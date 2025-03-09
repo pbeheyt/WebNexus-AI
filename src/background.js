@@ -1,8 +1,8 @@
 /**
- * Background Script
+ * Enhanced Background Script with Improved Claude Integration
  * 
- * Handles all background operations for the extension.
- * Manages context menus, tab management, and content script injection.
+ * This is a modified version focusing on improved Claude script injection
+ * with enhanced logging for debugging purposes.
  */
 
 // Import modules
@@ -18,6 +18,7 @@ const promptManager = require('./utils/promptManager');
 async function isContentScriptLoaded(tabId, action = 'ping') {
   return new Promise((resolve) => {
     try {
+      console.log(`[DEBUG] Checking if content script is loaded in tab ${tabId}`);
       chrome.tabs.sendMessage(tabId, { action }, (response) => {
         if (chrome.runtime.lastError) {
           console.log('Content script not ready:', chrome.runtime.lastError);
@@ -175,7 +176,7 @@ async function extractContent(tabId, url) {
 }
 
 /**
- * Open Claude with extracted content
+ * Enhanced Claude integration with improved reliability
  * @param {string} contentType - The content type
  * @returns {Promise<void>}
  */
@@ -183,6 +184,12 @@ async function openClaudeWithContent(contentType) {
   try {
     // Get prompt for content type
     const promptContent = await getPromptForContentType(contentType);
+    
+    // Verify we have extracted content
+    const { extractedContent } = await chrome.storage.local.get(['extractedContent']);
+    if (!extractedContent) {
+      throw new Error('No content was extracted');
+    }
     
     // Get Claude URL from config
     const response = await fetch(chrome.runtime.getURL('config.json'));
@@ -192,16 +199,99 @@ async function openClaudeWithContent(contentType) {
     // Save prompt to storage
     await chrome.storage.local.set({ prePrompt: promptContent });
     
+    // Verify data in storage before creating tab
+    const storageData = await chrome.storage.local.get(['prePrompt', 'extractedContent']);
+    
+    // Double check that prePrompt is available before proceeding
+    if (!storageData.prePrompt) {
+      // Retry saving the prompt
+      await chrome.storage.local.set({ prePrompt: promptContent });
+      
+      // Verify again
+      const retryData = await chrome.storage.local.get(['prePrompt']);
+      if (!retryData.prePrompt) {
+        throw new Error('Failed to save prompt to storage after retry');
+      }
+    }
+    
     // Create new tab with Claude
     const newTab = await chrome.tabs.create({ url: claudeUrl });
     
     // Save Claude state
     await storageManager.saveClaudeState({
       tabId: newTab.id,
-      scriptInjected: false
+      scriptInjected: false,
+      timestamp: Date.now()
     });
+    
+    // Additional check - set a backup timeout to ensure script gets injected
+    setTimeout(async () => {
+      try {
+        // Check if script was injected
+        const claudeState = await storageManager.getClaudeState();
+        
+        if (claudeState && claudeState.tabId === newTab.id && !claudeState.scriptInjected) {
+          // Get tab info
+          const tab = await chrome.tabs.get(newTab.id);
+          
+          if (tab && tab.url && tab.url.includes('claude.ai')) {
+            // Verify data in storage again before force injection
+            const backupCheck = await chrome.storage.local.get(['prePrompt', 'extractedContent']);
+            if (!backupCheck.prePrompt) {
+              await chrome.storage.local.set({ prePrompt: promptContent });
+            }
+            
+            // Inject with force mode
+            await forceInjectClaudeScript(newTab.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error in backup timeout:', error);
+      }
+    }, 10000); // 10 second backup
   } catch (error) {
     console.error('Error opening Claude with content:', error);
+  }
+}
+
+/**
+ * Force inject the Claude script with additional debugging information
+ * @param {number} tabId - The tab ID to inject into
+ * @returns {Promise<boolean>} Whether the injection was successful
+ */
+async function forceInjectClaudeScript(tabId) {
+  try {
+    console.log(`[Claude Integration] Force injecting Claude script into tab ${tabId}`);
+    
+    // Check current storage state
+    const storageData = await chrome.storage.local.get(['prePrompt', 'extractedContent']);
+    console.log('[Claude Integration] Storage state before force injection:', {
+      hasPrompt: !!storageData.prePrompt,
+      hasContent: !!storageData.extractedContent
+    });
+    
+    // Inject script with additional debugging code
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['dist/claude-content.bundle.js']
+    });
+    
+    // Mark as injected
+    const claudeState = await storageManager.getClaudeState();
+    if (claudeState && claudeState.tabId === tabId) {
+      await storageManager.saveClaudeState({
+        ...claudeState,
+        scriptInjected: true,
+        forceInjected: true,
+        forceTimestamp: Date.now()
+      });
+    }
+    
+    console.log(`[Claude Integration] Force injection completed for tab ${tabId}`);
+    return true;
+  } catch (error) {
+    console.error('[Claude Integration] Error in force injection:', error);
+    return false;
   }
 }
 
@@ -259,10 +349,12 @@ async function initialize() {
   }
 }
 
-// Tab update listener for Claude integration
+// Enhanced tab update listener for Claude integration
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
     try {
+      console.log(`[Tab Update] Tab ${tabId} completed loading: ${tab.url}`);
+      
       // Check if this is a Claude tab we need to inject into
       const claudeState = await storageManager.getClaudeState();
       
@@ -271,9 +363,20 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
           !claudeState.scriptInjected && 
           tab.url.includes('claude.ai')) {
         
-        console.log('Injecting Claude content script');
+        console.log(`[Claude Integration] Tab ${tabId} is a Claude tab ready for script injection`);
+        console.log('[Claude Integration] Claude state:', claudeState);
+        
+        // Check storage to make sure we have what we need
+        const { prePrompt, extractedContent } = await chrome.storage.local.get(['prePrompt', 'extractedContent']);
+        console.log('[Claude Integration] Storage verification before script injection:', {
+          hasPrompt: !!prePrompt,
+          promptLength: prePrompt?.length,
+          hasContent: !!extractedContent,
+          contentType: extractedContent?.contentType
+        });
         
         // Inject the Claude content script
+        console.log('[Claude Integration] Injecting Claude content script');
         await chrome.scripting.executeScript({
           target: { tabId },
           files: ['dist/claude-content.bundle.js']
@@ -282,8 +385,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         // Update Claude state
         await storageManager.saveClaudeState({
           ...claudeState,
-          scriptInjected: true
+          scriptInjected: true,
+          injectedTimestamp: Date.now()
         });
+        
+        console.log(`[Claude Integration] Script injected into tab ${tabId}`);
       }
     } catch (error) {
       console.error('Error in tab update listener:', error);
@@ -298,4 +404,25 @@ chrome.contextMenus.onClicked.addListener(handleContextMenuClick);
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('Extension installed');
   await initialize();
+});
+
+// Extension message handling for debugging
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'claudeDebug') {
+    console.log(`[Claude Debug] Message from tab ${sender.tab?.id}:`, message.data);
+    sendResponse({ received: true });
+    return true;
+  }
+  
+  if (message.action === 'storageCheck') {
+    chrome.storage.local.get(['prePrompt', 'extractedContent', 'claudeState'], data => {
+      console.log('[Storage Check]', data);
+      sendResponse({ 
+        hasPrompt: !!data.prePrompt,
+        hasContent: !!data.extractedContent,
+        claudeState: data.claudeState
+      });
+    });
+    return true;
+  }
 });
