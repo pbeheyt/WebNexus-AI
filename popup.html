@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Content Summarizer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #1a1a1b, #2a2a2b);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #ffffff;
+    }
+
+    .container {
+      background-color: #3c3c3c;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      width: 320px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .title {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .content-type {
+      font-size: 14px;
+      margin-bottom: 15px;
+      padding: 5px 10px;
+      background-color: #4a4a4a;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .prompt-select-container {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .prompt-select-label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .prompt-select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 5px;
+      background-color: #2a2a2b;
+      color: white;
+      border: 1px solid #555;
+      font-size: 14px;
+      appearance: none;
+    }
+
+    .prompt-select:focus {
+      outline: none;
+      border-color: #9C27B0;
+    }
+
+    button {
+      background: #9C27B0;
+      color: #ffffff;
+      padding: 12px 10px;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      white-space: normal;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      background: #7B1FA2;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .settings-button {
+      margin-top: 15px;
+    }
+
+    .customize-btn {
+      background: #444;
+      font-size: 13px;
+      padding: 8px;
+    }
+
+    .customize-btn:hover {
+      background: #555;
+    }
+
+    .status-message {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .settings-panel {
+      background-color: #2c2c2c;
+      border-radius: 6px;
+      padding: 15px;
+      margin-top: 15px;
+      text-align: left;
+      border: 1px solid #555;
+    }
+
+    .settings-panel h2 {
+      font-size: 16px;
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #eee;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .prompt-item {
+      background: #3a3a3a;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .prompt-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .prompt-name {
+      font-weight: bold;
+      color: #eee;
+    }
+
+    .prompt-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      padding: 3px 5px;
+      margin: 0;
+      font-size: 12px;
+      width: auto;
+    }
+
+    .action-btn:hover {
+      color: #fff;
+      background: none;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .prompt-editor {
+      width: 100%;
+      height: 200px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      resize: vertical;
+      margin-top: 5px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px;
+      background: #222;
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .button-group button {
+      flex: 1;
+    }
+
+    .cancel-btn {
+      background: #666;
+    }
+
+    .cancel-btn:hover {
+      background: #777;
+    }
+
+    .import-export-panel {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #555;
+    }
+
+    .import-export-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #eee;
+    }
+
+    .import-export-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .import-export-buttons button {
+      flex: 1;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .export-btn {
+      background: #2c662d;
+    }
+
+    .export-btn:hover {
+      background: #368537;
+    }
+
+    .import-btn {
+      background: #2c5066;
+    }
+
+    .import-btn:hover {
+      background: #366e85;
+    }
+
+    .reset-btn {
+      background: #663c2c;
+    }
+
+    .reset-btn:hover {
+      background: #7d4936;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .import-options {
+      margin-top: 15px;
+      padding: 12px;
+      background: #333;
+      border-radius: 4px;
+      border: 1px solid #555;
+    }
+
+    .import-option {
+      margin-bottom: 10px;
+    }
+
+    .import-option label {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .import-option input[type="radio"] {
+      margin-right: 8px;
+    }
+
+    .notification {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .notification.success {
+      background-color: rgba(40, 167, 69, 0.2);
+      border: 1px solid #28a745;
+      color: #9bffb0;
+    }
+
+    .notification.error {
+      background-color: rgba(220, 53, 69, 0.2);
+      border: 1px solid #dc3545;
+      color: #ffb3be;
+    }
+
+    .tab-container {
+      display: flex;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #555;
+    }
+
+    .tab-button {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #aaa;
+      padding: 8px 0;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .tab-button.active {
+      color: #fff;
+      border-bottom: 2px solid #9C27B0;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">AI Content Summarizer</h1>
+    
+    <div id="contentTypeDisplay" class="content-type">Detecting content type...</div>
+    
+    <div class="prompt-select-container">
+      <label for="promptType" class="prompt-select-label">Summary Type:</label>
+      <select id="promptType" class="prompt-select">
+        <!-- Prompt options will be dynamically populated -->
+      </select>
+    </div>
+    
+    <button type="button" id="summarizeBtn">Summarize with Claude</button>
+    
+    <div class="settings-button">
+      <button type="button" id="customizePromptsBtn" class="customize-btn">⚙️ Customize Prompts</button>
+    </div>
+    
+    <div id="promptSettingsPanel" class="settings-panel hidden">
+      <div class="tab-container">
+        <button type="button" class="tab-button active" data-tab="general">General</button>
+        <button type="button" class="tab-button" data-tab="reddit">Reddit</button>
+        <button type="button" class="tab-button" data-tab="youtube">YouTube</button>
+      </div>
+      
+      <div id="generalTab" class="tab-content active">
+        <h2>General Web Content Prompts</h2>
+        <div id="generalPromptsList" class="prompts-list">
+          <!-- General prompts will be dynamically populated -->
+        </div>
+        <button type="button" class="add-prompt-btn" data-type="general">+ Add New Prompt</button>
+      </div>
+      
+      <div id="redditTab" class="tab-content">
+        <h2>Reddit Post Prompts</h2>
+        <div id="redditPromptsList" class="prompts-list">
+          <!-- Reddit prompts will be dynamically populated -->
+        </div>
+        <button type="button" class="add-prompt-btn" data-type="reddit">+ Add New Prompt</button>
+      </div>
+      
+      <div id="youtubeTab" class="tab-content">
+        <h2>YouTube Video Prompts</h2>
+        <div id="youtubePromptsList" class="prompts-list">
+          <!-- YouTube prompts will be dynamically populated -->
+        </div>
+        <button type="button" class="add-prompt-btn" data-type="youtube">+ Add New Prompt</button>
+      </div>
+      
+      <div id="addPromptForm" class="add-prompt-form hidden">
+        <div class="form-group">
+          <label for="newPromptType">Content Type:</label>
+          <select id="newPromptType">
+            <option value="general">General Web Content</option>
+            <option value="reddit">Reddit Post</option>
+            <option value="youtube">YouTube Video</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="newPromptId">Prompt ID (no spaces):</label>
+          <input type="text" id="newPromptId" placeholder="e.g. technical">
+        </div>
+        <div class="form-group">
+          <label for="newPromptName">Display Name:</label>
+          <input type="text" id="newPromptName" placeholder="e.g. Technical Analysis">
+        </div>
+        <div class="form-group">
+          <label for="newPromptContent">Prompt Content:</label>
+          <textarea id="newPromptContent" class="prompt-editor" placeholder="Enter your prompt content here..."></textarea>
+        </div>
+        <div class="button-group">
+          <button type="button" id="saveNewPromptBtn">Save</button>
+          <button type="button" id="cancelNewPromptBtn" class="cancel-btn">Cancel</button>
+        </div>
+      </div>
+      
+      <!-- Import/Export Panel -->
+      <div class="import-export-panel">
+        <div class="import-export-title">Backup & Restore</div>
+        <div class="import-export-buttons">
+          <button type="button" id="exportPromptsBtn" class="export-btn">Export Prompts</button>
+          <button type="button" id="importPromptsBtn" class="import-btn">Import Prompts</button>
+          <button type="button" id="resetPromptsBtn" class="reset-btn">Reset to Default</button>
+        </div>
+        
+        <!-- Hidden file input for importing -->
+        <input type="file" id="fileInput" accept=".json">
+        
+        <!-- Import options (hidden by default) -->
+        <div id="importOptions" class="import-options hidden">
+          <div class="import-option">
+            <label>
+              <input type="radio" name="importMode" value="merge" checked>
+              Merge with existing prompts (keep existing)
+            </label>
+          </div>
+          <div class="import-option">
+            <label>
+              <input type="radio" name="importMode" value="overwrite">
+              Overwrite all existing prompts
+            </label>
+          </div>
+          <div class="button-group">
+            <button type="button" id="confirmImportBtn">Confirm Import</button>
+            <button type="button" id="cancelImportBtn" class="cancel-btn">Cancel</button>
+          </div>
+        </div>
+        
+        <!-- Notification area -->
+        <div id="notificationArea"></div>
+      </div>
+    </div>
+    
+    <div id="statusMessage" class="status-message"></div>
+  </div>
+  
+  <script src="dist/popup.bundle.js"></script>
+</body>
+</html>

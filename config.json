@@ -1,0 +1,17 @@
+{
+  "claudeUrl": "https://claude.ai/new",
+  "defaultPrompts": {
+    "general": {
+      "name": "Web Content Summary",
+      "content": "📝 Analyse et résume ce contenu web de manière claire et efficace:\n\n1️⃣ L'ESSENTIEL ⚡️\n- Le point clé en 2-3 phrases\n- Type de contenu (article, doc technique, wiki...)\n\n2️⃣ POINTS IMPORTANTS 🎯\n- Idées principales\n- Chiffres ou données clés\n- Conclusions essentielles\n\n3️⃣ DÉTAILS PERTINENTS 📌\n- Points techniques (si documentation)\n- Faits importants (si actualité)\n- Concepts clés (si article théorique)\n- Citations notables (traduites si besoin)\n\n4️⃣ À RETENIR 💡\n- Messages principaux\n- Points d'attention\n- Implications concrètes\n\nAnalyse ce contenu:"
+    },
+    "reddit": {
+      "name": "Reddit Post Analysis",
+      "content": "Réponse en français. 📱 Analyse Reddit\n\n💡 ANALYSE DU POST\nDéveloppez une analyse approfondie et détaillée du post principal, en explorant tous ses aspects. Capturez le contexte complet, détaillez chaque argument avancé et leurs implications, en incluant toutes données et chiffres pertinents mentionnés. Intégrez le ton de l'auteur, son intention, ainsi que les éléments factuels et sources présentés dans une narration fluide qui donne une compréhension exhaustive du contenu.\n\n📊 ANALYSE DES DISCUSSIONS\nPrésentez les différents courants de pensée qui émergent des commentaires sous forme de narration structurée. Pour chaque perspective majeure:\n\nDéveloppez l'idée centrale et son contexte, illustrée par des citations pertinentes au format \"[Citation exacte]\" - u/username (X points). Explorez ensuite comment cette perspective évolue et s'enrichit à travers les autres commentaires qui la soutiennent ou la nuancent, en intégrant naturellement les données et chiffres qui viennent appuyer ces points de vue.\n\nAdaptez la profondeur de l'analyse au volume et à la qualité des échanges. Privilégiez les commentaires les plus populaires et pertinents, tout en restant attentif aux expertises uniques et aux témoignages marquants. N'hésitez pas à mettre en lumière les contre-arguments significatifs qui enrichissent la discussion."
+    },
+    "youtube": {
+      "name": "YouTube Video Summary",
+      "content": "# Résumé de Vidéo YouTube\n\nVeuillez fournir un résumé concis et clair de cette transcription de vidéo YouTube. Votre résumé devrait :\n\n1. Capturer les points principaux et les enseignements clés en 3-5 points\n2. Comprendre environ 150-250 mots au total\n3. Maintenir le message principal et l'intention de l'orateur original\n4. Filtrer les mots de remplissage, les répétitions et le contenu tangentiel\n5. Présenter les informations dans une structure logique et facile à suivre\n\nConcentrez-vous sur la délivrance d'une valeur et d'une clarté maximales dans un espace minimal.\n\n## Analyse des Commentaires\nIdentifiez le commentaire le plus pertinent ou populaire (basé sur les likes) et incluez-le avec le nom d'utilisateur et le nombre de likes. Fournissez une brève analyse de ce commentaire en relation avec le contenu de la vidéo.\n\nRemarque : Le résumé doit être en français."
+    }
+  }
+}
