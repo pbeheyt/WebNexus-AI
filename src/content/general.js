@@ -1,8 +1,6 @@
 /**
  * General Content Script
- * 
  * Extracts text content from general web pages.
- * Handles DOM traversal to find and extract visible text.
  */
 
 // Flag to indicate script is fully loaded
@@ -61,8 +59,7 @@ function extractVisibleText() {
       // Skip hidden or non-content elements
       const excludedTags = [
         'script', 'style', 'img', 'svg', 'footer', 'nav', 
-        'noscript', 'iframe', 'video', 'audio', 'canvas',
-        'code', 'pre', 'meta', 'link', 'head', 'header'
+        'noscript', 'iframe', 'video', 'audio', 'canvas'
       ];
       
       if (excludedTags.includes(tagName)) {
@@ -106,39 +103,6 @@ function extractVisibleText() {
     .replace(/\n{3,}/g, '\n\n')  // Replace 3+ line breaks with 2
     .replace(/\s{2,}/g, ' ')     // Replace 2+ spaces with 1
     .trim();
-}
-
-/**
- * Extract main content from the page using heuristics
- * @returns {string} Main content text
- */
-function extractMainContent() {
-  // Try to find the main content element using common selectors
-  const mainSelectors = [
-    'main',
-    'article',
-    '#content',
-    '.content',
-    '.main',
-    '.article',
-    '.post',
-    '.entry',
-    '[role="main"]'
-  ];
-  
-  for (const selector of mainSelectors) {
-    const mainElement = document.querySelector(selector);
-    if (mainElement) {
-      const mainText = extractVisibleText(mainElement);
-      // Only use main content if it has substantial text
-      if (mainText.length > 200) {
-        return mainText;
-      }
-    }
-  }
-  
-  // Fallback to extracting all visible text
-  return extractVisibleText();
 }
 
 /**
@@ -187,7 +151,7 @@ function extractPageData() {
     const author = extractAuthor();
     
     // Extract content (either selection or main content)
-    const content = selectedText || extractMainContent();
+    const content = selectedText || extractVisibleText();
     
     // Return the complete page data object
     return {
@@ -232,30 +196,7 @@ function extractAndSavePageData() {
       },
       contentReady: true
     }, () => {
-      console.log('General page data saved to storage:', pageData.pageTitle);
-      console.log('Data extraction timestamp:', pageData.extractedAt);
-    });
-    
-    // Verify storage
-    chrome.storage.local.get(['extractedContent', 'contentReady'], function(result) {
-      console.log('VERIFICATION - Stored data:', result.extractedContent);
-      
-      if (result.extractedContent) {
-        if (result.extractedContent.error) {
-          console.log('❌ Page extraction issue:', result.extractedContent.message);
-        } else {
-          console.log('✅ Page successfully extracted');
-        }
-        
-        // Log content length
-        if (result.extractedContent.content) {
-          console.log(`✅ Content extracted: ${result.extractedContent.content.length} characters`);
-        } else {
-          console.log('❌ No content extracted');
-        }
-      } else {
-        console.log('❌ Page extraction failed');
-      }
+      console.log('General page data saved to storage');
     });
   } catch (error) {
     console.error('Error in general content script:', error);
@@ -305,9 +246,6 @@ const initialize = () => {
     console.error('Error initializing general content script:', error);
   }
 };
-
-// Log when content script loads
-console.log('General content script loaded');
 
 // Initialize the content script
 initialize();

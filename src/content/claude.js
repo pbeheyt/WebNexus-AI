@@ -1,30 +1,17 @@
 /**
  * Claude Content Script
- * 
- * Simplified implementation based on working YouTube extension approach.
- * Handles the integration with Claude AI by inserting extracted content 
+ * Handles the integration with Claude AI by inserting extracted content
  * into Claude's editor and clicking the send button.
  */
 
-const logger = require('../utils/logger');
-
 (() => {
-  // Simple debug logging function
-  const debug = (message, data = null) => {
-    if (data !== null) {
-      logger.claude.info(message, data);
-    } else {
-      logger.claude.info(message);
-    }
-  };
-
   /**
    * Insert text into Claude's editor and submit
    * @param {string} text - The text to insert
    * @returns {boolean} Success status
    */
   function insertText(text) {
-    debug('Attempting to insert text into Claude editor');
+    console.log('Attempting to insert text into Claude editor');
     
     // Try to find Claude's editor with simpler selectors first
     let editorElement = document.querySelector('p[data-placeholder="How can Claude help you today?"]');
@@ -34,7 +21,7 @@ const logger = require('../utils/logger');
     }
     
     if (!editorElement) {
-      debug('Claude editor element not found');
+      console.error('Claude editor element not found');
       return false;
     }
 
@@ -72,7 +59,7 @@ const logger = require('../utils/logger');
       try {
         editorElement.focus();
       } catch (focusError) {
-        debug('Could not focus editor', focusError);
+        console.error('Could not focus editor:', focusError);
       }
 
       // Find and click the send button after a short delay
@@ -82,7 +69,7 @@ const logger = require('../utils/logger');
 
       return true;
     } catch (error) {
-      debug('Error inserting text', error);
+      console.error('Error inserting text:', error);
       return false;
     }
   }
@@ -99,7 +86,7 @@ const logger = require('../utils/logger');
       document.querySelector('button svg path[d*="M208.49,120.49"]')?.closest('button');
     
     if (!sendButton) {
-      debug('Send button not found');
+      console.error('Send button not found');
       return false;
     }
     
@@ -126,10 +113,10 @@ const logger = require('../utils/logger');
       // Try direct click as well
       sendButton.click();
       
-      debug('Send button clicked');
+      console.log('Send button clicked');
       return true;
     } catch (error) {
-      debug('Error clicking send button', error);
+      console.error('Error clicking send button:', error);
       return false;
     }
   }
@@ -255,7 +242,7 @@ ${content}`;
    */
   function formatContent(data) {
     if (!data) {
-      debug('No content data available for formatting');
+      console.error('No content data available for formatting');
       return 'No content data available';
     }
     
@@ -284,14 +271,13 @@ ${content}`;
    */
   const handleProcess = async () => {
     try {
-      debug('Starting to process extracted content');
+      console.log('Starting to process extracted content');
       
       // Get data from storage using standard approach
       chrome.storage.local.get(['prePrompt', 'extractedContent'], result => {
-        debug('Retrieved data from storage', {
+        console.log('Retrieved data from storage', {
           hasPrompt: !!result.prePrompt,
-          hasContent: !!result.extractedContent,
-          contentType: result.extractedContent?.contentType
+          hasContent: !!result.extractedContent
         });
         
         if (!result.prePrompt) {
@@ -308,20 +294,20 @@ ${content}`;
         // Combine prompt with content
         const fullText = `${result.prePrompt}\n\n${formattedContent}`;
         
-        debug('Attempting to insert text into Claude');
+        console.log('Attempting to insert text into Claude');
         const success = insertText(fullText);
         
         if (success) {
-          debug('Content successfully inserted');
+          console.log('Content successfully inserted');
           
           // Clear the data after successful insertion
           chrome.storage.local.remove(['extractedContent', 'prePrompt', 'contentReady']);
         } else {
-          debug('Failed to insert content into Claude');
+          console.error('Failed to insert content into Claude');
         }
       });
     } catch (error) {
-      debug('Error in handleProcess', error);
+      console.error('Error in handleProcess:', error);
     }
   };
 
@@ -330,26 +316,23 @@ ${content}`;
    */
   function initialize() {
     if (!window.location.href.includes('claude.ai')) {
-      debug('Not on Claude.ai, exiting');
+      console.log('Not on Claude.ai, exiting');
       return;
     }
     
-    debug('Initializing Claude integration script');
+    console.log('Initializing Claude integration script');
     
     // Wait for the DOM to be fully loaded
     if (document.readyState === 'complete') {
-      debug('Document already loaded, processing content');
+      console.log('Document already loaded, processing content');
       setTimeout(handleProcess, 1000); // Small delay to ensure all elements are ready
     } else {
-      debug('Waiting for document to load');
+      console.log('Waiting for document to load');
       window.addEventListener('load', () => {
         setTimeout(handleProcess, 1000);
       });
     }
   }
-  
-  // Set a flag to indicate this script is loaded
-  window.__claudeExtensionLoaded = true;
   
   // Initialize the script
   initialize();

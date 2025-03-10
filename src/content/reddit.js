@@ -1,6 +1,5 @@
 /**
  * Reddit Content Script
- * 
  * Extracts post content and comments from Reddit pages.
  */
 
@@ -235,11 +234,6 @@ function extractComments(maxComments = 30) {
         }
       }
       
-      // Try getAttribute for shreddit-comment
-      if (score === '0' && commentElement.getAttribute) {
-        score = commentElement.getAttribute('score') || score;
-      }
-      
       // Add comment to the list if it has content
       if (commentContent) {
         comments.push({
@@ -324,30 +318,7 @@ function extractAndSavePostData() {
       },
       contentReady: true
     }, () => {
-      console.log('Reddit post data saved to storage:', postData.postTitle);
-      console.log('Data extraction timestamp:', postData.extractedAt);
-    });
-    
-    // Verify storage
-    chrome.storage.local.get(['extractedContent', 'contentReady'], function(result) {
-      console.log('VERIFICATION - Stored data:', result.extractedContent);
-      
-      if (result.extractedContent) {
-        if (result.extractedContent.error) {
-          console.log('❌ Post extraction issue:', result.extractedContent.message);
-        } else {
-          console.log('✅ Post successfully extracted');
-        }
-        
-        // Log if comments were found
-        if (Array.isArray(result.extractedContent.comments)) {
-          console.log('✅ Comments successfully extracted:', result.extractedContent.comments.length);
-        } else {
-          console.log('❌ Comment extraction failed or no comments found');
-        }
-      } else {
-        console.log('❌ Post extraction failed');
-      }
+      console.log('Reddit post data saved to storage');
     });
   } catch (error) {
     console.error('Error in Reddit content script:', error);
@@ -397,9 +368,6 @@ const initialize = () => {
     console.error('Error initializing Reddit content script:', error);
   }
 };
-
-// Log when content script loads
-console.log('Reddit content script loaded');
 
 // Initialize the content script
 initialize();

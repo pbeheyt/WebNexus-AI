@@ -1,6 +1,5 @@
 /**
  * YouTube Content Script
- * 
  * Extracts video information and transcript from YouTube pages.
  * Uses the youtube-transcript npm package for reliable transcript extraction.
  */
@@ -248,29 +247,6 @@ async function extractAndSaveVideoData() {
       console.log('YouTube video data saved to storage for video:', videoData.videoId);
       console.log('Data extraction timestamp:', videoData.extractedAt);
     });
-    
-    // Verify storage
-    chrome.storage.local.get(['extractedContent', 'contentReady'], function(result) {
-      console.log('VERIFICATION - Stored data:', result.extractedContent);
-      
-      // Log if transcript was found
-      if (result.extractedContent && result.extractedContent.transcript) {
-        if (result.extractedContent.error) {
-          console.log('❌ Transcript extraction issue:', result.extractedContent.message);
-        } else {
-          console.log('✅ Transcript successfully extracted');
-        }
-      } else {
-        console.log('❌ Transcript extraction failed');
-      }
-      
-      // Log if comments were found
-      if (result.extractedContent && Array.isArray(result.extractedContent.comments)) {
-        console.log('✅ Comments successfully extracted:', result.extractedContent.comments.length);
-      } else {
-        console.log('❌ Comment extraction failed or no comments found');
-      }
-    });
   } catch (error) {
     console.error('Error in YouTube content script:', error);
     
@@ -299,7 +275,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   if (message.action === 'extractContent') {
-    console.log('Extract content request received');
+    console.log('Extract transcript request received');
     // Start the extraction process
     extractAndSaveVideoData();
     sendResponse({ status: 'Extracting YouTube content...' });
@@ -319,9 +295,6 @@ const initialize = async () => {
     console.error('Error initializing YouTube content script:', error);
   }
 };
-
-// Log when content script loads
-console.log('YouTube content script loaded');
 
 // Initialize the content script
 initialize();

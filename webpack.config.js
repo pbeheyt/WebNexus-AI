@@ -7,7 +7,7 @@ module.exports = {
     'reddit-content': './src/content/reddit.js',
     'general-content': './src/content/general.js',
     'claude-content': './src/content/claude.js',
-    popup: './src/popup/popup.js'
+    popup: './src/popup.js'
   },
   output: {
     filename: '[name].bundle.js',
