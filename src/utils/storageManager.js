@@ -86,7 +86,13 @@ async function clearContent() {
  */
 async function saveClaudeState(state) {
   try {
-    await chrome.storage.local.set({ claudeState: state });
+    // Store the tabId and scriptInjected directly as flat keys
+    // instead of nested in a claudeState object
+    await chrome.storage.local.set({ 
+      claudeTabId: state.tabId,
+      scriptInjected: state.scriptInjected || false
+    });
+    console.log('Claude state saved with direct keys:', state);
   } catch (error) {
     console.error('Error saving Claude state:', error);
     throw error;
@@ -99,8 +105,19 @@ async function saveClaudeState(state) {
  */
 async function getClaudeState() {
   try {
-    const { claudeState } = await chrome.storage.local.get(['claudeState']);
-    return claudeState || null;
+    const { claudeTabId, scriptInjected } = await chrome.storage.local.get([
+      'claudeTabId',
+      'scriptInjected'
+    ]);
+    
+    if (claudeTabId === undefined) {
+      return null;
+    }
+    
+    return {
+      tabId: claudeTabId,
+      scriptInjected: scriptInjected || false
+    };
   } catch (error) {
     console.error('Error getting Claude state:', error);
     return null;
@@ -113,7 +130,8 @@ async function getClaudeState() {
  */
 async function clearClaudeState() {
   try {
-    await chrome.storage.local.remove(['claudeState']);
+    await chrome.storage.local.remove(['claudeTabId', 'scriptInjected']);
+    console.log('Claude state cleared from storage');
   } catch (error) {
     console.error('Error clearing Claude state:', error);
     throw error;

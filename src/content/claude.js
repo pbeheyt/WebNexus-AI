@@ -6,13 +6,15 @@
  * into Claude's editor and clicking the send button.
  */
 
+const logger = require('../utils/logger');
+
 (() => {
   // Simple debug logging function
   const debug = (message, data = null) => {
     if (data !== null) {
-      console.log(`[Claude Integration] ${message}`, data);
+      logger.claude.info(message, data);
     } else {
-      console.log(`[Claude Integration] ${message}`);
+      logger.claude.info(message);
     }
   };
 

@@ -1,13 +1,55 @@
 /**
  * Enhanced Background Script with Improved Claude Integration
  * 
- * This is a modified version focusing on improved Claude script injection
- * with enhanced reliability and simpler implementation.
+ * This background service worker handles:
+ * 1. Extracting content from web pages
+ * 2. Opening Claude AI in a new tab
+ * 3. Injecting scripts to send the content to Claude
+ * 4. Managing context menu integration
  */
 
 // Import modules
 const storageManager = require('./utils/storageManager');
 const promptManager = require('./utils/promptManager');
+
+// Constants for debugging
+const DEBUG = true;
+
+/**
+ * Enhanced logging function for background script
+ * @param {string} message - The log message
+ * @param {any} data - Optional data to log
+ */
+function log(message, data = null) {
+  const timestamp = new Date().toISOString().split('T')[1].slice(0, 8);
+  const prefix = `[${timestamp}][Background]`;
+  
+  if (data !== null) {
+    console.log(prefix, message, data);
+  } else {
+    console.log(prefix, message);
+  }
+  
+  // Also save to storage for viewing in the popup later
+  try {
+    chrome.storage.local.get(['debugLogs'], (result) => {
+      const logs = result.debugLogs || [];
+      logs.unshift({
+        timestamp: new Date().toISOString(),
+        context: 'background',
+        message,
+        data: data ? JSON.stringify(data) : null
+      });
+      
+      // Keep only latest 100 logs
+      if (logs.length > 100) logs.length = 100;
+      
+      chrome.storage.local.set({ debugLogs: logs });
+    });
+  } catch (e) {
+    // Ignore storage errors for logging
+  }
+}
 
 /**
  * Check if a content script is loaded in a tab
@@ -18,18 +60,18 @@ const promptManager = require('./utils/promptManager');
 async function isContentScriptLoaded(tabId, action = 'ping') {
   return new Promise((resolve) => {
     try {
-      console.log(`[DEBUG] Checking if content script is loaded in tab ${tabId}`);
+      log(`Checking if content script is loaded in tab ${tabId}`);
       chrome.tabs.sendMessage(tabId, { action }, (response) => {
         if (chrome.runtime.lastError) {
-          console.log('Content script not ready:', chrome.runtime.lastError);
+          log('Content script not ready:', chrome.runtime.lastError);
           resolve(false);
         } else {
-          console.log('Content script is ready, received:', response);
+          log('Content script is ready, received:', response);
           resolve(true);
         }
       });
     } catch (error) {
-      console.error('Error checking content script:', error);
+      log('Error checking content script:', error);
       resolve(false);
     }
   });
@@ -82,11 +124,11 @@ async function injectContentScriptIfNeeded(tabId, url) {
       const scriptFile = getContentScriptForUrl(url);
       
       if (!scriptFile) {
-        console.log('No applicable content script for URL:', url);
+        log('No applicable content script for URL:', url);
         return false;
       }
       
-      console.log('Injecting content script:', scriptFile);
+      log('Injecting content script:', scriptFile);
       
       // Inject the content script
       await chrome.scripting.executeScript({
@@ -99,12 +141,14 @@ async function injectContentScriptIfNeeded(tabId, url) {
       
       // Verify injection
       const verifyLoaded = await isContentScriptLoaded(tabId);
+      log(`Content script injection ${verifyLoaded ? 'successful' : 'failed'}`);
       return verifyLoaded;
     }
     
+    log('Content script already loaded');
     return true;
   } catch (error) {
-    console.error('Error injecting content script:', error);
+    log('Error injecting content script:', error);
     return false;
   }
 }
@@ -118,11 +162,12 @@ async function getPromptForContentType(contentType) {
   try {
     // Get selected prompt ID for this content type
     const selectedPromptId = await storageManager.getSelectedPrompt(contentType);
+    log(`Getting prompt for ${contentType}, selected prompt ID: ${selectedPromptId}`);
     
     // Get prompt content
     return await promptManager.getPromptContent(contentType, selectedPromptId);
   } catch (error) {
-    console.error('Error getting prompt for content type:', error);
+    log('Error getting prompt for content type:', error);
     
     // Fallback to default prompt from config
     const response = await fetch(chrome.runtime.getURL('config.json'));
@@ -139,16 +184,19 @@ async function getPromptForContentType(contentType) {
  */
 async function extractContent(tabId, url) {
   try {
+    log(`Starting content extraction for tab ${tabId}`);
+    
     // Inject content script if needed
     const injected = await injectContentScriptIfNeeded(tabId, url);
     
     if (!injected) {
-      console.error('Failed to inject content script');
+      log('Failed to inject content script');
       return false;
     }
     
     // Send message to extract content
     chrome.tabs.sendMessage(tabId, { action: 'extractContent' });
+    log('Extract content message sent');
     
     // Wait for content to be extracted (with timeout)
     let extractionSuccess = false;
@@ -162,26 +210,34 @@ async function extractContent(tabId, url) {
       
       if (contentReady) {
         extractionSuccess = true;
+        log('Content extraction successful');
         break;
       }
       
       retryCount++;
+      log(`Waiting for content extraction (${retryCount}/${MAX_RETRIES})`);
+    }
+    
+    if (!extractionSuccess) {
+      log('Content extraction timed out');
     }
     
     return extractionSuccess;
   } catch (error) {
-    console.error('Error extracting content:', error);
+    log('Error extracting content:', error);
     return false;
   }
 }
 
 /**
- * Simplified Claude integration with improved reliability
+ * Open Claude with extracted content
  * @param {string} contentType - The content type
  * @returns {Promise<void>}
  */
 async function openClaudeWithContent(contentType) {
   try {
+    log(`Opening Claude with ${contentType} content`);
+    
     // Get prompt for content type
     const promptContent = await getPromptForContentType(contentType);
     
@@ -190,6 +246,12 @@ async function openClaudeWithContent(contentType) {
     if (!extractedContent) {
       throw new Error('No content was extracted');
     }
+    
+    log('Content and prompt ready, opening Claude', {
+      contentType: extractedContent.contentType,
+      promptLength: promptContent.length,
+      hasExtractedContent: !!extractedContent
+    });
     
     // Get Claude URL from config
     const response = await fetch(chrome.runtime.getURL('config.json'));
@@ -204,14 +266,26 @@ async function openClaudeWithContent(contentType) {
     
     // Create new tab with Claude
     const newTab = await chrome.tabs.create({ url: claudeUrl });
+    log(`Claude tab created with ID ${newTab.id}`);
     
     // Save Claude state in a simple format
     await chrome.storage.local.set({
       claudeTabId: newTab.id,
       scriptInjected: false
     });
+    
+    // Store entire state for logging/debugging
+    await chrome.storage.local.set({
+      claudeOpenedAt: new Date().toISOString(),
+      openedWithContentType: contentType,
+      storedData: {
+        hasPrompt: true,
+        hasContent: true,
+        contentType: extractedContent.contentType
+      }
+    });
   } catch (error) {
-    console.error('Error opening Claude with content:', error);
+    log('Error opening Claude with content:', error);
   }
 }
 
@@ -223,7 +297,7 @@ async function openClaudeWithContent(contentType) {
  */
 async function handleContextMenuClick(info, tab) {
   try {
-    console.log('Context menu clicked:', info.menuItemId);
+    log('Context menu clicked:', info.menuItemId);
     
     // Clear any existing content
     await storageManager.clearContent();
@@ -235,14 +309,14 @@ async function handleContextMenuClick(info, tab) {
     const extracted = await extractContent(tab.id, tab.url);
     
     if (!extracted) {
-      console.error('Failed to extract content');
+      log('Failed to extract content');
       return;
     }
     
     // Open Claude with content
     await openClaudeWithContent(contentType);
   } catch (error) {
-    console.error('Error handling context menu click:', error);
+    log('Error handling context menu click:', error);
   }
 }
 
@@ -252,9 +326,11 @@ async function handleContextMenuClick(info, tab) {
  */
 async function initialize() {
   try {
+    log('Initializing extension');
+    
     // Initialize prompts
     const prompts = await promptManager.loadAllPrompts();
-    console.log('Loaded prompts:', Object.keys(prompts));
+    log('Loaded prompts:', Object.keys(prompts));
     
     // Create context menu items
     chrome.contextMenus.create({
@@ -263,32 +339,62 @@ async function initialize() {
       contexts: ['page', 'selection']
     });
     
-    console.log('Context menu items created');
+    log('Context menu items created');
+    
+    // Clear any stale script injection flags
+    await chrome.storage.local.set({ scriptInjected: false });
+    
+    log('Initialization complete');
   } catch (error) {
-    console.error('Error initializing extension:', error);
+    log('Error initializing extension:', error);
   }
 }
 
-// Simplified tab update listener for Claude integration
+// Tab update listener for Claude integration
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url && tab.url.includes('claude.ai')) {
     try {
+      log(`Claude tab ${tabId} updated`);
+      
       // Check if this is a Claude tab we need to inject into
-      const { claudeTabId, scriptInjected } = await chrome.storage.local.get(['claudeTabId', 'scriptInjected']);
+      const { claudeTabId, scriptInjected, prePrompt, extractedContent } = 
+        await chrome.storage.local.get(['claudeTabId', 'scriptInjected', 'prePrompt', 'extractedContent']);
+      
+      log('Claude tab check:', {
+        currentTabId: tabId,
+        expectedTabId: claudeTabId,
+        isMatch: tabId === claudeTabId,
+        scriptInjected: scriptInjected,
+        hasPrompt: !!prePrompt,
+        hasContent: !!extractedContent
+      });
       
       if (tabId === claudeTabId && !scriptInjected) {
-        console.log(`[Claude Integration] Tab ${tabId} is a Claude tab ready for script injection`);
+        log(`Tab ${tabId} is a Claude tab ready for script injection`);
         
         // Check storage to make sure we have what we need
-        const { prePrompt, extractedContent } = await chrome.storage.local.get(['prePrompt', 'extractedContent']);
-        
         if (!prePrompt || !extractedContent) {
-          console.error('[Claude Integration] Missing required data for Claude integration');
+          log('Missing required data for Claude integration', {
+            hasPrompt: !!prePrompt,
+            hasContent: !!extractedContent
+          });
           return;
         }
         
+        // Store debug info about what we're injecting
+        await chrome.storage.local.set({
+          claudeDebugInfo: {
+            injectionTime: new Date().toISOString(),
+            tabId: tabId,
+            url: tab.url,
+            contentType: extractedContent.contentType,
+            promptLength: prePrompt.length,
+            contentLength: JSON.stringify(extractedContent).length
+          }
+        });
+        
         // Inject the Claude content script
-        console.log('[Claude Integration] Injecting Claude content script');
+        log('Injecting Claude content script');
         await chrome.scripting.executeScript({
           target: { tabId },
           files: ['dist/claude-content.bundle.js']
@@ -297,10 +403,14 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         // Update injection flag
         await chrome.storage.local.set({ scriptInjected: true });
         
-        console.log(`[Claude Integration] Script injected into tab ${tabId}`);
+        log(`Script injected into tab ${tabId}`);
+      } else if (scriptInjected) {
+        log(`Script already injected into Claude tab ${tabId}`);
+      } else if (tabId !== claudeTabId) {
+        log(`Tab ${tabId} is not the expected Claude tab (${claudeTabId})`);
       }
     } catch (error) {
-      console.error('Error in tab update listener:', error);
+      log('Error in tab update listener:', error);
     }
   }
 });
@@ -310,6 +420,30 @@ chrome.contextMenus.onClicked.addListener(handleContextMenuClick);
 
 // Extension installation listener
 chrome.runtime.onInstalled.addListener(async () => {
-  console.log('Extension installed');
+  log('Extension installed or updated');
   await initialize();
+});
+
+// Debug message listener to support logging from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'logDebug') {
+    log(message.message, message.data);
+    sendResponse({ success: true });
+    return true;
+  }
+  
+  if (message.action === 'checkStatus') {
+    chrome.storage.local.get(null, (data) => {
+      log('Status check requested', { 
+        sender: sender.tab ? `Tab ${sender.tab.id}` : 'Popup',
+        storageSize: JSON.stringify(data).length
+      });
+      
+      sendResponse({ 
+        status: 'ok',
+        storageData: data
+      });
+    });
+    return true;
+  }
 });
