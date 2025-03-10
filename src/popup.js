@@ -1,3 +1,4 @@
+// src/popup.js (complete file)
 document.addEventListener('DOMContentLoaded', async () => {
   // Get UI elements
   const contentTypeDisplay = document.getElementById('contentTypeDisplay');
@@ -139,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   /**
-   * Handle summarize button click
+   * Handle summarize button click - UPDATED to use background service worker
    */
   async function handleSummarize() {
     try {
@@ -147,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       summarizeBtn.disabled = true;
       
       // Get current tab info
-      const { type, tabId, isSupported } = await checkCurrentContentType();
+      const { type, tabId, url, isSupported } = await checkCurrentContentType();
       
       if (!isSupported || !type || !tabId) {
         statusMessage.textContent = 'Unsupported content type or tab issue';
@@ -179,60 +180,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
       
-      // Clear any existing content
+      // Get the selected prompt type
+      const selectedPromptType = promptType.value || type;
+      
+      // Clear any existing content in storage
       await chrome.storage.local.set({ 
         contentReady: false,
-        extractedContent: null
+        extractedContent: null,
+        claudeTabId: null,
+        scriptInjected: false
       });
       
-      // Extract content
-      statusMessage.textContent = 'Extracting content...';
-      chrome.tabs.sendMessage(tabId, { action: 'extractContent' });
-      
-      // Wait for extraction to complete
-      const maxAttempts = 15;
-      let attempts = 0;
-      let extractionComplete = false;
-      
-      while (!extractionComplete && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const { contentReady } = await chrome.storage.local.get('contentReady');
-        if (contentReady) {
-          extractionComplete = true;
+      // Use the background script to handle the summarization
+      statusMessage.textContent = 'Processing content...';
+      chrome.runtime.sendMessage({
+        action: 'summarizeContent',
+        tabId: tabId,
+        contentType: type,
+        promptType: selectedPromptType,
+        url: url
+      }, response => {
+        if (response && response.success) {
+          statusMessage.textContent = 'Opening Claude...';
+        } else {
+          statusMessage.textContent = `Error: ${response?.error || 'Unknown error'}`;
+          summarizeBtn.disabled = false;
         }
-        
-        attempts++;
-      }
-      
-      if (!extractionComplete) {
-        statusMessage.textContent = 'Timed out waiting for content extraction';
-        summarizeBtn.disabled = false;
-        return;
-      }
-      
-      // Load the appropriate prompt
-      const selectedPromptType = promptType.value || type;
-      const response = await fetch(chrome.runtime.getURL('config.json'));
-      const config = await response.json();
-      const prePrompt = config.defaultPrompts[selectedPromptType].content;
-      
-      // Open Claude in a new tab
-      statusMessage.textContent = 'Opening Claude...';
-      const claudeTab = await chrome.tabs.create({ 
-        url: 'https://claude.ai/new',
-        active: true
       });
       
-      // Save tab ID for later
-      await chrome.storage.local.set({
-        claudeTabId: claudeTab.id,
-        scriptInjected: false,
-        prePrompt
-      });
-      
-      // Close popup
-      window.close();
+      // Close popup after a brief delay
+      setTimeout(() => window.close(), 2000);
     } catch (error) {
       console.error('Error:', error);
       statusMessage.textContent = `Error: ${error.message}`;
