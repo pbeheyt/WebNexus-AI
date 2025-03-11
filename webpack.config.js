@@ -7,7 +7,7 @@ module.exports = {
     'reddit-content': './src/content/reddit-content.js',
     'general-content': './src/content/general-content.js',
     'platform-content': './src/content/platform-content.js',
-    popup: './src/popup.js',
+    popup: './src/popup/index.js',
     settings: './src/settings.js'
   },
   output: {

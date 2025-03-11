@@ -1,120 +1,83 @@
-// popup/controllers/MainController.js
-export default class MainController {
-  constructor(
-    tabService,
-    contentService,
-    platformService,
-    promptService,
-    summarizeController,
-    statusManager,
-    contentTypeView,
-    platformSelector,
-    promptSelector
-  ) {
-    this.tabService = tabService;
+// popup/controllers/SummarizeController.js
+import { STORAGE_KEYS } from '../constants.js';
+
+export default class SummarizeController {
+  constructor(contentService, promptService, storageService) {
     this.contentService = contentService;
-    this.platformService = platformService;
     this.promptService = promptService;
-    this.summarizeController = summarizeController;
-    this.statusManager = statusManager;
-    this.contentTypeView = contentTypeView;
-    this.platformSelector = platformSelector;
-    this.promptSelector = promptSelector;
-    
-    this.state = {
-      currentTab: null,
-      contentType: null,
-      isSupported: false,
-      platforms: [],
-      selectedPlatformId: null,
-      selectedPromptId: null,
-      isProcessing: false
-    };
+    this.storageService = storageService;
   }
 
-  async initialize() {
+  async summarize(tabId, contentType, url, selectedPromptId, selectedPlatformId, statusCallback) {
     try {
-      this.statusManager.updateStatus('Detecting page content...', true);
+      statusCallback('Checking page content...', true);
       
-      // Get current tab info
-      this.state.currentTab = await this.tabService.getCurrentTab();
+      // Check if content script is loaded
+      let isScriptLoaded = await this.contentService.isContentScriptLoaded(tabId);
       
-      if (!this.state.currentTab || !this.state.currentTab.url) {
-        this.statusManager.updateStatus('Cannot access current tab', false, false);
-        return;
+      // If not loaded, inject it
+      if (!isScriptLoaded) {
+        statusCallback('Initializing content extraction...', true);
+        
+        const injected = await this.contentService.injectContentScript(tabId, contentType);
+        
+        if (!injected) {
+          statusCallback('Failed to initialize content extraction', false);
+          return false;
+        }
+        
+        // Verify script is now loaded
+        isScriptLoaded = await this.contentService.isContentScriptLoaded(tabId);
+        
+        if (!isScriptLoaded) {
+          statusCallback('Content script initialization failed', false);
+          return false;
+        }
       }
       
-      // Detect content type
-      this.state.contentType = this.contentService.detectContentType(this.state.currentTab.url);
-      this.state.isSupported = true;
+      // Get prompt content
+      const promptContent = await this.promptService.getPromptContent(selectedPromptId, contentType);
       
-      // Update content type display
-      this.contentTypeView.update(this.state.contentType);
-      
-      // Load platforms
-      const { platforms, preferredPlatformId } = await this.platformService.loadPlatforms();
-      this.state.platforms = platforms;
-      this.state.selectedPlatformId = preferredPlatformId;
-      
-      // Render platform selector
-      this.platformSelector.render(platforms, preferredPlatformId);
-      
-      // Load prompts for this content type
-      const { prompts, preferredPromptId } = await this.promptService.loadPrompts(this.state.contentType);
-      this.state.selectedPromptId = preferredPromptId;
-      
-      // Render prompt selector
-      this.promptSelector.render(prompts, preferredPromptId);
-      
-      // Update status
-      this.statusManager.updateStatus('Ready to summarize.', false, this.state.isSupported);
-    } catch (error) {
-      console.error('Initialization error:', error);
-      this.statusManager.updateStatus(`Error: ${error.message}`, false, false);
-    }
-  }
-
-  async handlePlatformChange(platformId) {
-    try {
-      await this.platformService.setPreferredPlatform(platformId);
-      this.state.selectedPlatformId = platformId;
-      
-      const platformName = this.state.platforms.find(p => p.id === platformId)?.name || platformId;
-      this.statusManager.updateStatus(`Platform set to ${platformName}`);
-    } catch (error) {
-      console.error('Platform change error:', error);
-      this.statusManager.updateStatus(`Error changing platform: ${error.message}`);
-    }
-  }
-
-  async handlePromptChange(promptId) {
-    this.state.selectedPromptId = promptId;
-  }
-
-  async handleSummarize() {
-    if (this.state.isProcessing || !this.state.isSupported) return;
-    
-    this.state.isProcessing = true;
-    
-    await this.summarizeController.summarize(
-      this.state.currentTab.id,
-      this.state.contentType,
-      this.state.currentTab.url,
-      this.state.selectedPromptId,
-      this.state.selectedPlatformId,
-      (message, isProcessing = true) => {
-        this.statusManager.updateStatus(message, isProcessing, this.state.isSupported);
-        this.state.isProcessing = isProcessing;
+      if (!promptContent) {
+        statusCallback('Error: Could not load prompt content', false);
+        return false;
       }
-    );
-  }
-
-  openSettings() {
-    try {
-      chrome.runtime.openOptionsPage();
+      
+      // Clear any existing content in storage
+      await this.storageService.set({
+        [STORAGE_KEYS.CONTENT_READY]: false,
+        [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
+        [STORAGE_KEYS.AI_PLATFORM_TAB_ID]: null,
+        [STORAGE_KEYS.SCRIPT_INJECTED]: false,
+        [STORAGE_KEYS.PRE_PROMPT]: promptContent
+      }, 'local');
+      
+      // Send message to background script
+      statusCallback(`Processing content with ${selectedPlatformId || 'default platform'}...`, true);
+      
+      const response = await chrome.runtime.sendMessage({
+        action: 'summarizeContent',
+        tabId,
+        contentType,
+        promptId: selectedPromptId,
+        platformId: selectedPlatformId,
+        url
+      });
+      
+      if (response && response.success) {
+        statusCallback(`Opening AI platform...`, true);
+        
+        // Close popup after delay
+        setTimeout(() => window.close(), 2000);
+        return true;
+      } else {
+        statusCallback(`Error: ${response?.error || 'Unknown error'}`, false);
+        return false;
+      }
     } catch (error) {
-      console.error('Could not open options page:', error);
-      chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
+      console.error('Summarize error:', error);
+      statusCallback(`Error: ${error.message}`, false);
+      return false;
     }
   }
 }
