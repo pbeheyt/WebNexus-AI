@@ -33,6 +33,7 @@
     "default_popup": "popup.html",
     "default_icon": "images/icon128.png"
   },
+  "options_page": "settings.html",
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",

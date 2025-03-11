@@ -1,4 +1,4 @@
-// src/background.js (complete file)
+// src/background.js (updated to support custom prompts)
 /**
  * Background Service Worker
  * Handles context menus, tab management, and content script injection
@@ -67,19 +67,52 @@ async function extractContent(tabId, url) {
 }
 
 /**
+ * Load custom prompt by ID
+ */
+async function loadCustomPromptById(promptId) {
+  try {
+    logger.background.info(`Loading custom prompt with ID: ${promptId}`);
+    const result = await chrome.storage.sync.get('custom_prompts');
+    const customPrompts = result.custom_prompts || {};
+    
+    if (customPrompts[promptId]) {
+      logger.background.info(`Custom prompt found for ID: ${promptId}`);
+      return customPrompts[promptId].content;
+    } else {
+      logger.background.warn(`No custom prompt found for ID: ${promptId}`);
+      return null;
+    }
+  } catch (error) {
+    logger.background.error('Error loading custom prompt:', error);
+    return null;
+  }
+}
+
+/**
  * Load appropriate prompt for content type
  */
-async function loadPromptForContentType(contentType) {
+async function loadPromptForContentType(contentType, customPromptId = null) {
   try {
-    logger.background.info(`Loading prompt for content type: ${contentType}`);
+    // If a custom prompt ID is provided, try to load it first
+    if (customPromptId) {
+      const customPrompt = await loadCustomPromptById(customPromptId);
+      if (customPrompt) {
+        logger.background.info(`Using custom prompt with ID: ${customPromptId}`);
+        return customPrompt;
+      }
+      logger.background.warn(`Custom prompt not found, falling back to default for ${contentType}`);
+    }
+    
+    // Load from default prompts if no custom prompt or custom prompt not found
+    logger.background.info(`Loading default prompt for content type: ${contentType}`);
     const response = await fetch(chrome.runtime.getURL('config.json'));
     const config = await response.json();
     
     if (config.defaultPrompts && config.defaultPrompts[contentType]) {
-      logger.background.info(`Prompt found for ${contentType}`);
+      logger.background.info(`Default prompt found for ${contentType}`);
       return config.defaultPrompts[contentType].content;
     } else {
-      logger.background.warn(`No prompt found for ${contentType}, using general prompt`);
+      logger.background.warn(`No default prompt found for ${contentType}, using general prompt`);
       return config.defaultPrompts.general.content;
     }
   } catch (error) {
@@ -91,10 +124,10 @@ async function loadPromptForContentType(contentType) {
 /**
  * Open Claude with extracted content
  */
-async function openClaudeWithContent(contentType) {
+async function openClaudeWithContent(contentType, customPromptId = null) {
   try {
     // Get prompt for content type
-    const prePrompt = await loadPromptForContentType(contentType);
+    const prePrompt = await loadPromptForContentType(contentType, customPromptId);
     
     // Open Claude in a new tab
     const claudeUrl = 'https://claude.ai/new';
@@ -239,8 +272,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 chrome.contextMenus.onClicked.addListener(handleContextMenuClick);
 
 // Extension installation listener
-chrome.runtime.onInstalled.addListener(async () => {
-  logger.background.info('Extension installed/updated');
+chrome.runtime.onInstalled.addListener(async (details) => {
+  logger.background.info('Extension installed/updated', details);
+  
+  // Set up options page
+  chrome.runtime.onInstalled.addListener(() => {
+    // Set options page
+    chrome.runtime.openOptionsPage();
+  });
+  
   await initialize();
 });
 
@@ -260,8 +300,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'summarizeContent') {
     (async () => {
       try {
-        const { tabId, contentType } = message;
-        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}`);
+        const { tabId, contentType, customPromptId } = message;
+        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, customPromptId: ${customPromptId}`);
         
         // Extract content first
         await extractContent(tabId, message.url);
@@ -270,7 +310,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Then open Claude with the content
-        const claudeTabId = await openClaudeWithContent(contentType);
+        const claudeTabId = await openClaudeWithContent(contentType, customPromptId);
         
         sendResponse({ 
           success: true, 

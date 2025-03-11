@@ -1,10 +1,11 @@
-// src/popup.js (complete file)
+// src/popup.js (updated with settings button functionality)
 document.addEventListener('DOMContentLoaded', async () => {
   // Get UI elements
   const contentTypeDisplay = document.getElementById('contentTypeDisplay');
   const promptType = document.getElementById('promptType');
   const summarizeBtn = document.getElementById('summarizeBtn');
   const statusMessage = document.getElementById('statusMessage');
+  const settingsBtn = document.getElementById('settingsBtn');
   
   // Content type constants
   const CONTENT_TYPES = {
@@ -55,6 +56,55 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   /**
+   * Load available custom prompts for the dropdown
+   */
+  async function loadCustomPrompts() {
+    return new Promise((resolve) => {
+      chrome.storage.sync.get('custom_prompts', (result) => {
+        const customPrompts = result.custom_prompts || {};
+        resolve(customPrompts);
+      });
+    });
+  }
+  
+  /**
+   * Update the prompt selector dropdown to include custom prompts
+   */
+  async function updatePromptSelector(contentType) {
+    try {
+      // Get custom prompts
+      const customPrompts = await loadCustomPrompts();
+      
+      // Clear existing options except the default ones
+      while (promptType.options.length > 3) {
+        promptType.remove(3);
+      }
+      
+      // If we have custom prompts for this content type, add them
+      const customPromptsForType = Object.entries(customPrompts)
+        .filter(([_, prompt]) => prompt.type === contentType);
+      
+      if (customPromptsForType.length > 0) {
+        // Add a separator
+        const separator = document.createElement('option');
+        separator.disabled = true;
+        separator.textContent = '─────────────────';
+        promptType.appendChild(separator);
+        
+        // Add custom prompts
+        customPromptsForType.forEach(([id, prompt]) => {
+          const option = document.createElement('option');
+          option.value = `custom:${id}`;
+          option.textContent = `${prompt.name} (Custom)`;
+          promptType.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.error('Error updating prompt selector:', error);
+    }
+  }
+  
+  /**
    * Display the current content type in the UI
    */
   function updateContentTypeDisplay(contentType) {
@@ -87,6 +137,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Auto-select the appropriate prompt type
     if (promptType && contentType) {
       promptType.value = contentType;
+      
+      // Update the dropdown with custom prompts for this content type
+      updatePromptSelector(contentType);
     }
   }
   
@@ -140,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   /**
-   * Handle summarize button click - UPDATED to use background service worker
+   * Handle summarize button click - UPDATED to support custom prompts
    */
   async function handleSummarize() {
     try {
@@ -181,14 +234,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       // Get the selected prompt type
-      const selectedPromptType = promptType.value || type;
+      const selectedValue = promptType.value;
+      
+      // Determine if it's a custom prompt and which type
+      let promptTypeToUse = type;
+      let customPromptId = null;
+      
+      if (selectedValue.startsWith('custom:')) {
+        // It's a custom prompt
+        customPromptId = selectedValue.split(':')[1];
+      } else {
+        // It's a default prompt type
+        promptTypeToUse = selectedValue;
+      }
       
       // Clear any existing content in storage
       await chrome.storage.local.set({ 
         contentReady: false,
         extractedContent: null,
         claudeTabId: null,
-        scriptInjected: false
+        scriptInjected: false,
+        customPromptId // Store the custom prompt ID if selected
       });
       
       // Use the background script to handle the summarization
@@ -197,7 +263,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         action: 'summarizeContent',
         tabId: tabId,
         contentType: type,
-        promptType: selectedPromptType,
+        promptType: promptTypeToUse,
+        customPromptId: customPromptId,
         url: url
       }, response => {
         if (response && response.success) {
@@ -215,6 +282,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       statusMessage.textContent = `Error: ${error.message}`;
       summarizeBtn.disabled = false;
     }
+  }
+  
+  /**
+   * Handle settings button click - Opens settings page
+   */
+  function handleSettingsClick() {
+    chrome.runtime.openOptionsPage();
   }
   
   // Initialize popup
@@ -242,6 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Set up event listeners
   summarizeBtn.addEventListener('click', handleSummarize);
+  settingsBtn.addEventListener('click', handleSettingsClick);
   
   // Initialize the popup
   initializePopup();
