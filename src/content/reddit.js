@@ -242,12 +242,58 @@ function extractComments() {
             }
           }
           
+          // Extract permalink for the comment
+          let permalink = '';
+          
+          // Method 1: Check for permalink attribute on shreddit-comment element
+          if (commentElement.getAttribute && commentElement.getAttribute('permalink')) {
+            permalink = commentElement.getAttribute('permalink');
+          } 
+          // Method 2: Check for permalink attribute on shreddit-comment-action-row
+          else {
+            const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
+            if (commentActionRow && commentActionRow.getAttribute('permalink')) {
+              permalink = commentActionRow.getAttribute('permalink');
+            } 
+            // Method 3: Look for permalink in link elements
+            else {
+              const permalinkSelectors = [
+                'a[href*="/comment/"]',
+                '.text-neutral-content-weak[href]',
+                'shreddit-comment-share-button[permalink]',
+                'a[rel="nofollow noopener noreferrer"]'
+              ];
+              
+              for (const selector of permalinkSelectors) {
+                const permalinkElement = commentElement.querySelector(selector);
+                if (permalinkElement) {
+                  // For normal link elements
+                  if (permalinkElement.href) {
+                    permalink = permalinkElement.href;
+                    break;
+                  }
+                  // For elements with permalink attribute
+                  else if (permalinkElement.getAttribute && permalinkElement.getAttribute('permalink')) {
+                    permalink = permalinkElement.getAttribute('permalink');
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          
+          // Convert relative permalink to absolute URL if needed
+          if (permalink && permalink.startsWith('/')) {
+            permalink = `https://www.reddit.com${permalink}`;
+          }
+          
           // Add comment to the list if it has content
           if (commentContent) {
             comments.push({
               author,
               content: commentContent,
-              popularity: score
+              popularity: score,
+              permalink: permalink || window.location.href // Fallback to post URL if permalink not found
             });
           }
         }

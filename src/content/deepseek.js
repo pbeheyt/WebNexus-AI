@@ -132,23 +132,43 @@
   };
 
   /**
-   * Format Reddit post data
+   * Format Reddit post data with comment links
    */
   function formatRedditData(data) {
     const title = data.postTitle || 'No title available';
     const content = data.postContent || 'No content available';
     const author = data.postAuthor || 'Unknown author';
+    const postUrl = data.postUrl || '';
     
-    // Format comments simply
-    let commentsText = '';
+    // Start with post information
+    let formattedText = `Title: ${title}\nAuthor: ${author}`;
+    
+    // Add post URL if available
+    if (postUrl) {
+      formattedText += `\nURL: ${postUrl}`;
+    }
+    
+    // Add post content
+    formattedText += `\n\nContent:\n${content}`;
+    
+    // Format comments with links
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      commentsText = '\n\nComments:\n';
+      formattedText += '\n\nComments:\n';
+      
       data.comments.forEach(comment => {
-        commentsText += `User: ${comment.author || 'Anonymous'}\nScore: ${comment.popularity || '0'}\nComment: ${comment.content || ''}\n\n`;
+        formattedText += `User: ${comment.author || 'Anonymous'}\n`;
+        formattedText += `Score: ${comment.popularity || '0'}\n`;
+        
+        // Add permalink if available
+        if (comment.permalink) {
+          formattedText += `Link: ${comment.permalink}\n`;
+        }
+        
+        formattedText += `Comment: ${comment.content || ''}\n\n`;
       });
     }
     
-    return `Title: ${title}\nAuthor: ${author}\n\nContent:\n${content}${commentsText}`;
+    return formattedText;
   }
 
   /**
