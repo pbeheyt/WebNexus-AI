@@ -116,6 +116,50 @@ function extractSubreddit() {
 }
 
 /**
+ * Wait for comments to be loaded in the DOM
+ * @returns {Promise} Promise that resolves when comments are available
+ */
+function waitForComments() {
+  return new Promise(resolve => {
+    // If comments are already present, resolve immediately
+    const selectors = [
+      'shreddit-comment',
+      'div[data-testid="comment"]',
+      '.Comment'
+    ];
+    
+    for (const selector of selectors) {
+      if (document.querySelectorAll(selector).length > 0) {
+        resolve();
+        return;
+      }
+    }
+    
+    // Otherwise, watch for changes
+    const observer = new MutationObserver(mutations => {
+      for (const selector of selectors) {
+        if (document.querySelectorAll(selector).length > 0) {
+          observer.disconnect();
+          resolve();
+          return;
+        }
+      }
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    // Timeout after 5 seconds to prevent infinite waiting
+    setTimeout(() => {
+      observer.disconnect();
+      resolve();
+    }, 5000);
+  });
+}
+
+/**
  * Extract comments from the Reddit post
  * @returns {Promise<Array>} Promise resolving to array of comment objects
  */
@@ -136,7 +180,9 @@ function extractComments() {
         
         console.log(`Extracting up to ${maxComments} Reddit comments...`);
         
-        // Continue with extraction logic
+        // Wait for comments to be loaded
+        await waitForComments();
+        
         // Try multiple selectors for comments to improve reliability
         const commentSelectors = [
           'shreddit-comment',
@@ -214,22 +260,34 @@ function extractComments() {
             }
           }
           
+          // IMPROVED SCORE EXTRACTION
           let score = '0';
-
-          // First check if the score attribute exists on shreddit-comment or shreddit-comment-action-row
-          if (commentElement.getAttribute && commentElement.getAttribute('score')) {
+          
+          // Method 1: Direct attribute access for shreddit-comment elements
+          if (commentElement.tagName && 
+              commentElement.tagName.toLowerCase() === 'shreddit-comment' && 
+              commentElement.hasAttribute('score')) {
             score = commentElement.getAttribute('score');
-          } else {
-            // Find score from shreddit-comment-action-row if it exists
+          } 
+          // Method 2: Access through action row with proper null checks
+          else {
             const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
-            if (commentActionRow && commentActionRow.getAttribute('score')) {
+            if (commentActionRow && commentActionRow.hasAttribute('score')) {
               score = commentActionRow.getAttribute('score');
-            } else {
-              // Try the existing selectors as fallback
+            } 
+            // Method 3: Try alternative selectors for score display elements
+            else {
               const scoreSelectors = [
                 '[data-testid="vote-score"]',
                 'div[data-click-id="upvote"]',
-                'div[class*="score"]'
+                'div[class*="score"]',
+                '.vote-count',
+                '.score[title]',
+                // Additional selectors for newer Reddit UI
+                '.text-neutral-content.text-12',
+                'span[aria-label*="votes"]',
+                'button[aria-label*="upvoted"]',
+                'faceplate-tracker[noun="upvote"] .text-neutral-content-weak'
               ];
               
               for (const selector of scoreSelectors) {
@@ -239,6 +297,19 @@ function extractComments() {
                   break;
                 }
               }
+            }
+          }
+          
+          // Handle "Vote" text and normalize score value
+          if (score) {
+            // Handle scores with "k" suffix (e.g., "1.2k")
+            if (typeof score === 'string' && score.includes('k')) {
+              score = String(Math.round(parseFloat(score.replace('k', '')) * 1000));
+            } 
+            // Remove non-numeric characters
+            else if (typeof score === 'string') {
+              const numericScore = score.replace(/[^\d.-]/g, '');
+              score = numericScore || '0';
             }
           }
           
@@ -363,6 +434,9 @@ function extractPostData() {
 async function extractAndSavePostData() {
   try {
     console.log('Starting Reddit post data extraction...');
+    
+    // Add small delay to ensure dynamic content is loaded
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // Extract all post data
     const postData = await extractPostData();
