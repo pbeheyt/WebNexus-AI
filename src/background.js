@@ -52,20 +52,33 @@ async function injectContentScript(tabId, scriptFile) {
  */
 async function extractContent(tabId, url) {
   const contentType = getContentTypeForUrl(url);
-  let scriptFile = 'dist/general-content.bundle.js';
-  
-  if (contentType === CONTENT_TYPES.YOUTUBE) {
-    scriptFile = 'dist/youtube-content.bundle.js';
-  } else if (contentType === CONTENT_TYPES.REDDIT) {
-    scriptFile = 'dist/reddit-content.bundle.js';
-  }
+  let scriptFile = `dist/${contentType}-content.bundle.js`;
   
   logger.background.info(`Extracting content from tab ${tabId}, content type: ${contentType}`);
   await injectContentScript(tabId, scriptFile);
-  chrome.tabs.sendMessage(tabId, { action: 'extractContent' });
-  logger.background.info(`Content extraction message sent to tab ${tabId}`);
   
-  return true;
+  // Return promise that resolves when content extraction completes
+  return new Promise((resolve) => {
+    // Set up storage change listener before sending extraction message
+    const storageListener = (changes, area) => {
+      if (area === 'local' && changes.contentReady?.newValue === true) {
+        chrome.storage.onChanged.removeListener(storageListener);
+        resolve(true);
+      }
+    };
+    
+    chrome.storage.onChanged.addListener(storageListener);
+    
+    // Send extraction message
+    chrome.tabs.sendMessage(tabId, { action: 'extractContent' });
+    
+    // Set timeout to prevent indefinite hanging
+    setTimeout(() => {
+      chrome.storage.onChanged.removeListener(storageListener);
+      logger.background.warn(`Extraction timeout for ${contentType}, proceeding anyway`);
+      resolve(false);
+    }, 15000); // 15 second failsafe
+  });
 }
 
 /**
