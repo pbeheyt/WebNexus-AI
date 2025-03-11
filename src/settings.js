@@ -387,11 +387,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       promptElement.classList.add('preferred-prompt');
     }
     
-    // Format content for display (truncate if needed)
-    let displayContent = prompt.content;
-    if (displayContent.length > 300) {
-      displayContent = displayContent.substring(0, 300) + '...';
-    }
+    // Display full content without truncation
+    const displayContent = prompt.content;
     
     promptElement.innerHTML = `
       <div class="prompt-header">
