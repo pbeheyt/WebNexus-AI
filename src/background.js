@@ -88,18 +88,10 @@ async function getPreferredAiPlatform() {
 /**
  * Get content script file for platform
  */
+// Modify in src/background.js
 function getPlatformContentScript(platformId) {
-  switch (platformId) {
-    case AI_PLATFORMS.CLAUDE:
-      return 'dist/claude-content.bundle.js';
-    case AI_PLATFORMS.CHATGPT:
-      return 'dist/chatgpt-content.bundle.js';
-    case AI_PLATFORMS.DEEPSEEK:
-      return 'dist/deepseek-content.bundle.js';
-    default:
-      logger.background.warn(`Unknown platform: ${platformId}, defaulting to Claude`);
-      return 'dist/claude-content.bundle.js';
-  }
+  // Now we just return the unified platform content script
+  return 'dist/platform-content.bundle.js';
 }
 
 /**

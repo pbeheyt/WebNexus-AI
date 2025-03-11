@@ -6,9 +6,7 @@ module.exports = {
     'youtube-content': './src/content/youtube-content.js',
     'reddit-content': './src/content/reddit-content.js',
     'general-content': './src/content/general-content.js',
-    'claude-content': './src/content/claude.js',
-    'chatgpt-content': './src/content/chatgpt.js',
-    'deepseek-content': './src/content/deepseek.js',
+    'platform-content': './src/content/platform-content.js',
     popup: './src/popup.js',
     settings: './src/settings.js'
   },
