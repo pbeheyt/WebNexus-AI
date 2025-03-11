@@ -1,4 +1,4 @@
-// src/popup.js (updated with settings button functionality)
+// src/popup.js
 document.addEventListener('DOMContentLoaded', async () => {
   // Get UI elements
   const contentTypeDisplay = document.getElementById('contentTypeDisplay');
@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     REDDIT: 'reddit',
     YOUTUBE: 'youtube'
   };
+  
+  // Storage constants
+  const STORAGE_KEY = 'custom_prompts_by_type';
   
   /**
    * Check the current tab to determine content type
@@ -56,49 +59,84 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   /**
-   * Load available custom prompts for the dropdown
+   * Load custom prompts by type
    */
-  async function loadCustomPrompts() {
+  async function loadCustomPromptsByType() {
     return new Promise((resolve) => {
-      chrome.storage.sync.get('custom_prompts', (result) => {
-        const customPrompts = result.custom_prompts || {};
-        resolve(customPrompts);
+      chrome.storage.sync.get(STORAGE_KEY, (result) => {
+        if (chrome.runtime.lastError) {
+          console.error('Error loading custom prompts:', chrome.runtime.lastError);
+          resolve({});
+        } else if (result && result[STORAGE_KEY]) {
+          resolve(result[STORAGE_KEY]);
+        } else {
+          resolve({});
+        }
       });
     });
   }
   
   /**
-   * Update the prompt selector dropdown to include custom prompts
+   * Get preferred prompt ID for a content type
+   */
+  async function getPreferredPromptId(contentType) {
+    const customPromptsByType = await loadCustomPromptsByType();
+    
+    // If we have custom prompts for this type with a preferred prompt set
+    if (customPromptsByType[contentType] && customPromptsByType[contentType].preferredPromptId) {
+      return customPromptsByType[contentType].preferredPromptId;
+    }
+    
+    // Default to the default prompt ID (same as the content type)
+    return contentType;
+  }
+  
+  /**
+   * Update the prompt selector dropdown with prompts for the current content type
    */
   async function updatePromptSelector(contentType) {
     try {
-      // Get custom prompts
-      const customPrompts = await loadCustomPrompts();
+      // Get custom prompts by type
+      const customPromptsByType = await loadCustomPromptsByType();
+      const preferredPromptId = await getPreferredPromptId(contentType);
       
-      // Clear existing options except the default ones
-      while (promptType.options.length > 3) {
-        promptType.remove(3);
-      }
+      // Clear existing options
+      promptType.innerHTML = '';
       
-      // If we have custom prompts for this content type, add them
-      const customPromptsForType = Object.entries(customPrompts)
-        .filter(([_, prompt]) => prompt.type === contentType);
+      // Add default prompt option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = contentType; // Default prompt has same ID as content type
+      defaultOption.textContent = contentType === CONTENT_TYPES.GENERAL 
+                               ? 'Web Content Summary (Default)' 
+                               : contentType === CONTENT_TYPES.REDDIT 
+                               ? 'Reddit Post Analysis (Default)' 
+                               : 'YouTube Video Summary (Default)';
+      promptType.appendChild(defaultOption);
       
-      if (customPromptsForType.length > 0) {
-        // Add a separator
-        const separator = document.createElement('option');
-        separator.disabled = true;
-        separator.textContent = '─────────────────';
-        promptType.appendChild(separator);
+      // Add custom prompts for this content type if any
+      if (customPromptsByType[contentType] && customPromptsByType[contentType].prompts) {
+        const customPrompts = customPromptsByType[contentType].prompts;
         
-        // Add custom prompts
-        customPromptsForType.forEach(([id, prompt]) => {
-          const option = document.createElement('option');
-          option.value = `custom:${id}`;
-          option.textContent = `${prompt.name} (Custom)`;
-          promptType.appendChild(option);
-        });
+        if (Object.keys(customPrompts).length > 0) {
+          // Add a separator
+          const separator = document.createElement('option');
+          separator.disabled = true;
+          separator.textContent = '─────────────────';
+          promptType.appendChild(separator);
+          
+          // Add custom prompts
+          Object.entries(customPrompts).forEach(([id, prompt]) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = prompt.name;
+            promptType.appendChild(option);
+          });
+        }
       }
+      
+      // Set the selected option to the preferred prompt
+      promptType.value = preferredPromptId;
+      
     } catch (error) {
       console.error('Error updating prompt selector:', error);
     }
@@ -107,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   /**
    * Display the current content type in the UI
    */
-  function updateContentTypeDisplay(contentType) {
+  async function updateContentTypeDisplay(contentType) {
     if (!contentTypeDisplay) return;
     
     let typeText = 'Unknown Content';
@@ -134,13 +172,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     contentTypeDisplay.textContent = typeText;
     contentTypeDisplay.className = `content-type ${typeClass}`;
     
-    // Auto-select the appropriate prompt type
-    if (promptType && contentType) {
-      promptType.value = contentType;
-      
-      // Update the dropdown with custom prompts for this content type
-      updatePromptSelector(contentType);
-    }
+    // Update the dropdown with prompts for this content type
+    // and select the preferred one
+    await updatePromptSelector(contentType);
   }
   
   /**
@@ -193,7 +227,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   /**
-   * Handle summarize button click - UPDATED to support custom prompts
+   * Get prompt content by ID
+   */
+  async function getPromptContentById(promptId, contentType) {
+    // If the promptId is the same as contentType, it's a default prompt
+    if (promptId === contentType) {
+      try {
+        const response = await fetch(chrome.runtime.getURL('config.json'));
+        const config = await response.json();
+        
+        if (config.defaultPrompts && config.defaultPrompts[contentType]) {
+          return config.defaultPrompts[contentType].content;
+        }
+      } catch (error) {
+        console.error('Error loading default prompt:', error);
+        return null;
+      }
+    }
+    
+    // Otherwise, it's a custom prompt
+    const customPromptsByType = await loadCustomPromptsByType();
+    
+    if (customPromptsByType[contentType] && 
+        customPromptsByType[contentType].prompts && 
+        customPromptsByType[contentType].prompts[promptId]) {
+      return customPromptsByType[contentType].prompts[promptId].content;
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Handle summarize button click
    */
   async function handleSummarize() {
     try {
@@ -233,19 +298,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
       
-      // Get the selected prompt type
-      const selectedValue = promptType.value;
+      // Get the selected prompt ID
+      const selectedPromptId = promptType.value;
       
-      // Determine if it's a custom prompt and which type
-      let promptTypeToUse = type;
-      let customPromptId = null;
+      // Get the actual prompt content
+      const promptContent = await getPromptContentById(selectedPromptId, type);
       
-      if (selectedValue.startsWith('custom:')) {
-        // It's a custom prompt
-        customPromptId = selectedValue.split(':')[1];
-      } else {
-        // It's a default prompt type
-        promptTypeToUse = selectedValue;
+      if (!promptContent) {
+        statusMessage.textContent = 'Error: Could not load prompt content';
+        summarizeBtn.disabled = false;
+        return;
       }
       
       // Clear any existing content in storage
@@ -254,17 +316,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         extractedContent: null,
         claudeTabId: null,
         scriptInjected: false,
-        customPromptId // Store the custom prompt ID if selected
+        promptContent: promptContent
       });
       
-      // Use the background script to handle the summarization
+      // Extract content and open Claude
       statusMessage.textContent = 'Processing content...';
+      
       chrome.runtime.sendMessage({
         action: 'summarizeContent',
         tabId: tabId,
         contentType: type,
-        promptType: promptTypeToUse,
-        customPromptId: customPromptId,
+        promptId: selectedPromptId,
         url: url
       }, response => {
         if (response && response.success) {
@@ -288,7 +350,15 @@ document.addEventListener('DOMContentLoaded', async () => {
    * Handle settings button click - Opens settings page
    */
   function handleSettingsClick() {
-    chrome.runtime.openOptionsPage();
+    try {
+      chrome.runtime.openOptionsPage();
+    } catch (error) {
+      console.error('Could not open options page:', error);
+      // Fallback to direct navigation
+      chrome.tabs.create({
+        url: chrome.runtime.getURL('settings.html')
+      });
+    }
   }
   
   // Initialize popup
@@ -297,8 +367,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Check current content type
       const { type, isSupported } = await checkCurrentContentType();
       
-      // Update UI to show content type
-      updateContentTypeDisplay(type);
+      // Update UI to show content type and prompt selector
+      await updateContentTypeDisplay(type);
       
       // Enable/disable summarize button based on support
       summarizeBtn.disabled = !isSupported;

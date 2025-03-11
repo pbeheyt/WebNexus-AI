@@ -1,21 +1,26 @@
 // src/settings.js
 document.addEventListener('DOMContentLoaded', async () => {
   // Constants
-  const STORAGE_KEY = 'custom_prompts';
+  const STORAGE_KEY = 'custom_prompts_by_type';
+  const CONTENT_TYPES = {
+    GENERAL: 'general',
+    REDDIT: 'reddit',
+    YOUTUBE: 'youtube'
+  };
   
   // Cache DOM elements
   const tabButtons = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
   const promptList = document.getElementById('promptList');
   const promptForm = document.getElementById('promptForm');
-  const promptSearch = document.getElementById('promptSearch');
   const backBtn = document.getElementById('backBtn');
   const cancelBtn = document.getElementById('cancelBtn');
   const notification = document.getElementById('notification');
+  const contentTypeSelect = document.getElementById('promptType');
   
   // Default prompts and custom prompts
   let defaultPrompts = {};
-  let customPrompts = {};
+  let customPromptsByType = {};
   
   /**
    * Generate a unique ID for new prompts
@@ -45,6 +50,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const config = await response.json();
       
       if (config.defaultPrompts) {
+        // Add type property to each default prompt
+        for (const [type, prompt] of Object.entries(config.defaultPrompts)) {
+          prompt.type = type;
+        }
+        
         defaultPrompts = config.defaultPrompts;
         return config.defaultPrompts;
       } else {
@@ -62,18 +72,95 @@ document.addEventListener('DOMContentLoaded', async () => {
    */
   async function loadCustomPrompts() {
     return new Promise((resolve) => {
-      chrome.storage.sync.get(STORAGE_KEY, (result) => {
+      chrome.storage.sync.get([STORAGE_KEY, 'custom_prompts'], (result) => {
         if (chrome.runtime.lastError) {
           console.error('Error loading custom prompts:', chrome.runtime.lastError);
-          resolve({});
-        } else if (result && result[STORAGE_KEY]) {
-          customPrompts = result[STORAGE_KEY];
-          resolve(result[STORAGE_KEY]);
-        } else {
-          resolve({});
+          customPromptsByType = initializeEmptyPromptStructure();
+          resolve(customPromptsByType);
+          return;
         }
+        
+        // Check if we're using the new structure
+        if (result[STORAGE_KEY]) {
+          customPromptsByType = result[STORAGE_KEY];
+          resolve(customPromptsByType);
+          return;
+        }
+        
+        // If we have legacy data, migrate it
+        if (result.custom_prompts) {
+          console.log('Migrating from legacy data structure');
+          const migratedData = migrateFromLegacyFormat(result.custom_prompts);
+          customPromptsByType = migratedData;
+          
+          // Save the migrated data
+          chrome.storage.sync.set({ [STORAGE_KEY]: migratedData }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Error saving migrated data:', chrome.runtime.lastError);
+            } else {
+              console.log('Migration completed successfully');
+              // Optionally remove old data
+              chrome.storage.sync.remove('custom_prompts');
+            }
+          });
+          
+          resolve(migratedData);
+          return;
+        }
+        
+        // Initialize empty structure if no data exists
+        customPromptsByType = initializeEmptyPromptStructure();
+        resolve(customPromptsByType);
       });
     });
+  }
+  
+  /**
+   * Initialize empty prompt structure
+   */
+  function initializeEmptyPromptStructure() {
+    return {
+      [CONTENT_TYPES.GENERAL]: {
+        prompts: {},
+        preferredPromptId: null
+      },
+      [CONTENT_TYPES.REDDIT]: {
+        prompts: {},
+        preferredPromptId: null
+      },
+      [CONTENT_TYPES.YOUTUBE]: {
+        prompts: {},
+        preferredPromptId: null
+      }
+    };
+  }
+  
+  /**
+   * Migrate from legacy format to new format
+   */
+  function migrateFromLegacyFormat(legacyPrompts) {
+    const newStructure = initializeEmptyPromptStructure();
+    
+    // Process each legacy prompt
+    Object.entries(legacyPrompts).forEach(([id, prompt]) => {
+      const type = prompt.type || CONTENT_TYPES.GENERAL;
+      
+      // Add to the appropriate type category
+      newStructure[type].prompts[id] = {
+        id,
+        name: prompt.name,
+        content: prompt.content,
+        type: type,
+        updatedAt: prompt.updatedAt || new Date().toISOString()
+      };
+      
+      // If this is the first prompt of this type, make it preferred
+      if (!newStructure[type].preferredPromptId) {
+        newStructure[type].preferredPromptId = id;
+      }
+    });
+    
+    return newStructure;
   }
   
   /**
@@ -81,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
    */
   async function saveCustomPrompts() {
     return new Promise((resolve, reject) => {
-      chrome.storage.sync.set({ [STORAGE_KEY]: customPrompts }, () => {
+      chrome.storage.sync.set({ [STORAGE_KEY]: customPromptsByType }, () => {
         if (chrome.runtime.lastError) {
           console.error('Error saving custom prompts:', chrome.runtime.lastError);
           reject(chrome.runtime.lastError);
@@ -93,81 +180,88 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   /**
-   * Render the prompt list
+   * Get all prompts for a specific type
    */
-  function renderPromptList(filter = '') {
+  function getPromptsByType(type) {
+    const typePrompts = [];
+    
+    // Add default prompt for this type if exists
+    if (defaultPrompts[type]) {
+      typePrompts.push({
+        id: type,
+        prompt: defaultPrompts[type],
+        isDefault: true
+      });
+    }
+    
+    // Add custom prompts for this type
+    if (customPromptsByType[type] && customPromptsByType[type].prompts) {
+      Object.entries(customPromptsByType[type].prompts).forEach(([id, prompt]) => {
+        typePrompts.push({
+          id,
+          prompt,
+          isDefault: false
+        });
+      });
+    }
+    
+    return typePrompts;
+  }
+  
+  /**
+   * Render the prompt list for a specific type
+   */
+  function renderPromptList(type) {
     promptList.innerHTML = '';
     
-    // Filter function for prompts
-    const filterPrompt = (name, content) => {
-      if (!filter) return true;
-      const lowercaseFilter = filter.toLowerCase();
-      return name.toLowerCase().includes(lowercaseFilter) || 
-             content.toLowerCase().includes(lowercaseFilter);
-    };
+    // Get preferred prompt ID for this type
+    const preferredPromptId = customPromptsByType[type]?.preferredPromptId || type;
     
-    // Count how many prompts we're displaying
-    let displayCount = 0;
+    // Get all prompts for this type
+    const typePrompts = getPromptsByType(type);
     
-    // Render default prompts
-    Object.entries(defaultPrompts).forEach(([key, prompt]) => {
-      if (!filterPrompt(prompt.name, prompt.content)) return;
-      
-      displayCount++;
-      promptList.appendChild(createPromptElement(key, prompt, true));
-    });
-    
-    // Render custom prompts
-    Object.entries(customPrompts).forEach(([key, prompt]) => {
-      if (!filterPrompt(prompt.name, prompt.content)) return;
-      
-      displayCount++;
-      promptList.appendChild(createPromptElement(key, prompt, false));
-    });
-    
-    // Show empty state if no prompts are displayed
-    if (displayCount === 0) {
+    // Display message if no prompts
+    if (typePrompts.length === 0) {
       const emptyState = document.createElement('div');
       emptyState.className = 'empty-state';
-      
-      if (filter) {
-        emptyState.innerHTML = `
-          <p>No prompts found matching "${filter}"</p>
-          <button class="btn" id="clearSearchBtn">Clear Search</button>
-        `;
-        
-        // Add event listener after it's in the DOM
-        setTimeout(() => {
-          document.getElementById('clearSearchBtn').addEventListener('click', () => {
-            promptSearch.value = '';
-            renderPromptList();
-          });
-        }, 0);
-      } else {
-        emptyState.innerHTML = `
-          <p>No prompts available. Add your first prompt to get started.</p>
-          <button class="btn" id="addFirstPromptBtn">Add First Prompt</button>
-        `;
-        
-        // Add event listener after it's in the DOM
-        setTimeout(() => {
-          document.getElementById('addFirstPromptBtn').addEventListener('click', () => {
-            switchTab('add-prompt');
-          });
-        }, 0);
-      }
+      emptyState.innerHTML = `
+        <p>No prompts available for ${type}. Add your first prompt to get started.</p>
+        <button class="btn" id="addFirstPromptBtn">Add First Prompt</button>
+      `;
       
       promptList.appendChild(emptyState);
+      
+      // Add event listener
+      setTimeout(() => {
+        const addBtn = document.getElementById('addFirstPromptBtn');
+        if (addBtn) {
+          addBtn.addEventListener('click', () => {
+            document.getElementById('promptType').value = type;
+            switchTab('add-prompt');
+          });
+        }
+      }, 0);
+      
+      return;
     }
+    
+    // Render each prompt
+    typePrompts.forEach(({ id, prompt, isDefault }) => {
+      promptList.appendChild(createPromptElement(id, prompt, isDefault, id === preferredPromptId));
+    });
   }
   
   /**
    * Create an HTML element for a prompt
    */
-  function createPromptElement(key, prompt, isDefault) {
+  function createPromptElement(id, prompt, isDefault, isPreferred) {
     const promptElement = document.createElement('div');
     promptElement.className = 'prompt-item';
-    promptElement.dataset.id = key;
+    promptElement.dataset.id = id;
+    
+    if (isPreferred) {
+      promptElement.classList.add('preferred-prompt');
+    }
     
     // Format content for display (truncate if needed)
     let displayContent = prompt.content;
@@ -182,8 +276,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span class="badge ${isDefault ? 'badge-default' : 'badge-custom'}">
             ${isDefault ? 'Default' : 'Custom'}
           </span>
+          ${isPreferred ? '<span class="badge badge-preferred">Preferred</span>' : ''}
         </h3>
         <div class="prompt-actions">
+          ${isPreferred ? '' : '<button class="action-btn set-preferred-btn" title="Set as Preferred">⭐ Set Preferred</button>'}
           ${isDefault ? `
             <button class="action-btn duplicate-btn" title="Duplicate">📋 Duplicate</button>
           ` : `
@@ -193,30 +289,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       </div>
       <div class="prompt-content">${displayContent.replace(/\n/g, '<br>')}</div>
-      <div class="prompt-meta">
-        Type: ${prompt.type === 'general' ? 'Web Content' : 
-               prompt.type === 'reddit' ? 'Reddit Post' : 
-               prompt.type === 'youtube' ? 'YouTube Video' : prompt.type}
-      </div>
     `;
     
     // Add event listeners
     const actionsDiv = promptElement.querySelector('.prompt-actions');
     
+    // Add "Set as Preferred" functionality
+    const setPreferredBtn = actionsDiv.querySelector('.set-preferred-btn');
+    if (setPreferredBtn) {
+      setPreferredBtn.addEventListener('click', () => setPreferredPrompt(id, prompt.type));
+    }
+    
     if (isDefault) {
       // For default prompts, we only have the duplicate button
       const duplicateBtn = actionsDiv.querySelector('.duplicate-btn');
-      duplicateBtn.addEventListener('click', () => duplicatePrompt(key, prompt));
+      duplicateBtn.addEventListener('click', () => duplicatePrompt(id, prompt));
     } else {
       // For custom prompts, we have edit and delete
       const editBtn = actionsDiv.querySelector('.edit-btn');
       const deleteBtn = actionsDiv.querySelector('.delete-btn');
       
-      editBtn.addEventListener('click', () => editPrompt(key, prompt));
-      deleteBtn.addEventListener('click', () => deletePrompt(key, prompt.name));
+      editBtn.addEventListener('click', () => editPrompt(id, prompt));
+      deleteBtn.addEventListener('click', () => deletePrompt(id, prompt.name, prompt.type));
     }
     
     return promptElement;
+  }
+  
+  /**
+   * Set a prompt as preferred for its type
+   */
+  function setPreferredPrompt(promptId, promptType) {
+    // Update preferred prompt ID
+    customPromptsByType[promptType].preferredPromptId = promptId;
+    
+    // Save changes
+    saveCustomPrompts().then(() => {
+      showNotification('Preferred prompt updated');
+      renderPromptList(promptType);
+    }).catch(error => {
+      showNotification('Error updating preferred prompt: ' + error.message, 5000);
+    });
   }
   
   /**
@@ -255,12 +368,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   /**
    * Delete a prompt
    */
-  function deletePrompt(id, name) {
+  function deletePrompt(id, name, type) {
     if (confirm(`Are you sure you want to delete the prompt "${name}"?`)) {
-      delete customPrompts[id];
+      // Check if this is the preferred prompt
+      const isPreferred = customPromptsByType[type].preferredPromptId === id;
+      
+      // Delete the prompt
+      delete customPromptsByType[type].prompts[id];
+      
+      // If this was the preferred prompt, reset preferred ID
+      if (isPreferred) {
+        customPromptsByType[type].preferredPromptId = type; // Default to the default prompt
+      }
+      
       saveCustomPrompts().then(() => {
         showNotification(`Prompt "${name}" has been deleted`);
-        renderPromptList(promptSearch.value);
+        renderPromptList(type);
       }).catch(error => {
         showNotification('Error deleting prompt: ' + error.message, 5000);
       });
@@ -284,13 +407,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     
+    // Make sure the type category exists
+    if (!customPromptsByType[type]) {
+      customPromptsByType[type] = {
+        prompts: {},
+        preferredPromptId: null
+      };
+    }
+    
     // Create/update the prompt
-    customPrompts[promptId] = {
+    customPromptsByType[type].prompts[promptId] = {
+      id: promptId,
       name,
       type,
       content,
       updatedAt: new Date().toISOString()
     };
+    
+    // If this is the first custom prompt of this type, make it preferred
+    if (!customPromptsByType[type].preferredPromptId || 
+        (customPromptsByType[type].preferredPromptId === type && mode === 'add')) {
+      customPromptsByType[type].preferredPromptId = promptId;
+    }
     
     // Save to storage
     saveCustomPrompts().then(() => {
@@ -300,13 +438,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('formMode').value = 'add';
       document.getElementById('savePromptBtn').textContent = 'Save Prompt';
       
-      // Show notification and switch tab
+      // Show notification and switch to the appropriate type tab
       showNotification(`Prompt ${mode === 'edit' ? 'updated' : 'saved'} successfully`);
-      switchTab('all-prompts');
-      renderPromptList(promptSearch.value);
+      switchToTypeTab(type);
     }).catch(error => {
       showNotification('Error saving prompt: ' + error.message, 5000);
     });
+  }
+  
+  /**
+   * Switch to a specific type tab and render its prompts
+   */
+  function switchToTypeTab(type) {
+    // Find the tab button for this type and activate it
+    tabButtons.forEach(button => {
+      if (button.dataset.type === type) {
+        button.classList.add('active');
+      } else {
+        button.classList.remove('active');
+      }
+    });
+    
+    // Show the all-prompts tab and render prompts for this type
+    tabContents.forEach(content => {
+      if (content.id === 'all-prompts') {
+        content.classList.add('active');
+      } else {
+        content.classList.remove('active');
+      }
+    });
+    
+    renderPromptList(type);
   }
   
   /**
@@ -317,7 +479,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabButtons.forEach(button => {
       if (button.dataset.tab === tabId) {
         button.classList.add('active');
-      } else {
+      } else if (!button.dataset.type) {
         button.classList.remove('active');
       }
     });
@@ -343,23 +505,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadCustomPrompts()
       ]);
       
-      // Render prompt list
-      renderPromptList();
+      // Set up type tabs
+      createTypeTabs();
       
-      // Set up tab switching
-      tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-          switchTab(button.dataset.tab);
-        });
-      });
+      // Start with general tab
+      switchToTypeTab(CONTENT_TYPES.GENERAL);
       
       // Set up form submission
       promptForm.addEventListener('submit', handleFormSubmit);
-      
-      // Set up search filtering
-      promptSearch.addEventListener('input', () => {
-        renderPromptList(promptSearch.value);
-      });
       
       // Set up back button
       backBtn.addEventListener('click', () => {
@@ -372,13 +525,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('promptId').value = '';
         document.getElementById('formMode').value = 'add';
         document.getElementById('savePromptBtn').textContent = 'Save Prompt';
-        switchTab('all-prompts');
+        switchToTypeTab(contentTypeSelect.value);
       });
       
     } catch (error) {
       console.error('Error initializing settings page:', error);
       showNotification('Error loading prompts. Please try again.', 5000);
     }
+  }
+  
+  /**
+   * Create tabs for each content type
+   */
+  function createTypeTabs() {
+    const tabNav = document.querySelector('.tab-nav');
+    
+    // Remove existing type tabs if any
+    document.querySelectorAll('.tab-btn[data-type]').forEach(btn => btn.remove());
+    
+    // Create a tab for each content type
+    Object.values(CONTENT_TYPES).forEach(type => {
+      const typeBtn = document.createElement('button');
+      typeBtn.className = 'tab-btn';
+      typeBtn.dataset.type = type;
+      typeBtn.dataset.tab = 'all-prompts';
+      typeBtn.textContent = type === CONTENT_TYPES.GENERAL ? 'Web Content' :
+                           type === CONTENT_TYPES.REDDIT ? 'Reddit Posts' :
+                           'YouTube Videos';
+      
+      typeBtn.addEventListener('click', () => {
+        switchToTypeTab(type);
+      });
+      
+      // Insert before the Add New Prompt tab
+      const addTab = document.querySelector('.tab-btn[data-tab="add-prompt"]');
+      tabNav.insertBefore(typeBtn, addTab);
+    });
   }
   
   // Initialize the page

@@ -59,6 +59,7 @@
       display: flex;
       margin-bottom: 20px;
       border-bottom: 1px solid #ddd;
+      flex-wrap: wrap;
     }
 
     .tab-btn {
@@ -106,6 +107,12 @@
       background: white;
     }
 
+    .prompt-item.preferred-prompt {
+      border-color: #4285f4;
+      background-color: #f8fbff;
+      box-shadow: 0 1px 3px rgba(66, 133, 244, 0.2);
+    }
+
     .prompt-header {
       display: flex;
       justify-content: space-between;
@@ -138,6 +145,10 @@
       background: rgba(66, 133, 244, 0.1);
     }
 
+    .set-preferred-btn {
+      color: #fbbc05;
+    }
+
     .edit-btn {
       color: #4285f4;
     }
@@ -155,11 +166,6 @@
       overflow-y: auto;
       white-space: pre-wrap;
       margin-bottom: 10px;
-    }
-
-    .prompt-meta {
-      font-size: 12px;
-      color: #666;
     }
 
     .form-group {
@@ -237,10 +243,6 @@
       margin-top: 20px;
     }
 
-    .search-bar {
-      margin-bottom: 20px;
-    }
-
     .empty-state {
       text-align: center;
       padding: 30px;
@@ -270,6 +272,11 @@
       color: #1a73e8;
     }
     
+    .badge-preferred {
+      background: #fef6e0;
+      color: #f9ab00;
+    }
+    
     .hidden {
       display: none;
     }
@@ -286,11 +293,20 @@
       transform: translateY(-100px);
       opacity: 0;
       transition: all 0.3s ease;
+      z-index: 1000;
     }
     
     .notification.show {
       transform: translateY(0);
       opacity: 1;
+    }
+
+    .type-heading {
+      margin: 0 0 15px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 18px;
+      color: #333;
     }
   </style>
 </head>
@@ -302,7 +318,7 @@
     </header>
 
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab="all-prompts">All Prompts</button>
+      <!-- Type tabs will be inserted here dynamically -->
       <button class="tab-btn" data-tab="add-prompt">Add New Prompt</button>
     </div>
 
@@ -310,10 +326,6 @@
 
     <!-- All Prompts Tab -->
     <div id="all-prompts" class="tab-content active">
-      <div class="search-bar">
-        <input type="text" id="promptSearch" placeholder="Search prompts..." />
-      </div>
-
       <div class="prompt-list" id="promptList">
         <!-- Prompts will be displayed here -->
         <div class="empty-state">
@@ -334,8 +346,8 @@
           <label for="promptType">Content Type</label>
           <select id="promptType" name="promptType" required>
             <option value="general">Web Content</option>
-            <option value="reddit">Reddit Post</option>
-            <option value="youtube">YouTube Video</option>
+            <option value="reddit">Reddit Posts</option>
+            <option value="youtube">YouTube Videos</option>
           </select>
         </div>
 

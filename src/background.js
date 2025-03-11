@@ -1,4 +1,4 @@
-// src/background.js (updated to support custom prompts)
+// src/background.js 
 /**
  * Background Service Worker
  * Handles context menus, tab management, and content script injection
@@ -13,6 +13,8 @@ const CONTENT_TYPES = {
   REDDIT: 'reddit',
   YOUTUBE: 'youtube'
 };
+
+const STORAGE_KEY = 'custom_prompts_by_type';
 
 /**
  * Determine content type based on URL
@@ -67,19 +69,68 @@ async function extractContent(tabId, url) {
 }
 
 /**
- * Load custom prompt by ID
+ * Get preferred prompt ID for a content type
  */
-async function loadCustomPromptById(promptId) {
+async function getPreferredPromptId(contentType) {
   try {
-    logger.background.info(`Loading custom prompt with ID: ${promptId}`);
-    const result = await chrome.storage.sync.get('custom_prompts');
-    const customPrompts = result.custom_prompts || {};
+    logger.background.info(`Getting preferred prompt ID for content type: ${contentType}`);
+    const result = await chrome.storage.sync.get(STORAGE_KEY);
+    const customPromptsByType = result[STORAGE_KEY] || {};
     
-    if (customPrompts[promptId]) {
-      logger.background.info(`Custom prompt found for ID: ${promptId}`);
-      return customPrompts[promptId].content;
+    // If we have custom prompts for this type with a preferred prompt set
+    if (customPromptsByType[contentType] && customPromptsByType[contentType].preferredPromptId) {
+      logger.background.info(`Found preferred prompt ID: ${customPromptsByType[contentType].preferredPromptId}`);
+      return customPromptsByType[contentType].preferredPromptId;
+    }
+    
+    // Default to the default prompt ID (same as the content type)
+    logger.background.info(`No preferred prompt found, using default: ${contentType}`);
+    return contentType;
+  } catch (error) {
+    logger.background.error('Error getting preferred prompt ID:', error);
+    return contentType;
+  }
+}
+
+/**
+ * Get prompt content by ID
+ */
+async function getPromptContentById(promptId, contentType) {
+  logger.background.info(`Getting prompt content for ID: ${promptId}, type: ${contentType}`);
+  
+  // If the promptId is the same as contentType, it's a default prompt
+  if (promptId === contentType) {
+    try {
+      logger.background.info('Loading default prompt from config');
+      const response = await fetch(chrome.runtime.getURL('config.json'));
+      const config = await response.json();
+      
+      if (config.defaultPrompts && config.defaultPrompts[contentType]) {
+        logger.background.info('Default prompt found in config');
+        return config.defaultPrompts[contentType].content;
+      } else {
+        logger.background.warn(`No default prompt found for ${contentType}`);
+        return null;
+      }
+    } catch (error) {
+      logger.background.error('Error loading default prompt:', error);
+      return null;
+    }
+  }
+  
+  // Otherwise, it's a custom prompt
+  try {
+    logger.background.info('Loading custom prompt from storage');
+    const result = await chrome.storage.sync.get(STORAGE_KEY);
+    const customPromptsByType = result[STORAGE_KEY] || {};
+    
+    if (customPromptsByType[contentType] && 
+        customPromptsByType[contentType].prompts && 
+        customPromptsByType[contentType].prompts[promptId]) {
+      logger.background.info('Custom prompt found in storage');
+      return customPromptsByType[contentType].prompts[promptId].content;
     } else {
-      logger.background.warn(`No custom prompt found for ID: ${promptId}`);
+      logger.background.warn(`Custom prompt not found: ${promptId}`);
       return null;
     }
   } catch (error) {
@@ -89,45 +140,21 @@ async function loadCustomPromptById(promptId) {
 }
 
 /**
- * Load appropriate prompt for content type
- */
-async function loadPromptForContentType(contentType, customPromptId = null) {
-  try {
-    // If a custom prompt ID is provided, try to load it first
-    if (customPromptId) {
-      const customPrompt = await loadCustomPromptById(customPromptId);
-      if (customPrompt) {
-        logger.background.info(`Using custom prompt with ID: ${customPromptId}`);
-        return customPrompt;
-      }
-      logger.background.warn(`Custom prompt not found, falling back to default for ${contentType}`);
-    }
-    
-    // Load from default prompts if no custom prompt or custom prompt not found
-    logger.background.info(`Loading default prompt for content type: ${contentType}`);
-    const response = await fetch(chrome.runtime.getURL('config.json'));
-    const config = await response.json();
-    
-    if (config.defaultPrompts && config.defaultPrompts[contentType]) {
-      logger.background.info(`Default prompt found for ${contentType}`);
-      return config.defaultPrompts[contentType].content;
-    } else {
-      logger.background.warn(`No default prompt found for ${contentType}, using general prompt`);
-      return config.defaultPrompts.general.content;
-    }
-  } catch (error) {
-    logger.background.error('Error loading prompt:', error);
-    return '';
-  }
-}
-
-/**
  * Open Claude with extracted content
  */
-async function openClaudeWithContent(contentType, customPromptId = null) {
+async function openClaudeWithContent(contentType, promptId = null) {
   try {
-    // Get prompt for content type
-    const prePrompt = await loadPromptForContentType(contentType, customPromptId);
+    // If no promptId provided, use the preferred prompt for this content type
+    if (!promptId) {
+      promptId = await getPreferredPromptId(contentType);
+    }
+    
+    // Get prompt content
+    const promptContent = await getPromptContentById(promptId, contentType);
+    
+    if (!promptContent) {
+      throw new Error(`Could not load prompt content for ID: ${promptId}`);
+    }
     
     // Open Claude in a new tab
     const claudeUrl = 'https://claude.ai/new';
@@ -144,7 +171,7 @@ async function openClaudeWithContent(contentType, customPromptId = null) {
     await chrome.storage.local.set({
       claudeTabId: newTab.id,
       scriptInjected: false,
-      prePrompt
+      prePrompt: promptContent
     });
     
     // Verify the data was stored correctly
@@ -168,7 +195,7 @@ async function handleContextMenuClick(info, tab) {
   await chrome.storage.local.set({ 
     contentReady: false,
     extractedContent: null,
-    claudeTabId: null,  // Clear previous Claude tab ID
+    claudeTabId: null,
     scriptInjected: false
   });
   logger.background.info('Cleared previous extracted content and tab state');
@@ -204,7 +231,7 @@ async function initialize() {
   // Reset state
   await chrome.storage.local.set({ 
     scriptInjected: false,
-    claudeTabId: null  // Ensure Claude tab ID is reset on initialization
+    claudeTabId: null
   });
   logger.background.info('Initial state reset complete');
 }
@@ -274,13 +301,6 @@ chrome.contextMenus.onClicked.addListener(handleContextMenuClick);
 // Extension installation listener
 chrome.runtime.onInstalled.addListener(async (details) => {
   logger.background.info('Extension installed/updated', details);
-  
-  // Set up options page
-  chrome.runtime.onInstalled.addListener(() => {
-    // Set options page
-    chrome.runtime.openOptionsPage();
-  });
-  
   await initialize();
 });
 
@@ -296,12 +316,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   
-  // New handler for summarize requests from popup
+  // Handler for summarize requests from popup
   if (message.action === 'summarizeContent') {
     (async () => {
       try {
-        const { tabId, contentType, customPromptId } = message;
-        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, customPromptId: ${customPromptId}`);
+        const { tabId, contentType, promptId } = message;
+        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}`);
         
         // Extract content first
         await extractContent(tabId, message.url);
@@ -310,7 +330,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Then open Claude with the content
-        const claudeTabId = await openClaudeWithContent(contentType, customPromptId);
+        const claudeTabId = await openClaudeWithContent(contentType, promptId);
         
         sendResponse({ 
           success: true, 
