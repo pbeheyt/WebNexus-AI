@@ -10,6 +10,9 @@ const { YoutubeTranscript } = require('youtube-transcript');
 // Flag to indicate script is fully loaded
 let contentScriptReady = false;
 
+// Storage key for accessing settings
+const STORAGE_KEY = 'custom_prompts_by_type';
+
 /**
  * Extract the video title from the page
  * @returns {string} The video title
@@ -79,66 +82,81 @@ function formatTranscript(transcriptData) {
 
 /**
  * Extract top comments from the YouTube video
- * @param {number} maxComments - Maximum number of comments to extract
- * @returns {Array|string} Array of comments or error message string
+ * @returns {Promise<Array|string>} Promise resolving to array of comments or error message string
  */
-function extractComments(maxComments = 20) {
-  try {
-    console.log('Extracting YouTube comments...');
-    
-    // Get all comment thread elements
-    const commentElements = document.querySelectorAll('ytd-comment-thread-renderer');
-    
-    if (!commentElements || commentElements.length === 0) {
-      console.log('No comments found or comments not loaded yet');
-      return 'No comments available. Comments might be disabled for this video or not loaded yet.';
-    }
-    
-    console.log(`Found ${commentElements.length} comments`);
-    
-    // Extract data from each comment
-    const comments = [];
-    
-    for (let i = 0; i < Math.min(commentElements.length, maxComments); i++) {
-      const commentElement = commentElements[i];
-      
-      // Extract author name
-      const authorElement = commentElement.querySelector('#author-text');
-      const author = authorElement ? authorElement.textContent.trim() : 'Unknown user';
-      
-      // Extract comment text
-      const contentTextElement = commentElement.querySelector('#content-text, yt-formatted-string#content-text');
-      let commentText = 'Comment text not found';
-      
-      if (contentTextElement) {
-        // Try to get text spans
-        const textSpans = contentTextElement.querySelectorAll('span.yt-core-attributed-string');
-        if (textSpans && textSpans.length > 0) {
-          commentText = Array.from(textSpans)
-            .map(span => span.textContent.trim())
-            .join(' ');
-        } else {
-          // Fallback - try to get text directly
-          commentText = contentTextElement.textContent.trim();
+function extractComments() {
+  return new Promise((resolve) => {
+    // First, get the configured max comments
+    chrome.storage.sync.get(STORAGE_KEY, async (result) => {
+      try {
+        // Get configured max comments or use default
+        let maxComments = 50; // Default value
+        
+        if (result && result[STORAGE_KEY] && 
+            result[STORAGE_KEY].youtube && 
+            result[STORAGE_KEY].youtube.settings && 
+            result[STORAGE_KEY].youtube.settings.maxComments) {
+          maxComments = result[STORAGE_KEY].youtube.settings.maxComments;
         }
+        
+        console.log(`Extracting up to ${maxComments} YouTube comments...`);
+        
+        // Get all comment thread elements
+        const commentElements = document.querySelectorAll('ytd-comment-thread-renderer');
+        
+        if (!commentElements || commentElements.length === 0) {
+          console.log('No comments found or comments not loaded yet');
+          resolve('No comments available. Comments might be disabled for this video or not loaded yet.');
+          return;
+        }
+        
+        console.log(`Found ${commentElements.length} comments`);
+        
+        // Extract data from each comment
+        const comments = [];
+        
+        for (let i = 0; i < Math.min(commentElements.length, maxComments); i++) {
+          const commentElement = commentElements[i];
+          
+          // Extract author name
+          const authorElement = commentElement.querySelector('#author-text');
+          const author = authorElement ? authorElement.textContent.trim() : 'Unknown user';
+          
+          // Extract comment text
+          const contentTextElement = commentElement.querySelector('#content-text, yt-formatted-string#content-text');
+          let commentText = 'Comment text not found';
+          
+          if (contentTextElement) {
+            // Try to get text spans
+            const textSpans = contentTextElement.querySelectorAll('span.yt-core-attributed-string');
+            if (textSpans && textSpans.length > 0) {
+              commentText = Array.from(textSpans)
+                .map(span => span.textContent.trim())
+                .join(' ');
+            } else {
+              // Fallback - try to get text directly
+              commentText = contentTextElement.textContent.trim();
+            }
+          }
+          
+          // Extract likes if available
+          const likeCountElement = commentElement.querySelector('#vote-count-middle');
+          const likes = likeCountElement ? likeCountElement.textContent.trim() : '0';
+          
+          comments.push({
+            author,
+            text: commentText,
+            likes
+          });
+        }
+        
+        resolve(comments);
+      } catch (error) {
+        console.error('Error extracting comments:', error);
+        resolve(`Error extracting comments: ${error.message}`);
       }
-      
-      // Extract likes if available
-      const likeCountElement = commentElement.querySelector('#vote-count-middle');
-      const likes = likeCountElement ? likeCountElement.textContent.trim() : '0';
-      
-      comments.push({
-        author,
-        text: commentText,
-        likes
-      });
-    }
-    
-    return comments;
-  } catch (error) {
-    console.error('Error extracting comments:', error);
-    return `Error extracting comments: ${error.message}`;
-  }
+    });
+  });
 }
 
 /**
@@ -169,7 +187,7 @@ async function extractVideoData() {
     
     // Extract comments
     console.log('Starting comment extraction...');
-    const comments = extractComments();
+    const comments = await extractComments();
     console.log('Comment extraction complete, found:', Array.isArray(comments) ? comments.length : 'error');
     
     // Return the complete video data object
@@ -201,6 +219,14 @@ async function extractVideoData() {
       errorMessage = `Error getting transcript: ${error.message}`;
     }
     
+    // Get comments despite transcript error
+    let comments = 'Comments could not be extracted';
+    try {
+      comments = await extractComments();
+    } catch (commentError) {
+      console.error('Error extracting comments after transcript error:', commentError);
+    }
+    
     // Return what we could get, with error message for transcript
     return {
       videoId: new URLSearchParams(window.location.search).get('v'),
@@ -208,7 +234,7 @@ async function extractVideoData() {
       channelName: extractChannelName(),
       videoDescription: extractVideoDescription(),
       transcript: errorMessage,
-      comments: extractComments(),
+      comments,
       error: true,
       message: errorMessage,
       extractedAt: new Date().toISOString()

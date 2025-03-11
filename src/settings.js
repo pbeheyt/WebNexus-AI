@@ -122,15 +122,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     return {
       [CONTENT_TYPES.GENERAL]: {
         prompts: {},
-        preferredPromptId: null
+        preferredPromptId: null,
+        settings: {}
       },
       [CONTENT_TYPES.REDDIT]: {
         prompts: {},
-        preferredPromptId: null
+        preferredPromptId: null,
+        settings: {
+          maxComments: 200 // Default value
+        }
       },
       [CONTENT_TYPES.YOUTUBE]: {
         prompts: {},
-        preferredPromptId: null
+        preferredPromptId: null,
+        settings: {
+          maxComments: 50 // Default value
+        }
       }
     };
   }
@@ -209,10 +216,132 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   /**
+   * Create settings section for content type tabs
+   * @param {string} type - The content type
+   * @returns {HTMLElement} The settings section element
+   */
+  function createSettingsSection(type) {
+    // Only create settings for Reddit and YouTube
+    if (type !== CONTENT_TYPES.REDDIT && type !== CONTENT_TYPES.YOUTUBE) {
+      return document.createElement('div'); // Return empty div for other types
+    }
+
+    const section = document.createElement('div');
+    section.className = 'settings-section';
+    
+    const heading = document.createElement('h3');
+    heading.className = 'type-heading';
+    heading.textContent = 'Content Settings';
+    
+    const settingsForm = document.createElement('div');
+    settingsForm.className = 'settings-form';
+    
+    // Create max comments input
+    const formGroup = document.createElement('div');
+    formGroup.className = 'form-group';
+    
+    const label = document.createElement('label');
+    label.htmlFor = `${type}-max-comments`;
+    label.textContent = 'Maximum Comments to Extract:';
+    
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = `${type}-max-comments`;
+    input.className = 'settings-input';
+    input.min = '1';
+    input.max = '1000';
+    input.value = customPromptsByType[type]?.settings?.maxComments || 
+                  (type === CONTENT_TYPES.REDDIT ? 200 : 50);
+    
+    input.addEventListener('change', () => saveContentTypeSettings(type));
+    
+    const helpText = document.createElement('p');
+    helpText.className = 'help-text';
+    helpText.textContent = 'Set the maximum number of comments to extract. Higher values may increase processing time.';
+    
+    // Assemble the form
+    formGroup.appendChild(label);
+    formGroup.appendChild(input);
+    formGroup.appendChild(helpText);
+    
+    settingsForm.appendChild(formGroup);
+    
+    section.appendChild(heading);
+    section.appendChild(settingsForm);
+    
+    return section;
+  }
+
+  /**
+   * Save content type specific settings
+   * @param {string} type - The content type
+   */
+  function saveContentTypeSettings(type) {
+    try {
+      const maxCommentsInput = document.getElementById(`${type}-max-comments`);
+      
+      if (!maxCommentsInput) return;
+      
+      // Parse and validate input
+      let maxComments = parseInt(maxCommentsInput.value, 10);
+      
+      // Ensure value is within valid range
+      if (isNaN(maxComments) || maxComments < 1) maxComments = 1;
+      if (maxComments > 1000) maxComments = 1000;
+      
+      // Update input with validated value
+      maxCommentsInput.value = maxComments;
+      
+      // Ensure settings object exists
+      if (!customPromptsByType[type].settings) {
+        customPromptsByType[type].settings = {};
+      }
+      
+      // Update settings
+      customPromptsByType[type].settings.maxComments = maxComments;
+      
+      // Save to storage
+      saveCustomPrompts().then(() => {
+        // Show brief flash feedback instead of notification
+        const input = document.getElementById(`${type}-max-comments`);
+        if (input) {
+          const originalBg = input.style.backgroundColor;
+          input.style.backgroundColor = '#e6f4ea'; // Light green
+          setTimeout(() => {
+            input.style.backgroundColor = originalBg;
+          }, 500);
+        }
+      }).catch(error => {
+        showNotification('Error saving settings: ' + error.message, 5000);
+      });
+    } catch (error) {
+      console.error('Error saving content type settings:', error);
+      showNotification('Error saving settings', 5000);
+    }
+  }
+  
+  /**
    * Render the prompt list for a specific type
    */
   function renderPromptList(type) {
     promptList.innerHTML = '';
+    
+    // Create and add settings section for this type
+    const settingsSection = createSettingsSection(type);
+    promptList.appendChild(settingsSection);
+    
+    // Add a divider if settings were added (for Reddit and YouTube)
+    if (type === CONTENT_TYPES.REDDIT || type === CONTENT_TYPES.YOUTUBE) {
+      const divider = document.createElement('hr');
+      divider.className = 'settings-divider';
+      promptList.appendChild(divider);
+    }
+    
+    // Add the prompts section heading
+    const promptsHeading = document.createElement('h3');
+    promptsHeading.className = 'type-heading';
+    promptsHeading.textContent = 'Prompts';
+    promptList.appendChild(promptsHeading);
     
     // Get preferred prompt ID for this type
     const preferredPromptId = customPromptsByType[type]?.preferredPromptId || type;
@@ -225,30 +354,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       const emptyState = document.createElement('div');
       emptyState.className = 'empty-state';
       emptyState.innerHTML = `
-        <p>No prompts available for ${type}. Add your first prompt to get started.</p>
-        <button class="btn" id="addFirstPromptBtn">Add First Prompt</button>
+        <p>No prompts available for ${type}. Add your first prompt below.</p>
       `;
       
       promptList.appendChild(emptyState);
-      
-      // Add event listener
-      setTimeout(() => {
-        const addBtn = document.getElementById('addFirstPromptBtn');
-        if (addBtn) {
-          addBtn.addEventListener('click', () => {
-            document.getElementById('promptType').value = type;
-            switchTab('add-prompt');
-          });
-        }
-      }, 0);
-      
-      return;
+    } else {
+      // Render each prompt
+      typePrompts.forEach(({ id, prompt, isDefault }) => {
+        promptList.appendChild(createPromptElement(id, prompt, isDefault, id === preferredPromptId));
+      });
     }
     
-    // Render each prompt
-    typePrompts.forEach(({ id, prompt, isDefault }) => {
-      promptList.appendChild(createPromptElement(id, prompt, isDefault, id === preferredPromptId));
-    });
+    // Add another divider
+    const addPromptDivider = document.createElement('hr');
+    addPromptDivider.className = 'settings-divider';
+    promptList.appendChild(addPromptDivider);
+    
+    // Add the add prompt form
+    const addPromptForm = createAddPromptForm(type);
+    promptList.appendChild(addPromptForm);
   }
   
   /**
@@ -280,9 +404,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </h3>
         <div class="prompt-actions">
           ${isPreferred ? '' : '<button class="action-btn set-preferred-btn" title="Set as Preferred">⭐ Set Preferred</button>'}
-          ${isDefault ? `
-            <button class="action-btn duplicate-btn" title="Duplicate">📋 Duplicate</button>
-          ` : `
+          ${isDefault ? `` : `
             <button class="action-btn edit-btn" title="Edit">✏️ Edit</button>
             <button class="action-btn delete-btn" title="Delete">🗑️ Delete</button>
           `}
@@ -301,9 +423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     if (isDefault) {
-      // For default prompts, we only have the duplicate button
-      const duplicateBtn = actionsDiv.querySelector('.duplicate-btn');
-      duplicateBtn.addEventListener('click', () => duplicatePrompt(id, prompt));
+      // No action for default prompts
     } else {
       // For custom prompts, we have edit and delete
       const editBtn = actionsDiv.querySelector('.edit-btn');
@@ -333,36 +453,231 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   /**
-   * Duplicate a prompt (create a copy of default or custom)
+   * Create an add prompt form for a specific type
+   * @param {string} type - The content type
+   * @returns {HTMLElement} - The form element
    */
-  function duplicatePrompt(id, prompt) {
-    // Set up the form for the duplicated prompt
-    document.getElementById('promptName').value = `${prompt.name} (Copy)`;
-    document.getElementById('promptType').value = prompt.type;
-    document.getElementById('promptContent').value = prompt.content;
-    document.getElementById('promptId').value = '';
-    document.getElementById('formMode').value = 'add';
+  function createAddPromptForm(type) {
+    const formSection = document.createElement('div');
+    formSection.className = 'add-prompt-section';
     
-    // Switch to the add tab
-    switchTab('add-prompt');
+    const heading = document.createElement('h3');
+    heading.className = 'type-heading';
+    heading.textContent = 'Add New Prompt';
+    
+    const form = document.createElement('form');
+    form.className = 'add-prompt-form';
+    form.dataset.type = type;
+    
+    // Name input
+    const nameGroup = document.createElement('div');
+    nameGroup.className = 'form-group';
+    
+    const nameLabel = document.createElement('label');
+    nameLabel.htmlFor = `${type}-prompt-name`;
+    nameLabel.textContent = 'Prompt Name';
+    
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.id = `${type}-prompt-name`;
+    nameInput.className = 'prompt-name-input';
+    nameInput.placeholder = 'Give your prompt a descriptive name';
+    nameInput.required = true;
+    
+    nameGroup.appendChild(nameLabel);
+    nameGroup.appendChild(nameInput);
+    
+    // Content textarea
+    const contentGroup = document.createElement('div');
+    contentGroup.className = 'form-group';
+    
+    const contentLabel = document.createElement('label');
+    contentLabel.htmlFor = `${type}-prompt-content`;
+    contentLabel.textContent = 'Prompt Content';
+    
+    const contentInput = document.createElement('textarea');
+    contentInput.id = `${type}-prompt-content`;
+    contentInput.className = 'prompt-content-input';
+    contentInput.placeholder = 'Enter your prompt content here...';
+    contentInput.required = true;
+    contentInput.rows = 10;
+    
+    contentGroup.appendChild(contentLabel);
+    contentGroup.appendChild(contentInput);
+    
+    // Hidden fields
+    const promptIdInput = document.createElement('input');
+    promptIdInput.type = 'hidden';
+    promptIdInput.id = `${type}-prompt-id`;
+    promptIdInput.value = '';
+    
+    const formModeInput = document.createElement('input');
+    formModeInput.type = 'hidden';
+    formModeInput.id = `${type}-form-mode`;
+    formModeInput.value = 'add';
+    
+    // Buttons
+    const formActions = document.createElement('div');
+    formActions.className = 'form-actions';
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-secondary cancel-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.dataset.type = type;
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'submit';
+    saveBtn.className = 'btn save-btn';
+    saveBtn.textContent = 'Save Prompt';
+    saveBtn.id = `${type}-save-prompt-btn`;
+    
+    formActions.appendChild(cancelBtn);
+    formActions.appendChild(saveBtn);
+    
+    // Assemble form
+    form.appendChild(nameGroup);
+    form.appendChild(contentGroup);
+    form.appendChild(promptIdInput);
+    form.appendChild(formModeInput);
+    form.appendChild(formActions);
+    
+    // Add event listeners
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      handleTypeFormSubmit(type);
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+      resetTypeForm(type);
+    });
+    
+    // Assemble section
+    formSection.appendChild(heading);
+    formSection.appendChild(form);
+    
+    return formSection;
+  }
+  
+  /**
+   * Reset a type-specific form
+   * @param {string} type - The content type
+   */
+  function resetTypeForm(type) {
+    const form = document.querySelector(`.add-prompt-form[data-type="${type}"]`);
+    if (!form) return;
+    
+    form.reset();
+    document.getElementById(`${type}-prompt-id`).value = '';
+    document.getElementById(`${type}-form-mode`).value = 'add';
+    document.getElementById(`${type}-save-prompt-btn`).textContent = 'Save Prompt';
+    
+    // Hide the form
+    form.classList.remove('editing');
+    
+    // If there's a toggle button, update its state
+    const toggleBtn = document.getElementById(`${type}-add-prompt-toggle`);
+    if (toggleBtn) {
+      toggleBtn.textContent = '+ Add New Prompt';
+      toggleBtn.classList.remove('active');
+    }
+  }
+  
+  /**
+   * Handle type-specific form submission
+   * @param {string} type - The content type
+   */
+  function handleTypeFormSubmit(type) {
+    const nameInput = document.getElementById(`${type}-prompt-name`);
+    const contentInput = document.getElementById(`${type}-prompt-content`);
+    const promptIdInput = document.getElementById(`${type}-prompt-id`);
+    const formModeInput = document.getElementById(`${type}-form-mode`);
+    
+    if (!nameInput || !contentInput || !promptIdInput || !formModeInput) {
+      showNotification('Form elements not found', 3000);
+      return;
+    }
+    
+    const name = nameInput.value;
+    const content = contentInput.value;
+    const promptId = promptIdInput.value || generateId();
+    const mode = formModeInput.value;
+    
+    if (!name || !content) {
+      showNotification('Please fill in all required fields', 3000);
+      return;
+    }
+    
+    // Make sure the type category exists
+    if (!customPromptsByType[type]) {
+      customPromptsByType[type] = {
+        prompts: {},
+        preferredPromptId: null,
+        settings: type === CONTENT_TYPES.REDDIT ? { maxComments: 200 } : 
+                 type === CONTENT_TYPES.YOUTUBE ? { maxComments: 50 } : {}
+      };
+    }
+    
+    // Create/update the prompt
+    customPromptsByType[type].prompts[promptId] = {
+      id: promptId,
+      name,
+      type,
+      content,
+      updatedAt: new Date().toISOString()
+    };
+    
+    // If this is the first custom prompt of this type, make it preferred
+    if (!customPromptsByType[type].preferredPromptId || 
+        (customPromptsByType[type].preferredPromptId === type && mode === 'add')) {
+      customPromptsByType[type].preferredPromptId = promptId;
+    }
+    
+    // Save to storage
+    saveCustomPrompts().then(() => {
+      // Reset the form
+      resetTypeForm(type);
+      
+      // Show notification
+      showNotification(`Prompt ${mode === 'edit' ? 'updated' : 'saved'} successfully`);
+      
+      // Refresh the prompt list
+      renderPromptList(type);
+    }).catch(error => {
+      showNotification('Error saving prompt: ' + error.message, 5000);
+    });
   }
   
   /**
    * Edit an existing prompt
    */
   function editPrompt(id, prompt) {
+    const type = prompt.type;
+    
     // Set up the form for editing
-    document.getElementById('promptName').value = prompt.name;
-    document.getElementById('promptType').value = prompt.type;
-    document.getElementById('promptContent').value = prompt.content;
-    document.getElementById('promptId').value = id;
-    document.getElementById('formMode').value = 'edit';
+    document.getElementById(`${type}-prompt-name`).value = prompt.name;
+    document.getElementById(`${type}-prompt-content`).value = prompt.content;
+    document.getElementById(`${type}-prompt-id`).value = id;
+    document.getElementById(`${type}-form-mode`).value = 'edit';
     
     // Update button text
-    document.getElementById('savePromptBtn').textContent = 'Update Prompt';
+    document.getElementById(`${type}-save-prompt-btn`).textContent = 'Update Prompt';
     
-    // Switch to the add tab (which becomes the edit tab)
-    switchTab('add-prompt');
+    // Add editing class to show the form is in edit mode
+    const form = document.querySelector(`.add-prompt-form[data-type="${type}"]`);
+    if (form) {
+      form.classList.add('editing');
+      
+      // Scroll to the form
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Update toggle button if exists
+    const toggleBtn = document.getElementById(`${type}-add-prompt-toggle`);
+    if (toggleBtn) {
+      toggleBtn.textContent = 'Editing Prompt';
+      toggleBtn.classList.add('active');
+    }
   }
   
   /**
@@ -511,21 +826,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Start with general tab
       switchToTypeTab(CONTENT_TYPES.GENERAL);
       
-      // Set up form submission
-      promptForm.addEventListener('submit', handleFormSubmit);
-      
       // Set up back button
       backBtn.addEventListener('click', () => {
         window.close();
-      });
-      
-      // Set up cancel button
-      cancelBtn.addEventListener('click', () => {
-        promptForm.reset();
-        document.getElementById('promptId').value = '';
-        document.getElementById('formMode').value = 'add';
-        document.getElementById('savePromptBtn').textContent = 'Save Prompt';
-        switchToTypeTab(contentTypeSelect.value);
       });
       
     } catch (error) {
@@ -541,7 +844,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tabNav = document.querySelector('.tab-nav');
     
     // Remove existing type tabs if any
-    document.querySelectorAll('.tab-btn[data-type]').forEach(btn => btn.remove());
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.remove());
     
     // Create a tab for each content type
     Object.values(CONTENT_TYPES).forEach(type => {
@@ -557,9 +860,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         switchToTypeTab(type);
       });
       
-      // Insert before the Add New Prompt tab
-      const addTab = document.querySelector('.tab-btn[data-tab="add-prompt"]');
-      tabNav.insertBefore(typeBtn, addTab);
+      tabNav.appendChild(typeBtn);
     });
   }
   

@@ -308,6 +308,91 @@
       font-size: 18px;
       color: #333;
     }
+
+    /* Settings section styles */
+    .settings-section {
+      background: #f9f9f9;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .settings-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .settings-input {
+      width: 100px;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    .settings-input:focus {
+      outline: none;
+      border-color: #4285f4;
+    }
+
+    /* Add Prompt Section Styles */
+    .add-prompt-section {
+      margin-top: 20px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      padding: 15px;
+    }
+    
+    .add-prompt-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .prompt-name-input, .prompt-content-input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      font-family: 'Roboto', sans-serif;
+      box-sizing: border-box;
+    }
+    
+    .prompt-content-input {
+      min-height: 150px;
+      resize: vertical;
+    }
+    
+    .prompt-name-input:focus, .prompt-content-input:focus {
+      outline: none;
+      border-color: #4285f4;
+    }
+    
+    .add-prompt-form.editing {
+      background-color: #f0f7ff;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 3px solid #4285f4;
+    }
+    
+    .highlighted {
+      background-color: #f0f7ff;
+      transition: background-color 0.5s ease;
+    }
+
+    .settings-divider {
+      margin: 20px 0;
+      border: none;
+      border-top: 1px solid #eee;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -319,12 +404,11 @@
 
     <div class="tab-nav">
       <!-- Type tabs will be inserted here dynamically -->
-      <button class="tab-btn" data-tab="add-prompt">Add New Prompt</button>
     </div>
 
     <div id="notification" class="notification"></div>
 
-    <!-- All Prompts Tab -->
+    <!-- Prompts Tab -->
     <div id="all-prompts" class="tab-content active">
       <div class="prompt-list" id="promptList">
         <!-- Prompts will be displayed here -->
@@ -332,38 +416,6 @@
           <p>Loading prompts...</p>
         </div>
       </div>
-    </div>
-
-    <!-- Add New Prompt Tab -->
-    <div id="add-prompt" class="tab-content">
-      <form id="promptForm">
-        <div class="form-group">
-          <label for="promptName">Prompt Name</label>
-          <input type="text" id="promptName" name="promptName" required placeholder="Give your prompt a descriptive name" />
-        </div>
-
-        <div class="form-group">
-          <label for="promptType">Content Type</label>
-          <select id="promptType" name="promptType" required>
-            <option value="general">Web Content</option>
-            <option value="reddit">Reddit Posts</option>
-            <option value="youtube">YouTube Videos</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="promptContent">Prompt Content</label>
-          <textarea id="promptContent" name="promptContent" required placeholder="Enter your prompt content here..."></textarea>
-        </div>
-
-        <input type="hidden" id="promptId" name="promptId" />
-        <input type="hidden" id="formMode" value="add" />
-
-        <div class="form-actions">
-          <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
-          <button type="submit" class="btn" id="savePromptBtn">Save Prompt</button>
-        </div>
-      </form>
     </div>
   </div>
 

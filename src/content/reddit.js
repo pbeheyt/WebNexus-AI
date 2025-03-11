@@ -6,6 +6,9 @@
 // Flag to indicate script is fully loaded
 let contentScriptReady = false;
 
+// Storage key for accessing settings
+const STORAGE_KEY = 'custom_prompts_by_type';
+
 /**
  * Extract the post title from the page
  * @returns {string} The post title
@@ -65,14 +68,6 @@ function extractPostContent() {
  * Extract the author username from the page
  * @returns {string} The post author username
  */
-/**
- * Extract the author username from the page
- * @returns {string} The post author username
- */
-/**
- * Extract the author username from the page
- * @returns {string} The post author username
- */
 function extractAuthor() {
   // Try multiple selectors to improve reliability
   const selectors = [
@@ -122,137 +117,153 @@ function extractSubreddit() {
 
 /**
  * Extract comments from the Reddit post
- * @param {number} maxComments - Maximum number of comments to extract
- * @returns {Array} Array of comment objects
+ * @returns {Promise<Array>} Promise resolving to array of comment objects
  */
-function extractComments(maxComments = 30) {
-  try {
-    console.log('Extracting Reddit comments...');
-    
-    // Try multiple selectors for comments to improve reliability
-    const commentSelectors = [
-      'shreddit-comment',
-      'div[data-testid="comment"]',
-      '.Comment'
-    ];
-    
-    let commentElements = [];
-    
-    for (const selector of commentSelectors) {
-      const elements = document.querySelectorAll(selector);
-      if (elements && elements.length > 0) {
-        commentElements = elements;
-        console.log(`Found ${elements.length} comments using selector: ${selector}`);
-        break;
-      }
-    }
-    
-    if (commentElements.length === 0) {
-      console.log('No comments found or comments not loaded yet');
-      return [];
-    }
-    
-    // Extract data from each comment
-    const comments = [];
-    
-    for (let i = 0; i < Math.min(commentElements.length, maxComments); i++) {
-      const commentElement = commentElements[i];
-      
-      // Extract author (handle different selectors)
-      let author = 'Unknown user';
-      const authorSelectors = [
-        'a[data-testid="comment_author_link"]',
-        'a[data-click-id="user"]',
-        '[data-testid="comment_author_icon"]+a',
-        'a.author'
-      ];
-      
-      for (const selector of authorSelectors) {
-        const authorElement = commentElement.querySelector(selector);
-        if (authorElement && authorElement.textContent.trim()) {
-          author = authorElement.textContent.trim();
-          break;
+function extractComments() {
+  return new Promise((resolve) => {
+    // First, get the configured max comments
+    chrome.storage.sync.get(STORAGE_KEY, async (result) => {
+      try {
+        // Get configured max comments or use default
+        let maxComments = 200; // Default value
+        
+        if (result && result[STORAGE_KEY] && 
+            result[STORAGE_KEY].reddit && 
+            result[STORAGE_KEY].reddit.settings && 
+            result[STORAGE_KEY].reddit.settings.maxComments) {
+          maxComments = result[STORAGE_KEY].reddit.settings.maxComments;
         }
-      }
-      
-      // Try getAttribute for shreddit-comment
-      if (author === 'Unknown user' && commentElement.getAttribute) {
-        author = commentElement.getAttribute('author') || author;
-      }
-      
-      // Extract comment text (handle different selectors)
-      let commentContent = '';
-      const contentSelectors = [
-        '.md.text-14',
-        '[data-testid="comment-content"]',
-        'div[data-click-id="text"]'
-      ];
-      
-      for (const selector of contentSelectors) {
-        const contentElement = commentElement.querySelector(selector);
-        if (contentElement) {
-          const paragraphs = contentElement.querySelectorAll('p');
-          if (paragraphs.length > 0) {
-            paragraphs.forEach(paragraph => {
-              commentContent += paragraph.textContent.trim() + '\n\n';
-            });
-            commentContent = commentContent.trim();
-            break;
-          } else {
-            commentContent = contentElement.textContent.trim();
+        
+        console.log(`Extracting up to ${maxComments} Reddit comments...`);
+        
+        // Continue with extraction logic
+        // Try multiple selectors for comments to improve reliability
+        const commentSelectors = [
+          'shreddit-comment',
+          'div[data-testid="comment"]',
+          '.Comment'
+        ];
+        
+        let commentElements = [];
+        
+        for (const selector of commentSelectors) {
+          const elements = document.querySelectorAll(selector);
+          if (elements && elements.length > 0) {
+            commentElements = elements;
+            console.log(`Found ${elements.length} comments using selector: ${selector}`);
             break;
           }
         }
-      }
-      
-      let score = '0';
-
-      // First check if the score attribute exists on shreddit-comment or shreddit-comment-action-row
-      if (commentElement.getAttribute && commentElement.getAttribute('score')) {
-        score = commentElement.getAttribute('score');
-      } else {
-        // Find score from shreddit-comment-action-row if it exists
-        const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
-        if (commentActionRow && commentActionRow.getAttribute('score')) {
-          score = commentActionRow.getAttribute('score');
-        } else {
-          // Try the existing selectors as fallback
-          const scoreSelectors = [
-            '[data-testid="vote-score"]',
-            'div[data-click-id="upvote"]',
-            'div[class*="score"]'
+        
+        if (commentElements.length === 0) {
+          console.log('No comments found or comments not loaded yet');
+          resolve([]);
+          return;
+        }
+        
+        // Extract data from each comment
+        const comments = [];
+        
+        for (let i = 0; i < Math.min(commentElements.length, maxComments); i++) {
+          const commentElement = commentElements[i];
+          
+          // Extract author (handle different selectors)
+          let author = 'Unknown user';
+          const authorSelectors = [
+            'a[data-testid="comment_author_link"]',
+            'a[data-click-id="user"]',
+            '[data-testid="comment_author_icon"]+a',
+            'a.author'
           ];
           
-          for (const selector of scoreSelectors) {
-            const scoreElement = commentElement.querySelector(selector);
-            if (scoreElement && scoreElement.textContent.trim()) {
-              score = scoreElement.textContent.trim();
+          for (const selector of authorSelectors) {
+            const authorElement = commentElement.querySelector(selector);
+            if (authorElement && authorElement.textContent.trim()) {
+              author = authorElement.textContent.trim();
               break;
             }
           }
+          
+          // Try getAttribute for shreddit-comment
+          if (author === 'Unknown user' && commentElement.getAttribute) {
+            author = commentElement.getAttribute('author') || author;
+          }
+          
+          // Extract comment text (handle different selectors)
+          let commentContent = '';
+          const contentSelectors = [
+            '.md.text-14',
+            '[data-testid="comment-content"]',
+            'div[data-click-id="text"]'
+          ];
+          
+          for (const selector of contentSelectors) {
+            const contentElement = commentElement.querySelector(selector);
+            if (contentElement) {
+              const paragraphs = contentElement.querySelectorAll('p');
+              if (paragraphs.length > 0) {
+                paragraphs.forEach(paragraph => {
+                  commentContent += paragraph.textContent.trim() + '\n\n';
+                });
+                commentContent = commentContent.trim();
+                break;
+              } else {
+                commentContent = contentElement.textContent.trim();
+                break;
+              }
+            }
+          }
+          
+          let score = '0';
+
+          // First check if the score attribute exists on shreddit-comment or shreddit-comment-action-row
+          if (commentElement.getAttribute && commentElement.getAttribute('score')) {
+            score = commentElement.getAttribute('score');
+          } else {
+            // Find score from shreddit-comment-action-row if it exists
+            const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
+            if (commentActionRow && commentActionRow.getAttribute('score')) {
+              score = commentActionRow.getAttribute('score');
+            } else {
+              // Try the existing selectors as fallback
+              const scoreSelectors = [
+                '[data-testid="vote-score"]',
+                'div[data-click-id="upvote"]',
+                'div[class*="score"]'
+              ];
+              
+              for (const selector of scoreSelectors) {
+                const scoreElement = commentElement.querySelector(selector);
+                if (scoreElement && scoreElement.textContent.trim()) {
+                  score = scoreElement.textContent.trim();
+                  break;
+                }
+              }
+            }
+          }
+          
+          // Add comment to the list if it has content
+          if (commentContent) {
+            comments.push({
+              author,
+              content: commentContent,
+              popularity: score
+            });
+          }
         }
+        
+        resolve(comments);
+      } catch (error) {
+        console.error('Error extracting Reddit comments:', error);
+        resolve([]);
       }
-      
-      // Add comment to the list if it has content
-      if (commentContent) {
-        comments.push({
-          author,
-          content: commentContent,
-          popularity: score
-        });
-      }
-    }
-    
-    return comments;
-  } catch (error) {
-    console.error('Error extracting Reddit comments:', error);
-    return [];
-  }
+    });
+  });
 }
 
 /**
  * Main function to extract all post data
- * @returns {Object} The extracted post data
+ * @returns {Promise<Object>} Promise resolving to the extracted post data
  */
 function extractPostData() {
   try {
@@ -262,29 +273,32 @@ function extractPostData() {
     const author = extractAuthor();
     const subreddit = extractSubreddit();
     
-    // Extract comments
-    console.log('Starting Reddit comment extraction...');
-    const comments = extractComments();
-    console.log('Comment extraction complete, found:', comments.length);
-    
-    // Get post URL for reference
-    const postUrl = window.location.href;
-    
-    // Return the complete post data object
-    return {
-      postTitle: title,
-      postContent: content,
-      postAuthor: author,
-      subreddit,
-      comments,
-      postUrl,
-      extractedAt: new Date().toISOString()
-    };
+    // Return a promise that resolves with the full post data
+    return new Promise(async (resolve) => {
+      // Extract comments
+      console.log('Starting Reddit comment extraction...');
+      const comments = await extractComments();
+      console.log('Comment extraction complete, found:', comments.length);
+      
+      // Get post URL for reference
+      const postUrl = window.location.href;
+      
+      // Resolve with the complete post data object
+      resolve({
+        postTitle: title,
+        postContent: content,
+        postAuthor: author,
+        subreddit,
+        comments,
+        postUrl,
+        extractedAt: new Date().toISOString()
+      });
+    });
   } catch (error) {
     console.error('Error extracting Reddit post data:', error);
     
     // Return what we could get, with error message
-    return {
+    return Promise.resolve({
       postTitle: extractPostTitle(),
       postContent: 'Error extracting content: ' + error.message,
       postAuthor: extractAuthor(),
@@ -293,19 +307,19 @@ function extractPostData() {
       error: true,
       message: error.message || 'Unknown error occurred',
       extractedAt: new Date().toISOString()
-    };
+    });
   }
 }
 
 /**
  * Extract and save post data to Chrome storage
  */
-function extractAndSavePostData() {
+async function extractAndSavePostData() {
   try {
     console.log('Starting Reddit post data extraction...');
     
     // Extract all post data
-    const postData = extractPostData();
+    const postData = await extractPostData();
     
     // Save to Chrome storage
     chrome.storage.local.set({ 
