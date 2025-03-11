@@ -94,7 +94,7 @@
   }
   
   /**
-   * Format YouTube video data - SIMPLIFIED VERSION
+   * Format YouTube video data
    */
   const formatYouTubeData = (data) => {
     const title = data.videoTitle || 'No title available';
@@ -102,12 +102,12 @@
     const description = data.videoDescription || 'No description available';
     const transcript = data.transcript || 'No transcript available';
     
-    // Format comments simply
+    // Format comments with likes
     let commentsText = '';
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
       commentsText = '\n\nComments:\n';
       data.comments.forEach(comment => {
-        commentsText += `User: ${comment.author || 'Anonymous'}\nComment: ${comment.text || ''}\n\n`;
+        commentsText += `User: ${comment.author || 'Anonymous'}\nLikes: ${comment.likes || '0'}\nComment: ${comment.text || ''}\n\n`;
       });
     }
     
@@ -115,7 +115,7 @@
   };
 
   /**
-   * Format Reddit post data - SIMPLIFIED VERSION
+   * Format Reddit post data
    */
   function formatRedditData(data) {
     const title = data.postTitle || 'No title available';
@@ -127,7 +127,7 @@
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
       commentsText = '\n\nComments:\n';
       data.comments.forEach(comment => {
-        commentsText += `User: ${comment.author || 'Anonymous'}\nComment: ${comment.content || ''}\n\n`;
+        commentsText += `User: ${comment.author || 'Anonymous'}\nScore: ${comment.popularity || '0'}\nComment: ${comment.content || ''}\n\n`;
       });
     }
     
@@ -135,7 +135,7 @@
   }
 
   /**
-   * Format general web page data - SIMPLIFIED VERSION
+   * Format general web page data
    */
   function formatGeneralData(data) {
     const title = data.pageTitle || 'No title available';

@@ -65,9 +65,18 @@ function extractPostContent() {
  * Extract the author username from the page
  * @returns {string} The post author username
  */
+/**
+ * Extract the author username from the page
+ * @returns {string} The post author username
+ */
+/**
+ * Extract the author username from the page
+ * @returns {string} The post author username
+ */
 function extractAuthor() {
   // Try multiple selectors to improve reliability
   const selectors = [
+    'span[slot="authorName"] a.author-name',
     'a[data-testid="post_author_link"]',
     'a[data-click-id="user"]',
     '.author-link'
@@ -109,28 +118,6 @@ function extractSubreddit() {
   }
 
   return 'Unknown subreddit';
-}
-
-/**
- * Extract the post score (upvotes) from the page
- * @returns {string} The post score
- */
-function extractPostScore() {
-  // Try multiple selectors to improve reliability
-  const selectors = [
-    '[data-testid="post-voting-arrows"] [data-testid="vote-score"]',
-    'div[class*="score"]',
-    'div[data-click-id="upvote"]'
-  ];
-
-  for (const selector of selectors) {
-    const scoreElement = document.querySelector(selector);
-    if (scoreElement && scoreElement.textContent.trim()) {
-      return scoreElement.textContent.trim();
-    }
-  }
-
-  return '0';
 }
 
 /**
@@ -218,19 +205,31 @@ function extractComments(maxComments = 30) {
         }
       }
       
-      // Extract score (handle different selectors)
       let score = '0';
-      const scoreSelectors = [
-        '[data-testid="vote-score"]',
-        'div[data-click-id="upvote"]',
-        'div[class*="score"]'
-      ];
-      
-      for (const selector of scoreSelectors) {
-        const scoreElement = commentElement.querySelector(selector);
-        if (scoreElement && scoreElement.textContent.trim()) {
-          score = scoreElement.textContent.trim();
-          break;
+
+      // First check if the score attribute exists on shreddit-comment or shreddit-comment-action-row
+      if (commentElement.getAttribute && commentElement.getAttribute('score')) {
+        score = commentElement.getAttribute('score');
+      } else {
+        // Find score from shreddit-comment-action-row if it exists
+        const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
+        if (commentActionRow && commentActionRow.getAttribute('score')) {
+          score = commentActionRow.getAttribute('score');
+        } else {
+          // Try the existing selectors as fallback
+          const scoreSelectors = [
+            '[data-testid="vote-score"]',
+            'div[data-click-id="upvote"]',
+            'div[class*="score"]'
+          ];
+          
+          for (const selector of scoreSelectors) {
+            const scoreElement = commentElement.querySelector(selector);
+            if (scoreElement && scoreElement.textContent.trim()) {
+              score = scoreElement.textContent.trim();
+              break;
+            }
+          }
         }
       }
       
@@ -262,7 +261,6 @@ function extractPostData() {
     const content = extractPostContent();
     const author = extractAuthor();
     const subreddit = extractSubreddit();
-    const score = extractPostScore();
     
     // Extract comments
     console.log('Starting Reddit comment extraction...');
@@ -278,7 +276,6 @@ function extractPostData() {
       postContent: content,
       postAuthor: author,
       subreddit,
-      postScore: score,
       comments,
       postUrl,
       extractedAt: new Date().toISOString()
