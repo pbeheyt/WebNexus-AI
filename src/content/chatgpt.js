@@ -18,39 +18,76 @@
   function insertText(text) {
     logger.info('Attempting to insert text into ChatGPT');
     
-    // Find ChatGPT's editor element
-    const textareaElement = document.querySelector('textarea[data-id="root"]');
+    // Find ChatGPT's modern editor element with more specific selector
+    const editorElement = document.querySelector('#prompt-textarea.ProseMirror');
     
-    if (!textareaElement) {
-      logger.error('ChatGPT textarea element not found');
+    if (!editorElement) {
+      logger.error('ChatGPT editor element not found');
       return false;
     }
 
     try {
-      // Focus on the textarea
-      textareaElement.focus();
+      // Clear existing content
+      editorElement.innerHTML = '';
       
-      // Set the value directly to avoid character limits in ui events
-      textareaElement.value = text;
+      // Split the text into paragraphs by newline
+      const paragraphs = text.split('\n');
       
-      // Trigger input event to activate the UI
-      const inputEvent = new Event('input', { bubbles: true });
-      textareaElement.dispatchEvent(inputEvent);
+      // Insert each paragraph
+      paragraphs.forEach((paragraph) => {
+        if (paragraph.trim() === '') {
+          // Add empty paragraph with break for blank lines
+          const p = document.createElement('p');
+          p.appendChild(document.createElement('br'));
+          editorElement.appendChild(p);
+        } else {
+          // Add text paragraph
+          const p = document.createElement('p');
+          p.textContent = paragraph;
+          editorElement.appendChild(p);
+        }
+      });
       
-      // Wait a short moment for the UI to update
+      // Remove placeholder class if it exists
+      const placeholderP = editorElement.querySelector('p.placeholder');
+      if (placeholderP) {
+        placeholderP.classList.remove('placeholder');
+      }
+      
+      // Focus the editor
+      editorElement.focus();
+      
+      // Dispatch input event to ensure ChatGPT recognizes the change
+      const inputEvent = new Event('input', {
+        bubbles: true
+      });
+      editorElement.dispatchEvent(inputEvent);
+      
+      // Wait a moment for UI to update (longer timeout for reliability)
       setTimeout(() => {
-        // Look for the send button
-        const sendButton = document.querySelector('button[data-testid="send-button"]');
+        // Find enabled send button
+        const sendButton = document.querySelector('button[data-testid="send-button"]:not(:disabled)');
         
         if (!sendButton) {
-          logger.error('ChatGPT send button not found');
+          logger.error('ChatGPT send button not found or disabled');
           return false;
         }
         
-        // Click the send button
-        sendButton.click();
+        logger.info('Send button found, clicking...');
+        
+        // Create and dispatch multiple events for better compatibility
+        ['mousedown', 'mouseup', 'click'].forEach(eventType => {
+          const event = new MouseEvent(eventType, {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            buttons: 1
+          });
+          sendButton.dispatchEvent(event);
+        });
+        
         logger.info('Text submitted to ChatGPT successfully');
-      }, 500);
+      }, 1000);
       
       return true;
     } catch (error) {
@@ -66,7 +103,7 @@
   function isLoggedIn() {
     // Look for elements that indicate the user is logged in
     const conversationElements = document.querySelector('[data-testid="conversation-turn"]');
-    const chatInputElement = document.querySelector('textarea[data-id="root"]');
+    const chatInputElement = document.querySelector('#prompt-textarea.ProseMirror');
     const loginButtonElement = document.querySelector('button[data-testid="login-button"]');
     
     // If login button is present, user is not logged in
@@ -229,10 +266,10 @@
   let processingStarted = false;
 
   const observer = new MutationObserver(() => {
-    // Check if textarea exists, which indicates the interface is ready
-    const textareaElement = document.querySelector('textarea[data-id="root"]');
+    // Check if ProseMirror editor exists, which indicates the interface is ready
+    const editorElement = document.querySelector('#prompt-textarea.ProseMirror');
     
-    if (textareaElement && !processingStarted) {
+    if (editorElement && !processingStarted) {
       logger.info('ChatGPT interface ready, starting processing');
       processingStarted = true;
       observer.disconnect();
@@ -251,8 +288,8 @@
   });
 
   const initialize = () => {
-    if (!window.location.href.includes('chat.openai.com')) {
-      logger.info('Not on chat.openai.com, exiting');
+    if (!window.location.href.includes('chatgpt.com')) {
+      logger.info('Not on chatgpt.com, exiting');
       return;
     }
     

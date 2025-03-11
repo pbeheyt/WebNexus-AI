@@ -14,7 +14,7 @@
     "https://*.youtube.com/*",
     "https://*.reddit.com/*",
     "https://claude.ai/*",
-    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
     "https://chat.deepseek.com/*",
     "https://*/*"
   ],

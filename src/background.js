@@ -355,7 +355,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     
     if (aiPlatform === AI_PLATFORMS.CLAUDE && tab.url.includes('claude.ai')) {
       isPlatformTab = true;
-    } else if (aiPlatform === AI_PLATFORMS.CHATGPT && tab.url.includes('chat.openai.com')) {
+    } else if (aiPlatform === AI_PLATFORMS.CHATGPT && tab.url.includes('chatgpt.com')) {
       isPlatformTab = true;
     } else if (aiPlatform === AI_PLATFORMS.DEEPSEEK && tab.url.includes('chat.deepseek.com')) {
       isPlatformTab = true;
