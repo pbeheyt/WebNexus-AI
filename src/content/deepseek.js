@@ -18,8 +18,9 @@
   function insertText(text) {
     logger.info('Attempting to insert text into DeepSeek');
     
-    // Find DeepSeek's editor element (textarea)
-    let editorElement = document.querySelector('textarea.resize-none');
+    // Find DeepSeek's editor element using the specific ID or class
+    let editorElement = document.querySelector('#chat-input') || 
+                       document.querySelector('.c92459f0');
     
     if (!editorElement) {
       logger.error('DeepSeek textarea element not found');
@@ -39,19 +40,40 @@
       
       // Wait a short moment for the UI to update
       setTimeout(() => {
-        // Look for the send button (might be a div with specific class or an SVG icon)
-        const sendButton = document.querySelector('button[type="submit"]') || 
-                         document.querySelector('.send-button') ||
-                         editorElement.parentElement.querySelector('button');
+        // Look for the send button using the new selectors
+        const sendButton = document.querySelector('div[role="button"].f6d670.bcc55ca1') || 
+                         document.querySelector('div[role="button"].f6d670');
         
         if (!sendButton) {
           logger.error('DeepSeek send button not found');
           return false;
         }
         
-        // Click the send button
-        sendButton.click();
-        logger.info('Text submitted to DeepSeek successfully');
+        // Check if button is disabled
+        const isDisabled = sendButton.getAttribute('aria-disabled') === 'true';
+        
+        if (isDisabled) {
+          logger.warn('Send button is currently disabled');
+          // Try enabling the button by triggering another input event
+          editorElement.dispatchEvent(inputEvent);
+          
+          // Wait a bit more and try again
+          setTimeout(() => {
+            const updatedButton = document.querySelector('div[role="button"].f6d670.bcc55ca1') || 
+                               document.querySelector('div[role="button"].f6d670');
+                               
+            if (updatedButton && updatedButton.getAttribute('aria-disabled') !== 'true') {
+              updatedButton.click();
+              logger.info('Text submitted to DeepSeek successfully after enabling button');
+            } else {
+              logger.error('Send button remained disabled after retry');
+            }
+          }, 300);
+        } else {
+          // Click the send button if it's not disabled
+          sendButton.click();
+          logger.info('Text submitted to DeepSeek successfully');
+        }
       }, 500);
       
       return true;
@@ -67,8 +89,8 @@
    */
   function isLoggedIn() {
     // Look for elements that indicate the user is logged in
-    const textareaElement = document.querySelector('textarea.resize-none');
-    const loginElements = document.querySelectorAll('button[type="button"]');
+    const textareaElement = document.querySelector('#chat-input') || 
+                           document.querySelector('.c92459f0');
     
     // If textareaElement exists, user is likely logged in
     if (textareaElement) {
@@ -76,6 +98,7 @@
     }
     
     // Check for login buttons
+    const loginElements = document.querySelectorAll('button[type="button"]');
     for (const button of loginElements) {
       const buttonText = button.textContent.toLowerCase();
       if (buttonText.includes('login') || buttonText.includes('sign in')) {
@@ -239,7 +262,8 @@
 
   const observer = new MutationObserver(() => {
     // Check if textarea exists, which indicates the interface is ready
-    const textareaElement = document.querySelector('textarea.resize-none');
+    const textareaElement = document.querySelector('#chat-input') || 
+                           document.querySelector('.c92459f0');
     
     if (textareaElement && !processingStarted) {
       logger.info('DeepSeek interface ready, starting processing');
