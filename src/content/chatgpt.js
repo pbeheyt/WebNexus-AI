@@ -95,25 +95,6 @@
       return false;
     }
   }
-  
-  /**
-   * Check if the user is logged in to ChatGPT
-   * @returns {boolean} Whether the user is logged in
-   */
-  function isLoggedIn() {
-    // Look for elements that indicate the user is logged in
-    const conversationElements = document.querySelector('[data-testid="conversation-turn"]');
-    const chatInputElement = document.querySelector('#prompt-textarea.ProseMirror');
-    const loginButtonElement = document.querySelector('button[data-testid="login-button"]');
-    
-    // If login button is present, user is not logged in
-    if (loginButtonElement) {
-      return false;
-    }
-    
-    // If conversation elements or chat input is present, user is likely logged in
-    return !!(conversationElements || chatInputElement);
-  }
 
   /**
    * Format YouTube video data
@@ -223,16 +204,6 @@
     try {
       logger.info('Starting to process extracted content for ChatGPT');
       
-      // Check if user is logged in
-      if (!isLoggedIn()) {
-        logger.error('User is not logged in to ChatGPT');
-        chrome.runtime.sendMessage({
-          action: 'notifyError',
-          error: 'Not logged in to ChatGPT. Please log in and try again.'
-        });
-        return;
-      }
-      
       // Get data from storage
       chrome.storage.local.get(['prePrompt', 'extractedContent'], result => {
         logger.info('Retrieved data from storage', {
@@ -316,26 +287,10 @@
     logger.info('Initializing ChatGPT content script');
     
     if (document.readyState === 'complete') {
-      if (isLoggedIn()) {
-        observer.observe(document.body, observerConfig);
-      } else {
-        logger.error('User is not logged in to ChatGPT');
-        chrome.runtime.sendMessage({
-          action: 'notifyError',
-          error: 'Not logged in to ChatGPT. Please log in and try again.'
-        });
-      }
+      observer.observe(document.body, observerConfig);
     } else {
       window.addEventListener('load', () => {
-        if (isLoggedIn()) {
-          observer.observe(document.body, observerConfig);
-        } else {
-          logger.error('User is not logged in to ChatGPT');
-          chrome.runtime.sendMessage({
-            action: 'notifyError',
-            error: 'Not logged in to ChatGPT. Please log in and try again.'
-          });
-        }
+        observer.observe(document.body, observerConfig);
       });
     }
   };

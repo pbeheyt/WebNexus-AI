@@ -82,33 +82,6 @@
       return false;
     }
   }
-  
-  /**
-   * Check if the user is logged in to DeepSeek
-   * @returns {boolean} Whether the user is logged in
-   */
-  function isLoggedIn() {
-    // Look for elements that indicate the user is logged in
-    const textareaElement = document.querySelector('#chat-input') || 
-                           document.querySelector('.c92459f0');
-    
-    // If textareaElement exists, user is likely logged in
-    if (textareaElement) {
-      return true;
-    }
-    
-    // Check for login buttons
-    const loginElements = document.querySelectorAll('button[type="button"]');
-    for (const button of loginElements) {
-      const buttonText = button.textContent.toLowerCase();
-      if (buttonText.includes('login') || buttonText.includes('sign in')) {
-        return false;
-      }
-    }
-    
-    // Default to assuming logged in if no clear indicators otherwise
-    return true;
-  }
 
   /**
    * Format YouTube video data
@@ -217,16 +190,6 @@
   const handleProcess = async () => {
     try {
       logger.info('Starting to process extracted content for DeepSeek');
-      
-      // Check if user is logged in
-      if (!isLoggedIn()) {
-        logger.error('User is not logged in to DeepSeek');
-        chrome.runtime.sendMessage({
-          action: 'notifyError',
-          error: 'Not logged in to DeepSeek. Please log in and try again.'
-        });
-        return;
-      }
       
       // Get data from storage
       chrome.storage.local.get(['prePrompt', 'extractedContent'], result => {
