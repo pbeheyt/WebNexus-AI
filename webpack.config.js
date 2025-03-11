@@ -3,9 +3,9 @@ const path = require('path');
 module.exports = {
   entry: {
     background: './src/background.js',
-    'youtube-content': './src/content/youtube.js',
-    'reddit-content': './src/content/reddit.js',
-    'general-content': './src/content/general.js',
+    'youtube-content': './src/content/youtube-content.js',
+    'reddit-content': './src/content/reddit-content.js',
+    'general-content': './src/content/general-content.js',
     'claude-content': './src/content/claude.js',
     'chatgpt-content': './src/content/chatgpt.js',
     'deepseek-content': './src/content/deepseek.js',
