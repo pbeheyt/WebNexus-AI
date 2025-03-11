@@ -301,6 +301,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Get the selected prompt ID
       const selectedPromptId = promptType.value;
       
+      // Find the selected platform
+      const selectedPlatformRadio = document.querySelector('input[name="platform"]:checked');
+      const platformId = selectedPlatformRadio ? selectedPlatformRadio.value : null;
+      
+      if (!platformId) {
+        console.warn('No platform selected, will use default');
+      }
+      
       // Get the actual prompt content
       const promptContent = await getPromptContentById(selectedPromptId, type);
       
@@ -314,23 +322,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       await chrome.storage.local.set({ 
         contentReady: false,
         extractedContent: null,
-        claudeTabId: null,
+        aiPlatformTabId: null,
         scriptInjected: false,
         promptContent: promptContent
       });
       
       // Extract content and open Claude
-      statusMessage.textContent = 'Processing content...';
+      statusMessage.textContent = `Processing content with ${platformId || 'default platform'}...`;
       
       chrome.runtime.sendMessage({
         action: 'summarizeContent',
         tabId: tabId,
         contentType: type,
         promptId: selectedPromptId,
+        platformId: platformId,
         url: url
       }, response => {
         if (response && response.success) {
-          statusMessage.textContent = 'Opening Claude...';
+          const platformName = platformId 
+            ? document.querySelector(`label[for="platform-${platformId}"]`)?.textContent || platformId
+            : 'AI platform';
+          statusMessage.textContent = `Opening ${platformName}...`;
         } else {
           statusMessage.textContent = `Error: ${response?.error || 'Unknown error'}`;
           summarizeBtn.disabled = false;
@@ -345,7 +357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       summarizeBtn.disabled = false;
     }
   }
-  
+
   /**
    * Handle settings button click - Opens settings page
    */
@@ -361,6 +373,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   
+  // Load and populate AI platform options
+  async function populatePlatformOptions() {
+    try {
+      // Get platform configurations from config.json
+      const response = await fetch(chrome.runtime.getURL('config.json'));
+      const config = await response.json();
+      
+      if (!config.aiPlatforms) {
+        throw new Error('AI platforms configuration not found');
+      }
+      
+      // Get preferred platform from storage
+      const PLATFORM_STORAGE_KEY = 'preferred_ai_platform';
+      const result = await chrome.storage.sync.get(PLATFORM_STORAGE_KEY);
+      const preferredPlatform = result[PLATFORM_STORAGE_KEY] || config.defaultAiPlatform || 'claude';
+      
+      // Get platform options container
+      const platformOptions = document.getElementById('platformOptions');
+      if (!platformOptions) {
+        throw new Error('Platform options container not found');
+      }
+      
+      // Clear existing options
+      platformOptions.innerHTML = '';
+      
+      // Add each platform
+      Object.entries(config.aiPlatforms).forEach(([id, platform]) => {
+        const option = document.createElement('div');
+        option.className = `platform-option ${id === preferredPlatform ? 'selected' : ''}`;
+        option.dataset.platform = id;
+        
+        const iconUrl = chrome.runtime.getURL(platform.icon);
+        
+        option.innerHTML = `
+          <input type="radio" name="platform" value="${id}" id="platform-${id}" 
+            ${id === preferredPlatform ? 'checked' : ''}>
+          <img src="${iconUrl}" class="platform-icon" alt="${platform.name}">
+          <label for="platform-${id}">${platform.name}</label>
+        `;
+        
+        // Add event listener for platform selection
+        option.addEventListener('click', () => {
+          // Update UI
+          document.querySelectorAll('.platform-option').forEach(el => {
+            el.classList.remove('selected');
+          });
+          option.classList.add('selected');
+          
+          // Select radio button
+          const radio = option.querySelector('input[type="radio"]');
+          radio.checked = true;
+          
+          // Save preference
+          chrome.storage.sync.set({
+            [PLATFORM_STORAGE_KEY]: id
+          });
+          
+          statusMessage.textContent = `Platform set to ${platform.name}`;
+        });
+        
+        platformOptions.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error loading platform options:', error);
+      statusMessage.textContent = `Error loading platforms: ${error.message}`;
+    }
+  }
+
+  // Call the function to populate platform options
+  await populatePlatformOptions();
+
   // Initialize popup
   async function initializePopup() {
     try {

@@ -7,6 +7,8 @@ module.exports = {
     'reddit-content': './src/content/reddit.js',
     'general-content': './src/content/general.js',
     'claude-content': './src/content/claude.js',
+    'chatgpt-content': './src/content/chatgpt.js',
+    'deepseek-content': './src/content/deepseek.js',
     popup: './src/popup.js',
     settings: './src/settings.js'
   },

@@ -1,8 +1,5 @@
-// src/background.js 
-/**
- * Background Service Worker
- * Handles context menus, tab management, and content script injection
- */
+// src/background.js
+// FIXED VERSION - Removed document references
 
 // Import logger utility
 const logger = require('./utils/logger');
@@ -14,7 +11,14 @@ const CONTENT_TYPES = {
   YOUTUBE: 'youtube'
 };
 
+const AI_PLATFORMS = {
+  CLAUDE: 'claude',
+  CHATGPT: 'chatgpt',
+  DEEPSEEK: 'deepseek'
+};
+
 const STORAGE_KEY = 'custom_prompts_by_type';
+const PLATFORM_STORAGE_KEY = 'preferred_ai_platform';
 
 /**
  * Determine content type based on URL
@@ -26,6 +30,75 @@ function getContentTypeForUrl(url) {
     return CONTENT_TYPES.REDDIT;
   } else {
     return CONTENT_TYPES.GENERAL;
+  }
+}
+
+/**
+ * Get platform configuration from config.json
+ */
+async function getPlatformConfig(platformId) {
+  try {
+    logger.background.info(`Getting config for platform: ${platformId}`);
+    const response = await fetch(chrome.runtime.getURL('config.json'));
+    const config = await response.json();
+    
+    if (config.aiPlatforms && config.aiPlatforms[platformId]) {
+      return config.aiPlatforms[platformId];
+    } else {
+      logger.background.error(`Platform config not found for: ${platformId}`);
+      return null;
+    }
+  } catch (error) {
+    logger.background.error(`Error loading platform config for ${platformId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get preferred AI platform or default
+ */
+async function getPreferredAiPlatform() {
+  try {
+    logger.background.info('Getting preferred AI platform');
+    const result = await chrome.storage.sync.get(PLATFORM_STORAGE_KEY);
+    
+    if (result[PLATFORM_STORAGE_KEY]) {
+      logger.background.info(`Found preferred platform: ${result[PLATFORM_STORAGE_KEY]}`);
+      return result[PLATFORM_STORAGE_KEY];
+    }
+    
+    // Check config for default platform
+    const configResponse = await fetch(chrome.runtime.getURL('config.json'));
+    const config = await configResponse.json();
+    
+    if (config.defaultAiPlatform) {
+      logger.background.info(`Using default platform from config: ${config.defaultAiPlatform}`);
+      return config.defaultAiPlatform;
+    }
+    
+    // Fallback to Claude
+    logger.background.info('No preferred platform found, using Claude as default');
+    return AI_PLATFORMS.CLAUDE;
+  } catch (error) {
+    logger.background.error('Error getting preferred AI platform:', error);
+    return AI_PLATFORMS.CLAUDE; // Fallback to Claude
+  }
+}
+
+/**
+ * Get content script file for platform
+ */
+function getPlatformContentScript(platformId) {
+  switch (platformId) {
+    case AI_PLATFORMS.CLAUDE:
+      return 'dist/claude-content.bundle.js';
+    case AI_PLATFORMS.CHATGPT:
+      return 'dist/chatgpt-content.bundle.js';
+    case AI_PLATFORMS.DEEPSEEK:
+      return 'dist/deepseek-content.bundle.js';
+    default:
+      logger.background.warn(`Unknown platform: ${platformId}, defaulting to Claude`);
+      return 'dist/claude-content.bundle.js';
   }
 }
 
@@ -153,13 +226,18 @@ async function getPromptContentById(promptId, contentType) {
 }
 
 /**
- * Open Claude with extracted content
+ * Open AI platform with extracted content
  */
-async function openClaudeWithContent(contentType, promptId = null) {
+async function openAiPlatformWithContent(contentType, promptId = null, platformId = null) {
   try {
     // If no promptId provided, use the preferred prompt for this content type
     if (!promptId) {
       promptId = await getPreferredPromptId(contentType);
+    }
+    
+    // If no platformId provided, use the preferred platform
+    if (!platformId) {
+      platformId = await getPreferredAiPlatform();
     }
     
     // Get prompt content
@@ -169,31 +247,39 @@ async function openClaudeWithContent(contentType, promptId = null) {
       throw new Error(`Could not load prompt content for ID: ${promptId}`);
     }
     
-    // Open Claude in a new tab
-    const claudeUrl = 'https://claude.ai/new';
-    logger.background.info(`Opening Claude at URL: ${claudeUrl}`);
-    const newTab = await chrome.tabs.create({ url: claudeUrl });
+    // Get platform config
+    const platformConfig = await getPlatformConfig(platformId);
     
-    if (!newTab || !newTab.id) {
-      throw new Error('Failed to create Claude tab or get tab ID');
+    if (!platformConfig) {
+      throw new Error(`Could not load config for platform: ${platformId}`);
     }
     
-    logger.background.info(`Claude tab created with ID: ${newTab.id}`);
+    // Open platform in a new tab
+    const platformUrl = platformConfig.url;
+    logger.background.info(`Opening ${platformConfig.name} at URL: ${platformUrl}`);
+    const newTab = await chrome.tabs.create({ url: platformUrl });
     
-    // Save tab ID and prompt for later
+    if (!newTab || !newTab.id) {
+      throw new Error(`Failed to create ${platformConfig.name} tab or get tab ID`);
+    }
+    
+    logger.background.info(`${platformConfig.name} tab created with ID: ${newTab.id}`);
+    
+    // Save tab ID, platform, and prompt for later
     await chrome.storage.local.set({
-      claudeTabId: newTab.id,
+      aiPlatformTabId: newTab.id,
+      aiPlatform: platformId,
       scriptInjected: false,
       prePrompt: promptContent
     });
     
     // Verify the data was stored correctly
-    const verifyData = await chrome.storage.local.get(['claudeTabId', 'scriptInjected']);
-    logger.background.info(`Storage verification: claudeTabId=${verifyData.claudeTabId}, scriptInjected=${verifyData.scriptInjected}`);
+    const verifyData = await chrome.storage.local.get(['aiPlatformTabId', 'aiPlatform', 'scriptInjected']);
+    logger.background.info(`Storage verification: aiPlatformTabId=${verifyData.aiPlatformTabId}, aiPlatform=${verifyData.aiPlatform}, scriptInjected=${verifyData.scriptInjected}`);
     
     return newTab.id;
   } catch (error) {
-    logger.background.error('Error opening Claude:', error);
+    logger.background.error('Error opening AI platform:', error);
     return null;
   }
 }
@@ -208,7 +294,7 @@ async function handleContextMenuClick(info, tab) {
   await chrome.storage.local.set({ 
     contentReady: false,
     extractedContent: null,
-    claudeTabId: null,
+    aiPlatformTabId: null,
     scriptInjected: false
   });
   logger.background.info('Cleared previous extracted content and tab state');
@@ -216,9 +302,9 @@ async function handleContextMenuClick(info, tab) {
   // Extract content
   await extractContent(tab.id, tab.url);
   
-  // Open Claude
+  // Open AI platform
   const contentType = getContentTypeForUrl(tab.url);
-  await openClaudeWithContent(contentType);
+  await openAiPlatformWithContent(contentType);
 }
 
 /**
@@ -230,13 +316,13 @@ async function initialize() {
   // Create context menus
   chrome.contextMenus.create({
     id: 'summarizeContent',
-    title: 'Summarize with Claude',
+    title: 'Summarize with AI',
     contexts: ['page']
   });
   
   chrome.contextMenus.create({
     id: 'summarizeSelection',
-    title: 'Summarize Selection with Claude',
+    title: 'Summarize Selection with AI',
     contexts: ['selection']
   });
   logger.background.info('Context menus created');
@@ -244,67 +330,61 @@ async function initialize() {
   // Reset state
   await chrome.storage.local.set({ 
     scriptInjected: false,
-    claudeTabId: null
+    aiPlatformTabId: null
   });
   logger.background.info('Initial state reset complete');
 }
 
-// Tab update listener for Claude integration
+// Tab update listener for AI platform integration
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url && tab.url.includes('claude.ai')) {
-    logger.background.info(`Claude tab detected and loaded: ${tabId}`, { 
-      url: tab.url, 
-      changeInfo 
-    });
+  if (changeInfo.status !== 'complete' || !tab.url) {
+    return;
+  }
+  
+  try {
+    const storageData = await chrome.storage.local.get(['aiPlatformTabId', 'aiPlatform', 'scriptInjected']);
+    const { aiPlatformTabId, aiPlatform, scriptInjected } = storageData;
     
-    try {
-      const storageData = await chrome.storage.local.get(['claudeTabId', 'scriptInjected']);
-      const { claudeTabId, scriptInjected } = storageData;
-      
-      logger.background.info('Claude tab check', { 
-        detectedTabId: tabId,
-        expectedClaudeTabId: claudeTabId,
-        scriptAlreadyInjected: scriptInjected
-      });
-      
-      // If claudeTabId is undefined but this is claude.ai, we might want to handle it anyway
-      if (tabId === claudeTabId && !scriptInjected) {
-        logger.background.info(`Injecting Claude content script into tab: ${tabId}`);
-        await injectContentScript(tabId, 'dist/claude-content.bundle.js');
-        
-        logger.background.info(`Setting scriptInjected flag to true for tab: ${tabId}`);
-        await chrome.storage.local.set({ scriptInjected: true });
-        
-        // Let's also retrieve the extracted content to verify it's available
-        const { extractedContent } = await chrome.storage.local.get('extractedContent');
-        logger.background.info('Content available for Claude:', { 
-          hasContent: !!extractedContent,
-          contentType: extractedContent?.contentType
-        });
-      } else if (tabId === claudeTabId && scriptInjected) {
-        logger.background.info(`Claude script already injected for tab: ${tabId}`);
-      } else if (tab.url.includes('claude.ai')) {
-        // This is a Claude tab but not our expected tab or claudeTabId is undefined
-        // Let's check if we have content ready but no tab ID set
-        const { contentReady, extractedContent } = await chrome.storage.local.get(['contentReady', 'extractedContent']);
-        
-        if (contentReady && extractedContent && !claudeTabId) {
-          logger.background.info(`Found content ready but no Claude tab ID. Adopting this tab: ${tabId}`);
-          
-          // Adopt this tab as our Claude tab
-          await chrome.storage.local.set({ claudeTabId: tabId });
-          
-          // Inject the script since this is now our Claude tab
-          logger.background.info(`Injecting Claude content script into adopted tab: ${tabId}`);
-          await injectContentScript(tabId, 'dist/claude-content.bundle.js');
-          await chrome.storage.local.set({ scriptInjected: true });
-        } else {
-          logger.background.info(`Tab is Claude but not our expected Claude tab ID and no content ready. Current: ${tabId}, Expected: ${claudeTabId}`);
-        }
-      }
-    } catch (error) {
-      logger.background.error(`Error handling Claude tab update for tab ${tabId}:`, error);
+    // Check if this is our AI platform tab
+    if (tabId !== aiPlatformTabId || scriptInjected) {
+      return;
     }
+    
+    // Determine which platform we're dealing with
+    let isPlatformTab = false;
+    
+    if (aiPlatform === AI_PLATFORMS.CLAUDE && tab.url.includes('claude.ai')) {
+      isPlatformTab = true;
+    } else if (aiPlatform === AI_PLATFORMS.CHATGPT && tab.url.includes('chat.openai.com')) {
+      isPlatformTab = true;
+    } else if (aiPlatform === AI_PLATFORMS.DEEPSEEK && tab.url.includes('chat.deepseek.com')) {
+      isPlatformTab = true;
+    }
+    
+    if (!isPlatformTab) {
+      return;
+    }
+    
+    logger.background.info(`${aiPlatform} tab detected and loaded: ${tabId}`, { url: tab.url });
+    
+    // Get the appropriate content script
+    const contentScript = getPlatformContentScript(aiPlatform);
+    
+    // Inject content script
+    logger.background.info(`Injecting ${aiPlatform} content script into tab: ${tabId}`);
+    await injectContentScript(tabId, contentScript);
+    
+    logger.background.info(`Setting scriptInjected flag to true for tab: ${tabId}`);
+    await chrome.storage.local.set({ scriptInjected: true });
+    
+    // Retrieve the extracted content to verify it's available
+    const { extractedContent } = await chrome.storage.local.get('extractedContent');
+    logger.background.info('Content available for AI platform:', { 
+      hasContent: !!extractedContent,
+      contentType: extractedContent?.contentType
+    });
+  } catch (error) {
+    logger.background.error(`Error handling tab update for tab ${tabId}:`, error);
   }
 });
 
@@ -317,7 +397,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   await initialize();
 });
 
-// Message listener for handling requests from popup
+// Message listener for handling requests from popup and content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   logger.background.info('Message received in background', { 
     message, 
@@ -329,25 +409,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   
+  // Handler for error notifications from content scripts
+  if (message.action === 'notifyError') {
+    logger.background.error('Error from content script:', message.error);
+    // We could show a notification here or handle in some other way
+    return true;
+  }
+  
   // Handler for summarize requests from popup
   if (message.action === 'summarizeContent') {
     (async () => {
       try {
-        const { tabId, contentType, promptId } = message;
-        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}`);
+        const { tabId, contentType, promptId, platformId, url } = message;
+        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}`);
         
         // Extract content first
-        await extractContent(tabId, message.url);
+        await extractContent(tabId, url);
         
         // Give time for content extraction to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Then open Claude with the content
-        const claudeTabId = await openClaudeWithContent(contentType, promptId);
+        // Then open AI platform with the content
+        const aiPlatformTabId = await openAiPlatformWithContent(contentType, promptId, platformId);
         
         sendResponse({ 
           success: true, 
-          claudeTabId
+          aiPlatformTabId
         });
       } catch (error) {
         logger.background.error('Error handling summarize content request:', error);

@@ -24,7 +24,7 @@
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      width: 300px;
+      width: 320px;
       max-width: 95vw;
     }
 
@@ -100,6 +100,54 @@
       border-color: #4285f4;
     }
 
+    .platform-selection {
+      margin-bottom: 15px;
+    }
+
+    .platform-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .platform-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .platform-option {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      background: #f9f9f9;
+      transition: all 0.2s;
+    }
+
+    .platform-option:hover {
+      background: #f0f0f0;
+    }
+
+    .platform-option.selected {
+      background: #e8f0fe;
+      border-color: #4285f4;
+    }
+
+    .platform-option input {
+      margin-right: 8px;
+    }
+
+    .platform-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 6px;
+      object-fit: contain;
+    }
+
     button {
       background: #4285f4;
       color: white;
@@ -144,6 +192,13 @@
     
     <div id="contentTypeDisplay" class="content-type">Detecting page type...</div>
     
+    <div class="platform-selection">
+      <label class="platform-label">Choose AI Platform:</label>
+      <div class="platform-options" id="platformOptions">
+        <!-- Platform options will be added here dynamically -->
+      </div>
+    </div>
+    
     <div class="prompt-select-container">
       <label for="promptType" class="prompt-select-label">Summary Type:</label>
       <select id="promptType" class="prompt-select">
@@ -153,7 +208,7 @@
       </select>
     </div>
     
-    <button type="button" id="summarizeBtn">Summarize with Claude</button>
+    <button type="button" id="summarizeBtn">Summarize Content</button>
     
     <div id="statusMessage" class="status-message">Detecting page content...</div>
   </div>
