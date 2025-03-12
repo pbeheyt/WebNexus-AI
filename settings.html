@@ -89,10 +89,26 @@
 
     .tab-content {
       display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      position: absolute;
+      width: 100%;
+      left: 0;
+      pointer-events: none;
     }
 
     .tab-content.active {
       display: block;
+      opacity: 1;
+      transform: translateY(0);
+      position: relative;
+      pointer-events: auto;
+    }
+
+    .tabs-container {
+      position: relative;
+      min-height: 400px; /* Set a minimum height to prevent layout shifts */
     }
 
     .prompt-list {
@@ -428,7 +444,7 @@
     <div id="notification" class="notification"></div>
 
     <!-- Prompts Tab -->
-    <div id="all-prompts" class="tab-content active">
+    <div id="all-prompts" class="tab-content active" data-type="general">
       <div class="prompt-list" id="promptList">
         <!-- Prompts will be displayed here -->
         <div class="empty-state">

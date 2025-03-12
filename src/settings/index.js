@@ -14,6 +14,7 @@ import MainController from './controllers/MainController.js';
 
 // Initialize the settings page
 document.addEventListener('DOMContentLoaded', () => {
+  
   // Create event bus
   const eventBus = new EventBus();
   
@@ -77,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Start the application
   mainController.initialize().catch(error => {
-    console.error('Application initialization error:', error);
+    console.error('🔥 Application initialization error:', error);
     notificationManager.error(`Failed to initialize application: ${error.message}`);
   });
 });

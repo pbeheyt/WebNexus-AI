@@ -1,6 +1,4 @@
-import { CONTENT_TYPES } from '../utils/constants.js';
-
-// Main application controller
+// Main application controller with optimized tab content management
 export default class MainController {
   constructor(
     tabManager,
@@ -20,6 +18,7 @@ export default class MainController {
     this.contentTypeService = contentTypeService;
     this.notificationManager = notificationManager;
     this.eventBus = eventBus;
+    this.initializedTabs = new Set();
     
     // Subscribe to tab changes
     this.eventBus.subscribe('tab:changed', (contentType) => {
@@ -29,30 +28,33 @@ export default class MainController {
 
   async initialize() {
     try {
-      // Initialize tab manager
-      this.tabManager.initialize();
-      
-      // Check for and migrate legacy data
+      // Check for and migrate legacy data first
       await this.promptService.migrateFromLegacyFormat();
       
-      // Initialize components for default tab
-      this.handleTabChange(CONTENT_TYPES.GENERAL);
+      // Initialize tab manager - this will trigger tab:changed event
+      this.tabManager.initialize();
       
       // Set up back button
       document.getElementById('backBtn')?.addEventListener('click', () => {
         window.close();
       });
     } catch (error) {
-      console.error('Initialization error:', error);
       this.notificationManager.error(`Error initializing settings: ${error.message}`);
     }
   }
 
   handleTabChange(contentType) {
+    // Don't reinitialize tabs that have already been set up
+    if (this.initializedTabs.has(contentType)) {
+      return;
+    }
+    
     // Get tab content container
     const tabContent = this.tabManager.getTabContent(contentType);
     
-    if (!tabContent) return;
+    if (!tabContent) {
+      return;
+    }
     
     // Clear tab content
     tabContent.innerHTML = '';
@@ -85,5 +87,8 @@ export default class MainController {
     this.settingsForm.initialize(settingsContainer, contentType);
     this.promptList.initialize(promptsContainer, contentType);
     this.promptForm.initialize(formContainer, contentType);
+    
+    // Mark this tab as initialized
+    this.initializedTabs.add(contentType);
   }
 }

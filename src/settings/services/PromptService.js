@@ -29,6 +29,7 @@ export default class PromptService {
     
     // Collect all prompts for this type
     const result = [];
+    const addedIds = new Set(); // Track added IDs to prevent duplicates
     
     // Add default prompt
     if (defaultPrompts[contentType]) {
@@ -41,17 +42,22 @@ export default class PromptService {
         isDefault: true,
         isPreferred: preferredPromptId === contentType
       });
+      addedIds.add(contentType); // Mark this ID as added
     }
     
     // Add custom prompts
     if (customPromptsByType[contentType]?.prompts) {
       Object.entries(customPromptsByType[contentType].prompts).forEach(([id, prompt]) => {
+        // Skip if this ID has already been added (prevents duplicates)
+        if (addedIds.has(id)) return;
+        
         result.push({
           id,
           prompt,
           isDefault: false,
           isPreferred: id === preferredPromptId
         });
+        addedIds.add(id);
       });
     }
     
@@ -190,8 +196,6 @@ export default class PromptService {
         return null; // No legacy data
       }
       
-      console.log('Migrating from legacy data structure');
-      
       const migratedData = this.initializeEmptyPromptStructure();
       
       // Process each legacy prompt
@@ -219,11 +223,8 @@ export default class PromptService {
       // Optionally remove old data
       await this.storageService.remove('custom_prompts');
       
-      console.log('Migration completed successfully');
-      
       return migratedData;
     } catch (error) {
-      console.error('Migration error:', error);
       return null;
     }
   }

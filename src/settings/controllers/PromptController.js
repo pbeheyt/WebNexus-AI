@@ -1,4 +1,4 @@
-// Controller for prompt operations
+// src/settings/controllers/PromptController.js
 export default class PromptController {
   constructor(promptService, notificationManager) {
     this.promptService = promptService;
@@ -9,18 +9,17 @@ export default class PromptController {
     try {
       return await this.promptService.getPromptsByType(contentType);
     } catch (error) {
-      console.error('Error getting prompts:', error);
+      console.error('Error getting prompts by type:', error);
       this.notificationManager.error(`Error loading prompts: ${error.message}`);
       throw error;
     }
   }
 
+  // Add similar delegating methods for other prompt operations
   async createPrompt(name, content, contentType) {
     try {
-      const prompt = await this.promptService.createPrompt(name, content, contentType);
-      return prompt;
+      return await this.promptService.createPrompt(name, content, contentType);
     } catch (error) {
-      console.error('Error creating prompt:', error);
       this.notificationManager.error(`Error creating prompt: ${error.message}`);
       throw error;
     }
@@ -28,10 +27,8 @@ export default class PromptController {
 
   async updatePrompt(id, promptData) {
     try {
-      const prompt = await this.promptService.updatePrompt(id, promptData);
-      return prompt;
+      return await this.promptService.updatePrompt(id, promptData);
     } catch (error) {
-      console.error('Error updating prompt:', error);
       this.notificationManager.error(`Error updating prompt: ${error.message}`);
       throw error;
     }
@@ -39,10 +36,8 @@ export default class PromptController {
 
   async deletePrompt(id, contentType) {
     try {
-      const result = await this.promptService.deletePrompt(id, contentType);
-      return result;
+      return await this.promptService.deletePrompt(id, contentType);
     } catch (error) {
-      console.error('Error deleting prompt:', error);
       this.notificationManager.error(`Error deleting prompt: ${error.message}`);
       throw error;
     }
@@ -50,10 +45,8 @@ export default class PromptController {
 
   async setPreferredPrompt(id, contentType) {
     try {
-      const result = await this.promptService.setPreferredPrompt(id, contentType);
-      return result;
+      return await this.promptService.setPreferredPrompt(id, contentType);
     } catch (error) {
-      console.error('Error setting preferred prompt:', error);
       this.notificationManager.error(`Error setting preferred prompt: ${error.message}`);
       throw error;
     }

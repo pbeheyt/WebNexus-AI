@@ -1,6 +1,6 @@
+// src/settings/ui/TabManager.js
 import { CONTENT_TYPES, CONTENT_TYPE_LABELS } from '../utils/constants.js';
 
-// Manages tab navigation and content
 export default class TabManager {
   constructor(tabButtonContainer, tabContentContainer, eventBus) {
     this.tabButtonContainer = tabButtonContainer;
@@ -8,10 +8,20 @@ export default class TabManager {
     this.eventBus = eventBus;
     this.tabButtons = new Map();
     this.tabContents = new Map();
-    this.activeContentType = CONTENT_TYPES.GENERAL;
+    this.activeContentType = null;
+    this.isInitialized = false;
   }
 
   initialize() {
+    if (!this.tabButtonContainer || !this.tabContentContainer) {
+      return;
+    }
+    
+    // Don't re-initialize if already done
+    if (this.isInitialized) {
+      return;
+    }
+    
     // Clear existing tabs
     this.tabButtonContainer.innerHTML = '';
     
@@ -32,6 +42,56 @@ export default class TabManager {
       this.tabButtonContainer.appendChild(typeBtn);
     });
     
+    // Wrap tabContentContainer in a tabs-container div if not already
+    if (!this.tabContentContainer.parentElement.classList.contains('tabs-container')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'tabs-container';
+      this.tabContentContainer.parentNode.insertBefore(wrapper, this.tabContentContainer);
+      wrapper.appendChild(this.tabContentContainer);
+    }
+    
+    // Handle the case where tabContentContainer itself is a tab-content element
+    if (this.tabContentContainer.classList.contains('tab-content')) {
+      // Use the container itself as a tab content
+      const type = this.tabContentContainer.dataset.type;
+      if (type) {
+        this.tabContents.set(type, this.tabContentContainer);
+        
+        // Create content containers for other types
+        Object.values(CONTENT_TYPES).forEach(contentType => {
+          if (contentType !== type) {
+            const tabContent = document.createElement('div');
+            tabContent.id = `tab-content-${contentType}`;
+            tabContent.className = 'tab-content';
+            tabContent.dataset.type = contentType;
+            
+            // Store reference
+            this.tabContents.set(contentType, tabContent);
+            
+            // Add to DOM - after the existing tab content
+            this.tabContentContainer.parentNode.insertBefore(
+              tabContent, 
+              this.tabContentContainer.nextSibling
+            );
+          }
+        });
+      } else {
+        // Fall back to normal initialization
+        this.initializeTabContents();
+      }
+    } else {
+      // Normal initialization
+      this.initializeTabContents();
+    }
+    
+    // Initialize with first tab and force activation
+    this.switchToTab(CONTENT_TYPES.GENERAL, true); // Force activation
+    
+    // Mark as initialized
+    this.isInitialized = true;
+  }
+
+  initializeTabContents() {
     // Create tab content containers if needed
     if (this.tabContentContainer.children.length === 0) {
       Object.values(CONTENT_TYPES).forEach(type => {
@@ -55,12 +115,14 @@ export default class TabManager {
         }
       });
     }
-    
-    // Initialize with first tab
-    this.switchToTab(CONTENT_TYPES.GENERAL);
   }
 
-  switchToTab(contentType) {
+  switchToTab(contentType, forceActivation = false) {
+    // Don't switch if already on this tab (unless forced)
+    if (!forceActivation && this.activeContentType === contentType) {
+      return;
+    }
+    
     // Update active tab button
     this.tabButtons.forEach((button, type) => {
       if (type === contentType) {
@@ -73,9 +135,26 @@ export default class TabManager {
     // Show active tab content
     this.tabContents.forEach((content, type) => {
       if (type === contentType) {
+        // First make it display:block but still invisible
+        content.style.display = 'block';
+        
+        // Force a reflow to ensure the transition works
+        content.offsetHeight;
+        
+        // Then add active class to trigger the transition
         content.classList.add('active');
       } else {
-        content.classList.remove('active');
+        // If it was active, start the transition out
+        if (content.classList.contains('active')) {
+          content.classList.remove('active');
+          
+          // After transition, hide completely
+          setTimeout(() => {
+            if (!content.classList.contains('active')) {
+              content.style.display = 'none';
+            }
+          }, 250); // Match transition time in CSS
+        }
       }
     });
     
