@@ -1,14 +1,23 @@
 // popup/ui/PromptSelector.js
 export default class PromptSelector {
-  constructor(element, onChange) {
+  constructor(element, onChange, onTypeChange) {
     this.element = element;
     this.onChange = onChange;
+    this.onTypeChange = onTypeChange;
+    this.selectedPromptId = null;
     
     // Set up event listener
     if (this.element) {
       this.element.addEventListener('change', (e) => {
+        this.selectedPromptId = e.target.value;
         if (this.onChange) {
-          this.onChange(e.target.value);
+          this.onChange(this.selectedPromptId);
+        }
+        
+        // Notify about prompt type change (default or custom)
+        if (this.onTypeChange) {
+          const isDefault = this.isSelectedPromptDefault();
+          this.onTypeChange(isDefault);
         }
       });
     }
@@ -16,6 +25,9 @@ export default class PromptSelector {
 
   render(prompts, selectedPromptId) {
     if (!this.element || !prompts?.length) return;
+    
+    // Update selected ID
+    this.selectedPromptId = selectedPromptId;
     
     // Clear existing options
     this.element.innerHTML = '';
@@ -54,7 +66,23 @@ export default class PromptSelector {
     // Set selected option
     if (selectedPromptId) {
       this.element.value = selectedPromptId;
+      
+      // Trigger type change event on initial render
+      if (this.onTypeChange) {
+        const isDefault = this.isSelectedPromptDefault();
+        this.onTypeChange(isDefault);
+      }
     }
+  }
+
+  isSelectedPromptDefault() {
+    if (!this.element || !this.selectedPromptId) return false;
+    
+    const selectedOption = [...this.element.options].find(
+      opt => opt.value === this.selectedPromptId
+    );
+    
+    return selectedOption && selectedOption.text.includes('(Default)');
   }
 
   clear() {

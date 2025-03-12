@@ -179,17 +179,44 @@ async function getPromptContentById(promptId, contentType) {
   // If the promptId is the same as contentType, it's a default prompt
   if (promptId === contentType) {
     try {
+      // Get default prompt template and user preferences
       logger.background.info('Loading default prompt from config');
-      const response = await fetch(chrome.runtime.getURL('config.json'));
-      const config = await response.json();
+      const [config, userPreferences] = await Promise.all([
+        fetch(chrome.runtime.getURL('config.json')).then(r => r.json()),
+        chrome.storage.sync.get('default_prompt_preferences')
+      ]);
       
-      if (config.defaultPrompts && config.defaultPrompts[contentType]) {
-        logger.background.info('Default prompt found in config');
-        return config.defaultPrompts[contentType].content;
-      } else {
+      const promptConfig = config.defaultPrompts && config.defaultPrompts[contentType];
+      
+      if (!promptConfig) {
         logger.background.warn(`No default prompt found for ${contentType}`);
         return null;
       }
+      
+      // Get user preferences for this content type
+      const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
+      const defaultPreferences = promptConfig.defaultPreferences || {};
+      
+      // Merge default preferences with user preferences
+      const preferences = { ...defaultPreferences, ...typePreferences };
+      
+      // Get parameters
+      const parameters = promptConfig.parameters || {};
+      
+      // Build prompt by replacing placeholders
+      let prompt = promptConfig.baseTemplate;
+      
+      // Process each parameter type
+      for (const [paramKey, paramOptions] of Object.entries(parameters)) {
+        const userValue = preferences[paramKey];
+        const replacement = paramOptions[String(userValue)] || '';
+        
+        // Replace in template
+        const placeholder = `{{${paramKey}}}`;
+        prompt = prompt.replace(placeholder, replacement);
+      }
+      
+      return prompt;
     } catch (error) {
       logger.background.error('Error loading default prompt:', error);
       return null;

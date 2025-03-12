@@ -1,12 +1,15 @@
 // popup/index.js
 import StorageService from './services/StorageService.js';
+import ConfigService from './services/ConfigService.js';
 import TabService from './services/TabService.js';
 import ContentService from './services/ContentService.js';
 import PlatformService from './services/PlatformService.js';
+import DefaultPromptPreferencesService from './services/DefaultPromptPreferencesService.js';
 import PromptService from './services/PromptService.js';
 import ContentTypeView from './ui/ContentTypeView.js';
 import PlatformSelector from './ui/PlatformSelector.js';
 import PromptSelector from './ui/PromptSelector.js';
+import DefaultPromptConfigPanel from './ui/DefaultPromptConfigPanel.js';
 import StatusManager from './ui/StatusManager.js';
 import SummarizeController from './controllers/SummarizeController.js';
 import MainController from './controllers/MainController.js';
@@ -20,13 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsBtn = document.getElementById('settingsBtn');
   const platformOptions = document.getElementById('platformOptions');
   const toastElement = document.getElementById('toast');
+  const defaultPromptConfigContainer = document.getElementById('defaultPromptConfig');
   
   // Initialize services
   const storageService = new StorageService();
+  const configService = new ConfigService();
   const tabService = new TabService();
   const contentService = new ContentService(tabService);
   const platformService = new PlatformService(storageService);
-  const promptService = new PromptService(storageService);
+  const defaultPromptPreferencesService = new DefaultPromptPreferencesService(storageService, configService);
+  const promptService = new PromptService(storageService, configService, defaultPromptPreferencesService);
   
   // Initialize UI components
   const contentTypeView = new ContentTypeView(contentTypeDisplay);
@@ -39,7 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const promptSelector = new PromptSelector(
     promptTypeSelect,
-    (promptId) => mainController.handlePromptChange(promptId)
+    (promptId) => mainController.handlePromptChange(promptId),
+    (isDefault) => mainController.handlePromptTypeChange(isDefault)
   );
   
   // Initialize controllers
@@ -54,11 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
     contentService,
     platformService,
     promptService,
+    defaultPromptPreferencesService,
     summarizeController,
     statusManager,
     contentTypeView,
     platformSelector,
-    promptSelector
+    promptSelector,
+    DefaultPromptConfigPanel
   );
   
   // Set up event listeners

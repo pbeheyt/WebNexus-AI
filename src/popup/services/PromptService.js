@@ -2,8 +2,10 @@
 import { STORAGE_KEYS } from '../constants.js';
 
 export default class PromptService {
-  constructor(storageService) {
+  constructor(storageService, configService, defaultPromptPreferencesService) {
     this.storageService = storageService;
+    this.configService = configService;
+    this.defaultPromptPreferencesService = defaultPromptPreferencesService;
   }
 
   async loadPrompts(contentType) {
@@ -12,8 +14,7 @@ export default class PromptService {
       const customPromptsByType = await this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS) || {};
       
       // Load default prompts from config
-      const response = await fetch(chrome.runtime.getURL('config.json'));
-      const config = await response.json();
+      const config = await this.configService.getConfig();
       const defaultPrompts = config.defaultPrompts || {};
       
       // Get preferred prompt ID
@@ -58,9 +59,7 @@ export default class PromptService {
   async getPromptContent(promptId, contentType) {
     // Default prompt (same ID as content type)
     if (promptId === contentType) {
-      const response = await fetch(chrome.runtime.getURL('config.json'));
-      const config = await response.json();
-      return config.defaultPrompts?.[contentType]?.content || null;
+      return this.defaultPromptPreferencesService.buildPrompt(contentType);
     }
     
     // Custom prompt

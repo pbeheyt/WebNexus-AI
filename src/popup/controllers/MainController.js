@@ -5,21 +5,25 @@ export default class MainController {
     contentService,
     platformService,
     promptService,
+    defaultPromptPreferencesService,
     summarizeController,
     statusManager,
     contentTypeView,
     platformSelector,
-    promptSelector
+    promptSelector,
+    defaultPromptConfigPanel
   ) {
     this.tabService = tabService;
     this.contentService = contentService;
     this.platformService = platformService;
     this.promptService = promptService;
+    this.defaultPromptPreferencesService = defaultPromptPreferencesService;
     this.summarizeController = summarizeController;
     this.statusManager = statusManager;
     this.contentTypeView = contentTypeView;
     this.platformSelector = platformSelector;
     this.promptSelector = promptSelector;
+    this.defaultPromptConfigPanel = defaultPromptConfigPanel;
     
     this.state = {
       currentTab: null,
@@ -28,7 +32,8 @@ export default class MainController {
       platforms: [],
       selectedPlatformId: null,
       selectedPromptId: null,
-      isProcessing: false
+      isProcessing: false,
+      isDefaultPrompt: false
     };
   }
 
@@ -63,8 +68,16 @@ export default class MainController {
       const { prompts, preferredPromptId } = await this.promptService.loadPrompts(this.state.contentType);
       this.state.selectedPromptId = preferredPromptId;
       
-      // Render prompt selector
+      // Check if selected prompt is default
+      this.state.isDefaultPrompt = preferredPromptId === this.state.contentType;
+      
+      // Render prompt selector with callback for type changes
       this.promptSelector.render(prompts, preferredPromptId);
+      
+      // Initialize default prompt config panel if needed
+      if (this.state.isDefaultPrompt) {
+        await this.initializeDefaultPromptConfig();
+      }
       
       // Update status
       this.statusManager.updateStatus('Ready to summarize.', false, this.state.isSupported);
@@ -89,6 +102,44 @@ export default class MainController {
 
   async handlePromptChange(promptId) {
     this.state.selectedPromptId = promptId;
+  }
+
+  async handlePromptTypeChange(isDefault) {
+    this.state.isDefaultPrompt = isDefault;
+    
+    // Show or hide default prompt config panel
+    const configPanel = document.getElementById('defaultPromptConfig');
+    if (configPanel) {
+      if (isDefault) {
+        configPanel.classList.remove('hidden');
+        await this.initializeDefaultPromptConfig();
+      } else {
+        configPanel.classList.add('hidden');
+      }
+    }
+  }
+
+  async initializeDefaultPromptConfig() {
+    const configContainer = document.getElementById('defaultPromptConfig');
+    if (!configContainer) return;
+    
+    try {
+      // Create and initialize config panel
+      const configPanel = new this.defaultPromptConfigPanel(
+        this.defaultPromptPreferencesService, 
+        this.state.contentType,
+        async () => {
+          // When preferences change, update status
+          this.statusManager.updateStatus('Default prompt preferences updated');
+        }
+      );
+      
+      await configPanel.initialize(configContainer);
+      configContainer.classList.remove('hidden');
+    } catch (error) {
+      console.error('Error initializing default prompt config:', error);
+      configContainer.classList.add('hidden');
+    }
   }
 
   async handleSummarize() {
