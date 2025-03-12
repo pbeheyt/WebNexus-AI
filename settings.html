@@ -293,6 +293,9 @@
     /* Form styling */
     .form-group {
       margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     label {
@@ -301,6 +304,8 @@
       font-size: 14px;
       font-weight: 500;
       color: var(--text-secondary);
+      margin-right: 15px;
+      min-width: 150px;
     }
 
     input[type="text"], input[type="number"], select, textarea {
@@ -314,6 +319,18 @@
       font-family: 'Inter', sans-serif;
       box-sizing: border-box;
       transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .settings-input {
+      width: 80px !important;
+      padding: 10px;
+      border-radius: 6px;
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      flex: 0 0 auto;
     }
 
     select {
@@ -471,82 +488,18 @@
       gap: 15px;
     }
 
-    .settings-input {
-      width: 100px;
-      padding: 10px;
-      border-radius: 6px;
-      background-color: var(--bg-surface);
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
-      font-size: 14px;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .settings-input:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 1px var(--color-primary);
-    }
-
-    /* Add Prompt Section Styles */
-    .add-prompt-section {
-      margin-top: 20px;
-      background: var(--bg-surface);
-      border-radius: 6px;
-      padding: 16px;
-    }
-    
-    .add-prompt-form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-    
-    .prompt-name-input, .prompt-content-input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      background-color: var(--bg-surface);
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
-      font-size: 14px;
-      font-family: 'Inter', sans-serif;
-      box-sizing: border-box;
-    }
-    
-    .prompt-content-input {
-      min-height: 150px;
-      resize: vertical;
-    }
-    
-    .prompt-name-input:focus, .prompt-content-input:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 1px var(--color-primary);
-    }
-    
-    .add-prompt-form.editing {
-      background-color: rgba(255, 123, 0, 0.05);
-      padding: 15px;
-      border-radius: 6px;
-      border-left: 3px solid var(--color-primary);
-    }
-    
-    .highlighted {
-      background-color: rgba(255, 123, 0, 0.1);
-      transition: background-color 0.5s ease;
+    .help-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 5px;
+      flex-basis: 100%;
+      margin-left: 165px;
     }
 
     .settings-divider {
       margin: 20px 0;
       border: none;
       border-top: 1px solid var(--divider-color);
-    }
-
-    .help-text {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 5px;
     }
 
     .settings-container, .prompts-container, .form-container {
@@ -717,17 +670,7 @@
       <div id="content-configuration" class="tab-content">
         <h2 class="type-heading">Content Extraction Settings</h2>
         
-        <!-- Content Type Accordion Groups -->
-        <div class="content-type-group">
-          <div class="content-type-header">
-            <span>Web Content</span>
-            <span>▼</span>
-          </div>
-          <div class="content-type-content">
-            <div id="general-settings-container"></div>
-          </div>
-        </div>
-        
+        <!-- Content Type Accordion Groups - Web panel removed -->
         <div class="content-type-group">
           <div class="content-type-header">
             <span>Reddit Posts</span>
