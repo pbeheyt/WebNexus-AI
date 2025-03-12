@@ -14,6 +14,52 @@ export default class CustomPromptSelector {
     this.handleSelectChange = null;
   }
 
+  async initializeWithData(contentType, preloadedPrompts, preferredPromptId) {
+    if (!this.element) return;
+    
+    // Clean up previous state
+    this.cleanup();
+    
+    // Set new content type
+    this.contentType = contentType;
+    
+    try {
+      // Use preloaded data
+      this.prompts = preloadedPrompts || [];
+      
+      // Default to preferred prompt if available
+      if (preferredPromptId && !this.selectedPromptId) {
+        this.selectedPromptId = preferredPromptId;
+      }
+      
+      // Handle empty prompts case
+      if (this.prompts.length === 0) {
+        this.renderEmptyState();
+        return;
+      }
+      
+      // Select first prompt if none selected
+      if (!this.selectedPromptId && this.prompts.length > 0) {
+        this.selectedPromptId = this.prompts[0].id;
+      }
+      
+      // Render the dropdown
+      this.renderPromptSelector();
+      
+      // Call onChange with initial selection
+      if (this.onChange && this.selectedPromptId) {
+        this.onChange(this.selectedPromptId);
+      }
+      
+      // Mark as initialized
+      this.initialized = true;
+      
+    } catch (error) {
+      console.error('Error loading custom prompts:', error);
+      this.renderError(error.message);
+    }
+  }
+
   async initialize(contentType) {
     if (!this.element) return;
     

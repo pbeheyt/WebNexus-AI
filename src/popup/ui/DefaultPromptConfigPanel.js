@@ -11,6 +11,21 @@ export default class DefaultPromptConfigPanel {
     this.parameterOptions = {};
   }
 
+  async initializeWithData(container, preloadedPreferences, preloadedParameters) {
+    this.container = container;
+    
+    try {
+      // Use preloaded data instead of fetching
+      this.preferences = preloadedPreferences;
+      this.parameterOptions = preloadedParameters;
+      
+      await this.render();
+    } catch (error) {
+      console.error('Error initializing default prompt config panel:', error);
+      this.showError(error.message);
+    }
+  }
+
   async initialize(container) {
     this.container = container;
     

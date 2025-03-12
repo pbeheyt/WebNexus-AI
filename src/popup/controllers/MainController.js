@@ -27,6 +27,7 @@ export default class MainController {
     this.customPromptSelector = customPromptSelector;
     this.defaultPromptConfigPanel = defaultPromptConfigPanel;
     
+    // Application state
     this.state = {
       currentTab: null,
       contentType: null,
@@ -37,11 +38,20 @@ export default class MainController {
       isProcessing: false,
       isDefaultPromptType: true
     };
+    
+    // Preloaded data repository
+    this.dataRepository = {
+      platforms: null,
+      defaultPrompts: null,
+      customPrompts: null,
+      defaultPromptPreferences: null,
+      defaultPromptParameters: null
+    };
   }
 
   async initialize() {
     try {
-      this.statusManager.updateStatus('Detecting page content...', true);
+      this.statusManager.updateStatus('Loading extension data...', true);
       
       // Get current tab info
       this.state.currentTab = await this.tabService.getCurrentTab();
@@ -58,32 +68,62 @@ export default class MainController {
       // Update content type display
       this.contentTypeView.update(this.state.contentType);
       
-      // Load platforms
-      const { platforms, preferredPlatformId } = await this.platformService.loadPlatforms();
-      this.state.platforms = platforms;
-      this.state.selectedPlatformId = preferredPlatformId;
+      // PRELOADING PHASE: Load all required data in parallel
+      const [
+        platformData,
+        defaultAndCustomPrompts,
+        defaultPromptPreferences,
+        defaultPromptParameters
+      ] = await Promise.all([
+        this.platformService.loadPlatforms(),
+        this.promptService.loadPrompts(this.state.contentType),
+        this.defaultPromptPreferencesService.getPreferences(this.state.contentType),
+        this.defaultPromptPreferencesService.getParameterOptions(this.state.contentType)
+      ]);
+      
+      // Store everything in memory repository
+      this.dataRepository = {
+        platforms: platformData.platforms,
+        selectedPlatformId: platformData.preferredPlatformId,
+        defaultPrompts: defaultAndCustomPrompts.prompts.filter(p => p.isDefault),
+        customPrompts: defaultAndCustomPrompts.prompts.filter(p => !p.isDefault),
+        preferredPromptId: defaultAndCustomPrompts.preferredPromptId,
+        defaultPromptPreferences: defaultPromptPreferences,
+        defaultPromptParameters: defaultPromptParameters
+      };
+      
+      // Set initial state from repository
+      this.state.platforms = this.dataRepository.platforms;
+      this.state.selectedPlatformId = this.dataRepository.selectedPlatformId;
+      this.state.selectedPromptId = this.dataRepository.preferredPromptId;
+      this.state.isDefaultPromptType = this.dataRepository.preferredPromptId === this.state.contentType;
+      
+      // RENDERING PHASE: Initialize UI components with preloaded data
       
       // Render platform selector
-      this.platformSelector.render(platforms, preferredPlatformId);
+      this.platformSelector.render(
+        this.dataRepository.platforms, 
+        this.dataRepository.selectedPlatformId
+      );
       
       // Initialize prompt type toggle
       this.promptTypeToggle.initialize();
-      
-      // Load prompts for this content type
-      const { prompts, preferredPromptId } = await this.promptService.loadPrompts(this.state.contentType);
-      this.state.selectedPromptId = preferredPromptId;
-      
-      // Check if selected prompt is default
-      this.state.isDefaultPromptType = preferredPromptId === this.state.contentType;
-      
-      // Set prompt type toggle to match
       this.promptTypeToggle.setType(this.state.isDefaultPromptType);
       
-      // Initialize appropriate prompt UI
+      // Pre-initialize both UI components with already loaded data
+      await this.initializeDefaultPromptConfig();
+      await this.initializeCustomPromptSelector();
+      
+      // Show the appropriate container based on initial state
+      const defaultContainer = document.getElementById('defaultPromptConfig');
+      const customContainer = document.getElementById('customPromptSelector');
+      
       if (this.state.isDefaultPromptType) {
-        await this.initializeDefaultPromptConfig();
+        defaultContainer.classList.remove('hidden');
+        customContainer.classList.add('hidden');
       } else {
-        await this.initializeCustomPromptSelector();
+        defaultContainer.classList.add('hidden');
+        customContainer.classList.remove('hidden');
       }
       
       // Update status
@@ -111,11 +151,11 @@ export default class MainController {
     this.state.selectedPromptId = promptId;
   }
 
-  async handlePromptTypeToggle(isDefault) {
+  handlePromptTypeToggle(isDefault) {
     try {
       this.state.isDefaultPromptType = isDefault;
       
-      // Show/hide appropriate containers
+      // Since both containers are pre-initialized, just toggle visibility
       const defaultContainer = document.getElementById('defaultPromptConfig');
       const customContainer = document.getElementById('customPromptSelector');
       
@@ -123,17 +163,16 @@ export default class MainController {
         defaultContainer.classList.remove('hidden');
         customContainer.classList.add('hidden');
         
-        // Initialize default prompt config if needed
-        await this.initializeDefaultPromptConfig();
-        
-        // Use default prompt ID
+        // Use default prompt ID (content type)
         this.state.selectedPromptId = this.state.contentType;
       } else {
         defaultContainer.classList.add('hidden');
         customContainer.classList.remove('hidden');
         
-        // Initialize custom prompt selector if needed
-        await this.initializeCustomPromptSelector();
+        // Use first custom prompt ID if available
+        if (this.dataRepository.customPrompts.length > 0) {
+          this.state.selectedPromptId = this.dataRepository.customPrompts[0].id;
+        }
       }
     } catch (error) {
       console.error('Error toggling prompt type:', error);
@@ -146,7 +185,7 @@ export default class MainController {
     if (!configContainer) return;
     
     try {
-      // Create and initialize config panel
+      // Create the config panel with preloaded data
       const configPanel = new this.defaultPromptConfigPanel(
         this.defaultPromptPreferencesService, 
         this.state.contentType,
@@ -156,10 +195,17 @@ export default class MainController {
         }
       );
       
-      await configPanel.initialize(configContainer);
+      // Pass preloaded data to the panel
+      await configPanel.initializeWithData(
+        configContainer,
+        this.dataRepository.defaultPromptPreferences,
+        this.dataRepository.defaultPromptParameters
+      );
       
-      // Set selected prompt ID to content type
-      this.state.selectedPromptId = this.state.contentType;
+      // Set selected prompt ID to content type for default prompts
+      if (this.state.isDefaultPromptType) {
+        this.state.selectedPromptId = this.state.contentType;
+      }
     } catch (error) {
       console.error('Error initializing default prompt config:', error);
       configContainer.classList.add('hidden');
@@ -168,7 +214,12 @@ export default class MainController {
 
   async initializeCustomPromptSelector() {
     try {
-      await this.customPromptSelector.initialize(this.state.contentType);
+      // Initialize with preloaded data
+      await this.customPromptSelector.initializeWithData(
+        this.state.contentType,
+        this.dataRepository.customPrompts,
+        this.dataRepository.preferredPromptId
+      );
     } catch (error) {
       console.error('Error initializing custom prompt selector:', error);
       this.statusManager.updateStatus(`Error: ${error.message}`);
