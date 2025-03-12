@@ -13,30 +13,46 @@ export default class PlatformSelector {
     
     // Create platform options
     platforms.forEach(platform => {
-      const option = document.createElement('div');
-      option.className = `platform-option ${platform.id === selectedPlatformId ? 'selected' : ''}`;
-      option.dataset.platform = platform.id;
+      const card = document.createElement('label');
+      card.className = `platform-card ${platform.id === selectedPlatformId ? 'selected' : ''}`;
+      card.dataset.platform = platform.id;
       
-      option.innerHTML = `
-        <input type="radio" name="platform" value="${platform.id}" id="platform-${platform.id}" 
+      card.innerHTML = `
+        <input type="radio" name="platform" value="${platform.id}" 
           ${platform.id === selectedPlatformId ? 'checked' : ''}>
         <img src="${platform.iconUrl}" class="platform-icon" alt="${platform.name}">
-        <label for="platform-${platform.id}">${platform.name}</label>
+        <span class="platform-name">${platform.name}</span>
+        ${platform.id === selectedPlatformId ? '<span class="selected-indicator"></span>' : ''}
       `;
       
-      option.addEventListener('click', () => {
-        // Update UI
-        document.querySelectorAll('.platform-option').forEach(el => 
-          el.classList.remove('selected'));
-        option.classList.add('selected');
-        
-        // Call onChange handler
-        if (this.onChange) {
-          this.onChange(platform.id);
+      const radioInput = card.querySelector('input');
+      
+      radioInput.addEventListener('change', () => {
+        if (radioInput.checked) {
+          // Update UI
+          document.querySelectorAll('.platform-card').forEach(el => {
+            el.classList.remove('selected');
+            const indicator = el.querySelector('.selected-indicator');
+            if (indicator) indicator.remove();
+          });
+          
+          card.classList.add('selected');
+          
+          // Add selected indicator if it doesn't exist
+          if (!card.querySelector('.selected-indicator')) {
+            const indicator = document.createElement('span');
+            indicator.className = 'selected-indicator';
+            card.appendChild(indicator);
+          }
+          
+          // Call onChange handler
+          if (this.onChange) {
+            this.onChange(platform.id);
+          }
         }
       });
       
-      this.element.appendChild(option);
+      this.element.appendChild(card);
     });
   }
 }

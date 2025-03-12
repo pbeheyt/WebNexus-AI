@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusMessage = document.getElementById('statusMessage');
   const settingsBtn = document.getElementById('settingsBtn');
   const platformOptions = document.getElementById('platformOptions');
+  const toastElement = document.getElementById('toast');
   
   // Initialize services
   const storageService = new StorageService();
@@ -29,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize UI components
   const contentTypeView = new ContentTypeView(contentTypeDisplay);
-  const statusManager = new StatusManager(statusMessage, summarizeBtn);
+  const statusManager = new StatusManager(statusMessage, summarizeBtn, toastElement);
   
   const platformSelector = new PlatformSelector(
     platformOptions, 
@@ -66,4 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize the application
   mainController.initialize();
+  
+  // Add transition classes after small delay to prevent initial animations
+  setTimeout(() => {
+    document.body.classList.add('transitions-enabled');
+  }, 100);
 });
