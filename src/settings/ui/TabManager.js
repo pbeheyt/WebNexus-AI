@@ -1,19 +1,18 @@
 // src/settings/ui/TabManager.js
-import { CONTENT_TYPES, CONTENT_TYPE_LABELS } from '../utils/constants.js';
+import { TABS } from '../utils/constants.js';
 
 export default class TabManager {
-  constructor(tabButtonContainer, tabContentContainer, eventBus) {
+  constructor(tabButtonContainer, eventBus) {
     this.tabButtonContainer = tabButtonContainer;
-    this.tabContentContainer = tabContentContainer;
     this.eventBus = eventBus;
     this.tabButtons = new Map();
     this.tabContents = new Map();
-    this.activeContentType = null;
+    this.activeTab = null;
     this.isInitialized = false;
   }
 
   initialize() {
-    if (!this.tabButtonContainer || !this.tabContentContainer) {
+    if (!this.tabButtonContainer) {
       return;
     }
     
@@ -22,110 +21,59 @@ export default class TabManager {
       return;
     }
     
-    // Clear existing tabs
-    this.tabButtonContainer.innerHTML = '';
-    
-    // Create a tab for each content type
-    Object.entries(CONTENT_TYPES).forEach(([key, type]) => {
-      const typeBtn = document.createElement('button');
-      typeBtn.className = 'tab-btn';
-      typeBtn.dataset.type = type;
-      typeBtn.textContent = CONTENT_TYPE_LABELS[type];
+    // Get references to tab buttons and contents
+    const tabButtons = this.tabButtonContainer.querySelectorAll('.tab-btn');
+    tabButtons.forEach(button => {
+      const tabId = button.dataset.tab;
+      this.tabButtons.set(tabId, button);
+      
+      // Get corresponding content
+      const content = document.getElementById(tabId);
+      if (content) {
+        this.tabContents.set(tabId, content);
+      }
       
       // Add event listener
-      typeBtn.addEventListener('click', () => this.switchToTab(type));
-      
-      // Store reference
-      this.tabButtons.set(type, typeBtn);
-      
-      // Add to DOM
-      this.tabButtonContainer.appendChild(typeBtn);
+      button.addEventListener('click', () => this.switchToTab(tabId));
     });
     
-    // Wrap tabContentContainer in a tabs-container div if not already
-    if (!this.tabContentContainer.parentElement.classList.contains('tabs-container')) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'tabs-container';
-      this.tabContentContainer.parentNode.insertBefore(wrapper, this.tabContentContainer);
-      wrapper.appendChild(this.tabContentContainer);
-    }
+    // Set initial active tab (either from URL hash or default to prompt management)
+    const hash = window.location.hash.substring(1);
+    const initialTab = this.tabButtons.has(hash) ? hash : TABS.PROMPT_MANAGEMENT;
+    this.switchToTab(initialTab);
     
-    // Handle the case where tabContentContainer itself is a tab-content element
-    if (this.tabContentContainer.classList.contains('tab-content')) {
-      // Use the container itself as a tab content
-      const type = this.tabContentContainer.dataset.type;
-      if (type) {
-        this.tabContents.set(type, this.tabContentContainer);
-        
-        // Create content containers for other types
-        Object.values(CONTENT_TYPES).forEach(contentType => {
-          if (contentType !== type) {
-            const tabContent = document.createElement('div');
-            tabContent.id = `tab-content-${contentType}`;
-            tabContent.className = 'tab-content';
-            tabContent.dataset.type = contentType;
-            
-            // Store reference
-            this.tabContents.set(contentType, tabContent);
-            
-            // Add to DOM - after the existing tab content
-            this.tabContentContainer.parentNode.insertBefore(
-              tabContent, 
-              this.tabContentContainer.nextSibling
-            );
-          }
-        });
-      } else {
-        // Fall back to normal initialization
-        this.initializeTabContents();
-      }
-    } else {
-      // Normal initialization
-      this.initializeTabContents();
-    }
-    
-    // Initialize with first tab and force activation
-    this.switchToTab(CONTENT_TYPES.GENERAL, true); // Force activation
+    // Initialize content accordion behavior for configuration tab
+    this.initializeAccordion();
     
     // Mark as initialized
     this.isInitialized = true;
   }
 
-  initializeTabContents() {
-    // Create tab content containers if needed
-    if (this.tabContentContainer.children.length === 0) {
-      Object.values(CONTENT_TYPES).forEach(type => {
-        const tabContent = document.createElement('div');
-        tabContent.id = `tab-content-${type}`;
-        tabContent.className = 'tab-content';
-        tabContent.dataset.type = type;
+  initializeAccordion() {
+    const headers = document.querySelectorAll('.content-type-header');
+    headers.forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        content.classList.toggle('collapsed');
         
-        // Store reference
-        this.tabContents.set(type, tabContent);
-        
-        // Add to DOM
-        this.tabContentContainer.appendChild(tabContent);
-      });
-    } else {
-      // Get existing tab content elements
-      this.tabContentContainer.querySelectorAll('.tab-content').forEach(element => {
-        const type = element.dataset.type;
-        if (type) {
-          this.tabContents.set(type, element);
+        // Update the indicator arrow
+        const arrow = header.querySelector('span:last-child');
+        if (arrow) {
+          arrow.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
         }
       });
-    }
+    });
   }
 
-  switchToTab(contentType, forceActivation = false) {
-    // Don't switch if already on this tab (unless forced)
-    if (!forceActivation && this.activeContentType === contentType) {
+  switchToTab(tabId) {
+    // Don't switch if already on this tab
+    if (this.activeTab === tabId) {
       return;
     }
     
     // Update active tab button
-    this.tabButtons.forEach((button, type) => {
-      if (type === contentType) {
+    this.tabButtons.forEach((button, id) => {
+      if (id === tabId) {
         button.classList.add('active');
       } else {
         button.classList.remove('active');
@@ -133,43 +81,29 @@ export default class TabManager {
     });
     
     // Show active tab content
-    this.tabContents.forEach((content, type) => {
-      if (type === contentType) {
-        // First make it display:block but still invisible
-        content.style.display = 'block';
-        
-        // Force a reflow to ensure the transition works
-        content.offsetHeight;
-        
-        // Then add active class to trigger the transition
+    this.tabContents.forEach((content, id) => {
+      if (id === tabId) {
         content.classList.add('active');
       } else {
-        // If it was active, start the transition out
-        if (content.classList.contains('active')) {
-          content.classList.remove('active');
-          
-          // After transition, hide completely
-          setTimeout(() => {
-            if (!content.classList.contains('active')) {
-              content.style.display = 'none';
-            }
-          }, 250); // Match transition time in CSS
-        }
+        content.classList.remove('active');
       }
     });
     
-    // Update active content type
-    this.activeContentType = contentType;
+    // Update active tab
+    this.activeTab = tabId;
+    
+    // Update URL hash
+    window.location.hash = tabId;
     
     // Publish event
-    this.eventBus.publish('tab:changed', contentType);
+    this.eventBus.publish('tab:changed', tabId);
   }
 
   getActiveTab() {
-    return this.activeContentType;
+    return this.activeTab;
   }
 
-  getTabContent(contentType) {
-    return this.tabContents.get(contentType);
+  getTabContent(tabId) {
+    return this.tabContents.get(tabId);
   }
 }

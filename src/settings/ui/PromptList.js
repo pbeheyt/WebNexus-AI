@@ -1,10 +1,14 @@
-// Displays and manages the list of prompts
+// src/settings/ui/PromptList.js
+import { CONTENT_TYPES, CONTENT_TYPE_LABELS } from '../utils/constants.js';
+
 export default class PromptList {
   constructor(promptController, eventBus) {
     this.promptController = promptController;
     this.eventBus = eventBus;
-    this.contentType = null;
     this.container = null;
+    this.filterElement = null;
+    this.selectedPromptId = null;
+    this.filterValue = 'all';
     
     // Subscribe to events
     this.eventBus.subscribe('prompt:saved', () => this.render());
@@ -12,39 +16,85 @@ export default class PromptList {
     this.eventBus.subscribe('prompt:preferred', () => this.render());
   }
 
-  initialize(container, contentType) {
-    this.container = container;
-    this.contentType = contentType;
+  initialize() {
+    this.container = document.getElementById('prompt-list');
+    this.filterElement = document.getElementById('content-type-filter');
+    
+    if (this.filterElement) {
+      this.filterElement.addEventListener('change', (e) => {
+        this.filterValue = e.target.value;
+        this.render();
+      });
+    }
+    
+    // Initialize new prompt button
+    const newPromptBtn = document.getElementById('newPromptBtn');
+    if (newPromptBtn) {
+      newPromptBtn.addEventListener('click', () => {
+        this.eventBus.publish('prompt:create');
+      });
+    }
+    
     this.render();
   }
 
   async render() {
-    if (!this.container || !this.contentType) return;
+    if (!this.container) return;
     
     // Clear container
     this.container.innerHTML = '';
     
-    const heading = document.createElement('h3');
-    heading.className = 'type-heading';
-    heading.textContent = 'Prompts';
-    this.container.appendChild(heading);
-    
     try {
-      // Get prompts for this type
-      const { prompts, preferredPromptId } = await this.promptController.getPromptsByType(this.contentType);
+      // Get all content types
+      const allPrompts = await Promise.all(
+        Object.values(CONTENT_TYPES).map(type => 
+          this.promptController.getPromptsByType(type)
+        )
+      );
+      
+      // Combine and filter prompts
+      let prompts = [];
+      Object.values(CONTENT_TYPES).forEach((type, index) => {
+        allPrompts[index].prompts.forEach(promptData => {
+          prompts.push({
+            ...promptData,
+            contentType: type,
+            contentTypeLabel: CONTENT_TYPE_LABELS[type]
+          });
+        });
+      });
+      
+      // Apply filter
+      if (this.filterValue !== 'all') {
+        prompts = prompts.filter(item => item.contentType === this.filterValue);
+      }
+      
+      // Sort prompts (default first, then by update time)
+      prompts.sort((a, b) => {
+        // Default prompts first
+        if (a.isDefault && !b.isDefault) return -1;
+        if (!a.isDefault && b.isDefault) return 1;
+        
+        // Then preferred prompts
+        if (a.isPreferred && !b.isPreferred) return -1;
+        if (!a.isPreferred && b.isPreferred) return 1;
+        
+        // Then by update time (most recent first)
+        return new Date(b.prompt.updatedAt || 0) - new Date(a.prompt.updatedAt || 0);
+      });
       
       // Display message if no prompts
       if (prompts.length === 0) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
         emptyState.innerHTML = `
-          <p>No prompts available for ${this.contentType}. Add your first prompt below.</p>
+          <p>No prompts available${this.filterValue !== 'all' ? ` for ${CONTENT_TYPE_LABELS[this.filterValue]}` : ''}. Create a new prompt to get started.</p>
         `;
         this.container.appendChild(emptyState);
       } else {
         // Create prompt elements
-        prompts.forEach(({ id, prompt, isDefault, isPreferred }) => {
-          const promptElement = this.createPromptElement(id, prompt, isDefault, isPreferred);
+        prompts.forEach(promptData => {
+          const promptElement = this.createPromptListItem(promptData);
           this.container.appendChild(promptElement);
         });
       }
@@ -58,13 +108,20 @@ export default class PromptList {
     }
   }
 
-  createPromptElement(id, prompt, isDefault, isPreferred) {
+  createPromptListItem(promptData) {
+    const { id, prompt, isDefault, isPreferred, contentType, contentTypeLabel } = promptData;
+    
     const promptElement = document.createElement('div');
     promptElement.className = 'prompt-item';
     promptElement.dataset.id = id;
+    promptElement.dataset.type = contentType;
     
     if (isPreferred) {
       promptElement.classList.add('preferred-prompt');
+    }
+    
+    if (id === this.selectedPromptId) {
+      promptElement.classList.add('selected');
     }
     
     promptElement.innerHTML = `
@@ -74,55 +131,42 @@ export default class PromptList {
           <span class="badge ${isDefault ? 'badge-default' : 'badge-custom'}">
             ${isDefault ? 'Default' : 'Custom'}
           </span>
-          ${isPreferred ? '<span class="badge badge-preferred">Preferred</span>' : ''}
         </h3>
-        <div class="prompt-actions">
-          ${isPreferred ? '' : '<button class="action-btn set-preferred-btn" title="Set as Preferred">⭐ Set Preferred</button>'}
-          ${isDefault ? `` : `
-            <button class="action-btn edit-btn" title="Edit">✏️ Edit</button>
-            <button class="action-btn delete-btn" title="Delete">🗑️ Delete</button>
-          `}
-        </div>
       </div>
-      <div class="prompt-content">${prompt.content.replace(/\n/g, '<br>')}</div>
+      <small>${contentTypeLabel}</small>
     `;
     
-    // Add event listeners
-    const actionsDiv = promptElement.querySelector('.prompt-actions');
-    
-    // Add "Set as Preferred" functionality
-    const setPreferredBtn = actionsDiv.querySelector('.set-preferred-btn');
-    if (setPreferredBtn) {
-      setPreferredBtn.addEventListener('click', () => {
-        this.promptController.setPreferredPrompt(id, this.contentType);
-      });
-    }
-    
-    if (!isDefault) {
-      // For custom prompts, we have edit and delete
-      const editBtn = actionsDiv.querySelector('.edit-btn');
-      const deleteBtn = actionsDiv.querySelector('.delete-btn');
-      
-      if (editBtn) {
-        editBtn.addEventListener('click', () => {
-          this.eventBus.publish('prompt:edit', { id, prompt });
-        });
-      }
-      
-      if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => {
-          if (confirm(`Are you sure you want to delete the prompt "${prompt.name}"?`)) {
-            this.promptController.deletePrompt(id, this.contentType);
-          }
-        });
-      }
-    }
+    // Add click event to select
+    promptElement.addEventListener('click', () => {
+      this.selectPrompt(id, prompt, contentType, isDefault, isPreferred);
+    });
     
     return promptElement;
   }
 
-  setContentType(contentType) {
-    this.contentType = contentType;
-    this.render();
+  selectPrompt(id, prompt, contentType, isDefault, isPreferred) {
+    // Deselect previous
+    const previousSelected = this.container.querySelector('.prompt-item.selected');
+    if (previousSelected) {
+      previousSelected.classList.remove('selected');
+    }
+    
+    // Select new
+    const newSelected = this.container.querySelector(`.prompt-item[data-id="${id}"]`);
+    if (newSelected) {
+      newSelected.classList.add('selected');
+    }
+    
+    // Update selected ID
+    this.selectedPromptId = id;
+    
+    // Publish event
+    this.eventBus.publish('prompt:selected', {
+      id, 
+      prompt, 
+      contentType, 
+      isDefault, 
+      isPreferred
+    });
   }
 }

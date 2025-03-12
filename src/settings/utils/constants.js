@@ -1,10 +1,15 @@
-// Constants used throughout the settings module
+// src/settings/utils/constants.js
 export const STORAGE_KEY = 'custom_prompts_by_type';
 
 export const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
   YOUTUBE: 'youtube'
+};
+
+export const TABS = {
+  CONTENT_CONFIGURATION: 'content-configuration',
+  PROMPT_MANAGEMENT: 'prompt-management'
 };
 
 export const CONTENT_TYPE_LABELS = {

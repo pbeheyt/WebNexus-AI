@@ -16,7 +16,7 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       background-color: white;
       padding: 30px;
@@ -111,8 +111,44 @@
       min-height: 400px; /* Set a minimum height to prevent layout shifts */
     }
 
+    /* Master-detail layout */
+    .master-detail {
+      display: flex;
+      gap: 20px;
+      min-height: 500px;
+    }
+
+    .master-panel {
+      flex: 1;
+      border-right: 1px solid #eee;
+      padding-right: 20px;
+      max-width: 350px;
+    }
+
+    .detail-panel {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .master-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .content-type-filter {
+      margin-bottom: 15px;
+      width: 100%;
+    }
+
+    /* Prompt styling */
     .prompt-list {
       margin-bottom: 20px;
+      max-height: 500px;
+      overflow-y: auto;
+      padding-right: 10px;
     }
 
     .prompt-item {
@@ -121,12 +157,23 @@
       padding: 15px;
       margin-bottom: 15px;
       background: white;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .prompt-item.preferred-prompt {
+    .prompt-item:hover {
+      border-color: #4285f4;
+      box-shadow: 0 1px 3px rgba(66, 133, 244, 0.2);
+    }
+
+    .prompt-item.selected {
       border-color: #4285f4;
       background-color: #f8fbff;
       box-shadow: 0 1px 3px rgba(66, 133, 244, 0.2);
+    }
+
+    .prompt-item.preferred-prompt {
+      border-left: 4px solid #fbbc05;
     }
 
     .prompt-header {
@@ -140,6 +187,9 @@
       font-weight: 500;
       font-size: 16px;
       margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .prompt-actions {
@@ -184,6 +234,7 @@
       margin-bottom: 10px;
     }
 
+    /* Form styling */
     .form-group {
       margin-bottom: 15px;
     }
@@ -428,27 +479,213 @@
       background-color: #d4edda;
       color: #155724;
     }
+
+    /* FAB styling */
+    .fab {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #4285f4;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 100;
+    }
+
+    .fab:hover {
+      background: #3367d6;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Content type accordion */
+    .content-type-group {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .content-type-header {
+      padding: 12px 15px;
+      background: #f5f5f5;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .content-type-header:hover {
+      background: #eee;
+    }
+
+    .content-type-content {
+      padding: 15px;
+      border-top: 1px solid #eee;
+      background: white;
+    }
+    
+    .content-type-content.collapsed {
+      display: none;
+    }
+
+    /* Detail view */
+    .prompt-detail {
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 6px;
+    }
+
+    .prompt-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .prompt-detail-title {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .prompt-detail-content {
+      white-space: pre-wrap;
+      background: white;
+      padding: 15px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      margin-bottom: 20px;
+    }
+
+    .prompt-detail-meta {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .prompt-detail-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* New prompt button */
+    .new-prompt-btn {
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .new-prompt-btn:hover {
+      background: #3367d6;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Prompt Settings</h1>
+      <h1>AI Summarizer Settings</h1>
       <button class="back-btn" id="backBtn">← Back to Summarizer</button>
     </header>
 
     <div class="tab-nav">
-      <!-- Type tabs will be inserted here dynamically -->
+      <button class="tab-btn" data-tab="content-configuration">Content Configuration</button>
+      <button class="tab-btn active" data-tab="prompt-management">Prompt Management</button>
     </div>
 
     <div id="notification" class="notification"></div>
 
-    <!-- Prompts Tab -->
-    <div id="all-prompts" class="tab-content active" data-type="general">
-      <div class="prompt-list" id="promptList">
-        <!-- Prompts will be displayed here -->
-        <div class="empty-state">
-          <p>Loading prompts...</p>
+    <div class="tabs-container">
+      <!-- Content Configuration Tab -->
+      <div id="content-configuration" class="tab-content">
+        <h2 class="type-heading">Content Extraction Settings</h2>
+        
+        <!-- Content Type Accordion Groups -->
+        <div class="content-type-group">
+          <div class="content-type-header">
+            <span>Web Content</span>
+            <span>▼</span>
+          </div>
+          <div class="content-type-content">
+            <div id="general-settings-container"></div>
+          </div>
+        </div>
+        
+        <div class="content-type-group">
+          <div class="content-type-header">
+            <span>Reddit Posts</span>
+            <span>▼</span>
+          </div>
+          <div class="content-type-content">
+            <div id="reddit-settings-container"></div>
+          </div>
+        </div>
+        
+        <div class="content-type-group">
+          <div class="content-type-header">
+            <span>YouTube Videos</span>
+            <span>▼</span>
+          </div>
+          <div class="content-type-content">
+            <div id="youtube-settings-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prompt Management Tab -->
+      <div id="prompt-management" class="tab-content active">
+        <div class="master-detail">
+          <!-- Master Panel (Prompt List) -->
+          <div class="master-panel">
+            <div class="master-header">
+              <h2 class="type-heading">Prompts</h2>
+              <button class="new-prompt-btn" id="newPromptBtn">+ New</button>
+            </div>
+            
+            <div class="form-group">
+              <select id="content-type-filter" class="content-type-filter">
+                <option value="all">All Content Types</option>
+                <option value="general">Web Content</option>
+                <option value="reddit">Reddit Posts</option>
+                <option value="youtube">YouTube Videos</option>
+              </select>
+            </div>
+            
+            <div id="prompt-list" class="prompt-list">
+              <!-- Prompts will be displayed here -->
+              <div class="empty-state">
+                <p>Loading prompts...</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Detail Panel (Prompt Detail/Form) -->
+          <div class="detail-panel" id="detail-panel">
+            <!-- Initial state - select a prompt message -->
+            <div class="empty-state">
+              <p>Select a prompt from the list or create a new one</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
