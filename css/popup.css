@@ -1,16 +1,18 @@
-/* popup-specific.css - Styles specific to the popup interface */
+/* popup.css - Styles specific to the popup interface */
 
 /* ======================================
    Popup Layout
    ====================================== */
    body {
     min-width: 320px;
-    min-height: 300px;
+    overflow-y: auto;
   }
   
   .container {
     width: 320px;
     padding: 16px;
+    display: flex;
+    flex-direction: column;
   }
   
   /* ======================================
