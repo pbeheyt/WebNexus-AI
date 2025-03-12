@@ -5,76 +5,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Content Summarizer - Settings</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+    :root {
+      --bg-primary: #1E1E1E;
+      --bg-surface: #2D2D2D;
+      --bg-surface-hover: #353535;
+      --bg-surface-active: rgba(255, 123, 0, 0.1);
+      --color-primary: #FF7B00;
+      --color-primary-hover: #E06E00;
+      --color-secondary: #FF9D45;
+      --text-primary: #FFFFFF;
+      --text-secondary: #B0B0B0;
+      --border-color: #3D3D3D;
+      --divider-color: #3D3D3D;
+      --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.2);
+      --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.3);
+      --transition-fast: 0.2s ease;
+      --transition-medium: 0.3s ease;
+      --error-color: #FF4545;
+      --success-color: #4CAF50;
+      --warning-color: #FFC107;
+    }
 
     body {
-      font-family: 'Roboto', sans-serif;
-      background: #f5f5f5;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
       margin: 0;
       padding: 20px;
-      color: #333;
+      color: var(--text-primary);
     }
 
     .container {
       max-width: 1000px;
       margin: 0 auto;
-      background-color: white;
+      background-color: var(--bg-primary);
       padding: 30px;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow-medium);
     }
 
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #eee;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--divider-color);
     }
 
     h1 {
       font-size: 24px;
-      color: #444;
+      color: var(--text-primary);
       margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      color: var(--color-primary);
     }
 
     .back-btn {
       background: transparent;
-      color: #4285f4;
-      border: 1px solid #4285f4;
+      color: var(--color-primary);
+      border: 1px solid var(--color-primary);
       padding: 8px 12px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
+      font-family: 'Inter', sans-serif;
     }
 
     .back-btn:hover {
-      background: rgba(66, 133, 244, 0.1);
+      background: rgba(255, 123, 0, 0.1);
     }
 
     .tab-nav {
       display: flex;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #ddd;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--divider-color);
       flex-wrap: wrap;
     }
 
     .tab-btn {
       background: transparent;
       border: none;
-      padding: 10px 20px;
-      font-size: 16px;
+      padding: 12px 20px;
+      font-size: 15px;
       cursor: pointer;
       position: relative;
-      color: #666;
+      color: var(--text-secondary);
       font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      transition: color var(--transition-fast);
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
     }
 
     .tab-btn.active {
-      color: #4285f4;
+      color: var(--color-primary);
     }
 
     .tab-btn.active::after {
@@ -84,7 +119,7 @@
       left: 0;
       right: 0;
       height: 2px;
-      background: #4285f4;
+      background: var(--color-primary);
     }
 
     .tab-content {
@@ -114,13 +149,13 @@
     /* Master-detail layout */
     .master-detail {
       display: flex;
-      gap: 20px;
+      gap: 24px;
       min-height: 500px;
     }
 
     .master-panel {
       flex: 1;
-      border-right: 1px solid #eee;
+      border-right: 1px solid var(--divider-color);
       padding-right: 20px;
       max-width: 350px;
     }
@@ -135,12 +170,31 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 16px;
     }
 
     .content-type-filter {
-      margin-bottom: 15px;
       width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B0B0B0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 14px;
+      padding-right: 32px;
+    }
+
+    .content-type-filter:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 1px var(--color-primary);
     }
 
     /* Prompt styling */
@@ -152,28 +206,28 @@
     }
 
     .prompt-item {
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
       padding: 15px;
-      margin-bottom: 15px;
-      background: white;
+      margin-bottom: 12px;
+      background: var(--bg-surface);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
     }
 
     .prompt-item:hover {
-      border-color: #4285f4;
-      box-shadow: 0 1px 3px rgba(66, 133, 244, 0.2);
+      background: var(--bg-surface-hover);
+      border-color: var(--color-primary);
     }
 
     .prompt-item.selected {
-      border-color: #4285f4;
-      background-color: #f8fbff;
-      box-shadow: 0 1px 3px rgba(66, 133, 244, 0.2);
+      border-color: var(--color-primary);
+      background-color: var(--bg-surface-active);
+      box-shadow: 0 0 0 1px var(--color-primary);
     }
 
     .prompt-item.preferred-prompt {
-      border-left: 4px solid #fbbc05;
+      border-left: 4px solid var(--color-primary);
     }
 
     .prompt-header {
@@ -185,7 +239,7 @@
 
     .prompt-title {
       font-weight: 500;
-      font-size: 16px;
+      font-size: 15px;
       margin: 0;
       white-space: nowrap;
       overflow: hidden;
@@ -194,7 +248,7 @@
 
     .prompt-actions {
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
 
     .action-btn {
@@ -202,36 +256,38 @@
       border: none;
       cursor: pointer;
       font-size: 14px;
-      color: #4285f4;
+      color: var(--color-primary);
       padding: 5px;
       border-radius: 4px;
+      transition: background var(--transition-fast);
     }
 
     .action-btn:hover {
-      background: rgba(66, 133, 244, 0.1);
+      background: rgba(255, 123, 0, 0.1);
     }
 
     .set-preferred-btn {
-      color: #fbbc05;
+      color: var(--color-primary);
     }
 
     .edit-btn {
-      color: #4285f4;
+      color: var(--color-primary);
     }
 
     .delete-btn {
-      color: #ea4335;
+      color: var(--error-color);
     }
 
     .prompt-content {
       font-size: 14px;
-      background: #f9f9f9;
+      background: rgba(255, 255, 255, 0.05);
       padding: 10px;
       border-radius: 4px;
       max-height: 150px;
       overflow-y: auto;
       white-space: pre-wrap;
       margin-bottom: 10px;
+      color: var(--text-secondary);
     }
 
     /* Form styling */
@@ -241,23 +297,33 @@
 
     label {
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
       font-size: 14px;
       font-weight: 500;
+      color: var(--text-secondary);
     }
 
-    input[type="text"], select, textarea {
+    input[type="text"], input[type="number"], select, textarea {
       width: 100%;
       padding: 10px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
+      border-radius: 6px;
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
       font-size: 14px;
-      font-family: 'Roboto', sans-serif;
+      font-family: 'Inter', sans-serif;
       box-sizing: border-box;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     }
 
     select {
       height: 40px;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B0B0B0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 14px;
+      padding-right: 32px;
     }
 
     textarea {
@@ -265,42 +331,51 @@
       resize: vertical;
     }
 
-    input[type="text"]:focus, select:focus, textarea:focus {
+    input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
       outline: none;
-      border-color: #4285f4;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 1px var(--color-primary);
+    }
+
+    select option {
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
     }
 
     .btn {
-      background: #4285f4;
+      background: var(--color-primary);
       color: white;
       padding: 10px 15px;
       font-size: 14px;
       font-weight: 500;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background var(--transition-fast);
+      font-family: 'Inter', sans-serif;
     }
 
     .btn:hover {
-      background: #3367d6;
+      background: var(--color-primary-hover);
     }
 
     .btn-secondary {
-      background: #f1f3f4;
-      color: #333;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
     }
 
     .btn-secondary:hover {
-      background: #e8eaed;
+      background: var(--bg-surface-hover);
+      border-color: var(--color-primary);
     }
 
     .btn-danger {
-      background: #ea4335;
+      background: var(--error-color);
     }
 
     .btn-danger:hover {
-      background: #d33426;
+      background: #d32f2f;
     }
 
     .form-actions {
@@ -313,7 +388,9 @@
     .empty-state {
       text-align: center;
       padding: 30px;
-      color: #666;
+      color: var(--text-secondary);
+      background: var(--bg-surface);
+      border-radius: 6px;
     }
 
     .empty-state p {
@@ -326,22 +403,25 @@
       border-radius: 4px;
       font-size: 12px;
       font-weight: 500;
-      margin-left: 10px;
+      margin-left: 8px;
     }
 
     .badge-default {
-      background: #f1f3f4;
-      color: #333;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
     }
 
     .badge-custom {
-      background: #e8f0fe;
-      color: #1a73e8;
+      background: rgba(255, 123, 0, 0.1);
+      color: var(--color-primary);
+      border: 1px solid var(--color-primary);
     }
     
     .badge-preferred {
-      background: #fef6e0;
-      color: #f9ab00;
+      background: rgba(255, 123, 0, 0.2);
+      color: var(--color-primary);
+      border: 1px solid var(--color-primary);
     }
     
     .hidden {
@@ -353,14 +433,15 @@
       top: 20px;
       right: 20px;
       padding: 15px 20px;
-      background: #323232;
-      color: white;
-      border-radius: 4px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border-radius: 6px;
+      box-shadow: var(--shadow-medium);
       transform: translateY(-100px);
       opacity: 0;
       transition: all 0.3s ease;
       z-index: 1000;
+      border-left: 3px solid var(--color-primary);
     }
     
     .notification.show {
@@ -369,18 +450,18 @@
     }
 
     .type-heading {
-      margin: 0 0 15px 0;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
+      margin: 0 0 16px 0;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--divider-color);
       font-size: 18px;
-      color: #333;
+      color: var(--text-primary);
     }
 
     /* Settings section styles */
     .settings-section {
-      background: #f9f9f9;
+      background: var(--bg-surface);
       border-radius: 6px;
-      padding: 15px;
+      padding: 16px;
       margin-bottom: 20px;
     }
 
@@ -392,23 +473,27 @@
 
     .settings-input {
       width: 100px;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 6px;
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
       font-size: 14px;
+      font-family: 'Inter', sans-serif;
     }
 
     .settings-input:focus {
       outline: none;
-      border-color: #4285f4;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 1px var(--color-primary);
     }
 
     /* Add Prompt Section Styles */
     .add-prompt-section {
       margin-top: 20px;
-      background: #f9f9f9;
+      background: var(--bg-surface);
       border-radius: 6px;
-      padding: 15px;
+      padding: 16px;
     }
     
     .add-prompt-form {
@@ -420,10 +505,12 @@
     .prompt-name-input, .prompt-content-input {
       width: 100%;
       padding: 10px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
+      border-radius: 6px;
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
       font-size: 14px;
-      font-family: 'Roboto', sans-serif;
+      font-family: 'Inter', sans-serif;
       box-sizing: border-box;
     }
     
@@ -434,30 +521,31 @@
     
     .prompt-name-input:focus, .prompt-content-input:focus {
       outline: none;
-      border-color: #4285f4;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 1px var(--color-primary);
     }
     
     .add-prompt-form.editing {
-      background-color: #f0f7ff;
+      background-color: rgba(255, 123, 0, 0.05);
       padding: 15px;
-      border-radius: 4px;
-      border-left: 3px solid #4285f4;
+      border-radius: 6px;
+      border-left: 3px solid var(--color-primary);
     }
     
     .highlighted {
-      background-color: #f0f7ff;
+      background-color: rgba(255, 123, 0, 0.1);
       transition: background-color 0.5s ease;
     }
 
     .settings-divider {
       margin: 20px 0;
       border: none;
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--divider-color);
     }
 
     .help-text {
       font-size: 12px;
-      color: #666;
+      color: var(--text-secondary);
       margin-top: 5px;
     }
 
@@ -466,71 +554,50 @@
     }
 
     .updated {
-      background-color: #e6f4ea !important;
+      background-color: rgba(76, 175, 80, 0.1) !important;
       transition: background-color 0.5s ease;
     }
 
     .notification.error {
-      background-color: #f8d7da;
-      color: #721c24;
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border-left-color: var(--error-color);
     }
 
     .notification.success {
-      background-color: #d4edda;
-      color: #155724;
-    }
-
-    /* FAB styling */
-    .fab {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: #4285f4;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 3px 5px rgba(0,0,0,0.2);
-      cursor: pointer;
-      transition: all 0.2s;
-      z-index: 100;
-    }
-
-    .fab:hover {
-      background: #3367d6;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border-left-color: var(--success-color);
     }
 
     /* Content type accordion */
     .content-type-group {
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
       overflow: hidden;
+      background: var(--bg-surface);
     }
 
     .content-type-header {
       padding: 12px 15px;
-      background: #f5f5f5;
+      background: var(--bg-surface);
       font-weight: 500;
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: background var(--transition-fast);
     }
 
     .content-type-header:hover {
-      background: #eee;
+      background: var(--bg-surface-hover);
     }
 
     .content-type-content {
-      padding: 15px;
-      border-top: 1px solid #eee;
-      background: white;
+      padding: 16px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-surface);
     }
     
     .content-type-content.collapsed {
@@ -540,7 +607,7 @@
     /* Detail view */
     .prompt-detail {
       padding: 20px;
-      background: #f9f9f9;
+      background: var(--bg-surface);
       border-radius: 6px;
     }
 
@@ -550,21 +617,23 @@
       align-items: center;
       margin-bottom: 15px;
       padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--divider-color);
     }
 
     .prompt-detail-title {
       font-size: 18px;
       margin: 0;
+      color: var(--text-primary);
     }
 
     .prompt-detail-content {
       white-space: pre-wrap;
-      background: white;
+      background: rgba(255, 255, 255, 0.05);
       padding: 15px;
-      border-radius: 4px;
-      border: 1px solid #eee;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
       margin-bottom: 20px;
+      color: var(--text-secondary);
     }
 
     .prompt-detail-meta {
@@ -572,7 +641,7 @@
       gap: 15px;
       margin-bottom: 15px;
       font-size: 14px;
-      color: #666;
+      color: var(--text-secondary);
     }
 
     .prompt-detail-actions {
@@ -583,28 +652,56 @@
 
     /* New prompt button */
     .new-prompt-btn {
-      background: #4285f4;
+      background: var(--color-primary);
       color: white;
       border: none;
       padding: 8px 12px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
       display: flex;
       align-items: center;
       gap: 5px;
+      font-family: 'Inter', sans-serif;
+      transition: background var(--transition-fast);
     }
 
     .new-prompt-btn:hover {
-      background: #3367d6;
+      background: var(--color-primary-hover);
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-primary);
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>AI Summarizer Settings</h1>
+      <h1>
+        <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" fill="currentColor"/>
+          <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        AI Content Summarizer Settings
+      </h1>
       <button class="back-btn" id="backBtn">← Back to Summarizer</button>
     </header>
 
