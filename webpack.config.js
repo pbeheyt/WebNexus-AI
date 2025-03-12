@@ -8,7 +8,7 @@ module.exports = {
     'general-content': './src/content/general-content.js',
     'platform-content': './src/content/platform-content.js',
     popup: './src/popup/index.js',
-    settings: './src/settings.js'
+    settings: './src/settings/index.js'
   },
   output: {
     filename: '[name].bundle.js',
