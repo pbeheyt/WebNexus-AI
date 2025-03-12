@@ -91,6 +91,12 @@ export default class DefaultPromptConfigPanel {
       
       const slider = document.createElement('span');
       slider.className = 'slider';
+
+      // ARCHITECTURAL IMPROVEMENT: Add explicit click handler for the slider
+      slider.addEventListener('click', () => {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+      });
       
       toggle.appendChild(checkbox);
       toggle.appendChild(slider);

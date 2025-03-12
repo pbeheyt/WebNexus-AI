@@ -111,8 +111,9 @@ export default class MainController {
     const configPanel = document.getElementById('defaultPromptConfig');
     if (configPanel) {
       if (isDefault) {
-        configPanel.classList.remove('hidden');
+        // ARCHITECTURAL IMPROVEMENT: Initialize before showing
         await this.initializeDefaultPromptConfig();
+        configPanel.classList.remove('hidden');
       } else {
         configPanel.classList.add('hidden');
       }
@@ -135,7 +136,6 @@ export default class MainController {
       );
       
       await configPanel.initialize(configContainer);
-      configContainer.classList.remove('hidden');
     } catch (error) {
       console.error('Error initializing default prompt config:', error);
       configContainer.classList.add('hidden');
