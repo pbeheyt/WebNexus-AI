@@ -7,91 +7,164 @@ export default class CustomPromptSelector {
     this.contentType = null;
     this.prompts = [];
     this.selectedPromptId = null;
+    
+    // Track component lifecycle
+    this.initialized = false;
+    this.selectElement = null;
+    this.handleSelectChange = null;
   }
 
   async initialize(contentType) {
     if (!this.element) return;
     
-    this.contentType = contentType;
+    // If already initialized with same content type, just update selected value if needed
+    if (this.contentType === contentType && this.initialized && this.selectElement) {
+      if (this.selectedPromptId && this.selectElement.value !== this.selectedPromptId) {
+        this.selectElement.value = this.selectedPromptId;
+      }
+      return;
+    }
     
-    // Clear existing content
-    this.element.innerHTML = '';
+    // Clean up previous state
+    this.cleanup();
+    
+    // Set new content type
+    this.contentType = contentType;
     
     try {
       // Get custom prompts for this content type
-      const { prompts } = await this.promptService.loadCustomPrompts(contentType);
+      const { prompts, preferredPromptId } = await this.promptService.loadCustomPrompts(contentType);
       this.prompts = prompts || [];
       
+      // Default to preferred prompt if available
+      if (preferredPromptId && !this.selectedPromptId) {
+        this.selectedPromptId = preferredPromptId;
+      }
+      
+      // Handle empty prompts case
       if (this.prompts.length === 0) {
-        this.showEmptyState();
+        this.renderEmptyState();
         return;
       }
       
-      // Create select element
-      const select = document.createElement('select');
-      select.className = 'custom-prompt-select';
-      
-      // Add options
-      this.prompts.forEach(prompt => {
-        const option = document.createElement('option');
-        option.value = prompt.id;
-        option.textContent = prompt.name;
-        select.appendChild(option);
-        
-        // Select first one by default if none selected
-        if (!this.selectedPromptId) {
-          this.selectedPromptId = prompt.id;
-        }
-      });
-      
-      // Set selected option
-      if (this.selectedPromptId) {
-        select.value = this.selectedPromptId;
+      // Select first prompt if none selected
+      if (!this.selectedPromptId && this.prompts.length > 0) {
+        this.selectedPromptId = this.prompts[0].id;
       }
       
-      // Add change handler
-      select.addEventListener('change', () => {
-        this.selectedPromptId = select.value;
-        if (this.onChange) {
-          this.onChange(this.selectedPromptId);
-        }
-      });
-      
-      this.element.appendChild(select);
+      // Render the dropdown
+      this.renderPromptSelector();
       
       // Call onChange with initial selection
       if (this.onChange && this.selectedPromptId) {
         this.onChange(this.selectedPromptId);
       }
+      
+      // Mark as initialized
+      this.initialized = true;
+      
     } catch (error) {
       console.error('Error loading custom prompts:', error);
-      this.showError(error.message);
+      this.renderError(error.message);
     }
   }
 
-  showEmptyState() {
-    this.element.innerHTML = `
-      <div class="empty-custom-prompts">
-        <p>No custom prompts available. Create one in settings.</p>
-      </div>
-    `;
+  renderPromptSelector() {
+    // Ensure the element is empty before rendering
+    while (this.element.firstChild) {
+      this.element.removeChild(this.element.firstChild);
+    }
+    
+    // Create select element
+    this.selectElement = document.createElement('select');
+    this.selectElement.className = 'custom-prompt-select';
+    
+    // Add options
+    this.prompts.forEach(prompt => {
+      const option = document.createElement('option');
+      option.value = prompt.id;
+      option.textContent = prompt.name;
+      option.selected = prompt.id === this.selectedPromptId;
+      this.selectElement.appendChild(option);
+    });
+    
+    // Create and store reference to the handler
+    this.handleSelectChange = () => {
+      this.selectedPromptId = this.selectElement.value;
+      if (this.onChange) {
+        this.onChange(this.selectedPromptId);
+      }
+    };
+    
+    // Add event listener with the referenced handler
+    this.selectElement.addEventListener('change', this.handleSelectChange);
+    
+    // Append to container
+    this.element.appendChild(this.selectElement);
+  }
+
+  renderEmptyState() {
+    // Ensure the element is empty
+    while (this.element.firstChild) {
+      this.element.removeChild(this.element.firstChild);
+    }
+    
+    const emptyState = document.createElement('div');
+    emptyState.className = 'empty-custom-prompts';
+    emptyState.innerHTML = '<p>No custom prompts available. Create one in settings.</p>';
+    this.element.appendChild(emptyState);
   }
   
-  showError(message) {
-    this.element.innerHTML = `
-      <div class="empty-custom-prompts error">
-        <p>Error: ${message}</p>
-      </div>
-    `;
+  renderError(message) {
+    // Ensure the element is empty
+    while (this.element.firstChild) {
+      this.element.removeChild(this.element.firstChild);
+    }
+    
+    const errorElement = document.createElement('div');
+    errorElement.className = 'empty-custom-prompts error';
+    errorElement.innerHTML = `<p>Error: ${message}</p>`;
+    this.element.appendChild(errorElement);
+  }
+  
+  cleanup() {
+    // Remove event listeners to prevent memory leaks
+    if (this.selectElement && this.handleSelectChange) {
+      this.selectElement.removeEventListener('change', this.handleSelectChange);
+      this.handleSelectChange = null;
+    }
+    
+    // Clear DOM content
+    while (this.element && this.element.firstChild) {
+      this.element.removeChild(this.element.firstChild);
+    }
+    
+    this.selectElement = null;
+    this.initialized = false;
   }
   
   setSelectedPromptId(promptId) {
     this.selectedPromptId = promptId;
     
-    // Update select element if it exists
-    const select = this.element.querySelector('.custom-prompt-select');
-    if (select) {
-      select.value = promptId;
+    // Update select element if it exists and is different
+    if (this.selectElement && this.selectElement.value !== promptId) {
+      this.selectElement.value = promptId;
+      
+      // Programmatically trigger change handler
+      if (this.onChange) {
+        this.onChange(promptId);
+      }
     }
+  }
+  
+  // Destroy component (call when navigating away)
+  destroy() {
+    this.cleanup();
+    this.element = null;
+    this.promptService = null;
+    this.onChange = null;
+    this.prompts = null;
+    this.contentType = null;
+    this.selectedPromptId = null;
   }
 }
