@@ -42,13 +42,23 @@
     </div>
     
     <div class="form-section">
-      <label for="promptType" class="form-label">Summary Type:</label>
-      <select id="promptType" class="prompt-select">
-        <option value="general">Web Content Summary</option>
-        <option value="reddit">Reddit Post Analysis</option>
-        <option value="youtube">YouTube Video Summary</option>
-      </select>
-      <div id="defaultPromptConfig" class="hidden"></div>
+      <label class="form-label">Prompt Type:</label>
+      <div class="prompt-type-toggle" id="promptTypeToggle">
+        <label class="toggle-option">
+          <input type="radio" name="promptTypeOption" value="default" checked>
+          <span>Default</span>
+        </label>
+        <label class="toggle-option">
+          <input type="radio" name="promptTypeOption" value="custom">
+          <span>Custom</span>
+        </label>
+      </div>
+      
+      <!-- Container for Default Prompt Config -->
+      <div id="defaultPromptConfig" class="prompt-config-panel"></div>
+      
+      <!-- Container for Custom Prompt Selector (hidden by default) -->
+      <div id="customPromptSelector" class="prompt-config-panel hidden"></div>
     </div>
     
     <button type="button" id="summarizeBtn" class="btn-summarize">Summarize Content</button>

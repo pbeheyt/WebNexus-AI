@@ -8,7 +8,8 @@ import DefaultPromptPreferencesService from './services/DefaultPromptPreferences
 import PromptService from './services/PromptService.js';
 import ContentTypeView from './ui/ContentTypeView.js';
 import PlatformSelector from './ui/PlatformSelector.js';
-import PromptSelector from './ui/PromptSelector.js';
+import PromptTypeToggle from './ui/PromptTypeToggle.js';
+import CustomPromptSelector from './ui/CustomPromptSelector.js';
 import DefaultPromptConfigPanel from './ui/DefaultPromptConfigPanel.js';
 import StatusManager from './ui/StatusManager.js';
 import SummarizeController from './controllers/SummarizeController.js';
@@ -17,13 +18,14 @@ import MainController from './controllers/MainController.js';
 document.addEventListener('DOMContentLoaded', () => {
   // Get DOM elements
   const contentTypeDisplay = document.getElementById('contentTypeDisplay');
-  const promptTypeSelect = document.getElementById('promptType');
+  const promptTypeToggleElement = document.getElementById('promptTypeToggle');
   const summarizeBtn = document.getElementById('summarizeBtn');
   const statusMessage = document.getElementById('statusMessage');
   const settingsBtn = document.getElementById('settingsBtn');
   const platformOptions = document.getElementById('platformOptions');
   const toastElement = document.getElementById('toast');
   const defaultPromptConfigContainer = document.getElementById('defaultPromptConfig');
+  const customPromptSelectorContainer = document.getElementById('customPromptSelector');
   
   // Initialize services
   const storageService = new StorageService();
@@ -43,10 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
     (platformId) => mainController.handlePlatformChange(platformId)
   );
   
-  const promptSelector = new PromptSelector(
-    promptTypeSelect,
-    (promptId) => mainController.handlePromptChange(promptId),
-    (isDefault) => mainController.handlePromptTypeChange(isDefault)
+  const promptTypeToggle = new PromptTypeToggle(
+    promptTypeToggleElement,
+    (isDefault) => mainController.handlePromptTypeToggle(isDefault)
+  );
+  
+  const customPromptSelector = new CustomPromptSelector(
+    customPromptSelectorContainer,
+    promptService,
+    (promptId) => mainController.handlePromptChange(promptId)
   );
   
   // Initialize controllers
@@ -66,7 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
     statusManager,
     contentTypeView,
     platformSelector,
-    promptSelector,
+    promptTypeToggle,
+    customPromptSelector,
     DefaultPromptConfigPanel
   );
   

@@ -1,4 +1,4 @@
-// popup/controllers/MainController.js
+// src/popup/controllers/MainController.js
 export default class MainController {
   constructor(
     tabService,
@@ -10,7 +10,8 @@ export default class MainController {
     statusManager,
     contentTypeView,
     platformSelector,
-    promptSelector,
+    promptTypeToggle,
+    customPromptSelector,
     defaultPromptConfigPanel
   ) {
     this.tabService = tabService;
@@ -22,7 +23,8 @@ export default class MainController {
     this.statusManager = statusManager;
     this.contentTypeView = contentTypeView;
     this.platformSelector = platformSelector;
-    this.promptSelector = promptSelector;
+    this.promptTypeToggle = promptTypeToggle;
+    this.customPromptSelector = customPromptSelector;
     this.defaultPromptConfigPanel = defaultPromptConfigPanel;
     
     this.state = {
@@ -33,7 +35,7 @@ export default class MainController {
       selectedPlatformId: null,
       selectedPromptId: null,
       isProcessing: false,
-      isDefaultPrompt: false
+      isDefaultPromptType: true
     };
   }
 
@@ -64,19 +66,24 @@ export default class MainController {
       // Render platform selector
       this.platformSelector.render(platforms, preferredPlatformId);
       
+      // Initialize prompt type toggle
+      this.promptTypeToggle.initialize();
+      
       // Load prompts for this content type
       const { prompts, preferredPromptId } = await this.promptService.loadPrompts(this.state.contentType);
       this.state.selectedPromptId = preferredPromptId;
       
       // Check if selected prompt is default
-      this.state.isDefaultPrompt = preferredPromptId === this.state.contentType;
+      this.state.isDefaultPromptType = preferredPromptId === this.state.contentType;
       
-      // Render prompt selector with callback for type changes
-      this.promptSelector.render(prompts, preferredPromptId);
+      // Set prompt type toggle to match
+      this.promptTypeToggle.setType(this.state.isDefaultPromptType);
       
-      // Initialize default prompt config panel if needed
-      if (this.state.isDefaultPrompt) {
+      // Initialize appropriate prompt UI
+      if (this.state.isDefaultPromptType) {
         await this.initializeDefaultPromptConfig();
+      } else {
+        await this.initializeCustomPromptSelector();
       }
       
       // Update status
@@ -104,19 +111,33 @@ export default class MainController {
     this.state.selectedPromptId = promptId;
   }
 
-  async handlePromptTypeChange(isDefault) {
-    this.state.isDefaultPrompt = isDefault;
-    
-    // Show or hide default prompt config panel
-    const configPanel = document.getElementById('defaultPromptConfig');
-    if (configPanel) {
+  async handlePromptTypeToggle(isDefault) {
+    try {
+      this.state.isDefaultPromptType = isDefault;
+      
+      // Show/hide appropriate containers
+      const defaultContainer = document.getElementById('defaultPromptConfig');
+      const customContainer = document.getElementById('customPromptSelector');
+      
       if (isDefault) {
-        // ARCHITECTURAL IMPROVEMENT: Initialize before showing
+        defaultContainer.classList.remove('hidden');
+        customContainer.classList.add('hidden');
+        
+        // Initialize default prompt config if needed
         await this.initializeDefaultPromptConfig();
-        configPanel.classList.remove('hidden');
+        
+        // Use default prompt ID
+        this.state.selectedPromptId = this.state.contentType;
       } else {
-        configPanel.classList.add('hidden');
+        defaultContainer.classList.add('hidden');
+        customContainer.classList.remove('hidden');
+        
+        // Initialize custom prompt selector if needed
+        await this.initializeCustomPromptSelector();
       }
+    } catch (error) {
+      console.error('Error toggling prompt type:', error);
+      this.statusManager.updateStatus(`Error: ${error.message}`);
     }
   }
 
@@ -136,9 +157,21 @@ export default class MainController {
       );
       
       await configPanel.initialize(configContainer);
+      
+      // Set selected prompt ID to content type
+      this.state.selectedPromptId = this.state.contentType;
     } catch (error) {
       console.error('Error initializing default prompt config:', error);
       configContainer.classList.add('hidden');
+    }
+  }
+
+  async initializeCustomPromptSelector() {
+    try {
+      await this.customPromptSelector.initialize(this.state.contentType);
+    } catch (error) {
+      console.error('Error initializing custom prompt selector:', error);
+      this.statusManager.updateStatus(`Error: ${error.message}`);
     }
   }
 

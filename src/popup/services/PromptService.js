@@ -66,4 +66,35 @@ export default class PromptService {
     const customPromptsByType = await this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS) || {};
     return customPromptsByType[contentType]?.prompts?.[promptId]?.content || null;
   }
+
+  async loadCustomPrompts(contentType) {
+    try {
+      // Load custom prompts
+      const customPromptsByType = await this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS) || {};
+      
+      // Get preferred prompt ID
+      const preferredPromptId = customPromptsByType[contentType]?.preferredPromptId || null;
+      
+      // Extract custom prompts only
+      const customPrompts = [];
+      
+      if (customPromptsByType[contentType]?.prompts) {
+        Object.entries(customPromptsByType[contentType].prompts).forEach(([id, prompt]) => {
+          customPrompts.push({
+            id,
+            name: prompt.name,
+            isPreferred: id === preferredPromptId
+          });
+        });
+      }
+      
+      return { 
+        prompts: customPrompts, 
+        preferredPromptId 
+      };
+    } catch (error) {
+      console.error('Error loading custom prompts:', error);
+      return { prompts: [], preferredPromptId: null };
+    }
+  }
 }
