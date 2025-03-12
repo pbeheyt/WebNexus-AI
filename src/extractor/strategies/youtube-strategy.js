@@ -159,17 +159,31 @@ class YoutubeExtractorStrategy extends BaseExtractor {
   }
 
   /**
-   * Extract the video description from meta tag or description element
+   * Extract the video description from the microformat JSON-LD schema, with fallbacks
    * @returns {string} The video description
    */
   extractVideoDescription() {
-    // Try meta tag first
+    // Target the specific microformat element first
+    try {
+      const microformatElement = document.querySelector('#microformat script[type="application/ld+json"]');
+      if (microformatElement) {
+        const jsonData = JSON.parse(microformatElement.textContent);
+        if (jsonData && jsonData.description) {
+          this.logger.info('Found description in microformat JSON-LD schema');
+          return jsonData.description;
+        }
+      }
+    } catch (e) {
+      this.logger.warn('Error extracting from microformat JSON-LD:', e);
+    }
+    
+    // Try meta tag as fallback
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       return metaDescription.getAttribute('content');
     }
     
-    // Try description element as fallback
+    // Try description element as final fallback
     const descriptionElement = document.querySelector('#description-inline-expander');
     if (descriptionElement) {
       return descriptionElement.textContent.trim();
@@ -189,9 +203,49 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     }
     
     // Concatenate all text segments with spaces, removing timestamps
-    return transcriptData.map(segment => segment.text.trim())
+    const rawTranscript = transcriptData.map(segment => segment.text.trim())
       .join(' ')
       .replace(/\s+/g, ' '); // Replace multiple spaces with a single space
+      
+    // Decode HTML entities - specifically handling double-encoded entities
+    return this.decodeDoubleEncodedEntities(rawTranscript);
+  }
+
+  /**
+   * Decode double-encoded HTML entities
+   * @param {string} text - Text with encoded entities
+   * @returns {string} Decoded text
+   */
+  decodeDoubleEncodedEntities(text) {
+    if (!text) return '';
+    
+    // First pass: convert &amp; to & (handles double encoding)
+    let decoded = text.replace(/&amp;/g, '&');
+    
+    // Second pass: decode common HTML entities
+    const entities = {
+      '&#39;': "'",
+      '&quot;': '"',
+      '&lt;': '<',
+      '&gt;': '>',
+      '&nbsp;': ' ',
+      '&#34;': '"',
+      '&#60;': '<',
+      '&#62;': '>',
+      '&#160;': ' '
+    };
+    
+    // Replace each entity with its corresponding character
+    for (const [entity, char] of Object.entries(entities)) {
+      decoded = decoded.replace(new RegExp(entity, 'g'), char);
+    }
+    
+    // Handle numeric entities (like &#039;)
+    decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+      return String.fromCharCode(dec);
+    });
+    
+    return decoded;
   }
 
   /**
