@@ -367,8 +367,15 @@
     right: 14px;
     padding: 10px 14px;
     font-size: 12px;
+    pointer-events: none;
   }
   
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   /* ======================================
      Utility Classes
      ====================================== */
