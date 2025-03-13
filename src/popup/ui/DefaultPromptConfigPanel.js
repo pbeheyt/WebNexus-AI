@@ -46,12 +46,6 @@ export default class DefaultPromptConfigPanel {
     const panel = document.createElement('div');
     panel.className = 'default-prompt-config-panel';
     
-    // Add title
-    const title = document.createElement('h3');
-    title.className = 'config-panel-title';
-    title.textContent = 'Customize Default Prompt';
-    panel.appendChild(title);
-    
     // Create form
     const form = document.createElement('div');
     form.className = 'config-panel-form';
