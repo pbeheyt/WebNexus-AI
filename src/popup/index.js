@@ -5,6 +5,7 @@ import TabService from './services/TabService.js';
 import ContentService from './services/ContentService.js';
 import PlatformService from './services/PlatformService.js';
 import DefaultPromptPreferencesService from './services/DefaultPromptPreferencesService.js';
+import PreferenceService from './services/PreferenceService.js';
 import PromptService from './services/PromptService.js';
 import ContentTypeView from './ui/ContentTypeView.js';
 import PlatformSelector from './ui/PlatformSelector.js';
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const contentService = new ContentService(tabService);
   const platformService = new PlatformService(storageService);
   const defaultPromptPreferencesService = new DefaultPromptPreferencesService(storageService, configService);
+  const preferenceService = new PreferenceService(storageService);
   const promptService = new PromptService(storageService, configService, defaultPromptPreferencesService);
   
   // Initialize UI components
@@ -47,13 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const promptTypeToggle = new PromptTypeToggle(
     promptTypeToggleElement,
-    (isDefault) => mainController.handlePromptTypeToggle(isDefault)
+    (isDefault) => mainController.handlePromptTypeToggle(isDefault),
+    preferenceService,
+    statusManager
   );
   
   const customPromptSelector = new CustomPromptSelector(
     customPromptSelectorContainer,
     promptService,
-    (promptId) => mainController.handlePromptChange(promptId)
+    (promptId) => mainController.handlePromptChange(promptId),
+    preferenceService,
+    statusManager
   );
   
   // Initialize controllers
@@ -69,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     platformService,
     promptService,
     defaultPromptPreferencesService,
+    preferenceService,
     summarizeController,
     statusManager,
     contentTypeView,

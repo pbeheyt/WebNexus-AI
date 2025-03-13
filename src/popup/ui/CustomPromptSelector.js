@@ -1,9 +1,11 @@
 // src/popup/ui/CustomPromptSelector.js
 export default class CustomPromptSelector {
-  constructor(element, promptService, onChange) {
+  constructor(element, promptService, onChange, preferenceService = null, statusManager = null) {
     this.element = element;
     this.promptService = promptService;
     this.onChange = onChange;
+    this.preferenceService = preferenceService;
+    this.statusManager = statusManager;
     this.contentType = null;
     this.prompts = [];
     this.selectedPromptId = null;
@@ -14,52 +16,10 @@ export default class CustomPromptSelector {
     this.handleSelectChange = null;
   }
 
-  async initializeWithData(contentType, preloadedPrompts, preferredPromptId) {
-    if (!this.element) return;
-    
-    // Clean up previous state
-    this.cleanup();
-    
-    // Set new content type
-    this.contentType = contentType;
-    
-    try {
-      // Use preloaded data
-      this.prompts = preloadedPrompts || [];
-      
-      // Default to preferred prompt if available
-      if (preferredPromptId && !this.selectedPromptId) {
-        this.selectedPromptId = preferredPromptId;
-      }
-      
-      // Handle empty prompts case
-      if (this.prompts.length === 0) {
-        this.renderEmptyState();
-        return;
-      }
-      
-      // Select first prompt if none selected
-      if (!this.selectedPromptId && this.prompts.length > 0) {
-        this.selectedPromptId = this.prompts[0].id;
-      }
-      
-      // Render the dropdown
-      this.renderPromptSelector();
-      
-      // Call onChange with initial selection
-      if (this.onChange && this.selectedPromptId) {
-        this.onChange(this.selectedPromptId);
-      }
-      
-      // Mark as initialized
-      this.initialized = true;
-      
-    } catch (error) {
-      console.error('Error loading custom prompts:', error);
-      this.renderError(error.message);
-    }
-  }
-
+  /**
+   * Initialize the custom prompt selector
+   * @param {string} contentType - The content type (general, reddit, youtube)
+   */
   async initialize(contentType) {
     if (!this.element) return;
     
@@ -82,8 +42,20 @@ export default class CustomPromptSelector {
       const { prompts, preferredPromptId } = await this.promptService.loadCustomPrompts(contentType);
       this.prompts = prompts || [];
       
-      // Default to preferred prompt if available
-      if (preferredPromptId && !this.selectedPromptId) {
+      // Try to load previously selected prompt ID
+      if (this.preferenceService) {
+        try {
+          const savedPromptId = await this.preferenceService.getSelectedPromptId(contentType, false);
+          if (savedPromptId && this.prompts.some(p => p.id === savedPromptId)) {
+            this.selectedPromptId = savedPromptId;
+          }
+        } catch (error) {
+          console.error('Error loading saved prompt ID:', error);
+        }
+      }
+      
+      // Default to preferred prompt if no selection yet
+      if (!this.selectedPromptId && preferredPromptId) {
         this.selectedPromptId = preferredPromptId;
       }
       
@@ -93,7 +65,7 @@ export default class CustomPromptSelector {
         return;
       }
       
-      // Select first prompt if none selected
+      // Select first prompt if still no selection
       if (!this.selectedPromptId && this.prompts.length > 0) {
         this.selectedPromptId = this.prompts[0].id;
       }
@@ -106,6 +78,19 @@ export default class CustomPromptSelector {
         this.onChange(this.selectedPromptId);
       }
       
+      // Save initial selection
+      if (this.preferenceService && this.selectedPromptId) {
+        try {
+          await this.preferenceService.saveSelectedPromptId(
+            this.contentType, 
+            false, 
+            this.selectedPromptId
+          );
+        } catch (error) {
+          console.error('Error saving initial prompt selection:', error);
+        }
+      }
+      
       // Mark as initialized
       this.initialized = true;
       
@@ -115,6 +100,9 @@ export default class CustomPromptSelector {
     }
   }
 
+  /**
+   * Render the prompt selector dropdown
+   */
   renderPromptSelector() {
     // Ensure the element is empty before rendering
     while (this.element.firstChild) {
@@ -135,8 +123,32 @@ export default class CustomPromptSelector {
     });
     
     // Create and store reference to the handler
-    this.handleSelectChange = () => {
+    this.handleSelectChange = async () => {
+      const previousId = this.selectedPromptId;
       this.selectedPromptId = this.selectElement.value;
+      
+      // Find prompt name for notification
+      const selectedPrompt = this.prompts.find(p => p.id === this.selectedPromptId);
+      
+      // Save selection if changed
+      if (previousId !== this.selectedPromptId && this.preferenceService && this.contentType) {
+        try {
+          await this.preferenceService.saveSelectedPromptId(
+            this.contentType, 
+            false, 
+            this.selectedPromptId
+          );
+          
+          // Show notification
+          if (this.statusManager && selectedPrompt) {
+            this.statusManager.notifyCustomPromptChanged(selectedPrompt.name);
+          }
+        } catch (error) {
+          console.error('Error saving prompt selection:', error);
+        }
+      }
+      
+      // Call onChange
       if (this.onChange) {
         this.onChange(this.selectedPromptId);
       }
@@ -149,6 +161,9 @@ export default class CustomPromptSelector {
     this.element.appendChild(this.selectElement);
   }
 
+  /**
+   * Render empty state message
+   */
   renderEmptyState() {
     // Ensure the element is empty
     while (this.element.firstChild) {
@@ -161,6 +176,10 @@ export default class CustomPromptSelector {
     this.element.appendChild(emptyState);
   }
   
+  /**
+   * Render error message
+   * @param {string} message - The error message
+   */
   renderError(message) {
     // Ensure the element is empty
     while (this.element.firstChild) {
@@ -173,6 +192,9 @@ export default class CustomPromptSelector {
     this.element.appendChild(errorElement);
   }
   
+  /**
+   * Clean up component resources
+   */
   cleanup() {
     // Remove event listeners to prevent memory leaks
     if (this.selectElement && this.handleSelectChange) {
@@ -189,12 +211,34 @@ export default class CustomPromptSelector {
     this.initialized = false;
   }
   
-  setSelectedPromptId(promptId) {
+  /**
+   * Set the selected prompt ID
+   * @param {string} promptId - The prompt ID to select
+   */
+  async setSelectedPromptId(promptId) {
+    const previousId = this.selectedPromptId;
     this.selectedPromptId = promptId;
     
     // Update select element if it exists and is different
     if (this.selectElement && this.selectElement.value !== promptId) {
       this.selectElement.value = promptId;
+      
+      // Find prompt name for notification
+      const selectedPrompt = this.prompts.find(p => p.id === promptId);
+      
+      // Save selection if changed
+      if (previousId !== promptId && this.preferenceService && this.contentType) {
+        try {
+          await this.preferenceService.saveSelectedPromptId(this.contentType, false, promptId);
+          
+          // Show notification
+          if (this.statusManager && selectedPrompt) {
+            this.statusManager.notifyCustomPromptChanged(selectedPrompt.name);
+          }
+        } catch (error) {
+          console.error('Error saving prompt selection:', error);
+        }
+      }
       
       // Programmatically trigger change handler
       if (this.onChange) {
@@ -203,7 +247,9 @@ export default class CustomPromptSelector {
     }
   }
   
-  // Destroy component (call when navigating away)
+  /**
+   * Destroy component (call when navigating away)
+   */
   destroy() {
     this.cleanup();
     this.element = null;
@@ -212,5 +258,7 @@ export default class CustomPromptSelector {
     this.prompts = null;
     this.contentType = null;
     this.selectedPromptId = null;
+    this.preferenceService = null;
+    this.statusManager = null;
   }
 }

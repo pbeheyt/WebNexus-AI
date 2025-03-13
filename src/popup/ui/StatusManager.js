@@ -53,4 +53,44 @@ export default class StatusManager {
       this.toastElement.classList.remove('show');
     }, 3000);
   }
+
+  /**
+   * Show notification for parameter change in default prompt config
+   * @param {string} paramType - The parameter type (e.g., 'length', 'style')
+   * @param {string} paramName - The parameter name
+   * @param {string} newValue - The new parameter value
+   */
+  notifyParameterChanged(paramType, paramName, newValue) {
+    const readableParamName = this.formatParameterName(paramName);
+    const message = `Default prompt preferences ${readableParamName} updated to ${newValue}`;
+    this.updateStatus(message, false, true);
+  }
+
+  /**
+   * Show notification for custom prompt selection
+   * @param {string} promptName - The name of the selected prompt
+   */
+  notifyCustomPromptChanged(promptName) {
+    const message = `Custom prompt changed to "${promptName}"`;
+    this.updateStatus(message, false, true);
+  }
+
+  /**
+   * Show notification for prompt type toggle
+   * @param {boolean} isDefault - Whether toggled to default (true) or custom (false)
+   */
+  notifyPromptTypeToggled(isDefault) {
+    const message = `Switched to ${isDefault ? 'Default' : 'Custom'} prompt`;
+    this.updateStatus(message, false, true);
+  }
+
+  /**
+   * Format parameter name for display
+   * @param {string} paramName - The parameter name in camelCase
+   * @returns {string} - Formatted parameter name
+   */
+  formatParameterName(paramName) {
+    // Convert camelCase to readable format (e.g., "commentAnalysis" to "Comment Analysis")
+    return paramName.replace(/([A-Z])/g, ' $1').toLowerCase().replace(/^./, str => str.toUpperCase());
+  }
 }
