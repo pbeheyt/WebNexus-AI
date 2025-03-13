@@ -17,7 +17,7 @@
       "icon": "images/deepseek_logo.png"
     }
   },
-    "defaultPrompts": {
+  "defaultPrompts": {
     "general": {
       "name": "Web Content Summary",
       "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this web content {{length}} {{style}} {{language}}.\n\n## PARAMETERS\n- Content Type: General Web Content\n\n{{additionalContext}}\n{{typeSpecificInstructions}}",
@@ -37,10 +37,10 @@
           "educational": "as a learning resource. Include:\n📚 TOPIC OVERVIEW: What this content covers\n🔑 KEY CONCEPTS: Important terms and ideas explained\n📝 MAIN LESSONS: What someone should learn from this\n🧠 PRACTICAL APPLICATIONS: How to apply this knowledge\n📌 FURTHER EXPLORATION: Related topics worth investigating"
         },
         "language": {
-          "english": "in English",
-          "french": "en Français",
-          "spanish": "en Español",
-          "german": "auf Deutsch"
+          "english": "with the ENTIRE RESPONSE written in English",
+          "french": "with the ENTIRE RESPONSE written in French (en Français)",
+          "spanish": "with the ENTIRE RESPONSE written in Spanish (en Español)",
+          "german": "with the ENTIRE RESPONSE written in German (auf Deutsch)"
         },
         "additionalContext": {
           "true": "## ADDITIONAL CONTEXT REQUIREMENTS\nAfter completing your summary, please add:\n💡 BACKGROUND CONTEXT\nProvide additional background information that helps understand this content's significance and place in the broader topic area.",
@@ -77,10 +77,10 @@
           "educational": "as a learning resource. Include:\n📚 TOPIC OVERVIEW: The subject and its importance\n🔑 KEY VIEWPOINTS: Major perspectives explained\n🧩 SUPPORTING EVIDENCE: Facts and examples shared\n🔄 COUNTERARGUMENTS: Alternative viewpoints presented\n🧠 KNOWLEDGE GAINED: What someone can learn from this discussion"
         },
         "language": {
-          "english": "in English",
-          "french": "en Français",
-          "spanish": "en Español",
-          "german": "auf Deutsch"
+          "english": "with the ENTIRE RESPONSE written in English",
+          "french": "with the ENTIRE RESPONSE written in French (en Français)",
+          "spanish": "with the ENTIRE RESPONSE written in Spanish (en Español)",
+          "german": "with the ENTIRE RESPONSE written in German (auf Deutsch)"
         },
         "additionalContext": {
           "true": "## ADDITIONAL CONTEXT REQUIREMENTS\nAfter completing your analysis, please add:\n📚 TOPIC BACKGROUND\nProvide additional context about the topic being discussed that would help someone understand the full significance of the conversation.",
@@ -117,10 +117,10 @@
           "educational": "as a learning resource. Include:\n📚 VIDEO CONTEXT: Creator, format, and purpose\n🎬 STRUCTURE OVERVIEW: How the video is organized\n🔑 KEY CONCEPTS: Important terms and ideas explained\n📝 MAIN LESSONS: What the viewer should learn\n🧠 PRACTICAL APPLICATIONS: How to apply this knowledge\n🎓 LEARNING ASSESSMENT: Educational value of the content"
         },
         "language": {
-          "english": "in English",
-          "french": "en Français",
-          "spanish": "en Español",
-          "german": "auf Deutsch"
+          "english": "with the ENTIRE RESPONSE written in English",
+          "french": "with the ENTIRE RESPONSE written in French (en Français)",
+          "spanish": "with the ENTIRE RESPONSE written in Spanish (en Español)",
+          "german": "with the ENTIRE RESPONSE written in German (auf Deutsch)"
         },
         "commentAnalysis": {
           "true": "Include analysis of the most insightful or popular comments. For each significant comment, include it in this format: \"Comment text\" - Username (X likes)",
