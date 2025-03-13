@@ -123,7 +123,7 @@
           "german": "with the ENTIRE RESPONSE written in German (auf Deutsch)"
         },
         "commentAnalysis": {
-          "true": "Include analysis of the most insightful or popular comments. For each significant comment, include it in this format: \"Comment text\" - Username (X likes)",
+          "true": "Include a cross-analysis of the comment section that weaves in quotes from top comments. Identify major themes/patterns across comments and illustrate each with relevant quote examples using this format: \"[comment quote]\" - Username (X likes). Highlight areas of consensus, notable disagreements, and unique perspectives while integrating the most popular or insightful comments directly into your analysis.",
           "false": "Do not include comment analysis."
         },
         "additionalContext": {
