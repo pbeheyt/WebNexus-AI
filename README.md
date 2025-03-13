@@ -7,15 +7,17 @@ A Chrome extension that extracts and summarizes web content, Reddit posts, and Y
 - Multi-platform support for Claude, ChatGPT, and DeepSeek
 - Smart content extraction from general web pages
 - Specialized extractors for Reddit posts and YouTube videos
-- Customizable prompts for different content types
+- Default and custom prompt templates for different content types
+- Configurable extraction settings (comment limits, etc.)
 - One-click summarization with context menu integration
+- Dark/light theme support
 
 ## How It Works
 
 1. The extension extracts relevant content from the current page
-2. The content is sent to your chosen AI platform
-3. The AI generates a summary based on the prompt template
-4. You receive a comprehensive summary of the content
+2. The content is sent to your chosen AI platform with a prompt template
+3. The AI generates a summary based on the content
+4. You receive a comprehensive summary suited to the content type
 
 ## Usage Guide
 
@@ -23,12 +25,20 @@ A Chrome extension that extracts and summarizes web content, Reddit posts, and Y
 
 1. Navigate to any webpage, Reddit post, or YouTube video
 2. Click the extension icon in your Chrome toolbar
-3. Select your preferred AI platform and summary type
-4. Click "Summarize Content"
+3. Select your preferred AI platform (Claude, ChatGPT, or DeepSeek)
+4. Choose between default or custom prompts
+5. Customize prompt parameters if using default prompts
+6. Click "Summarize Content"
 
 ### Context Menu
 
-Right-click on any webpage or selected text and choose "Summarize with AI" for quick access.
+Right-click on any webpage or selected text and choose "Summarize with AI" for quick access using your default settings.
+
+### Customization Options
+
+- **Default Prompts**: Customize length, style, language, and additional options
+- **Custom Prompts**: Create and manage your own prompt templates in settings
+- **Content Settings**: Configure extraction parameters like comment limits
 
 ## Architecture Overview
 
@@ -44,20 +54,21 @@ The extension is built on Chrome's Extension Manifest V3 architecture with a mod
 ### Content Extractors
 
 - **General Web Pages**: Extracts main content and metadata
-- **Reddit Posts**: Extracts post content, metadata, and comments
-- **YouTube Videos**: Extracts video transcript, metadata, and comments
+- **Reddit Posts**: Extracts post content, metadata, and configurable number of comments
+- **YouTube Videos**: Extracts video transcript, metadata, and configurable number of comments
 
 ### AI Platform Integration
 
 The extension integrates with three AI platforms:
-- Claude
-- ChatGPT
-- DeepSeek
+- **Claude**: Anthropic's Claude AI assistant
+- **ChatGPT**: OpenAI's ChatGPT interface
+- **DeepSeek**: DeepSeek AI's interface
 
 ### User Interface
 
-- **Popup Interface**: Content type detection, AI platform selection, prompt selection
+- **Popup Interface**: Content type detection, AI platform selection, prompt customization
 - **Settings Interface**: Custom prompt management, extraction configuration
+- **Theme Support**: Light and dark mode
 
 ## Installation from Source
 
