@@ -1,26 +1,26 @@
-// popup/ui/PlatformSelector.js
+// src/popup/ui/PlatformSelector.js - Simplified Version without theme-dependent logos
+
 export default class PlatformSelector {
   constructor(element, onChange) {
     this.element = element;
     this.onChange = onChange;
   }
 
+  /**
+   * Render platform options
+   * @param {Array} platforms - Array of platform objects
+   * @param {string} selectedPlatformId - ID of the selected platform
+   */
   render(platforms, selectedPlatformId) {
     if (!this.element || !platforms?.length) return;
-    
-    // Get current theme
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     
     // Clear existing content
     this.element.innerHTML = '';
     
     // Create platform options
     platforms.forEach(platform => {
-      // Modify iconUrl for ChatGPT based on theme
-      let iconUrl = platform.iconUrl;
-      if (platform.id === 'chatgpt') {
-        iconUrl = chrome.runtime.getURL(currentTheme === 'dark' ? 'images/chatgpt_logo_white.png' : 'images/chatgpt_logo_black.png');
-      }
+      // Use platform icon directly without theme modifications
+      const iconUrl = platform.iconUrl;
       
       const card = document.createElement('label');
       card.className = `platform-card ${platform.id === selectedPlatformId ? 'selected' : ''}`;
@@ -63,19 +63,5 @@ export default class PlatformSelector {
       
       this.element.appendChild(card);
     });
-  }
-  
-  // Theme change listener to update ChatGPT logo
-  updateLogos() {
-    if (!this.element) return;
-    
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-    const chatGptIcon = this.element.querySelector('[data-platform="chatgpt"] .platform-icon');
-    
-    if (chatGptIcon) {
-      chatGptIcon.src = chrome.runtime.getURL(
-        currentTheme === 'dark' ? 'images/chatgpt_logo_white.png' : 'images/chatgpt_logo_black.png'
-      );
-    }
   }
 }
