@@ -73,6 +73,16 @@ export default class DefaultPromptConfigPanel {
    * @returns {HTMLElement} - The parameter control element
    */
   createParameterControl(paramKey, paramOptions) {
+    // Skip displaying commentAnalysis parameter for non-YouTube content types
+    if (paramKey === 'commentAnalysis' && this.contentType !== 'youtube') {
+      return document.createElement('div'); // Return empty div to skip this parameter
+    }
+    
+    // Skip type-specific instructions as they're not user-configurable
+    if (paramKey === 'typeSpecificInstructions') {
+      return document.createElement('div');
+    }
+    
     const group = document.createElement('div');
     group.className = 'config-param-group';
     
@@ -122,7 +132,10 @@ export default class DefaultPromptConfigPanel {
       for (const [optionKey, optionValue] of Object.entries(paramOptions)) {
         const option = document.createElement('option');
         option.value = optionKey;
-        option.textContent = PARAMETER_OPTIONS_LABELS[paramKey]?.[optionKey] || optionKey;
+        
+        // Use label from PARAMETER_OPTIONS_LABELS if available, otherwise use optionKey
+        const optionLabel = PARAMETER_OPTIONS_LABELS[paramKey]?.[optionKey];
+        option.textContent = optionLabel !== undefined ? optionLabel : optionKey;
         
         // Set selected option
         if (this.preferences[paramKey] === optionKey) {
@@ -154,7 +167,7 @@ export default class DefaultPromptConfigPanel {
       // Convert string boolean values to actual booleans
       const processedValue = value === 'true' ? true : (value === 'false' ? false : value);
       
-      // Get human-readable value for notification
+      // Get human-readable value for notification using labels from constants
       const readableValue = PARAMETER_OPTIONS_LABELS[paramKey]?.[value] || value;
       
       // Update preferences

@@ -26,14 +26,18 @@ export const PARAMETER_LABELS = {
 
 export const PARAMETER_OPTIONS_LABELS = {
   length: {
+    ultra_concise: 'Ultra Concise',
     concise: 'Concise',
     normal: 'Normal',
-    detailed: 'Detailed'
+    detailed: 'Detailed',
+    exhaustive: 'Exhaustive'
   },
   style: {
     narrative: 'Narrative',
     bulletPoints: 'Bullet Points',
-    analytical: 'Analytical'
+    analytical: 'Analytical',
+    executive: 'Executive',
+    educational: 'Educational'
   },
   language: {
     english: 'English',

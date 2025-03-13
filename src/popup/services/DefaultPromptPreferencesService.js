@@ -55,6 +55,11 @@ export default class DefaultPromptPreferencesService {
     // Get user preferences
     const preferences = await this.getPreferences(contentType);
     
+    // Ensure typeSpecificInstructions preference exists
+    if (!preferences.typeSpecificInstructions) {
+      preferences.typeSpecificInstructions = "default";
+    }
+    
     // Get parameters
     const parameters = promptConfig.parameters;
     
@@ -63,6 +68,14 @@ export default class DefaultPromptPreferencesService {
     
     // Process each parameter type
     for (const [paramKey, paramOptions] of Object.entries(parameters)) {
+      // Skip commentAnalysis for non-YouTube content types
+      if (paramKey === 'commentAnalysis' && contentType !== 'youtube') {
+        // Remove the placeholder completely
+        prompt = prompt.replace(`{{${paramKey}}}\n`, '');
+        prompt = prompt.replace(`{{${paramKey}}}`, '');
+        continue;
+      }
+      
       const userValue = preferences[paramKey];
       const replacement = paramOptions[userValue] || '';
       
@@ -71,7 +84,9 @@ export default class DefaultPromptPreferencesService {
       prompt = prompt.replace(placeholder, replacement);
     }
     
-    // Return the built prompt
+    // Remove any double newlines that might have been created by empty parameters
+    prompt = prompt.replace(/\n\n+/g, '\n\n');
+    
     return prompt;
   }
 }
