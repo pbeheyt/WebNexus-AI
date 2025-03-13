@@ -15,10 +15,10 @@
     flex-direction: column;
   }
   
-  /* ======================================
-     Header Component
-     ====================================== */
-  .header {
+/* ======================================
+   Header Component
+   ====================================== */
+   .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -40,13 +40,17 @@
     color: var(--color-primary);
   }
   
+  .header-controls {
+    display: flex;
+    align-items: center;
+  }
+  
   .theme-toggle-btn {
     background: transparent;
     border: none;
     cursor: pointer;
     color: var(--text-secondary);
     padding: 4px;
-    margin-right: 8px;
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -75,6 +79,7 @@
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
+    margin-left: 2px;
   }
   
   .settings-btn:hover {

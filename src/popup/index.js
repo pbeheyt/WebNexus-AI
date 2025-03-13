@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const defaultPromptPreferencesService = new DefaultPromptPreferencesService(storageService, configService);
   const preferenceService = new PreferenceService(storageService);
   const promptService = new PromptService(storageService, configService, defaultPromptPreferencesService);
-  const themeService = new ThemeService(storageService); // Initialize theme service
+  const themeService = new ThemeService(storageService);
   
   // Initialize UI components
   const contentTypeView = new ContentTypeView(contentTypeDisplay);
@@ -66,11 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
     statusManager
   );
   
-  // Initialize theme toggle
+  // Initialize theme toggle with platform selector reference
   const themeToggle = new ThemeToggle(
     themeToggleBtn,
     themeService,
-    statusManager
+    statusManager,
+    platformSelector // Pass platformSelector to refresh logos on theme change
   );
   
   // Initialize controllers
@@ -106,7 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
   mainController.initialize();
   
   // Initialize theme toggle
-  themeToggle.initialize();
+  themeToggle.initialize().then(() => {
+    // After theme is applied, update platform logos
+    platformSelector.updateLogos();
+  });
   
   // Add transition classes after small delay to prevent initial animations
   setTimeout(() => {

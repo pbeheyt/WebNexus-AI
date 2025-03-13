@@ -16,10 +16,10 @@
     box-shadow: var(--shadow-medium);
   }
   
-  /* ======================================
-     Header Component
-     ====================================== */
-  header {
+/* ======================================
+   Header Component
+   ====================================== */
+   header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -38,6 +38,35 @@
   
   .logo-icon {
     color: var(--color-primary);
+  }
+  
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .theme-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+  }
+  
+  .theme-toggle-btn:hover {
+    background: rgba(255, 123, 0, 0.1);
+    color: var(--color-primary);
+  }
+  
+  .theme-toggle-btn svg {
+    width: 18px;
+    height: 18px;
   }
   
   .back-btn {

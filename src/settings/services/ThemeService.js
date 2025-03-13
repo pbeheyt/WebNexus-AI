@@ -1,4 +1,4 @@
-// src/popup/services/ThemeService.js
+// src/settings/services/ThemeService.js
 export default class ThemeService {
   constructor(storageService) {
     this.storageService = storageService;
@@ -11,7 +11,7 @@ export default class ThemeService {
 
   async getTheme() {
     const theme = await this.storageService.get(this.THEME_KEY);
-    return theme || this.THEMES.LIGHT; // Default to light theme instead of dark
+    return theme || this.THEMES.LIGHT; // Default to light theme
   }
 
   async setTheme(theme) {

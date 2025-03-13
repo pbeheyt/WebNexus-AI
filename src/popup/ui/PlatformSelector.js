@@ -8,11 +8,20 @@ export default class PlatformSelector {
   render(platforms, selectedPlatformId) {
     if (!this.element || !platforms?.length) return;
     
+    // Get current theme
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    
     // Clear existing content
     this.element.innerHTML = '';
     
     // Create platform options
     platforms.forEach(platform => {
+      // Modify iconUrl for ChatGPT based on theme
+      let iconUrl = platform.iconUrl;
+      if (platform.id === 'chatgpt') {
+        iconUrl = chrome.runtime.getURL(currentTheme === 'dark' ? 'images/chatgpt_logo_white.png' : 'images/chatgpt_logo_black.png');
+      }
+      
       const card = document.createElement('label');
       card.className = `platform-card ${platform.id === selectedPlatformId ? 'selected' : ''}`;
       card.dataset.platform = platform.id;
@@ -20,7 +29,7 @@ export default class PlatformSelector {
       card.innerHTML = `
         <input type="radio" name="platform" value="${platform.id}" 
           ${platform.id === selectedPlatformId ? 'checked' : ''}>
-        <img src="${platform.iconUrl}" class="platform-icon" alt="${platform.name}">
+        <img src="${iconUrl}" class="platform-icon" alt="${platform.name}">
         <span class="platform-name">${platform.name}</span>
         ${platform.id === selectedPlatformId ? '<span class="selected-indicator"></span>' : ''}
       `;
@@ -54,5 +63,19 @@ export default class PlatformSelector {
       
       this.element.appendChild(card);
     });
+  }
+  
+  // Theme change listener to update ChatGPT logo
+  updateLogos() {
+    if (!this.element) return;
+    
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const chatGptIcon = this.element.querySelector('[data-platform="chatgpt"] .platform-icon');
+    
+    if (chatGptIcon) {
+      chatGptIcon.src = chrome.runtime.getURL(
+        currentTheme === 'dark' ? 'images/chatgpt_logo_white.png' : 'images/chatgpt_logo_black.png'
+      );
+    }
   }
 }

@@ -1,11 +1,10 @@
-// src/popup/ui/ThemeToggle.js
+// src/settings/ui/ThemeToggle.js
 export default class ThemeToggle {
-  constructor(element, themeService, statusManager, platformSelector = null) {
+  constructor(element, themeService, notificationManager) {
     this.element = element;
     this.themeService = themeService;
-    this.statusManager = statusManager;
-    this.platformSelector = platformSelector; // Store reference to platformSelector
-    this.currentTheme = 'light'; // Default to light theme
+    this.notificationManager = notificationManager;
+    this.currentTheme = 'light'; // Default
   }
 
   async initialize() {
@@ -37,15 +36,10 @@ export default class ThemeToggle {
       // Update button appearance
       this.renderButton();
       
-      // Update platform logos if platformSelector is available
-      if (this.platformSelector) {
-        this.platformSelector.updateLogos();
-      }
-      
       // Show notification
-      if (this.statusManager) {
+      if (this.notificationManager) {
         const themeName = this.currentTheme === 'dark' ? 'Dark' : 'Light';
-        this.statusManager.updateStatus(`${themeName} theme applied`);
+        this.notificationManager.success(`${themeName} theme applied`);
       }
     } catch (error) {
       console.error('Error toggling theme:', error);
