@@ -13,7 +13,9 @@ export default class MainController {
     platformSelector,
     promptTypeToggle,
     customPromptSelector,
-    defaultPromptConfigPanel
+    defaultPromptConfigPanel,
+    themeToggle,  // Add theme toggle parameter
+    themeService  // Add theme service parameter
   ) {
     this.tabService = tabService;
     this.contentService = contentService;
@@ -28,6 +30,8 @@ export default class MainController {
     this.promptTypeToggle = promptTypeToggle;
     this.customPromptSelector = customPromptSelector;
     this.defaultPromptConfigPanel = defaultPromptConfigPanel;
+    this.themeToggle = themeToggle;
+    this.themeService = themeService;
     
     this.state = {
       currentTab: null,
@@ -37,7 +41,8 @@ export default class MainController {
       selectedPlatformId: null,
       selectedPromptId: null,
       isProcessing: false,
-      isDefaultPromptType: true
+      isDefaultPromptType: true,
+      currentTheme: 'dark'
     };
   }
 
@@ -47,6 +52,16 @@ export default class MainController {
   async initialize() {
     try {
       this.statusManager.updateStatus('Detecting page content...', true);
+      
+      // Initialize theme first to prevent flash of incorrect theme
+      if (this.themeService) {
+        try {
+          this.state.currentTheme = await this.themeService.getTheme();
+          this.themeService.applyTheme(this.state.currentTheme);
+        } catch (error) {
+          console.error('Error initializing theme:', error);
+        }
+      }
       
       // Get current tab info
       this.state.currentTab = await this.tabService.getCurrentTab();
@@ -273,6 +288,21 @@ export default class MainController {
     } catch (error) {
       console.error('Error toggling prompt type:', error);
       this.statusManager.updateStatus(`Error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Handle theme change
+   * @param {string} theme - The new theme ('dark' or 'light')
+   */
+  async handleThemeChange(theme) {
+    try {
+      this.state.currentTheme = theme;
+      this.themeService.applyTheme(theme);
+      this.statusManager.updateStatus(`${theme === 'dark' ? 'Dark' : 'Light'} theme applied`);
+    } catch (error) {
+      console.error('Theme change error:', error);
+      this.statusManager.updateStatus(`Error changing theme: ${error.message}`);
     }
   }
 

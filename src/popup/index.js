@@ -7,12 +7,14 @@ import PlatformService from './services/PlatformService.js';
 import DefaultPromptPreferencesService from './services/DefaultPromptPreferencesService.js';
 import PreferenceService from './services/PreferenceService.js';
 import PromptService from './services/PromptService.js';
+import ThemeService from './services/ThemeService.js';
 import ContentTypeView from './ui/ContentTypeView.js';
 import PlatformSelector from './ui/PlatformSelector.js';
 import PromptTypeToggle from './ui/PromptTypeToggle.js';
 import CustomPromptSelector from './ui/CustomPromptSelector.js';
 import DefaultPromptConfigPanel from './ui/DefaultPromptConfigPanel.js';
 import StatusManager from './ui/StatusManager.js';
+import ThemeToggle from './ui/ThemeToggle.js';
 import SummarizeController from './controllers/SummarizeController.js';
 import MainController from './controllers/MainController.js';
 
@@ -27,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastElement = document.getElementById('toast');
   const defaultPromptConfigContainer = document.getElementById('defaultPromptConfig');
   const customPromptSelectorContainer = document.getElementById('customPromptSelector');
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
   
   // Initialize services
   const storageService = new StorageService();
@@ -37,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const defaultPromptPreferencesService = new DefaultPromptPreferencesService(storageService, configService);
   const preferenceService = new PreferenceService(storageService);
   const promptService = new PromptService(storageService, configService, defaultPromptPreferencesService);
+  const themeService = new ThemeService(storageService); // Initialize theme service
   
   // Initialize UI components
   const contentTypeView = new ContentTypeView(contentTypeDisplay);
@@ -62,6 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
     statusManager
   );
   
+  // Initialize theme toggle
+  const themeToggle = new ThemeToggle(
+    themeToggleBtn,
+    themeService,
+    statusManager
+  );
+  
   // Initialize controllers
   const summarizeController = new SummarizeController(
     contentService,
@@ -82,7 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
     platformSelector,
     promptTypeToggle,
     customPromptSelector,
-    DefaultPromptConfigPanel
+    DefaultPromptConfigPanel,
+    themeToggle,
+    themeService
   );
   
   // Set up event listeners
@@ -91,6 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize the application
   mainController.initialize();
+  
+  // Initialize theme toggle
+  themeToggle.initialize();
   
   // Add transition classes after small delay to prevent initial animations
   setTimeout(() => {

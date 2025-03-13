@@ -6,7 +6,7 @@
    Design Tokens
    ====================================== */
 :root {
-  /* Colors - Structural */
+  /* Colors - Structural (Dark Theme) */
   --bg-primary: #1E1E1E;
   --bg-surface: #2D2D2D;
   --bg-surface-hover: #353535;
@@ -19,7 +19,7 @@
   --color-primary-hover: #E06E00;
   --color-secondary: #FF9D45;
 
-  /* Colors - Text */
+  /* Colors - Text (Dark Theme) */
   --text-primary: #FFFFFF;
   --text-secondary: #B0B0B0;
 
@@ -35,6 +35,25 @@
   /* Animation */
   --transition-fast: 0.2s ease;
   --transition-medium: 0.3s ease;
+}
+
+/* Light Theme Variables */
+:root[data-theme="light"] {
+  /* Colors - Structural (Light Theme) */
+  --bg-primary: #F8F8F8;
+  --bg-surface: #FFFFFF;
+  --bg-surface-hover: #F2F2F2;
+  --bg-surface-active: rgba(255, 123, 0, 0.05);
+  --border-color: #E0E0E0;
+  --divider-color: #E0E0E0;
+
+  /* Colors - Text (Light Theme) */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  
+  /* Shadows (Light Theme) */
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* ======================================

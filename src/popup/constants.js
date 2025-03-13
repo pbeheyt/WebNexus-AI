@@ -13,7 +13,8 @@ export const STORAGE_KEYS = {
   EXTRACTED_CONTENT: 'extractedContent',
   AI_PLATFORM_TAB_ID: 'aiPlatformTabId',
   SCRIPT_INJECTED: 'scriptInjected',
-  PRE_PROMPT: 'prePrompt'
+  PRE_PROMPT: 'prePrompt',
+  THEME_PREFERENCE: 'theme_preference'
 };
 
 export const PARAMETER_LABELS = {
