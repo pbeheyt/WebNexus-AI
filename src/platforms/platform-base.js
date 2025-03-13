@@ -142,11 +142,8 @@ class BasePlatform extends PlatformInterface {
   createStructuredPrompt(prePrompt, formattedContent) {
     // Use a simple structural approach that preserves the entire prePrompt
     return `# INSTRUCTION
-
 ${prePrompt}
-    
 # CONTENT
-    
 ${formattedContent}`;
   }
   
@@ -195,24 +192,23 @@ ${formattedContent}`;
     // Format comments with likes
     let commentsText = '';
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      commentsText = `## Comments\n`;
+      commentsText = `## COMMENTS
+`;
       data.comments.forEach((comment, index) => {
-        commentsText += `${index + 1}. User: ${comment.author || 'Anonymous'} (${comment.likes || '0'} likes)\n`;
-        commentsText += `   "${comment.text || ''}"\n\n`;
+        commentsText += `${index + 1}. User: ${comment.author || 'Anonymous'} (${comment.likes || '0'} likes)
+   "${comment.text || ''}"
+`;
       });
     }
     
-    return `## Video Metadata
+    return `## VIDEO METADATA
 - Title: ${title}
 - Channel: ${channel}
 - URL: https://www.youtube.com/watch?v=${data.videoId || ''}
-
-## Description
+## DESCRIPTION
 ${description}
-
-## Transcript
+## TRANSCRIPT
 ${transcript}
-
 ${commentsText}`;
   }
   
@@ -228,24 +224,24 @@ ${commentsText}`;
     const postUrl = data.postUrl || '';
     const subreddit = data.subreddit || 'Unknown subreddit';
     
-    let formattedText = `## Post Metadata
+    let formattedText = `## POST METADATA
 - Title: ${title}
 - Author: ${author}
 - Subreddit: ${subreddit}
 - URL: ${postUrl}
-
-## Post Content
+## POST CONTENT
 ${content}
-
 `;
     
     // Format comments with links
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      formattedText += `## Comments\n`;
+      formattedText += `## COMMENTS
+`;
       
       data.comments.forEach((comment, index) => {
-        formattedText += `${index + 1}. u/${comment.author || 'Anonymous'} (${comment.popularity || '0'} points) [(link)](${comment.permalink || postUrl})\n`;
-        formattedText += `   "${comment.content || ''}"\n\n`;
+        formattedText += `${index + 1}. u/${comment.author || 'Anonymous'} (${comment.popularity || '0'} points) [(link)](${comment.permalink || postUrl})
+   "${comment.content || ''}"
+`;
       });
     }
     
@@ -264,25 +260,27 @@ ${content}
     const author = data.pageAuthor || null;
     const description = data.pageDescription || null;
     
-    let metadataText = `## Page Metadata
+    let metadataText = `## PAGE METADATA
 - Title: ${title}
 - URL: ${url}`;
     
     if (author) {
-      metadataText += `\n- Author: ${author}`;
+      metadataText += `
+- Author: ${author}`;
     }
     
     if (description) {
-      metadataText += `\n- Description: ${description}`;
+      metadataText += `
+- Description: ${description}`;
     }
     
     if (data.isSelection) {
-      metadataText += `\n- Note: This is a user-selected portion of the page content.`;
+      metadataText += `
+- Note: This is a user-selected portion of the page content.`;
     }
     
     return `${metadataText}
-
-## Page Content
+## PAGE CONTENT
 ${content}`;
   }
 }
