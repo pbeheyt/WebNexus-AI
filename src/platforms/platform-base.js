@@ -105,8 +105,8 @@ class BasePlatform extends PlatformInterface {
         // Format content based on type
         const formattedContent = this.formatContent(result.extractedContent);
         
-        // Combine prompt with content
-        const fullText = `${result.prePrompt}\n\n${formattedContent}`;
+        // Combine prompt with content in the new structured format
+        const fullText = this.createStructuredPrompt(result.prePrompt, formattedContent);
         
         this.logger.info(`Attempting to insert text into ${this.platformId}`);
         this.insertAndSubmitText(fullText).then(success => {
@@ -131,6 +131,27 @@ class BasePlatform extends PlatformInterface {
         error: `Error processing content: ${error.message}`
       });
     }
+  }
+
+  /**
+   * Create a structured prompt combining instructions and formatted content
+   * @param {string} prePrompt - The pre-prompt instructions
+   * @param {string} formattedContent - The formatted content
+   * @returns {string} The full structured prompt
+   */
+  createStructuredPrompt(prePrompt, formattedContent) {
+    // Use a simple structural approach that preserves the entire prePrompt
+    return `##################################################
+# SUMMARY INSTRUCTION
+##################################################
+
+${prePrompt}
+
+##################################################
+# CONTENT
+##################################################
+
+${formattedContent}`;
   }
   
   /**
@@ -178,13 +199,25 @@ class BasePlatform extends PlatformInterface {
     // Format comments with likes
     let commentsText = '';
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      commentsText = '\n\nComments:\n';
-      data.comments.forEach(comment => {
-        commentsText += `User: ${comment.author || 'Anonymous'}\nLikes: ${comment.likes || '0'}\nComment: ${comment.text || ''}\n\n`;
+      commentsText = `## Comments\n`;
+      data.comments.forEach((comment, index) => {
+        commentsText += `${index + 1}. User: ${comment.author || 'Anonymous'} (${comment.likes || '0'} likes)\n`;
+        commentsText += `   "${comment.text || ''}"\n\n`;
       });
     }
     
-    return `Title: ${title}\nChannel: ${channel}\n\nDescription:\n${description}\n\nTranscript:\n${transcript}${commentsText}`;
+    return `## Video Metadata
+- Title: ${title}
+- Channel: ${channel}
+- URL: https://www.youtube.com/watch?v=${data.videoId || ''}
+
+## Description
+${description}
+
+## Transcript
+${transcript}
+
+${commentsText}`;
   }
   
   /**
@@ -197,32 +230,26 @@ class BasePlatform extends PlatformInterface {
     const content = data.postContent || 'No content available';
     const author = data.postAuthor || 'Unknown author';
     const postUrl = data.postUrl || '';
+    const subreddit = data.subreddit || 'Unknown subreddit';
     
-    // Start with post information
-    let formattedText = `Title: ${title}\nAuthor: ${author}`;
-    
-    // Add post URL if available
-    if (postUrl) {
-      formattedText += `\nURL: ${postUrl}`;
-    }
-    
-    // Add post content
-    formattedText += `\n\nContent:\n${content}`;
+    let formattedText = `## Post Metadata
+- Title: ${title}
+- Author: ${author}
+- Subreddit: ${subreddit}
+- URL: ${postUrl}
+
+## Post Content
+${content}
+
+`;
     
     // Format comments with links
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      formattedText += '\n\nComments:\n';
+      formattedText += `## Comments\n`;
       
-      data.comments.forEach(comment => {
-        formattedText += `User: ${comment.author || 'Anonymous'}\n`;
-        formattedText += `Score: ${comment.popularity || '0'}\n`;
-        
-        // Add permalink if available
-        if (comment.permalink) {
-          formattedText += `Link: ${comment.permalink}\n`;
-        }
-        
-        formattedText += `Comment: ${comment.content || ''}\n\n`;
+      data.comments.forEach((comment, index) => {
+        formattedText += `${index + 1}. u/${comment.author || 'Anonymous'} (${comment.popularity || '0'} points) [(link)](${comment.permalink || postUrl})\n`;
+        formattedText += `   "${comment.content || ''}"\n\n`;
       });
     }
     
@@ -238,8 +265,29 @@ class BasePlatform extends PlatformInterface {
     const title = data.pageTitle || 'No title available';
     const url = data.pageUrl || 'Unknown URL';
     const content = data.content || 'No content available';
+    const author = data.pageAuthor || null;
+    const description = data.pageDescription || null;
     
-    return `Title: ${title}\nURL: ${url}\n\nContent:\n${content}`;
+    let metadataText = `## Page Metadata
+- Title: ${title}
+- URL: ${url}`;
+    
+    if (author) {
+      metadataText += `\n- Author: ${author}`;
+    }
+    
+    if (description) {
+      metadataText += `\n- Description: ${description}`;
+    }
+    
+    if (data.isSelection) {
+      metadataText += `\n- Note: This is a user-selected portion of the page content.`;
+    }
+    
+    return `${metadataText}
+
+## Page Content
+${content}`;
   }
 }
 
