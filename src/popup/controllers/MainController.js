@@ -86,12 +86,26 @@ export default class MainController {
         }
       }
       
-      // Initialize prompt type toggle
+      // Initialize prompt type toggle UI
       if (this.promptTypeToggle) {
-        this.promptTypeToggle.initialize();
+        await this.promptTypeToggle.initialize();
         
         // Ensure toggle matches loaded preference
         this.promptTypeToggle.setType(this.state.isDefaultPromptType);
+      }
+      
+      // Show/hide appropriate containers based on the prompt type
+      const defaultContainer = document.getElementById('defaultPromptConfig');
+      const customContainer = document.getElementById('customPromptSelector');
+      
+      if (defaultContainer && customContainer) {
+        if (this.state.isDefaultPromptType) {
+          defaultContainer.classList.remove('hidden');
+          customContainer.classList.add('hidden');
+        } else {
+          defaultContainer.classList.add('hidden');
+          customContainer.classList.remove('hidden');
+        }
       }
       
       // Initialize appropriate prompt UI
@@ -111,9 +125,20 @@ export default class MainController {
           
           if (savedPromptId) {
             this.state.selectedPromptId = savedPromptId;
+            
+            // If using custom prompts, also update the selector UI
+            if (!this.state.isDefaultPromptType && this.customPromptSelector) {
+              await this.customPromptSelector.setSelectedPromptId(savedPromptId);
+            }
+          } else if (this.state.isDefaultPromptType) {
+            // Default to content type as prompt ID for default type
+            this.state.selectedPromptId = this.state.contentType;
           }
         } catch (error) {
           console.error('Error loading saved prompt ID:', error);
+          if (this.state.isDefaultPromptType) {
+            this.state.selectedPromptId = this.state.contentType;
+          }
         }
       }
       

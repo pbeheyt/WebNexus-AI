@@ -23,19 +23,14 @@ export default class CustomPromptSelector {
   async initialize(contentType) {
     if (!this.element) return;
     
-    // If already initialized with same content type, just update selected value if needed
-    if (this.contentType === contentType && this.initialized && this.selectElement) {
-      if (this.selectedPromptId && this.selectElement.value !== this.selectedPromptId) {
-        this.selectElement.value = this.selectedPromptId;
-      }
-      return;
+    // Set new content type if different, otherwise force refresh
+    const forceRefresh = this.contentType === contentType;
+    
+    // Clean up previous state if forcing refresh or changing content type
+    if (forceRefresh || this.contentType !== contentType) {
+      this.cleanup();
+      this.contentType = contentType;
     }
-    
-    // Clean up previous state
-    this.cleanup();
-    
-    // Set new content type
-    this.contentType = contentType;
     
     try {
       // Get custom prompts for this content type
