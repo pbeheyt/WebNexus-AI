@@ -43,7 +43,7 @@
           "german": "with the ENTIRE RESPONSE written in German (auf Deutsch)"
         },
         "additionalContext": {
-          "true": "## ADDITIONAL CONTEXT REQUIREMENTS\nAfter completing your summary, please add:\n💡 BACKGROUND CONTEXT\nProvide additional background information that helps understand this content's significance and place in the broader topic area.",
+          "true": "## ADDITIONAL CONTEXT REQUIREMENTS\nAfter completing your summary, please add:\n BACKGROUND CONTEXT\nProvide additional background information that helps understand this content's significance and place in the broader topic area.",
           "false": ""
         },
         "typeSpecificInstructions": {
@@ -83,7 +83,7 @@
           "german": "with the ENTIRE RESPONSE written in German (auf Deutsch)"
         },
         "additionalContext": {
-          "true": "## ADDITIONAL CONTEXT REQUIREMENTS\nAfter completing your analysis, please add:\n📚 TOPIC BACKGROUND\nProvide additional context about the topic being discussed that would help someone understand the full significance of the conversation.",
+          "true": "## ADDITIONAL CONTEXT REQUIREMENTS\nAfter completing your analysis, please add:\n TOPIC BACKGROUND\nProvide additional context about the topic being discussed that would help someone understand the full significance of the conversation.",
           "false": ""
         },
         "typeSpecificInstructions": {
@@ -127,7 +127,7 @@
           "false": "Do not include comment analysis."
         },
         "additionalContext": {
-          "true": "## ADDITIONAL CONTEXT REQUIREMENTS\nAfter completing your summary, please add:\n📚 TOPIC EXPANSION\nExplain the broader subject area this video addresses, including relevant developments, competing viewpoints, or historical context not mentioned in the video.",
+          "true": "## ADDITIONAL CONTEXT REQUIREMENTS\nAfter completing your summary, please add:\n TOPIC EXPANSION\nExplain the broader subject area this video addresses, including relevant developments, competing viewpoints, or historical context not mentioned in the video.",
           "false": ""
         },
         "typeSpecificInstructions": {
