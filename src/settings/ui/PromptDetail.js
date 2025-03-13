@@ -21,7 +21,7 @@ export default class PromptDetail {
   render(data) {
     if (!this.container || !data) return;
     
-    const { id, prompt, contentType, isDefault, isPreferred } = data;
+    const { id, prompt, contentType } = data;
     
     // Clear container
     this.container.innerHTML = '';
@@ -39,10 +39,7 @@ export default class PromptDetail {
     
     const badges = document.createElement('div');
     badges.innerHTML = `
-      <span class="badge ${isDefault ? 'badge-default' : 'badge-custom'}">
-        ${isDefault ? 'Default' : 'Custom'}
-      </span>
-      ${isPreferred ? '<span class="badge badge-preferred">Preferred</span>' : ''}
+      <span class="badge badge-custom">Custom</span>
     `;
     
     header.appendChild(title);
@@ -54,10 +51,7 @@ export default class PromptDetail {
     const typeInfo = document.createElement('div');
     typeInfo.innerHTML = `<strong>Type:</strong> ${prompt.type}`;
     
-    // Removed the dateInfo element that was showing last updated date
-    
     meta.appendChild(typeInfo);
-    // Removed appending dateInfo to meta
     
     const content = document.createElement('div');
     content.className = 'prompt-detail-content';
@@ -66,30 +60,19 @@ export default class PromptDetail {
     const actions = document.createElement('div');
     actions.className = 'prompt-detail-actions';
     
-    // Only show "Set as Preferred" if not already preferred
-    if (!isPreferred) {
-      const preferredBtn = document.createElement('button');
-      preferredBtn.className = 'btn btn-secondary';
-      preferredBtn.textContent = 'Set as Preferred';
-      preferredBtn.addEventListener('click', () => this.handleSetPreferred(id, contentType));
-      actions.appendChild(preferredBtn);
-    }
+    // Only show edit/delete buttons (removed "Set as Preferred" button)
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => this.handleEdit(data));
     
-    // Only show edit/delete for custom prompts
-    if (!isDefault) {
-      const editBtn = document.createElement('button');
-      editBtn.className = 'btn';
-      editBtn.textContent = 'Edit';
-      editBtn.addEventListener('click', () => this.handleEdit(data));
-      
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn btn-danger';
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.addEventListener('click', () => this.handleDelete(id, prompt.name, contentType));
-      
-      actions.appendChild(editBtn);
-      actions.appendChild(deleteBtn);
-    }
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-danger';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', () => this.handleDelete(id, prompt.name, contentType));
+    
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
     
     // Assemble detail view
     detailView.appendChild(header);
@@ -101,15 +84,7 @@ export default class PromptDetail {
     this.container.appendChild(detailView);
   }
 
-  async handleSetPreferred(id, contentType) {
-    try {
-      await this.promptController.setPreferredPrompt(id, contentType);
-      this.notificationManager.success('Prompt set as preferred');
-    } catch (error) {
-      console.error('Error setting preferred prompt:', error);
-      this.notificationManager.error(`Error: ${error.message}`);
-    }
-  }
+  // Removed handleSetPreferred method since it's no longer needed
 
   handleEdit(data) {
     this.eventBus.publish('prompt:edit', data);

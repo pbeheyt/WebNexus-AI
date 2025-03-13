@@ -56,11 +56,14 @@ export default class PromptList {
       let prompts = [];
       Object.values(CONTENT_TYPES).forEach((type, index) => {
         allPrompts[index].prompts.forEach(promptData => {
-          prompts.push({
-            ...promptData,
-            contentType: type,
-            contentTypeLabel: CONTENT_TYPE_LABELS[type]
-          });
+          // Only include custom prompts (filter out default prompts)
+          if (!promptData.isDefault) {
+            prompts.push({
+              ...promptData,
+              contentType: type,
+              contentTypeLabel: CONTENT_TYPE_LABELS[type]
+            });
+          }
         });
       });
       
@@ -69,17 +72,8 @@ export default class PromptList {
         prompts = prompts.filter(item => item.contentType === this.filterValue);
       }
       
-      // Sort prompts (default first, then by update time)
+      // Sort prompts by update time (most recent first)
       prompts.sort((a, b) => {
-        // Default prompts first
-        if (a.isDefault && !b.isDefault) return -1;
-        if (!a.isDefault && b.isDefault) return 1;
-        
-        // Then preferred prompts
-        if (a.isPreferred && !b.isPreferred) return -1;
-        if (!a.isPreferred && b.isPreferred) return 1;
-        
-        // Then by update time (most recent first)
         return new Date(b.prompt.updatedAt || 0) - new Date(a.prompt.updatedAt || 0);
       });
       
@@ -109,16 +103,12 @@ export default class PromptList {
   }
 
   createPromptListItem(promptData) {
-    const { id, prompt, isDefault, isPreferred, contentType, contentTypeLabel } = promptData;
+    const { id, prompt, contentType, contentTypeLabel } = promptData;
     
     const promptElement = document.createElement('div');
     promptElement.className = 'prompt-item';
     promptElement.dataset.id = id;
     promptElement.dataset.type = contentType;
-    
-    if (isPreferred) {
-      promptElement.classList.add('preferred-prompt');
-    }
     
     if (id === this.selectedPromptId) {
       promptElement.classList.add('selected');
@@ -128,9 +118,6 @@ export default class PromptList {
       <div class="prompt-header">
         <h3 class="prompt-title">
           ${prompt.name}
-          <span class="badge ${isDefault ? 'badge-default' : 'badge-custom'}">
-            ${isDefault ? 'Default' : 'Custom'}
-          </span>
         </h3>
       </div>
       <small>${contentTypeLabel}</small>
@@ -138,13 +125,13 @@ export default class PromptList {
     
     // Add click event to select
     promptElement.addEventListener('click', () => {
-      this.selectPrompt(id, prompt, contentType, isDefault, isPreferred);
+      this.selectPrompt(id, prompt, contentType);
     });
     
     return promptElement;
   }
 
-  selectPrompt(id, prompt, contentType, isDefault, isPreferred) {
+  selectPrompt(id, prompt, contentType) {
     // Deselect previous
     const previousSelected = this.container.querySelector('.prompt-item.selected');
     if (previousSelected) {
@@ -165,8 +152,8 @@ export default class PromptList {
       id, 
       prompt, 
       contentType, 
-      isDefault, 
-      isPreferred
+      isDefault: false,
+      isPreferred: false // Remove preferred status concept
     });
   }
 }
