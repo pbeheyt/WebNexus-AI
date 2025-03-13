@@ -60,6 +60,11 @@ export default class DefaultPromptPreferencesService {
       preferences.typeSpecificInstructions = "default";
     }
     
+    // Ensure lengthAdaptationInstructions preference exists
+    if (!preferences.lengthAdaptationInstructions) {
+      preferences.lengthAdaptationInstructions = "default";
+    }
+    
     // Get parameters
     const parameters = promptConfig.parameters;
     

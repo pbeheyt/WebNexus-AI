@@ -79,7 +79,7 @@ export default class DefaultPromptConfigPanel {
     }
     
     // Skip type-specific instructions as they're not user-configurable
-    if (paramKey === 'typeSpecificInstructions') {
+    if (paramKey === 'typeSpecificInstructions' || paramKey === 'lengthAdaptationInstructions') {
       return document.createElement('div');
     }
     
