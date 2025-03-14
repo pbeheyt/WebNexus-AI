@@ -70,11 +70,27 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       
       this.logger.info('Transcript data extracted:', transcriptData.length, 'segments');
       
-      // Extract comments
-      this.logger.info('Starting comment extraction...');
-      const commentsResult = await this.extractComments();
-      const { items: comments, status: commentStatus } = commentsResult;
-      this.logger.info('Comment extraction complete, status:', commentStatus);
+      // Check if comment analysis is enabled in user preferences
+      const shouldExtractComments = await this.shouldExtractComments();
+      
+      // Extract comments only if needed
+      let comments = [];
+      let commentStatus = { 
+        state: "skipped", 
+        message: "Comment extraction skipped based on user preferences", 
+        count: 0,
+        commentsExist: false
+      };
+      
+      if (shouldExtractComments) {
+        this.logger.info('Starting comment extraction...');
+        const commentsResult = await this.extractComments();
+        comments = commentsResult.items;
+        commentStatus = commentsResult.status;
+        this.logger.info('Comment extraction complete, status:', commentStatus);
+      } else {
+        this.logger.info('Comment extraction skipped - analysis disabled in user preferences');
+      }
       
       // Return the complete video data object
       return {
@@ -109,7 +125,21 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       // Get comments despite transcript error, using our new method
       let commentsResult = { items: [], status: { state: "unknown", message: "", count: 0 } };
       try {
-        commentsResult = await this.extractComments();
+        // Only extract comments if needed
+        const shouldExtractComments = await this.shouldExtractComments();
+        if (shouldExtractComments) {
+          commentsResult = await this.extractComments();
+        } else {
+          commentsResult = { 
+            items: [], 
+            status: { 
+              state: "skipped", 
+              message: "Comment extraction skipped based on user preferences", 
+              count: 0,
+              commentsExist: false
+            } 
+          };
+        }
       } catch (commentError) {
         this.logger.error('Error extracting comments after transcript error:', commentError);
       }
@@ -127,6 +157,49 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         message: errorMessage,
         extractedAt: new Date().toISOString()
       };
+    }
+  }
+
+  /**
+   * Check if comments should be extracted based on user preferences
+   * @returns {Promise<boolean>} Whether comments should be extracted
+   */
+  async shouldExtractComments() {
+    try {
+      // Get prompt preferences
+      const result = await new Promise((resolve) => {
+        chrome.storage.sync.get('default_prompt_preferences', (data) => resolve(data));
+      });
+      
+      // Check if comment analysis is explicitly disabled
+      if (result && 
+          result.default_prompt_preferences && 
+          result.default_prompt_preferences.youtube && 
+          result.default_prompt_preferences.youtube.commentAnalysis === false) {
+        return false;
+      }
+      
+      // Also check if we're using a custom prompt that might require comments
+      const promptTypePrefs = await new Promise((resolve) => {
+        chrome.storage.sync.get('prompt_type_preference', (data) => resolve(data));
+      });
+      
+      const usingCustomPrompt = promptTypePrefs && 
+                                promptTypePrefs.prompt_type_preference && 
+                                promptTypePrefs.prompt_type_preference.youtube === 'custom';
+      
+      if (usingCustomPrompt) {
+        // For custom prompts, we could parse the content to check for comment analysis
+        // requirements, but for now we'll assume they might need comments
+        return true;
+      }
+      
+      // Default to extracting comments if preference isn't explicitly set
+      return true;
+    } catch (error) {
+      this.logger.warn('Error checking comment extraction preference:', error);
+      // Default to extracting comments in case of error
+      return true;
     }
   }
 
