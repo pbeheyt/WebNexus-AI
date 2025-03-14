@@ -240,7 +240,7 @@ export default class PromptService {
         prompts: {},
         preferredPromptId: null,
         settings: {
-          maxComments: 200
+          maxComments: 100
         }
       },
       [CONTENT_TYPES.YOUTUBE]: {

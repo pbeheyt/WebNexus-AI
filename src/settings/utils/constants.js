@@ -20,6 +20,6 @@ export const CONTENT_TYPE_LABELS = {
 
 export const DEFAULT_SETTINGS = {
   [CONTENT_TYPES.GENERAL]: {},
-  [CONTENT_TYPES.REDDIT]: { maxComments: 200 },
+  [CONTENT_TYPES.REDDIT]: { maxComments: 100 },
   [CONTENT_TYPES.YOUTUBE]: { maxComments: 50 }
 };
