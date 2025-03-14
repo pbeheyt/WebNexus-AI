@@ -65,7 +65,7 @@
       "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this Reddit discussion\n{{length}}\n{{style}}\n{{language}}\n{{additionalContext}}\n{{typeSpecificInstructions}}",
       "parameters": {
         "typeSpecificInstructions": {
-          "default": "◆ COMMENT CITATION FORMAT\nFor significant comments, use this format: \"Exact quote\" - u/username (X points) [(link)](URL)"
+          "default": "◆ CRITICAL COMMENT INSTRUCTION\nWhen quoting comments, ALWAYS include the link to them [(link)](URL)"
         }
       },
       "defaultPreferences": {
