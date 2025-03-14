@@ -12,11 +12,11 @@ export default class StatusManager {
     if (this.statusElement) {
       this.statusElement.textContent = message || '';
     }
-    
+
     // Update button state
     if (this.summarizeBtn) {
       this.summarizeBtn.disabled = !isSupported || isProcessing;
-      
+
       // Update button text based on state
       if (isProcessing) {
         this.summarizeBtn.textContent = 'Processing...';
@@ -24,38 +24,46 @@ export default class StatusManager {
         this.summarizeBtn.textContent = 'Summarize Content';
       }
     }
-    
+
     // Show important messages as toast notifications
-    if (message && (message.includes('Error') || message.includes('Failed') || message.includes('Cannot') || 
+    if (message && (message.includes('Error') || message.includes('Failed') || message.includes('Cannot') ||
                     message.includes('No transcript') || message.includes('Transcript is not available'))) {
       this.showToast(message, 'error');
     }
   }
-  
+
   showToast(message, type = 'info') {
     if (!this.toastElement) return;
-    
+
     // Clear any existing timeout
     if (this.toastTimeout) {
       clearTimeout(this.toastTimeout);
     }
-    
+
     // Update toast content and class
     this.toastElement.textContent = message;
     this.toastElement.className = `toast ${type}`;
-    
+
     // Show the toast
     setTimeout(() => {
       this.toastElement.classList.add('show');
     }, 10);
-    
-    // Show errors longer (5 seconds instead of 3)
-    const displayTime = type === 'error' ? 5000 : 3000;
-    
+
+    // Show different types with different durations
+    // errors: 5 seconds, warnings: 4 seconds, info: 3 seconds
+    const displayTime = type === 'error' ? 5000 : (type === 'warning' ? 4000 : 3000);
+
     // Auto-hide after display time
     this.toastTimeout = setTimeout(() => {
       this.toastElement.classList.remove('show');
     }, displayTime);
+  }
+
+  // Add new method for YouTube comments notification
+  notifyCommentsNotLoaded() {
+    const message = 'Scroll down on YouTube to load comments for analysis';
+    this.showToast(message, 'warning');
+    this.updateStatus(message, false, true);
   }
 
   /**

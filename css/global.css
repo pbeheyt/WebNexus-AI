@@ -50,7 +50,7 @@
   /* Colors - Text (Light Theme) */
   --text-primary: #333333;
   --text-secondary: #666666;
-  
+
   /* Shadows (Light Theme) */
   --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-medium: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -85,9 +85,9 @@ a:hover {
 /* ======================================
    Form Controls
    ====================================== */
-input[type="text"], 
-input[type="number"], 
-select, 
+input[type="text"],
+input[type="number"],
+select,
 textarea {
   width: 100%;
   padding: 10px;
@@ -101,9 +101,9 @@ textarea {
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-input[type="text"]:focus, 
-input[type="number"]:focus, 
-select:focus, 
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--color-primary);
@@ -255,7 +255,9 @@ input:checked + .slider:before {
   border: 1px solid var(--color-primary);
 }
 
-/* Toast notification */
+/* ======================================
+   Status Indicators
+   ====================================== */
 .notification,
 .toast {
   position: fixed;
@@ -282,14 +284,16 @@ input:checked + .slider:before {
   border-left-color: var(--error-color);
 }
 
+.notification.warning,
+.toast.warning {
+  border-left-color: var(--warning-color);
+}
+
 .notification.success,
 .toast.success {
   border-left-color: var(--success-color);
 }
 
-/* ======================================
-   Status Indicators
-   ====================================== */
 .status-message {
   font-size: 13px;
   color: var(--text-secondary);

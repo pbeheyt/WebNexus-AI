@@ -256,8 +256,10 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     try {
       // Get configured max comments or use default
       let maxComments = 50; // Default value
+      let commentAnalysisEnabled = false;
       
       try {
+        // Get extraction settings
         const result = await new Promise((resolve) => {
           chrome.storage.sync.get(STORAGE_KEY, (data) => resolve(data));
         });
@@ -268,15 +270,52 @@ class YoutubeExtractorStrategy extends BaseExtractor {
             result[STORAGE_KEY].youtube.settings.maxComments) {
           maxComments = result[STORAGE_KEY].youtube.settings.maxComments;
         }
+        
+        // Check if comment analysis is enabled in default prompt preferences
+        const promptPrefs = await new Promise((resolve) => {
+          chrome.storage.sync.get('default_prompt_preferences', (data) => resolve(data));
+        });
+        
+        if (promptPrefs && 
+            promptPrefs.default_prompt_preferences && 
+            promptPrefs.default_prompt_preferences.youtube && 
+            promptPrefs.default_prompt_preferences.youtube.commentAnalysis === true) {
+          commentAnalysisEnabled = true;
+        }
       } catch (error) {
-        this.logger.warn('Error fetching max comments setting, using default:', error);
+        this.logger.warn('Error fetching settings:', error);
       }
       
       this.logger.info(`Extracting up to ${maxComments} YouTube comments...`);
       
-      // Get all comment thread elements
+      // Check if comment section exists but is not loaded
+      const commentSection = document.getElementById('comments');
       const commentElements = document.querySelectorAll('ytd-comment-thread-renderer');
+      const commentsDisabledMessage = document.querySelector('#comments ytd-message-renderer');
       
+      // If comment analysis is enabled, comments section exists, but no comments are loaded
+      // and there's no "comments turned off" message, notify user
+      if (commentAnalysisEnabled && 
+          commentSection && 
+          commentElements.length === 0 && 
+          !commentsDisabledMessage) {
+        
+        this.logger.info('Comments section exists but comments not loaded - user needs to scroll');
+        
+        // Save notification flag to local storage
+        await chrome.storage.local.set({ 
+          youtubeCommentsNotLoaded: true 
+        });
+        
+        // Send message to background script
+        chrome.runtime.sendMessage({
+          action: 'youtubeCommentsNotLoaded'
+        });
+        
+        return 'Comments exist but are not loaded. Scroll down on the YouTube page to load comments for analysis.';
+      }
+      
+      // Get all comment thread elements
       if (!commentElements || commentElements.length === 0) {
         this.logger.info('No comments found or comments not loaded yet');
         return 'No comments available. Comments might be disabled for this video or not loaded yet.';
