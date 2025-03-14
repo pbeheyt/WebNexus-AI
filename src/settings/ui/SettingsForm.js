@@ -110,7 +110,7 @@ export default class SettingsForm {
     input.min = '1';
     input.max = '1000';
     input.value = this.settings[contentType]?.maxComments || 
-                  (contentType === CONTENT_TYPES.REDDIT ? 100 : 50);
+                  (contentType === CONTENT_TYPES.REDDIT ? 100 : 20);
     
     const help = document.createElement('p');
     help.className = 'help-text';

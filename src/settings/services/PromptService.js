@@ -247,7 +247,7 @@ export default class PromptService {
         prompts: {},
         preferredPromptId: null,
         settings: {
-          maxComments: 50
+          maxComments: 20
         }
       }
     };
