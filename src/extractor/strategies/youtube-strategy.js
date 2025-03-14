@@ -72,8 +72,9 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       
       // Extract comments
       this.logger.info('Starting comment extraction...');
-      const comments = await this.extractComments();
-      this.logger.info('Comment extraction complete, found:', Array.isArray(comments) ? comments.length : 'error');
+      const commentsResult = await this.extractComments();
+      const { items: comments, status: commentStatus } = commentsResult;
+      this.logger.info('Comment extraction complete, status:', commentStatus);
       
       // Return the complete video data object
       return {
@@ -83,6 +84,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         videoDescription: description,
         transcript: formattedTranscript,
         comments,
+        commentStatus,
         transcriptLanguage: transcriptData.length > 0 ? transcriptData[0].lang : 'unknown',
         extractedAt: new Date().toISOString()
       };
@@ -104,10 +106,10 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         errorMessage = `Error getting transcript: ${error.message}`;
       }
       
-      // Get comments despite transcript error
-      let comments = 'Comments could not be extracted';
+      // Get comments despite transcript error, using our new method
+      let commentsResult = { items: [], status: { state: "unknown", message: "", count: 0 } };
       try {
-        comments = await this.extractComments();
+        commentsResult = await this.extractComments();
       } catch (commentError) {
         this.logger.error('Error extracting comments after transcript error:', commentError);
       }
@@ -119,7 +121,8 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         channelName: this.extractChannelName(),
         videoDescription: this.extractVideoDescription(),
         transcript: errorMessage,
-        comments,
+        comments: commentsResult.items,
+        commentStatus: commentsResult.status,
         error: true,
         message: errorMessage,
         extractedAt: new Date().toISOString()
@@ -293,12 +296,41 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       const commentElements = document.querySelectorAll('ytd-comment-thread-renderer');
       const commentsDisabledMessage = document.querySelector('#comments ytd-message-renderer');
       
-      // If comment analysis is enabled, comments section exists, but no comments are loaded
-      // and there's no "comments turned off" message, notify user
-      if (commentAnalysisEnabled && 
-          commentSection && 
-          commentElements.length === 0 && 
-          !commentsDisabledMessage) {
+      // Return structured comment status object
+      let commentStatus = {
+        state: "unknown",
+        message: "",
+        count: 0,
+        commentsExist: false
+      };
+      
+      // Check if comments are disabled entirely
+      if (commentsDisabledMessage) {
+        const disabledText = commentsDisabledMessage.textContent.toLowerCase();
+        if (disabledText.includes('disabled') || disabledText.includes('turned off')) {
+          commentStatus = {
+            state: "disabled",
+            message: "Comments are disabled for this video",
+            count: 0,
+            commentsExist: false
+          };
+          
+          this.logger.info('Comments are disabled for this video');
+          return {
+            items: [],
+            status: commentStatus
+          };
+        }
+      }
+      
+      // If comment section exists but no comments are loaded
+      if (commentSection && commentElements.length === 0 && !commentsDisabledMessage) {
+        commentStatus = {
+          state: "not_loaded",
+          message: "Comments exist but are not loaded. Scroll down on the YouTube page to load comments.",
+          count: 0,
+          commentsExist: true
+        };
         
         this.logger.info('Comments section exists but comments not loaded - user needs to scroll');
         
@@ -312,13 +344,27 @@ class YoutubeExtractorStrategy extends BaseExtractor {
           action: 'youtubeCommentsNotLoaded'
         });
         
-        return 'Comments exist but are not loaded. Scroll down on the YouTube page to load comments for analysis.';
+        return {
+          items: [],
+          status: commentStatus
+        };
       }
       
       // Get all comment thread elements
       if (!commentElements || commentElements.length === 0) {
         this.logger.info('No comments found or comments not loaded yet');
-        return 'No comments available. Comments might be disabled for this video or not loaded yet.';
+        
+        commentStatus = {
+          state: "empty",
+          message: "No comments available. Comments might be disabled for this video.",
+          count: 0,
+          commentsExist: false
+        };
+        
+        return {
+          items: [],
+          status: commentStatus
+        };
       }
       
       this.logger.info(`Found ${commentElements.length} comments`);
@@ -361,10 +407,30 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         });
       }
       
-      return comments;
+      // Set comment status for successfully loaded comments
+      commentStatus = {
+        state: "loaded",
+        message: "",
+        count: comments.length,
+        commentsExist: true
+      };
+      
+      return {
+        items: comments,
+        status: commentStatus
+      };
     } catch (error) {
       this.logger.error('Error extracting comments:', error);
-      return `Error extracting comments: ${error.message}`;
+      
+      return {
+        items: [],
+        status: {
+          state: "error",
+          message: `Error extracting comments: ${error.message}`,
+          count: 0,
+          commentsExist: false
+        }
+      };
     }
   }
 }

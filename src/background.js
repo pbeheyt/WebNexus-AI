@@ -170,6 +170,19 @@ async function getPreferredPromptId(contentType) {
 }
 
 /**
+ * Check if comment analysis is required for the given prompt content
+ * @param {string} promptContent - The prompt content to check
+ * @returns {boolean} True if comment analysis is required
+ */
+function isCommentAnalysisRequired(promptContent) {
+  if (!promptContent) return false;
+  
+  // Check if the prompt content includes the comment analysis instruction
+  return promptContent.includes('◆ COMMENT ANALYSIS') && 
+         !promptContent.includes('◆ COMMENT ANALYSIS\nDo not include comment analysis.');
+}
+
+/**
  * Get prompt content by ID
  */
 async function getPromptContentById(promptId, contentType) {
@@ -258,15 +271,23 @@ async function openAiPlatformWithContent(contentType, promptId = null, platformI
       platformId = await getPreferredAiPlatform();
     }
 
-    // NEW: Check if content extraction had errors for YouTube
-    if (contentType === CONTENT_TYPES.YOUTUBE) {
-      const { extractedContent } = await chrome.storage.local.get('extractedContent');
+    // Get prompt content
+    const promptContent = await getPromptContentById(promptId, contentType);
 
+    if (!promptContent) {
+      throw new Error(`Could not load prompt content for ID: ${promptId}`);
+    }
+
+    // NEW: Check for extraction errors
+    const { extractedContent } = await chrome.storage.local.get('extractedContent');
+
+    // Transcript error check (existing code)
+    if (contentType === CONTENT_TYPES.YOUTUBE) {
       if (extractedContent?.error &&
           extractedContent?.transcript &&
           typeof extractedContent.transcript === 'string' &&
           (extractedContent.transcript.includes('No transcript') ||
-           extractedContent.transcript.includes('Transcript is not available'))) {
+          extractedContent.transcript.includes('Transcript is not available'))) {
 
         logger.background.warn('YouTube transcript error detected, aborting platform open');
 
@@ -278,13 +299,25 @@ async function openAiPlatformWithContent(contentType, promptId = null, platformI
 
         return null; // Return null to indicate operation was aborted
       }
-    }
 
-    // Get prompt content
-    const promptContent = await getPromptContentById(promptId, contentType);
+      // NEW: Comment analysis check
+      const commentAnalysisRequired = isCommentAnalysisRequired(promptContent);
 
-    if (!promptContent) {
-      throw new Error(`Could not load prompt content for ID: ${promptId}`);
+      if (commentAnalysisRequired &&
+          extractedContent?.commentStatus?.state === 'not_loaded' &&
+          extractedContent?.commentStatus?.commentsExist) {
+
+        logger.background.warn('YouTube comments not loaded but required for analysis, aborting platform open');
+
+        // Notify popup about comment loading requirement
+        chrome.runtime.sendMessage({
+          action: 'youtubeCommentsNotLoaded',
+          message: extractedContent.commentStatus.message ||
+                  'Please scroll down on YouTube to load comments before summarizing'
+        });
+
+        return null; // Return null to indicate operation was aborted
+      }
     }
 
     // Get platform config
@@ -470,21 +503,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'summarizeContent') {
     (async () => {
       try {
-        const { tabId, contentType, promptId, platformId, url } = message;
+        const { tabId, contentType, promptId, platformId, url, commentAnalysisRequired } = message;
         logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}`);
 
         // Extract content first
         await extractContent(tabId, url);
 
+        // Get the extracted content
+        const { extractedContent } = await chrome.storage.local.get('extractedContent');
+        
         // Check if YouTube transcript extraction failed
         if (contentType === CONTENT_TYPES.YOUTUBE) {
-          const { extractedContent } = await chrome.storage.local.get('extractedContent');
-
           if (extractedContent?.error &&
               extractedContent?.transcript &&
               typeof extractedContent.transcript === 'string' &&
               (extractedContent.transcript.includes('No transcript') ||
-               extractedContent.transcript.includes('Transcript is not available'))) {
+              extractedContent.transcript.includes('Transcript is not available'))) {
 
             logger.background.warn('YouTube transcript error detected, aborting summarization');
 
@@ -492,6 +526,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               success: false,
               youtubeTranscriptError: true,
               errorMessage: extractedContent.message || 'Failed to retrieve YouTube transcript.'
+            });
+            return;
+          }
+          
+          // Check if comment analysis is required but comments aren't loaded
+          if (commentAnalysisRequired && 
+              extractedContent?.commentStatus?.state === 'not_loaded' &&
+              extractedContent?.commentStatus?.commentsExist) {
+              
+            logger.background.warn('YouTube comments not loaded but required for analysis, aborting summarization');
+            
+            sendResponse({
+              success: false,
+              youtubeCommentsError: true,
+              errorMessage: extractedContent.commentStatus.message || 
+                          'Comments exist but are not loaded. Scroll down on YouTube to load comments.'
             });
             return;
           }

@@ -43,6 +43,13 @@ export default class SummarizeController {
         return false;
       }
       
+      // NEW: Get comment analysis preference directly
+      let commentAnalysisRequired = false;
+      if (contentType === 'youtube') {
+        const preferences = await this.promptService.getPromptPreferences(selectedPromptId, contentType);
+        commentAnalysisRequired = preferences.commentAnalysis === true;
+      }
+      
       // Clear any existing content in storage
       await this.storageService.set({
         [STORAGE_KEYS.CONTENT_READY]: false,
@@ -61,12 +68,19 @@ export default class SummarizeController {
         contentType,
         promptId: selectedPromptId,
         platformId: selectedPlatformId,
-        url
+        url,
+        commentAnalysisRequired // NEW: Pass the flag directly
       });
       
       // Check if YouTube transcript error occurred
       if (response && response.youtubeTranscriptError) {
         statusCallback(`Error: ${response.errorMessage || 'No transcript available for this YouTube video.'}`, false);
+        return false;
+      }
+      
+      // NEW: Check if YouTube comments error occurred
+      if (response && response.youtubeCommentsError) {
+        statusCallback(`${response.errorMessage || 'Comments exist but are not loaded. Scroll down on YouTube to load comments before summarizing.'}`, false);
         return false;
       }
       

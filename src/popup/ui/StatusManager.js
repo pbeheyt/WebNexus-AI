@@ -59,11 +59,27 @@ export default class StatusManager {
     }, displayTime);
   }
 
-  // Add new method for YouTube comments notification
   notifyCommentsNotLoaded() {
-    const message = 'Scroll down on YouTube to load comments for analysis';
+    const message = 'Comments exist but are not loaded. Scroll down on YouTube to load comments before summarizing.';
     this.showToast(message, 'warning');
+    
+    // Update status with actionable information
     this.updateStatus(message, false, true);
+    
+    // Add additional helper text to the status message if available
+    if (this.statusElement) {
+      const helperText = document.createElement('div');
+      helperText.className = 'comment-loading-helper';
+      helperText.innerHTML = '<small><strong>Tip:</strong> After scrolling to load comments, click "Summarize Content" again.</small>';
+      
+      // Remove any existing helper text
+      const existingHelper = this.statusElement.querySelector('.comment-loading-helper');
+      if (existingHelper) {
+        existingHelper.remove();
+      }
+      
+      this.statusElement.appendChild(helperText);
+    }
   }
 
   /**

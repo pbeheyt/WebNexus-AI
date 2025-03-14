@@ -338,6 +338,13 @@ export default class MainController {
     
     this.state.isProcessing = true;
     
+    // Ensure clean state before summarizing
+    try {
+      await chrome.storage.local.set({ youtubeCommentsNotLoaded: false });
+    } catch (error) {
+      console.error('Error resetting comment notification state:', error);
+    }
+    
     await this.summarizeController.summarize(
       this.state.currentTab.id,
       this.state.contentType,

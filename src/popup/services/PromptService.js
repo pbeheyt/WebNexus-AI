@@ -97,4 +97,16 @@ export default class PromptService {
       return { prompts: [], preferredPromptId: null };
     }
   }
+
+  async getPromptPreferences(promptId, contentType) {
+    // For default prompts
+    if (promptId === contentType) {
+      return await this.defaultPromptPreferencesService.getPreferences(contentType);
+    }
+    
+    // For custom prompts, we need to retrieve and parse the content
+    // In this implementation, we'll return empty preferences for custom prompts
+    // since comment analysis is primarily used with default prompts
+    return {};
+  }
 }
