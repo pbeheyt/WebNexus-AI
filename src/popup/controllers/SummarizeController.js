@@ -64,6 +64,12 @@ export default class SummarizeController {
         url
       });
       
+      // Check if YouTube transcript error occurred
+      if (response && response.youtubeTranscriptError) {
+        statusCallback(`Error: ${response.errorMessage || 'No transcript available for this YouTube video.'}`, false);
+        return false;
+      }
+      
       if (response && response.success) {
         statusCallback(`Opening AI platform...`, true);
         

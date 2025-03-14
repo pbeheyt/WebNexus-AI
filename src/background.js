@@ -259,6 +259,28 @@ async function openAiPlatformWithContent(contentType, promptId = null, platformI
       platformId = await getPreferredAiPlatform();
     }
     
+    // NEW: Check if content extraction had errors for YouTube
+    if (contentType === CONTENT_TYPES.YOUTUBE) {
+      const { extractedContent } = await chrome.storage.local.get('extractedContent');
+      
+      if (extractedContent?.error && 
+          extractedContent?.transcript && 
+          typeof extractedContent.transcript === 'string' && 
+          extractedContent.transcript.includes('No transcript') || 
+          extractedContent.transcript.includes('Transcript is not available')) {
+        
+        logger.background.warn('YouTube transcript error detected, aborting platform open');
+        
+        // Notify popup about transcript error
+        chrome.runtime.sendMessage({
+          action: 'youtubeTranscriptError',
+          message: extractedContent.message || 'Failed to retrieve YouTube transcript.'
+        });
+        
+        return null; // Return null to indicate operation was aborted
+      }
+    }
+    
     // Get prompt content
     const promptContent = await getPromptContentById(promptId, contentType);
     
@@ -444,6 +466,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         
         // Extract content first
         await extractContent(tabId, url);
+        
+        // Check if YouTube transcript extraction failed
+        if (contentType === CONTENT_TYPES.YOUTUBE) {
+          const { extractedContent } = await chrome.storage.local.get('extractedContent');
+          
+          if (extractedContent?.error && 
+              extractedContent?.transcript && 
+              typeof extractedContent.transcript === 'string' && 
+              (extractedContent.transcript.includes('No transcript') || 
+               extractedContent.transcript.includes('Transcript is not available'))) {
+            
+            logger.background.warn('YouTube transcript error detected, aborting summarization');
+            
+            sendResponse({ 
+              success: false, 
+              youtubeTranscriptError: true,
+              errorMessage: extractedContent.message || 'Failed to retrieve YouTube transcript.'
+            });
+            return;
+          }
+        }
         
         // Give time for content extraction to complete
         await new Promise(resolve => setTimeout(resolve, 1000));

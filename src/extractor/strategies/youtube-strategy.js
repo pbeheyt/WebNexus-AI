@@ -112,7 +112,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         this.logger.error('Error extracting comments after transcript error:', commentError);
       }
       
-      // Return what we could get, with error message for transcript
+      // Return what we could get, with error message for transcript and error flag
       return {
         videoId: new URLSearchParams(window.location.search).get('v'),
         videoTitle: this.extractVideoTitle(),

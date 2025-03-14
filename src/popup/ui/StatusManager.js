@@ -26,7 +26,8 @@ export default class StatusManager {
     }
     
     // Show important messages as toast notifications
-    if (message && (message.includes('Error') || message.includes('Failed') || message.includes('Cannot'))) {
+    if (message && (message.includes('Error') || message.includes('Failed') || message.includes('Cannot') || 
+                    message.includes('No transcript') || message.includes('Transcript is not available'))) {
       this.showToast(message, 'error');
     }
   }
@@ -48,10 +49,13 @@ export default class StatusManager {
       this.toastElement.classList.add('show');
     }, 10);
     
-    // Auto-hide after 3 seconds
+    // Show errors longer (5 seconds instead of 3)
+    const displayTime = type === 'error' ? 5000 : 3000;
+    
+    // Auto-hide after display time
     this.toastTimeout = setTimeout(() => {
       this.toastElement.classList.remove('show');
-    }, 3000);
+    }, displayTime);
   }
 
   /**
