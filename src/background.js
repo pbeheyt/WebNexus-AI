@@ -212,14 +212,15 @@ async function getPromptContentById(promptId, contentType) {
       // Merge default preferences with user preferences
       const preferences = { ...defaultPreferences, ...typePreferences };
 
-      // Get parameters
-      const parameters = promptConfig.parameters || {};
-
+      // Get parameters - UPDATED to include both content-specific and shared parameters
+      const contentSpecificParams = promptConfig.parameters || {};
+      const sharedParams = config.sharedParameters || {};
+      
       // Build prompt by replacing placeholders
       let prompt = promptConfig.baseTemplate;
 
-      // Process each parameter type
-      for (const [paramKey, paramOptions] of Object.entries(parameters)) {
+      // Process each parameter from content-specific parameters
+      for (const [paramKey, paramOptions] of Object.entries(contentSpecificParams)) {
         const userValue = preferences[paramKey];
         const replacement = paramOptions[String(userValue)] || '';
 
@@ -227,6 +228,29 @@ async function getPromptContentById(promptId, contentType) {
         const placeholder = `{{${paramKey}}}`;
         prompt = prompt.replace(placeholder, replacement);
       }
+      
+      // Process shared parameters (length, style, language, etc.)
+      for (const [paramKey, paramOptions] of Object.entries(sharedParams)) {
+        const userValue = preferences[paramKey];
+        const replacement = paramOptions[String(userValue)] || '';
+
+        // Replace in template
+        const placeholder = `{{${paramKey}}}`;
+        prompt = prompt.replace(placeholder, replacement);
+      }
+      
+      // Apply style adaptation if applicable
+      if (preferences.style && config.styleContentAdaptations) {
+        const styleAdaptation = config.styleContentAdaptations[preferences.style]?.[contentType];
+        if (styleAdaptation) {
+          prompt = prompt.replace('{{styleContentAdaptation}}', styleAdaptation);
+        } else {
+          prompt = prompt.replace('{{styleContentAdaptation}}', '');
+        }
+      }
+      
+      // Remove any double newlines that might have been created by empty parameters
+      prompt = prompt.replace(/\n\n+/g, '\n\n');
 
       return prompt;
     } catch (error) {
@@ -235,7 +259,7 @@ async function getPromptContentById(promptId, contentType) {
     }
   }
 
-  // Otherwise, it's a custom prompt
+  // Rest of the function for custom prompts remains unchanged
   try {
     logger.background.info('Loading custom prompt from storage');
     const result = await chrome.storage.sync.get(STORAGE_KEY);

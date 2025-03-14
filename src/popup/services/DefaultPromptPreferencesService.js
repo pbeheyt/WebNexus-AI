@@ -40,7 +40,15 @@ export default class DefaultPromptPreferencesService {
 
   async getParameterOptions(contentType) {
     const config = await this.configService.getConfig();
-    return config.defaultPrompts[contentType]?.parameters || {};
+    
+    // Get content-specific parameters
+    const contentSpecificParams = config.defaultPrompts[contentType]?.parameters || {};
+    
+    // Get shared parameters
+    const sharedParams = config.sharedParameters || {};
+    
+    // Return all parameters, with content-specific taking precedence if there are duplicates
+    return { ...sharedParams, ...contentSpecificParams };
   }
 
   async buildPrompt(contentType) {
@@ -60,13 +68,8 @@ export default class DefaultPromptPreferencesService {
       preferences.typeSpecificInstructions = "default";
     }
     
-    // Ensure lengthAdaptationInstructions preference exists
-    if (!preferences.lengthAdaptationInstructions) {
-      preferences.lengthAdaptationInstructions = "default";
-    }
-    
-    // Get parameters
-    const parameters = promptConfig.parameters;
+    // Get parameters (now includes both shared and content-specific)
+    const parameters = await this.getParameterOptions(contentType);
     
     // Build prompt by replacing placeholders
     let prompt = promptConfig.baseTemplate;
@@ -82,12 +85,33 @@ export default class DefaultPromptPreferencesService {
       }
       
       const userValue = preferences[paramKey];
-      const replacement = paramOptions[userValue] || '';
+      let replacement = '';
+      
+      // Find parameter value in options
+      if (userValue && paramOptions[userValue]) {
+        replacement = paramOptions[userValue];
+      }
       
       // Replace in template
       const placeholder = `{{${paramKey}}}`;
       prompt = prompt.replace(placeholder, replacement);
     }
+    
+    // Apply style content adaptation if applicable
+    if (preferences.style) {
+      const styleAdaptations = config.styleContentAdaptations || {};
+      const styleAdaptation = styleAdaptations[preferences.style]?.[contentType];
+      
+      if (styleAdaptation) {
+        // Check if this template uses style adaptations
+        if (prompt.includes('{{styleContentAdaptation}}')) {
+          prompt = prompt.replace('{{styleContentAdaptation}}', styleAdaptation);
+        }
+      }
+    }
+    
+    // Remove any remaining style adaptation placeholder
+    prompt = prompt.replace('{{styleContentAdaptation}}', '');
     
     // Remove any double newlines that might have been created by empty parameters
     prompt = prompt.replace(/\n\n+/g, '\n\n');
