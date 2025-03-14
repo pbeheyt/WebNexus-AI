@@ -50,6 +50,6 @@ export default class MainController {
 
   handleTabChange(tabId) {
     // We can react to tab changes here if needed
-    console.log(`Tab changed to: ${tabId}`);
+    // console.log(`Tab changed to: ${tabId}`);
   }
 }
