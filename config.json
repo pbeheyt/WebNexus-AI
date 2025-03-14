@@ -24,34 +24,34 @@
   },
   "sharedParameters": {
     "length": {
-      "ultra_concise": "◆ ULTRA CONCISE LENGTH (CRITICAL DIRECTIVE : 50-75 words summary output)\nExtremely brief summary with only essential takeaways. Prioritize brevity over detail.",
-      "concise": "◆ CONCISE LENGTH (CRITICAL DIRECTIVE : 150-300 words summary output)\nBrief summary with essential points and minimal supporting details for quick reading.",
-      "normal": "◆ NORMAL LENGTH (CRITICAL DIRECTIVE : 400-700 words summary output)\nBalanced summary with appropriate depth, important details, and context while maintaining readability.",
-      "detailed": "◆ DETAILED LENGTH (CRITICAL DIRECTIVE : 800-1200 words summary output)\nSubstantial depth covering important concepts, examples, and comprehensive analysis of significant elements.",
-      "exhaustive": "◆ EXHAUSTIVE LENGTH (CRITICAL DIRECTIVE : 1500-3000+ words summary output)\nMaximum thoroughness covering all aspects in detail with concept explanations, multiple supporting details, implications, and context. Use sections and subsections for academic-level comprehensiveness."
+      "ultra_concise": "[SUMMARY LENGTH] : ULTRA CONCISE (CRITICAL DIRECTIVE : 50-75 words)\nExtremely brief summary with only essential takeaways. Prioritize brevity over detail.",
+      "concise": "[SUMMARY LENGTH] : CONCISE (CRITICAL DIRECTIVE : 150-300 words summary output)\nBrief summary with essential points and minimal supporting details for quick reading.",
+      "normal": "[SUMMARY LENGTH] : NORMAL (CRITICAL DIRECTIVE : 400-700 words)\nBalanced summary with appropriate depth, important details, and context while maintaining readability.",
+      "detailed": "[SUMMARY LENGTH] : DETAILED (CRITICAL DIRECTIVE : 800-1200 words)\nSubstantial depth covering important concepts, examples, and comprehensive analysis of significant elements.",
+      "exhaustive": "[SUMMARY LENGTH] : EXHAUSTIVE (CRITICAL DIRECTIVE : 1500-3000+ words)\nMaximum thoroughness covering all aspects in detail with concept explanations, multiple supporting details, implications, and context. Use sections and subsections for academic-level comprehensiveness."
     },
     "style": {
-      "narrative": "◆ NARRATIVE SUMMARY STYLE\nPresent content as an engaging story with introduction, logical progression of key points, and conclusion that synthesizes main insights. Adapt flow to content type, maintaining narrative cohesion throughout.",
-      "bulletPoints": "◆ BULLET SUMMARY POINTS STYLE\nOrganize in scannable hierarchy with clear sections and concise bullet points. Structure with overview, key points, supporting evidence, and conclusions. Adapt sections based on content type.",
-      "analytical": "◆ ANALYTICAL SUMMARY STYLE\nSystematic analysis including: 1) Content identification & context, 2) Structural analysis, 3) Evidence evaluation, 4) Comparative positioning, and 5) Comprehensive evaluation. Maintain objective, evidence-based tone.",
-      "executive": "◆ EXECUTIVE SUMMARY STYLE\nHigh-value briefing for decision-makers with: executive snapshot, source assessment, key information value, content architecture, strategic implications, and recommended actions. Use precise, economical language focused on decision-making value.",
-      "educational": "◆ EDUCATIONAL SUMMARY STYLE\nLearning resource with: topic framing, core concepts explained, knowledge organization, practical application, learning consolidation, and extended learning pathways. Use clear language with examples and mental models."
+      "narrative": "[SUMMARY STYLE] : NARRATIVE\nPresent content as an engaging story with introduction, logical progression of key points, and conclusion that synthesizes main insights. Adapt flow to content type, maintaining narrative cohesion throughout.",
+      "bulletPoints": "[SUMMARY STYLE] : BULLET POINTS\nOrganize in scannable hierarchy with clear sections and concise bullet points. Structure with overview, key points, supporting evidence, and conclusions. Adapt sections based on content type.",
+      "analytical": "[SUMMARY STYLE] : ANALYTICAL\nSystematic analysis including: 1) Content identification & context, 2) Structural analysis, 3) Evidence evaluation, 4) Comparative positioning, and 5) Comprehensive evaluation. Maintain objective, evidence-based tone.",
+      "executive": "[SUMMARY STYLE] : EXECUTIVE\nHigh-value briefing for decision-makers with: executive snapshot, source assessment, key information value, content architecture, strategic implications, and recommended actions. Use precise, economical language focused on decision-making value.",
+      "educational": "[SUMMARY STYLE] : EDUCATIONAL\nLearning resource with: topic framing, core concepts explained, knowledge organization, practical application, learning consolidation, and extended learning pathways. Use clear language with examples and mental models."
     },
     "language": {
-      "english": "◆ LANGUAGE\nWrite in English",
-      "french": "◆ LANGUAGE\nWrite in French (en Français)",
-      "spanish": "◆ LANGUAGE\nWrite in Spanish (en Español)",
-      "german": "◆ LANGUAGE\nWrite in German (auf Deutsch)"
+      "english": "[SUMMARY LANGUAGE] : ENGLISH\nWrite in English",
+      "french": "[SUMMARY LANGUAGE] : FRENCH\nWrite in French (en Français)",
+      "spanish": "[SUMMARY LANGUAGE] : SPANISH\nWrite in Spanish (en Español)",
+      "german": "[SUMMARY LANGUAGE] : GERMAN\nWrite in German (auf Deutsch)"
     },
     "additionalContext": {
-      "true": "◆ ADDITIONAL CONTEXT\nAfter completing your summary, add a section with additional background information that helps understand this content's significance. Scale depth with length parameter.",
+      "true": "[ADDITIONAL CONTEXT]\nAfter completing your summary, add a section with additional background information that helps understand this content's significance. Scale depth with length parameter.",
       "false": ""
     }
   },
   "defaultPrompts": {
     "general": {
       "name": "Web Content Summary",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this web content based on the followings paramters\n{{length}}\n{{style}}\n{{language}}\n{{additionalContext}}\n{{typeSpecificInstructions}}",
+      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this web content based on the followings paramters\n{{length}}\n{{style}}\n{{language}}\n{{{typeSpecificInstructions}}\n{{additionalContext}}",
       "parameters": {
         "typeSpecificInstructions": {
           "default": ""
@@ -67,10 +67,10 @@
     },
     "reddit": {
       "name": "Reddit Post Analysis",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this Reddit discussion\n based on the followings paramters\n{{length}}\n{{style}}\n{{language}}\n{{additionalContext}}\n{{typeSpecificInstructions}}",
+      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this Reddit discussion based on the followings [SUMMARY] instructions\n{{length}}\n{{style}}\n{{language}}\n{{typeSpecificInstructions}}\n{{additionalContext}}",
       "parameters": {
         "typeSpecificInstructions": {
-          "default": "◆ CRITICAL COMMENT INSTRUCTION\nWhen quoting comments, ALWAYS include the link to them [(link)](URL)"
+          "default": "[CRITICAL INSTRUCTION]\nALWAYS format user mentions as: [u/username](https://www.reddit.com/r/subreddit/comments/postid/comment/commentid"
         }
       },
       "defaultPreferences": {
@@ -83,10 +83,10 @@
     },
     "youtube": {
       "name": "YouTube Video Summary",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nSummarize this YouTube based on the followings paramters\n{{length}}\n{{style}}\n{{language}}\n{{commentAnalysis}}\n{{additionalContext}}\n{{typeSpecificInstructions}}",
+      "baseTemplate": "## PRIMARY INSTRUCTION\nSummarize this YouTube based on the followings paramters\n{{length}}\n{{style}}\n{{language}}\n{{commentAnalysis}}\n{{typeSpecificInstructions}}\n{{additionalContext}}",
       "parameters": {
         "commentAnalysis": {
-          "true": "◆ COMMENT ANALYSIS\nInclude analysis of comment section identifying major themes with example quotes using format: \"[comment]\" - Username (X likes). Scale depth with length parameter.",
+          "true": "[ADDITIONNAL COMMENT ANALYSIS]\nAfter completing your summary, include an analysis of comment section identifying major themes with example quotes using format: \"[comment]\" - Username (X likes). Scale depth with length parameter.",
           "false": ""
         },
         "typeSpecificInstructions": {
