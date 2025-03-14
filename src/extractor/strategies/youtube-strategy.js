@@ -334,15 +334,17 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         
         this.logger.info('Comments section exists but comments not loaded - user needs to scroll');
         
-        // Save notification flag to local storage
-        await chrome.storage.local.set({ 
-          youtubeCommentsNotLoaded: true 
-        });
-        
-        // Send message to background script
-        chrome.runtime.sendMessage({
-          action: 'youtubeCommentsNotLoaded'
-        });
+        if (commentAnalysisEnabled) {
+          // Save notification flag to local storage
+          await chrome.storage.local.set({ 
+            youtubeCommentsNotLoaded: true 
+          });
+          
+          // Send message to background script
+          chrome.runtime.sendMessage({
+            action: 'youtubeCommentsNotLoaded'
+          });
+        }
         
         return {
           items: [],
