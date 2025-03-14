@@ -46,7 +46,7 @@
           "german": "◆ LANGUAGE\nThe ENTIRE RESPONSE should be written in German (auf Deutsch)."
         },
         "additionalContext": {
-          "true": "◆ ADDITIONAL CONTEXT\nAfter completing your summary, please add:\n► BACKGROUND CONTEXT\nProvide additional background information that helps understand this content's significance and place in the broader topic area.",
+          "true": "◆ ADDITIONAL CONTEXT\nIMPORTANT: Always include this additional context section REGARDLESS of the content length instruction. This section should be included for all summaries when enabled.\n\nAfter completing your summary, please add:\n► BACKGROUND CONTEXT\nProvide additional background information that helps understand this content's significance and place in the broader topic area.\n\nSCALING DIRECTIVE: The depth and breadth of your additional context should scale proportionally with the overall length parameter. For ultra-concise and concise summaries, provide only essential background in 1-2 sentences. For normal length, include moderate background with 1-2 paragraphs. For detailed and exhaustive summaries, offer comprehensive context with multiple paragraphs covering historical development, related concepts, and broader significance.",
           "false": ""
         },
         "typeSpecificInstructions": {
@@ -90,7 +90,7 @@
           "german": "◆ LANGUAGE\nThe ENTIRE RESPONSE should be written in German (auf Deutsch)."
         },
         "additionalContext": {
-          "true": "◆ ADDITIONAL CONTEXT\nAfter completing your analysis, please add:\n► TOPIC BACKGROUND\nProvide additional context about the topic being discussed that would help someone understand the full significance of the conversation.",
+          "true": "◆ ADDITIONAL CONTEXT\nIMPORTANT: Always include this additional context section REGARDLESS of the content length instruction. This section should be included for all analyses when enabled.\n\nAfter completing your analysis, please add:\n► TOPIC BACKGROUND\nProvide additional context about the topic being discussed that would help someone understand the full significance of the conversation.\n\nSCALING DIRECTIVE: The depth and breadth of your additional context should scale proportionally with the overall length parameter. For ultra-concise and concise summaries, provide only essential background in 1-2 sentences. For normal length, include moderate background with 1-2 paragraphs. For detailed and exhaustive summaries, offer comprehensive context with multiple paragraphs covering historical perspectives, related discussions, and broader community or societal significance.",
           "false": ""
         },
         "typeSpecificInstructions": {
@@ -134,11 +134,11 @@
           "german": "◆ LANGUAGE\nThe ENTIRE RESPONSE should be written in German (auf Deutsch)."
         },
         "commentAnalysis": {
-          "true": "◆ COMMENT ANALYSIS\nInclude a cross-analysis of the comment section that weaves in quotes from top comments. Identify major themes/patterns across comments and illustrate each with relevant quote examples using this format: \"[comment quote]\" - Username (X likes). Highlight areas of consensus, notable disagreements, and unique perspectives while integrating the most popular or insightful comments directly into your analysis.",
+          "true": "◆ COMMENT ANALYSIS\nIMPORTANT: Always include comment analysis REGARDLESS of the content length instruction. The comment analysis should be performed for all summaries.\nInclude a cross-analysis of the comment section that weaves in quotes from top comments. Identify major themes/patterns across comments and illustrate each with relevant quote examples using this format: \"[comment quote]\" - Username (X likes). Highlight areas of consensus, notable disagreements, and unique perspectives while integrating the most popular or insightful comments directly into your analysis.\nSCALING DIRECTIVE: The depth and length of your comment analysis should scale proportionally with the overall length parameter. For ultra-concise and concise summaries, limit to 1-3 key comment themes with minimal examples. For normal length, include 3-5 themes with moderate detail. For detailed and exhaustive summaries, provide comprehensive comment analysis with multiple examples per theme and deeper exploration of comment dynamics.",
           "false": "◆ COMMENT ANALYSIS\nDo not include comment analysis."
         },
         "additionalContext": {
-          "true": "◆ ADDITIONAL CONTEXT\nAfter completing your summary, please add:\n► TOPIC EXPANSION\nExplain the broader subject area this video addresses, including relevant developments, competing viewpoints, or historical context not mentioned in the video.",
+          "true": "◆ ADDITIONAL CONTEXT\nIMPORTANT: Always include this additional context section REGARDLESS of the content length instruction. This section should be included for all summaries when enabled.\n\nAfter completing your summary, please add:\n► TOPIC EXPANSION\nExplain the broader subject area this video addresses, including relevant developments, competing viewpoints, or historical context not mentioned in the video.\n\nSCALING DIRECTIVE: The depth and breadth of your additional context should scale proportionally with the overall length parameter. For ultra-concise and concise summaries, provide only essential background in 1-2 sentences. For normal length, include moderate background with 1-2 paragraphs. For detailed and exhaustive summaries, offer comprehensive context with multiple paragraphs covering historical development, competing theories, and broader significance.",
           "false": ""
         },
         "typeSpecificInstructions": {
