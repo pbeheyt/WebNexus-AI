@@ -2,6 +2,7 @@
 const ClaudePlatform = require('./implementations/claude-platform');
 const ChatGptPlatform = require('./implementations/chatgpt-platform');
 const DeepSeekPlatform = require('./implementations/deepseek-platform');
+const MistralPlatform = require('./implementations/mistral-platform');
 
 /**
  * Factory to create the appropriate platform implementation
@@ -15,7 +16,8 @@ class PlatformFactory {
     const platforms = [
       new ClaudePlatform(),
       new ChatGptPlatform(),
-      new DeepSeekPlatform()
+      new DeepSeekPlatform(),
+      new MistralPlatform()
     ];
     
     // Find the first platform that matches the current URL
@@ -35,6 +37,8 @@ class PlatformFactory {
         return new ChatGptPlatform();
       case 'deepseek':
         return new DeepSeekPlatform();
+      case 'mistral':
+        return new MistralPlatform();
       default:
         console.error(`Unknown platform ID: ${platformId}`);
         return null;

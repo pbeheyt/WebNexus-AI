@@ -16,6 +16,7 @@
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://chat.deepseek.com/*",
+    "https://chat.mistral.ai/*",
     "https://*/*"
   ],
   "background": {

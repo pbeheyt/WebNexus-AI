@@ -14,7 +14,8 @@ const CONTENT_TYPES = {
 const AI_PLATFORMS = {
   CLAUDE: 'claude',
   CHATGPT: 'chatgpt',
-  DEEPSEEK: 'deepseek'
+  DEEPSEEK: 'deepseek',
+  MISTRAL: 'mistral'
 };
 
 const STORAGE_KEY = 'custom_prompts_by_type';
@@ -455,6 +456,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     } else if (aiPlatform === AI_PLATFORMS.CHATGPT && tab.url.includes('chatgpt.com')) {
       isPlatformTab = true;
     } else if (aiPlatform === AI_PLATFORMS.DEEPSEEK && tab.url.includes('chat.deepseek.com')) {
+      isPlatformTab = true;
+    } else if (aiPlatform === AI_PLATFORMS.MISTRAL && tab.url.includes('chat.mistral.ai')) {
       isPlatformTab = true;
     }
 
