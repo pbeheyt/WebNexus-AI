@@ -8,6 +8,7 @@ export default class MainController {
     promptForm,
     promptDetail,
     settingsForm,
+    configImportExportController,  // Added new controller
     promptService,
     contentTypeService,
     notificationManager,
@@ -18,6 +19,7 @@ export default class MainController {
     this.promptForm = promptForm;
     this.promptDetail = promptDetail;
     this.settingsForm = settingsForm;
+    this.configImportExportController = configImportExportController;  // Added new controller
     this.promptService = promptService;
     this.contentTypeService = contentTypeService;
     this.notificationManager = notificationManager;
@@ -38,6 +40,12 @@ export default class MainController {
       this.promptForm.initialize();
       this.promptDetail.initialize();
       this.settingsForm.initialize();
+      
+      // Initialize import/export controller
+      const importExportContainer = document.getElementById('import-export-container');
+      if (importExportContainer) {
+        this.configImportExportController.initialize(importExportContainer);
+      }
       
       // Set up back button
       document.getElementById('backBtn')?.addEventListener('click', () => {

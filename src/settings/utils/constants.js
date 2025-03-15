@@ -9,7 +9,8 @@ export const CONTENT_TYPES = {
 
 export const TABS = {
   CONTENT_CONFIGURATION: 'content-configuration',
-  PROMPT_MANAGEMENT: 'prompt-management'
+  PROMPT_MANAGEMENT: 'prompt-management',
+  IMPORT_EXPORT: 'import-export'
 };
 
 export const CONTENT_TYPE_LABELS = {

@@ -195,48 +195,48 @@ async function getPromptContentById(promptId, contentType) {
 
       // Get user preferences for this content type
       const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
-      
+
       // Start with the base template
       let template = promptTemplate.baseTemplate;
-      
+
       // Always add type-specific instructions if available
       if (promptTemplate.parameters?.typeSpecificInstructions?.values?.default) {
         template += '\n' + promptTemplate.parameters.typeSpecificInstructions.values.default;
       }
-      
+
       // Combine all applicable parameters
       const allParams = {
         ...(promptTemplate.parameters || {}),
         ...(promptConfigData.sharedParameters || {})
       };
-      
+
       // Process each parameter according to user preferences
       for (const [paramKey, paramConfig] of Object.entries(allParams)) {
         // Skip typeSpecificInstructions as we've already handled it
         if (paramKey === 'typeSpecificInstructions') {
           continue;
         }
-        
+
         // Skip commentAnalysis on non-YouTube content
         if (paramKey === 'commentAnalysis' && contentType !== 'youtube') {
           continue;
         }
-        
+
         const userValue = typePreferences[paramKey];
-        
+
         // Handle different parameter types appropriately
         if (typeof userValue === 'boolean') {
           // For boolean parameters, only add content if value is true
           if (userValue === true && paramConfig.values?.true) {
             template += '\n' + paramConfig.values.true;
           }
-        } 
+        }
         // For non-boolean parameters with valid values
         else if (userValue && paramConfig.values?.[userValue]) {
           template += '\n' + paramConfig.values[userValue];
         }
       }
-      
+
       return template;
     } catch (error) {
       logger.background.error('Error loading default prompt:', error);
@@ -371,10 +371,42 @@ async function handleContextMenuClick(info, tab) {
 }
 
 /**
+ * Check for and apply imported configuration if present
+ */
+async function checkForImportedConfig() {
+  try {
+    const { use_imported_config, imported_prompt_config } = await chrome.storage.local.get([
+      'use_imported_config',
+      'imported_prompt_config'
+    ]);
+
+    if (use_imported_config && imported_prompt_config) {
+      logger.background.info('Found imported configuration, applying it');
+
+      // For Chrome MV3, we cannot write to extension files directly
+      // Instead, we'll create a runtime override of the configuration
+
+      // Store the imported config in sync storage for persistence
+      await chrome.storage.sync.set({ 'prompt_config_override': imported_prompt_config });
+
+      // Clear the import flags
+      await chrome.storage.local.remove(['use_imported_config', 'imported_prompt_config']);
+
+      logger.background.info('Successfully applied imported configuration');
+    }
+  } catch (error) {
+    logger.background.error('Error applying imported configuration:', error);
+  }
+}
+
+/**
  * Initialize the extension
  */
 async function initialize() {
   logger.background.info('Initializing background service worker');
+
+  // Check for imported configuration
+  await checkForImportedConfig();
 
   // Create context menus
   chrome.contextMenus.create({
@@ -503,7 +535,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Get the extracted content
         const { extractedContent } = await chrome.storage.local.get('extractedContent');
-        
+
         // Check if YouTube transcript extraction failed
         if (contentType === CONTENT_TYPES.YOUTUBE) {
           if (extractedContent?.error &&
@@ -521,18 +553,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             });
             return;
           }
-          
+
           // Check if comment analysis is required but comments aren't loaded
-          if (commentAnalysisRequired && 
+          if (commentAnalysisRequired &&
               extractedContent?.commentStatus?.state === 'not_loaded' &&
               extractedContent?.commentStatus?.commentsExist) {
-              
+
             logger.background.warn('YouTube comments not loaded but required for analysis, aborting summarization');
-            
+
             sendResponse({
               success: false,
               youtubeCommentsError: true,
-              errorMessage: extractedContent.commentStatus.message || 
+              errorMessage: extractedContent.commentStatus.message ||
                           'Comments exist but are not loaded. Scroll down on YouTube to load comments.'
             });
             return;

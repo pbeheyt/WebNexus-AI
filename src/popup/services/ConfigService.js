@@ -1,8 +1,18 @@
 // src/popup/services/ConfigService.js
+import StorageService from './StorageService.js';
+
 export default class ConfigService {
   constructor() {
     this.platformConfig = null;
     this.promptConfig = null;
+    this.overrideConfig = null;
+    this.storageService = new StorageService();
+  }
+
+  clearCache() {
+    this.platformConfig = null;
+    this.promptConfig = null;
+    this.overrideConfig = null;
   }
 
   async getConfig(type = 'combined') {
@@ -24,7 +34,24 @@ export default class ConfigService {
         return this.platformConfig;
       } 
       else if (type === 'prompt') {
-        // Return cached prompt config if available
+        // Check for override config first
+        if (!this.overrideConfig) {
+          try {
+            const result = await chrome.storage.sync.get('prompt_config_override');
+            this.overrideConfig = result.prompt_config_override || null;
+          } catch (error) {
+            console.error('Error loading config override:', error);
+            this.overrideConfig = null;
+          }
+        }
+        
+        // Return override if available
+        if (this.overrideConfig) {
+          console.log('Using imported configuration override');
+          return this.overrideConfig;
+        }
+        
+        // Fall back to default config
         if (this.promptConfig) {
           return this.promptConfig;
         }

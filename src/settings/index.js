@@ -12,6 +12,7 @@ import PromptDetail from './ui/PromptDetail.js';
 import SettingsForm from './ui/SettingsForm.js';
 import PromptController from './controllers/PromptController.js';
 import SettingsController from './controllers/SettingsController.js';
+import ConfigImportExportController from './controllers/ConfigImportExportController.js';  // Import new controller
 import MainController from './controllers/MainController.js';
 import { initializeTheme } from './themeManager';
 
@@ -49,6 +50,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     notificationManager
   );
   
+  // Initialize new controller for import/export
+  const configImportExportController = new ConfigImportExportController(
+    configService,
+    storageService,
+    notificationManager
+  );
+  
   // Initialize UI with controllers
   const promptList = new PromptList(
     promptController,
@@ -80,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     promptForm,
     promptDetail,
     settingsForm,
+    configImportExportController,  // Add the new controller
     promptService,
     contentTypeService,
     notificationManager,

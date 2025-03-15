@@ -23,11 +23,20 @@
     <div class="tab-nav">
       <button class="tab-btn" data-tab="content-configuration">Content Configuration</button>
       <button class="tab-btn active" data-tab="prompt-management">Prompt Management</button>
+      <button class="tab-btn" data-tab="import-export">Import/Export</button>
     </div>
 
     <div id="notification" class="notification"></div>
 
     <div class="tabs-container">
+      <!-- Import/Export Tab -->
+      <div id="import-export" class="tab-content">
+        <h2 class="type-heading">Configuration Import/Export</h2>
+        <div class="settings-section" id="import-export-container">
+          <!-- Content will be dynamically generated -->
+        </div>
+      </div>
+
       <!-- Content Configuration Tab -->
       <div id="content-configuration" class="tab-content">
         <h2 class="type-heading">Content Extraction Settings</h2>

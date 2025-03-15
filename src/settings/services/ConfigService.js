@@ -1,8 +1,16 @@
-// src/popup/services/ConfigService.js
+// src/settings/services/ConfigService.js
 export default class ConfigService {
-  constructor() {
+  constructor(storageService) {
+    this.storageService = storageService;
     this.platformConfig = null;
     this.promptConfig = null;
+    this.overrideConfig = null;
+  }
+
+  clearCache() {
+    this.platformConfig = null;
+    this.promptConfig = null;
+    this.overrideConfig = null;
   }
 
   async getConfig(type = 'combined') {
@@ -24,7 +32,19 @@ export default class ConfigService {
         return this.platformConfig;
       } 
       else if (type === 'prompt') {
-        // Return cached prompt config if available
+        // Check for override config
+        if (!this.overrideConfig) {
+          // Check if there's an override in storage
+          const { prompt_config_override } = await this.storageService.get('prompt_config_override', 'sync') || {};
+          this.overrideConfig = prompt_config_override || null;
+        }
+        
+        // If we have an override config, use it
+        if (this.overrideConfig) {
+          return this.overrideConfig;
+        }
+        
+        // Otherwise use the default config
         if (this.promptConfig) {
           return this.promptConfig;
         }
@@ -40,7 +60,7 @@ export default class ConfigService {
         return this.promptConfig;
       }
       else {
-        // For backward compatibility - return combined config
+        // For combined config
         const [platformConfig, promptConfig] = await Promise.all([
           this.getConfig('platform'),
           this.getConfig('prompt')
