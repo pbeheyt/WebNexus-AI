@@ -179,13 +179,10 @@ async function getPromptContentById(promptId, contentType) {
   // If the promptId is the same as contentType, it's a default prompt
   if (promptId === contentType) {
     try {
-      // Get default prompt template and user preferences
+      // Get default prompt template 
       logger.background.info('Loading default prompt from config');
-      const [config, userPreferences] = await Promise.all([
-        fetch(chrome.runtime.getURL('config.json')).then(r => r.json()),
-        chrome.storage.sync.get('default_prompt_preferences')
-      ]);
-
+      const config = await fetch(chrome.runtime.getURL('config.json')).then(r => r.json());
+      
       const promptConfig = config.defaultPrompts && config.defaultPrompts[contentType];
 
       if (!promptConfig) {
@@ -193,58 +190,16 @@ async function getPromptContentById(promptId, contentType) {
         return null;
       }
 
-      // Get user preferences for this content type
-      const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
-      const defaultPreferences = promptConfig.defaultPreferences || {};
-
-      // Merge default preferences with user preferences
-      const preferences = { ...defaultPreferences, ...typePreferences };
-
-      // Get parameters - UPDATED to include both content-specific and shared parameters
-      const contentSpecificParams = promptConfig.parameters || {};
-      const sharedParams = config.sharedParameters || {};
+      // Just return the base template directly if no replacements needed
+      return promptConfig.baseTemplate;
       
-      // Build prompt by replacing placeholders
-      let prompt = promptConfig.baseTemplate;
-
-      // Process each parameter from content-specific parameters
-      for (const [paramKey, paramOptions] of Object.entries(contentSpecificParams)) {
-        // Skip commentAnalysis for non-YouTube content types
-        if (paramKey === 'commentAnalysis' && contentType !== 'youtube') {
-          // Remove the placeholder completely
-          prompt = prompt.replace(`{{${paramKey}}}\n`, '');
-          prompt = prompt.replace(`{{${paramKey}}}`, '');
-          continue;
-        }
-        
-        const userValue = preferences[paramKey];
-        // Updated to access values through the nested 'values' object
-        const replacement = paramOptions.values?.[String(userValue)] || '';
-
-        // Replace in template
-        const placeholder = `{{${paramKey}}}`;
-        prompt = prompt.replace(placeholder, replacement);
-      }
-      
-      // Process shared parameters (length, style, language, etc.)
-      for (const [paramKey, paramOptions] of Object.entries(sharedParams)) {
-        const userValue = preferences[paramKey];
-        // Updated to access values through the nested 'values' object
-        const replacement = paramOptions.values?.[String(userValue)] || '';
-
-        // Replace in template
-        const placeholder = `{{${paramKey}}}`;
-        prompt = prompt.replace(placeholder, replacement);
-      }
-
-      return prompt;
     } catch (error) {
       logger.background.error('Error loading default prompt:', error);
       return null;
     }
   }
 
-  // For custom prompts
+  // For custom prompts - keeping this part the same
   try {
     logger.background.info('Loading custom prompt from storage');
     const result = await chrome.storage.sync.get(STORAGE_KEY);

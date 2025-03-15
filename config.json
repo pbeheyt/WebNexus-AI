@@ -72,7 +72,7 @@
   "defaultPrompts": {
     "general": {
       "name": "Web Content Summary",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this web content based on the followings paramters\n{{length}}\n{{style}}\n{{language}}\n{{{typeSpecificInstructions}}\n{{additionalContext}}",
+      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this web content based on the followings the followings [SUMMARY] instructions",
       "parameters": {
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
@@ -91,7 +91,7 @@
     },
     "reddit": {
       "name": "Reddit Post Analysis",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this Reddit discussion based on the followings [SUMMARY] instructions\n{{length}}\n{{style}}\n{{language}}\n{{typeSpecificInstructions}}\n{{additionalContext}}\n{{factCheck}}",
+      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this Reddit discussion based on the followings [SUMMARY] instructions",
       "parameters": {
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
@@ -110,7 +110,7 @@
     },
     "youtube": {
       "name": "YouTube Video Summary",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nSummarize this YouTube based on the followings paramters\n{{length}}\n{{style}}\n{{language}}\n{{commentAnalysis}}\n{{typeSpecificInstructions}}\n{{additionalContext}}",
+      "baseTemplate": "## PRIMARY INSTRUCTION\nSummarize this YouTube based on the followings [SUMMARY] instructions",
       "parameters": {
         "commentAnalysis": {
           "param_name": "Comment Analysis",
