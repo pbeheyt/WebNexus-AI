@@ -71,6 +71,9 @@ export default class TabManager {
       return;
     }
     
+    // Store current scroll position
+    const scrollPosition = window.scrollY;
+    
     // Update active tab button
     this.tabButtons.forEach((button, id) => {
       if (id === tabId) {
@@ -92,8 +95,11 @@ export default class TabManager {
     // Update active tab
     this.activeTab = tabId;
     
-    // Update URL hash
-    window.location.hash = tabId;
+    // Update URL hash without scrolling
+    history.replaceState(null, null, `#${tabId}`);
+    
+    // Restore scroll position 
+    window.scrollTo(0, scrollPosition);
     
     // Publish event
     this.eventBus.publish('tab:changed', tabId);
