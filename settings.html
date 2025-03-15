@@ -21,26 +21,18 @@
     </header>
 
     <div class="tab-nav">
+      <button class="tab-btn" data-tab="prompt-management">Custom Prompt Management</button>
       <button class="tab-btn" data-tab="content-configuration">Content Configuration</button>
-      <button class="tab-btn active" data-tab="prompt-management">Prompt Management</button>
-      <button class="tab-btn" data-tab="import-export">Import/Export</button>
+      <button class="tab-btn" data-tab="import-export">Import/Export Configuration</button>
     </div>
 
     <div id="notification" class="notification"></div>
 
     <div class="tabs-container">
-      <!-- Import/Export Tab -->
-      <div id="import-export" class="tab-content">
-        <h2 class="type-heading">Configuration Import/Export</h2>
-        <div class="settings-section" id="import-export-container">
-          <!-- Content will be dynamically generated -->
-        </div>
-      </div>
-
       <!-- Content Configuration Tab -->
       <div id="content-configuration" class="tab-content">
         <h2 class="type-heading">Content Extraction Settings</h2>
-        
+
         <!-- Content Type Accordion Groups - Web panel removed -->
         <div class="content-type-group">
           <div class="content-type-header">
@@ -51,7 +43,7 @@
             <div id="reddit-settings-container"></div>
           </div>
         </div>
-        
+
         <div class="content-type-group">
           <div class="content-type-header">
             <span>YouTube Videos</span>
@@ -72,7 +64,7 @@
               <h2 class="type-heading">Prompts</h2>
               <button class="new-prompt-btn" id="newPromptBtn">+ New</button>
             </div>
-            
+
             <div class="form-group">
               <select id="content-type-filter" class="content-type-filter">
                 <option value="all">All Content Types</option>
@@ -81,7 +73,7 @@
                 <option value="youtube">YouTube Videos</option>
               </select>
             </div>
-            
+
             <div id="prompt-list" class="prompt-list">
               <!-- Prompts will be displayed here -->
               <div class="empty-state">
@@ -89,7 +81,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Detail Panel (Prompt Detail/Form) -->
           <div class="detail-panel" id="detail-panel">
             <!-- Initial state - select a prompt message -->
@@ -97,6 +89,14 @@
               <p>Select a prompt from the list or create a new one</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Import/Export Tab -->
+      <div id="import-export" class="tab-content">
+        <h2 class="type-heading">Configuration Import/Export</h2>
+        <div class="settings-section" id="import-export-container">
+          <!-- Content will be dynamically generated -->
         </div>
       </div>
     </div>
