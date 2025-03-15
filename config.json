@@ -80,13 +80,6 @@
             "default": ""
           }
         }
-      },
-      "defaultPreferences": {
-        "length": "normal",
-        "style": "narrative",
-        "language": "english",
-        "additionalContext": false,
-        "typeSpecificInstructions": "default"
       }
     },
     "reddit": {
@@ -99,13 +92,6 @@
             "default": "[CRITICAL INSTRUCTION]\nALWAYS format user mentions as: [u/username](https://www.reddit.com/r/subreddit/comments/postid/comment/commentid"
           }
         }
-      },
-      "defaultPreferences": {
-        "length": "normal",
-        "style": "narrative",
-        "language": "english",
-        "additionalContext": false,
-        "typeSpecificInstructions": "default"
       }
     },
     "youtube": {
@@ -125,14 +111,6 @@
             "default": ""
           }
         }
-      },
-      "defaultPreferences": {
-        "length": "normal",
-        "style": "narrative",
-        "language": "english",
-        "commentAnalysis": true,
-        "additionalContext": false,
-        "typeSpecificInstructions": "default"
       }
     }
   }

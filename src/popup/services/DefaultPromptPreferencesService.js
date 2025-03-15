@@ -8,12 +8,20 @@ export default class DefaultPromptPreferencesService {
   }
 
   async getPreferences(contentType) {
-    // Get user preferences from storage
+    // Get user preferences
     const userPreferences = await this.storageService.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES) || {};
     
-    // Get default preferences from config
-    const config = await this.configService.getConfig();
-    const defaultPreferences = config.defaultPrompts[contentType]?.defaultPreferences || {};
+    // Get parameters for this content type
+    const parameters = await this.getParameterOptions(contentType);
+    
+    // Build default preferences using first value of each parameter
+    const defaultPreferences = {};
+    for (const [paramKey, paramOptions] of Object.entries(parameters)) {
+      if (paramOptions.values && Object.keys(paramOptions.values).length > 0) {
+        // Use first value as default
+        defaultPreferences[paramKey] = Object.keys(paramOptions.values)[0];
+      }
+    }
     
     // Merge default preferences with user preferences
     return {
