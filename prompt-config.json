@@ -49,7 +49,7 @@
   "defaultPrompts": {
     "general": {
       "name": "Web Content Summary",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this web content based on the followings the followings [SUMMARY] instructions",
+      "baseTemplate": "Analyze this web content based on the followings the followings [SUMMARY] instructions",
       "parameters": {
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
@@ -61,7 +61,7 @@
     },
     "reddit": {
       "name": "Reddit Post Analysis",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this Reddit discussion based on the followings [SUMMARY] instructions",
+      "baseTemplate": "Analyze this Reddit discussion based on the followings [SUMMARY] instructions",
       "parameters": {
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
@@ -73,12 +73,12 @@
     },
     "youtube": {
       "name": "YouTube Video Summary",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nSummarize this YouTube based on the followings [SUMMARY] instructions",
+      "baseTemplate": "Summarize this YouTube based on the followings [SUMMARY] instructions",
       "parameters": {
         "commentAnalysis": {
           "param_name": "Comment Analysis",
           "values": {
-            "true": "[ADDITIONNAL COMMENT ANALYSIS]\nAfter completing your summary, include an analysis of comment section identifying major themes with example quotes using format: \"[comment]\" - Username (X likes). Scale depth with length parameter.",
+            "true": "[COMMENT ANALYSIS]\nAfter completing your summary, include an analysis of comment section identifying major themes with example quotes using format: \"[comment]\" - Username (X likes). Scale depth with length parameter.",
             "false": ""
           }
         },
