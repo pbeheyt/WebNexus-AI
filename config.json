@@ -60,6 +60,13 @@
         "true": "[ADDITIONAL CONTEXT]\nAfter completing your summary, add a section with additional background information that helps understand this content's significance. Scale depth with length parameter.",
         "false": ""
       }
+    },
+    "factCheck": {
+      "param_name": "Fact Check",
+      "values": {
+        "true": "[FACT CHECK]\nAfter completing your summary, fact-check the information provided in the post and comments. Identify any misinformation or inaccuracies and provide corrections or clarifications.",
+        "false": ""
+      }
     }
   },
   "defaultPrompts": {
@@ -84,7 +91,7 @@
     },
     "reddit": {
       "name": "Reddit Post Analysis",
-      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this Reddit discussion based on the followings [SUMMARY] instructions\n{{length}}\n{{style}}\n{{language}}\n{{typeSpecificInstructions}}\n{{additionalContext}}",
+      "baseTemplate": "## PRIMARY INSTRUCTION\nAnalyze this Reddit discussion based on the followings [SUMMARY] instructions\n{{length}}\n{{style}}\n{{language}}\n{{typeSpecificInstructions}}\n{{additionalContext}}\n{{factCheck}}",
       "parameters": {
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
@@ -127,33 +134,6 @@
         "additionalContext": false,
         "typeSpecificInstructions": "default"
       }
-    }
-  },
-  "styleContentAdaptations": {
-    "narrative": {
-      "general": "Adapt flow to content type (news, documentation, Wikipedia, e-commerce, academic, forum, blog). For news, follow journalistic conventions. For documentation, create a learning journey. For Wikipedia, balance factual density with explanatory narrative.",
-      "reddit": "Capture conversation dynamics by establishing the post's topic, showing how the discussion evolved with perspective shifts and notable exchanges. Highlight conflicts, collaborations, humor, and shared insights. Conclude with how the discussion progressed.",
-      "youtube": "Capture the viewing experience with creator context, key moments, visual elements, and presentation style. Include impactful quotes and maintain the video's sequencing and emotional arc."
-    },
-    "bulletPoints": {
-      "general": "Adapt sections based on content type. For news, add Source Analysis. For documentation, add Implementation Steps. For Wikipedia, add Citation Quality. For e-commerce, add Product Value Assessment.",
-      "reddit": "Include Post Summary, Comment Landscape with viewpoints and quotes, Notable Exchanges, Community Sentiment, and Trends & Patterns. Format comments as \"Quote\" - Username (points).",
-      "youtube": "Include Video Identification, Content Breakdown with timestamps, Visual Elements & Demonstrations, Supporting Information, and Key Takeaways & Conclusions."
-    },
-    "analytical": {
-      "general": "Adapt analytical focus by content type. For news, focus on journalistic standards. For documentation, emphasize technical accuracy. For Wikipedia, assess neutrality and citations.",
-      "reddit": "Focus on post content analysis, comment landscape mapping, discourse dynamics, information quality evaluation, and cross-comment analysis. Format as \"Quote\" - Username (points).",
-      "youtube": "Analyze content classification, production & presentation, argument mapping, content quality, and effectiveness assessment."
-    },
-    "executive": {
-      "general": "Adapt focus by content type. For news, emphasize timeliness and impact. For documentation, focus on implementation requirements. For Wikipedia, highlight knowledge gaps.",
-      "reddit": "Include Discussion Snapshot, Post Context, Comment Analysis with top viewpoints, Sentiment and Trends, and Key Insights from commenters. Format as \"Quote\" - Username (points).",
-      "youtube": "Provide Content Snapshot, Source Assessment, Key Information Value, Content Architecture, Strategic Implications, and Recommended Actions."
-    },
-    "educational": {
-      "general": "Adapt approach by content type. For news, frame as current events education. For documentation, structure as technical skill-building. For Wikipedia, organize as foundational knowledge.",
-      "reddit": "Structure as Discussion Overview, Viewpoint Landscape with representative quotes, Critical Insights with valuable contributions, and Practical Applications. Format as \"Quote\" - Username (points).",
-      "youtube": "Include Learning Context, Presentation Framework, Core Concepts Explained, Evidence & Examples, Practical Knowledge Extraction, and Learning Consolidation."
     }
   }
 }
