@@ -173,16 +173,22 @@ async function getPreferredPromptId(contentType) {
 /**
  * Get prompt content by ID
  */
+/**
+ * Get prompt content by ID
+ */
 async function getPromptContentById(promptId, contentType) {
   logger.background.info(`Getting prompt content for ID: ${promptId}, type: ${contentType}`);
 
   // If the promptId is the same as contentType, it's a default prompt
   if (promptId === contentType) {
     try {
-      // Get default prompt template 
+      // Get default prompt template and user preferences
       logger.background.info('Loading default prompt from config');
-      const config = await fetch(chrome.runtime.getURL('config.json')).then(r => r.json());
-      
+      const [config, userPreferences] = await Promise.all([
+        fetch(chrome.runtime.getURL('config.json')).then(r => r.json()),
+        chrome.storage.sync.get('default_prompt_preferences')
+      ]);
+
       const promptConfig = config.defaultPrompts && config.defaultPrompts[contentType];
 
       if (!promptConfig) {
@@ -190,9 +196,51 @@ async function getPromptContentById(promptId, contentType) {
         return null;
       }
 
-      // Just return the base template directly if no replacements needed
-      return promptConfig.baseTemplate;
+      // Get user preferences for this content type
+      const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
       
+      // Start with the base template
+      let template = promptConfig.baseTemplate;
+      
+      // Always add type-specific instructions if available (these are mandatory for the content type)
+      if (promptConfig.parameters?.typeSpecificInstructions?.values?.default) {
+        template += '\n' + promptConfig.parameters.typeSpecificInstructions.values.default;
+      }
+      
+      // Combine all applicable parameters (content-specific and shared)
+      const allParams = {
+        ...(promptConfig.parameters || {}),
+        ...(config.sharedParameters || {})
+      };
+      
+      // Process each parameter according to user preferences
+      for (const [paramKey, paramConfig] of Object.entries(allParams)) {
+        // Skip typeSpecificInstructions as we've already handled it
+        if (paramKey === 'typeSpecificInstructions') {
+          continue;
+        }
+        
+        // Skip commentAnalysis on non-YouTube content
+        if (paramKey === 'commentAnalysis' && contentType !== 'youtube') {
+          continue;
+        }
+        
+        const userValue = typePreferences[paramKey];
+        
+        // Handle different parameter types appropriately
+        if (typeof userValue === 'boolean') {
+          // For boolean parameters, only add content if value is true
+          if (userValue === true && paramConfig.values?.true) {
+            template += '\n' + paramConfig.values.true;
+          }
+        } 
+        // For non-boolean parameters with valid values
+        else if (userValue && paramConfig.values?.[userValue]) {
+          template += '\n' + paramConfig.values[userValue];
+        }
+      }
+      
+      return template;
     } catch (error) {
       logger.background.error('Error loading default prompt:', error);
       return null;
