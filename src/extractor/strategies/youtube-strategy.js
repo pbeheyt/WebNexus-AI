@@ -331,7 +331,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
   async extractComments() {
     try {
       // Get configured max comments or use default
-      let maxComments = 50; // Default value
+      let maxComments = 20; // Default value
       let commentAnalysisEnabled = false;
       
       try {

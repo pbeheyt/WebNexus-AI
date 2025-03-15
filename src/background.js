@@ -171,19 +171,6 @@ async function getPreferredPromptId(contentType) {
 }
 
 /**
- * Check if comment analysis is required for the given prompt content
- * @param {string} promptContent - The prompt content to check
- * @returns {boolean} True if comment analysis is required
- */
-function isCommentAnalysisRequired(promptContent) {
-  if (!promptContent) return false;
-  
-  // Check if the prompt content includes the comment analysis instruction
-  return promptContent.includes('◆ COMMENT ANALYSIS') && 
-         !promptContent.includes('◆ COMMENT ANALYSIS\nDo not include comment analysis.');
-}
-
-/**
  * Get prompt content by ID
  */
 async function getPromptContentById(promptId, contentType) {
@@ -317,25 +304,6 @@ async function openAiPlatformWithContent(contentType, promptId = null, platformI
         chrome.runtime.sendMessage({
           action: 'youtubeTranscriptError',
           message: extractedContent.message || 'Failed to retrieve YouTube transcript.'
-        });
-
-        return null; // Return null to indicate operation was aborted
-      }
-
-      // NEW: Comment analysis check
-      const commentAnalysisRequired = isCommentAnalysisRequired(promptContent);
-
-      if (commentAnalysisRequired &&
-          extractedContent?.commentStatus?.state === 'not_loaded' &&
-          extractedContent?.commentStatus?.commentsExist) {
-
-        logger.background.warn('YouTube comments not loaded but required for analysis, aborting platform open');
-
-        // Notify popup about comment loading requirement
-        chrome.runtime.sendMessage({
-          action: 'youtubeCommentsNotLoaded',
-          message: extractedContent.commentStatus.message ||
-                  'Please scroll down on YouTube to load comments before summarizing'
         });
 
         return null; // Return null to indicate operation was aborted

@@ -240,7 +240,7 @@ class RedditExtractorStrategy extends BaseExtractor {
   async extractComments() {
     try {
       // Get configured max comments or use default
-      let maxComments = 200; // Default value
+      let maxComments = 100; // Default value
       
       try {
         const result = await new Promise((resolve) => {
