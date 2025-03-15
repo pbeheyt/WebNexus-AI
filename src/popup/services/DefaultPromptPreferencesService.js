@@ -63,11 +63,6 @@ export default class DefaultPromptPreferencesService {
     // Get user preferences
     const preferences = await this.getPreferences(contentType);
     
-    // Ensure typeSpecificInstructions preference exists
-    // if (!preferences.typeSpecificInstructions) {
-    //   preferences.typeSpecificInstructions = "default";
-    // }
-    
     // Get parameters (now includes both shared and content-specific)
     const parameters = await this.getParameterOptions(contentType);
     
@@ -96,25 +91,6 @@ export default class DefaultPromptPreferencesService {
       const placeholder = `{{${paramKey}}}`;
       prompt = prompt.replace(placeholder, replacement);
     }
-    
-    // Apply style content adaptation if applicable
-    if (preferences.style) {
-      const styleAdaptations = config.styleContentAdaptations || {};
-      const styleAdaptation = styleAdaptations[preferences.style]?.[contentType];
-      
-      if (styleAdaptation) {
-        // Check if this template uses style adaptations
-        if (prompt.includes('{{styleContentAdaptation}}')) {
-          prompt = prompt.replace('{{styleContentAdaptation}}', styleAdaptation);
-        }
-      }
-    }
-    
-    // Remove any remaining style adaptation placeholder
-    prompt = prompt.replace('{{styleContentAdaptation}}', '');
-    
-    // Remove any double newlines that might have been created by empty parameters
-    prompt = prompt.replace(/\n\n+/g, '\n\n');
     
     return prompt;
   }

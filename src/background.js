@@ -222,8 +222,17 @@ async function getPromptContentById(promptId, contentType) {
 
       // Process each parameter from content-specific parameters
       for (const [paramKey, paramOptions] of Object.entries(contentSpecificParams)) {
+        // Skip commentAnalysis for non-YouTube content types
+        if (paramKey === 'commentAnalysis' && contentType !== 'youtube') {
+          // Remove the placeholder completely
+          prompt = prompt.replace(`{{${paramKey}}}\n`, '');
+          prompt = prompt.replace(`{{${paramKey}}}`, '');
+          continue;
+        }
+        
         const userValue = preferences[paramKey];
-        const replacement = paramOptions[String(userValue)] || '';
+        // Updated to access values through the nested 'values' object
+        const replacement = paramOptions.values?.[String(userValue)] || '';
 
         // Replace in template
         const placeholder = `{{${paramKey}}}`;
@@ -233,25 +242,13 @@ async function getPromptContentById(promptId, contentType) {
       // Process shared parameters (length, style, language, etc.)
       for (const [paramKey, paramOptions] of Object.entries(sharedParams)) {
         const userValue = preferences[paramKey];
-        const replacement = paramOptions[String(userValue)] || '';
+        // Updated to access values through the nested 'values' object
+        const replacement = paramOptions.values?.[String(userValue)] || '';
 
         // Replace in template
         const placeholder = `{{${paramKey}}}`;
         prompt = prompt.replace(placeholder, replacement);
       }
-      
-      // Apply style adaptation if applicable
-      if (preferences.style && config.styleContentAdaptations) {
-        const styleAdaptation = config.styleContentAdaptations[preferences.style]?.[contentType];
-        if (styleAdaptation) {
-          prompt = prompt.replace('{{styleContentAdaptation}}', styleAdaptation);
-        } else {
-          prompt = prompt.replace('{{styleContentAdaptation}}', '');
-        }
-      }
-      
-      // Remove any double newlines that might have been created by empty parameters
-      prompt = prompt.replace(/\n\n+/g, '\n\n');
 
       return prompt;
     } catch (error) {
@@ -260,7 +257,7 @@ async function getPromptContentById(promptId, contentType) {
     }
   }
 
-  // Rest of the function for custom prompts remains unchanged
+  // For custom prompts
   try {
     logger.background.info('Loading custom prompt from storage');
     const result = await chrome.storage.sync.get(STORAGE_KEY);
