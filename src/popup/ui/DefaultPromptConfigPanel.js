@@ -1,5 +1,5 @@
 // popup/ui/DefaultPromptConfigPanel.js
-import { PARAMETER_LABELS, PARAMETER_OPTIONS_LABELS } from '../constants.js';
+// Removed constants import as we'll use param_name from config
 
 export default class DefaultPromptConfigPanel {
   constructor(defaultPromptPreferencesService, contentType, onChange, statusManager = null) {
@@ -52,8 +52,8 @@ export default class DefaultPromptConfigPanel {
     
     // Add parameters
     for (const [paramKey, paramOptions] of Object.entries(this.parameterOptions)) {
-      // Skip if no options
-      if (!paramOptions || Object.keys(paramOptions).length === 0) continue;
+      // Skip if no options or values
+      if (!paramOptions || !paramOptions.values || Object.keys(paramOptions.values).length === 0) continue;
       
       // Create parameter group
       const paramGroup = this.createParameterControl(paramKey, paramOptions);
@@ -79,7 +79,7 @@ export default class DefaultPromptConfigPanel {
     }
     
     // Skip type-specific instructions as they're not user-configurable
-    if (paramKey === 'typeSpecificInstructions' || paramKey === 'lengthAdaptationInstructions') {
+    if (paramKey === 'typeSpecificInstructions') {
       return document.createElement('div');
     }
     
@@ -88,12 +88,14 @@ export default class DefaultPromptConfigPanel {
     
     const label = document.createElement('label');
     label.className = 'config-param-label';
-    label.textContent = PARAMETER_LABELS[paramKey] || paramKey;
+    // Use param_name from the config instead of PARAMETER_LABELS
+    label.textContent = paramOptions.param_name || paramKey;
     
     // For boolean parameters (true/false), use a toggle switch
-    if (Object.keys(paramOptions).length === 2 && 
-        Object.keys(paramOptions).includes('true') && 
-        Object.keys(paramOptions).includes('false')) {
+    const values = paramOptions.values;
+    if (Object.keys(values).length === 2 && 
+        Object.keys(values).includes('true') && 
+        Object.keys(values).includes('false')) {
       
       const toggle = document.createElement('div');
       toggle.className = 'toggle-switch';
@@ -128,14 +130,14 @@ export default class DefaultPromptConfigPanel {
       select.className = 'config-param-select';
       select.id = `param-${paramKey}`;
       
-      // Add options
-      for (const [optionKey, optionValue] of Object.entries(paramOptions)) {
+      // Add options - now iterating through values object
+      for (const [optionKey, optionValue] of Object.entries(values)) {
         const option = document.createElement('option');
         option.value = optionKey;
         
-        // Use label from PARAMETER_OPTIONS_LABELS if available, otherwise use optionKey
-        const optionLabel = PARAMETER_OPTIONS_LABELS[paramKey]?.[optionKey];
-        option.textContent = optionLabel !== undefined ? optionLabel : optionKey;
+        // We'll create a readable option name from the option key
+        // This could be enhanced to extract a better label from the optionValue if needed
+        option.textContent = this.formatOptionKey(optionKey);
         
         // Set selected option
         if (this.preferences[paramKey] === optionKey) {
@@ -158,6 +160,18 @@ export default class DefaultPromptConfigPanel {
   }
 
   /**
+   * Format option key to make it readable
+   * @param {string} key - The option key
+   * @returns {string} - Formatted option name
+   */
+  formatOptionKey(key) {
+    // Simple formatting: capitalize first letter and replace camelCase with spaces
+    return key
+      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+      .replace(/^./, str => str.toUpperCase()); // Capitalize first letter
+  }
+
+  /**
    * Handle parameter change
    * @param {string} paramKey - The parameter key
    * @param {string} value - The new value
@@ -167,8 +181,8 @@ export default class DefaultPromptConfigPanel {
       // Convert string boolean values to actual booleans
       const processedValue = value === 'true' ? true : (value === 'false' ? false : value);
       
-      // Get human-readable value for notification using labels from constants
-      const readableValue = PARAMETER_OPTIONS_LABELS[paramKey]?.[value] || value;
+      // Get human-readable value for notification
+      const readableValue = this.formatOptionKey(value);
       
       // Update preferences
       this.preferences[paramKey] = processedValue;

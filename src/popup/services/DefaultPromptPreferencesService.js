@@ -64,9 +64,9 @@ export default class DefaultPromptPreferencesService {
     const preferences = await this.getPreferences(contentType);
     
     // Ensure typeSpecificInstructions preference exists
-    if (!preferences.typeSpecificInstructions) {
-      preferences.typeSpecificInstructions = "default";
-    }
+    // if (!preferences.typeSpecificInstructions) {
+    //   preferences.typeSpecificInstructions = "default";
+    // }
     
     // Get parameters (now includes both shared and content-specific)
     const parameters = await this.getParameterOptions(contentType);
