@@ -1,4 +1,4 @@
-// popup/services/DefaultPromptPreferencesService.js
+// src/popup/services/DefaultPromptPreferencesService.js
 import { STORAGE_KEYS } from '../constants.js';
 
 export default class DefaultPromptPreferencesService {
@@ -47,13 +47,13 @@ export default class DefaultPromptPreferencesService {
   }
 
   async getParameterOptions(contentType) {
-    const config = await this.configService.getConfig();
+    const promptConfig = await this.configService.getConfig('prompt');
     
     // Get content-specific parameters
-    const contentSpecificParams = config.defaultPrompts[contentType]?.parameters || {};
+    const contentSpecificParams = promptConfig.defaultPrompts[contentType]?.parameters || {};
     
     // Get shared parameters
-    const sharedParams = config.sharedParameters || {};
+    const sharedParams = promptConfig.sharedParameters || {};
     
     // Return all parameters, with content-specific taking precedence if there are duplicates
     return { ...sharedParams, ...contentSpecificParams };
@@ -61,10 +61,10 @@ export default class DefaultPromptPreferencesService {
 
   async buildPrompt(contentType) {
     // Get configuration
-    const config = await this.configService.getConfig();
-    const promptConfig = config.defaultPrompts[contentType];
+    const promptConfig = await this.configService.getConfig('prompt');
+    const promptTemplate = promptConfig.defaultPrompts[contentType];
     
-    if (!promptConfig || !promptConfig.baseTemplate) {
+    if (!promptTemplate || !promptTemplate.baseTemplate) {
       throw new Error(`No template found for content type: ${contentType}`);
     }
     
@@ -75,7 +75,7 @@ export default class DefaultPromptPreferencesService {
     const parameters = await this.getParameterOptions(contentType);
     
     // Build prompt by replacing placeholders
-    let prompt = promptConfig.baseTemplate;
+    let prompt = promptTemplate.baseTemplate;
     
     // Process each parameter type
     for (const [paramKey, paramOptions] of Object.entries(parameters)) {

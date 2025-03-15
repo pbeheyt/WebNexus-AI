@@ -40,7 +40,7 @@ function getContentTypeForUrl(url) {
 async function getPlatformConfig(platformId) {
   try {
     logger.background.info(`Getting config for platform: ${platformId}`);
-    const response = await fetch(chrome.runtime.getURL('config.json'));
+    const response = await fetch(chrome.runtime.getURL('platform-config.json'));
     const config = await response.json();
 
     if (config.aiPlatforms && config.aiPlatforms[platformId]) {
@@ -69,7 +69,7 @@ async function getPreferredAiPlatform() {
     }
 
     // Check config for default platform
-    const configResponse = await fetch(chrome.runtime.getURL('config.json'));
+    const configResponse = await fetch(chrome.runtime.getURL('platform-config.json'));
     const config = await configResponse.json();
 
     if (config.defaultAiPlatform) {
@@ -173,9 +173,6 @@ async function getPreferredPromptId(contentType) {
 /**
  * Get prompt content by ID
  */
-/**
- * Get prompt content by ID
- */
 async function getPromptContentById(promptId, contentType) {
   logger.background.info(`Getting prompt content for ID: ${promptId}, type: ${contentType}`);
 
@@ -184,14 +181,14 @@ async function getPromptContentById(promptId, contentType) {
     try {
       // Get default prompt template and user preferences
       logger.background.info('Loading default prompt from config');
-      const [config, userPreferences] = await Promise.all([
-        fetch(chrome.runtime.getURL('config.json')).then(r => r.json()),
+      const [promptConfigData, userPreferences] = await Promise.all([
+        fetch(chrome.runtime.getURL('prompt-config.json')).then(r => r.json()),
         chrome.storage.sync.get('default_prompt_preferences')
       ]);
 
-      const promptConfig = config.defaultPrompts && config.defaultPrompts[contentType];
+      const promptTemplate = promptConfigData.defaultPrompts && promptConfigData.defaultPrompts[contentType];
 
-      if (!promptConfig) {
+      if (!promptTemplate) {
         logger.background.warn(`No default prompt found for ${contentType}`);
         return null;
       }
@@ -200,17 +197,17 @@ async function getPromptContentById(promptId, contentType) {
       const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
       
       // Start with the base template
-      let template = promptConfig.baseTemplate;
+      let template = promptTemplate.baseTemplate;
       
-      // Always add type-specific instructions if available (these are mandatory for the content type)
-      if (promptConfig.parameters?.typeSpecificInstructions?.values?.default) {
-        template += '\n' + promptConfig.parameters.typeSpecificInstructions.values.default;
+      // Always add type-specific instructions if available
+      if (promptTemplate.parameters?.typeSpecificInstructions?.values?.default) {
+        template += '\n' + promptTemplate.parameters.typeSpecificInstructions.values.default;
       }
       
-      // Combine all applicable parameters (content-specific and shared)
+      // Combine all applicable parameters
       const allParams = {
-        ...(promptConfig.parameters || {}),
-        ...(config.sharedParameters || {})
+        ...(promptTemplate.parameters || {}),
+        ...(promptConfigData.sharedParameters || {})
       };
       
       // Process each parameter according to user preferences

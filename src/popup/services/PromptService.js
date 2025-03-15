@@ -1,4 +1,4 @@
-// popup/services/PromptService.js
+// src/popup/services/PromptService.js
 import { STORAGE_KEYS } from '../constants.js';
 
 export default class PromptService {
@@ -13,9 +13,9 @@ export default class PromptService {
       // Load custom prompts
       const customPromptsByType = await this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS) || {};
       
-      // Load default prompts from config
-      const config = await this.configService.getConfig();
-      const defaultPrompts = config.defaultPrompts || {};
+      // Load default prompts from prompt config
+      const promptConfig = await this.configService.getConfig('prompt');
+      const defaultPrompts = promptConfig.defaultPrompts || {};
       
       // Get preferred prompt ID
       const preferredPromptId = customPromptsByType[contentType]?.preferredPromptId || contentType;
@@ -104,9 +104,7 @@ export default class PromptService {
       return await this.defaultPromptPreferencesService.getPreferences(contentType);
     }
     
-    // For custom prompts, we need to retrieve and parse the content
-    // In this implementation, we'll return empty preferences for custom prompts
-    // since comment analysis is primarily used with default prompts
+    // For custom prompts, return empty preferences
     return {};
   }
 }

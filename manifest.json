@@ -44,7 +44,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["config.json", "dist/*.bundle.js", "images/*.png"],
+      "resources": ["platform-config.json", "prompt-config.json", "dist/*.bundle.js", "images/*.png"],
       "matches": ["<all_urls>"]
     }
   ]

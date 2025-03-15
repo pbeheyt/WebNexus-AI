@@ -1,0 +1,25 @@
+{
+  "defaultAiPlatform": "claude",
+  "aiPlatforms": {
+    "claude": {
+      "name": "Claude",
+      "url": "https://claude.ai/new",
+      "icon": "images/claude_logo.png"
+    },
+    "chatgpt": {
+      "name": "ChatGPT",
+      "url": "https://chatgpt.com/",
+      "icon": "images/chatgpt_logo.png"
+    },
+    "deepseek": {
+      "name": "DeepSeek",
+      "url": "https://chat.deepseek.com/",
+      "icon": "images/deepseek_logo.png"
+    },
+    "mistral": {
+      "name": "Mistral",
+      "url": "https://chat.mistral.ai/chat",
+      "icon": "images/mistral_logo.png"
+    }
+  }
+}

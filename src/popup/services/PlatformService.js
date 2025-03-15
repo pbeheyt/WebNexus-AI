@@ -1,4 +1,4 @@
-// popup/services/PlatformService.js
+// src/popup/services/PlatformService.js
 import { STORAGE_KEYS } from '../constants.js';
 
 export default class PlatformService {
@@ -8,7 +8,7 @@ export default class PlatformService {
 
   async loadPlatforms() {
     try {
-      const response = await fetch(chrome.runtime.getURL('config.json'));
+      const response = await fetch(chrome.runtime.getURL('platform-config.json'));
       const config = await response.json();
       
       if (!config.aiPlatforms) {
