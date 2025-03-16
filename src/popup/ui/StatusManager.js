@@ -105,10 +105,17 @@ export default class StatusManager {
 
   /**
    * Show notification for prompt type toggle
-   * @param {boolean} isDefault - Whether toggled to default (true) or custom (false)
+   * @param {string} promptType - The prompt type ('default', 'custom', or 'quick')
    */
-  notifyPromptTypeToggled(isDefault) {
-    const message = `Switched to ${isDefault ? 'Default' : 'Custom'} prompt`;
+  notifyPromptTypeToggled(promptType) {
+    let typeName = 'Default';
+    if (promptType === 'custom') {
+      typeName = 'Custom';
+    } else if (promptType === 'quick') {
+      typeName = 'Quick';
+    }
+    
+    const message = `Switched to ${typeName} prompt`;
     this.updateStatus(message, false, true);
   }
 

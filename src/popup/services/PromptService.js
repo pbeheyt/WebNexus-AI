@@ -9,6 +9,8 @@ export default class PromptService {
   }
 
   async loadPrompts(contentType) {
+    // This method is unchanged as it only deals with default and custom prompts
+    // Quick prompts are handled directly
     try {
       // Load custom prompts
       const customPromptsByType = await this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS) || {};
@@ -57,6 +59,18 @@ export default class PromptService {
   }
 
   async getPromptContent(promptId, contentType) {
+    // Handle quick prompt
+    if (promptId === 'quick') {
+      const quickPrompts = await this.storageService.get(STORAGE_KEYS.QUICK_PROMPTS) || {};
+      const quickPromptText = quickPrompts[contentType] || '';
+      
+      if (!quickPromptText.trim()) {
+        throw new Error('Quick prompt is empty. Please enter your prompt text.');
+      }
+      
+      return quickPromptText;
+    }
+    
     // Default prompt (same ID as content type)
     if (promptId === contentType) {
       return this.defaultPromptPreferencesService.buildPrompt(contentType);
@@ -104,7 +118,7 @@ export default class PromptService {
       return await this.defaultPromptPreferencesService.getPreferences(contentType);
     }
     
-    // For custom prompts, return empty preferences
+    // For custom and quick prompts, return empty preferences
     return {};
   }
 }

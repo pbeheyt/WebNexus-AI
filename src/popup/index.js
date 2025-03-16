@@ -1,4 +1,5 @@
-// popup/index.js
+// popup/index.js - Add QuickPromptEditor initialization
+
 import StorageService from './services/StorageService.js';
 import ConfigService from './services/ConfigService.js';
 import TabService from './services/TabService.js';
@@ -12,6 +13,7 @@ import PlatformSelector from './ui/PlatformSelector.js';
 import PromptTypeToggle from './ui/PromptTypeToggle.js';
 import CustomPromptSelector from './ui/CustomPromptSelector.js';
 import DefaultPromptConfigPanel from './ui/DefaultPromptConfigPanel.js';
+import QuickPromptEditor from './ui/QuickPromptEditor.js';
 import StatusManager from './ui/StatusManager.js';
 import SummarizeController from './controllers/SummarizeController.js';
 import MainController from './controllers/MainController.js';
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toastElement = document.getElementById('toast');
   const defaultPromptConfigContainer = document.getElementById('defaultPromptConfig');
   const customPromptSelectorContainer = document.getElementById('customPromptSelector');
+  const quickPromptEditorContainer = document.getElementById('quickPromptEditor');
 
   // Initialize services
   const storageService = new StorageService();
@@ -52,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const promptTypeToggle = new PromptTypeToggle(
     promptTypeToggleElement,
-    (isDefault) => mainController.handlePromptTypeToggle(isDefault),
+    (promptType) => mainController.handlePromptTypeToggle(promptType),
     preferenceService,
     statusManager
   );
@@ -61,6 +64,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     customPromptSelectorContainer,
     promptService,
     (promptId) => mainController.handlePromptChange(promptId),
+    preferenceService,
+    statusManager
+  );
+  
+  const quickPromptEditor = new QuickPromptEditor(
+    quickPromptEditorContainer,
+    (text) => mainController.handleQuickPromptChange(text),
     preferenceService,
     statusManager
   );
@@ -85,7 +95,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     platformSelector,
     promptTypeToggle,
     customPromptSelector,
-    DefaultPromptConfigPanel
+    DefaultPromptConfigPanel,
+    quickPromptEditor
   );
 
   // Set up event listeners

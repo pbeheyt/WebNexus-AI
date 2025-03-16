@@ -176,6 +176,26 @@ async function getPreferredPromptId(contentType) {
 async function getPromptContentById(promptId, contentType) {
   logger.background.info(`Getting prompt content for ID: ${promptId}, type: ${contentType}`);
 
+  // NEW HANDLER FOR QUICK PROMPTS
+  if (promptId === "quick") {
+    try {
+      logger.background.info('Loading quick prompt from storage');
+      const result = await chrome.storage.sync.get('quick_prompts');
+      const quickPrompts = result.quick_prompts || {};
+
+      if (quickPrompts[contentType]) {
+        logger.background.info('Quick prompt found in storage');
+        return quickPrompts[contentType];
+      } else {
+        logger.background.warn(`Quick prompt not found for content type: ${contentType}`);
+        return null;
+      }
+    } catch (error) {
+      logger.background.error('Error loading quick prompt:', error);
+      return null;
+    }
+  }
+
   // If the promptId is the same as contentType, it's a default prompt
   if (promptId === contentType) {
     try {
@@ -244,7 +264,7 @@ async function getPromptContentById(promptId, contentType) {
     }
   }
 
-  // For custom prompts - keeping this part the same
+  // For custom prompts
   try {
     logger.background.info('Loading custom prompt from storage');
     const result = await chrome.storage.sync.get(STORAGE_KEY);

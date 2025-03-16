@@ -54,12 +54,12 @@ export default class PromptTypeToggle {
             try {
               await this.preferenceService.savePromptTypePreference(
                 this.contentType, 
-                this.selectedType === 'default'
+                this.selectedType
               );
               
               // Show notification
               if (this.statusManager) {
-                this.statusManager.notifyPromptTypeToggled(this.selectedType === 'default');
+                this.statusManager.notifyPromptTypeToggled(this.selectedType);
               }
             } catch (error) {
               console.error('Error saving prompt type preference:', error);
@@ -68,7 +68,7 @@ export default class PromptTypeToggle {
           
           // Call the callback
           if (this.onTypeChange) {
-            this.onTypeChange(this.selectedType === 'default');
+            this.onTypeChange(this.selectedType);
           }
         }
       });
@@ -79,7 +79,7 @@ export default class PromptTypeToggle {
     
     // Call the callback with initial state
     if (this.onTypeChange) {
-      this.onTypeChange(this.selectedType === 'default');
+      this.onTypeChange(this.selectedType);
     }
   }
   
@@ -98,26 +98,25 @@ export default class PromptTypeToggle {
   
   /**
    * Set the toggle type
-   * @param {boolean} isDefault - Whether to set to default (true) or custom (false)
+   * @param {string} type - The prompt type ('default', 'custom', or 'quick')
    */
-  async setType(isDefault) {
-    const value = isDefault ? 'default' : 'custom';
-    const radio = this.element.querySelector(`input[value="${value}"]`);
+  async setType(type) {
+    const radio = this.element.querySelector(`input[value="${type}"]`);
     
     if (radio && radio.value !== this.selectedType) {
       const previousType = this.selectedType;
       radio.checked = true;
-      this.selectedType = value;
+      this.selectedType = type;
       this.updateVisualState();
       
       // Save preference if changed
       if (previousType !== this.selectedType && this.preferenceService && this.contentType) {
         try {
-          await this.preferenceService.savePromptTypePreference(this.contentType, isDefault);
+          await this.preferenceService.savePromptTypePreference(this.contentType, type);
           
           // Show notification
           if (this.statusManager) {
-            this.statusManager.notifyPromptTypeToggled(isDefault);
+            this.statusManager.notifyPromptTypeToggled(type);
           }
         } catch (error) {
           console.error('Error saving prompt type preference:', error);
@@ -126,7 +125,7 @@ export default class PromptTypeToggle {
       
       // Call the callback
       if (this.onTypeChange) {
-        this.onTypeChange(isDefault);
+        this.onTypeChange(type);
       }
     }
   }

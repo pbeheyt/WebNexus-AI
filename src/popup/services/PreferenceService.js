@@ -4,14 +4,15 @@ export default class PreferenceService {
     this.storageService = storageService;
     this.STORAGE_KEYS = {
       PROMPT_TYPE_PREFERENCE: 'prompt_type_preference',
-      SELECTED_PROMPT_IDS: 'selected_prompt_ids'
+      SELECTED_PROMPT_IDS: 'selected_prompt_ids',
+      QUICK_PROMPTS: 'quick_prompts'
     };
   }
 
   /**
-   * Get saved prompt type preference (default or custom) for a content type
+   * Get saved prompt type preference (default, custom, or quick) for a content type
    * @param {string} contentType - The content type (general, reddit, youtube)
-   * @returns {Promise<string>} - 'default' or 'custom'
+   * @returns {Promise<string>} - 'default', 'custom', or 'quick'
    */
   async getPromptTypePreference(contentType) {
     const preferences = await this.storageService.get(this.STORAGE_KEYS.PROMPT_TYPE_PREFERENCE) || {};
@@ -21,12 +22,12 @@ export default class PreferenceService {
   /**
    * Save prompt type preference for a content type
    * @param {string} contentType - The content type (general, reddit, youtube)
-   * @param {boolean} isDefault - Whether to use default (true) or custom (false) prompt
+   * @param {string} promptType - The prompt type ('default', 'custom', or 'quick')
    * @returns {Promise<string>} - Saved preference value
    */
-  async savePromptTypePreference(contentType, isDefault) {
+  async savePromptTypePreference(contentType, promptType) {
     const preferences = await this.storageService.get(this.STORAGE_KEYS.PROMPT_TYPE_PREFERENCE) || {};
-    preferences[contentType] = isDefault ? 'default' : 'custom';
+    preferences[contentType] = promptType;
     await this.storageService.set({ [this.STORAGE_KEYS.PROMPT_TYPE_PREFERENCE]: preferences });
     return preferences[contentType];
   }
@@ -34,16 +35,21 @@ export default class PreferenceService {
   /**
    * Get selected prompt ID for a content type and prompt type
    * @param {string} contentType - Content type (general, reddit, youtube)
-   * @param {boolean} isDefault - Whether using default (true) or custom (false) prompt
+   * @param {string} promptType - Prompt type ('default', 'custom', or 'quick')
    * @returns {Promise<string>} - The prompt ID
    */
-  async getSelectedPromptId(contentType, isDefault) {
+  async getSelectedPromptId(contentType, promptType) {
     const selections = await this.storageService.get(this.STORAGE_KEYS.SELECTED_PROMPT_IDS) || {};
-    const key = `${contentType}-${isDefault ? 'default' : 'custom'}`;
+    const key = `${contentType}-${promptType}`;
     
     // For default prompts, return content type as fallback
-    if (isDefault && !selections[key]) {
+    if (promptType === 'default' && !selections[key]) {
       return contentType;
+    }
+    
+    // For quick prompts, return 'quick' as fallback
+    if (promptType === 'quick' && !selections[key]) {
+      return 'quick';
     }
     
     return selections[key];
@@ -52,15 +58,38 @@ export default class PreferenceService {
   /**
    * Save selected prompt ID for a content type and prompt type
    * @param {string} contentType - Content type (general, reddit, youtube)
-   * @param {boolean} isDefault - Whether using default (true) or custom (false) prompt
+   * @param {string} promptType - Prompt type ('default', 'custom', or 'quick')
    * @param {string} promptId - The prompt ID to save
    * @returns {Promise<string>} - The saved prompt ID
    */
-  async saveSelectedPromptId(contentType, isDefault, promptId) {
+  async saveSelectedPromptId(contentType, promptType, promptId) {
     const selections = await this.storageService.get(this.STORAGE_KEYS.SELECTED_PROMPT_IDS) || {};
-    const key = `${contentType}-${isDefault ? 'default' : 'custom'}`;
+    const key = `${contentType}-${promptType}`;
     selections[key] = promptId;
     await this.storageService.set({ [this.STORAGE_KEYS.SELECTED_PROMPT_IDS]: selections });
     return promptId;
+  }
+  
+  /**
+   * Get saved quick prompt text for a content type
+   * @param {string} contentType - The content type (general, reddit, youtube)
+   * @returns {Promise<string>} - The saved quick prompt text
+   */
+  async getQuickPromptText(contentType) {
+    const quickPrompts = await this.storageService.get(this.STORAGE_KEYS.QUICK_PROMPTS) || {};
+    return quickPrompts[contentType] || '';
+  }
+
+  /**
+   * Save quick prompt text for a content type
+   * @param {string} contentType - The content type (general, reddit, youtube)
+   * @param {string} text - The quick prompt text
+   * @returns {Promise<string>} - The saved quick prompt text
+   */
+  async saveQuickPromptText(contentType, text) {
+    const quickPrompts = await this.storageService.get(this.STORAGE_KEYS.QUICK_PROMPTS) || {};
+    quickPrompts[contentType] = text;
+    await this.storageService.set({ [this.STORAGE_KEYS.QUICK_PROMPTS]: quickPrompts });
+    return text;
   }
 }
