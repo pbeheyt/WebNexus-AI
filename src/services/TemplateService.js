@@ -245,6 +245,56 @@ class TemplateService {
     });
   }
 
+  async reorderParameter(contentType, parameterId, newOrder) {
+    return this.configManager.updateConfig(config => {
+      const newConfig = { ...config };
+      
+      // Determine which parameter collection to modify
+      const paramCollection = contentType === 'shared' 
+        ? newConfig.sharedParameters 
+        : (newConfig.defaultPrompts[contentType]?.parameters);
+      
+      if (!paramCollection) return newConfig;
+      
+      // Convert parameters to array with current ordering
+      const paramsArray = Object.entries(paramCollection)
+        .map(([id, param]) => ({ id, ...param }))
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      // Find target parameter
+      const paramIndex = paramsArray.findIndex(p => p.id === parameterId);
+      if (paramIndex === -1) return newConfig;
+      
+      // Remove parameter from array
+      const [paramToMove] = paramsArray.splice(paramIndex, 1);
+      
+      // Insert at new position (clamped to valid range)
+      const targetIndex = Math.max(0, Math.min(newOrder, paramsArray.length));
+      paramsArray.splice(targetIndex, 0, paramToMove);
+      
+      // Update explicit order values
+      paramsArray.forEach((param, idx) => {
+        param.order = idx;
+      });
+      
+      // Convert back to object structure
+      const updatedParams = {};
+      paramsArray.forEach(param => {
+        const { id, ...paramData } = param;
+        updatedParams[id] = paramData;
+      });
+      
+      // Update appropriate section
+      if (contentType === 'shared') {
+        newConfig.sharedParameters = updatedParams;
+      } else if (newConfig.defaultPrompts[contentType]) {
+        newConfig.defaultPrompts[contentType].parameters = updatedParams;
+      }
+      
+      return newConfig;
+    });
+  }
+
   /**
    * Convert parameter object to array with IDs
    * @private
