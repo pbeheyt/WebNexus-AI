@@ -156,67 +156,25 @@ button.btn-summarize:disabled {
 /* ======================================
    Content Type Display
    ====================================== */
-.content-type {
-  font-size: 13px;
-  margin-bottom: 8px;
-  padding: 6px;
-  border-radius: 6px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-}
-
-.content-type.youtube {
-  border-left: 3px solid #FF0000;
-}
-
-.content-type.reddit {
-  border-left: 3px solid #FF4500;
-}
-
-.content-type.general {
-  border-left: 3px solid var(--color-primary);
-}
-
-/* Content type specific icons */
-.youtube-icon, .reddit-icon, .general-icon {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-}
-
-.content-type.pdf {
-  background-color: rgba(244, 67, 54, 0.1);
-  border-color: rgba(244, 67, 54, 0.6);
-}
-
-.content-type.pdf svg {
-  color: #F40F02;
-}
-
-/* Add PDF icon for settings menu */
-.content-type-icon.pdf {
-  background-image: url('../images/pdf-icon.svg');
-}
-
-/* Specific styles for PDF extraction settings */
-.pdf-settings .extraction-option {
-  margin-bottom: 0.75rem;
-}
-
-.pdf-settings .extraction-option label {
-  display: flex;
-  align-items: center;
-}
-
-/* Add these to your dark theme section */
-.dark-theme .content-type.pdf {
-  background-color: rgba(244, 67, 54, 0.15);
-  border-color: rgba(244, 67, 54, 0.5);
-}
+   .content-type {
+    font-size: 13px;
+    margin-bottom: 8px;
+    padding: 6px;
+    border-radius: 6px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+  
+  /* Content type specific icons */
+  .youtube-icon, .reddit-icon, .general-icon, .pdf-icon {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+  }
 
 /* ======================================
    Form Sections
