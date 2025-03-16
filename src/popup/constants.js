@@ -3,7 +3,8 @@ export const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
   YOUTUBE: 'youtube',
-  PDF: 'pdf'
+  PDF: 'pdf',
+  SELECTED_TEXT: 'selected_text'
 };
 
 export const PROMPT_TYPES = {

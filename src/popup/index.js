@@ -128,4 +128,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   setTimeout(() => {
     document.body.classList.add('transitions-enabled');
   }, 100);
+
+  // Set up cleanup when popup closes
+  window.addEventListener('unload', () => {
+    if (mainController.selectionCheckInterval) {
+      clearInterval(mainController.selectionCheckInterval);
+    }
+  });
 });

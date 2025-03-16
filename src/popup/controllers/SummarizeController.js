@@ -1,4 +1,4 @@
-// popup/controllers/SummarizeController.js
+// Update src/popup/controllers/SummarizeController.js
 import { STORAGE_KEYS } from '../constants.js';
 
 export default class SummarizeController {
@@ -8,7 +8,18 @@ export default class SummarizeController {
     this.storageService = storageService;
   }
 
-  async summarize(tabId, contentType, url, selectedPromptId, selectedPlatformId, statusCallback) {
+  /**
+   * Perform the content summarization
+   * @param {number} tabId - Tab ID
+   * @param {string} contentType - Content type
+   * @param {string} url - Page URL
+   * @param {string} selectedPromptId - Selected prompt ID
+   * @param {string} selectedPlatformId - Selected AI platform ID
+   * @param {boolean} hasSelection - Whether text is selected
+   * @param {Function} statusCallback - Callback for status updates
+   * @returns {Promise<boolean>} - Whether summarization succeeded
+   */
+  async summarize(tabId, contentType, url, selectedPromptId, selectedPlatformId, hasSelection = false, statusCallback) {
     try {
       statusCallback('Checking page content...', true);
       
@@ -43,9 +54,9 @@ export default class SummarizeController {
         return false;
       }
       
-      // NEW: Get comment analysis preference directly
+      // Only check comment analysis for YouTube when not using selection
       let commentAnalysisRequired = false;
-      if (contentType === 'youtube') {
+      if (contentType === 'youtube' && !hasSelection) {
         const preferences = await this.promptService.getPromptPreferences(selectedPromptId, contentType);
         commentAnalysisRequired = preferences.commentAnalysis === true;
       }
@@ -69,17 +80,18 @@ export default class SummarizeController {
         promptId: selectedPromptId,
         platformId: selectedPlatformId,
         url,
-        commentAnalysisRequired // NEW: Pass the flag directly
+        hasSelection, // Pass selection flag
+        commentAnalysisRequired
       });
       
-      // Check if YouTube transcript error occurred
-      if (response && response.youtubeTranscriptError) {
+      // Check if YouTube transcript error occurred (only if not using selection)
+      if (!hasSelection && response && response.youtubeTranscriptError) {
         statusCallback(`Error: ${response.errorMessage || 'No transcript available for this YouTube video.'}`, false);
         return false;
       }
       
-      // NEW: Check if YouTube comments error occurred
-      if (response && response.youtubeCommentsError) {
+      // Check if YouTube comments error occurred (only if not using selection)
+      if (!hasSelection && response && response.youtubeCommentsError) {
         statusCallback(`${response.errorMessage || 'Comments exist but are not loaded. Scroll down on YouTube to load comments before summarizing.'}`, false);
         return false;
       }

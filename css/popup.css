@@ -170,7 +170,7 @@ button.btn-summarize:disabled {
   }
   
   /* Content type specific icons */
-  .youtube-icon, .reddit-icon, .general-icon, .pdf-icon {
+  .youtube-icon, .reddit-icon, .general-icon, .pdf-icon, .selected-text-icon {
     display: inline-block;
     width: 14px;
     height: 14px;

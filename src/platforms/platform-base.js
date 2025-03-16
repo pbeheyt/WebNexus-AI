@@ -174,6 +174,9 @@ ${formattedContent}`;
       case 'pdf':
         formatted = this.formatPdfData(data);
         break;
+      case 'selected_text':
+        formatted = this.formatSelectedTextData(data);
+        break;
       default:
         formatted = `Content: ${JSON.stringify(data)}`;
     }
@@ -344,6 +347,16 @@ ${content}`;
 
 ## PDF CONTENT
 ${formattedContent}`;
+  }
+
+  /**
+   * Format selected text data with emphasis on content
+   * @param {Object} data - Selected text data
+   * @returns {string} Formatted selected text data
+   */
+  formatSelectedTextData(data) {
+    // Just return the raw selected text with no headings or extra formatting
+    return data.text || 'No text selected';
   }
 }
 

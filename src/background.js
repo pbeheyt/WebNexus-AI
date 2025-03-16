@@ -9,7 +9,8 @@ const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
   YOUTUBE: 'youtube',
-  PDF: 'pdf'
+  PDF: 'pdf',
+  SELECTED_TEXT: 'selected_text'
 };
 
 const AI_PLATFORMS = {
@@ -25,15 +26,21 @@ const PLATFORM_STORAGE_KEY = 'preferred_ai_platform';
 /**
  * Determine content type based on URL
  */
-function getContentTypeForUrl(url) {
-  logger.background.info('Evaluating content type for URL:', url);
-  
+function getContentTypeForUrl(url, hasSelection = false) {
+  logger.background.info('Evaluating content type for URL:', url, 'Has selection:', hasSelection);
+
+  // If there's selection, prioritize it over URL-based detection
+  if (hasSelection) {
+    logger.background.info('Selected text content type detected');
+    return CONTENT_TYPES.SELECTED_TEXT;
+  }
+
   // Log PDF detection criteria evaluation
   const isPdf = url.endsWith('.pdf');
   const containsPdfPath = url.includes('/pdf/');
   const containsPdfViewer = url.includes('pdfviewer');
   const isChromeExtensionPdf = url.includes('chrome-extension://') && url.includes('pdfviewer');
-  
+
   logger.background.info('PDF detection results:', {
     isPdf,
     containsPdfPath,
@@ -41,11 +48,11 @@ function getContentTypeForUrl(url) {
     isChromeExtensionPdf,
     wouldDetectAsPdf: isPdf || containsPdfPath || containsPdfViewer || isChromeExtensionPdf
   });
-  
+
   // PDF detection logic
-  if (isPdf || 
-      containsPdfPath || 
-      containsPdfViewer || 
+  if (isPdf ||
+      containsPdfPath ||
+      containsPdfViewer ||
       isChromeExtensionPdf) {
     logger.background.info('Detected as PDF');
     return CONTENT_TYPES.PDF;
@@ -142,11 +149,24 @@ async function injectContentScript(tabId, scriptFile) {
 /**
  * Extract content from a tab
  */
-async function extractContent(tabId, url) {
-  const contentType = getContentTypeForUrl(url);
-  let scriptFile = `dist/${contentType}-content.bundle.js`;
+async function extractContent(tabId, url, hasSelection = false) {
+  const contentType = getContentTypeForUrl(url, hasSelection);
+  let scriptFile;
 
-  logger.background.info(`Extracting content from tab ${tabId}, content type: ${contentType}`);
+  // Select appropriate content script based on content type and selection
+  if (hasSelection) {
+    scriptFile = 'dist/selected-text-content.bundle.js';
+  } else if (contentType === CONTENT_TYPES.PDF) {
+    scriptFile = 'dist/pdf-content.bundle.js';
+  } else if (contentType === CONTENT_TYPES.YOUTUBE) {
+    scriptFile = 'dist/youtube-content.bundle.js';
+  } else if (contentType === CONTENT_TYPES.REDDIT) {
+    scriptFile = 'dist/reddit-content.bundle.js';
+  } else {
+    scriptFile = 'dist/general-content.bundle.js';
+  }
+
+  logger.background.info(`Extracting content from tab ${tabId}, content type: ${contentType}, hasSelection: ${hasSelection}`);
   await injectContentScript(tabId, scriptFile);
 
   // Return promise that resolves when content extraction completes
@@ -161,8 +181,11 @@ async function extractContent(tabId, url) {
 
     chrome.storage.onChanged.addListener(storageListener);
 
-    // Send extraction message
-    chrome.tabs.sendMessage(tabId, { action: 'extractContent' });
+    // Send extraction message with selection info
+    chrome.tabs.sendMessage(tabId, {
+      action: 'extractContent',
+      hasSelection: hasSelection
+    });
 
     // Set timeout to prevent indefinite hanging
     setTimeout(() => {
@@ -179,21 +202,21 @@ async function extractContent(tabId, url) {
 async function getPreferredPromptId(contentType) {
   try {
     logger.background.info(`Getting preferred prompt ID for content type: ${contentType}`);
-    
+
     // Determine preferred prompt type
     const typeResult = await chrome.storage.sync.get('prompt_type_preference');
     const promptTypePreferences = typeResult.prompt_type_preference || {};
     const preferredType = promptTypePreferences[contentType] || 'default';
-    
+
     logger.background.info(`Preferred prompt type: ${preferredType}`);
-    
+
     // 1. Try preferred type first
     const promptId = await getPromptIdForType(preferredType, contentType);
     if (promptId) {
       logger.background.info(`Using ${preferredType} prompt ID: ${promptId}`);
       return promptId;
     }
-    
+
     // 2. If preferred type is 'quick' but no valid prompt found, try custom
     if (preferredType === 'quick') {
       logger.background.info("Quick prompt unavailable, attempting to fallback to custom prompt");
@@ -203,7 +226,7 @@ async function getPreferredPromptId(contentType) {
         return customPromptId;
       }
     }
-    
+
     // 3. Final fallback to default template prompt
     logger.background.info(`Fallback to default template prompt for ${contentType}`);
     return contentType;
@@ -220,42 +243,42 @@ async function getPromptIdForType(promptType, contentType) {
       // Check if quick prompt exists and has content
       const quickResult = await chrome.storage.sync.get('quick_prompts');
       const quickPrompts = quickResult.quick_prompts || {};
-      
+
       if (quickPrompts[contentType] && quickPrompts[contentType].trim()) {
         logger.background.info('Found valid quick prompt');
         return 'quick';
       }
       return null;
-    } 
+    }
     else if (promptType === 'custom') {
       // First check selected custom prompt ID
       const selectionsResult = await chrome.storage.sync.get('selected_prompt_ids');
       const selections = selectionsResult.selected_prompt_ids || {};
       const key = `${contentType}-custom`;
-      
+
       if (selections[key]) {
         // Verify this custom prompt still exists
         const customResult = await chrome.storage.sync.get(STORAGE_KEY);
         const customPromptsByType = customResult[STORAGE_KEY] || {};
-        
+
         if (customPromptsByType[contentType]?.prompts?.[selections[key]]) {
           logger.background.info(`Found selected custom prompt ID: ${selections[key]}`);
           return selections[key];
         }
       }
-      
+
       // If no selection or selection invalid, check if any custom prompts exist
       const customResult = await chrome.storage.sync.get(STORAGE_KEY);
       const customPromptsByType = customResult[STORAGE_KEY] || {};
-      
+
       if (customPromptsByType[contentType]?.prompts) {
         const promptIds = Object.keys(customPromptsByType[contentType].prompts);
         if (promptIds.length > 0) {
           // Use preferred prompt if set, otherwise first available prompt
           const preferredId = customPromptsByType[contentType].preferredPromptId;
-          const promptId = (preferredId && promptIds.includes(preferredId)) ? 
+          const promptId = (preferredId && promptIds.includes(preferredId)) ?
                           preferredId : promptIds[0];
-                          
+
           logger.background.info(`Using available custom prompt ID: ${promptId}`);
           return promptId;
         }
@@ -265,7 +288,7 @@ async function getPromptIdForType(promptType, contentType) {
     else if (promptType === 'default') {
       return contentType; // Default prompt ID is same as content type
     }
-    
+
     return null;
   } catch (error) {
     logger.background.error(`Error getting prompt ID for type ${promptType}:`, error);
@@ -485,11 +508,14 @@ async function handleContextMenuClick(info, tab) {
   });
   logger.background.info('Cleared previous extracted content and tab state');
 
+  // Determine if there's a text selection
+  const hasSelection = info.menuItemId === 'summarizeSelection' || !!info.selectionText;
+
   // Extract content
-  await extractContent(tab.id, tab.url);
+  await extractContent(tab.id, tab.url, hasSelection);
 
   // Open AI platform
-  const contentType = getContentTypeForUrl(tab.url);
+  const contentType = getContentTypeForUrl(tab.url, hasSelection);
   await openAiPlatformWithContent(contentType);
 }
 
@@ -652,7 +678,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         logger.background.info(`Clearing quick prompt for content type: ${message.contentType}`);
         const quickPrompts = await chrome.storage.sync.get('quick_prompts');
-        
+
         if (quickPrompts.quick_prompts && quickPrompts.quick_prompts[message.contentType]) {
           logger.background.info(`Found quick prompt to clear for ${message.contentType}`);
           quickPrompts.quick_prompts[message.contentType] = '';
@@ -661,7 +687,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else {
           logger.background.info(`No quick prompt found for ${message.contentType}, nothing to clear`);
         }
-        
+
         sendResponse({ success: true });
       } catch (error) {
         logger.background.error(`Error clearing quick prompt: ${error.message}`, error);
@@ -675,11 +701,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'summarizeContent') {
     (async () => {
       try {
-        const { tabId, contentType, promptId, platformId, url, commentAnalysisRequired } = message;
-        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}`);
+        const { tabId, contentType, promptId, platformId, url, hasSelection, commentAnalysisRequired } = message;
+        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}, hasSelection: ${hasSelection}`);
 
         // Extract content first
-        await extractContent(tabId, url);
+        await extractContent(tabId, url, hasSelection);
 
         // Get the extracted content
         const { extractedContent } = await chrome.storage.local.get('extractedContent');
@@ -735,7 +761,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Then open AI platform with the content
         const aiPlatformTabId = await openAiPlatformWithContent(contentType, promptId, platformId);
-
 
         sendResponse({
           success: true,
