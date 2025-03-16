@@ -65,10 +65,18 @@ export default class ContentTypeView {
         borderColor = 'var(--color-primary)';
         iconSvg = `
           <svg class="general-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-            <path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <path d="M8 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <path d="M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <!-- Browser window -->
+            <rect x="2" y="2" width="20" height="20" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <!-- URL/address bar -->
+            <rect x="3" y="3" width="18" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <!-- Browser circles (window controls) -->
+            <circle cx="4.5" cy="4.5" r="0.75" fill="currentColor"/>
+            <circle cx="7.5" cy="4.5" r="0.75" fill="currentColor"/>
+            <circle cx="10.5" cy="4.5" r="0.75" fill="currentColor"/>
+            <!-- Page content -->
+            <path d="M5 10H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M5 14H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M5 18H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         `;
         break;
@@ -78,10 +86,12 @@ export default class ContentTypeView {
         borderColor = '#3498db';
         iconSvg = `
           <svg class="selected-text-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5" 
-              stroke="${borderColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M9 12H15M9 16H13" 
-              stroke="${borderColor}" stroke-width="2" stroke-linecap="round"/>
+            <!-- Clear, prominent cursor arrow -->
+            <path d="M4 2v16l4-4 3 7 4-2-3-6h6L4 2z" 
+                  fill="${borderColor}" 
+                  stroke="#ffffff" 
+                  stroke-width="0.75" 
+                  stroke-linejoin="round"/>
           </svg>
         `;
         break;
