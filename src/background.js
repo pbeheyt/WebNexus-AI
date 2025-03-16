@@ -152,21 +152,97 @@ async function extractContent(tabId, url) {
 async function getPreferredPromptId(contentType) {
   try {
     logger.background.info(`Getting preferred prompt ID for content type: ${contentType}`);
-    const result = await chrome.storage.sync.get(STORAGE_KEY);
-    const customPromptsByType = result[STORAGE_KEY] || {};
-
-    // If we have custom prompts for this type with a preferred prompt set
-    if (customPromptsByType[contentType] && customPromptsByType[contentType].preferredPromptId) {
-      logger.background.info(`Found preferred prompt ID: ${customPromptsByType[contentType].preferredPromptId}`);
-      return customPromptsByType[contentType].preferredPromptId;
+    
+    // Determine preferred prompt type
+    const typeResult = await chrome.storage.sync.get('prompt_type_preference');
+    const promptTypePreferences = typeResult.prompt_type_preference || {};
+    const preferredType = promptTypePreferences[contentType] || 'default';
+    
+    logger.background.info(`Preferred prompt type: ${preferredType}`);
+    
+    // 1. Try preferred type first
+    const promptId = await getPromptIdForType(preferredType, contentType);
+    if (promptId) {
+      logger.background.info(`Using ${preferredType} prompt ID: ${promptId}`);
+      return promptId;
     }
-
-    // Default to the default prompt ID (same as the content type)
-    logger.background.info(`No preferred prompt found, using default: ${contentType}`);
+    
+    // 2. If preferred type is 'quick' but no valid prompt found, try custom
+    if (preferredType === 'quick') {
+      logger.background.info("Quick prompt unavailable, attempting to fallback to custom prompt");
+      const customPromptId = await getPromptIdForType('custom', contentType);
+      if (customPromptId) {
+        logger.background.info(`Fallback to custom prompt ID: ${customPromptId}`);
+        return customPromptId;
+      }
+    }
+    
+    // 3. Final fallback to default template prompt
+    logger.background.info(`Fallback to default template prompt for ${contentType}`);
     return contentType;
   } catch (error) {
     logger.background.error('Error getting preferred prompt ID:', error);
     return contentType;
+  }
+}
+
+// Helper function to get prompt ID for a specific type
+async function getPromptIdForType(promptType, contentType) {
+  try {
+    if (promptType === 'quick') {
+      // Check if quick prompt exists and has content
+      const quickResult = await chrome.storage.sync.get('quick_prompts');
+      const quickPrompts = quickResult.quick_prompts || {};
+      
+      if (quickPrompts[contentType] && quickPrompts[contentType].trim()) {
+        logger.background.info('Found valid quick prompt');
+        return 'quick';
+      }
+      return null;
+    } 
+    else if (promptType === 'custom') {
+      // First check selected custom prompt ID
+      const selectionsResult = await chrome.storage.sync.get('selected_prompt_ids');
+      const selections = selectionsResult.selected_prompt_ids || {};
+      const key = `${contentType}-custom`;
+      
+      if (selections[key]) {
+        // Verify this custom prompt still exists
+        const customResult = await chrome.storage.sync.get(STORAGE_KEY);
+        const customPromptsByType = customResult[STORAGE_KEY] || {};
+        
+        if (customPromptsByType[contentType]?.prompts?.[selections[key]]) {
+          logger.background.info(`Found selected custom prompt ID: ${selections[key]}`);
+          return selections[key];
+        }
+      }
+      
+      // If no selection or selection invalid, check if any custom prompts exist
+      const customResult = await chrome.storage.sync.get(STORAGE_KEY);
+      const customPromptsByType = customResult[STORAGE_KEY] || {};
+      
+      if (customPromptsByType[contentType]?.prompts) {
+        const promptIds = Object.keys(customPromptsByType[contentType].prompts);
+        if (promptIds.length > 0) {
+          // Use preferred prompt if set, otherwise first available prompt
+          const preferredId = customPromptsByType[contentType].preferredPromptId;
+          const promptId = (preferredId && promptIds.includes(preferredId)) ? 
+                          preferredId : promptIds[0];
+                          
+          logger.background.info(`Using available custom prompt ID: ${promptId}`);
+          return promptId;
+        }
+      }
+      return null;
+    }
+    else if (promptType === 'default') {
+      return contentType; // Default prompt ID is same as content type
+    }
+    
+    return null;
+  } catch (error) {
+    logger.background.error(`Error getting prompt ID for type ${promptType}:`, error);
+    return null;
   }
 }
 
