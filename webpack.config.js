@@ -11,7 +11,7 @@ module.exports = {
     'platform-content': './src/content/platform-content.js',
     popup: './src/popup/index.js',
     settings: './src/settings/index.js',
-    'pdf.worker': pdfWorkerPath
+    'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry'
   },
   output: {
     filename: '[name].bundle.js',
