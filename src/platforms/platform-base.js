@@ -171,6 +171,9 @@ ${formattedContent}`;
       case 'general':
         formatted = this.formatGeneralData(data);
         break;
+      case 'pdf':
+        formatted = this.formatPdfData(data);
+        break;
       default:
         formatted = `Content: ${JSON.stringify(data)}`;
     }
@@ -282,6 +285,65 @@ ${content}
     return `${metadataText}
 ## PAGE CONTENT
 ${content}`;
+  }
+  
+  /**
+   * Format PDF document data
+   * @param {Object} data - PDF document data
+   * @returns {string} Formatted PDF data
+   */
+  formatPdfData(data) {
+    const title = data.pdfTitle || 'Untitled PDF';
+    const url = data.pdfUrl || 'Unknown URL';
+    const content = data.content || 'No content available';
+    const pageCount = data.pageCount || 'Unknown';
+    const metadata = data.metadata || {};
+    
+    // Format metadata section
+    let metadataText = `## PDF METADATA
+- Title: ${title}
+- Pages: ${pageCount}
+- URL: ${url}`;
+    
+    if (metadata.author) {
+      metadataText += `
+- Author: ${metadata.author}`;
+    }
+    
+    if (metadata.creationDate) {
+      metadataText += `
+- Created: ${metadata.creationDate}`;
+    }
+    
+    if (data.ocrRequired) {
+      metadataText += `
+- Note: This PDF may require OCR as text extraction was limited.`;
+    }
+    
+    // Format and clean up the content
+    let formattedContent = content;
+    
+    // Remove JSON artifacts if present
+    if (formattedContent.includes('{"content":"')) {
+      try {
+        const contentObj = JSON.parse(formattedContent);
+        formattedContent = contentObj.content || formattedContent;
+      } catch (e) {
+        // If parsing fails, keep the original content
+        this.logger.warn('Failed to parse JSON in PDF content');
+      }
+    }
+    
+    // Clean up page markers to make them more readable
+    formattedContent = formattedContent
+      .replace(/--- Page \d+ ---\n\n/g, '\n\n## PAGE $&\n')
+      .replace(/\n{3,}/g, '\n\n')  // Reduce multiple line breaks
+      .trim();
+    
+    return `${metadataText}
+
+## PDF CONTENT
+${formattedContent}`;
   }
 }
 
