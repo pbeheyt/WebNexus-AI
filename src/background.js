@@ -1,72 +1,12 @@
 // src/background.js
-// FIXED VERSION - Removed document references
+// UPDATED VERSION - Using shared modules for content type management
+
+// Import from shared modules
+import { CONTENT_TYPES, AI_PLATFORMS, STORAGE_KEYS } from './shared/constants.js';
+import { determineContentType, getContentScriptFile } from './shared/content-utils.js';
 
 // Import logger utility
 const logger = require('./utils/logger');
-
-// Constants
-const CONTENT_TYPES = {
-  GENERAL: 'general',
-  REDDIT: 'reddit',
-  YOUTUBE: 'youtube',
-  PDF: 'pdf',
-  SELECTED_TEXT: 'selected_text'
-};
-
-const AI_PLATFORMS = {
-  CLAUDE: 'claude',
-  CHATGPT: 'chatgpt',
-  DEEPSEEK: 'deepseek',
-  MISTRAL: 'mistral'
-};
-
-const STORAGE_KEY = 'custom_prompts_by_type';
-const PLATFORM_STORAGE_KEY = 'preferred_ai_platform';
-
-/**
- * Determine content type based on URL
- */
-function getContentTypeForUrl(url, hasSelection = false) {
-  logger.background.info('Evaluating content type for URL:', url, 'Has selection:', hasSelection);
-
-  // If there's selection, prioritize it over URL-based detection
-  if (hasSelection) {
-    logger.background.info('Selected text content type detected');
-    return CONTENT_TYPES.SELECTED_TEXT;
-  }
-
-  // Log PDF detection criteria evaluation
-  const isPdf = url.endsWith('.pdf');
-  const containsPdfPath = url.includes('/pdf/');
-  const containsPdfViewer = url.includes('pdfviewer');
-  const isChromeExtensionPdf = url.includes('chrome-extension://') && url.includes('pdfviewer');
-
-  logger.background.info('PDF detection results:', {
-    isPdf,
-    containsPdfPath,
-    containsPdfViewer,
-    isChromeExtensionPdf,
-    wouldDetectAsPdf: isPdf || containsPdfPath || containsPdfViewer || isChromeExtensionPdf
-  });
-
-  // PDF detection logic
-  if (isPdf ||
-      containsPdfPath ||
-      containsPdfViewer ||
-      isChromeExtensionPdf) {
-    logger.background.info('Detected as PDF');
-    return CONTENT_TYPES.PDF;
-  } else if (url.includes('youtube.com/watch')) {
-    logger.background.info('Detected as YouTube');
-    return CONTENT_TYPES.YOUTUBE;
-  } else if (url.includes('reddit.com/r/') && url.includes('/comments/')) {
-    logger.background.info('Detected as Reddit');
-    return CONTENT_TYPES.REDDIT;
-  } else {
-    logger.background.info('Detected as General content');
-    return CONTENT_TYPES.GENERAL;
-  }
-}
 
 /**
  * Get platform configuration from config.json
@@ -95,11 +35,11 @@ async function getPlatformConfig(platformId) {
 async function getPreferredAiPlatform() {
   try {
     logger.background.info('Getting preferred AI platform');
-    const result = await chrome.storage.sync.get(PLATFORM_STORAGE_KEY);
+    const result = await chrome.storage.sync.get(STORAGE_KEYS.PLATFORM_STORAGE_KEY);
 
-    if (result[PLATFORM_STORAGE_KEY]) {
-      logger.background.info(`Found preferred platform: ${result[PLATFORM_STORAGE_KEY]}`);
-      return result[PLATFORM_STORAGE_KEY];
+    if (result[STORAGE_KEYS.PLATFORM_STORAGE_KEY]) {
+      logger.background.info(`Found preferred platform: ${result[STORAGE_KEYS.PLATFORM_STORAGE_KEY]}`);
+      return result[STORAGE_KEYS.PLATFORM_STORAGE_KEY];
     }
 
     // Check config for default platform
@@ -150,21 +90,8 @@ async function injectContentScript(tabId, scriptFile) {
  * Extract content from a tab
  */
 async function extractContent(tabId, url, hasSelection = false) {
-  const contentType = getContentTypeForUrl(url, hasSelection);
-  let scriptFile;
-
-  // Select appropriate content script based on content type and selection
-  if (hasSelection) {
-    scriptFile = 'dist/selected-text-content.bundle.js';
-  } else if (contentType === CONTENT_TYPES.PDF) {
-    scriptFile = 'dist/pdf-content.bundle.js';
-  } else if (contentType === CONTENT_TYPES.YOUTUBE) {
-    scriptFile = 'dist/youtube-content.bundle.js';
-  } else if (contentType === CONTENT_TYPES.REDDIT) {
-    scriptFile = 'dist/reddit-content.bundle.js';
-  } else {
-    scriptFile = 'dist/general-content.bundle.js';
-  }
+  const contentType = determineContentType(url, hasSelection);
+  const scriptFile = getContentScriptFile(contentType, hasSelection);
 
   logger.background.info(`Extracting content from tab ${tabId}, content type: ${contentType}, hasSelection: ${hasSelection}`);
   await injectContentScript(tabId, scriptFile);
@@ -258,8 +185,8 @@ async function getPromptIdForType(promptType, contentType) {
 
       if (selections[key]) {
         // Verify this custom prompt still exists
-        const customResult = await chrome.storage.sync.get(STORAGE_KEY);
-        const customPromptsByType = customResult[STORAGE_KEY] || {};
+        const customResult = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+        const customPromptsByType = customResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
 
         if (customPromptsByType[contentType]?.prompts?.[selections[key]]) {
           logger.background.info(`Found selected custom prompt ID: ${selections[key]}`);
@@ -268,8 +195,8 @@ async function getPromptIdForType(promptType, contentType) {
       }
 
       // If no selection or selection invalid, check if any custom prompts exist
-      const customResult = await chrome.storage.sync.get(STORAGE_KEY);
-      const customPromptsByType = customResult[STORAGE_KEY] || {};
+      const customResult = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+      const customPromptsByType = customResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
 
       if (customPromptsByType[contentType]?.prompts) {
         const promptIds = Object.keys(customPromptsByType[contentType].prompts);
@@ -393,8 +320,8 @@ async function getPromptContentById(promptId, contentType) {
   // For custom prompts
   try {
     logger.background.info('Loading custom prompt from storage');
-    const result = await chrome.storage.sync.get(STORAGE_KEY);
-    const customPromptsByType = result[STORAGE_KEY] || {};
+    const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+    const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
 
     if (customPromptsByType[contentType] &&
         customPromptsByType[contentType].prompts &&
@@ -515,7 +442,7 @@ async function handleContextMenuClick(info, tab) {
   await extractContent(tab.id, tab.url, hasSelection);
 
   // Open AI platform
-  const contentType = getContentTypeForUrl(tab.url, hasSelection);
+  const contentType = determineContentType(tab.url, hasSelection);
   await openAiPlatformWithContent(contentType);
 }
 
@@ -652,6 +579,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === 'checkStatus') {
     sendResponse({ status: 'ok' });
+    return true;
+  }
+
+  // NEW: Handler for content type detection
+  if (message.action === 'getContentType') {
+    const contentType = determineContentType(message.url, message.hasSelection);
+    sendResponse({ contentType });
     return true;
   }
 

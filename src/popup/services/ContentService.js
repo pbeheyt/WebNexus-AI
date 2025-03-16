@@ -1,5 +1,6 @@
-// popup/services/ContentService.js
-import { CONTENT_TYPES } from '../constants.js';
+// src/popup/services/ContentService.js
+import { CONTENT_TYPES } from '../../shared/constants.js';
+import { determineContentType, getContentScriptFile } from '../../shared/content-utils.js';
 
 export default class ContentService {
   constructor(tabService) {
@@ -15,32 +16,18 @@ export default class ContentService {
     // Check for text selection in the active tab first
     const hasSelection = await this.checkForTextSelection();
     
-    if (hasSelection) {
-      return CONTENT_TYPES.SELECTED_TEXT;
-    }
-    
-    // Use the URL-based detection
-    return this.getUrlContentType(url);
+    // Use the shared utility function
+    return determineContentType(url, hasSelection);
   }
 
   /**
-   * Get content type based on URL pattern only
+   * Get content type based on URL pattern only (without checking for selection)
    * @param {string} url - The URL to check
    * @returns {string} The detected content type
    */
   getUrlContentType(url) {
-    if (url.endsWith('.pdf') || 
-        url.includes('/pdf/') || 
-        url.includes('pdfviewer') || 
-        (url.includes('chrome-extension://') && url.includes('pdfviewer'))) {
-      return CONTENT_TYPES.PDF;
-    } else if (url.includes('youtube.com/watch')) {
-      return CONTENT_TYPES.YOUTUBE;
-    } else if (url.includes('reddit.com/r/') && url.includes('/comments/')) {
-      return CONTENT_TYPES.REDDIT;
-    } else {
-      return CONTENT_TYPES.GENERAL;
-    }
+    // Use the shared utility function with hasSelection = false
+    return determineContentType(url, false);
   }
 
   /**
@@ -73,26 +60,25 @@ export default class ContentService {
    * @returns {Promise<boolean>} Whether injection succeeded
    */
   async injectContentScript(tabId, contentType) {
-    // Map content types to script files
-    const scriptMapping = {
-      [CONTENT_TYPES.SELECTED_TEXT]: 'dist/selected-text-content.bundle.js',
-      [CONTENT_TYPES.YOUTUBE]: 'dist/youtube-content.bundle.js',
-      [CONTENT_TYPES.REDDIT]: 'dist/reddit-content.bundle.js',
-      [CONTENT_TYPES.PDF]: 'dist/pdf-content.bundle.js',
-      [CONTENT_TYPES.GENERAL]: 'dist/general-content.bundle.js'
-    };
+    try {
+      // Get text selection state for the tab
+      const hasSelection = contentType === CONTENT_TYPES.SELECTED_TEXT;
+      
+      // Get the script file path from shared utility
+      const scriptFile = getContentScriptFile(contentType, hasSelection);
+      
+      const result = await this.tabService.executeScript(tabId, scriptFile);
 
-    // Get the appropriate script file
-    const scriptFile = scriptMapping[contentType] || scriptMapping[CONTENT_TYPES.GENERAL];
-    
-    const result = await this.tabService.executeScript(tabId, scriptFile);
+      // Wait a moment for script to initialize
+      if (result) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
-    // Wait a moment for script to initialize
-    if (result) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      return result;
+    } catch (error) {
+      console.error('Error injecting content script:', error);
+      return false;
     }
-
-    return result;
   }
 
   /**
