@@ -108,7 +108,7 @@ export default class StatusManager {
    * @param {string} promptType - The prompt type ('default', 'custom', or 'quick')
    */
   notifyPromptTypeToggled(promptType) {
-    let typeName = 'Default';
+    let typeName = 'Template';
     if (promptType === 'custom') {
       typeName = 'Custom';
     } else if (promptType === 'quick') {

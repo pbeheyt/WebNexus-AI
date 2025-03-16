@@ -28,9 +28,9 @@
         </button>
       </div>
     </div>
-    
+
     <button type="button" id="summarizeBtn" class="btn-summarize">Summarize Content</button>
-    
+
     <div id="contentTypeDisplay" class="content-type">
       <svg class="general-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
@@ -40,46 +40,46 @@
       </svg>
       Detecting page type...
     </div>
-    
+
     <div class="form-section">
       <label class="form-label">Choose AI Platform:</label>
       <div class="platform-options" id="platformOptions">
         <!-- Platform options will be added here dynamically -->
       </div>
     </div>
-    
+
     <div class="form-section">
       <label class="form-label">Prompt Type:</label>
       <div class="prompt-type-toggle" id="promptTypeToggle">
         <label class="toggle-option">
+          <input type="radio" name="promptTypeOption" value="quick">
+          <span>Quick</span>
+        </label>
+        <label class="toggle-option">
           <input type="radio" name="promptTypeOption" value="default" checked>
-          <span>Default</span>
+          <span>Template</span>
         </label>
         <label class="toggle-option">
           <input type="radio" name="promptTypeOption" value="custom">
           <span>Custom</span>
         </label>
-        <label class="toggle-option">
-          <input type="radio" name="promptTypeOption" value="quick">
-          <span>Quick</span>
-        </label>
       </div>
-      
+
       <!-- Container for Default Prompt Config -->
       <div id="defaultPromptConfig" class="prompt-config-panel"></div>
-      
+
       <!-- Container for Custom Prompt Selector (hidden by default) -->
       <div id="customPromptSelector" class="prompt-config-panel hidden"></div>
-      
+
       <!-- Container for Quick Prompt Editor (hidden by default) -->
       <div id="quickPromptEditor" class="prompt-config-panel hidden"></div>
     </div>
-    
+
     <div id="statusMessage" class="status-message">Detecting page content...</div>
   </div>
-  
+
   <div id="toast" class="toast">Status message</div>
-  
+
   <script src="dist/popup.bundle.js"></script>
 </body>
 </html>
