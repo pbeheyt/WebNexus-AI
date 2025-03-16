@@ -100,6 +100,12 @@ export default class QuickPromptEditor {
         return 'Enter your prompt for analyzing this YouTube video...';
       case 'reddit':
         return 'Enter your prompt for analyzing this Reddit post...';
+      case 'pdf':
+        return 'Enter your prompt for analyzing this PDF document...';
+      case 'selected_text':
+        return 'Enter your prompt for analyzing this selected text...';
+      case 'general':
+        return 'Enter your custom prompt for analyzing this page...';``
       default:
         return 'Enter your custom prompt for analyzing this page...';
     }
