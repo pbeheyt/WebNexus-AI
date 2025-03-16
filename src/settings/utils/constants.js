@@ -1,11 +1,10 @@
 // src/settings/utils/constants.js
-export const STORAGE_KEY = 'custom_prompts_by_type';
+import { CONTENT_TYPES, STORAGE_KEYS } from '../../shared/constants.js';
 
-export const CONTENT_TYPES = {
-  GENERAL: 'general',
-  REDDIT: 'reddit',
-  YOUTUBE: 'youtube'
-};
+// Re-export shared constants for backwards compatibility
+export { CONTENT_TYPES };
+
+export const STORAGE_KEY = STORAGE_KEYS.CUSTOM_PROMPTS;
 
 export const TABS = {
   CONTENT_CONFIGURATION: 'content-configuration',
@@ -13,14 +12,20 @@ export const TABS = {
   IMPORT_EXPORT: 'import-export'
 };
 
+// Human-readable labels for content types
 export const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.GENERAL]: 'Web Content',
   [CONTENT_TYPES.REDDIT]: 'Reddit Posts',
-  [CONTENT_TYPES.YOUTUBE]: 'YouTube Videos'
+  [CONTENT_TYPES.YOUTUBE]: 'YouTube Videos',
+  [CONTENT_TYPES.PDF]: 'PDF Documents',
+  [CONTENT_TYPES.SELECTED_TEXT]: 'Selected Text'
 };
 
+// Default settings for each content type
 export const DEFAULT_SETTINGS = {
   [CONTENT_TYPES.GENERAL]: {},
   [CONTENT_TYPES.REDDIT]: { maxComments: 100 },
-  [CONTENT_TYPES.YOUTUBE]: { maxComments: 20 }
+  [CONTENT_TYPES.YOUTUBE]: { maxComments: 20 },
+  [CONTENT_TYPES.PDF]: {},
+  [CONTENT_TYPES.SELECTED_TEXT]: {}
 };
