@@ -1,11 +1,14 @@
 // src/settings/utils/constants.js
+// Export content types and storage key constants
+export const CONTENT_TYPES = {
+  GENERAL: 'general',
+  REDDIT: 'reddit',
+  YOUTUBE: 'youtube',
+  PDF: 'pdf',
+  SELECTED_TEXT: 'selected_text'
+};
 
-import { CONTENT_TYPES, STORAGE_KEYS } from '../../shared/constants.js';
-
-// Re-export shared constants for backwards compatibility
-export { CONTENT_TYPES };
-
-export const STORAGE_KEY = STORAGE_KEYS.CUSTOM_PROMPTS;
+export const STORAGE_KEY = 'custom_prompts_by_type';
 
 export const TABS = {
   CONTENT_CONFIGURATION: 'content-configuration',

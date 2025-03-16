@@ -188,47 +188,6 @@ export default class PromptService {
     return id;
   }
 
-  async migrateFromLegacyFormat() {
-    try {
-      const legacyData = await this.storageService.get('custom_prompts');
-      
-      if (!legacyData) {
-        return null; // No legacy data
-      }
-      
-      const migratedData = this.initializeEmptyPromptStructure();
-      
-      // Process each legacy prompt
-      Object.entries(legacyData).forEach(([id, prompt]) => {
-        const type = prompt.type || CONTENT_TYPES.GENERAL;
-        
-        // Add to the appropriate type category
-        migratedData[type].prompts[id] = {
-          id,
-          name: prompt.name,
-          content: prompt.content,
-          type: type,
-          updatedAt: prompt.updatedAt || new Date().toISOString()
-        };
-        
-        // If this is the first prompt of this type, make it preferred
-        if (!migratedData[type].preferredPromptId) {
-          migratedData[type].preferredPromptId = id;
-        }
-      });
-      
-      // Save the migrated data
-      await this.storageService.set({ [STORAGE_KEY]: migratedData });
-      
-      // Optionally remove old data
-      await this.storageService.remove('custom_prompts');
-      
-      return migratedData;
-    } catch (error) {
-      return null;
-    }
-  }
-
   initializeEmptyPromptStructure() {
     return {
       [CONTENT_TYPES.GENERAL]: {

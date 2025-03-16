@@ -1,10 +1,10 @@
 // src/settings/controllers/TemplateCustomizationController.js
-import templateService from '../../services/TemplateService.js';
-import configManager from '../../services/ConfigManager.js';
 import TemplateCustomizationTab from '../ui/TemplateCustomizationTab.js';
 
 export default class TemplateCustomizationController {
-  constructor(eventBus, notificationManager) {
+  constructor(templateService, configManager, eventBus, notificationManager) {
+    this.templateService = templateService;
+    this.configManager = configManager;
     this.eventBus = eventBus;
     this.notificationManager = notificationManager;
     this.tabComponent = null;
@@ -12,13 +12,10 @@ export default class TemplateCustomizationController {
   
   async initialize(container) {
     try {
-      // Initialize config manager
-      await configManager.initialize();
-      
       // Create and initialize tab component
       this.tabComponent = new TemplateCustomizationTab(
-        templateService,
-        configManager,
+        this.templateService,
+        this.configManager,
         this.eventBus,
         this.notificationManager
       );

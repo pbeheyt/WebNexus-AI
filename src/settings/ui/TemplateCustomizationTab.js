@@ -10,7 +10,6 @@ export default class TemplateCustomizationTab {
     this.container = null;
     this.sharedParamsContainer = null;
     this.contentTypeParamsContainers = {};
-    this.unsubscribeFromConfig = null;
     this.contentTypes = [
       { id: 'general', label: 'Web Content Parameters' },
       { id: 'reddit', label: 'Reddit Parameters' },
@@ -18,24 +17,25 @@ export default class TemplateCustomizationTab {
       { id: 'pdf', label: 'PDF Document Parameters' },
       { id: 'selected_text', label: 'Selected Text Parameters' }
     ];
+    
+    // Bind event handlers
+    this.handleParameterUpdated = this.handleParameterUpdated.bind(this);
+    this.handleParameterAdded = this.handleParameterAdded.bind(this);
+    this.handleParameterDeleted = this.handleParameterDeleted.bind(this);
+    this.handleParameterValueAdded = this.handleParameterValueAdded.bind(this);
+    this.handleParameterValueDeleted = this.handleParameterValueDeleted.bind(this);
+    
+    // Subscribe to events
+    this.eventBus.subscribe('parameter:updated', this.handleParameterUpdated);
+    this.eventBus.subscribe('parameter:added', this.handleParameterAdded);
+    this.eventBus.subscribe('parameter:deleted', this.handleParameterDeleted);
+    this.eventBus.subscribe('parameter:value:added', this.handleParameterValueAdded);
+    this.eventBus.subscribe('parameter:value:deleted', this.handleParameterValueDeleted);
   }
   
   initialize(container) {
     this.container = container;
     this.render();
-    
-    // Subscribe to config changes
-    this.unsubscribeFromConfig = this.configManager.subscribe(() => {
-      this.loadParameters();
-    });
-  }
-  
-  destroy() {
-    // Clean up subscriptions
-    if (this.unsubscribeFromConfig) {
-      this.unsubscribeFromConfig();
-      this.unsubscribeFromConfig = null;
-    }
   }
   
   async render() {
@@ -122,12 +122,12 @@ export default class TemplateCustomizationTab {
   async loadParameters() {
     try {
       // Load shared parameters
-      const sharedParams = await this.templateService.getSortedParameters('shared');
+      const sharedParams = await this.templateService.getParameters('shared');
       this.renderParameterList(sharedParams, this.sharedParamsContainer, 'shared');
       
       // Load content-type specific parameters
       for (const contentType of this.contentTypes) {
-        const params = await this.templateService.getSortedParameters('content', contentType.id);
+        const params = await this.templateService.getParameters(contentType.id);
         this.renderParameterList(params, this.contentTypeParamsContainers[contentType.id], 'content', contentType.id);
       }
     } catch (error) {
@@ -221,25 +221,17 @@ export default class TemplateCustomizationTab {
       }
       
       try {
-        // Determine if this is a shared parameter or content-specific
-        const paramType = section === 'shared' ? 'shared' : 'content';
-        const contentType = paramType === 'content' ? section : null;
-        
         // Create new parameter
         const paramData = {
           param_name: name,
           values: { [valueKey]: value }
         };
         
-        const newParam = await this.templateService.addParameter(paramType, paramData, contentType);
-        this.notificationManager.success('Parameter added successfully');
+        // Add parameter to appropriate section
+        const contentType = section === 'shared' ? null : section;
+        await this.templateService.addParameter(section === 'shared' ? 'shared' : contentType, paramData);
         
-        // Publish event
-        this.eventBus.publish('parameter:added', {
-          paramType,
-          contentType,
-          parameter: newParam
-        });
+        this.notificationManager.success('Parameter added successfully');
         
         // Reload parameters
         await this.loadParameters();
@@ -256,7 +248,7 @@ export default class TemplateCustomizationTab {
   async handleResetTemplates() {
     if (confirm('Are you sure you want to reset all template customizations? This cannot be undone.')) {
       try {
-        await this.templateService.resetAllCustomizations();
+        await this.configManager.resetConfig();
         this.notificationManager.success('Templates reset to default');
         await this.loadParameters();
       } catch (error) {
@@ -267,28 +259,23 @@ export default class TemplateCustomizationTab {
   }
   
   // Event handlers
-  handleParameterUpdated(data) {
-    // Reload all parameters to ensure consistent state
+  handleParameterUpdated() {
     this.loadParameters();
   }
   
-  handleParameterAdded(data) {
+  handleParameterAdded() {
     this.loadParameters();
   }
   
-  handleParameterDeleted(data) {
+  handleParameterDeleted() {
     this.loadParameters();
   }
   
-  handleParameterValueAdded(data) {
+  handleParameterValueAdded() {
     this.loadParameters();
   }
   
-  handleParameterValueDeleted(data) {
-    this.loadParameters();
-  }
-  
-  handleParameterReordered(data) {
+  handleParameterValueDeleted() {
     this.loadParameters();
   }
 }

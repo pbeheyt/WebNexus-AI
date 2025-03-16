@@ -1,13 +1,17 @@
-// Controller for settings operations
+// src/settings/controllers/SettingsController.js
+import { STORAGE_KEY, DEFAULT_SETTINGS } from '../utils/constants.js';
+
 export default class SettingsController {
-  constructor(contentTypeService, notificationManager) {
-    this.contentTypeService = contentTypeService;
+  constructor(storageService, configManager, notificationManager) {
+    this.storageService = storageService;
+    this.configManager = configManager;
     this.notificationManager = notificationManager;
   }
 
   async getSettings(contentType) {
     try {
-      return await this.contentTypeService.getSettings(contentType);
+      const data = await this.storageService.get(STORAGE_KEY) || {};
+      return data[contentType]?.settings || DEFAULT_SETTINGS[contentType] || {};
     } catch (error) {
       console.error('Error getting settings:', error);
       this.notificationManager.error(`Error loading settings: ${error.message}`);
@@ -17,8 +21,28 @@ export default class SettingsController {
 
   async updateSettings(contentType, settings) {
     try {
-      const result = await this.contentTypeService.updateSettings(contentType, settings);
-      return result;
+      const data = await this.storageService.get(STORAGE_KEY) || {};
+      
+      // Initialize the content type data if it doesn't exist
+      if (!data[contentType]) {
+        data[contentType] = {
+          prompts: {},
+          preferredPromptId: null,
+          settings: {}
+        };
+      }
+      
+      // Update settings
+      data[contentType].settings = {
+        ...DEFAULT_SETTINGS[contentType],
+        ...data[contentType].settings,
+        ...settings
+      };
+      
+      // Save to storage
+      await this.storageService.set({ [STORAGE_KEY]: data });
+      
+      return data[contentType].settings;
     } catch (error) {
       console.error('Error updating settings:', error);
       this.notificationManager.error(`Error updating settings: ${error.message}`);
@@ -27,6 +51,6 @@ export default class SettingsController {
   }
 
   getDefaultSettings(contentType) {
-    return this.contentTypeService.getDefaultSettings(contentType);
+    return DEFAULT_SETTINGS[contentType] || {};
   }
 }

@@ -1,4 +1,4 @@
-// Simple event system for communication between components
+// src/settings/utils/events.js
 export default class EventBus {
   constructor() {
     this.events = {};

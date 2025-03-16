@@ -31,10 +31,7 @@ export default class MainController {
   }
 
   async initialize() {
-    try {
-      // Check for and migrate legacy data first
-      await this.promptService.migrateFromLegacyFormat();
-      
+    try {    
       // Initialize components
       this.tabManager.initialize();
       this.promptList.initialize();
