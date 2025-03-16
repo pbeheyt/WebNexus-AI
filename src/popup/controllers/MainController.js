@@ -41,7 +41,7 @@ export default class MainController {
       selectedPlatformId: null,
       selectedPromptId: null,
       isProcessing: false,
-      promptType: PROMPT_TYPES.DEFAULT
+      promptType: PROMPT_TYPES.DEFAULT  // Changed from isDefaultPromptType boolean to string enum
     };
   }
 
@@ -84,7 +84,7 @@ export default class MainController {
       if (this.preferenceService) {
         try {
           const promptTypePreference = await this.preferenceService.getPromptTypePreference(this.state.contentType);
-          this.state.promptType = promptTypePreference;
+          this.state.promptType = promptTypePreference || PROMPT_TYPES.DEFAULT;
         } catch (error) {
           console.error('Error loading prompt type preference:', error);
         }
@@ -104,12 +104,12 @@ export default class MainController {
       const quickContainer = document.getElementById('quickPromptEditor');
       
       if (defaultContainer && customContainer && quickContainer) {
-        // Hide all containers
+        // Hide all containers first
         defaultContainer.classList.add('hidden');
         customContainer.classList.add('hidden');
         quickContainer.classList.add('hidden');
         
-        // Show appropriate container
+        // Show the appropriate container
         if (this.state.promptType === PROMPT_TYPES.DEFAULT) {
           defaultContainer.classList.remove('hidden');
         } else if (this.state.promptType === PROMPT_TYPES.CUSTOM) {
@@ -119,7 +119,7 @@ export default class MainController {
         }
       }
       
-      // Initialize appropriate prompt UI
+      // Initialize appropriate prompt UI based on type
       if (this.state.promptType === PROMPT_TYPES.DEFAULT) {
         await this.initializeDefaultPromptConfig();
       } else if (this.state.promptType === PROMPT_TYPES.CUSTOM) {
@@ -147,7 +147,7 @@ export default class MainController {
             // Default to content type as prompt ID for default type
             this.state.selectedPromptId = this.state.contentType;
           } else if (this.state.promptType === PROMPT_TYPES.QUICK) {
-            // Use 'quick' as the prompt ID for quick prompts
+            // Default to 'quick' as prompt ID for quick type
             this.state.selectedPromptId = 'quick';
           }
         } catch (error) {
@@ -208,28 +208,13 @@ export default class MainController {
   }
 
   /**
-   * Handle quick prompt text change
-   * @param {string} text - The quick prompt text
-   */
-  async handleQuickPromptChange(text) {
-    // Set prompt ID to 'quick' if using quick prompts
-    if (this.state.promptType === PROMPT_TYPES.QUICK) {
-      this.state.selectedPromptId = 'quick';
-    }
-  }
-
-  /**
    * Handle prompt type toggle
-   * @param {string} promptType - The prompt type (default, custom, or quick)
+   * @param {string} promptType - The prompt type ('default', 'custom', or 'quick')
    */
   async handlePromptTypeToggle(promptType) {
     try {
       // Only proceed if it's a change
       if (this.state.promptType !== promptType) {
-        // Record previous state
-        const previousType = this.state.promptType;
-        
-        // Update state
         this.state.promptType = promptType;
         
         // Save preference
@@ -246,21 +231,83 @@ export default class MainController {
         const customContainer = document.getElementById('customPromptSelector');
         const quickContainer = document.getElementById('quickPromptEditor');
         
-        // Hide all containers
-        defaultContainer.classList.add('hidden');
-        customContainer.classList.add('hidden');
-        quickContainer.classList.add('hidden');
-        
-        // Show and initialize appropriate container
-        if (promptType === PROMPT_TYPES.DEFAULT) {
-          defaultContainer.classList.remove('hidden');
-          await this.initializeDefaultPromptConfig();
-        } else if (promptType === PROMPT_TYPES.CUSTOM) {
-          customContainer.classList.remove('hidden');
-          await this.initializeCustomPromptSelector();
-        } else if (promptType === PROMPT_TYPES.QUICK) {
-          quickContainer.classList.remove('hidden');
-          await this.initializeQuickPromptEditor();
+        if (defaultContainer && customContainer && quickContainer) {
+          // Hide all containers first
+          defaultContainer.classList.add('hidden');
+          customContainer.classList.add('hidden');
+          quickContainer.classList.add('hidden');
+          
+          // Show the appropriate container based on type
+          if (promptType === PROMPT_TYPES.DEFAULT) {
+            defaultContainer.classList.remove('hidden');
+            await this.initializeDefaultPromptConfig();
+            
+            // Load appropriate prompt ID
+            if (this.preferenceService) {
+              try {
+                const savedPromptId = await this.preferenceService.getSelectedPromptId(
+                  this.state.contentType, 
+                  PROMPT_TYPES.DEFAULT
+                );
+                
+                if (savedPromptId) {
+                  this.state.selectedPromptId = savedPromptId;
+                } else {
+                  // Default to content type as prompt ID
+                  this.state.selectedPromptId = this.state.contentType;
+                }
+              } catch (error) {
+                console.error('Error loading saved prompt ID:', error);
+                this.state.selectedPromptId = this.state.contentType;
+              }
+            } else {
+              // Default to content type as prompt ID
+              this.state.selectedPromptId = this.state.contentType;
+            }
+          } else if (promptType === PROMPT_TYPES.CUSTOM) {
+            customContainer.classList.remove('hidden');
+            await this.initializeCustomPromptSelector();
+            
+            // Load appropriate prompt ID
+            if (this.preferenceService) {
+              try {
+                const savedPromptId = await this.preferenceService.getSelectedPromptId(
+                  this.state.contentType, 
+                  PROMPT_TYPES.CUSTOM
+                );
+                
+                if (savedPromptId) {
+                  this.state.selectedPromptId = savedPromptId;
+                  
+                  // Update custom prompt selector
+                  if (this.customPromptSelector) {
+                    await this.customPromptSelector.setSelectedPromptId(savedPromptId);
+                  }
+                }
+              } catch (error) {
+                console.error('Error loading saved prompt ID:', error);
+              }
+            }
+          } else if (promptType === PROMPT_TYPES.QUICK) {
+            quickContainer.classList.remove('hidden');
+            await this.initializeQuickPromptEditor();
+            
+            // Set prompt ID to 'quick'
+            this.state.selectedPromptId = 'quick';
+            
+            // Save selection
+            if (this.preferenceService) {
+              try {
+                await this.preferenceService.saveSelectedPromptId(
+                  this.state.contentType,
+                  PROMPT_TYPES.QUICK,
+                  'quick'
+                );
+              } catch (error) {
+                console.error('Error saving quick prompt selection:', error);
+              }
+            }
+          }
         }
       }
     } catch (error) {
@@ -317,57 +364,34 @@ export default class MainController {
   async initializeCustomPromptSelector() {
     try {
       await this.customPromptSelector.initialize(this.state.contentType);
-      
-      // Load appropriate prompt ID
-      if (this.preferenceService) {
-        try {
-          const savedPromptId = await this.preferenceService.getSelectedPromptId(
-            this.state.contentType, 
-            PROMPT_TYPES.CUSTOM
-          );
-          
-          if (savedPromptId) {
-            this.state.selectedPromptId = savedPromptId;
-            
-            // Update custom prompt selector
-            await this.customPromptSelector.setSelectedPromptId(savedPromptId);
-          }
-        } catch (error) {
-          console.error('Error loading saved prompt ID:', error);
-        }
-      }
     } catch (error) {
       console.error('Error initializing custom prompt selector:', error);
       this.statusManager.updateStatus(`Error: ${error.message}`);
     }
   }
-  
+
   /**
    * Initialize quick prompt editor
    */
   async initializeQuickPromptEditor() {
     try {
-      await this.quickPromptEditor.initialize(this.state.contentType);
-      
-      // Set selected prompt ID to 'quick'
-      this.state.selectedPromptId = 'quick';
-      
-      // Save selection
-      if (this.preferenceService) {
-        try {
-          await this.preferenceService.saveSelectedPromptId(
-            this.state.contentType,
-            PROMPT_TYPES.QUICK,
-            'quick'
-          );
-        } catch (error) {
-          console.error('Error saving quick prompt selection:', error);
-        }
+      if (this.quickPromptEditor) {
+        await this.quickPromptEditor.initialize(this.state.contentType);
       }
     } catch (error) {
       console.error('Error initializing quick prompt editor:', error);
       this.statusManager.updateStatus(`Error: ${error.message}`);
     }
+  }
+
+  /**
+   * Handle quick prompt change
+   * @param {string} text - The new quick prompt text
+   */
+  async handleQuickPromptChange(text) {
+    // The QuickPromptEditor already handles saving text to storage
+    // This method exists for potential future extensions or validations
+    // It also maintains architectural symmetry with other handler methods
   }
 
   /**
@@ -385,7 +409,7 @@ export default class MainController {
         return;
       }
     }
-    
+
     this.state.isProcessing = true;
     
     // Ensure clean state before summarizing

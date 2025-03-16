@@ -14,20 +14,40 @@ export default class QuickPromptEditor {
     this.contentType = contentType;
     if (!this.element) return;
     
-    // Clear container
-    this.element.innerHTML = '';
-    
-    // Create textarea with appropriate placeholder
-    this.textarea = document.createElement('textarea');
-    this.textarea.className = 'quick-prompt-textarea';
-    this.textarea.placeholder = this.getPlaceholderText(contentType);
-    
-    // Character counter
-    this.charCounter = document.createElement('div');
-    this.charCounter.className = 'char-counter';
-    
-    // Load saved text if available
     try {
+      // Check for previously consumed quick prompt
+      const consumptionData = await chrome.storage.local.get('quick_prompt_consumed');
+      const wasConsumed = consumptionData.quick_prompt_consumed && 
+                        consumptionData.quick_prompt_consumed.contentType === contentType;
+      
+      // Clear if consumed
+      if (wasConsumed) {
+        console.log(`Found consumed quick prompt for ${contentType}, clearing it`);
+        
+        // Clear the prompt for this content type
+        if (this.preferenceService) {
+          await this.preferenceService.clearQuickPromptText(contentType);
+          console.log(`Cleared previously consumed quick prompt for ${contentType}`);
+        }
+        
+        // Reset consumption flag
+        await chrome.storage.local.remove('quick_prompt_consumed');
+        console.log('Reset quick_prompt_consumed flag');
+      }
+    
+      // Clear container
+      this.element.innerHTML = '';
+      
+      // Create textarea with appropriate placeholder
+      this.textarea = document.createElement('textarea');
+      this.textarea.className = 'quick-prompt-textarea';
+      this.textarea.placeholder = this.getPlaceholderText(contentType);
+      
+      // Character counter
+      this.charCounter = document.createElement('div');
+      this.charCounter.className = 'char-counter';
+      
+      // Load saved text if available
       if (this.preferenceService) {
         const savedText = await this.preferenceService.getQuickPromptText(contentType);
         if (savedText) {
@@ -37,37 +57,41 @@ export default class QuickPromptEditor {
           this.charCounter.textContent = '0 characters';
         }
       }
+      
+      // Handle text input
+      this.textarea.addEventListener('input', async () => {
+        const text = this.textarea.value;
+        this.charCounter.textContent = `${text.length} characters`;
+        
+        // Apply warning style for very long prompts
+        if (text.length > 2000) {
+          this.charCounter.classList.add('warning');
+        } else {
+          this.charCounter.classList.remove('warning');
+        }
+        
+        // Save to storage if preference service available
+        if (this.preferenceService) {
+          await this.preferenceService.saveQuickPromptText(this.contentType, text);
+        }
+        
+        // Notify parent
+        if (this.onChange) {
+          this.onChange(text);
+        }
+      });
+      
+      // Append elements
+      this.element.appendChild(this.textarea);
+      this.element.appendChild(this.charCounter);
     } catch (error) {
-      console.error('Error loading quick prompt:', error);
-      this.charCounter.textContent = '0 characters';
+      console.error('Error initializing quick prompt editor:', error);
+      // Fallback to basic initialization
+      this.element.innerHTML = `
+        <textarea class="quick-prompt-textarea" placeholder="Enter your prompt..."></textarea>
+        <div class="char-counter">0 characters</div>
+      `;
     }
-    
-    // Handle text input
-    this.textarea.addEventListener('input', async () => {
-      const text = this.textarea.value;
-      this.charCounter.textContent = `${text.length} characters`;
-      
-      // Apply warning style for very long prompts
-      if (text.length > 2000) {
-        this.charCounter.classList.add('warning');
-      } else {
-        this.charCounter.classList.remove('warning');
-      }
-      
-      // Save to storage if preference service available
-      if (this.preferenceService) {
-        await this.preferenceService.saveQuickPromptText(this.contentType, text);
-      }
-      
-      // Notify parent
-      if (this.onChange) {
-        this.onChange(text);
-      }
-    });
-    
-    // Append elements
-    this.element.appendChild(this.textarea);
-    this.element.appendChild(this.charCounter);
   }
   
   getPlaceholderText(contentType) {

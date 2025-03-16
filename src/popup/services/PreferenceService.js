@@ -92,4 +92,33 @@ export default class PreferenceService {
     await this.storageService.set({ [this.STORAGE_KEYS.QUICK_PROMPTS]: quickPrompts });
     return text;
   }
+  
+  /**
+   * Clear the quick prompt text for a content type
+   * @param {string} contentType - The content type to clear quick prompt for
+   * @returns {Promise<boolean>} - Whether a prompt was cleared
+   */
+  async clearQuickPromptText(contentType) {
+    try {
+      console.log(`Attempting to clear quick prompt for ${contentType}`);
+      const quickPrompts = await this.storageService.get(this.STORAGE_KEYS.QUICK_PROMPTS) || {};
+      console.log(`Current quick prompts state:`, quickPrompts);
+      
+      // Check if we have quick prompts and if there's content for this type
+      if (quickPrompts && quickPrompts[contentType]) {
+        console.log(`Found existing prompt for ${contentType}, clearing it`);
+        quickPrompts[contentType] = '';
+        await this.storageService.set({ [this.STORAGE_KEYS.QUICK_PROMPTS]: quickPrompts });
+        console.log(`Successfully cleared quick prompt for ${contentType}`);
+        return true;
+      } else {
+        console.log(`No quick prompt found for ${contentType}, nothing to clear`);
+        return false;
+      }
+    } catch (error) {
+      console.error(`Error clearing quick prompt for ${contentType}:`, error);
+      // Don't throw, as this is cleanup code that shouldn't break the main flow
+      return false;
+    }
+  }
 }

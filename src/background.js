@@ -543,6 +543,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Handler for clearing quick prompts
+  if (message.action === 'clearQuickPrompt') {
+    (async () => {
+      try {
+        logger.background.info(`Clearing quick prompt for content type: ${message.contentType}`);
+        const quickPrompts = await chrome.storage.sync.get('quick_prompts');
+        
+        if (quickPrompts.quick_prompts && quickPrompts.quick_prompts[message.contentType]) {
+          logger.background.info(`Found quick prompt to clear for ${message.contentType}`);
+          quickPrompts.quick_prompts[message.contentType] = '';
+          await chrome.storage.sync.set({ quick_prompts: quickPrompts.quick_prompts });
+          logger.background.info(`Successfully cleared quick prompt for ${message.contentType}`);
+        } else {
+          logger.background.info(`No quick prompt found for ${message.contentType}, nothing to clear`);
+        }
+        
+        sendResponse({ success: true });
+      } catch (error) {
+        logger.background.error(`Error clearing quick prompt: ${error.message}`, error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
+
   // Handler for summarize requests from popup
   if (message.action === 'summarizeContent') {
     (async () => {
@@ -591,11 +616,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         }
 
+        // Check if this was a quick prompt that needs to be marked as consumed
+        if (promptId === 'quick') {
+          logger.background.info(`Marking quick prompt as consumed for content type: ${contentType}`);
+          await chrome.storage.local.set({
+            'quick_prompt_consumed': {
+              contentType: contentType,
+              timestamp: Date.now()
+            }
+          });
+        }
+
         // Give time for content extraction to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Then open AI platform with the content
         const aiPlatformTabId = await openAiPlatformWithContent(contentType, promptId, platformId);
+
 
         sendResponse({
           success: true,
