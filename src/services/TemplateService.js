@@ -31,6 +31,37 @@ class TemplateService {
   }
 
   /**
+   * BACKWARD COMPATIBILITY: Get sorted parameters for a content type
+   * @param {string} contentType - Content type or 'shared' for shared parameters
+   * @returns {Promise<Array>} Array of parameters
+   */
+  async getSortedParameters(contentType) {
+    console.warn('Deprecated: Use getParameters() instead');
+    return this.getParameters(contentType);
+  }
+
+  /**
+   * BACKWARD COMPATIBILITY: Reset all customizations to defaults
+   * @returns {Promise<Object>} The default configuration
+   */
+  async resetAllCustomizations() {
+    console.warn('Deprecated: Use configManager.resetConfig() instead');
+    return this.configManager.resetConfig();
+  }
+
+  /**
+   * BACKWARD COMPATIBILITY: Get a specific parameter
+   * @param {string} contentType - Content type or 'shared'
+   * @param {string} paramId - Parameter ID
+   * @returns {Promise<Object>} The parameter object
+   */
+  async getParameter(contentType, paramId) {
+    console.warn('Deprecated: Use getParameters() and filter by ID instead');
+    const parameters = await this.getParameters(contentType);
+    return parameters.find(param => param.id === paramId) || null;
+  }
+
+  /**
    * Update parameter name
    * @param {string} contentType - Content type or 'shared'
    * @param {string} parameterId - Parameter ID

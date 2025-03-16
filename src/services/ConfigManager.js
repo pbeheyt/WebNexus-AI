@@ -65,6 +65,15 @@ class ConfigManager {
   }
 
   /**
+   * Get default prompts (BACKWARD COMPATIBILITY)
+   * @returns {Promise<Object>} The default prompts 
+   */
+  async getDefaultPrompts() {
+    console.warn('Deprecated: Use getConfigSection("defaultPrompts") instead');
+    return this.getConfigSection('defaultPrompts');
+  }
+
+  /**
    * Get a specific prompt template
    * @param {string} contentType - Content type (e.g., 'general', 'youtube')
    * @returns {Promise<Object>} The prompt template
