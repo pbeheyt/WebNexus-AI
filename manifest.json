@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "AI Content Summarizer",
-  "description": "Summarize web content, Reddit posts, and YouTube videos with Claude, ChatGPT, or DeepSeek AI",
-  "version": "1.1",
+  "description": "Summarize web content, Reddit posts, YouTube videos, and PDFs with Claude, ChatGPT, or DeepSeek AI",
+  "version": "1.2",
   "permissions": [
     "contextMenus",
     "activeTab",
     "scripting",
     "storage",
-    "tabs"
+    "tabs",
+    "webRequest"
   ],
   "host_permissions": [
     "https://*.youtube.com/*",
@@ -17,7 +18,9 @@
     "https://chatgpt.com/*",
     "https://chat.deepseek.com/*",
     "https://chat.mistral.ai/*",
-    "https://*/*"
+    "https://*/*",
+    "file://*.pdf",
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "dist/background.bundle.js"
@@ -30,6 +33,10 @@
     {
       "matches": ["*://*.reddit.com/r/*/comments/*"],
       "js": ["dist/reddit-content.bundle.js"]
+    },
+    {
+      "matches": ["*://*/*.pdf", "file://*.pdf"],
+      "js": ["dist/pdf-content.bundle.js"]
     }
   ],
   "action": {
@@ -44,7 +51,13 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["platform-config.json", "prompt-config.json", "dist/*.bundle.js", "images/*.png"],
+      "resources": [
+        "platform-config.json",
+        "prompt-config.json", 
+        "dist/*.bundle.js",
+        "dist/pdf.worker.bundle.js",
+        "images/*.png"
+      ],
       "matches": ["<all_urls>"]
     }
   ]

@@ -2,7 +2,8 @@
 export const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
-  YOUTUBE: 'youtube'
+  YOUTUBE: 'youtube',
+  PDF: 'pdf'
 };
 
 export const PROMPT_TYPES = {

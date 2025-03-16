@@ -188,6 +188,36 @@ button.btn-summarize:disabled {
   height: 14px;
 }
 
+.content-type.pdf {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.6);
+}
+
+.content-type.pdf svg {
+  color: #F40F02;
+}
+
+/* Add PDF icon for settings menu */
+.content-type-icon.pdf {
+  background-image: url('../images/pdf-icon.svg');
+}
+
+/* Specific styles for PDF extraction settings */
+.pdf-settings .extraction-option {
+  margin-bottom: 0.75rem;
+}
+
+.pdf-settings .extraction-option label {
+  display: flex;
+  align-items: center;
+}
+
+/* Add these to your dark theme section */
+.dark-theme .content-type.pdf {
+  background-color: rgba(244, 67, 54, 0.15);
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
 /* ======================================
    Form Sections
    ====================================== */

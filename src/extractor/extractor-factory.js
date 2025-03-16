@@ -2,6 +2,7 @@
 const GeneralExtractorStrategy = require('./strategies/general-strategy');
 const RedditExtractorStrategy = require('./strategies/reddit-strategy');
 const YoutubeExtractorStrategy = require('./strategies/youtube-strategy');
+const PdfExtractorStrategy = require('./strategies/pdf-strategy');  // Add this import
 
 /**
  * Factory to create the appropriate content extractor
@@ -13,7 +14,13 @@ class ExtractorFactory {
    * @returns {BaseExtractor} An instance of the appropriate extractor
    */
   static createExtractor(url) {
-    if (url.includes('youtube.com/watch')) {
+    // Check if it's a PDF file or viewer
+    if (url.endsWith('.pdf') || 
+        url.includes('/pdf/') || 
+        url.includes('pdfviewer') || 
+        (url.includes('chrome-extension://') && url.includes('pdfviewer'))) {
+      return new PdfExtractorStrategy();
+    } else if (url.includes('youtube.com/watch')) {
       return new YoutubeExtractorStrategy();
     } else if (url.includes('reddit.com/r/') && url.includes('/comments/')) {
       return new RedditExtractorStrategy();

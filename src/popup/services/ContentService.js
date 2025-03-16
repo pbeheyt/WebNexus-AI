@@ -7,7 +7,14 @@ export default class ContentService {
   }
 
   detectContentType(url) {
-    if (url.includes('youtube.com/watch')) {
+    const isPdf = url.endsWith('.pdf');
+    const containsPdfPath = url.includes('/pdf/');
+    const containsPdfViewer = url.includes('pdfviewer');
+    const isChromeExtensionPdf = url.includes('chrome-extension://') && url.includes('pdfviewer');
+    
+    if (isPdf || containsPdfPath || containsPdfViewer || isChromeExtensionPdf) {
+      return CONTENT_TYPES.PDF;
+    } else if (url.includes('youtube.com/watch')) {
       return CONTENT_TYPES.YOUTUBE;
     } else if (url.includes('reddit.com/r/') && url.includes('/comments/')) {
       return CONTENT_TYPES.REDDIT;
@@ -23,6 +30,8 @@ export default class ContentService {
       scriptFile = 'dist/youtube-content.bundle.js';
     } else if (contentType === CONTENT_TYPES.REDDIT) {
       scriptFile = 'dist/reddit-content.bundle.js';
+    } else if (contentType === CONTENT_TYPES.PDF) {
+      scriptFile = 'dist/pdf-content.bundle.js';
     }
     
     const result = await this.tabService.executeScript(tabId, scriptFile);

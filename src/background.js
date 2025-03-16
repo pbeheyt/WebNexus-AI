@@ -8,7 +8,8 @@ const logger = require('./utils/logger');
 const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
-  YOUTUBE: 'youtube'
+  YOUTUBE: 'youtube',
+  PDF: 'pdf'
 };
 
 const AI_PLATFORMS = {
@@ -25,11 +26,37 @@ const PLATFORM_STORAGE_KEY = 'preferred_ai_platform';
  * Determine content type based on URL
  */
 function getContentTypeForUrl(url) {
-  if (url.includes('youtube.com/watch')) {
+  logger.background.info('Evaluating content type for URL:', url);
+  
+  // Log PDF detection criteria evaluation
+  const isPdf = url.endsWith('.pdf');
+  const containsPdfPath = url.includes('/pdf/');
+  const containsPdfViewer = url.includes('pdfviewer');
+  const isChromeExtensionPdf = url.includes('chrome-extension://') && url.includes('pdfviewer');
+  
+  logger.background.info('PDF detection results:', {
+    isPdf,
+    containsPdfPath,
+    containsPdfViewer,
+    isChromeExtensionPdf,
+    wouldDetectAsPdf: isPdf || containsPdfPath || containsPdfViewer || isChromeExtensionPdf
+  });
+  
+  // PDF detection logic
+  if (isPdf || 
+      containsPdfPath || 
+      containsPdfViewer || 
+      isChromeExtensionPdf) {
+    logger.background.info('Detected as PDF');
+    return CONTENT_TYPES.PDF;
+  } else if (url.includes('youtube.com/watch')) {
+    logger.background.info('Detected as YouTube');
     return CONTENT_TYPES.YOUTUBE;
   } else if (url.includes('reddit.com/r/') && url.includes('/comments/')) {
+    logger.background.info('Detected as Reddit');
     return CONTENT_TYPES.REDDIT;
   } else {
+    logger.background.info('Detected as General content');
     return CONTENT_TYPES.GENERAL;
   }
 }

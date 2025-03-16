@@ -1,4 +1,5 @@
 const path = require('path');
+const pdfWorkerPath = require.resolve('pdfjs-dist/build/pdf.worker.entry');
 
 module.exports = {
   entry: {
@@ -6,9 +7,11 @@ module.exports = {
     'youtube-content': './src/content/youtube-content.js',
     'reddit-content': './src/content/reddit-content.js',
     'general-content': './src/content/general-content.js',
+    'pdf-content': './src/content/pdf-content.js',
     'platform-content': './src/content/platform-content.js',
     popup: './src/popup/index.js',
-    settings: './src/settings/index.js'
+    settings: './src/settings/index.js',
+    'pdf.worker': pdfWorkerPath
   },
   output: {
     filename: '[name].bundle.js',
