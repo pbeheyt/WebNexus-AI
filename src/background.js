@@ -1,12 +1,27 @@
 // src/background.js
-// UPDATED VERSION - Using shared modules for content type management
+// UPDATED VERSION - With centralized configuration storage
 
 // Import from shared modules
 import { CONTENT_TYPES, AI_PLATFORMS, STORAGE_KEYS } from './shared/constants.js';
 import { determineContentType, getContentScriptFile } from './shared/content-utils.js';
+import configManager from './services/ConfigManager.js';
+import promptBuilder from './services/PromptBuilder.js';
 
 // Import logger utility
 const logger = require('./utils/logger');
+
+/**
+ * Initialize configuration in storage
+ */
+async function initializeConfiguration() {
+  try {
+    // Initialize configuration
+    await configManager.initialize();
+    logger.background.info('Configuration initialized');
+  } catch (error) {
+    logger.background.error('Error initializing configuration:', error);
+  }
+}
 
 /**
  * Get platform configuration from config.json
@@ -228,110 +243,37 @@ async function getPromptIdForType(promptType, contentType) {
  */
 async function getPromptContentById(promptId, contentType) {
   logger.background.info(`Getting prompt content for ID: ${promptId}, type: ${contentType}`);
-
-  // NEW HANDLER FOR QUICK PROMPTS
+  
+  // Handle quick prompts
   if (promptId === "quick") {
     try {
-      logger.background.info('Loading quick prompt from storage');
       const result = await chrome.storage.sync.get('quick_prompts');
-      const quickPrompts = result.quick_prompts || {};
-
-      if (quickPrompts[contentType]) {
-        logger.background.info('Quick prompt found in storage');
-        return quickPrompts[contentType];
-      } else {
-        logger.background.warn(`Quick prompt not found for content type: ${contentType}`);
-        return null;
-      }
+      return result.quick_prompts?.[contentType] || null;
     } catch (error) {
       logger.background.error('Error loading quick prompt:', error);
       return null;
     }
   }
-
-  // If the promptId is the same as contentType, it's a default prompt
+  
+  // If ID matches content type, it's a default prompt
   if (promptId === contentType) {
     try {
-      // Get default prompt template and user preferences
-      logger.background.info('Loading default prompt from config');
-      const [promptConfigData, userPreferences] = await Promise.all([
-        fetch(chrome.runtime.getURL('prompt-config.json')).then(r => r.json()),
-        chrome.storage.sync.get('default_prompt_preferences')
-      ]);
-
-      const promptTemplate = promptConfigData.defaultPrompts && promptConfigData.defaultPrompts[contentType];
-
-      if (!promptTemplate) {
-        logger.background.warn(`No default prompt found for ${contentType}`);
-        return null;
-      }
-
-      // Get user preferences for this content type
+      // Get user preferences
+      const userPreferences = await chrome.storage.sync.get('default_prompt_preferences');
       const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
-
-      // Start with the base template
-      let template = promptTemplate.baseTemplate;
-
-      // Always add type-specific instructions if available
-      if (promptTemplate.parameters?.typeSpecificInstructions?.values?.default) {
-        template += '\n' + promptTemplate.parameters.typeSpecificInstructions.values.default;
-      }
-
-      // Combine all applicable parameters
-      const allParams = {
-        ...(promptTemplate.parameters || {}),
-        ...(promptConfigData.sharedParameters || {})
-      };
-
-      // Process each parameter according to user preferences
-      for (const [paramKey, paramConfig] of Object.entries(allParams)) {
-        // Skip typeSpecificInstructions as we've already handled it
-        if (paramKey === 'typeSpecificInstructions') {
-          continue;
-        }
-
-        // Skip commentAnalysis on non-YouTube content
-        if (paramKey === 'commentAnalysis' && contentType !== 'youtube') {
-          continue;
-        }
-
-        const userValue = typePreferences[paramKey];
-
-        // Handle different parameter types appropriately
-        if (typeof userValue === 'boolean') {
-          // For boolean parameters, only add content if value is true
-          if (userValue === true && paramConfig.values?.true) {
-            template += '\n' + paramConfig.values.true;
-          }
-        }
-        // For non-boolean parameters with valid values
-        else if (userValue && paramConfig.values?.[userValue]) {
-          template += '\n' + paramConfig.values[userValue];
-        }
-      }
-
-      return template;
+      
+      // Build prompt using the preferences
+      return promptBuilder.buildPrompt(contentType, typePreferences);
     } catch (error) {
-      logger.background.error('Error loading default prompt:', error);
+      logger.background.error('Error building default prompt:', error);
       return null;
     }
   }
-
+  
   // For custom prompts
   try {
-    logger.background.info('Loading custom prompt from storage');
     const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-    const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
-
-    if (customPromptsByType[contentType] &&
-        customPromptsByType[contentType].prompts &&
-        customPromptsByType[contentType].prompts[promptId]) {
-      logger.background.info('Custom prompt found in storage');
-      return customPromptsByType[contentType].prompts[promptId].content;
-    } else {
-      logger.background.warn(`Custom prompt not found: ${promptId}`);
-      return null;
-    }
+    return result[STORAGE_KEYS.CUSTOM_PROMPTS]?.[contentType]?.prompts?.[promptId]?.content || null;
   } catch (error) {
     logger.background.error('Error loading custom prompt:', error);
     return null;
@@ -447,42 +389,13 @@ async function handleContextMenuClick(info, tab) {
 }
 
 /**
- * Check for and apply imported configuration if present
- */
-async function checkForImportedConfig() {
-  try {
-    const { use_imported_config, imported_prompt_config } = await chrome.storage.local.get([
-      'use_imported_config',
-      'imported_prompt_config'
-    ]);
-
-    if (use_imported_config && imported_prompt_config) {
-      logger.background.info('Found imported configuration, applying it');
-
-      // For Chrome MV3, we cannot write to extension files directly
-      // Instead, we'll create a runtime override of the configuration
-
-      // Store the imported config in sync storage for persistence
-      await chrome.storage.sync.set({ 'prompt_config_override': imported_prompt_config });
-
-      // Clear the import flags
-      await chrome.storage.local.remove(['use_imported_config', 'imported_prompt_config']);
-
-      logger.background.info('Successfully applied imported configuration');
-    }
-  } catch (error) {
-    logger.background.error('Error applying imported configuration:', error);
-  }
-}
-
-/**
  * Initialize the extension
  */
 async function initialize() {
   logger.background.info('Initializing background service worker');
 
-  // Check for imported configuration
-  await checkForImportedConfig();
+  // Initialize configuration in storage
+  await initializeConfiguration();
 
   // Create context menus
   chrome.contextMenus.create({
@@ -582,7 +495,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // NEW: Handler for content type detection
+  // Handler for content type detection
   if (message.action === 'getContentType') {
     const contentType = determineContentType(message.url, message.hasSelection);
     sendResponse({ contentType });
@@ -602,7 +515,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Handler for error notifications from content scripts
   if (message.action === 'notifyError') {
     logger.background.error('Error from content script:', message.error);
-    // We could show a notification here or handle in some other way
     return true;
   }
 
@@ -712,7 +624,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Debug logging for extension lifecycle
-chrome.runtime.onSuspend.addListener(() => {
-  logger.background.info('Background service worker suspending');
+// Listen for configuration changes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes.template_configuration) {
+    logger.background.info('Template configuration changed in storage');
+  }
 });

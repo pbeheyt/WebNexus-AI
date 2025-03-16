@@ -508,6 +508,28 @@ export default class MainController {
   }
 
   /**
+   * Refresh configuration and update UI
+   */
+  async refreshConfiguration() {
+    try {
+      // Reload prompt configuration
+      if (this.state.promptType === PROMPT_TYPES.DEFAULT) {
+        await this.initializeDefaultPromptConfig();
+      } else if (this.state.promptType === PROMPT_TYPES.CUSTOM) {
+        await this.initializeCustomPromptSelector();
+      } else if (this.state.promptType === PROMPT_TYPES.QUICK) {
+        await this.initializeQuickPromptEditor();
+      }
+
+      // Update status
+      this.statusManager.updateStatus('Configuration updated', false, this.state.isSupported);
+    } catch (error) {
+      console.error('Error refreshing configuration:', error);
+      this.statusManager.updateStatus(`Error refreshing: ${error.message}`, false, this.state.isSupported);
+    }
+  }
+
+  /**
    * Open settings page
    */
   openSettings() {

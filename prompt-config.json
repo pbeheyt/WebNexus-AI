@@ -89,6 +89,51 @@
           }
         }
       }
+    },
+    "pdf": {
+      "name": "PDF Document Summary",
+      "baseTemplate": "Analyze this PDF document based on the following [SUMMARY] instructions",
+      "parameters": {
+        "tableOfContents": {
+          "param_name": "Table of Contents",
+          "values": {
+            "true": "[TOC ANALYSIS]\nAfter completing your summary, include a structured outline of the document's organization and key sections. Scale depth with length parameter.",
+            "false": ""
+          }
+        },
+        "visualsAnalysis": {
+          "param_name": "Visuals Analysis",
+          "values": {
+            "true": "[VISUALS ANALYSIS]\nInclude analysis of key figures, charts, tables, and diagrams with their significance to the main content.",
+            "false": ""
+          }
+        },
+        "typeSpecificInstructions": {
+          "param_name": "Type Specific Instructions",
+          "values": {
+            "default": "[PDF PROCESSING INSTRUCTION]\nPrioritize main body text over headers, footers, and page numbers. Maintain hierarchical structure of headings and sections."
+          }
+        }
+      }
+    },
+    "selected_text": {
+      "name": "Selected Text Analysis", 
+      "baseTemplate": "Analyze this selected text based on the following [SUMMARY] instructions",
+      "parameters": {
+        "contextAwareness": {
+          "param_name": "Context Awareness",
+          "values": {
+            "true": "[CONTEXT AWARENESS]\nAnalyze this text considering it may be an excerpt from a larger document. Note potential missing context where relevant.",
+            "false": ""
+          }
+        },
+        "typeSpecificInstructions": {
+          "param_name": "Type Specific Instructions",
+          "values": {
+            "default": "[SELECTED TEXT INSTRUCTION]\nFocus analysis specifically on the provided text fragment without assumptions about surrounding content."
+          }
+        }
+      }
     }
   }
 }

@@ -2,22 +2,32 @@
 import { STORAGE_KEYS } from '../constants.js';
 
 export default class PromptService {
-  constructor(storageService, configService, defaultPromptPreferencesService) {
+  constructor(storageService, configManager, defaultPromptPreferencesService) {
     this.storageService = storageService;
-    this.configService = configService;
+    this.configManager = configManager;
     this.defaultPromptPreferencesService = defaultPromptPreferencesService;
   }
 
+  async getAllPrompts() {
+    // Get both default and custom prompts
+    const [defaultPrompts, customData] = await Promise.all([
+      this.configManager.getConfigSection('defaultPrompts'),
+      this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS)
+    ]);
+    
+    // Return organized by content type
+    const customPromptsByType = customData || this.initializeEmptyPromptStructure();
+    
+    return { defaultPrompts, customPromptsByType };
+  }
+
   async loadPrompts(contentType) {
-    // This method is unchanged as it only deals with default and custom prompts
-    // Quick prompts are handled directly
     try {
+      // Load default prompts from configManager
+      const defaultPrompts = await this.configManager.getConfigSection('defaultPrompts');
+      
       // Load custom prompts
       const customPromptsByType = await this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS) || {};
-      
-      // Load default prompts from prompt config
-      const promptConfig = await this.configService.getConfig('prompt');
-      const defaultPrompts = promptConfig.defaultPrompts || {};
       
       // Get preferred prompt ID
       const preferredPromptId = customPromptsByType[contentType]?.preferredPromptId || contentType;
@@ -120,5 +130,30 @@ export default class PromptService {
     
     // For custom and quick prompts, return empty preferences
     return {};
+  }
+
+  initializeEmptyPromptStructure() {
+    // This method remains the same as in the original code
+    return {
+      general: {
+        prompts: {},
+        preferredPromptId: null,
+        settings: {}
+      },
+      reddit: {
+        prompts: {},
+        preferredPromptId: null,
+        settings: {
+          maxComments: 100
+        }
+      },
+      youtube: {
+        prompts: {},
+        preferredPromptId: null,
+        settings: {
+          maxComments: 20
+        }
+      }
+    };
   }
 }

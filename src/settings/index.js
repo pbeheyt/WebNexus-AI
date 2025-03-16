@@ -1,7 +1,6 @@
 // src/settings/index.js
 import EventBus from './utils/events.js';
 import StorageService from './services/StorageService.js';
-import ConfigService from './services/ConfigService.js';
 import ContentTypeService from './services/ContentTypeService.js';
 import PromptService from './services/PromptService.js';
 import NotificationManager from './ui/NotificationManager.js';
@@ -12,22 +11,26 @@ import PromptDetail from './ui/PromptDetail.js';
 import SettingsForm from './ui/SettingsForm.js';
 import PromptController from './controllers/PromptController.js';
 import SettingsController from './controllers/SettingsController.js';
-import ConfigImportExportController from './controllers/ConfigImportExportController.js';  // Import new controller
+import TemplateCustomizationController from './controllers/TemplateCustomizationController.js';
+import ConfigImportExportController from './controllers/ConfigImportExportController.js';
 import MainController from './controllers/MainController.js';
 import { initializeTheme } from './themeManager';
+import configManager from '../services/ConfigManager';
 
 // Initialize the settings page
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeTheme();
+  
+  // Initialize config manager first
+  await configManager.initialize();
 
   // Create event bus
   const eventBus = new EventBus();
   
   // Initialize services
   const storageService = new StorageService();
-  const configService = new ConfigService(storageService);
   const contentTypeService = new ContentTypeService(storageService, eventBus);
-  const promptService = new PromptService(storageService, configService, eventBus);
+  const promptService = new PromptService(storageService, eventBus);
   
   // Initialize UI components
   const notificationManager = new NotificationManager(
@@ -50,10 +53,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     notificationManager
   );
   
-  // Initialize new controller for import/export
+  // Initialize template customization controller with new architecture
+  const templateCustomizationController = new TemplateCustomizationController(
+    eventBus,
+    notificationManager
+  );
+  
+  // Initialize config import/export controller
   const configImportExportController = new ConfigImportExportController(
-    configService,
-    storageService,
     notificationManager
   );
   
@@ -88,12 +95,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     promptForm,
     promptDetail,
     settingsForm,
-    configImportExportController,  // Add the new controller
+    templateCustomizationController,
     promptService,
     contentTypeService,
     notificationManager,
     eventBus
   );
+  
+  // Initialize config import/export
+  const importExportContainer = document.getElementById('config-import-export');
+  if (importExportContainer) {
+    configImportExportController.initialize(importExportContainer);
+  }
   
   // Start the application
   mainController.initialize().catch(error => {

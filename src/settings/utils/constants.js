@@ -1,4 +1,5 @@
 // src/settings/utils/constants.js
+
 import { CONTENT_TYPES, STORAGE_KEYS } from '../../shared/constants.js';
 
 // Re-export shared constants for backwards compatibility
@@ -9,7 +10,7 @@ export const STORAGE_KEY = STORAGE_KEYS.CUSTOM_PROMPTS;
 export const TABS = {
   CONTENT_CONFIGURATION: 'content-configuration',
   PROMPT_MANAGEMENT: 'prompt-management',
-  IMPORT_EXPORT: 'import-export'
+  TEMPLATE_CUSTOMIZATION: 'template-customization'
 };
 
 // Human-readable labels for content types

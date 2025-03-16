@@ -1,9 +1,9 @@
 // src/settings/controllers/ConfigImportExportController.js
+import configManager from '../../services/ConfigManager.js';
 
 export default class ConfigImportExportController {
-  constructor(configService, storageService, notificationManager) {
-    this.configService = configService;
-    this.storageService = storageService;
+  constructor(notificationManager) {
+    this.configManager = configManager;
     this.notificationManager = notificationManager;
     this.container = null;
   }
@@ -57,8 +57,6 @@ export default class ConfigImportExportController {
     importWarning.innerHTML = `
       <p><strong>⚠️ Warning:</strong> Importing a configuration will replace the current prompt templates and settings. 
       Your custom prompts will not be affected.</p>
-      <p><strong>Important:</strong> Modifying the default structure of the JSON file or renaming critical fields
-      rather than simply adding or modifying parameters may cause unexpected behavior in the extension.</p>
     `;
     
     const fileInputContainer = document.createElement('div');
@@ -151,15 +149,11 @@ export default class ConfigImportExportController {
 
   async handleExport() {
     try {
-      // Get current configuration (either default or overridden)
-      const promptConfig = await this.configService.getConfig('prompt');
-      
-      if (!promptConfig) {
-        throw new Error('Failed to retrieve prompt configuration');
-      }
+      // Get current configuration
+      const config = await this.configManager.getConfig();
       
       // Convert to JSON string with pretty formatting
-      const configJson = JSON.stringify(promptConfig, null, 2);
+      const configJson = JSON.stringify(config, null, 2);
       
       // Create download
       const blob = new Blob([configJson], { type: 'application/json' });
@@ -197,7 +191,7 @@ export default class ConfigImportExportController {
       // Read file
       const fileContent = await this.readFileAsText(file);
       
-      // Parse and validate JSON
+      // Parse JSON
       let importedConfig;
       try {
         importedConfig = JSON.parse(fileContent);
@@ -205,25 +199,13 @@ export default class ConfigImportExportController {
         throw new Error('Invalid JSON file format');
       }
       
-      // Validate configuration structure
-      this.validateConfigStructure(importedConfig);
-      
-      // Get current configuration for merging protected fields
-      const currentConfig = await this.configService.getConfig('prompt');
-      
-      // Merge configurations, preserving protected fields
-      const mergedConfig = this.mergeConfigurations(currentConfig, importedConfig);
-      
-      // Confirm import with detailed warning
-      if (!confirm('WARNING: Importing this configuration will replace your current settings.\n\nThe critical fields will be preserved, but modifying the default structure or renaming fields may cause unexpected behavior.\n\nAre you sure you want to proceed?')) {
+      // Confirm import
+      if (!confirm('WARNING: Importing this configuration will replace your current settings.\n\nAre you sure you want to proceed?')) {
         return;
       }
       
-      // Store the merged configuration as the active override
-      await this.storageService.set({ 'prompt_config_override': mergedConfig }, 'sync');
-      
-      // Reset the configService cache to force reloading the configuration
-      this.configService.clearCache();
+      // Import configuration
+      await this.configManager.importConfig(importedConfig);
       
       this.notificationManager.success('Configuration imported successfully');
       
@@ -239,15 +221,12 @@ export default class ConfigImportExportController {
 
   async handleReset() {
     try {
-      if (!confirm('Are you sure you want to reset to the default configuration? This will remove any imported configuration.')) {
+      if (!confirm('Are you sure you want to reset to the default configuration? This cannot be undone.')) {
         return;
       }
       
-      // Remove the override
-      await this.storageService.remove('prompt_config_override', 'sync');
-      
-      // Reset the configService cache
-      this.configService.clearCache();
+      // Reset configuration
+      await this.configManager.resetConfig();
       
       this.notificationManager.success('Configuration reset to default successfully');
       
@@ -268,121 +247,6 @@ export default class ConfigImportExportController {
       reader.onerror = (error) => reject(error);
       reader.readAsText(file);
     });
-  }
-
-  validateConfigStructure(config) {
-    // Check minimum required structure
-    if (!config.sharedParameters || !config.defaultPrompts) {
-      throw new Error('Invalid configuration format: missing required sections');
-    }
-    
-    // Check for critical shared parameters
-    const requiredParams = ['length', 'style', 'language'];
-    for (const param of requiredParams) {
-      if (!config.sharedParameters[param]) {
-        throw new Error(`Invalid configuration format: missing required parameter '${param}'`);
-      }
-    }
-    
-    // Check for required prompt types
-    const requiredTypes = ['general', 'reddit', 'youtube'];
-    for (const type of requiredTypes) {
-      if (!config.defaultPrompts[type]) {
-        throw new Error(`Invalid configuration format: missing '${type}' prompt template`);
-      }
-      
-      // Each prompt type must have a baseTemplate
-      if (!config.defaultPrompts[type].baseTemplate) {
-        throw new Error(`Invalid configuration format: missing baseTemplate for '${type}'`);
-      }
-      
-      // Each prompt type must have a name
-      if (!config.defaultPrompts[type].name) {
-        throw new Error(`Invalid configuration format: missing name for '${type}'`);
-      }
-    }
-    
-    // Validate protected fields and their structure
-    this.validateProtectedFields(config);
-    
-    return true;
-  }
-
-  validateProtectedFields(config) {
-    // Validate YouTube parameters
-    if (!config.defaultPrompts.youtube.parameters) {
-      throw new Error('Missing parameters object in YouTube prompt configuration');
-    }
-
-    // Check specifically for a parameter named exactly "commentAnalysis"
-    if (!config.defaultPrompts.youtube.parameters.hasOwnProperty('commentAnalysis')) {
-      throw new Error('YouTube config must include a parameter named exactly "commentAnalysis"');
-    }
-
-    // Verify the commentAnalysis parameter has the correct structure
-    const commentAnalysis = config.defaultPrompts.youtube.parameters.commentAnalysis;
-    if (!commentAnalysis.param_name || 
-        !commentAnalysis.values || 
-        !commentAnalysis.values.hasOwnProperty('true') || 
-        !commentAnalysis.values.hasOwnProperty('false')) {
-      throw new Error('The commentAnalysis parameter must have param_name and values with true/false properties');
-    }
-    
-    // Verify the integrity of base templates for each content type
-    const contentTypeKeywords = {
-      'general': ['web content', 'SUMMARY'],
-      'reddit': ['Reddit', 'SUMMARY'],
-      'youtube': ['YouTube', 'SUMMARY']
-    };
-    
-    for (const [type, keywords] of Object.entries(contentTypeKeywords)) {
-      if (config.defaultPrompts[type] && config.defaultPrompts[type].baseTemplate) {
-        const template = config.defaultPrompts[type].baseTemplate;
-        const missingKeywords = keywords.filter(keyword => 
-          !template.toLowerCase().includes(keyword.toLowerCase())
-        );
-        
-        if (missingKeywords.length > 0) {
-          throw new Error(`The baseTemplate for ${type} must contain these keywords: ${missingKeywords.join(', ')}`);
-        }
-      }
-    }
-  }
-
-  mergeConfigurations(currentConfig, importedConfig) {
-    // Create a deep clone of the imported config to avoid modifying the original
-    const mergedConfig = JSON.parse(JSON.stringify(importedConfig));
-    
-    // 1. Make sure YouTube parameters object exists
-    if (!mergedConfig.defaultPrompts.youtube.parameters) {
-      mergedConfig.defaultPrompts.youtube.parameters = {};
-    }
-    
-    // 2. Preserve YouTube commentAnalysis regardless of name
-    let commentAnalysisParam = null;
-    
-    // Find commentAnalysis parameter in current config
-    if (currentConfig.defaultPrompts.youtube?.parameters) {
-      Object.entries(currentConfig.defaultPrompts.youtube.parameters).forEach(([paramName, paramValue]) => {
-        if (paramValue && 
-            paramValue.values && 
-            paramValue.values.true && 
-            typeof paramValue.values.true === 'string' &&
-            paramValue.values.true.includes('[COMMENT ANALYSIS]')) {
-          commentAnalysisParam = {
-            name: paramName,
-            value: paramValue
-          };
-        }
-      });
-    }
-    
-    // Apply the commentAnalysis parameter to merged config
-    if (commentAnalysisParam) {
-      mergedConfig.defaultPrompts.youtube.parameters[commentAnalysisParam.name] = commentAnalysisParam.value;
-    }
-    
-    return mergedConfig;
   }
 
   addStyles() {

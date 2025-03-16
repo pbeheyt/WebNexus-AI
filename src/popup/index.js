@@ -1,7 +1,5 @@
-// popup/index.js - Add QuickPromptEditor initialization
-
+// src/popup/index.js
 import StorageService from './services/StorageService.js';
-import ConfigService from './services/ConfigService.js';
 import TabService from './services/TabService.js';
 import ContentService from './services/ContentService.js';
 import PlatformService from './services/PlatformService.js';
@@ -18,6 +16,8 @@ import StatusManager from './ui/StatusManager.js';
 import SummarizeController from './controllers/SummarizeController.js';
 import MainController from './controllers/MainController.js';
 import { initializeTheme } from './themeManager';
+import configManager from '../services/ConfigManager.js';
+import promptBuilder from '../services/PromptBuilder.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeTheme();
@@ -36,13 +36,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Initialize services
   const storageService = new StorageService();
-  const configService = new ConfigService();
   const tabService = new TabService();
   const contentService = new ContentService(tabService);
   const platformService = new PlatformService(storageService);
-  const defaultPromptPreferencesService = new DefaultPromptPreferencesService(storageService, configService);
+  
+  // Initialize configManager early
+  await configManager.initialize();
+
+  const defaultPromptPreferencesService = new DefaultPromptPreferencesService(
+    storageService,
+    promptBuilder
+  );
+  
   const preferenceService = new PreferenceService(storageService);
-  const promptService = new PromptService(storageService, configService, defaultPromptPreferencesService);
+  
+  const promptService = new PromptService(
+    storageService, 
+    configManager,
+    defaultPromptPreferencesService
+  );
 
   // Initialize UI components
   const contentTypeView = new ContentTypeView(contentTypeDisplay);
@@ -99,6 +111,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     quickPromptEditor
   );
 
+  // Subscribe to config changes
+  const unsubscribeFromConfig = configManager.subscribe(() => {
+    if (mainController && typeof mainController.refreshConfiguration === 'function') {
+      mainController.refreshConfiguration();
+    }
+  });
+
   // Set up event listeners
   summarizeBtn.addEventListener('click', () => mainController.handleSummarize());
   settingsBtn.addEventListener('click', () => mainController.openSettings());
@@ -129,8 +148,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('transitions-enabled');
   }, 100);
 
-  // Set up cleanup when popup closes
+  // Clean up on unload
   window.addEventListener('unload', () => {
+    if (unsubscribeFromConfig) {
+      unsubscribeFromConfig();
+    }
+    
     if (mainController.selectionCheckInterval) {
       clearInterval(mainController.selectionCheckInterval);
     }

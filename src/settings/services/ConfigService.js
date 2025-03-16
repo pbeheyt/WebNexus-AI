@@ -1,16 +1,19 @@
 // src/settings/services/ConfigService.js
+
 export default class ConfigService {
   constructor(storageService) {
     this.storageService = storageService;
     this.platformConfig = null;
     this.promptConfig = null;
     this.overrideConfig = null;
+    this.customizedConfig = null;
   }
 
   clearCache() {
     this.platformConfig = null;
     this.promptConfig = null;
     this.overrideConfig = null;
+    this.customizedConfig = null;
   }
 
   async getConfig(type = 'combined') {
@@ -32,32 +35,73 @@ export default class ConfigService {
         return this.platformConfig;
       } 
       else if (type === 'prompt') {
-        // Check for override config
-        if (!this.overrideConfig) {
+        // Check for customized config first
+        if (this.customizedConfig) {
+          return this.customizedConfig;
+        }
+
+        try {
+          // Import TemplateCustomizationService here to avoid circular dependencies
+          const TemplateCustomizationService = (await import('./TemplateCustomizationService.js')).default;
+          const customizationService = new TemplateCustomizationService(this.storageService, this);
+          
+          // Get base config first
+          let baseConfig;
+          if (this.promptConfig) {
+            baseConfig = this.promptConfig;
+          } else {
+            const configUrl = chrome.runtime.getURL('prompt-config.json');
+            const response = await fetch(configUrl);
+            
+            if (!response.ok) {
+              throw new Error(`Failed to fetch prompt config: ${response.status} ${response.statusText}`);
+            }
+            
+            baseConfig = await response.json();
+            this.promptConfig = baseConfig;
+          }
+          
+          // Get customizations
+          const customizations = await customizationService.getCustomizations();
+          
+          // Merge them
+          this.customizedConfig = customizationService.mergeCustomizationsWithDefaults(baseConfig, customizations);
+          return this.customizedConfig;
+        } catch (error) {
+          console.error('Error loading customized config:', error);
+          
+          // Fall back to override or default config
+          if (this.overrideConfig) {
+            return this.overrideConfig;
+          }
+          
           // Check if there's an override in storage
-          const { prompt_config_override } = await this.storageService.get('prompt_config_override', 'sync') || {};
-          this.overrideConfig = prompt_config_override || null;
-        }
-        
-        // If we have an override config, use it
-        if (this.overrideConfig) {
-          return this.overrideConfig;
-        }
-        
-        // Otherwise use the default config
-        if (this.promptConfig) {
+          if (!this.overrideConfig) {
+            // Check if there's an override in storage
+            const { prompt_config_override } = await this.storageService.get('prompt_config_override', 'sync') || {};
+            this.overrideConfig = prompt_config_override || null;
+          }
+          
+          // If we have an override config, use it
+          if (this.overrideConfig) {
+            return this.overrideConfig;
+          }
+          
+          // Otherwise use the default config
+          if (this.promptConfig) {
+            return this.promptConfig;
+          }
+          
+          const configUrl = chrome.runtime.getURL('prompt-config.json');
+          const response = await fetch(configUrl);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch prompt config: ${response.status} ${response.statusText}`);
+          }
+          
+          this.promptConfig = await response.json();
           return this.promptConfig;
         }
-        
-        const configUrl = chrome.runtime.getURL('prompt-config.json');
-        const response = await fetch(configUrl);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch prompt config: ${response.status} ${response.statusText}`);
-        }
-        
-        this.promptConfig = await response.json();
-        return this.promptConfig;
       }
       else {
         // For combined config

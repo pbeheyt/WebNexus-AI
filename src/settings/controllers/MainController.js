@@ -1,4 +1,5 @@
 // src/settings/controllers/MainController.js
+
 import { TABS } from '../utils/constants.js';
 
 export default class MainController {
@@ -8,7 +9,7 @@ export default class MainController {
     promptForm,
     promptDetail,
     settingsForm,
-    configImportExportController,  // Added new controller
+    templateCustomizationController,  // New controller
     promptService,
     contentTypeService,
     notificationManager,
@@ -19,7 +20,7 @@ export default class MainController {
     this.promptForm = promptForm;
     this.promptDetail = promptDetail;
     this.settingsForm = settingsForm;
-    this.configImportExportController = configImportExportController;  // Added new controller
+    this.templateCustomizationController = templateCustomizationController;
     this.promptService = promptService;
     this.contentTypeService = contentTypeService;
     this.notificationManager = notificationManager;
@@ -41,10 +42,10 @@ export default class MainController {
       this.promptDetail.initialize();
       this.settingsForm.initialize();
       
-      // Initialize import/export controller
-      const importExportContainer = document.getElementById('import-export-container');
-      if (importExportContainer) {
-        this.configImportExportController.initialize(importExportContainer);
+      // Initialize template customization tab
+      const templateCustomizationContainer = document.getElementById('template-customization-container');
+      if (templateCustomizationContainer) {
+        await this.templateCustomizationController.initialize(templateCustomizationContainer);
       }
       
       // Set up back button
@@ -58,6 +59,5 @@ export default class MainController {
 
   handleTabChange(tabId) {
     // We can react to tab changes here if needed
-    // console.log(`Tab changed to: ${tabId}`);
   }
 }

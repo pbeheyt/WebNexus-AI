@@ -2,80 +2,49 @@
 
 /**
  * Cross-context logging utility for Chrome extensions
- * Works in background service workers, content scripts, and popups
+ * Console-only implementation with backward compatibility
  */
 
-const LOG_STORAGE_KEY = 'extension_debug_logs';
-const MAX_LOGS = 500; // Maximum number of logs to keep
-
 /**
- * Log a message to storage and console
+ * Log a message to console
  * @param {string} context - The context (background, content, popup)
  * @param {string} level - Log level (info, warn, error)
  * @param {string} message - The message to log
  * @param {any} data - Optional data to include
  */
-async function log(context, level, message, data = null) {
-  // Always log to console
+function log(context, level, message, data = null) {
+  // Map level to console method
   const consoleMethod = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
+  
+  // Format prefix with context
   const prefix = `[${context}]`;
   
+  // Log to console with or without data
   if (data !== null) {
     console[consoleMethod](prefix, message, data);
   } else {
     console[consoleMethod](prefix, message);
   }
-  
-  try {
-    // Create log entry
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      context,
-      level,
-      message,
-      data: data !== null ? JSON.stringify(data) : null
-    };
-    
-    // Get existing logs
-    const { [LOG_STORAGE_KEY]: existingLogs = [] } = await chrome.storage.local.get(LOG_STORAGE_KEY);
-    
-    // Add new log and limit size
-    const updatedLogs = [logEntry, ...existingLogs].slice(0, MAX_LOGS);
-    
-    // Save to storage
-    await chrome.storage.local.set({ [LOG_STORAGE_KEY]: updatedLogs });
-  } catch (error) {
-    // If storage fails, at least we logged to console
-    console.error('[Logger] Failed to save log to storage:', error);
-  }
 }
 
 /**
- * Get all logs from storage
- * @returns {Promise<Array>} Array of log entries
+ * Stub function for backward compatibility
+ * Returns empty array since we're not storing logs
+ * @returns {Promise<Array>} Empty array
  */
 async function getLogs() {
-  try {
-    const { [LOG_STORAGE_KEY]: logs = [] } = await chrome.storage.local.get(LOG_STORAGE_KEY);
-    return logs;
-  } catch (error) {
-    console.error('[Logger] Failed to retrieve logs:', error);
-    return [];
-  }
+  console.log('[Logger] getLogs called - logs are not being stored in this version');
+  return [];
 }
 
 /**
- * Clear all logs from storage
+ * Stub function for backward compatibility
  */
 async function clearLogs() {
-  try {
-    await chrome.storage.local.remove(LOG_STORAGE_KEY);
-  } catch (error) {
-    console.error('[Logger] Failed to clear logs:', error);
-  }
+  console.log('[Logger] clearLogs called - logs are not being stored in this version');
 }
 
-// Convenience methods
+// Maintain the exact same interface for backward compatibility
 const logger = {
   background: {
     info: (message, data) => log('background', 'info', message, data),
@@ -92,10 +61,10 @@ const logger = {
     warn: (message, data) => log('popup', 'warn', message, data),
     error: (message, data) => log('popup', 'error', message, data)
   },
-  claude: {
-    info: (message, data) => log('claude', 'info', message, data),
-    warn: (message, data) => log('claude', 'warn', message, data),
-    error: (message, data) => log('claude', 'error', message, data)
+  service: {
+    info: (message, data) => log('service', 'info', message, data),
+    warn: (message, data) => log('service', 'warn', message, data),
+    error: (message, data) => log('service', 'error', message, data)
   },
   getLogs,
   clearLogs
