@@ -237,7 +237,8 @@ button.btn-summarize:disabled {
    Platform Selection
    ====================================== */
 .platform-options {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   margin-bottom: 8px;
 }
@@ -282,17 +283,9 @@ button.btn-summarize:disabled {
 }
 
 .platform-name {
-  font-size: 11px;
+  font-size: 10px;
   text-align: center;
   font-weight: 500;
-}
-
-.selected-indicator {
-  height: 5px;
-  width: 5px;
-  border-radius: 50%;
-  background-color: var(--color-primary);
-  margin-top: 3px;
 }
 
 /* ======================================
