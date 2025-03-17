@@ -37,13 +37,7 @@ export default class PromptDetail {
     title.className = 'prompt-detail-title';
     title.textContent = prompt.name;
     
-    const badges = document.createElement('div');
-    badges.innerHTML = `
-      <span class="badge badge-custom">Custom</span>
-    `;
-    
     header.appendChild(title);
-    header.appendChild(badges);
     
     const meta = document.createElement('div');
     meta.className = 'prompt-detail-meta';
@@ -60,7 +54,7 @@ export default class PromptDetail {
     const actions = document.createElement('div');
     actions.className = 'prompt-detail-actions';
     
-    // Only show edit/delete buttons (removed "Set as Preferred" button)
+    // Only show edit/delete buttons
     const editBtn = document.createElement('button');
     editBtn.className = 'btn';
     editBtn.textContent = 'Edit';
@@ -83,8 +77,6 @@ export default class PromptDetail {
     // Add to container
     this.container.appendChild(detailView);
   }
-
-  // Removed handleSetPreferred method since it's no longer needed
 
   handleEdit(data) {
     this.eventBus.publish('prompt:edit', data);
