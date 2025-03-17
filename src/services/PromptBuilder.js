@@ -110,13 +110,12 @@ class PromptBuilder {
         order: param.order || 0
       }));
     
-    // Combine parameters
-    let allParams = [...contentParams, ...sharedParams];
+    // Sort each set of parameters internally
+    contentParams.sort((a, b) => a.order - b.order);
+    sharedParams.sort((a, b) => a.order - b.order);
     
-    // Sort by order
-    allParams.sort((a, b) => a.order - b.order);
-    
-    return allParams;
+    // Combine with content-specific parameters first
+    return [...contentParams, ...sharedParams];
   }
 
   /**
