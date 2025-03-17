@@ -86,7 +86,7 @@ export default class ShortcutsTab {
       
       const actionCell = document.createElement('td');
       actionCell.textContent = command.description || 
-        (command.name === '_execute_action' ? 'Open extension popup' : command.name);
+        (command.name === '_execute_action' ? 'Activate the extension' : command.name);
       
       const shortcutCell = document.createElement('td');
       shortcutCell.textContent = command.shortcut || 'Not set';

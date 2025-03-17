@@ -40,7 +40,7 @@
       "suggested_key": {
         "default": "Ctrl+Shift+A"
       },
-      "description": "Open extension popup"
+      "description": "Activate the extension"
     },
     "summarize-page": {
       "suggested_key": {

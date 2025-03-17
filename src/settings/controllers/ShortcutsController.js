@@ -129,7 +129,7 @@ export default class ShortcutsController {
         // Return mock data for testing or when API is unavailable
         return [
           { name: 'summarize-page', description: 'Summarize current page', shortcut: 'Not set' },
-          { name: 'open-popup', description: 'Open extension popup', shortcut: 'Not set' }
+          { name: 'open-popup', description: 'Activate the extension', shortcut: 'Not set' }
         ];
       }
     } catch (error) {
