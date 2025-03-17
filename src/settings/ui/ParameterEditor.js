@@ -111,32 +111,26 @@ export default class ParameterEditor {
       nameInput.dataset.contentType = contentType;
     }
   
-    // Create update button (initially hidden)
-    const nameUpdateBtn = document.createElement('button');
-    nameUpdateBtn.className = 'btn btn-sm parameter-update-btn';
-    nameUpdateBtn.textContent = 'Update';
-    nameUpdateBtn.style.marginLeft = '8px';
-    nameUpdateBtn.style.display = 'none'; // Hide initially
-    nameUpdateBtn.addEventListener('click', () => {
+    // Handle name changes via Enter key
+    nameInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        const newName = nameInput.value.trim();
+        if (newName && newName !== parameter.param_name) {
+          this.handleNameChange(parameter, paramType, newName, contentType);
+        }
+      }
+    });
+    
+    // Also handle name changes on input blur
+    nameInput.addEventListener('blur', () => {
       const newName = nameInput.value.trim();
       if (newName && newName !== parameter.param_name) {
         this.handleNameChange(parameter, paramType, newName, contentType);
-        // Provide visual feedback
-        nameUpdateBtn.textContent = 'Updated ✓';
-        setTimeout(() => { nameUpdateBtn.textContent = 'Update'; }, 1500);
-      }
-    });
-  
-    // Enter key to submit
-    nameInput.addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') {
-        nameUpdateBtn.click();
       }
     });
   
     nameWrapper.appendChild(nameLabel);
     nameWrapper.appendChild(nameInput);
-    nameWrapper.appendChild(nameUpdateBtn);
   
     // Add parameter type badge (always visible)
     const typeBadge = document.createElement('span');
@@ -168,12 +162,6 @@ export default class ParameterEditor {
       const valuesSection = editor.querySelector('.parameter-values');
       const actionsSection = editor.querySelector('.parameter-actions');
       
-      // Show/hide update button based on expanded state
-      const updateBtn = editor.querySelector('.parameter-update-btn');
-      if (updateBtn) {
-        updateBtn.style.display = newState ? 'inline-block' : 'none';
-      }
-  
       if (valuesSection) {
         valuesSection.style.display = newState ? 'block' : 'none';
       }
