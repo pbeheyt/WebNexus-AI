@@ -29,6 +29,7 @@ export default class TemplateCustomizationTab {
     this.handleParameterValueDeleted = this.handleParameterValueDeleted.bind(this);
     this.handleParameterReordered = this.handleParameterReordered.bind(this);
     this.handleParameterValueReordered = this.handleParameterValueReordered.bind(this);
+    this.handleParameterTypeChanged = this.handleParameterTypeChanged.bind(this);
     
     // Subscribe to events
     this.eventBus.subscribe('parameter:updated', this.handleParameterUpdated);
@@ -38,6 +39,7 @@ export default class TemplateCustomizationTab {
     this.eventBus.subscribe('parameter:value:deleted', this.handleParameterValueDeleted);
     this.eventBus.subscribe('parameter:reordered', this.handleParameterReordered);
     this.eventBus.subscribe('parameter:value:reordered', this.handleParameterValueReordered);
+    this.eventBus.subscribe('parameter:type:changed', this.handleParameterTypeChanged);
     
     // Custom event listener for expansion toggling
     this.eventBus.subscribe('parameter:toggle:expansion', this.handleParameterExpansionToggle.bind(this));
@@ -188,9 +190,14 @@ export default class TemplateCustomizationTab {
     toggleBtn.title = 'Hide Details';
     
     // Show sections
+    const typeSelector = editor.querySelector('.parameter-type-selector');
     const valuesSection = editor.querySelector('.parameter-values');
     const actionsSection = editor.querySelector('.parameter-actions');
     
+    if (typeSelector) {
+      typeSelector.style.display = 'block';
+    }
+
     if (valuesSection) {
       valuesSection.style.display = 'block';
     }
@@ -245,12 +252,45 @@ export default class TemplateCustomizationTab {
             <input type="text" id="parameter-name" placeholder="Enter parameter name">
           </div>
           <div class="form-group">
-            <label for="parameter-default-key">Default Value Key:</label>
-            <input type="text" id="parameter-default-key" placeholder="e.g., default, basic">
+            <label for="parameter-type">Parameter Type:</label>
+            <select id="parameter-type">
+              <option value="list">List (Multiple Options)</option>
+              <option value="checkbox">Checkbox (True/False)</option>
+              <option value="single">Single Value (Always Present)</option>
+            </select>
+            <p class="help-text">Choose the type of parameter you want to create.</p>
           </div>
-          <div class="form-group">
-            <label for="parameter-default-value">Default Value:</label>
-            <textarea id="parameter-default-value" placeholder="Enter the default value content"></textarea>
+          
+          <!-- List Parameter Fields -->
+          <div id="list-param-fields">
+            <div class="form-group">
+              <label for="list-default-key">Default Option Key:</label>
+              <input type="text" id="list-default-key" placeholder="e.g., default, normal">
+            </div>
+            <div class="form-group">
+              <label for="list-default-value">Default Option Value:</label>
+              <textarea id="list-default-value" placeholder="Enter the default option content"></textarea>
+            </div>
+          </div>
+          
+          <!-- Checkbox Parameter Fields -->
+          <div id="checkbox-param-fields" style="display: none;">
+            <div class="form-group">
+              <label for="checkbox-true-value">When Checked (True):</label>
+              <textarea id="checkbox-true-value" placeholder="Enter content when option is checked"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="checkbox-false-value">When Unchecked (False):</label>
+              <textarea id="checkbox-false-value" placeholder="Enter content when option is unchecked (usually empty)"></textarea>
+            </div>
+          </div>
+          
+          <!-- Single Value Parameter Fields -->
+          <div id="single-param-fields" style="display: none;">
+            <div class="form-group">
+              <label for="single-value">Parameter Value:</label>
+              <textarea id="single-value" placeholder="Enter the parameter value (always included in prompt)"></textarea>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -267,6 +307,20 @@ export default class TemplateCustomizationTab {
     const cancelBtn = modal.querySelector('.cancel-btn');
     const addBtn = modal.querySelector('.add-btn');
     
+    // Toggle field visibility based on selected type
+    const typeSelect = modal.querySelector('#parameter-type');
+    const listFields = modal.querySelector('#list-param-fields');
+    const checkboxFields = modal.querySelector('#checkbox-param-fields');
+    const singleFields = modal.querySelector('#single-param-fields');
+    
+    typeSelect.addEventListener('change', () => {
+      const paramType = typeSelect.value;
+      
+      listFields.style.display = paramType === 'list' ? 'block' : 'none';
+      checkboxFields.style.display = paramType === 'checkbox' ? 'block' : 'none';
+      singleFields.style.display = paramType === 'single' ? 'block' : 'none';
+    });
+    
     const closeModal = () => {
       document.body.removeChild(modal);
     };
@@ -276,20 +330,60 @@ export default class TemplateCustomizationTab {
     
     addBtn.addEventListener('click', async () => {
       const name = modal.querySelector('#parameter-name').value.trim();
-      const valueKey = modal.querySelector('#parameter-default-key').value.trim();
-      const value = modal.querySelector('#parameter-default-value').value.trim();
+      const type = typeSelect.value;
       
-      if (!name || !valueKey || !value) {
-        this.notificationManager.show('All fields are required', 'error');
+      if (!name) {
+        this.notificationManager.error('Parameter name is required');
         return;
       }
       
       try {
-        // Create new parameter
+        // Create parameter data based on type
         const paramData = {
           param_name: name,
-          values: { [valueKey]: value }
+          type: type
         };
+        
+        // Add type-specific data
+        switch (type) {
+          case 'list':
+            const listKey = modal.querySelector('#list-default-key').value.trim();
+            const listValue = modal.querySelector('#list-default-value').value.trim();
+            
+            if (!listKey || !listValue) {
+              this.notificationManager.error('Default option key and value are required for list parameters');
+              return;
+            }
+            
+            paramData.values = { [listKey]: listValue };
+            break;
+            
+          case 'checkbox':
+            const trueValue = modal.querySelector('#checkbox-true-value').value.trim();
+            const falseValue = modal.querySelector('#checkbox-false-value').value.trim();
+            
+            if (!trueValue) {
+              this.notificationManager.error('True value is required for checkbox parameters');
+              return;
+            }
+            
+            paramData.values = {
+              true: trueValue,
+              false: falseValue
+            };
+            break;
+            
+          case 'single':
+            const singleValue = modal.querySelector('#single-value').value.trim();
+            
+            if (!singleValue) {
+              this.notificationManager.error('Value is required for single value parameters');
+              return;
+            }
+            
+            paramData.value = singleValue;
+            break;
+        }
         
         // Add parameter to appropriate section
         const contentType = section === 'shared' ? null : section;
@@ -333,6 +427,11 @@ export default class TemplateCustomizationTab {
     } else {
       this.expandedParameters.delete(parameterId);
     }
+  }
+  
+  // New handler for parameter type change
+  handleParameterTypeChanged() {
+    this.loadParameters();
   }
   
   // Event handlers for parameters - preserve expanded state

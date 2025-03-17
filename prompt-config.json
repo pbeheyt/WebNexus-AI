@@ -2,6 +2,7 @@
   "sharedParameters": {
     "length": {
       "param_name": "Length",
+      "type": "list",
       "values": {
         "concise": "[SUMMARY LENGTH] : CONCISE (CRITICAL DIRECTIVE : 150-300 words summary output)\nBrief summary with essential points and minimal supporting details for quick reading.",
         "normal": "[SUMMARY LENGTH] : NORMAL (CRITICAL DIRECTIVE : 400-700 words)\nBalanced summary with appropriate depth, important details, and context while maintaining readability.",
@@ -11,6 +12,7 @@
     },
     "style": {
       "param_name": "Style",
+      "type": "list",
       "values": {
         "adaptive": "[SUMMARY STYLE] : ADAPTIVE\nDynamically structure summary based on content type: narrative flow for stories/experiences, hierarchical organization for informational content, chronological structure for processes/tutorials, and comparative format for discussions. Begin with content type identification followed by optimized summary approach.",
         "narrative": "[SUMMARY STYLE] : NARRATIVE\nPresent content as an engaging story with introduction, logical progression of key points, and conclusion that synthesizes main insights. Adapt flow to content type, maintaining narrative cohesion throughout.",
@@ -24,6 +26,7 @@
     },
     "language": {
       "param_name": "Language",
+      "type": "list",
       "values": {
         "english": "[SUMMARY LANGUAGE] : ENGLISH\nWrite in English",
         "french": "[SUMMARY LANGUAGE] : FRENCH\nWrite in French (en Français)",
@@ -33,6 +36,7 @@
     },
     "additionalContext": {
       "param_name": "Additional Context",
+      "type": "checkbox",
       "values": {
         "true": "[ADDITIONAL CONTEXT]\nAfter completing your summary, add a section with additional background information that helps understand this content's significance. Scale depth with length parameter.",
         "false": ""
@@ -40,10 +44,16 @@
     },
     "factCheck": {
       "param_name": "Fact Check",
+      "type": "checkbox",
       "values": {
         "true": "[FACT CHECK]\nAfter completing your summary, fact-check the information provided in the post and comments. Identify any misinformation or inaccuracies and provide corrections or clarifications.",
         "false": ""
       }
+    },
+    "includeKeyPhrases": {
+      "param_name": "Include Key Phrases",
+      "type": "single",
+      "value": "[KEY PHRASES]\nHighlight important phrases and quotes from the source material using the format \"Key Phrase: [phrase]\"."
     }
   },
   "defaultPrompts": {
@@ -53,9 +63,8 @@
       "parameters": {
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
-          "values": {
-            "default": ""
-          }
+          "type": "single",
+          "value": ""
         }
       }
     },
@@ -65,9 +74,8 @@
       "parameters": {
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
-          "values": {
-            "default": "[CRITICAL INSTRUCTION]\nALWAYS format user mentions as: [u/username](https://www.reddit.com/r/subreddit/comments/postid/comment/commentid"
-          }
+          "type": "single",
+          "value": "[CRITICAL INSTRUCTION]\nALWAYS format user mentions as: [u/username](https://www.reddit.com/r/subreddit/comments/postid/comment/commentid"
         }
       }
     },
@@ -77,6 +85,7 @@
       "parameters": {
         "commentAnalysis": {
           "param_name": "Comment Analysis",
+          "type": "checkbox",
           "values": {
             "true": "[COMMENT ANALYSIS]\nAfter completing your summary, include an analysis of comment section identifying major themes with example quotes using format: \"[comment]\" - Username (X likes). Scale depth with length parameter.",
             "false": ""
@@ -84,9 +93,8 @@
         },
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
-          "values": {
-            "default": ""
-          }
+          "type": "single",
+          "value": ""
         }
       }
     },
@@ -96,6 +104,7 @@
       "parameters": {
         "tableOfContents": {
           "param_name": "Table of Contents",
+          "type": "checkbox",
           "values": {
             "true": "[TOC ANALYSIS]\nAfter completing your summary, include a structured outline of the document's organization and key sections. Scale depth with length parameter.",
             "false": ""
@@ -103,6 +112,7 @@
         },
         "visualsAnalysis": {
           "param_name": "Visuals Analysis",
+          "type": "checkbox",
           "values": {
             "true": "[VISUALS ANALYSIS]\nInclude analysis of key figures, charts, tables, and diagrams with their significance to the main content.",
             "false": ""
@@ -110,9 +120,8 @@
         },
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
-          "values": {
-            "default": "[PDF PROCESSING INSTRUCTION]\nPrioritize main body text over headers, footers, and page numbers. Maintain hierarchical structure of headings and sections."
-          }
+          "type": "single",
+          "value": "[PDF PROCESSING INSTRUCTION]\nPrioritize main body text over headers, footers, and page numbers. Maintain hierarchical structure of headings and sections."
         }
       }
     },
@@ -122,6 +131,7 @@
       "parameters": {
         "contextAwareness": {
           "param_name": "Context Awareness",
+          "type": "checkbox",
           "values": {
             "true": "[CONTEXT AWARENESS]\nAnalyze this text considering it may be an excerpt from a larger document. Note potential missing context where relevant.",
             "false": ""
@@ -129,9 +139,8 @@
         },
         "typeSpecificInstructions": {
           "param_name": "Type Specific Instructions",
-          "values": {
-            "default": "[SELECTED TEXT INSTRUCTION]\nFocus analysis specifically on the provided text fragment without assumptions about surrounding content."
-          }
+          "type": "single",
+          "value": "[SELECTED TEXT INSTRUCTION]\nFocus analysis specifically on the provided text fragment without assumptions about surrounding content."
         }
       }
     }

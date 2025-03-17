@@ -154,9 +154,21 @@ class ConfigManager {
       return this._ensureParameterOrder({
         sharedParameters: {},
         defaultPrompts: {
-          general: { name: 'Web Content', baseTemplate: 'Analyze this web content' },
-          reddit: { name: 'Reddit Post', baseTemplate: 'Analyze this Reddit post' },
-          youtube: { name: 'YouTube Video', baseTemplate: 'Analyze this YouTube video' }
+          general: { 
+            name: 'Web Content', 
+            baseTemplate: 'Analyze this web content',
+            parameters: {} 
+          },
+          reddit: { 
+            name: 'Reddit Post', 
+            baseTemplate: 'Analyze this Reddit post',
+            parameters: {} 
+          },
+          youtube: { 
+            name: 'YouTube Video', 
+            baseTemplate: 'Analyze this YouTube video',
+            parameters: {} 
+          }
         }
       });
     }
@@ -218,14 +230,10 @@ class ConfigManager {
     // Validate the imported config
     this._validateConfig(importedConfig);
     
-    // Merge with current config to preserve critical fields
-    const currentConfig = await this.getConfig();
-    const mergedConfig = this._mergeConfigs(currentConfig, importedConfig);
-    
     // Ensure parameter order is set
-    const orderedConfig = this._ensureParameterOrder(mergedConfig);
+    const orderedConfig = this._ensureParameterOrder(importedConfig);
     
-    // Save the merged config
+    // Save the config
     await this._saveConfig(orderedConfig);
     
     return orderedConfig;
@@ -253,31 +261,44 @@ class ConfigManager {
         throw new Error(`Invalid configuration: missing baseTemplate for '${type}'`);
       }
     }
+    
+    // Validate parameter types
+    const validateParameters = (parameters) => {
+      Object.entries(parameters).forEach(([key, param]) => {
+        if (param.type) {
+          if (!['list', 'checkbox', 'single'].includes(param.type)) {
+            throw new Error(`Invalid parameter type for '${key}': ${param.type}`);
+          }
+          
+          // Type-specific validation
+          if (param.type === 'list' && (!param.values || Object.keys(param.values).length === 0)) {
+            throw new Error(`List parameter '${key}' must have at least one value`);
+          }
+          
+          if (param.type === 'checkbox' && (!param.values?.true || !param.values?.false)) {
+            throw new Error(`Checkbox parameter '${key}' must have true and false values`);
+          }
+          
+          if (param.type === 'single' && param.value === undefined) {
+            throw new Error(`Single parameter '${key}' must have a value property`);
+          }
+        }
+      });
+    };
+    
+    // Validate shared parameters
+    validateParameters(config.sharedParameters);
+    
+    // Validate content-type parameters
+    Object.entries(config.defaultPrompts).forEach(([contentType, template]) => {
+      if (template.parameters) {
+        validateParameters(template.parameters);
+      }
+    });
   }
 
   /**
-   * Merge configurations, preserving critical fields
-   * @private
-   * @param {Object} currentConfig - Current configuration
-   * @param {Object} importedConfig - Imported configuration
-   * @returns {Object} Merged configuration
-   */
-  _mergeConfigs(currentConfig, importedConfig) {
-    // Deep clone to avoid modifying the original
-    const merged = JSON.parse(JSON.stringify(importedConfig));
-    
-    // Preserve YouTube commentAnalysis parameter if it exists
-    if (currentConfig.defaultPrompts?.youtube?.parameters?.commentAnalysis &&
-        merged.defaultPrompts?.youtube?.parameters) {
-      merged.defaultPrompts.youtube.parameters.commentAnalysis = 
-        currentConfig.defaultPrompts.youtube.parameters.commentAnalysis;
-    }
-    
-    return merged;
-  }
-
-  /**
-   * Ensure all parameters have an order property
+   * Ensure all parameters have an order property and proper type
    * @private
    * @param {Object} config - Configuration to process
    * @returns {Object} Configuration with order properties
@@ -292,6 +313,19 @@ class ConfigManager {
         if (param.order === undefined) {
           newConfig.sharedParameters[key].order = index;
         }
+        
+        // Ensure parameter has a type
+        if (!param.type) {
+          // Infer type from structure
+          if (param.value !== undefined) {
+            newConfig.sharedParameters[key].type = 'single';
+          } else if (param.values && Object.keys(param.values).length === 2 && 
+                    'true' in param.values && 'false' in param.values) {
+            newConfig.sharedParameters[key].type = 'checkbox';
+          } else {
+            newConfig.sharedParameters[key].type = 'list';
+          }
+        }
       });
     }
     
@@ -302,6 +336,19 @@ class ConfigManager {
           Object.entries(typeConfig.parameters).forEach(([key, param], index) => {
             if (param.order === undefined) {
               newConfig.defaultPrompts[contentType].parameters[key].order = index;
+            }
+            
+            // Ensure parameter has a type
+            if (!param.type) {
+              // Infer type from structure
+              if (param.value !== undefined) {
+                newConfig.defaultPrompts[contentType].parameters[key].type = 'single';
+              } else if (param.values && Object.keys(param.values).length === 2 && 
+                        'true' in param.values && 'false' in param.values) {
+                newConfig.defaultPrompts[contentType].parameters[key].type = 'checkbox';
+              } else {
+                newConfig.defaultPrompts[contentType].parameters[key].type = 'list';
+              }
             }
           });
         }

@@ -42,9 +42,10 @@ class PromptBuilder {
     // Start with the base template
     let prompt = template.baseTemplate;
     
-    // Add type-specific instructions if available
-    if (template.parameters?.typeSpecificInstructions?.values?.default) {
-      prompt += '\n' + template.parameters.typeSpecificInstructions.values.default;
+    // Add type-specific instructions if available (now as a single-value parameter)
+    if (template.parameters?.typeSpecificInstructions?.type === 'single' && 
+        template.parameters?.typeSpecificInstructions?.value) {
+      prompt += '\n' + template.parameters.typeSpecificInstructions.value;
       logger.service.info('Added type-specific instructions to prompt');
     }
     
@@ -54,6 +55,7 @@ class PromptBuilder {
       const userValue = preferences[paramKey];
       logger.service.info(`Processing shared parameter: ${paramKey}`, {
         paramKey,
+        paramType: paramConfig.type,
         userValue: userValue !== undefined ? (typeof userValue === 'boolean' ? userValue.toString() : userValue) : 'undefined'
       });
       
@@ -67,10 +69,10 @@ class PromptBuilder {
       }
     }
     
-    // Process content-specific parameters (except typeSpecificInstructions)
+    // Process content-specific parameters
     if (template.parameters) {
       const specificParamKeys = Object.keys(template.parameters).filter(
-        k => k !== 'typeSpecificInstructions' && !(k === 'commentAnalysis' && contentType !== 'youtube')
+        k => k !== 'typeSpecificInstructions'
       );
       
       logger.service.info(`Processing ${specificParamKeys.length} content-specific parameters`);
@@ -81,14 +83,10 @@ class PromptBuilder {
           continue;
         }
         
-        // Skip commentAnalysis for non-YouTube content
-        if (paramKey === 'commentAnalysis' && contentType !== 'youtube') {
-          continue;
-        }
-        
         const userValue = preferences[paramKey];
         logger.service.info(`Processing content-specific parameter: ${paramKey}`, {
           paramKey,
+          paramType: paramConfig.type,
           userValue: userValue !== undefined ? (typeof userValue === 'boolean' ? userValue.toString() : userValue) : 'undefined'
         });
         
@@ -112,7 +110,7 @@ class PromptBuilder {
   }
 
   /**
-   * Append parameter value to prompt text
+   * Append parameter value to prompt text based on parameter type
    * @private
    * @param {string} prompt - Current prompt text
    * @param {string|boolean} userValue - User preference value
@@ -121,33 +119,49 @@ class PromptBuilder {
    * @returns {string} Updated prompt text
    */
   _appendParameterValue(prompt, userValue, paramConfig, paramKey) {
-    // Handle boolean parameters (true/false)
-    if (typeof userValue === 'boolean') {
-      if (userValue === true && paramConfig.values?.true) {
-        logger.service.info(`Appending boolean parameter ${paramKey}=true`);
-        return prompt + '\n' + paramConfig.values.true;
-      }
-      logger.service.info(`Boolean parameter ${paramKey}=${userValue} not appended`);
-      return prompt;
-    }
+    // Handle based on parameter type
+    const paramType = paramConfig.type || 'list';
     
-    // Handle regular parameters with string values
-    if (userValue && paramConfig.values?.[userValue]) {
-      logger.service.info(`Appending value for parameter ${paramKey}=${userValue}`);
-      return prompt + '\n' + paramConfig.values[userValue];
+    switch (paramType) {
+      case 'single':
+        // Single value parameters are always included
+        logger.service.info(`Appending single value parameter ${paramKey}`);
+        return prompt + '\n' + paramConfig.value;
+      
+      case 'checkbox':
+        // Checkbox parameters (true/false)
+        if (typeof userValue === 'boolean') {
+          if (userValue === true && paramConfig.values?.true) {
+            logger.service.info(`Appending checkbox parameter ${paramKey}=true`);
+            return prompt + '\n' + paramConfig.values.true;
+          }
+          logger.service.info(`Checkbox parameter ${paramKey}=${userValue} not appended (false value)`);
+          return prompt;
+        }
+        // Default to false if not explicitly set
+        logger.service.info(`Checkbox parameter ${paramKey} defaulting to false`);
+        return prompt;
+      
+      case 'list':
+      default:
+        // List parameters (multiple options)
+        if (userValue && paramConfig.values?.[userValue]) {
+          logger.service.info(`Appending list parameter ${paramKey}=${userValue}`);
+          return prompt + '\n' + paramConfig.values[userValue];
+        }
+        
+        // Default to first value if no preference specified
+        const firstValue = Object.keys(paramConfig.values || {})[0];
+        if (firstValue && paramConfig.values[firstValue]) {
+          logger.service.info(`Using default value for list parameter ${paramKey}=${firstValue}`, {
+            reason: userValue ? 'Value not found in config' : 'No user preference specified'
+          });
+          return prompt + '\n' + paramConfig.values[firstValue];
+        }
+        
+        logger.service.warn(`No valid value found for parameter ${paramKey}`);
+        return prompt;
     }
-    
-    // Default to first value if no preference specified
-    const firstValue = Object.keys(paramConfig.values || {})[0];
-    if (firstValue && paramConfig.values[firstValue]) {
-      logger.service.info(`Using default value for parameter ${paramKey}=${firstValue}`, {
-        reason: userValue ? 'Value not found in config' : 'No user preference specified'
-      });
-      return prompt + '\n' + paramConfig.values[firstValue];
-    }
-    
-    logger.service.warn(`No valid value found for parameter ${paramKey}`);
-    return prompt;
   }
 
   /**
@@ -201,11 +215,8 @@ class PromptBuilder {
       orderedParams[entry.key] = entry.param;
     });
     
-    // Remove non-configurable parameters
+    // Remove non-configurable parameters (typeSpecificInstructions is single-value)
     delete orderedParams.typeSpecificInstructions;
-    if (contentType !== 'youtube') {
-      delete orderedParams.commentAnalysis;
-    }
     
     logger.service.info(`Final parameter options count for ${contentType}: ${Object.keys(orderedParams).length}`);
     return orderedParams;
@@ -221,23 +232,34 @@ class PromptBuilder {
     
     const paramOptions = await this.getParameterOptions(contentType);
     
-    // Use first value of each parameter as default
+    // Create defaults based on parameter type
     const defaults = {};
     for (const [paramKey, paramConfig] of Object.entries(paramOptions)) {
-      // For boolean parameters
-      if (paramConfig.values && 
-          Object.keys(paramConfig.values).length === 2 &&
-          'true' in paramConfig.values && 'false' in paramConfig.values) {
-        defaults[paramKey] = false; // Default to false for boolean params
-        logger.service.info(`Setting default for boolean parameter ${paramKey}=false`);
-      } 
-      // For regular parameters
-      else if (paramConfig.values && Object.keys(paramConfig.values).length > 0) {
-        const defaultKey = Object.keys(paramConfig.values)[0];
-        defaults[paramKey] = defaultKey;
-        logger.service.info(`Setting default for parameter ${paramKey}=${defaultKey}`);
-      } else {
-        logger.service.warn(`No default value available for parameter ${paramKey}`);
+      const paramType = paramConfig.type || 'list';
+      
+      switch (paramType) {
+        case 'single':
+          // Single value parameters don't need preferences as they're always included
+          logger.service.info(`Single value parameter ${paramKey} - no preference needed`);
+          break;
+          
+        case 'checkbox':
+          // Default checkbox parameters to false
+          defaults[paramKey] = false;
+          logger.service.info(`Setting default for checkbox parameter ${paramKey}=false`);
+          break;
+          
+        case 'list':
+        default:
+          // For list parameters, use first value as default
+          if (paramConfig.values && Object.keys(paramConfig.values).length > 0) {
+            const defaultKey = Object.keys(paramConfig.values)[0];
+            defaults[paramKey] = defaultKey;
+            logger.service.info(`Setting default for list parameter ${paramKey}=${defaultKey}`);
+          } else {
+            logger.service.warn(`No default value available for list parameter ${paramKey}`);
+          }
+          break;
       }
     }
     
