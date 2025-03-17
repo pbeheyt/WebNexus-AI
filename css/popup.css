@@ -1,26 +1,23 @@
 /* Quick Prompt Styles */
 .quick-prompt-textarea {
+  border: none;
+  box-shadow: none;
+  background-color: transparent; /* Make it blend with parent */
   width: 100%;
-  min-height: 130px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  font-size: 14px;
+  min-height: 100px;
+  padding: 10px 12px;
+  font-size: 13px;
   line-height: 1.5;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   resize: vertical;
   margin-bottom: 8px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
 }
 
 .quick-prompt-textarea:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(255, 123, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.05);
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: rgba(255, 255, 255, 0.02); /* Subtle highlight when focused */
+  box-shadow: none;
 }
 
 .quick-prompt-textarea::placeholder {
@@ -79,7 +76,7 @@ body {
 
 .container {
   width: 320px;
-  padding: 10px;
+  padding: 8px; /* Reduced from 10px */
   display: flex;
   flex-direction: column;
 }
@@ -91,8 +88,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 6px;
-  margin-bottom: 6px;
+  padding-bottom: 4px; /* Reduced from 6px */
+  margin-bottom: 4px; /* Reduced from 6px */
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -166,7 +163,7 @@ body {
    ====================================== */
 button.btn-summarize {
   width: 100%;
-  padding: 8px;
+  padding: 7px; /* Reduced from 8px */
   border: none;
   border-radius: 6px;
   background: var(--color-primary);
@@ -177,7 +174,7 @@ button.btn-summarize {
   transition: background-color var(--transition-fast);
   font-family: 'Inter', sans-serif;
   margin-top: 0;
-  margin-bottom: 8px;
+  margin-bottom: 6px; /* Reduced from 8px */
 }
 
 button.btn-summarize:hover {
@@ -195,7 +192,7 @@ button.btn-summarize:disabled {
    ====================================== */
    .content-type {
     font-size: 13px;
-    margin-bottom: 8px;
+    margin-bottom: 6px; /* Reduced from 8px */
     padding: 6px;
     border-radius: 6px;
     background-color: var(--bg-surface);
@@ -239,7 +236,7 @@ button.btn-summarize:disabled {
 .platform-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 4px; /* Reduced from 6px */
   margin-bottom: 8px;
 }
 
@@ -247,7 +244,7 @@ button.btn-summarize:disabled {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  padding: 6px 4px;
+  padding: 5px 4px; /* Reduced from 6px 4px */
   flex: 1;
   cursor: pointer;
   display: flex;
@@ -296,14 +293,14 @@ button.btn-summarize:disabled {
   background: var(--bg-surface);
   border-radius: 6px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 4px; /* Reduced from 6px */
   border: 1px solid var(--border-color);
 }
 
 .toggle-option {
   flex: 1;
   text-align: center;
-  padding: 6px 0;
+  padding: 5px 0; /* Reduced from 6px 0 */
   cursor: pointer;
   font-size: 13px;
   transition: all var(--transition-fast);
