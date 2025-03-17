@@ -160,28 +160,55 @@ class PromptBuilder {
     
     const config = await this.configManager.getConfig();
     
-    // Get shared parameters
-    const sharedParams = config.sharedParameters || {};
-    logger.service.info(`Retrieved ${Object.keys(sharedParams).length} shared parameters`);
+    // Get parameters with their keys
+    const sharedParamsEntries = Object.entries(config.sharedParameters || {});
     
-    // Get content-specific parameters
     const template = config.defaultPrompts[contentType];
-    const contentParams = template?.parameters || {};
-    logger.service.info(`Retrieved ${Object.keys(contentParams).length} content-specific parameters for ${contentType}`);
+    const contentParamsEntries = Object.entries(template?.parameters || {});
     
-    // Combine parameters (content-specific override shared)
-    const combinedParams = { ...sharedParams, ...contentParams };
+    // Create combined array of parameter entries with source information
+    const allParamsEntries = [
+      ...sharedParamsEntries.map(([key, param]) => ({ 
+        key, 
+        param, 
+        order: param.order || 0,
+        source: 'shared' 
+      })),
+      ...contentParamsEntries.map(([key, param]) => ({ 
+        key, 
+        param, 
+        order: param.order || 0,
+        source: 'content' 
+      }))
+    ];
     
-    // Remove typeSpecificInstructions - not user configurable
-    delete combinedParams.typeSpecificInstructions;
+    // Group by key to handle duplicates (content overrides shared)
+    const groupedByKey = {};
+    allParamsEntries.forEach(entry => {
+      // If entry doesn't exist yet, or this is from content (which overrides shared)
+      if (!groupedByKey[entry.key] || entry.source === 'content') {
+        groupedByKey[entry.key] = entry;
+      }
+    });
     
-    // Remove commentAnalysis for non-YouTube content
+    // Convert to array and sort by order
+    const sortedEntries = Object.values(groupedByKey)
+      .sort((a, b) => a.order - b.order);
+    
+    // Convert back to object
+    const orderedParams = {};
+    sortedEntries.forEach(entry => {
+      orderedParams[entry.key] = entry.param;
+    });
+    
+    // Remove non-configurable parameters
+    delete orderedParams.typeSpecificInstructions;
     if (contentType !== 'youtube') {
-      delete combinedParams.commentAnalysis;
+      delete orderedParams.commentAnalysis;
     }
     
-    logger.service.info(`Final parameter options count for ${contentType}: ${Object.keys(combinedParams).length}`);
-    return combinedParams;
+    logger.service.info(`Final parameter options count for ${contentType}: ${Object.keys(orderedParams).length}`);
+    return orderedParams;
   }
 
   /**

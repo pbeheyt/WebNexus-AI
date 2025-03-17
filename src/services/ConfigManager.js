@@ -21,14 +21,13 @@ class ConfigManager {
     if (this.isInitialized) return this.config;
     
     try {
-      // Try to load config from storage
       const { [this.STORAGE_KEY]: storedConfig } = await chrome.storage.sync.get(this.STORAGE_KEY);
       
       if (storedConfig) {
-        this.config = storedConfig;
+        this.config = this._ensureParameterOrder(storedConfig);
       } else {
-        // If no config in storage, load defaults and save
-        this.config = await this._loadDefaultConfig();
+        const defaultConfig = await this._loadDefaultConfig();
+        this.config = this._ensureParameterOrder(defaultConfig);
         await this._saveConfig(this.config);
       }
       
@@ -36,8 +35,8 @@ class ConfigManager {
       return this.config;
     } catch (error) {
       console.error('ConfigManager initialization error:', error);
-      // Fallback to defaults without saving
-      this.config = await this._loadDefaultConfig();
+      const defaultConfig = await this._loadDefaultConfig();
+      this.config = this._ensureParameterOrder(defaultConfig);
       this.isInitialized = true;
       return this.config;
     }
@@ -148,17 +147,18 @@ class ConfigManager {
       if (!response.ok) {
         throw new Error(`Failed to load default config: ${response.status}`);
       }
-      return await response.json();
+      const config = await response.json();
+      return this._ensureParameterOrder(config);
     } catch (error) {
       console.error('Error loading default configuration:', error);
-      return {
+      return this._ensureParameterOrder({
         sharedParameters: {},
         defaultPrompts: {
           general: { name: 'Web Content', baseTemplate: 'Analyze this web content' },
           reddit: { name: 'Reddit Post', baseTemplate: 'Analyze this Reddit post' },
           youtube: { name: 'YouTube Video', baseTemplate: 'Analyze this YouTube video' }
         }
-      };
+      });
     }
   }
 
@@ -222,10 +222,13 @@ class ConfigManager {
     const currentConfig = await this.getConfig();
     const mergedConfig = this._mergeConfigs(currentConfig, importedConfig);
     
-    // Save the merged config
-    await this._saveConfig(mergedConfig);
+    // Ensure parameter order is set
+    const orderedConfig = this._ensureParameterOrder(mergedConfig);
     
-    return mergedConfig;
+    // Save the merged config
+    await this._saveConfig(orderedConfig);
+    
+    return orderedConfig;
   }
 
   /**
@@ -271,6 +274,41 @@ class ConfigManager {
     }
     
     return merged;
+  }
+
+  /**
+   * Ensure all parameters have an order property
+   * @private
+   * @param {Object} config - Configuration to process
+   * @returns {Object} Configuration with order properties
+   */
+  _ensureParameterOrder(config) {
+    // Make deep copy to avoid modifying the input directly
+    const newConfig = JSON.parse(JSON.stringify(config));
+    
+    // Process shared parameters
+    if (newConfig.sharedParameters) {
+      Object.entries(newConfig.sharedParameters).forEach(([key, param], index) => {
+        if (param.order === undefined) {
+          newConfig.sharedParameters[key].order = index;
+        }
+      });
+    }
+    
+    // Process content-specific parameters
+    if (newConfig.defaultPrompts) {
+      Object.entries(newConfig.defaultPrompts).forEach(([contentType, typeConfig]) => {
+        if (typeConfig.parameters) {
+          Object.entries(typeConfig.parameters).forEach(([key, param], index) => {
+            if (param.order === undefined) {
+              newConfig.defaultPrompts[contentType].parameters[key].order = index;
+            }
+          });
+        }
+      });
+    }
+    
+    return newConfig;
   }
 }
 
