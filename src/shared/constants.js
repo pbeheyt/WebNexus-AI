@@ -23,7 +23,9 @@ export const AI_PLATFORMS = {
   CLAUDE: 'claude',
   CHATGPT: 'chatgpt',
   DEEPSEEK: 'deepseek',
-  MISTRAL: 'mistral'
+  MISTRAL: 'mistral',
+  GEMINI: 'gemini',
+  GROK: 'grok'
 };
 
 /**

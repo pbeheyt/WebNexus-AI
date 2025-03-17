@@ -676,6 +676,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       isPlatformTab = true;
     } else if (aiPlatform === AI_PLATFORMS.MISTRAL && tab.url.includes('chat.mistral.ai')) {
       isPlatformTab = true;
+    } else if (aiPlatform === AI_PLATFORMS.GEMINI && tab.url.includes('gemini.google.com')) {
+      isPlatformTab = true;
+    } else if (aiPlatform === AI_PLATFORMS.GROK && tab.url.includes('grok.com')) {
+      isPlatformTab = true;
     }
 
     if (!isPlatformTab) {

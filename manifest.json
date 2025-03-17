@@ -18,6 +18,8 @@
     "https://chatgpt.com/*",
     "https://chat.deepseek.com/*",
     "https://chat.mistral.ai/*",
+    "https://gemini.google.com/*",
+    "https://grok.com/*",
     "https://*/*",
     "file://*.pdf",
     "<all_urls>"
