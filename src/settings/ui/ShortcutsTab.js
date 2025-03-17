@@ -7,6 +7,7 @@ export default class ShortcutsTab {
     this.container = null;
     this.settings = null;
     this.commands = [];
+    this.isSaving = false; // Flag to prevent concurrent saves
     
     // Subscribe to settings updates
     this.eventBus.subscribe('shortcuts:updated', this.handleSettingsUpdate.bind(this));
@@ -29,7 +30,7 @@ export default class ShortcutsTab {
   
   handleSettingsUpdate(settings) {
     this.settings = settings;
-    this.render();
+    // Only update our local state, don't re-render to avoid UI jumps
   }
   
   render() {
@@ -84,7 +85,6 @@ export default class ShortcutsTab {
       const row = document.createElement('tr');
       
       const actionCell = document.createElement('td');
-      // Use the command's description instead of the internal name
       actionCell.textContent = command.description || 
         (command.name === '_execute_action' ? 'Open extension popup' : command.name);
       
@@ -151,6 +151,13 @@ export default class ShortcutsTab {
     pageRadio.value = 'page';
     pageRadio.checked = this.settings.summarization_behavior === 'page';
     
+    // Add auto-save functionality
+    pageRadio.addEventListener('change', async (e) => {
+      if (e.target.checked) {
+        await this.autoSaveSettings('page');
+      }
+    });
+    
     const pageLabel = document.createElement('label');
     pageLabel.htmlFor = 'page-summarize';
     pageLabel.textContent = 'Summarize entire page';
@@ -169,6 +176,13 @@ export default class ShortcutsTab {
     selectionRadio.value = 'selection';
     selectionRadio.checked = this.settings.summarization_behavior === 'selection';
     
+    // Add auto-save functionality
+    selectionRadio.addEventListener('change', async (e) => {
+      if (e.target.checked) {
+        await this.autoSaveSettings('selection');
+      }
+    });
+    
     const selectionLabel = document.createElement('label');
     selectionLabel.htmlFor = 'selection-summarize';
     selectionLabel.textContent = 'Summarize selected text (if no selection, falls back to page)';
@@ -182,33 +196,54 @@ export default class ShortcutsTab {
     summarizeSection.appendChild(radioGroup);
     behaviorSettings.appendChild(summarizeSection);
     
-    // Save button
-    const saveButton = document.createElement('button');
-    saveButton.className = 'btn save-shortcuts-btn';
-    saveButton.textContent = 'Save Settings';
-    saveButton.addEventListener('click', () => this.saveSettings());
-    
-    behaviorSettings.appendChild(saveButton);
     tabContent.appendChild(behaviorSettings);
     
     // Append to container
     this.container.appendChild(tabContent);
   }
   
-  async saveSettings() {
+  async autoSaveSettings(value) {
+    // Prevent concurrent saves
+    if (this.isSaving) return;
+    
     try {
-      // Get the summarization behavior value
-      const summarizationBehavior = document.querySelector('input[name="summarize-behavior"]:checked').value;
+      this.isSaving = true;
       
-      // Update settings
+      // Ensure UI reflects what we're saving
+      const pageRadio = document.getElementById('page-summarize');
+      const selectionRadio = document.getElementById('selection-summarize');
+      
+      if (pageRadio && selectionRadio) {
+        pageRadio.checked = value === 'page';
+        selectionRadio.checked = value === 'selection';
+      }
+      
+      // Save the settings
       await this.shortcutsController.updateSettings({
-        summarization_behavior: summarizationBehavior
+        summarization_behavior: value
       });
       
-      this.notificationManager.success('Shortcut settings saved successfully');
+      // Show success message
+      this.notificationManager.success('Setting saved');
     } catch (error) {
-      console.error('Error saving shortcut settings:', error);
-      this.notificationManager.error(`Error saving settings: ${error.message}`);
+      console.error('Error auto-saving shortcut settings:', error);
+      this.notificationManager.error(`Error saving setting: ${error.message}`);
+      
+      // Revert UI to match actual settings
+      this.updateRadioState();
+    } finally {
+      this.isSaving = false;
+    }
+  }
+  
+  // Ensure radio buttons match our settings state
+  updateRadioState() {
+    const pageRadio = document.getElementById('page-summarize');
+    const selectionRadio = document.getElementById('selection-summarize');
+    
+    if (pageRadio && selectionRadio && this.settings) {
+      pageRadio.checked = this.settings.summarization_behavior === 'page';
+      selectionRadio.checked = this.settings.summarization_behavior === 'selection';
     }
   }
 }

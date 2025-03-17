@@ -8,6 +8,7 @@ export default class ShortcutsController {
     this.notificationManager = notificationManager;
     this.settings = null;
     this.commands = [];
+    this.lastSaveTimestamp = 0; // Track last save time
   }
 
   async initialize(container) {
@@ -40,19 +41,24 @@ export default class ShortcutsController {
     try {
       console.log('Loading shortcut settings');
       
+      let result;
       try {
-        const result = await this.storageService.get(STORAGE_KEYS.SHORTCUT_SETTINGS);
-        this.settings = result || this.getDefaultSettings();
+        result = await this.storageService.get(STORAGE_KEYS.SHORTCUT_SETTINGS);
       } catch (storageError) {
         console.error('Storage error when loading shortcut settings:', storageError);
-        this.settings = this.getDefaultSettings();
+        result = null;
       }
       
-      // Ensure all default settings exist
-      this.settings = {
-        ...this.getDefaultSettings(),
-        ...this.settings
-      };
+      // If no settings or storage error, use defaults
+      if (!result) {
+        this.settings = this.getDefaultSettings();
+      } else {
+        // Ensure all default settings exist by merging
+        this.settings = {
+          ...this.getDefaultSettings(),
+          ...result
+        };
+      }
       
       console.log('Shortcut settings loaded:', this.settings);
       return this.settings;
@@ -74,6 +80,17 @@ export default class ShortcutsController {
     try {
       console.log('Updating shortcut settings:', newSettings);
       
+      // Debounce rapid saves (prevent saving more than once every 300ms)
+      const now = Date.now();
+      if (now - this.lastSaveTimestamp < 300) {
+        console.log('Debouncing rapid setting update');
+        return this.settings;
+      }
+      this.lastSaveTimestamp = now;
+      
+      // Get the latest settings first to avoid race conditions
+      await this.loadSettings();
+      
       // Merge with existing settings
       const updatedSettings = {
         ...this.settings,
@@ -82,6 +99,9 @@ export default class ShortcutsController {
       
       // Save to storage
       await this.storageService.set({ [STORAGE_KEYS.SHORTCUT_SETTINGS]: updatedSettings });
+      
+      // Wait briefly to ensure storage is committed
+      await new Promise(resolve => setTimeout(resolve, 50));
       
       // Update local copy
       this.settings = updatedSettings;
@@ -135,7 +155,6 @@ export default class ShortcutsController {
   
   refresh() {
     console.log('Refreshing shortcuts controller');
-    // Load settings and commands, then trigger a render through the event system
     Promise.all([
       this.loadSettings(),
       this.getExtensionCommands()
