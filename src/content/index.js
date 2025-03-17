@@ -1,0 +1,74 @@
+// src/content/index.js - Modify existing or create new
+const ExtractorFactory = require('../extractor/extractor-factory');
+const logger = require('../utils/logger').content;
+
+// Track active extraction process
+let currentExtractionId = null;
+
+// Initialize content script state
+logger.info('Content script initialized');
+
+// Centralized message handler
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  logger.info('Message received in content script:', message.action);
+  
+  // Handle reset extractor command
+  if (message.action === 'resetExtractor') {
+    logger.info('Resetting extractor, hasSelection:', message.hasSelection);
+    currentExtractionId = Date.now().toString();
+    
+    // Force cleanup of all extractors
+    ExtractorFactory.cleanup();
+    
+    // Initialize fresh extractor
+    ExtractorFactory.initialize(message.hasSelection);
+    ExtractorFactory.activeExtractor.extractionId = currentExtractionId;
+    
+    sendResponse({ status: 'reset', extractionId: currentExtractionId });
+    return true;
+  }
+  
+  // Basic ping check
+  if (message.action === 'ping') {
+    const isReady = !!ExtractorFactory.activeExtractor && 
+                    ExtractorFactory.activeExtractor.contentScriptReady;
+    sendResponse({ status: 'pong', ready: isReady });
+    return true;
+  }
+  
+  // Extract content command
+  if (message.action === 'extractContent') {
+    if (!ExtractorFactory.activeExtractor) {
+      // Initialize extractor if not present
+      ExtractorFactory.initialize(message.hasSelection);
+    }
+    
+    if (ExtractorFactory.activeExtractor) {
+      ExtractorFactory.activeExtractor.extractAndSaveContent();
+      sendResponse({ 
+        status: `Extracting content...`, 
+        contentType: ExtractorFactory.activeExtractor.contentType 
+      });
+    } else {
+      sendResponse({ status: 'error', message: 'Failed to initialize extractor' });
+    }
+    return true;
+  }
+  
+  // Let active extractor handle other messages
+  if (ExtractorFactory.activeExtractor) {
+    try {
+      // Custom handler for specialized extractor-specific messages
+      const handled = ExtractorFactory.activeExtractor.handleMessage?.(message, sender, sendResponse);
+      if (handled) return true;
+    } catch (error) {
+      logger.error('Error in extractor message handler:', error);
+    }
+  }
+  
+  sendResponse({ status: 'unhandled_message' });
+  return true;
+});
+
+// Export for webpack
+export default {};

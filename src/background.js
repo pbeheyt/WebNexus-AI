@@ -1,5 +1,5 @@
 // src/background.js
-// UPDATED VERSION - With centralized configuration storage and keyboard shortcuts
+// UPDATED VERSION - With centralized summarization workflow
 
 // Import from shared modules
 import { CONTENT_TYPES, AI_PLATFORMS, STORAGE_KEYS } from './shared/constants.js';
@@ -106,14 +106,45 @@ async function injectContentScript(tabId, scriptFile) {
  */
 async function extractContent(tabId, url, hasSelection = false) {
   const contentType = determineContentType(url, hasSelection);
-  const scriptFile = getContentScriptFile(contentType, hasSelection);
+  // Use a single content script for all types
+  const scriptFile = 'dist/content-script.bundle.js';
 
-  logger.background.info(`Extracting content from tab ${tabId}, content type: ${contentType}, hasSelection: ${hasSelection}`);
-  await injectContentScript(tabId, scriptFile);
+  logger.background.info(`Extracting content from tab ${tabId}, type: ${contentType}, hasSelection: ${hasSelection}`);
+  
+  // Check if content script is loaded
+  let isScriptLoaded = false;
+  try {
+    const response = await Promise.race([
+      chrome.tabs.sendMessage(tabId, { action: 'ping' }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 300))
+    ]);
+    isScriptLoaded = !!(response && response.ready);
+  } catch (error) {
+    logger.background.info('Content script not loaded, will inject');
+  }
+  
+  // Inject if needed
+  if (!isScriptLoaded) {
+    const result = await injectContentScript(tabId, scriptFile);
+    if (!result) {
+      logger.background.error(`Failed to inject content script`);
+      return false;
+    }
+  }
 
+  // Always reset previous extraction state
+  try {
+    await chrome.tabs.sendMessage(tabId, { 
+      action: 'resetExtractor',
+      hasSelection: hasSelection
+    });
+    logger.background.info('Reset command sent to extractor');
+  } catch (error) {
+    logger.background.error('Error sending reset command:', error);
+  }
+  
   // Return promise that resolves when content extraction completes
   return new Promise((resolve) => {
-    // Set up storage change listener before sending extraction message
     const storageListener = (changes, area) => {
       if (area === 'local' && changes.contentReady?.newValue === true) {
         chrome.storage.onChanged.removeListener(storageListener);
@@ -123,18 +154,19 @@ async function extractContent(tabId, url, hasSelection = false) {
 
     chrome.storage.onChanged.addListener(storageListener);
 
-    // Send extraction message with selection info
+    // Send extraction command
     chrome.tabs.sendMessage(tabId, {
       action: 'extractContent',
-      hasSelection: hasSelection
+      hasSelection: hasSelection,
+      contentType: contentType
     });
 
-    // Set timeout to prevent indefinite hanging
+    // Failsafe timeout
     setTimeout(() => {
       chrome.storage.onChanged.removeListener(storageListener);
       logger.background.warn(`Extraction timeout for ${contentType}, proceeding anyway`);
       resolve(false);
-    }, 15000); // 15 second failsafe
+    }, 15000);
   });
 }
 
@@ -312,7 +344,7 @@ async function openAiPlatformWithContent(contentType, promptId = null, platformI
       throw new Error(`Could not load prompt content for ID: ${promptId}`);
     }
 
-    // NEW: Check for extraction errors
+    // Check for extraction errors
     const { extractedContent } = await chrome.storage.local.get('extractedContent');
 
     // Transcript error check (existing code)
@@ -373,29 +405,145 @@ async function openAiPlatformWithContent(contentType, promptId = null, platformI
 }
 
 /**
- * Handle context menu click
+ * Centralized function to handle content summarization
+ * This is the key improvement - all paths now go through this function
+ * @param {Object} params - Parameters object containing all necessary info for summarization
+ * @returns {Promise<Object>} Result object with success/error information
+ */
+async function summarizeContent(params) {
+  const { 
+    tabId, 
+    url, 
+    hasSelection = false, 
+    promptId = null, 
+    platformId = null, 
+    commentAnalysisRequired = false 
+  } = params;
+  
+  try {
+    logger.background.info('Starting centralized content summarization process', params);
+    
+    // 1. Reset previous state
+    await chrome.storage.local.set({
+      contentReady: false,
+      extractedContent: null,
+      aiPlatformTabId: null,
+      scriptInjected: false
+    });
+    logger.background.info('Cleared previous extracted content and tab state');
+    
+    // 2. Extract content (single extraction point)
+    const contentType = determineContentType(url, hasSelection);
+    logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
+    
+    const extractionResult = await extractContent(tabId, url, hasSelection);
+    if (!extractionResult) {
+      logger.background.warn('Content extraction completed with issues');
+    }
+
+    // 3. Check for specific errors, especially for YouTube
+    const { extractedContent } = await chrome.storage.local.get('extractedContent');
+    
+    // YouTube transcript error check
+    if (contentType === CONTENT_TYPES.YOUTUBE && !hasSelection) {
+      if (extractedContent?.error &&
+          extractedContent?.transcript &&
+          typeof extractedContent.transcript === 'string' &&
+          (extractedContent.transcript.includes('No transcript') ||
+          extractedContent.transcript.includes('Transcript is not available'))) {
+        
+        logger.background.warn('YouTube transcript error detected, aborting summarization');
+        
+        return {
+          success: false,
+          youtubeTranscriptError: true,
+          errorMessage: extractedContent.message || 'Failed to retrieve YouTube transcript.'
+        };
+      }
+      
+      // YouTube comments check (only if required by the prompt)
+      if (commentAnalysisRequired &&
+          extractedContent?.commentStatus?.state === 'not_loaded' &&
+          extractedContent?.commentStatus?.commentsExist) {
+          
+        logger.background.warn('YouTube comments required but not loaded');
+        
+        // Notify popup if it's open
+        try {
+          chrome.runtime.sendMessage({
+            action: 'youtubeCommentsNotLoaded'
+          });
+        } catch (error) {
+          // Ignore message sending error if popup isn't open
+        }
+        
+        return {
+          success: false,
+          youtubeCommentsError: true,
+          errorMessage: extractedContent.commentStatus.message ||
+                      'Comments exist but are not loaded. Scroll down on YouTube to load comments.'
+        };
+      }
+    }
+    
+    // 4. Handle quick prompt consumption tracking if needed
+    if (promptId === 'quick') {
+      logger.background.info(`Marking quick prompt as consumed for content type: ${contentType}`);
+      await chrome.storage.local.set({
+        'quick_prompt_consumed': {
+          contentType: contentType,
+          timestamp: Date.now()
+        }
+      });
+    }
+    
+    // 5. Open AI platform with the content
+    const aiPlatformTabId = await openAiPlatformWithContent(contentType, promptId, platformId);
+    
+    if (!aiPlatformTabId) {
+      return {
+        success: false,
+        error: 'Failed to open AI platform tab'
+      };
+    }
+    
+    return {
+      success: true,
+      aiPlatformTabId,
+      contentType
+    };
+  } catch (error) {
+    logger.background.error('Error in summarizeContent:', error);
+    return {
+      success: false,
+      error: error.message || 'Unknown error occurred'
+    };
+  }
+}
+
+/**
+ * Handle context menu click - now uses the centralized summarizeContent function
  */
 async function handleContextMenuClick(info, tab) {
   logger.background.info('Context menu clicked', { info, tabId: tab.id });
 
-  // Clear any existing content
-  await chrome.storage.local.set({
-    contentReady: false,
-    extractedContent: null,
-    aiPlatformTabId: null,
-    scriptInjected: false
-  });
-  logger.background.info('Cleared previous extracted content and tab state');
-
   // Determine if there's a text selection
   const hasSelection = info.menuItemId === 'summarizeSelection' || !!info.selectionText;
+  
+  logger.background.info(`Summarize content request from menu context`);
 
-  // Extract content
-  await extractContent(tab.id, tab.url, hasSelection);
-
-  // Open AI platform
-  const contentType = determineContentType(tab.url, hasSelection);
-  await openAiPlatformWithContent(contentType);
+  // Use centralized summarization process
+  const result = await summarizeContent({
+    tabId: tab.id,
+    url: tab.url,
+    hasSelection
+    // No promptId/platformId to use user's preferred defaults
+  });
+  
+  // Handle any errors that need UI feedback
+  if (!result.success) {
+    logger.background.error('Context menu action failed:', result);
+  }
 }
 
 /**
@@ -429,7 +577,7 @@ async function initialize() {
   logger.background.info('Initial state reset complete');
 }
 
-// Command listener for keyboard shortcuts
+// Command listener for keyboard shortcuts - now uses the centralized summarizeContent function
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === "summarize-page") {
     try {
@@ -480,22 +628,21 @@ chrome.commands.onCommand.addListener(async (command) => {
           // Continue with no selection
         }
       }
+
+      logger.background.info(`Summarize content request from keyboard`);
       
-      // Clear any existing content
-      await chrome.storage.local.set({
-        contentReady: false,
-        extractedContent: null,
-        aiPlatformTabId: null,
-        scriptInjected: false
+      // Use centralized summarization process
+      const result = await summarizeContent({
+        tabId: activeTab.id,
+        url: activeTab.url,
+        hasSelection
+        // No promptId/platformId to use user's preferred defaults
       });
-      logger.background.info('Cleared previous extracted content and tab state');
       
-      // Extract content - reusing existing function
-      await extractContent(activeTab.id, activeTab.url, hasSelection);
-      
-      // Open AI platform - reusing existing function
-      const contentType = determineContentType(activeTab.url, hasSelection);
-      await openAiPlatformWithContent(contentType);
+      // Handle any errors that need UI feedback
+      if (!result.success) {
+        logger.background.error('Keyboard shortcut action failed:', result);
+      }
       
     } catch (error) {
       logger.background.error('Error handling keyboard shortcut:', error);
@@ -627,75 +774,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep channel open for async response
   }
 
-  // Handler for summarize requests from popup
+  // Handler for summarize requests from popup - now uses the centralized summarizeContent function
   if (message.action === 'summarizeContent') {
     (async () => {
       try {
         const { tabId, contentType, promptId, platformId, url, hasSelection, commentAnalysisRequired } = message;
         logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}, hasSelection: ${hasSelection}`);
 
-        // Extract content first
-        await extractContent(tabId, url, hasSelection);
-
-        // Get the extracted content
-        const { extractedContent } = await chrome.storage.local.get('extractedContent');
-
-        // Check if YouTube transcript extraction failed
-        if (contentType === CONTENT_TYPES.YOUTUBE) {
-          if (extractedContent?.error &&
-              extractedContent?.transcript &&
-              typeof extractedContent.transcript === 'string' &&
-              (extractedContent.transcript.includes('No transcript') ||
-              extractedContent.transcript.includes('Transcript is not available'))) {
-
-            logger.background.warn('YouTube transcript error detected, aborting summarization');
-
-            sendResponse({
-              success: false,
-              youtubeTranscriptError: true,
-              errorMessage: extractedContent.message || 'Failed to retrieve YouTube transcript.'
-            });
-            return;
-          }
-
-          // Check if comment analysis is required but comments aren't loaded
-          if (commentAnalysisRequired &&
-              extractedContent?.commentStatus?.state === 'not_loaded' &&
-              extractedContent?.commentStatus?.commentsExist) {
-
-            logger.background.warn('YouTube comments not loaded but required for analysis, aborting summarization');
-
-            sendResponse({
-              success: false,
-              youtubeCommentsError: true,
-              errorMessage: extractedContent.commentStatus.message ||
-                          'Comments exist but are not loaded. Scroll down on YouTube to load comments.'
-            });
-            return;
-          }
-        }
-
-        // Check if this was a quick prompt that needs to be marked as consumed
-        if (promptId === 'quick') {
-          logger.background.info(`Marking quick prompt as consumed for content type: ${contentType}`);
-          await chrome.storage.local.set({
-            'quick_prompt_consumed': {
-              contentType: contentType,
-              timestamp: Date.now()
-            }
-          });
-        }
-
-        // Give time for content extraction to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Then open AI platform with the content
-        const aiPlatformTabId = await openAiPlatformWithContent(contentType, promptId, platformId);
-
-        sendResponse({
-          success: true,
-          aiPlatformTabId
+        // Call centralized summarization function
+        const result = await summarizeContent({
+          tabId,
+          url,
+          hasSelection,
+          promptId,
+          platformId,
+          commentAnalysisRequired
         });
+
+        sendResponse(result);
       } catch (error) {
         logger.background.error('Error handling summarize content request:', error);
         sendResponse({

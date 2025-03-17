@@ -25,20 +25,6 @@
   "background": {
     "service_worker": "dist/background.bundle.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["*://*.youtube.com/watch?*"],
-      "js": ["dist/youtube-content.bundle.js"]
-    },
-    {
-      "matches": ["*://*.reddit.com/r/*/comments/*"],
-      "js": ["dist/reddit-content.bundle.js"]
-    },
-    {
-      "matches": ["*://*/*.pdf", "file://*.pdf"],
-      "js": ["dist/pdf-content.bundle.js"]
-    }
-  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "images/icon128.png"

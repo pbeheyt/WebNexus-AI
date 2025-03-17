@@ -13,8 +13,13 @@ const SelectedTextExtractorStrategy = require('./strategies/selected-text-strate
  */
 class ExtractorFactory {
   /**
+   * Keep track of active extractor instance per tab
+   * @type {BaseExtractor}
+   */
+  static activeExtractor = null;
+
+  /**
    * Strategy mapping for content types
-   * Maps each content type to its corresponding extractor strategy
    */
   static STRATEGY_MAP = {
     [CONTENT_TYPES.GENERAL]: GeneralExtractorStrategy,
@@ -26,31 +31,60 @@ class ExtractorFactory {
 
   /**
    * Create an extractor based on the current URL and selection state
-   * @param {string} url - The URL of the current page
-   * @param {boolean} hasSelection - Whether there's text selected
-   * @returns {BaseExtractor} An instance of the appropriate extractor
    */
   static createExtractor(url, hasSelection = false) {
-    // Use the shared utility function to determine content type
     const contentType = determineContentType(url, hasSelection);
-    
-    // Get the appropriate strategy class from the mapping
     const StrategyClass = this.STRATEGY_MAP[contentType] || GeneralExtractorStrategy;
-    
-    // Create and return an instance of the strategy
     return new StrategyClass();
   }
   
   /**
    * Initialize the appropriate extractor based on the current page
-   * @param {boolean} hasSelection - Whether there's text selected
-   * @returns {BaseExtractor} The initialized extractor
    */
   static initialize(hasSelection = false) {
+    // Clean up any existing extractor
+    if (this.activeExtractor) {
+      this.activeExtractor.cleanup();
+    }
+    
     const url = window.location.href;
-    const extractor = ExtractorFactory.createExtractor(url, hasSelection);
-    extractor.initialize();
-    return extractor;
+    this.activeExtractor = ExtractorFactory.createExtractor(url, hasSelection);
+    this.activeExtractor.initialize();
+    return this.activeExtractor;
+  }
+
+    /**
+   * Reinitialize extractor based on selection state change
+   * @param {boolean} hasSelection - Whether there's text selected
+   * @returns {BaseExtractor} The reinitialized extractor
+   */
+  static reinitialize(hasSelection = false) {
+    this.logger.info(`Reinitializing extractor with selection state: ${hasSelection}`);
+    
+    // Clean up existing extractor
+    if (this.activeExtractor) {
+      this.activeExtractor.cleanup();
+      this.activeExtractor = null;
+    }
+    
+    // Create new extractor with current URL and selection state
+    const url = window.location.href;
+    const contentType = determineContentType(url, hasSelection);
+    
+    this.logger.info(`Creating new extractor for content type: ${contentType}`);
+    
+    // Create and initialize the new extractor
+    this.activeExtractor = this.createExtractor(url, hasSelection);
+    this.activeExtractor.initialize();
+    
+    return this.activeExtractor;
+  }
+
+  static cleanup() {
+    if (this.activeExtractor) {
+      this.activeExtractor.cleanup();
+      this.activeExtractor = null;
+    }
   }
 }
 

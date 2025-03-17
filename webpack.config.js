@@ -4,6 +4,7 @@ const pdfWorkerPath = require.resolve('pdfjs-dist/build/pdf.worker.entry');
 module.exports = {
   entry: {
     background: './src/background.js',
+    'content-script': './src/content/index.js',
     'youtube-content': './src/content/youtube-content.js',
     'reddit-content': './src/content/reddit-content.js',
     'general-content': './src/content/general-content.js',

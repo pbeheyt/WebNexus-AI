@@ -6,6 +6,7 @@ class BaseExtractor {
     this.contentType = contentType;
     this.contentScriptReady = false;
     this.logger = logger.content;
+    this.messageListener = null;
   }
 
   /**
@@ -14,11 +15,7 @@ class BaseExtractor {
   initialize() {
     try {
       this.logger.info(`${this.contentType} extractor initializing...`);
-      
-      // Set up message listeners
       this.setupMessageListeners();
-      
-      // Mark script as ready
       this.contentScriptReady = true;
       this.logger.info(`${this.contentType} extractor ready`);
     } catch (error) {
@@ -27,27 +24,42 @@ class BaseExtractor {
   }
 
   /**
+   * Clean up extractor resources and listeners
+   */
+  cleanup() {
+    try {
+      if (this.messageListener) {
+        chrome.runtime.onMessage.removeListener(this.messageListener);
+        this.messageListener = null;
+      }
+      this.logger.info(`${this.contentType} extractor cleaned up`);
+    } catch (error) {
+      this.logger.error(`Error cleaning up ${this.contentType} extractor:`, error);
+    }
+  }
+
+  /**
    * Set up message listeners for communication
    */
   setupMessageListeners() {
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    this.messageListener = (message, sender, sendResponse) => {
       this.logger.info(`Message received in ${this.contentType} extractor:`, message);
       
-      // Respond to ping messages to verify content script is loaded
       if (message.action === 'ping') {
         this.logger.info('Ping received, responding with pong');
         sendResponse({ status: 'pong', ready: this.contentScriptReady });
-        return true; // Keep the message channel open for async response
+        return true;
       }
       
       if (message.action === 'extractContent') {
         this.logger.info('Extract content request received');
-        // Start the extraction process
         this.extractAndSaveContent();
         sendResponse({ status: `Extracting ${this.contentType} content...` });
-        return true; // Keep the message channel open for async response
+        return true;
       }
-    });
+    };
+    
+    chrome.runtime.onMessage.addListener(this.messageListener);
   }
 
   /**
