@@ -120,6 +120,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Set up event listeners
   summarizeBtn.addEventListener('click', () => mainController.handleSummarize());
+  
+  // Add keyboard shortcut (Enter key) for summarize action
+  document.addEventListener('keydown', (event) => {
+    // Only handle Enter key presses
+    if (event.key === 'Enter') {
+      // Handle textarea behavior specifically
+      if (document.activeElement.tagName === 'TEXTAREA') {
+        // If Shift+Enter, allow default behavior (new line)
+        if (event.shiftKey) {
+          return;
+        }
+        
+        // If just Enter, prevent default and trigger summarize
+        event.preventDefault();
+        
+        // Check if the summarize button is enabled
+        if (!summarizeBtn.disabled) {
+          mainController.handleSummarize();
+        }
+        return;
+      }
+      
+      // Don't interfere with regular input fields
+      if (document.activeElement.tagName === 'INPUT' && 
+          document.activeElement.type !== 'radio' && 
+          document.activeElement.type !== 'checkbox') {
+        return;
+      }
+      
+      // For any other element, prevent default and trigger summarize
+      event.preventDefault();
+      if (!summarizeBtn.disabled) {
+        mainController.handleSummarize();
+      }
+    }
+  });
+  
   settingsBtn.addEventListener('click', () => mainController.openSettings());
 
   // Set up message listener for YouTube comments notification
