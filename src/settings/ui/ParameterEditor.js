@@ -111,27 +111,34 @@ export default class ParameterEditor {
       nameInput.dataset.contentType = contentType;
     }
   
-    // Handle name change
-    nameInput.addEventListener('blur', () => {
+    // Create update button (initially hidden)
+    const nameUpdateBtn = document.createElement('button');
+    nameUpdateBtn.className = 'btn btn-sm parameter-update-btn';
+    nameUpdateBtn.textContent = 'Update';
+    nameUpdateBtn.style.marginLeft = '8px';
+    nameUpdateBtn.style.display = 'none'; // Hide initially
+    nameUpdateBtn.addEventListener('click', () => {
       const newName = nameInput.value.trim();
       if (newName && newName !== parameter.param_name) {
         this.handleNameChange(parameter, paramType, newName, contentType);
-      } else {
-        nameInput.value = parameter.param_name;
+        // Provide visual feedback
+        nameUpdateBtn.textContent = 'Updated ✓';
+        setTimeout(() => { nameUpdateBtn.textContent = 'Update'; }, 1500);
       }
     });
   
-    // Also submit on Enter key
+    // Enter key to submit
     nameInput.addEventListener('keyup', (e) => {
       if (e.key === 'Enter') {
-        nameInput.blur();
+        nameUpdateBtn.click();
       }
     });
   
     nameWrapper.appendChild(nameLabel);
     nameWrapper.appendChild(nameInput);
+    nameWrapper.appendChild(nameUpdateBtn);
   
-    // Add parameter type badge
+    // Add parameter type badge (always visible)
     const typeBadge = document.createElement('span');
     typeBadge.className = 'type-badge';
     typeBadge.textContent = parameter.type || 'list';
@@ -145,6 +152,9 @@ export default class ParameterEditor {
     toggleBtn.innerHTML = '▶';
     toggleBtn.title = 'Show Details';
     toggleBtn.dataset.expanded = 'false';
+    toggleBtn.style.marginLeft = '10px';
+    toggleBtn.style.marginRight = '20px'; // Increased right padding
+    
     toggleBtn.addEventListener('click', () => {
       const isExpanded = toggleBtn.dataset.expanded === 'true';
       const newState = !isExpanded;
@@ -157,6 +167,12 @@ export default class ParameterEditor {
       const parameterId = editor.dataset.id;
       const valuesSection = editor.querySelector('.parameter-values');
       const actionsSection = editor.querySelector('.parameter-actions');
+      
+      // Show/hide update button based on expanded state
+      const updateBtn = editor.querySelector('.parameter-update-btn');
+      if (updateBtn) {
+        updateBtn.style.display = newState ? 'inline-block' : 'none';
+      }
   
       if (valuesSection) {
         valuesSection.style.display = newState ? 'block' : 'none';
@@ -254,15 +270,23 @@ export default class ParameterEditor {
       trueTextarea.dataset.contentType = contentType;
     }
 
-    // Handle value change
-    trueTextarea.addEventListener('blur', () => {
+    // Add update button instead of blur event
+    const trueUpdateBtn = document.createElement('button');
+    trueUpdateBtn.className = 'btn btn-sm';
+    trueUpdateBtn.textContent = 'Update';
+    trueUpdateBtn.style.marginTop = '8px';
+    trueUpdateBtn.addEventListener('click', () => {
       const newValue = trueTextarea.value;
       if (newValue !== (parameter.values?.true || '')) {
         this.handleValueChange(parameter, paramType, 'true', newValue, contentType);
+        // Provide visual feedback
+        trueUpdateBtn.textContent = 'Updated ✓';
+        setTimeout(() => { trueUpdateBtn.textContent = 'Update'; }, 1500);
       }
     });
 
     trueValueEditor.appendChild(trueTextarea);
+    trueValueEditor.appendChild(trueUpdateBtn);
     valuesSection.appendChild(trueValueEditor);
 
     // Create false value editor
@@ -283,15 +307,23 @@ export default class ParameterEditor {
       falseTextarea.dataset.contentType = contentType;
     }
 
-    // Handle value change
-    falseTextarea.addEventListener('blur', () => {
+    // Add update button instead of blur event
+    const falseUpdateBtn = document.createElement('button');
+    falseUpdateBtn.className = 'btn btn-sm';
+    falseUpdateBtn.textContent = 'Update';
+    falseUpdateBtn.style.marginTop = '8px';
+    falseUpdateBtn.addEventListener('click', () => {
       const newValue = falseTextarea.value;
       if (newValue !== (parameter.values?.false || '')) {
         this.handleValueChange(parameter, paramType, 'false', newValue, contentType);
+        // Provide visual feedback
+        falseUpdateBtn.textContent = 'Updated ✓';
+        setTimeout(() => { falseUpdateBtn.textContent = 'Update'; }, 1500);
       }
     });
 
     falseValueEditor.appendChild(falseTextarea);
+    falseValueEditor.appendChild(falseUpdateBtn);
     valuesSection.appendChild(falseValueEditor);
 
     return valuesSection;
@@ -315,15 +347,23 @@ export default class ParameterEditor {
       valueTextarea.dataset.contentType = contentType;
     }
 
-    // Handle value change
-    valueTextarea.addEventListener('blur', () => {
+    // Add update button instead of blur event
+    const updateBtn = document.createElement('button');
+    updateBtn.className = 'btn btn-sm';
+    updateBtn.textContent = 'Update';
+    updateBtn.style.marginTop = '8px';
+    updateBtn.addEventListener('click', () => {
       const newValue = valueTextarea.value;
       if (newValue !== (parameter.value || '')) {
         this.handleSingleValueChange(parameter, paramType, newValue, contentType);
+        // Provide visual feedback
+        updateBtn.textContent = 'Updated ✓';
+        setTimeout(() => { updateBtn.textContent = 'Update'; }, 1500);
       }
     });
 
     valuesSection.appendChild(valueTextarea);
+    valuesSection.appendChild(updateBtn);
 
     return valuesSection;
   }
@@ -387,24 +427,33 @@ export default class ParameterEditor {
       valueTextarea.dataset.contentType = contentType;
     }
   
-    // Handle value change
-    valueTextarea.addEventListener('blur', () => {
+    valueWrapper.appendChild(valueTextarea);
+  
+    // Add value actions (including update and delete)
+    const actions = document.createElement('div');
+    actions.className = 'value-actions';
+  
+    // Add update button
+    const updateBtn = document.createElement('button');
+    updateBtn.className = 'btn btn-sm';
+    updateBtn.textContent = 'Update';
+    updateBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const newValue = valueTextarea.value;
       if (newValue !== value) {
         this.handleValueChange(parameter, paramType, key, newValue, contentType);
+        // Provide visual feedback
+        updateBtn.textContent = 'Updated ✓';
+        setTimeout(() => { updateBtn.textContent = 'Update'; }, 1500);
       }
     });
-  
-    valueWrapper.appendChild(valueTextarea);
-  
-    // Add value actions (like delete)
-    const actions = document.createElement('div');
-    actions.className = 'value-actions';
+    actions.appendChild(updateBtn);
   
     // Only show delete button if there are multiple values
     if (Object.keys(parameter.values || {}).length > 1) {
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'btn btn-sm btn-danger delete-value-btn';
+      deleteBtn.style.marginLeft = '8px';
       deleteBtn.innerHTML = 'Delete';
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
