@@ -813,6 +813,7 @@
   .delete-param-btn,
   .delete-value-btn {
     color: var(--error-color);
+    color: white;
   }
 
   .reset-templates-btn {
