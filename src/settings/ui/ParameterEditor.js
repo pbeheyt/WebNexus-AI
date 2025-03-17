@@ -138,7 +138,7 @@ export default class ParameterEditor {
 
     header.appendChild(nameWrapper);
 
-    // Add toggle button for details - more discrete and initially collapsed
+    // Inside createNameEditor method, replace the toggleBtn code with this:
     const toggleBtn = document.createElement('button');
     toggleBtn.className = 'btn btn-sm toggle-details-btn';
     toggleBtn.innerHTML = '▶';
@@ -157,6 +157,7 @@ export default class ParameterEditor {
 
       // Find the parent editor and toggle sections visibility
       const editor = toggleBtn.closest('.parameter-editor');
+      const parameterId = editor.dataset.id;
       const valuesSection = editor.querySelector('.parameter-values');
       const actionsSection = editor.querySelector('.parameter-actions');
 
@@ -167,6 +168,12 @@ export default class ParameterEditor {
       if (actionsSection) {
         actionsSection.style.display = newState ? 'flex' : 'none';
       }
+      
+      // Notify about expansion state change
+      this.eventBus.publish('parameter:toggle:expansion', {
+        parameterId,
+        isExpanded: newState
+      });
     });
 
     nameWrapper.appendChild(toggleBtn);

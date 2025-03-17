@@ -18,6 +18,9 @@ export default class TemplateCustomizationTab {
       { id: 'selected_text', label: 'Selected Text Parameters' }
     ];
     
+    // Track expanded parameters
+    this.expandedParameters = new Set();
+    
     // Bind event handlers
     this.handleParameterUpdated = this.handleParameterUpdated.bind(this);
     this.handleParameterAdded = this.handleParameterAdded.bind(this);
@@ -35,6 +38,9 @@ export default class TemplateCustomizationTab {
     this.eventBus.subscribe('parameter:value:deleted', this.handleParameterValueDeleted);
     this.eventBus.subscribe('parameter:reordered', this.handleParameterReordered);
     this.eventBus.subscribe('parameter:value:reordered', this.handleParameterValueReordered);
+    
+    // Custom event listener for expansion toggling
+    this.eventBus.subscribe('parameter:toggle:expansion', this.handleParameterExpansionToggle.bind(this));
   }
   
   initialize(container) {
@@ -125,6 +131,9 @@ export default class TemplateCustomizationTab {
   
   async loadParameters() {
     try {
+      // Save expanded state before reload
+      this.saveExpandedState();
+      
       // Load shared parameters
       const sharedParams = await this.templateService.getParameters('shared');
       this.renderParameterList(sharedParams, this.sharedParamsContainer, 'shared');
@@ -134,9 +143,60 @@ export default class TemplateCustomizationTab {
         const params = await this.templateService.getParameters(contentType.id);
         this.renderParameterList(params, this.contentTypeParamsContainers[contentType.id], 'content', contentType.id);
       }
+      
+      // Restore expanded state after reload
+      this.restoreExpandedState();
     } catch (error) {
       console.error('Error loading parameters:', error);
       this.notificationManager.error(`Error loading parameters: ${error.message}`);
+    }
+  }
+  
+  saveExpandedState() {
+    // Clear previous expanded state
+    this.expandedParameters.clear();
+    
+    // Collect IDs of currently expanded parameters
+    const expandedEditors = document.querySelectorAll('.parameter-editor');
+    expandedEditors.forEach(editor => {
+      const toggleBtn = editor.querySelector('.toggle-details-btn');
+      if (toggleBtn && toggleBtn.dataset.expanded === 'true') {
+        this.expandedParameters.add(editor.dataset.id);
+      }
+    });
+  }
+  
+  restoreExpandedState() {
+    // Find all parameter editors and restore their expanded state
+    const editors = document.querySelectorAll('.parameter-editor');
+    editors.forEach(editor => {
+      const parameterId = editor.dataset.id;
+      if (this.expandedParameters.has(parameterId)) {
+        const toggleBtn = editor.querySelector('.toggle-details-btn');
+        if (toggleBtn) {
+          // Simulate a click on the toggle button to expand
+          this.expandParameter(editor, toggleBtn);
+        }
+      }
+    });
+  }
+  
+  expandParameter(editor, toggleBtn) {
+    // Update toggle button state
+    toggleBtn.dataset.expanded = 'true';
+    toggleBtn.innerHTML = '▼';
+    toggleBtn.title = 'Hide Details';
+    
+    // Show sections
+    const valuesSection = editor.querySelector('.parameter-values');
+    const actionsSection = editor.querySelector('.parameter-actions');
+    
+    if (valuesSection) {
+      valuesSection.style.display = 'block';
+    }
+    
+    if (actionsSection) {
+      actionsSection.style.display = 'flex';
     }
   }
   
@@ -254,6 +314,10 @@ export default class TemplateCustomizationTab {
       try {
         await this.configManager.resetConfig();
         this.notificationManager.success('Templates reset to default');
+        
+        // Clear expanded state as we're resetting everything
+        this.expandedParameters.clear();
+        
         await this.loadParameters();
       } catch (error) {
         console.error('Error resetting templates:', error);
@@ -262,7 +326,16 @@ export default class TemplateCustomizationTab {
     }
   }
   
-  // Event handlers
+  // New handler for parameter expansion toggle events
+  handleParameterExpansionToggle({ parameterId, isExpanded }) {
+    if (isExpanded) {
+      this.expandedParameters.add(parameterId);
+    } else {
+      this.expandedParameters.delete(parameterId);
+    }
+  }
+  
+  // Event handlers for parameters - preserve expanded state
   handleParameterUpdated() {
     this.loadParameters();
   }
@@ -271,7 +344,9 @@ export default class TemplateCustomizationTab {
     this.loadParameters();
   }
   
-  handleParameterDeleted() {
+  handleParameterDeleted({ parameterId }) {
+    // Remove from expanded set if it exists
+    this.expandedParameters.delete(parameterId);
     this.loadParameters();
   }
   
