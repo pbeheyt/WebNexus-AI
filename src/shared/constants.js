@@ -12,6 +12,11 @@ export const CONTENT_TYPES = {
 };
 
 /**
+ * Shared prompt type - accessible across all content types
+ */
+export const SHARED_TYPE = 'shared';
+
+/**
  * AI platforms supported by the extension
  */
 export const AI_PLATFORMS = {

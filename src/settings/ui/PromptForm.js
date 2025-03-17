@@ -1,5 +1,6 @@
 // src/settings/ui/PromptForm.js
 import { CONTENT_TYPES, CONTENT_TYPE_LABELS } from '../utils/constants.js';
+import { SHARED_TYPE } from '../../shared/constants.js';
 
 export default class PromptForm {
   constructor(promptController, eventBus, notificationManager) {
@@ -67,7 +68,13 @@ export default class PromptForm {
     const typeSelect = document.createElement('select');
     typeSelect.id = 'prompt-type';
     
-    Object.entries(CONTENT_TYPE_LABELS).forEach(([type, label]) => {
+    // Add SHARED_TYPE to the selectable types
+    const allTypes = {
+      ...CONTENT_TYPE_LABELS,
+      [SHARED_TYPE]: 'Shared Prompts'
+    };
+    
+    Object.entries(allTypes).forEach(([type, label]) => {
       const option = document.createElement('option');
       option.value = type;
       option.textContent = label;

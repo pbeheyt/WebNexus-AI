@@ -1,4 +1,6 @@
 // src/popup/ui/CustomPromptSelector.js
+import { SHARED_TYPE } from '../constants.js';
+
 export default class CustomPromptSelector {
   constructor(element, promptService, onChange, preferenceService = null, statusManager = null) {
     this.element = element;
@@ -108,14 +110,35 @@ export default class CustomPromptSelector {
     this.selectElement = document.createElement('select');
     this.selectElement.className = 'custom-prompt-select';
     
-    // Add options
+    // Create option groups
+    const contentTypeGroup = document.createElement('optgroup');
+    contentTypeGroup.label = 'Content-Specific Prompts';
+    
+    const sharedGroup = document.createElement('optgroup');
+    sharedGroup.label = 'Shared Prompts';
+    
+    // Add options to appropriate groups
     this.prompts.forEach(prompt => {
       const option = document.createElement('option');
       option.value = prompt.id;
       option.textContent = prompt.name;
       option.selected = prompt.id === this.selectedPromptId;
-      this.selectElement.appendChild(option);
+      
+      if (prompt.isShared) {
+        sharedGroup.appendChild(option);
+      } else {
+        contentTypeGroup.appendChild(option);
+      }
     });
+    
+    // Add groups to select (only if they have options)
+    if (contentTypeGroup.children.length > 0) {
+      this.selectElement.appendChild(contentTypeGroup);
+    }
+    
+    if (sharedGroup.children.length > 0) {
+      this.selectElement.appendChild(sharedGroup);
+    }
     
     // Create and store reference to the handler
     this.handleSelectChange = async () => {
@@ -130,7 +153,7 @@ export default class CustomPromptSelector {
         try {
           await this.preferenceService.saveSelectedPromptId(
             this.contentType, 
-            false, 
+            'custom', 
             this.selectedPromptId
           );
           

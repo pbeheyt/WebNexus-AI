@@ -1,5 +1,6 @@
 // src/settings/ui/PromptList.js
 import { CONTENT_TYPES, CONTENT_TYPE_LABELS } from '../utils/constants.js';
+import { SHARED_TYPE } from '../../shared/constants.js';
 
 export default class PromptList {
   constructor(promptController, eventBus) {
@@ -21,6 +22,9 @@ export default class PromptList {
     this.filterElement = document.getElementById('content-type-filter');
     
     if (this.filterElement) {
+      // Update filter options to include all content types
+      this.updateFilterOptions();
+      
       this.filterElement.addEventListener('change', (e) => {
         this.filterValue = e.target.value;
         this.render();
@@ -38,6 +42,35 @@ export default class PromptList {
     this.render();
   }
 
+  updateFilterOptions() {
+    if (!this.filterElement) return;
+    
+    // Clear existing options
+    this.filterElement.innerHTML = '';
+    
+    // Add "All" option
+    const allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All Content Types';
+    this.filterElement.appendChild(allOption);
+    
+    // Add options for each content type plus shared
+    const contentTypes = {
+      ...CONTENT_TYPES,
+      [SHARED_TYPE]: SHARED_TYPE
+    };
+    
+    Object.entries(contentTypes).forEach(([key, value]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = CONTENT_TYPE_LABELS[value];
+      this.filterElement.appendChild(option);
+    });
+    
+    // Set initial value
+    this.filterElement.value = this.filterValue;
+  }
+
   async render() {
     if (!this.container) return;
     
@@ -45,16 +78,21 @@ export default class PromptList {
     this.container.innerHTML = '';
     
     try {
-      // Get all content types
+      // Get all content types plus shared
+      const contentTypesToFetch = [
+        ...Object.values(CONTENT_TYPES),
+        SHARED_TYPE
+      ];
+      
       const allPrompts = await Promise.all(
-        Object.values(CONTENT_TYPES).map(type => 
+        contentTypesToFetch.map(type => 
           this.promptController.getPromptsByType(type)
         )
       );
       
       // Combine and filter prompts
       let prompts = [];
-      Object.values(CONTENT_TYPES).forEach((type, index) => {
+      contentTypesToFetch.forEach((type, index) => {
         allPrompts[index].prompts.forEach(promptData => {
           // Only include custom prompts (filter out default prompts)
           if (!promptData.isDefault) {

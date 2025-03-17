@@ -1,5 +1,6 @@
 // src/settings/controllers/PromptController.js
 import { STORAGE_KEY, CONTENT_TYPES } from '../utils/constants.js';
+import { SHARED_TYPE } from '../../shared/constants.js';
 
 export default class PromptController {
   constructor(storageService, configManager, eventBus, notificationManager) {
@@ -25,8 +26,8 @@ export default class PromptController {
       const result = [];
       const addedIds = new Set();
       
-      // Add default prompt
-      if (defaultPrompts?.[contentType]) {
+      // Add default prompt if this is a standard content type (not shared)
+      if (contentType !== SHARED_TYPE && defaultPrompts?.[contentType]) {
         result.push({
           id: contentType,
           prompt: {

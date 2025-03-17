@@ -1,5 +1,5 @@
 // src/popup/controllers/MainController.js
-import { PROMPT_TYPES, CONTENT_TYPES } from '../constants.js';
+import { PROMPT_TYPES, CONTENT_TYPES, SHARED_TYPE } from '../constants.js';
 
 export default class MainController {
   constructor(
@@ -178,6 +178,19 @@ export default class MainController {
     } catch (error) {
       console.error('Initialization error:', error);
       this.statusManager.updateStatus(`Error: ${error.message}`, false, false);
+    }
+  }
+
+  /**
+   * Initialize custom prompt selector
+   */
+  async initializeCustomPromptSelector() {
+    try {
+      // Pass current content type to the selector
+      await this.customPromptSelector.initialize(this.state.contentType);
+    } catch (error) {
+      console.error('Error initializing custom prompt selector:', error);
+      this.statusManager.updateStatus(`Error: ${error.message}`);
     }
   }
 

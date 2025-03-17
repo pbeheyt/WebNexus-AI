@@ -1,5 +1,5 @@
 // src/popup/services/PromptService.js
-import { STORAGE_KEYS } from '../constants.js';
+import { STORAGE_KEYS, CONTENT_TYPES, SHARED_TYPE } from '../constants.js';
 
 export default class PromptService {
   constructor(storageService, configManager, defaultPromptPreferencesService) {
@@ -86,34 +86,61 @@ export default class PromptService {
       return this.defaultPromptPreferencesService.buildPrompt(contentType);
     }
     
-    // Custom prompt
+    // Try to find in content-specific prompts
     const customPromptsByType = await this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS) || {};
-    return customPromptsByType[contentType]?.prompts?.[promptId]?.content || null;
+    const contentPrompt = customPromptsByType[contentType]?.prompts?.[promptId]?.content;
+    
+    if (contentPrompt) {
+      return contentPrompt;
+    }
+    
+    // If not found, check shared prompts
+    const sharedPrompt = customPromptsByType[SHARED_TYPE]?.prompts?.[promptId]?.content;
+    
+    return sharedPrompt || null;
   }
 
   async loadCustomPrompts(contentType) {
     try {
-      // Load custom prompts
+      // Load custom prompts from storage
       const customPromptsByType = await this.storageService.get(STORAGE_KEYS.CUSTOM_PROMPTS) || {};
       
-      // Get preferred prompt ID
+      // Get content-specific prompts
+      const contentPrompts = customPromptsByType[contentType]?.prompts || {};
       const preferredPromptId = customPromptsByType[contentType]?.preferredPromptId || null;
       
-      // Extract custom prompts only
-      const customPrompts = [];
+      // Also get shared prompts (if we're not already loading shared type)
+      const sharedPrompts = contentType !== SHARED_TYPE 
+        ? customPromptsByType[SHARED_TYPE]?.prompts || {}
+        : {};
       
-      if (customPromptsByType[contentType]?.prompts) {
-        Object.entries(customPromptsByType[contentType].prompts).forEach(([id, prompt]) => {
-          customPrompts.push({
+      // Combine prompts
+      const combinedPrompts = [];
+      
+      // Add content-specific prompts
+      Object.entries(contentPrompts).forEach(([id, prompt]) => {
+        combinedPrompts.push({
+          id,
+          name: prompt.name,
+          isPreferred: id === preferredPromptId,
+          isShared: false
+        });
+      });
+      
+      // Add shared prompts (if not already on shared type)
+      if (contentType !== SHARED_TYPE) {
+        Object.entries(sharedPrompts).forEach(([id, prompt]) => {
+          combinedPrompts.push({
             id,
             name: prompt.name,
-            isPreferred: id === preferredPromptId
+            isPreferred: false, // Shared prompts can't be preferred in a specific context
+            isShared: true
           });
         });
       }
       
       return { 
-        prompts: customPrompts, 
+        prompts: combinedPrompts, 
         preferredPromptId 
       };
     } catch (error) {
@@ -133,26 +160,40 @@ export default class PromptService {
   }
 
   initializeEmptyPromptStructure() {
-    // This method remains the same as in the original code
     return {
-      general: {
+      [CONTENT_TYPES.GENERAL]: {
         prompts: {},
         preferredPromptId: null,
         settings: {}
       },
-      reddit: {
+      [CONTENT_TYPES.REDDIT]: {
         prompts: {},
         preferredPromptId: null,
         settings: {
           maxComments: 100
         }
       },
-      youtube: {
+      [CONTENT_TYPES.YOUTUBE]: {
         prompts: {},
         preferredPromptId: null,
         settings: {
           maxComments: 20
         }
+      },
+      [CONTENT_TYPES.PDF]: {
+        prompts: {},
+        preferredPromptId: null,
+        settings: {}
+      },
+      [CONTENT_TYPES.SELECTED_TEXT]: {
+        prompts: {},
+        preferredPromptId: null,
+        settings: {}
+      },
+      [SHARED_TYPE]: {
+        prompts: {},
+        preferredPromptId: null,
+        settings: {}
       }
     };
   }

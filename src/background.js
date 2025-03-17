@@ -273,7 +273,17 @@ async function getPromptContentById(promptId, contentType) {
   // For custom prompts
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-    return result[STORAGE_KEYS.CUSTOM_PROMPTS]?.[contentType]?.prompts?.[promptId]?.content || null;
+    
+    // First try to find the prompt in the content-specific storage
+    let promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS]?.[contentType]?.prompts?.[promptId]?.content;
+    
+    // If not found, check in the shared storage
+    if (!promptContent && result[STORAGE_KEYS.CUSTOM_PROMPTS]?.shared?.prompts?.[promptId]) {
+      logger.background.info(`Prompt not found in ${contentType}, found in shared storage instead`);
+      promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS].shared.prompts[promptId].content;
+    }
+    
+    return promptContent || null;
   } catch (error) {
     logger.background.error('Error loading custom prompt:', error);
     return null;
