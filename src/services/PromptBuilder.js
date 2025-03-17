@@ -1,6 +1,6 @@
 /**
  * PromptBuilder.js - Builds prompts from templates and preferences
- * Responsible for dynamically constructing prompt templates with parameter substitution
+ * Responsible for dynamically constructing prompt templates with parameter substitution and instruction formatting
  */
 import configManager from './ConfigManager.js';
 const logger = require('../utils/logger');
@@ -29,7 +29,7 @@ class PromptBuilder {
     
     // Get the template for this content type
     const template = config.defaultPrompts[contentType];
-    if (!template || !template.baseTemplate) {
+    if (!template) {
       logger.service.error(`Template not found for content type: ${contentType}`);
       throw new Error(`No template found for content type: ${contentType}`);
     }
@@ -39,115 +39,124 @@ class PromptBuilder {
       hasParameters: !!template.parameters
     });
     
-    // Start with the base template
-    let prompt = template.baseTemplate;
+    // Initialize prompt as empty string
+    let prompt = '';
     
-    // Add type-specific instructions if available (now as a single-value parameter)
-    if (template.parameters?.typeSpecificInstructions?.type === 'single' && 
-        template.parameters?.typeSpecificInstructions?.value) {
-      prompt += '\n' + template.parameters.typeSpecificInstructions.value;
-      logger.service.info('Added type-specific instructions to prompt');
-    }
+    // Initialize instruction counter
+    let instructionCounter = 1;
     
-    // Process shared parameters
-    logger.service.info(`Processing ${Object.keys(config.sharedParameters || {}).length} shared parameters`);
-    for (const [paramKey, paramConfig] of Object.entries(config.sharedParameters || {})) {
-      const userValue = preferences[paramKey];
-      logger.service.info(`Processing shared parameter: ${paramKey}`, {
-        paramKey,
+    // Get all parameters in the correct order
+    let allParameters = await this._getOrderedParameters(contentType, config);
+    
+    // Process each parameter in order
+    for (const paramEntry of allParameters) {
+      const { key, paramConfig, source } = paramEntry;
+      const userValue = preferences[key];
+      
+      logger.service.info(`Processing parameter: ${key}`, {
+        paramKey: key,
         paramType: paramConfig.type,
+        source: source,
         userValue: userValue !== undefined ? (typeof userValue === 'boolean' ? userValue.toString() : userValue) : 'undefined'
       });
       
-      const originalLength = prompt.length;
-      prompt = this._appendParameterValue(prompt, userValue, paramConfig, paramKey);
+      const paramValue = this._getParameterValue(paramConfig, userValue, key);
       
-      if (prompt.length > originalLength) {
-        logger.service.info(`Appended shared parameter value for: ${paramKey}`, {
-          addedLength: prompt.length - originalLength
-        });
-      }
-    }
-    
-    // Process content-specific parameters
-    if (template.parameters) {
-      const specificParamKeys = Object.keys(template.parameters).filter(
-        k => k !== 'typeSpecificInstructions'
-      );
-      
-      logger.service.info(`Processing ${specificParamKeys.length} content-specific parameters`);
-      
-      for (const [paramKey, paramConfig] of Object.entries(template.parameters)) {
-        // Skip type-specific instructions as they're always added
-        if (paramKey === 'typeSpecificInstructions') {
-          continue;
-        }
+      // Only add if there's a value to add
+      if (paramValue) {
+        // Add instruction header with the format "## INSTRUCTION X"
+        const header = `## INSTRUCTION ${instructionCounter}`;
         
-        const userValue = preferences[paramKey];
-        logger.service.info(`Processing content-specific parameter: ${paramKey}`, {
-          paramKey,
-          paramType: paramConfig.type,
-          userValue: userValue !== undefined ? (typeof userValue === 'boolean' ? userValue.toString() : userValue) : 'undefined'
-        });
+        // Add to prompt with a newline between instruction header and content
+        prompt += `${prompt ? '\n' : ''}${header}\n${paramValue}`;
+        instructionCounter++;
         
-        const originalLength = prompt.length;
-        prompt = this._appendParameterValue(prompt, userValue, paramConfig, paramKey);
-        
-        if (prompt.length > originalLength) {
-          logger.service.info(`Appended content-specific parameter value for: ${paramKey}`, {
-            addedLength: prompt.length - originalLength
-          });
-        }
+        logger.service.info(`Added parameter: ${key} with instruction #${instructionCounter - 1}`);
       }
     }
     
     logger.service.info(`Prompt building complete for ${contentType}`, {
       promptLength: prompt.length,
-      parameterCount: Object.keys(preferences).length
+      parameterCount: Object.keys(preferences).length,
+      instructionsCount: instructionCounter - 1
     });
     
     return prompt;
   }
+  
+  /**
+   * Get all parameters in the correct order
+   * @private
+   * @param {string} contentType - Content type
+   * @param {Object} config - Configuration object
+   * @returns {Promise<Array>} Ordered parameters
+   */
+  async _getOrderedParameters(contentType, config) {
+    // Get content-specific parameters
+    const contentParams = Object.entries(config.defaultPrompts[contentType]?.parameters || {})
+      .map(([key, param]) => ({
+        key,
+        paramConfig: param,
+        source: 'content',
+        order: param.order || 0
+      }));
+    
+    // Get shared parameters
+    const sharedParams = Object.entries(config.sharedParameters || {})
+      .map(([key, param]) => ({
+        key,
+        paramConfig: param,
+        source: 'shared',
+        order: param.order || 0
+      }));
+    
+    // Combine parameters
+    let allParams = [...contentParams, ...sharedParams];
+    
+    // Sort by order
+    allParams.sort((a, b) => a.order - b.order);
+    
+    return allParams;
+  }
 
   /**
-   * Append parameter value to prompt text based on parameter type
+   * Get parameter value based on user preference and parameter configuration
    * @private
-   * @param {string} prompt - Current prompt text
-   * @param {string|boolean} userValue - User preference value
    * @param {Object} paramConfig - Parameter configuration
+   * @param {any} userValue - User preference value
    * @param {string} paramKey - Parameter key
-   * @returns {string} Updated prompt text
+   * @returns {string} Parameter value or empty string
    */
-  _appendParameterValue(prompt, userValue, paramConfig, paramKey) {
+  _getParameterValue(paramConfig, userValue, paramKey) {
     // Handle based on parameter type
     const paramType = paramConfig.type || 'list';
     
     switch (paramType) {
       case 'single':
         // Single value parameters are always included
-        logger.service.info(`Appending single value parameter ${paramKey}`);
-        return prompt + '\n' + paramConfig.value;
+        logger.service.info(`Using single value parameter ${paramKey}`);
+        return paramConfig.value || '';
       
       case 'checkbox':
         // Checkbox parameters (true/false)
         if (typeof userValue === 'boolean') {
           if (userValue === true && paramConfig.values?.true) {
-            logger.service.info(`Appending checkbox parameter ${paramKey}=true`);
-            return prompt + '\n' + paramConfig.values.true;
+            logger.service.info(`Using checkbox parameter ${paramKey}=true`);
+            return paramConfig.values.true;
           }
-          logger.service.info(`Checkbox parameter ${paramKey}=${userValue} not appended (false value)`);
-          return prompt;
+          logger.service.info(`Checkbox parameter ${paramKey}=${userValue} not used (false value)`);
+          return '';
         }
         // Default to false if not explicitly set
         logger.service.info(`Checkbox parameter ${paramKey} defaulting to false`);
-        return prompt;
+        return '';
       
       case 'list':
       default:
         // List parameters (multiple options)
         if (userValue && paramConfig.values?.[userValue]) {
-          logger.service.info(`Appending list parameter ${paramKey}=${userValue}`);
-          return prompt + '\n' + paramConfig.values[userValue];
+          logger.service.info(`Using list parameter ${paramKey}=${userValue}`);
+          return paramConfig.values[userValue];
         }
         
         // Default to first value if no preference specified
@@ -156,11 +165,11 @@ class PromptBuilder {
           logger.service.info(`Using default value for list parameter ${paramKey}=${firstValue}`, {
             reason: userValue ? 'Value not found in config' : 'No user preference specified'
           });
-          return prompt + '\n' + paramConfig.values[firstValue];
+          return paramConfig.values[firstValue];
         }
         
         logger.service.warn(`No valid value found for parameter ${paramKey}`);
-        return prompt;
+        return '';
     }
   }
 
@@ -215,7 +224,8 @@ class PromptBuilder {
       orderedParams[entry.key] = entry.param;
     });
     
-    // Remove non-configurable parameters (typeSpecificInstructions is single-value)
+    // Remove non-configurable parameters
+    delete orderedParams.baseInstruction;
     delete orderedParams.typeSpecificInstructions;
     
     logger.service.info(`Final parameter options count for ${contentType}: ${Object.keys(orderedParams).length}`);
