@@ -16,7 +16,6 @@
 
 .quick-prompt-textarea:focus {
   outline: none;
-  background-color: rgba(255, 255, 255, 0.02); /* Subtle highlight when focused */
   box-shadow: none;
 }
 
@@ -236,7 +235,7 @@ button.btn-summarize:disabled {
 .platform-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px; /* Reduced from 6px */
+  gap: 5px;
   margin-bottom: 8px;
 }
 
@@ -244,7 +243,7 @@ button.btn-summarize:disabled {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  padding: 5px 4px; /* Reduced from 6px 4px */
+  padding: 5px 4px;
   flex: 1;
   cursor: pointer;
   display: flex;
