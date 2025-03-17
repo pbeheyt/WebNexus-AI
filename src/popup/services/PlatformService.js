@@ -24,13 +24,12 @@ export default class PlatformService {
       }));
       
       // Get preferred platform
-      const preferredPlatformId = await this.storageService.get(STORAGE_KEYS.PREFERRED_PLATFORM) || 
-                                config.defaultAiPlatform || 'claude';
+      const preferredPlatformId = await this.storageService.get(STORAGE_KEYS.PREFERRED_PLATFORM) || config.defaultAiPlatform;
       
       return { platforms, preferredPlatformId };
     } catch (error) {
       console.error('Error loading platforms:', error);
-      return { platforms: [], preferredPlatformId: 'claude' };
+      return { platforms: [] };
     }
   }
 

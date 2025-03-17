@@ -67,11 +67,11 @@ async function getPreferredAiPlatform() {
     }
 
     // Fallback to Claude
-    logger.background.info('No preferred platform found, using Claude as default');
-    return AI_PLATFORMS.CLAUDE;
+    logger.background.info('No preferred platform found, using Chatgpt as default');
+    return AI_PLATFORMS.CHATGPT;
   } catch (error) {
     logger.background.error('Error getting preferred AI platform:', error);
-    return AI_PLATFORMS.CLAUDE; // Fallback to Claude
+    return AI_PLATFORMS.CHATGPT; // Fallback to Claude
   }
 }
 
