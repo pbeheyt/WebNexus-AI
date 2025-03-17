@@ -752,3 +752,22 @@
   .reset-templates-btn:hover {
     background: var(--warning-color-hover);
   }
+
+  /* Value reordering and editor styles */
+  .value-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  .value-reorder-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .value-reorder-actions button {
+    padding: 2px 6px;
+    font-size: 12px;
+    min-width: 24px;
+  }

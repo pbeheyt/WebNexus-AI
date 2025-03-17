@@ -24,6 +24,8 @@ export default class TemplateCustomizationTab {
     this.handleParameterDeleted = this.handleParameterDeleted.bind(this);
     this.handleParameterValueAdded = this.handleParameterValueAdded.bind(this);
     this.handleParameterValueDeleted = this.handleParameterValueDeleted.bind(this);
+    this.handleParameterReordered = this.handleParameterReordered.bind(this);
+    this.handleParameterValueReordered = this.handleParameterValueReordered.bind(this);
     
     // Subscribe to events
     this.eventBus.subscribe('parameter:updated', this.handleParameterUpdated);
@@ -31,6 +33,8 @@ export default class TemplateCustomizationTab {
     this.eventBus.subscribe('parameter:deleted', this.handleParameterDeleted);
     this.eventBus.subscribe('parameter:value:added', this.handleParameterValueAdded);
     this.eventBus.subscribe('parameter:value:deleted', this.handleParameterValueDeleted);
+    this.eventBus.subscribe('parameter:reordered', this.handleParameterReordered);
+    this.eventBus.subscribe('parameter:value:reordered', this.handleParameterValueReordered);
   }
   
   initialize(container) {
@@ -276,6 +280,14 @@ export default class TemplateCustomizationTab {
   }
   
   handleParameterValueDeleted() {
+    this.loadParameters();
+  }
+  
+  handleParameterReordered() {
+    this.loadParameters();
+  }
+  
+  handleParameterValueReordered() {
     this.loadParameters();
   }
 }

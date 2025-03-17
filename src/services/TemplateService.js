@@ -31,37 +31,6 @@ class TemplateService {
   }
 
   /**
-   * BACKWARD COMPATIBILITY: Get sorted parameters for a content type
-   * @param {string} contentType - Content type or 'shared' for shared parameters
-   * @returns {Promise<Array>} Array of parameters
-   */
-  async getSortedParameters(contentType) {
-    console.warn('Deprecated: Use getParameters() instead');
-    return this.getParameters(contentType);
-  }
-
-  /**
-   * BACKWARD COMPATIBILITY: Reset all customizations to defaults
-   * @returns {Promise<Object>} The default configuration
-   */
-  async resetAllCustomizations() {
-    console.warn('Deprecated: Use configManager.resetConfig() instead');
-    return this.configManager.resetConfig();
-  }
-
-  /**
-   * BACKWARD COMPATIBILITY: Get a specific parameter
-   * @param {string} contentType - Content type or 'shared'
-   * @param {string} paramId - Parameter ID
-   * @returns {Promise<Object>} The parameter object
-   */
-  async getParameter(contentType, paramId) {
-    console.warn('Deprecated: Use getParameters() and filter by ID instead');
-    const parameters = await this.getParameters(contentType);
-    return parameters.find(param => param.id === paramId) || null;
-  }
-
-  /**
    * Update parameter name
    * @param {string} contentType - Content type or 'shared'
    * @param {string} parameterId - Parameter ID
@@ -245,6 +214,13 @@ class TemplateService {
     });
   }
 
+  /**
+   * Reorder parameter
+   * @param {string} contentType - Content type or 'shared'
+   * @param {string} parameterId - Parameter ID
+   * @param {number} newOrder - New order position
+   * @returns {Promise<Object>} Updated configuration
+   */
   async reorderParameter(contentType, parameterId, newOrder) {
     return this.configManager.updateConfig(config => {
       const newConfig = { ...config };
@@ -258,8 +234,17 @@ class TemplateService {
       
       // Convert parameters to array with current ordering
       const paramsArray = Object.entries(paramCollection)
-        .map(([id, param]) => ({ id, ...param }))
-        .sort((a, b) => (a.order || 0) - (b.order || 0));
+        .map(([id, param]) => ({ id, ...param }));
+      
+      // Ensure every parameter has an order value
+      paramsArray.forEach((param, idx) => {
+        if (param.order === undefined) {
+          param.order = idx;
+        }
+      });
+      
+      // Sort by current order
+      paramsArray.sort((a, b) => (a.order || 0) - (b.order || 0));
       
       // Find target parameter
       const paramIndex = paramsArray.findIndex(p => p.id === parameterId);
@@ -296,21 +281,76 @@ class TemplateService {
   }
 
   /**
+   * Reorder parameter value
+   * @param {string} contentType - Content type or 'shared'
+   * @param {string} parameterId - Parameter ID
+   * @param {string} valueKey - Value key to reorder
+   * @param {number} newPosition - New position index
+   * @returns {Promise<Object>} Updated configuration
+   */
+  async reorderParameterValue(contentType, parameterId, valueKey, newPosition) {
+    return this.configManager.updateConfig(config => {
+      const newConfig = { ...config };
+      
+      // Get parameter values
+      let paramValues;
+      if (contentType === 'shared') {
+        paramValues = newConfig.sharedParameters[parameterId]?.values;
+      } else {
+        paramValues = newConfig.defaultPrompts[contentType]?.parameters?.[parameterId]?.values;
+      }
+      
+      if (!paramValues) return newConfig;
+      
+      // Convert to ordered array
+      const valuesArray = Object.entries(paramValues).map(([key, value], index) => ({
+        key,
+        value,
+        order: index
+      }));
+      
+      // Find target value
+      const valueIndex = valuesArray.findIndex(v => v.key === valueKey);
+      if (valueIndex === -1) return newConfig;
+      
+      // Remove value
+      const [valueToMove] = valuesArray.splice(valueIndex, 1);
+      
+      // Insert at new position
+      const targetIndex = Math.max(0, Math.min(newPosition, valuesArray.length));
+      valuesArray.splice(targetIndex, 0, valueToMove);
+      
+      // Convert back to object
+      const updatedValues = {};
+      valuesArray.forEach(({key, value}) => {
+        updatedValues[key] = value;
+      });
+      
+      // Update config
+      if (contentType === 'shared') {
+        newConfig.sharedParameters[parameterId].values = updatedValues;
+      } else if (newConfig.defaultPrompts[contentType]?.parameters?.[parameterId]) {
+        newConfig.defaultPrompts[contentType].parameters[parameterId].values = updatedValues;
+      }
+      
+      return newConfig;
+    });
+  }
+
+  /**
    * Convert parameter object to array with IDs
    * @private
    * @param {Object} parameters - Parameters object
    * @returns {Array} Array of parameters with IDs
    */
   _convertParametersToArray(parameters) {
-    return Object.entries(parameters).map(([id, param]) => ({
+    return Object.entries(parameters).map(([id, param], index) => ({
       id,
+      order: param.order !== undefined ? param.order : index, // Ensure order exists
       ...param
     })).sort((a, b) => {
-      // Sort by order if present, otherwise alphabetically by name
-      if (a.order !== undefined && b.order !== undefined) {
-        return a.order - b.order;
-      }
-      return (a.param_name || '').localeCompare(b.param_name || '');
+      // Sort by order value
+      return (a.order) - (b.order);
     });
   }
 

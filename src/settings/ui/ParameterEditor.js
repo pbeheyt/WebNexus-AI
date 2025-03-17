@@ -133,8 +133,15 @@ export default class ParameterEditor {
     const valuesList = document.createElement('div');
     valuesList.className = 'values-list';
     
-    Object.entries(parameter.values).forEach(([key, value]) => {
-      const valueEditor = this.createValueEditor(parameter, paramType, key, value, contentType);
+    // Get values as array to maintain order for display
+    const valuesArray = Object.entries(parameter.values).map(([key, value], index) => ({
+      key,
+      value,
+      index
+    }));
+    
+    valuesArray.forEach((entry, index) => {
+      const valueEditor = this.createValueEditor(parameter, paramType, entry.key, entry.value, contentType, index, valuesArray.length);
       valuesList.appendChild(valueEditor);
     });
     
@@ -143,14 +150,60 @@ export default class ParameterEditor {
     return valuesSection;
   }
   
-  createValueEditor(parameter, paramType, key, value, contentType) {
+  createValueEditor(parameter, paramType, key, value, contentType, index, totalValues) {
     const valueWrapper = document.createElement('div');
     valueWrapper.className = 'value-editor';
     valueWrapper.dataset.key = key;
     
+    // Create value header with move buttons
+    const valueHeader = document.createElement('div');
+    valueHeader.className = 'value-header';
+    valueHeader.style.display = 'flex';
+    valueHeader.style.justifyContent = 'space-between';
+    valueHeader.style.alignItems = 'center';
+    valueHeader.style.marginBottom = '5px';
+    
     const keyLabel = document.createElement('div');
     keyLabel.className = 'value-key-label';
     keyLabel.textContent = key;
+    valueHeader.appendChild(keyLabel);
+    
+    // Action buttons for value reordering
+    const valueActions = document.createElement('div');
+    valueActions.className = 'value-reorder-actions';
+    valueActions.style.display = 'flex';
+    valueActions.style.gap = '4px';
+    
+    // Only show up button if not first
+    if (index > 0) {
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.type = 'button';
+      moveUpBtn.className = 'btn btn-sm move-up-btn';
+      moveUpBtn.innerHTML = '↑';
+      moveUpBtn.title = 'Move Up';
+      moveUpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleValueReorder(parameter, paramType, key, index - 1, contentType);
+      });
+      valueActions.appendChild(moveUpBtn);
+    }
+    
+    // Only show down button if not last
+    if (index < totalValues - 1) {
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.type = 'button';
+      moveDownBtn.className = 'btn btn-sm move-down-btn';
+      moveDownBtn.innerHTML = '↓';
+      moveDownBtn.title = 'Move Down';
+      moveDownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleValueReorder(parameter, paramType, key, index + 1, contentType);
+      });
+      valueActions.appendChild(moveDownBtn);
+    }
+    
+    valueHeader.appendChild(valueActions);
+    valueWrapper.appendChild(valueHeader);
     
     const valueTextarea = document.createElement('textarea');
     valueTextarea.className = 'value-textarea';
@@ -170,6 +223,9 @@ export default class ParameterEditor {
       }
     });
     
+    valueWrapper.appendChild(valueTextarea);
+    
+    // Add value actions (like delete)
     const actions = document.createElement('div');
     actions.className = 'value-actions';
     
@@ -178,14 +234,13 @@ export default class ParameterEditor {
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'btn btn-sm btn-danger delete-value-btn';
       deleteBtn.innerHTML = 'Delete';
-      deleteBtn.addEventListener('click', () => {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.handleDeleteValue(parameter, paramType, key, contentType);
       });
       actions.appendChild(deleteBtn);
     }
     
-    valueWrapper.appendChild(keyLabel);
-    valueWrapper.appendChild(valueTextarea);
     valueWrapper.appendChild(actions);
     
     return valueWrapper;
@@ -321,13 +376,13 @@ export default class ParameterEditor {
     }
   }
   
-  async handleDeleteValue(parameter, paramType, valueKey, contentType) {
-    if (confirm(`Are you sure you want to delete the value "${valueKey}"?`)) {
+  async handleDeleteValue(parameter, paramType, key, contentType) {
+    if (confirm(`Are you sure you want to delete the value "${key}"?`)) {
       try {
-        await this.templateService.removeParameterValue(
+        await this.templateService.deleteParameterValue(
           contentType || 'shared',
           parameter.id,
-          valueKey
+          key
         );
         
         this.notificationManager.success('Value deleted successfully');
@@ -337,12 +392,37 @@ export default class ParameterEditor {
           paramType,
           contentType,
           parameterId: parameter.id,
-          valueKey
+          valueKey: key
         });
       } catch (error) {
         console.error('Error deleting value:', error);
         this.notificationManager.error(`Error deleting value: ${error.message}`);
       }
+    }
+  }
+  
+  async handleValueReorder(parameter, paramType, valueKey, newPosition, contentType) {
+    try {
+      await this.templateService.reorderParameterValue(
+        contentType || 'shared',
+        parameter.id,
+        valueKey,
+        newPosition
+      );
+      
+      this.notificationManager.success('Value reordered successfully');
+      
+      // Publish event
+      this.eventBus.publish('parameter:value:reordered', {
+        paramType,
+        contentType,
+        parameterId: parameter.id,
+        valueKey,
+        newPosition
+      });
+    } catch (error) {
+      console.error('Error reordering value:', error);
+      this.notificationManager.error(`Error reordering value: ${error.message}`);
     }
   }
   
