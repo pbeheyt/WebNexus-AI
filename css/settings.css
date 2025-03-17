@@ -518,7 +518,7 @@
   }
 
 /* ======================================
-   Template Customization
+   Template Customization - Updated
    ====================================== */
 
   /* Template Customization Tab */
@@ -536,21 +536,33 @@
     justify-content: flex-end;
   }
 
+  /* Template Section Styling */
   .template-section {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     background: var(--bg-surface);
     border-radius: 6px;
-    padding: 16px;
-    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
   }
 
   .template-section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    padding: 12px 15px;
+    background: var(--bg-surface);
     border-bottom: 1px solid var(--divider-color);
+    transition: background var(--transition-fast);
+  }
+
+  .template-section-header:hover {
+    background: var(--bg-surface-hover);
+  }
+
+  .section-title-wrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
   }
 
   .template-section-header h3 {
@@ -558,36 +570,55 @@
     font-size: 16px;
   }
 
+  .section-collapse-indicator {
+    margin-left: 10px;
+    color: var(--text-secondary);
+    transition: transform var(--transition-fast);
+  }
+
   .parameter-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    padding: 16px;
+  }
+
+  .parameter-list.collapsed {
+    display: none;
   }
 
   .empty-parameters {
-    padding: 20px;
+    padding: 16px;
     text-align: center;
     color: var(--text-secondary);
     background: var(--bg-surface-hover);
     border-radius: 4px;
   }
 
-  /* Parameter Editor */
+  /* Parameter Editor Styling */
   .parameter-editor {
-    background: var(--bg-surface-hover);
-    border-radius: 4px;
+    background: var(--bg-surface);
+    border-radius: 6px;
     padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
     border-left: 3px solid var(--color-primary);
+    transition: all var(--transition-fast);
   }
 
-  .parameter-header {
-    margin-bottom: 16px;
+  .parameter-editor:hover {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .parameter-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
   }
 
   .parameter-name-wrapper {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-grow: 1;
   }
 
   .parameter-name-input {
@@ -600,22 +631,88 @@
     font-weight: 500;
   }
 
-  .custom-badge {
-    background: var(--color-primary);
-    color: white;
-    font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 4px;
+  .parameter-name-input:focus {
+    border-color: var(--color-primary);
+    outline: none;
   }
 
+  .toggle-details-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 10px;
+    padding: 4px;
+    margin-left: 6px;
+    opacity: 0.8;
+    transition: all var(--transition-fast);
+  }
+
+  .toggle-details-btn:hover {
+    color: var(--color-primary);
+    opacity: 1;
+  }
+
+  .essential-parameter-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  /* Type Badge Styling */
+  .type-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    margin-left: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    background-color: var(--bg-surface-hover);
+    color: var(--text-secondary);
+  }
+
+  .parameter-editor[data-param-type="list"] .type-badge {
+    background-color: rgba(66, 133, 244, 0.1);
+    color: var(--color-primary);
+  }
+
+  .parameter-editor[data-param-type="checkbox"] .type-badge {
+    background-color: rgba(52, 168, 83, 0.1);
+    color: var(--color-accent);
+  }
+
+  .parameter-editor[data-param-type="single"] .type-badge {
+    background-color: rgba(251, 188, 4, 0.1);
+    color: var(--warning-color);
+  }
+
+  /* Parameter Section Styling */
+  .parameter-type-selector,
   .parameter-values {
-    margin-bottom: 16px;
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 4px;
+    background-color: var(--bg-surface-hover);
+    border: 1px solid var(--border-color);
+  }
+
+  .parameter-type-selector-wrapper {
+    display: flex;
+    gap: 15px;
+    margin-top: 8px;
+  }
+
+  .type-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
 
   .values-label {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
+    color: var(--text-primary);
   }
 
   .values-list {
@@ -624,11 +721,20 @@
     gap: 12px;
   }
 
+  /* Value Editor Styling */
   .value-editor {
     background: var(--bg-primary);
     border-radius: 4px;
     padding: 12px;
     border: 1px solid var(--border-color);
+    margin-bottom: 10px;
+  }
+
+  .value-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
   }
 
   .value-key-label {
@@ -637,22 +743,33 @@
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 13px;
-    margin-bottom: 8px;
     font-weight: 500;
     border: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  .value-reorder-actions {
+    display: flex;
+    gap: 4px;
   }
 
   .value-textarea {
     width: 100%;
     min-height: 80px;
     padding: 8px;
-    border-radius: 4px;
     border: 1px solid var(--border-color);
-    background: var(--bg-surface);
+    border-radius: 4px;
+    background: var(--bg-primary);
     color: var(--text-primary);
     font-family: 'Courier New', monospace;
     font-size: 13px;
     resize: vertical;
+    transition: border-color var(--transition-fast);
+  }
+
+  .value-textarea:focus {
+    border-color: var(--color-primary);
+    outline: none;
   }
 
   .value-actions {
@@ -661,13 +778,53 @@
     margin-top: 8px;
   }
 
+  /* Parameter Type-Specific Styling */
+  .checkbox-parameter .checkbox-value-editor {
+    margin-bottom: 12px;
+  }
+
+  /* Parameter Actions */
   .parameter-actions {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: 10px;
   }
 
-  /* Modal dialog */
+  /* Button styling */
+  .btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+  }
+
+  .move-up-btn, 
+  .move-down-btn {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+  }
+
+  .move-up-btn:hover, 
+  .move-down-btn:hover {
+    background: var(--bg-surface-hover);
+  }
+
+  .delete-param-btn,
+  .delete-value-btn {
+    color: var(--error-color);
+  }
+
+  .reset-templates-btn {
+    background: var(--warning-color);
+    color: white;
+  }
+
+  .reset-templates-btn:hover {
+    background: var(--warning-color-hover);
+  }
+
+  /* Modal dialog styling */
   .modal {
     position: fixed;
     top: 0;
@@ -726,198 +883,4 @@
     font-size: 12px;
     color: var(--text-secondary);
     margin-top: 4px;
-  }
-
-  /* Button styles */
-  .btn-sm {
-    padding: 4px 8px;
-    font-size: 12px;
-  }
-
-  .move-up-btn, .move-down-btn {
-    background: var(--bg-surface);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-  }
-
-  .move-up-btn:hover, .move-down-btn:hover {
-    background: var(--bg-surface-hover);
-  }
-
-  .reset-templates-btn {
-    background: var(--warning-color);
-    color: white;
-  }
-
-  .reset-templates-btn:hover {
-    background: var(--warning-color-hover);
-  }
-
-  /* Value reordering and editor styles */
-  .value-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-  }
-
-  .value-reorder-actions {
-    display: flex;
-    gap: 4px;
-  }
-
-  .value-reorder-actions button {
-    padding: 2px 6px;
-    font-size: 12px;
-    min-width: 24px;
-  }
-
-  .type-badge {
-    display: inline-block;
-    padding: 2px 6px;
-    margin-left: 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-  }
-  
-  .parameter-editor[data-param-type="list"] .type-badge {
-    background-color: #e3f2fd;
-    color: #0d47a1;
-  }
-  
-  .parameter-editor[data-param-type="checkbox"] .type-badge {
-    background-color: #e8f5e9;
-    color: #1b5e20;
-  }
-  
-  .parameter-editor[data-param-type="single"] .type-badge {
-    background-color: #fff3e0;
-    color: #e65100;
-  }
-  
-  /* Parameter type selector */
-  .parameter-type-selector {
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 4px;
-    background-color: #f5f5f5;
-  }
-  
-  .parameter-type-selector-wrapper {
-    display: flex;
-    gap: 15px;
-    margin-top: 5px;
-  }
-  
-  .type-option {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  
-  /* Parameter values sections */
-  .parameter-values {
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 4px;
-    background-color: #fafafa;
-  }
-  
-  /* List parameter styles */
-  .list-parameter .values-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .list-parameter .value-editor {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 8px;
-    background-color: white;
-  }
-  
-  .list-parameter .value-key-label {
-    font-weight: 500;
-    padding: 2px 6px;
-    background-color: #f5f5f5;
-    border-radius: 3px;
-  }
-  
-  /* Checkbox parameter styles */
-  .checkbox-parameter .checkbox-value-editor {
-    margin-bottom: 10px;
-  }
-  
-  .checkbox-parameter label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-  }
-  
-  /* Single parameter styles */
-  .single-parameter {
-    background-color: #fffde7;
-    border-left: 3px solid #ffd600;
-  }
-  
-  .single-parameter .value-label {
-    font-weight: 500;
-    color: #795548;
-  }
-  
-  /* Textarea styles for different parameter types */
-  .list-parameter .value-textarea {
-    width: 100%;
-    min-height: 80px;
-    padding: 8px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    resize: vertical;
-  }
-  
-  .checkbox-parameter .value-textarea {
-    width: 100%;
-    min-height: 60px;
-    padding: 8px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    resize: vertical;
-  }
-  
-  .single-parameter .value-textarea {
-    width: 100%;
-    min-height: 100px;
-    padding: 8px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    resize: vertical;
-    background-color: #fffef3;
-  }
-  
-  /* Add parameter modal */
-  .modal-body #list-param-fields,
-  .modal-body #checkbox-param-fields,
-  .modal-body #single-param-fields {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-  }
-  
-  .modal-body select#parameter-type {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: white;
-  }
-  
-  /* Parameter actions */
-  .parameter-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 10px;
   }

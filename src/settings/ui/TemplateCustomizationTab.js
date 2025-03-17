@@ -105,12 +105,37 @@ export default class TemplateCustomizationTab {
     
     const header = document.createElement('div');
     header.className = 'template-section-header';
-    header.innerHTML = `
-      <h3>${title}</h3>
-      <div class="section-actions">
-        <button class="btn add-parameter-btn" data-section="${id}">+ Add Parameter</button>
-      </div>
-    `;
+    
+    // Create a title wrapper for the collapsible functionality
+    const titleWrapper = document.createElement('div');
+    titleWrapper.className = 'section-title-wrapper';
+    
+    const sectionTitle = document.createElement('h3');
+    sectionTitle.textContent = title;
+    
+    const collapseIndicator = document.createElement('span');
+    collapseIndicator.className = 'section-collapse-indicator';
+    collapseIndicator.textContent = '▼';
+    
+    titleWrapper.appendChild(sectionTitle);
+    titleWrapper.appendChild(collapseIndicator);
+    
+    const actions = document.createElement('div');
+    actions.className = 'section-actions';
+    
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn add-parameter-btn';
+    addBtn.textContent = '+ Add Parameter';
+    addBtn.dataset.section = id;
+    addBtn.addEventListener('click', (e) => {
+      const section = e.target.dataset.section;
+      this.showAddParameterDialog(section);
+    });
+    
+    actions.appendChild(addBtn);
+    
+    header.appendChild(titleWrapper);
+    header.appendChild(actions);
     
     const parameterList = document.createElement('div');
     parameterList.className = 'parameter-list';
@@ -119,14 +144,11 @@ export default class TemplateCustomizationTab {
     section.appendChild(header);
     section.appendChild(parameterList);
     
-    // Add event listener for add parameter button
-    const addBtn = header.querySelector('.add-parameter-btn');
-    if (addBtn) {
-      addBtn.addEventListener('click', (e) => {
-        const section = e.target.dataset.section;
-        this.showAddParameterDialog(section);
-      });
-    }
+    // Make the section collapsible
+    titleWrapper.addEventListener('click', () => {
+      parameterList.classList.toggle('collapsed');
+      collapseIndicator.textContent = parameterList.classList.contains('collapsed') ? '▶' : '▼';
+    });
     
     return section;
   }
@@ -258,7 +280,7 @@ export default class TemplateCustomizationTab {
               <option value="checkbox">Checkbox (True/False)</option>
               <option value="single">Single Value (Always Present)</option>
             </select>
-            <p class="help-text">Choose the type of parameter you want to create.</p>
+            <p class="help-text">Choose the type of parameter you want to create. Type cannot be changed after creation.</p>
           </div>
           
           <!-- List Parameter Fields -->

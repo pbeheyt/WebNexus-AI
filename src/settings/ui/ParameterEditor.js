@@ -12,7 +12,7 @@ export default class ParameterEditor {
     editor.className = 'parameter-editor';
     editor.dataset.id = parameter.id;
     editor.dataset.type = paramType;
-    editor.dataset.paramType = parameter.type || 'list'; // Add parameter type as data attribute
+    editor.dataset.paramType = parameter.type || 'list';
     if (contentType) {
       editor.dataset.contentType = contentType;
     }
@@ -61,9 +61,6 @@ export default class ParameterEditor {
     headerWrapper.appendChild(header);
     headerWrapper.appendChild(essentialActions);
 
-    // Parameter type switcher
-    const typeSelector = this.createTypeSelector(parameter, paramType, contentType);
-
     // Values editor based on parameter type
     const valuesSection = this.createValuesEditor(parameter, paramType, contentType);
     
@@ -88,7 +85,6 @@ export default class ParameterEditor {
 
     // Assemble editor
     editor.appendChild(headerWrapper);
-    editor.appendChild(typeSelector);
     editor.appendChild(valuesSection);
     editor.appendChild(actions);
 
@@ -98,13 +94,13 @@ export default class ParameterEditor {
   createNameEditor(parameter, paramType, contentType) {
     const header = document.createElement('div');
     header.className = 'parameter-header';
-
+  
     const nameWrapper = document.createElement('div');
     nameWrapper.className = 'parameter-name-wrapper';
-
+  
     const nameLabel = document.createElement('label');
     nameLabel.textContent = 'Parameter Name:';
-
+  
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.className = 'parameter-name-input';
@@ -114,7 +110,7 @@ export default class ParameterEditor {
     if (contentType) {
       nameInput.dataset.contentType = contentType;
     }
-
+  
     // Handle name change
     nameInput.addEventListener('blur', () => {
       const newName = nameInput.value.trim();
@@ -124,34 +120,30 @@ export default class ParameterEditor {
         nameInput.value = parameter.param_name;
       }
     });
-
+  
     // Also submit on Enter key
     nameInput.addEventListener('keyup', (e) => {
       if (e.key === 'Enter') {
         nameInput.blur();
       }
     });
-
+  
     nameWrapper.appendChild(nameLabel);
     nameWrapper.appendChild(nameInput);
-
+  
     // Add parameter type badge
     const typeBadge = document.createElement('span');
     typeBadge.className = 'type-badge';
     typeBadge.textContent = parameter.type || 'list';
     nameWrapper.appendChild(typeBadge);
-
+  
     header.appendChild(nameWrapper);
-
+  
     // Toggle button for expanding/collapsing details
     const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'btn btn-sm toggle-details-btn';
+    toggleBtn.className = 'toggle-details-btn';
     toggleBtn.innerHTML = '▶';
     toggleBtn.title = 'Show Details';
-    toggleBtn.style.fontSize = '10px';
-    toggleBtn.style.padding = '2px 6px';
-    toggleBtn.style.marginLeft = '6px';
-    toggleBtn.style.opacity = '0.7';
     toggleBtn.dataset.expanded = 'false';
     toggleBtn.addEventListener('click', () => {
       const isExpanded = toggleBtn.dataset.expanded === 'true';
@@ -159,22 +151,17 @@ export default class ParameterEditor {
       toggleBtn.dataset.expanded = newState.toString();
       toggleBtn.innerHTML = newState ? '▼' : '▶';
       toggleBtn.title = newState ? 'Hide Details' : 'Show Details';
-
+  
       // Find the parent editor and toggle sections visibility
       const editor = toggleBtn.closest('.parameter-editor');
       const parameterId = editor.dataset.id;
-      const typeSelector = editor.querySelector('.parameter-type-selector');
       const valuesSection = editor.querySelector('.parameter-values');
       const actionsSection = editor.querySelector('.parameter-actions');
-
-      if (typeSelector) {
-        typeSelector.style.display = newState ? 'block' : 'none';
-      }
-
+  
       if (valuesSection) {
         valuesSection.style.display = newState ? 'block' : 'none';
       }
-
+  
       if (actionsSection) {
         actionsSection.style.display = newState ? 'flex' : 'none';
       }
@@ -185,59 +172,9 @@ export default class ParameterEditor {
         isExpanded: newState
       });
     });
-
+  
     nameWrapper.appendChild(toggleBtn);
     return header;
-  }
-
-  createTypeSelector(parameter, paramType, contentType) {
-    const typeSelectorSection = document.createElement('div');
-    typeSelectorSection.className = 'parameter-type-selector';
-    typeSelectorSection.style.display = 'none';  // Hidden by default
-
-    const typeSelectorLabel = document.createElement('label');
-    typeSelectorLabel.textContent = 'Parameter Type:';
-    typeSelectorSection.appendChild(typeSelectorLabel);
-
-    const typeSelectorWrapper = document.createElement('div');
-    typeSelectorWrapper.className = 'parameter-type-selector-wrapper';
-
-    // Create a radio button group for parameter types
-    const types = [
-      { value: 'list', label: 'List (Multiple Options)' },
-      { value: 'checkbox', label: 'Checkbox (True/False)' },
-      { value: 'single', label: 'Single Value (Always Present)' }
-    ];
-
-    types.forEach(type => {
-      const typeOption = document.createElement('div');
-      typeOption.className = 'type-option';
-
-      const radio = document.createElement('input');
-      radio.type = 'radio';
-      radio.name = `param-type-${parameter.id}`;
-      radio.id = `param-type-${parameter.id}-${type.value}`;
-      radio.value = type.value;
-      radio.checked = (parameter.type || 'list') === type.value;
-
-      const radioLabel = document.createElement('label');
-      radioLabel.htmlFor = `param-type-${parameter.id}-${type.value}`;
-      radioLabel.textContent = type.label;
-
-      typeOption.appendChild(radio);
-      typeOption.appendChild(radioLabel);
-      typeSelectorWrapper.appendChild(typeOption);
-
-      // Add event listener for type change
-      radio.addEventListener('change', () => {
-        if (radio.checked) {
-          this.handleTypeChange(parameter, paramType, type.value, contentType);
-        }
-      });
-    });
-
-    typeSelectorSection.appendChild(typeSelectorWrapper);
-    return typeSelectorSection;
   }
 
   createValuesEditor(parameter, paramType, contentType) {
@@ -395,26 +332,20 @@ export default class ParameterEditor {
     const valueWrapper = document.createElement('div');
     valueWrapper.className = 'value-editor';
     valueWrapper.dataset.key = key;
-
+  
     // Create value header with move buttons
     const valueHeader = document.createElement('div');
     valueHeader.className = 'value-header';
-    valueHeader.style.display = 'flex';
-    valueHeader.style.justifyContent = 'space-between';
-    valueHeader.style.alignItems = 'center';
-    valueHeader.style.marginBottom = '5px';
-
+  
     const keyLabel = document.createElement('div');
     keyLabel.className = 'value-key-label';
     keyLabel.textContent = key;
     valueHeader.appendChild(keyLabel);
-
+  
     // Action buttons for value reordering
     const valueActions = document.createElement('div');
     valueActions.className = 'value-reorder-actions';
-    valueActions.style.display = 'flex';
-    valueActions.style.gap = '4px';
-
+  
     // Only show up button if not first
     if (index > 0) {
       const moveUpBtn = document.createElement('button');
@@ -428,7 +359,7 @@ export default class ParameterEditor {
       });
       valueActions.appendChild(moveUpBtn);
     }
-
+  
     // Only show down button if not last
     if (index < totalValues - 1) {
       const moveDownBtn = document.createElement('button');
@@ -442,10 +373,10 @@ export default class ParameterEditor {
       });
       valueActions.appendChild(moveDownBtn);
     }
-
+  
     valueHeader.appendChild(valueActions);
     valueWrapper.appendChild(valueHeader);
-
+  
     const valueTextarea = document.createElement('textarea');
     valueTextarea.className = 'value-textarea';
     valueTextarea.value = value;
@@ -455,7 +386,7 @@ export default class ParameterEditor {
     if (contentType) {
       valueTextarea.dataset.contentType = contentType;
     }
-
+  
     // Handle value change
     valueTextarea.addEventListener('blur', () => {
       const newValue = valueTextarea.value;
@@ -463,13 +394,13 @@ export default class ParameterEditor {
         this.handleValueChange(parameter, paramType, key, newValue, contentType);
       }
     });
-
+  
     valueWrapper.appendChild(valueTextarea);
-
+  
     // Add value actions (like delete)
     const actions = document.createElement('div');
     actions.className = 'value-actions';
-
+  
     // Only show delete button if there are multiple values
     if (Object.keys(parameter.values || {}).length > 1) {
       const deleteBtn = document.createElement('button');
@@ -481,9 +412,9 @@ export default class ParameterEditor {
       });
       actions.appendChild(deleteBtn);
     }
-
+  
     valueWrapper.appendChild(actions);
-
+  
     return valueWrapper;
   }
 
@@ -638,76 +569,6 @@ export default class ParameterEditor {
     } catch (error) {
       console.error('Error updating single value:', error);
       this.notificationManager.error(`Error updating value: ${error.message}`);
-    }
-  }
-
-  async handleTypeChange(parameter, paramType, newType, contentType) {
-    try {
-      // Prepare default values based on current parameter values if possible
-      const defaultValues = {};
-      
-      switch (newType) {
-        case 'list':
-          // Convert existing values if possible
-          if (parameter.type === 'checkbox' && parameter.values?.true) {
-            defaultValues.values = {
-              'enabled': parameter.values.true,
-              'disabled': parameter.values.false || ''
-            };
-          } else if (parameter.type === 'single' && parameter.value) {
-            defaultValues.values = {
-              'default': parameter.value
-            };
-          }
-          break;
-          
-        case 'checkbox':
-          // Convert existing values if possible
-          if (parameter.type === 'list' && Object.keys(parameter.values || {}).length > 0) {
-            const firstKey = Object.keys(parameter.values)[0];
-            defaultValues.values = {
-              true: parameter.values[firstKey] || '',
-              false: ''
-            };
-          } else if (parameter.type === 'single' && parameter.value) {
-            defaultValues.values = {
-              true: parameter.value,
-              false: ''
-            };
-          }
-          break;
-          
-        case 'single':
-          // Convert existing values if possible
-          if (parameter.type === 'list' && Object.keys(parameter.values || {}).length > 0) {
-            const firstKey = Object.keys(parameter.values)[0];
-            defaultValues.value = parameter.values[firstKey] || '';
-          } else if (parameter.type === 'checkbox' && parameter.values?.true) {
-            defaultValues.value = parameter.values.true;
-          }
-          break;
-      }
-      
-      // Change parameter type
-      await this.templateService.changeParameterType(
-        contentType || 'shared',
-        parameter.id,
-        newType,
-        defaultValues
-      );
-
-      this.notificationManager.success(`Parameter type changed to ${newType}`);
-
-      // Publish event
-      this.eventBus.publish('parameter:type:changed', {
-        paramType,
-        contentType,
-        parameterId: parameter.id,
-        newType
-      });
-    } catch (error) {
-      console.error('Error changing parameter type:', error);
-      this.notificationManager.error(`Error changing type: ${error.message}`);
     }
   }
 
