@@ -1,33 +1,70 @@
 /* Quick Prompt Styles */
 .quick-prompt-textarea {
   width: 100%;
-  min-height: 120px;
-  padding: 8px;
-  border-radius: 6px;
+  min-height: 130px;
+  padding: 12px 14px;
+  border-radius: 8px;
   background-color: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  font-size: 13px;
-  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   resize: vertical;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .quick-prompt-textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(255, 123, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
+.quick-prompt-textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Editor container focus state */
+.editor-focused .quick-prompt-textarea {
+  border-color: var(--color-primary);
+}
+
+/* Improved character counter */
 .char-counter {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-secondary);
   text-align: right;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  transition: color 0.2s ease;
+}
+
+.char-counter::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4CAF50;
+  margin-right: 2px;
 }
 
 .char-counter.warning {
   color: var(--warning-color);
+}
+
+.char-counter.warning::before {
+  background-color: var(--warning-color);
 }
 
 /* popup.css - Styles specific to the popup interface */

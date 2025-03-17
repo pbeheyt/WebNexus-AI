@@ -38,13 +38,13 @@
   "commands": {
     "_execute_action": {
       "suggested_key": {
-        "default": "Ctrl+Shift+H"
+        "default": "Ctrl+Shift+A"
       },
       "description": "Open extension popup"
     },
     "summarize-page": {
       "suggested_key": {
-        "default": "Ctrl+Shift+K"
+        "default": "Ctrl+Shift+Z"
       },
       "description": "Summarize current page"
     }

@@ -8,6 +8,7 @@ export default class QuickPromptEditor {
     this.contentType = null;
     this.textarea = null;
     this.charCounter = null;
+    // Don't try to bind handleInput here as it's not defined yet
   }
 
   async initialize(contentType) {
@@ -58,8 +59,8 @@ export default class QuickPromptEditor {
         }
       }
       
-      // Handle text input
-      this.textarea.addEventListener('input', async () => {
+      // Define handleInput as a proper method with proper binding
+      this.handleInput = async (event) => {
         const text = this.textarea.value;
         this.charCounter.textContent = `${text.length} characters`;
         
@@ -79,11 +80,36 @@ export default class QuickPromptEditor {
         if (this.onChange) {
           this.onChange(text);
         }
-      });
+        
+        // Auto-grow the textarea
+        this.textarea.style.height = 'auto';
+        this.textarea.style.height = Math.max(130, Math.min(this.textarea.scrollHeight, 300)) + 'px';
+      };
+      
+      this.textarea.addEventListener('input', this.handleInput);
+      
+      // Add focus/blur listeners for enhanced UI feedback
+      // Store references to handlers for proper cleanup
+      this.focusHandler = () => {
+        this.element.classList.add('editor-focused');
+      };
+      
+      this.blurHandler = () => {
+        this.element.classList.remove('editor-focused');
+      };
+      
+      this.textarea.addEventListener('focus', this.focusHandler);
+      this.textarea.addEventListener('blur', this.blurHandler);
       
       // Append elements
       this.element.appendChild(this.textarea);
       this.element.appendChild(this.charCounter);
+      
+      // Initialize the height for auto-grow
+      setTimeout(() => {
+        this.textarea.style.height = 'auto';
+        this.textarea.style.height = Math.max(130, Math.min(this.textarea.scrollHeight, 300)) + 'px';
+      }, 0);
     } catch (error) {
       console.error('Error initializing quick prompt editor:', error);
       // Fallback to basic initialization
@@ -105,7 +131,7 @@ export default class QuickPromptEditor {
       case 'selected_text':
         return 'Enter your prompt for analyzing this selected text...';
       case 'general':
-        return 'Enter your custom prompt for analyzing this page...';``
+        return 'Enter your custom prompt for analyzing this page...';
       default:
         return 'Enter your custom prompt for analyzing this page...';
     }
@@ -138,6 +164,10 @@ export default class QuickPromptEditor {
         }
       }
       
+      // Adjust height for auto-grow
+      this.textarea.style.height = 'auto';
+      this.textarea.style.height = Math.max(130, Math.min(this.textarea.scrollHeight, 300)) + 'px';
+      
       // Save to storage if preference service available
       if (this.preferenceService && this.contentType) {
         await this.preferenceService.saveQuickPromptText(this.contentType, text);
@@ -157,6 +187,15 @@ export default class QuickPromptEditor {
     if (this.textarea) {
       // Remove event listeners
       this.textarea.removeEventListener('input', this.handleInput);
+      
+      // Store references to the focus/blur handlers during initialization
+      if (this.focusHandler) {
+        this.textarea.removeEventListener('focus', this.focusHandler);
+      }
+      
+      if (this.blurHandler) {
+        this.textarea.removeEventListener('blur', this.blurHandler);
+      }
     }
     
     // Clear container
