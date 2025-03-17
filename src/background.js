@@ -1,5 +1,5 @@
 // src/background.js
-// UPDATED VERSION - With centralized configuration storage
+// UPDATED VERSION - With centralized configuration storage and keyboard shortcuts
 
 // Import from shared modules
 import { CONTENT_TYPES, AI_PLATFORMS, STORAGE_KEYS } from './shared/constants.js';
@@ -428,6 +428,80 @@ async function initialize() {
   });
   logger.background.info('Initial state reset complete');
 }
+
+// Command listener for keyboard shortcuts
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === "summarize-page") {
+    try {
+      logger.background.info('Keyboard shortcut triggered: summarize-page');
+      
+      // Get active tab
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tabs || tabs.length === 0) {
+        logger.background.warn('No active tab found');
+        return;
+      }
+      
+      const activeTab = tabs[0];
+      logger.background.info(`Active tab: ${activeTab.id}, URL: ${activeTab.url}`);
+      
+      // First, determine behavior based on user settings
+      let useSelection = true; // Default to respecting selection
+      
+      try {
+        const result = await chrome.storage.sync.get('shortcut_settings');
+        if (result.shortcut_settings && result.shortcut_settings.summarization_behavior) {
+          useSelection = result.shortcut_settings.summarization_behavior === 'selection';
+          logger.background.info(`Using shortcut behavior from settings: ${useSelection ? 'Respect selection' : 'Always full page'}`);
+        }
+      } catch (error) {
+        logger.background.error('Error getting shortcut settings:', error);
+        // Continue with default behavior
+      }
+      
+      // If we're set to respect selection, we need to check if there's a selection
+      let hasSelection = false;
+      
+      if (useSelection) {
+        // We need to inject a content script to check for selection
+        try {
+          // Create and inject a temporary script to check selection
+          const injectionResult = await chrome.scripting.executeScript({
+            target: { tabId: activeTab.id },
+            function: () => window.getSelection().toString().trim().length > 0
+          });
+          
+          if (injectionResult && injectionResult[0]) {
+            hasSelection = injectionResult[0].result;
+            logger.background.info(`Selection detection result: ${hasSelection}`);
+          }
+        } catch (error) {
+          logger.background.error('Error detecting selection:', error);
+          // Continue with no selection
+        }
+      }
+      
+      // Clear any existing content
+      await chrome.storage.local.set({
+        contentReady: false,
+        extractedContent: null,
+        aiPlatformTabId: null,
+        scriptInjected: false
+      });
+      logger.background.info('Cleared previous extracted content and tab state');
+      
+      // Extract content - reusing existing function
+      await extractContent(activeTab.id, activeTab.url, hasSelection);
+      
+      // Open AI platform - reusing existing function
+      const contentType = determineContentType(activeTab.url, hasSelection);
+      await openAiPlatformWithContent(contentType);
+      
+    } catch (error) {
+      logger.background.error('Error handling keyboard shortcut:', error);
+    }
+  }
+});
 
 // Tab update listener for AI platform integration
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {

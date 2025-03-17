@@ -15,7 +15,8 @@ export const STORAGE_KEY = 'custom_prompts_by_type';
 export const TABS = {
   CONTENT_CONFIGURATION: 'content-configuration',
   PROMPT_MANAGEMENT: 'prompt-management',
-  TEMPLATE_CUSTOMIZATION: 'template-customization'
+  TEMPLATE_CUSTOMIZATION: 'template-customization',
+  SHORTCUTS: 'shortcuts'
 };
 
 // Human-readable labels for content types

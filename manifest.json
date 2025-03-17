@@ -49,6 +49,20 @@
     "48": "images/icon48.png",
     "128": "images/icon128.png"
   },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+H"
+      },
+      "description": "Open extension popup"
+    },
+    "summarize-page": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K"
+      },
+      "description": "Summarize current page"
+    }
+  },
   "web_accessible_resources": [
     {
       "resources": [

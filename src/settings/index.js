@@ -10,6 +10,8 @@ import SettingsForm from './ui/SettingsForm.js';
 import PromptController from './controllers/PromptController.js';
 import SettingsController from './controllers/SettingsController.js';
 import TemplateCustomizationController from './controllers/TemplateCustomizationController.js';
+import ShortcutsController from './controllers/ShortcutsController.js';
+import ShortcutsTab from './ui/ShortcutsTab.js';
 import MainController from './controllers/MainController.js';
 import { initializeTheme } from './themeManager.js';
 import configManager from '../services/ConfigManager.js';
@@ -57,6 +59,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     notificationManager
   );
   
+  // Initialize shortcuts controller
+  const shortcutsController = new ShortcutsController(
+    storageService,
+    eventBus,
+    notificationManager
+  );
+  
   // Initialize UI components
   const promptList = new PromptList(
     promptController,
@@ -81,6 +90,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     notificationManager
   );
   
+  const shortcutsTab = new ShortcutsTab(
+    shortcutsController,
+    eventBus,
+    notificationManager
+  );
+  
   // Initialize main controller
   const mainController = new MainController(
     tabManager,
@@ -89,6 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     promptDetail,
     settingsForm,
     templateCustomizationController,
+    shortcutsController,
     promptController,
     settingsController,
     notificationManager,
@@ -100,4 +116,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Application initialization error:', error);
     notificationManager.error(`Failed to initialize application: ${error.message}`);
   });
+  
+  // Initialize shortcuts tab
+  const shortcutsContainer = document.getElementById('shortcuts');
+  if (shortcutsContainer) {
+    shortcutsTab.initialize(shortcutsContainer);
+  }
 });

@@ -42,7 +42,8 @@ export const STORAGE_KEYS = {
   PROMPT_TYPE_PREFERENCE: 'prompt_type_preference',
   SELECTED_PROMPT_IDS: 'selected_prompt_ids',
   QUICK_PROMPTS: 'quick_prompts',
-  PLATFORM_STORAGE_KEY: 'preferred_ai_platform'
+  PLATFORM_STORAGE_KEY: 'preferred_ai_platform',
+  SHORTCUT_SETTINGS: 'shortcut_settings'
 };
 
 /**
@@ -52,4 +53,11 @@ export const PROMPT_TYPES = {
   DEFAULT: 'default',
   CUSTOM: 'custom',
   QUICK: 'quick'
+};
+
+/**
+ * Default shortcut settings
+ */
+export const DEFAULT_SHORTCUT_SETTINGS = {
+  summarization_behavior: 'selection' // Default to respecting selection
 };

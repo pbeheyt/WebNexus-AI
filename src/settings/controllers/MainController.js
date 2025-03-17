@@ -9,7 +9,8 @@ export default class MainController {
     promptForm,
     promptDetail,
     settingsForm,
-    templateCustomizationController,  // New controller
+    templateCustomizationController,
+    shortcutsController,  // New controller
     promptService,
     contentTypeService,
     notificationManager,
@@ -21,6 +22,7 @@ export default class MainController {
     this.promptDetail = promptDetail;
     this.settingsForm = settingsForm;
     this.templateCustomizationController = templateCustomizationController;
+    this.shortcutsController = shortcutsController;
     this.promptService = promptService;
     this.contentTypeService = contentTypeService;
     this.notificationManager = notificationManager;
