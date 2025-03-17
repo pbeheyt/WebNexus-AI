@@ -7,7 +7,7 @@ export default class ParameterEditor {
     this.notificationManager = notificationManager;
   }
 
-  render(parameter, paramType, contentType = null) {
+  render(parameter, paramType, contentType = null, isFirst = false, isLast = false) {
     const editor = document.createElement('div');
     editor.className = 'parameter-editor';
     editor.dataset.id = parameter.id;
@@ -16,30 +16,38 @@ export default class ParameterEditor {
     if (contentType) {
       editor.dataset.contentType = contentType;
     }
-
+  
     // Parameter header (name editor, type badge, and actions)
     const header = this.createNameEditor(parameter, paramType, contentType);
-
+  
     // Essential actions (always visible)
     const essentialActions = document.createElement('div');
     essentialActions.className = 'essential-parameter-actions';
     
-    const moveUpBtn = document.createElement('button');
-    moveUpBtn.className = 'btn btn-sm move-up-btn';
-    moveUpBtn.innerHTML = '↑';
-    moveUpBtn.title = 'Move Up';
-    moveUpBtn.addEventListener('click', () => {
-      this.handleReorder(parameter, paramType, parameter.order - 1, contentType);
-    });
-
-    const moveDownBtn = document.createElement('button');
-    moveDownBtn.className = 'btn btn-sm move-down-btn';
-    moveDownBtn.innerHTML = '↓';
-    moveDownBtn.title = 'Move Down';
-    moveDownBtn.addEventListener('click', () => {
-      this.handleReorder(parameter, paramType, parameter.order + 1, contentType);
-    });
-
+    // Only show up button if not the first parameter
+    if (!isFirst) {
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.className = 'btn btn-sm move-up-btn';
+      moveUpBtn.innerHTML = '↑';
+      moveUpBtn.title = 'Move Up';
+      moveUpBtn.addEventListener('click', () => {
+        this.handleReorder(parameter, paramType, parameter.order - 1, contentType);
+      });
+      essentialActions.appendChild(moveUpBtn);
+    }
+  
+    // Only show down button if not the last parameter
+    if (!isLast) {
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.className = 'btn btn-sm move-down-btn';
+      moveDownBtn.innerHTML = '↓';
+      moveDownBtn.title = 'Move Down';
+      moveDownBtn.addEventListener('click', () => {
+        this.handleReorder(parameter, paramType, parameter.order + 1, contentType);
+      });
+      essentialActions.appendChild(moveDownBtn);
+    }
+  
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-sm btn-danger delete-param-btn';
     deleteBtn.innerHTML = '×';
@@ -47,11 +55,8 @@ export default class ParameterEditor {
     deleteBtn.addEventListener('click', () => {
       this.handleDeleteParameter(parameter, paramType, contentType);
     });
-
-    essentialActions.appendChild(moveUpBtn);
-    essentialActions.appendChild(moveDownBtn);
     essentialActions.appendChild(deleteBtn);
-
+  
     // Create a header wrapper to hold the name and essential actions
     const headerWrapper = document.createElement('div');
     headerWrapper.className = 'parameter-header-wrapper';
@@ -60,18 +65,18 @@ export default class ParameterEditor {
     headerWrapper.style.alignItems = 'center';
     headerWrapper.appendChild(header);
     headerWrapper.appendChild(essentialActions);
-
+  
     // Values editor based on parameter type
     const valuesSection = this.createValuesEditor(parameter, paramType, contentType);
     
     // This section will be hidden by default
     valuesSection.style.display = 'none';
-
+  
     // Add buttons for parameter actions
     const actions = document.createElement('div');
     actions.className = 'parameter-actions';
     actions.style.display = 'none';
-
+  
     // Only show add value button for list type
     if (parameter.type === 'list') {
       const addValueBtn = document.createElement('button');
@@ -82,12 +87,12 @@ export default class ParameterEditor {
       });
       actions.appendChild(addValueBtn);
     }
-
+  
     // Assemble editor
     editor.appendChild(headerWrapper);
     editor.appendChild(valuesSection);
     editor.appendChild(actions);
-
+  
     return editor;
   }
 

@@ -246,14 +246,18 @@ export default class TemplateCustomizationTab {
     }
     
     // Create parameter editor for each parameter
-    params.forEach(param => {
+    params.forEach((param, index) => {
       const editor = new ParameterEditor(
         this.templateService,
         this.eventBus,
         this.notificationManager
       );
       
-      const editorElement = editor.render(param, paramType, contentType);
+      // Determine if this parameter is first or last
+      const isFirst = index === 0;
+      const isLast = index === params.length - 1;
+      
+      const editorElement = editor.render(param, paramType, contentType, isFirst, isLast);
       container.appendChild(editorElement);
     });
   }

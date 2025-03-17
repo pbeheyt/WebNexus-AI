@@ -104,7 +104,7 @@
           "param_name": "Type Specific Instructions",
           "type": "single",
           "order": 1,
-          "value": "Prioritize main body text over headers, footers, and page numbers. Maintain hierarchical structure of headings and sections."
+          "value": ""
         }
       }
     },
