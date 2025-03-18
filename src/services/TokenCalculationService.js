@@ -40,31 +40,16 @@ class TokenCalculationService {
    * @param {string} modelId - Model ID to lookup
    * @returns {Object|null} - Model configuration or null if not found
    */
-  getModelConfig(platformConfig, modelId) {
+  getModelConfig(platformConfig, modelIdOrObject) {
     if (!platformConfig?.api?.models) return null;
     
-    // Check if models is an array of objects or just an array of strings
-    if (Array.isArray(platformConfig.api.models)) {
-      // Handle array of objects (new format)
-      if (typeof platformConfig.api.models[0] === 'object') {
-        return platformConfig.api.models.find(model => model.id === modelId) || null;
-      }
-      
-      // // Handle array of strings (old format)
-      // if (platformConfig.api.models.includes(modelId)) {
-      //   // Return default parameters for backward compatibility
-      //   return {
-      //     id: modelId,
-      //     maxTokens: 4000,
-      //     temperature: 0.7,
-      //     topP: 1.0,
-      //     parameterStyle: "standard",
-      //     contextWindow: 8192
-      //   };
-      // }
-    }
+    // Extract ID if an object was passed
+    const modelId = typeof modelIdOrObject === 'object' && modelIdOrObject !== null
+      ? modelIdOrObject.id || modelIdOrObject.model || String(modelIdOrObject)
+      : modelIdOrObject;
     
-    return null;
+    // Find model in array of objects
+    return platformConfig.api.models.find(model => model.id === modelId) || null;
   }
 }
 
