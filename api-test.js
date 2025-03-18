@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
           platformId,
           useApi: true,
           tabId: 999, // Dummy tab ID
-          url: 'https://example.com/test',
+          url: 'https://lenvie-des-mets.fr/info',
           hasSelection: false,
           testPrompt
       };

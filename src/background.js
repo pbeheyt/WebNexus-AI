@@ -421,7 +421,7 @@ async function summarizeContent(params) {
     promptId = null, 
     platformId = null, 
     commentAnalysisRequired = false,
-    useApi = false // New parameter for API mode
+    useApi = false
   } = params;
   
   try {
@@ -537,43 +537,77 @@ async function summarizeContent(params) {
  * @returns {Promise<Object>} Result object
  */
 async function summarizeContentViaApi(params) {
-  const { 
-    tabId, 
-    url, 
-    hasSelection = false, 
-    promptId = null, 
-    platformId = null
+  const {
+    tabId,
+    url,
+    hasSelection = false,
+    promptId = null,
+    platformId = null,
+    testMode = true,    // Add this parameter
+    testContent = null   // Add this parameter
   } = params;
-  
+
   try {
     logger.background.info('Starting API-based summarization', params);
-    
+
     // 1. Reset previous state
     await chrome.storage.local.set({
       contentReady: false,
       extractedContent: null,
       apiProcessingStatus: 'extracting'
     });
-    
-    // 2. Extract content (uses existing extraction logic)
-    const contentType = determineContentType(url, hasSelection);
-    logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
-    
-    const extractionResult = await extractContent(tabId, url, hasSelection);
-    
-    if (!extractionResult) {
-      logger.background.warn('Content extraction completed with warnings');
+
+    let extractedContent;
+
+    // If in test mode, use the provided test content or get mock data
+    if (testMode) {
+      logger.background.info('Using test mode with mock data');
+
+      // Use provided test content or generate from mockDataFactory
+      if (testContent) {
+        extractedContent = testContent;
+        logger.background.info(' extractedContent type for API testing', { extractedContent });
+      } else {
+        logger.background.info(' on est la');
+
+        // Import your test harness or access it from a global
+        const apiTestHarness = require('./api/api-test-utils');
+        const contentType = determineContentType(url, hasSelection);
+        logger.background.info(' content type for API testing', { contentType });
+        extractedContent = apiTestHarness.mockDataFactory[contentType] ||
+                          apiTestHarness.mockDataFactory.general;
+      }
+
+      // Store mock content in local storage to mimic normal flow
+      await chrome.storage.local.set({
+        extractedContent,
+        contentReady: true
+      });
+
+      logger.background.info('Mock content ready for API testing', {
+        contentType: extractedContent.contentType
+      });
+    } else {
+      // Normal extraction for real tabs
+      const contentType = determineContentType(url, hasSelection);
+      logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
+
+      const extractionResult = await extractContent(tabId, url, hasSelection);
+
+      if (!extractionResult) {
+        logger.background.warn('Content extraction completed with warnings');
+      }
+
+      // Get the extracted content
+      const { extractedContent } = await chrome.storage.local.get('extractedContent');
+
+      if (!extractedContent) {
+        throw new Error('Failed to extract content');
+      }
     }
-    
-    // 3. Get the extracted content
-    const { extractedContent } = await chrome.storage.local.get('extractedContent');
-    
-    if (!extractedContent) {
-      throw new Error('Failed to extract content');
-    }
-    
+
     // YouTube transcript error check (similar to existing code)
-    if (contentType === CONTENT_TYPES.YOUTUBE) {
+    if (extractedContent.contentType === CONTENT_TYPES.YOUTUBE) {
       if (extractedContent?.error &&
           extractedContent?.transcript &&
           typeof extractedContent.transcript === 'string' &&
@@ -589,18 +623,18 @@ async function summarizeContentViaApi(params) {
         };
       }
     }
-    
+
     // 4. Get the prompt
-    const effectivePromptId = promptId || await getPreferredPromptId(contentType);
-    const promptContent = await getPromptContentById(effectivePromptId, contentType);
-    
+    const effectivePromptId = promptId || await getPreferredPromptId(extractedContent.contentType);
+    const promptContent = await getPromptContentById(effectivePromptId, extractedContent.contentType);
+
     if (!promptContent) {
       throw new Error(`Prompt not found for ID: ${effectivePromptId}`);
     }
-    
+
     // 5. Determine platform to use
     const effectivePlatformId = platformId || await getPreferredAiPlatform();
-    
+
     // 6. Update processing status
     await chrome.storage.local.set({
       apiProcessingStatus: 'processing',
@@ -608,21 +642,21 @@ async function summarizeContentViaApi(params) {
       apiSummarizationPlatform: effectivePlatformId,
       apiSummarizationTimestamp: Date.now()
     });
-    
+
     // 7. Process with API
     const apiResponse = await ApiServiceManager.processContent(
-      effectivePlatformId, 
-      extractedContent, 
+      effectivePlatformId,
+      extractedContent,
       promptContent
     );
-    
+
     // 8. Store the response
     await chrome.storage.local.set({
       apiProcessingStatus: apiResponse.success ? 'completed' : 'error',
       apiResponse: apiResponse,
       apiResponseTimestamp: Date.now()
     });
-    
+
     // 9. Notify the popup if open
     try {
       chrome.runtime.sendMessage({
@@ -632,21 +666,21 @@ async function summarizeContentViaApi(params) {
     } catch (error) {
       // Ignore if popup isn't open
     }
-    
+
     return {
       success: apiResponse.success,
       response: apiResponse,
-      contentType
+      contentType: extractedContent.contentType
     };
   } catch (error) {
     logger.background.error('API summarization error:', error);
-    
+
     // Update state for error
     await chrome.storage.local.set({
       apiProcessingStatus: 'error',
       apiProcessingError: error.message
     });
-    
+
     // Notify popup if open
     try {
       chrome.runtime.sendMessage({
@@ -656,13 +690,14 @@ async function summarizeContentViaApi(params) {
     } catch (msgError) {
       // Ignore if popup isn't open
     }
-    
+
     return {
       success: false,
       error: error.message
     };
   }
 }
+
 
 /**
  * Handle context menu click - now uses the centralized summarizeContent function

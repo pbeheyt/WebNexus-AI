@@ -42,7 +42,7 @@ class ApiTester {
       const testContent = {
         contentType: 'general',
         pageTitle: 'API Test Page',
-        pageUrl: 'https://example.com/test',
+        pageUrl: 'https://lenvie-des-mets.fr/info',
         content: 'This is a test page content for API integration testing.'
       };
       
