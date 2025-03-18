@@ -26,9 +26,21 @@ class MistralApiService extends BaseApiService {
       
       // Create the request payload
       const requestPayload = {
-        model: model,
-        messages: [{ role: 'user', content: text }]
+        model: model
       };
+      
+      // Add messages array with system prompt if available
+      const messages = [];
+      
+      // Add system message if system prompt is specified in advanced settings
+      if (params.systemPrompt) {
+        messages.push({ role: 'system', content: params.systemPrompt });
+      }
+      
+      // Add user message
+      messages.push({ role: 'user', content: text });
+      
+      requestPayload.messages = messages;
       
       // Add token parameter
       requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;

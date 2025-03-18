@@ -37,9 +37,9 @@ class ClaudeApiService extends BaseApiService {
       }
       
       // Add system prompt if specified in advanced settings
-      const userSettings = await this.getAdvancedSettings();
-      if (userSettings?.systemPrompt) {
-        requestPayload.system = userSettings.systemPrompt;
+      // This now comes directly from params resolved by ModelParameterService
+      if (params.systemPrompt) {
+        requestPayload.system = params.systemPrompt;
       }
       
       const response = await fetch(endpoint, {
@@ -87,20 +87,6 @@ class ClaudeApiService extends BaseApiService {
         platformId: this.platformId,
         timestamp: new Date().toISOString()
       };
-    }
-  }
-  
-  /**
-   * Get advanced settings for Claude API
-   * @returns {Promise<Object>} Advanced settings
-   */
-  async getAdvancedSettings() {
-    try {
-      const result = await chrome.storage.sync.get('api_advanced_settings');
-      return result.api_advanced_settings?.claude || {};
-    } catch (error) {
-      this.logger.error('Error getting advanced settings:', error);
-      return {};
     }
   }
   

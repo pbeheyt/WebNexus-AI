@@ -26,9 +26,21 @@ class ChatGptApiService extends BaseApiService {
       
       // Create the request payload based on parameter style
       const requestPayload = {
-        model: model,
-        messages: [{ role: 'user', content: text }]
+        model: model
       };
+      
+      // Add messages array with system prompt if available
+      const messages = [];
+      
+      // Add system message if system prompt is specified in advanced settings
+      if (params.systemPrompt) {
+        messages.push({ role: 'system', content: params.systemPrompt });
+      }
+      
+      // Add user message
+      messages.push({ role: 'user', content: text });
+      
+      requestPayload.messages = messages;
       
       // Use the correct token parameter based on model style
       if (params.parameterStyle === 'reasoning') {

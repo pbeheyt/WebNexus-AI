@@ -36,11 +36,18 @@ class GeminiApiService extends BaseApiService {
       url.searchParams.append('key', apiKey);
 
       // Create the request payload
+      let fullContent = text;
+      
+      // Add system prompt if specified in advanced settings
+      if (params.systemPrompt) {
+        fullContent = `${params.systemPrompt}\n\n${text}`;
+      }
+      
       const requestPayload = {
         contents: [
           {
             parts: [
-              { text: text }
+              { text: fullContent }
             ]
           }
         ],
