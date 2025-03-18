@@ -11,20 +11,37 @@ class GrokApiService extends BaseApiService {
   }
   
   /**
-   * Process content through Grok API
-   * @param {string} prompt - Formatted prompt text
-   * @returns {Promise<Object>} Standardized response object
+   * Process with model-specific parameters
+   * @param {string} text - Prompt text
+   * @param {string} model - Model ID to use
+   * @param {string} apiKey - API key
+   * @param {Object} params - Resolved parameters
+   * @returns {Promise<Object>} API response
    */
-  async _processWithApi(prompt) {
-    const { apiKey, model } = this.credentials;
-    const endpoint = this.config?.endpoint || 'https://api.grok.ai/v1/chat/completions';
-    const defaultModel = this.config?.defaultModel || 'grok-3';
-    
-    // Use provided model or default
-    const modelToUse = model || defaultModel;
+  async _processWithModel(text, model, apiKey, params) {
+    const endpoint = this.config?.endpoint || 'https://api.x.ai/v1/chat/completions';
     
     try {
-      this.logger.info(`Making Grok API request with model: ${modelToUse}`);
+      this.logger.info(`Making Grok API request with model: ${model}`);
+      
+      // Create the request payload
+      const requestPayload = {
+        model: model,
+        messages: [{ role: 'user', content: text }]
+      };
+      
+      // Add token parameter
+      requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;
+      
+      // Add temperature if supported
+      if (params.supportsTemperature) {
+        requestPayload.temperature = params.temperature;
+      }
+      
+      // Add top_p if supported
+      if (params.supportsTopP) {
+        requestPayload.top_p = params.topP;
+      }
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -32,11 +49,7 @@ class GrokApiService extends BaseApiService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model: modelToUse,
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 4000
-        })
+        body: JSON.stringify(requestPayload)
       });
       
       if (!response.ok) {
@@ -57,7 +70,13 @@ class GrokApiService extends BaseApiService {
         usage: responseData.usage,
         metadata: {
           responseId: responseData.id,
-          finishReason: responseData.choices[0].finish_reason
+          finishReason: responseData.choices[0].finish_reason,
+          parameters: {
+            modelUsed: model,
+            maxTokens: params.effectiveMaxTokens,
+            temperature: params.supportsTemperature ? params.temperature : null,
+            topP: params.supportsTopP ? params.topP : null
+          }
         }
       };
     } catch (error) {

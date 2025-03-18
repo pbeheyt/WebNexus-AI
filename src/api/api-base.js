@@ -1,9 +1,8 @@
-// src/api/api-base.js
-
 const ApiInterface = require('./api-interface');
+const ModelParameterService = require('../services/ModelParameterService');
 
 /**
- * Base class with shared API functionality 
+ * Base class with shared API functionality
  */
 class BaseApiService extends ApiInterface {
   constructor(platformId) {
@@ -13,7 +12,7 @@ class BaseApiService extends ApiInterface {
     this.credentials = null;
     this.config = null;
   }
-  
+
   /**
    * Initialize the API client with credentials
    * @param {Object} credentials - API credentials
@@ -34,14 +33,14 @@ class BaseApiService extends ApiInterface {
   async process(contentData, prompt) {
     // Format content using same logic as platform-base.js
     const formattedContent = this._formatContent(contentData);
-    
+
     // Create structured prompt using same logic as platform-base.js
     const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent);
-    
+
     // Process via API
     return this._processWithApi(structuredPrompt);
   }
-  
+
   /**
    * Create a structured prompt combining instructions and formatted content
    * @param {string} prePrompt - The pre-prompt instructions
@@ -54,7 +53,7 @@ ${prePrompt}
 # CONTENT
 ${formattedContent}`;
   }
-  
+
   /**
    * Format content based on content type
    * @param {Object} data - The extracted content data
@@ -65,9 +64,9 @@ ${formattedContent}`;
       this.logger.error('No content data available for formatting');
       return 'No content data available';
     }
-    
+
     const contentType = data.contentType;
-    
+
     let formatted = '';
     switch (contentType) {
       case 'youtube':
@@ -88,10 +87,10 @@ ${formattedContent}`;
       default:
         formatted = `Content: ${JSON.stringify(data)}`;
     }
-    
+
     return formatted;
   }
-  
+
   /**
    * Format YouTube video data
    * @param {Object} data - YouTube video data
@@ -102,7 +101,7 @@ ${formattedContent}`;
     const channel = data.channelName || 'Unknown channel';
     const description = data.videoDescription || 'No description available';
     const transcript = data.transcript || 'No transcript available';
-    
+
     // Format comments with likes
     let commentsText = '';
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
@@ -114,7 +113,7 @@ ${formattedContent}`;
 `;
       });
     }
-    
+
     return `## VIDEO METADATA
 - Title: ${title}
 - Channel: ${channel}
@@ -125,7 +124,7 @@ ${description}
 ${transcript}
 ${commentsText}`;
   }
-  
+
   /**
    * Format Reddit post data
    * @param {Object} data - Reddit post data
@@ -137,7 +136,7 @@ ${commentsText}`;
     const author = data.postAuthor || 'Unknown author';
     const postUrl = data.postUrl || '';
     const subreddit = data.subreddit || 'Unknown subreddit';
-    
+
     let formattedText = `## POST METADATA
 - Title: ${title}
 - Author: ${author}
@@ -146,22 +145,22 @@ ${commentsText}`;
 ## POST CONTENT
 ${content}
 `;
-    
+
     // Format comments with links
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
       formattedText += `## COMMENTS
 `;
-      
+
       data.comments.forEach((comment, index) => {
         formattedText += `${index + 1}. u/${comment.author || 'Anonymous'} (${comment.popularity || '0'} points) [(link)](${comment.permalink || postUrl})
    "${comment.content || ''}"
 `;
       });
     }
-    
+
     return formattedText;
   }
-  
+
   /**
    * Format general web page data
    * @param {Object} data - Web page data
@@ -173,31 +172,31 @@ ${content}
     const content = data.content || 'No content available';
     const author = data.pageAuthor || null;
     const description = data.pageDescription || null;
-    
+
     let metadataText = `## PAGE METADATA
 - Title: ${title}
 - URL: ${url}`;
-    
+
     if (author) {
       metadataText += `
 - Author: ${author}`;
     }
-    
+
     if (description) {
       metadataText += `
 - Description: ${description}`;
     }
-    
+
     if (data.isSelection) {
       metadataText += `
 - Note: This is a user-selected portion of the page content.`;
     }
-    
+
     return `${metadataText}
 ## PAGE CONTENT
 ${content}`;
   }
-  
+
   /**
    * Format PDF document data
    * @param {Object} data - PDF document data
@@ -209,31 +208,31 @@ ${content}`;
     const content = data.content || 'No content available';
     const pageCount = data.pageCount || 'Unknown';
     const metadata = data.metadata || {};
-    
+
     // Format metadata section
     let metadataText = `## PDF METADATA
 - Title: ${title}
 - Pages: ${pageCount}
 - URL: ${url}`;
-    
+
     if (metadata.author) {
       metadataText += `
 - Author: ${metadata.author}`;
     }
-    
+
     if (metadata.creationDate) {
       metadataText += `
 - Created: ${metadata.creationDate}`;
     }
-    
+
     if (data.ocrRequired) {
       metadataText += `
 - Note: This PDF may require OCR as text extraction was limited.`;
     }
-    
+
     // Format and clean up the content
     let formattedContent = content;
-    
+
     // Remove JSON artifacts if present
     if (formattedContent.includes('{"content":"')) {
       try {
@@ -244,13 +243,13 @@ ${content}`;
         this.logger.warn('Failed to parse JSON in PDF content');
       }
     }
-    
+
     // Clean up page markers to make them more readable
     formattedContent = formattedContent
       .replace(/--- Page \d+ ---\n\n/g, '\n\n## PAGE $&\n')
       .replace(/\n{3,}/g, '\n\n')  // Reduce multiple line breaks
       .trim();
-    
+
     return `${metadataText}
 
 ## PDF CONTENT
@@ -266,16 +265,73 @@ ${formattedContent}`;
     // Just return the raw selected text with no headings or extra formatting
     return data.text || 'No text selected';
   }
-  
+
   /**
-   * Process text with the API
+   * Process text with the API with model-specific parameters
    * @param {string} text - Prompt text to process
    * @returns {Promise<Object>} API response
    */
   async _processWithApi(text) {
-    throw new Error('_processWithApi must be implemented by subclasses');
+    const { apiKey, model } = this.credentials;
+
+    // Determine which model to use (provided or default)
+    const platformConfig = this.config;
+    const defaultModel = platformConfig?.defaultModel || this._getDefaultModel();
+    const modelToUse = model || defaultModel;
+
+    try {
+      // Resolve model-specific parameters
+      const params = await ModelParameterService.resolveParameters(
+        this.platformId,
+        modelToUse,
+        text
+      );
+
+      // Log parameters being used
+      this.logger.info(`Using model ${modelToUse} with parameters:`, {
+        effectiveMaxTokens: params.effectiveMaxTokens,
+        temperature: params.temperature,
+        parameterStyle: params.parameterStyle
+      });
+
+      // Each implementation must handle the resolved parameters appropriately
+      return this._processWithModel(text, modelToUse, apiKey, params);
+    } catch (error) {
+      this.logger.error('Error in _processWithApi:', error);
+      throw error;
+    }
   }
-  
+
+  /**
+   * Process with model-specific parameters
+   * @param {string} text - Prompt text
+   * @param {string} model - Model ID to use
+   * @param {string} apiKey - API key
+   * @param {Object} params - Resolved parameters
+   * @returns {Promise<Object>} API response
+   */
+  async _processWithModel(text, model, apiKey, params) {
+    throw new Error('_processWithModel must be implemented by subclasses');
+  }
+
+  /**
+   * Get default model for this platform
+   * @returns {string} Default model ID
+   */
+  _getDefaultModel() {
+    // Platform-specific defaults
+    const defaults = {
+      'chatgpt': 'gpt-4o',
+      'claude': 'claude-3-7-sonnet-latest',
+      'gemini': 'gemini-1.5-flash',
+      'mistral': 'mistral-large-latest',
+      'deepseek': 'deepseek-chat',
+      'grok': 'grok-2-1212'
+    };
+
+    return defaults[this.platformId] || 'gpt-4o';
+  }
+
   /**
    * Create a logger instance
    * @returns {Object} Logger object
@@ -287,7 +343,7 @@ ${formattedContent}`;
       error: (message, data = null) => console.error(`[${this.platformId}-api] ERROR: ${message}`, data || '')
     };
   }
-  
+
   /**
    * Load platform API configuration
    * @returns {Promise<Object>} Platform API configuration

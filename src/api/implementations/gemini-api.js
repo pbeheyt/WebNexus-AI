@@ -11,48 +11,65 @@ class GeminiApiService extends BaseApiService {
   }
 
   /**
-   * Process content through Gemini API
-   * @param {string} prompt - Formatted prompt text
-   * @returns {Promise<Object>} Standardized response object
+   * Process with model-specific parameters
+   * @param {string} text - Prompt text
+   * @param {string} model - Model ID to use
+   * @param {string} apiKey - API key
+   * @param {Object} params - Resolved parameters
+   * @returns {Promise<Object>} API response
    */
-  async _processWithApi(prompt) {
-    const { apiKey, model } = this.credentials;
-    const defaultModel = this.config?.defaultModel || 'gemini-1.5-flash';
-    const modelToUse = model || defaultModel;
-
+  async _processWithModel(text, model, apiKey, params) {
     // Get endpoint from config or use default
-    let endpoint = this.config?.endpoint ||
-                   `https://generativelanguage.googleapis.com/v1/models/${modelToUse}:generateContent`;
+    let endpoint = this.config?.endpoint || 
+                   `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
 
     // Replace {model} placeholder if present
     if (endpoint.includes('{model}')) {
-      endpoint = endpoint.replace('{model}', modelToUse);
+      endpoint = endpoint.replace('{model}', model);
     }
 
     try {
-      this.logger.info(`Making Gemini API request with model: ${modelToUse}`);
+      this.logger.info(`Making Gemini API request with model: ${model}`);
 
       // Gemini API uses API key as a query parameter
       const url = new URL(endpoint);
       url.searchParams.append('key', apiKey);
+
+      // Create the request payload
+      const requestPayload = {
+        contents: [
+          {
+            parts: [
+              { text: text }
+            ]
+          }
+        ],
+        generationConfig: {}
+      };
+
+      // Add model-specific parameters
+      if (params.tokenParameter) {
+        requestPayload.generationConfig[params.tokenParameter] = params.effectiveMaxTokens;
+      } else {
+        requestPayload.generationConfig.maxOutputTokens = params.effectiveMaxTokens;
+      }
+
+      // Add temperature if supported
+      if (params.supportsTemperature) {
+        requestPayload.generationConfig.temperature = params.temperature;
+      }
+
+      // Add top_p if supported
+      if (params.supportsTopP) {
+        requestPayload.generationConfig.topP = params.topP;
+      }
 
       const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: prompt }
-              ]
-            }
-          ],
-          generationConfig: {
-            maxOutputTokens: 4000
-          }
-        })
+        body: JSON.stringify(requestPayload)
       });
 
       if (!response.ok) {
@@ -70,13 +87,19 @@ class GeminiApiService extends BaseApiService {
       return {
         success: true,
         content: content,
-        model: modelToUse,
+        model: model,
         platformId: this.platformId,
         timestamp: new Date().toISOString(),
         usage: responseData.usageMetadata,
         metadata: {
           responseId: responseData.candidates[0].finishReason,
-          safetyRatings: responseData.candidates[0].safetyRatings
+          safetyRatings: responseData.candidates[0].safetyRatings,
+          parameters: {
+            modelUsed: model,
+            maxTokens: params.effectiveMaxTokens,
+            temperature: params.supportsTemperature ? params.temperature : null,
+            topP: params.supportsTopP ? params.topP : null
+          }
         }
       };
     } catch (error) {

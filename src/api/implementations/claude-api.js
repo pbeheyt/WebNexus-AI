@@ -11,22 +11,36 @@ class ClaudeApiService extends BaseApiService {
   }
   
   /**
-   * Process content through Claude API
-   * @param {string} prompt - Formatted prompt text
-   * @returns {Promise<Object>} Standardized response object
+   * Process with model-specific parameters
+   * @param {string} text - Prompt text
+   * @param {string} model - Model ID to use
+   * @param {string} apiKey - API key
+   * @param {Object} params - Resolved parameters
+   * @returns {Promise<Object>} API response
    */
-  async _processWithApi(prompt) {
-    const { apiKey, model } = this.credentials;
+  async _processWithModel(text, model, apiKey, params) {
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
     
-    // Use configuration-provided default model with a fallback for backwards compatibility
-    const defaultModel = this.config?.defaultModel || 'claude-3-7-sonnet-latest';
-    
-    // Choose the model to use, prioritizing the explicitly provided model
-    const modelToUse = model || defaultModel;
-    
     try {
-      this.logger.info(`Making Claude API request with model: ${modelToUse}`);
+      this.logger.info(`Making Claude API request with model: ${model}`);
+      
+      // Create the request payload with model-specific parameters
+      const requestPayload = {
+        model: model,
+        max_tokens: params.effectiveMaxTokens,
+        messages: [{ role: 'user', content: text }]
+      };
+      
+      // Add temperature if supported
+      if (params.supportsTemperature) {
+        requestPayload.temperature = params.temperature;
+      }
+      
+      // Add system prompt if specified in advanced settings
+      const userSettings = await this.getAdvancedSettings();
+      if (userSettings?.systemPrompt) {
+        requestPayload.system = userSettings.systemPrompt;
+      }
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -36,11 +50,7 @@ class ClaudeApiService extends BaseApiService {
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': true
         },
-        body: JSON.stringify({
-          model: modelToUse,
-          max_tokens: 4000,
-          messages: [{ role: 'user', content: prompt }]
-        })
+        body: JSON.stringify(requestPayload)
       });
       
       if (!response.ok) {
@@ -55,12 +65,17 @@ class ClaudeApiService extends BaseApiService {
       return {
         success: true,
         content: responseData.content[0].text,
-        model: responseData.model, // Use actual model from response
+        model: responseData.model,
         platformId: this.platformId,
         timestamp: new Date().toISOString(),
         usage: responseData.usage,
         metadata: {
-          responseId: responseData.id
+          responseId: responseData.id,
+          parameters: {
+            modelUsed: model,
+            maxTokens: params.effectiveMaxTokens,
+            temperature: params.temperature
+          }
         }
       };
     } catch (error) {
@@ -72,6 +87,20 @@ class ClaudeApiService extends BaseApiService {
         platformId: this.platformId,
         timestamp: new Date().toISOString()
       };
+    }
+  }
+  
+  /**
+   * Get advanced settings for Claude API
+   * @returns {Promise<Object>} Advanced settings
+   */
+  async getAdvancedSettings() {
+    try {
+      const result = await chrome.storage.sync.get('api_advanced_settings');
+      return result.api_advanced_settings?.claude || {};
+    } catch (error) {
+      this.logger.error('Error getting advanced settings:', error);
+      return {};
     }
   }
   

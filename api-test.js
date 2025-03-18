@@ -222,39 +222,110 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
-  // Function to run API test
+  // Function to run API test - Properly accessing the content field
   function runApiTest() {
-      const platformId = testPlatformSelect.value;
-      const testPrompt = testPromptInput.value.trim() || 'Summarize this content in 1-2 sentences.';
-      
-      logInfo(`Running API test for ${platformId}...`);
-      
-      // Create a test params object similar to what summarizeContentViaApi expects
-      const testParams = {
-          platformId,
-          useApi: true,
-          tabId: 999, // Dummy tab ID
-          url: 'https://lenvie-des-mets.fr/info',
-          hasSelection: false,
-          testPrompt
-      };
-      
-      sendMessage({
-          action: 'summarizeContent',
-          ...testParams
-      }).then(response => {
-          if (response.success) {
-              logSuccess(`API test successful for ${platformId}`);
-              
-              if (response.response && response.response.content) {
-                  const contentDiv = document.createElement('div');
-                  contentDiv.innerHTML = `<strong>API Response:</strong><br>${response.response.content}`;
-                  resultContainer.appendChild(contentDiv);
-              }
-          } else {
-              logError(`API test failed: ${response.error || 'Unknown error'}`);
-          }
-      });
+    const platformId = testPlatformSelect.value;
+    const testPrompt = testPromptInput.value.trim() || 'Summarize this content in 1-2 sentences.';
+    const maxTokens = parseInt(document.getElementById('max-tokens-input')?.value || '4000');
+    const temperature = parseFloat(document.getElementById('temperature-input')?.value || '0.7');
+    
+    logInfo(`Running API test for ${platformId} with max_tokens=${maxTokens}, temp=${temperature}...`);
+    
+    // Create a test params object with advanced options
+    const testParams = {
+        platformId,
+        useApi: true,
+        tabId: 999, // Dummy tab ID
+        url: 'https://lenvie-des-mets.fr/info',
+        hasSelection: false,
+        testPrompt,
+        options: {
+            max_tokens: maxTokens,
+            temperature: temperature
+        }
+    };
+    
+    sendMessage({
+        action: 'summarizeContent',
+        ...testParams
+    }).then(response => {
+        if (response.success) {
+            logSuccess(`API test successful for ${platformId}`);
+            
+            // Direct access to the content field (response text)
+            if (response.content) {
+                // Create response display container
+                const responseContainer = document.createElement('div');
+                responseContainer.className = 'api-response-container';
+                
+                // Add main content
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'content-section';
+                contentDiv.innerHTML = `<strong>Response:</strong><pre>${response.content}</pre>`;
+                responseContainer.appendChild(contentDiv);
+                
+                // Add detailed metadata
+                const metadataDiv = document.createElement('div');
+                metadataDiv.className = 'metadata-section';
+                
+                // Build comprehensive metadata display
+                let metadataHtml = `
+                    <strong>Model:</strong> ${response.model || 'N/A'}<br>
+                    <strong>Timestamp:</strong> ${new Date(response.timestamp).toLocaleString()}<br>
+                    <strong>Parameters:</strong><br>
+                `;
+                
+                // Add request parameters if available
+                if (response.request_params) {
+                    metadataHtml += `
+                        &nbsp;&nbsp;Temperature: ${response.request_params.temperature}<br>
+                        &nbsp;&nbsp;Max Tokens: ${response.request_params.max_tokens}<br>
+                    `;
+                    
+                    // Add other parameters if available
+                    if (response.request_params.top_p) {
+                        metadataHtml += `&nbsp;&nbsp;Top P: ${response.request_params.top_p}<br>`;
+                    }
+                    
+                    if (response.request_params.presence_penalty) {
+                        metadataHtml += `&nbsp;&nbsp;Presence Penalty: ${response.request_params.presence_penalty}<br>`;
+                    }
+                }
+                
+                // Add token usage information
+                if (response.usage) {
+                    metadataHtml += `
+                        <strong>Usage:</strong><br>
+                        &nbsp;&nbsp;Prompt Tokens: ${response.usage.prompt_tokens || 0}<br>
+                        &nbsp;&nbsp;Completion Tokens: ${response.usage.completion_tokens || 0}<br>
+                        &nbsp;&nbsp;Total Tokens: ${response.usage.total_tokens || 0}<br>
+                    `;
+                    
+                    // Add reasoning tokens if available (for specific models)
+                    if (response.usage.reasoning_tokens !== undefined) {
+                        metadataHtml += `&nbsp;&nbsp;Reasoning Tokens: ${response.usage.reasoning_tokens}<br>`;
+                    }
+                }
+                
+                // Add finish reason and response ID
+                if (response.metadata) {
+                    metadataHtml += `
+                        <strong>Response ID:</strong> ${response.metadata.responseId || 'N/A'}<br>
+                        <strong>Finish Reason:</strong> ${response.metadata.finishReason || 'N/A'}<br>
+                    `;
+                }
+                
+                metadataDiv.innerHTML = metadataHtml;
+                responseContainer.appendChild(metadataDiv);
+                
+                // Add the complete response container to results
+                resultContainer.appendChild(responseContainer);
+                resultContainer.scrollTop = resultContainer.scrollHeight;
+            }
+        } else {
+            logError(`API test failed: ${response.error || 'Unknown error'}`);
+        }
+    });
   }
 
   // Function to check API availability

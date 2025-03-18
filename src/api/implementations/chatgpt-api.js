@@ -11,38 +11,48 @@ class ChatGptApiService extends BaseApiService {
   }
   
   /**
-   * Process content through ChatGPT API
-   * @param {string} prompt - Formatted prompt text
-   * @returns {Promise<Object>} Standardized response object
+   * Process with model-specific parameters
+   * @param {string} text - Prompt text
+   * @param {string} model - Model ID to use
+   * @param {string} apiKey - API key
+   * @param {Object} params - Resolved parameters
+   * @returns {Promise<Object>} API response
    */
-  async _processWithApi(prompt) {
-    const { apiKey, model } = this.credentials;
+  async _processWithModel(text, model, apiKey, params) {
     const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
-
-    // Use configuration default with fallback
-    const defaultModel = this.config?.defaultModel || 'gpt-4o';
-
-    // Use provided model or default
-    const modelToUse = model || defaultModel;
-      
-    // Determine the correct token parameter based on the model
-    const isReasoningModel = modelToUse.includes('o1') || modelToUse.includes('o3');
-    const tokenParam = isReasoningModel ? 'max_completion_tokens' : 'max_tokens';
-
+    
     try {
-      this.logger.info(`Making ChatGPT API request with model: ${modelToUse}`);
+      this.logger.info(`Making ChatGPT API request with model: ${model}`);
       
+      // Create the request payload based on parameter style
+      const requestPayload = {
+        model: model,
+        messages: [{ role: 'user', content: text }]
+      };
+      
+      // Use the correct token parameter based on model style
+      if (params.parameterStyle === 'reasoning') {
+        requestPayload[params.tokenParameter || 'max_completion_tokens'] = params.effectiveMaxTokens;
+      } else {
+        requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;
+        
+        // Only add temperature and top_p for standard models that support them
+        if (params.supportsTemperature) {
+          requestPayload.temperature = params.temperature;
+        }
+        
+        if (params.supportsTopP) {
+          requestPayload.top_p = params.topP;
+        }
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model: modelToUse,
-          messages: [{ role: 'user', content: prompt }],
-          [tokenParam]: 4000
-        })
+        body: JSON.stringify(requestPayload)
       });
 
       if (!response.ok) {
@@ -63,7 +73,13 @@ class ChatGptApiService extends BaseApiService {
         usage: responseData.usage,
         metadata: {
           responseId: responseData.id,
-          finishReason: responseData.choices[0].finish_reason
+          finishReason: responseData.choices[0].finish_reason,
+          parameters: {
+            modelUsed: model,
+            maxTokens: params.effectiveMaxTokens,
+            temperature: params.supportsTemperature ? params.temperature : null,
+            topP: params.supportsTopP ? params.topP : null
+          }
         }
       };
     } catch (error) {
