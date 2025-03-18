@@ -398,11 +398,6 @@ class ApiSettingsTab {
     modelSelectorGroup.appendChild(modelSelectorLabel);
     modelSelectorGroup.appendChild(modelSelector);
     
-    const modelSelectorHelp = document.createElement('p');
-    modelSelectorHelp.className = 'help-text';
-    modelSelectorHelp.textContent = 'Select a model to configure its settings.';
-    modelSelectorGroup.appendChild(modelSelectorHelp);
-    
     advancedSection.appendChild(modelSelectorGroup);
     
     // Container for model-specific settings
@@ -468,16 +463,20 @@ class ApiSettingsTab {
       if (modelConfig.inputTokenPrice !== undefined) {
         const inputPrice = document.createElement('div');
         inputPrice.className = 'price-item';
+        const isInputFree = typeof modelConfig.inputTokenPrice === 'number' && Math.abs(modelConfig.inputTokenPrice) < 0.0001;
+        const inputPriceDisplay = isInputFree ? "Free" : `$${this.formatPrice(modelConfig.inputTokenPrice)} per 1M tokens`;
         inputPrice.innerHTML = `<span class="price-label">Input tokens:</span> 
-                               <span class="price-value">$${this.formatPrice(modelConfig.inputTokenPrice)} per 1M tokens</span>`;
+                               <span class="price-value">${inputPriceDisplay}</span>`;
         pricingInfo.appendChild(inputPrice);
       }
       
       if (modelConfig.outputTokenPrice !== undefined) {
         const outputPrice = document.createElement('div');
         outputPrice.className = 'price-item';
+        const isOutputFree = typeof modelConfig.outputTokenPrice === 'number' && Math.abs(modelConfig.outputTokenPrice) < 0.0001;
+        const outputPriceDisplay = isOutputFree ? "Free" : `$${this.formatPrice(modelConfig.outputTokenPrice)} per 1M tokens`;
         outputPrice.innerHTML = `<span class="price-label">Output tokens:</span> 
-                                <span class="price-value">$${this.formatPrice(modelConfig.outputTokenPrice)} per 1M tokens</span>`;
+                                <span class="price-value">${outputPriceDisplay}</span>`;
         pricingInfo.appendChild(outputPrice);
       }
       
