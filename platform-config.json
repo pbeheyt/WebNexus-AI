@@ -20,8 +20,16 @@
       "icon": "images/chatgpt_logo.png",
       "api": {
         "endpoint": "https://api.openai.com/v1/chat/completions",
-        "models": ["gpt-4o-o3", "gpt-4o-o3-mini", "gpt-3.5-turbo"],
-        "defaultModel": "gpt-4o-o3",
+        "models": [
+          "gpt-4.5-preview",
+          "gpt-4o",
+          "gpt-4o-mini",
+          "o1",
+          "o3-mini",
+          "o1-mini",
+          "gpt-3.5-turbo"
+        ],
+        "defaultModel": "gpt-4o",
         "requiresModel": true,
         "authType": "bearer",
         "authHeaderName": "Authorization"
@@ -71,9 +79,9 @@
       "url": "https://grok.com/",
       "icon": "images/grok_logo.png",
       "api": {
-        "endpoint": "https://api.grok.ai/v1/chat/completions",
-        "models": ["grok-3"],
-        "defaultModel": "grok-3",
+        "endpoint": "https://api.x.ai/v1/chat/completions",
+        "models": ["grok-beta", "grok-vision-beta", "grok-2-1212", "grok-2-vision-1212"],
+        "defaultModel": "grok-2-1212",
         "requiresModel": true,
         "authType": "bearer",
         "authHeaderName": "Authorization"

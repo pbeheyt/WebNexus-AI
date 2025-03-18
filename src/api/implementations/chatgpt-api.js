@@ -18,13 +18,17 @@ class ChatGptApiService extends BaseApiService {
   async _processWithApi(prompt) {
     const { apiKey, model } = this.credentials;
     const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
-    
+
     // Use configuration default with fallback
-    const defaultModel = this.config?.defaultModel || 'gpt-4o-o3';
-    
+    const defaultModel = this.config?.defaultModel || 'gpt-4o';
+
     // Use provided model or default
     const modelToUse = model || defaultModel;
-    
+      
+    // Determine the correct token parameter based on the model
+    const isReasoningModel = modelToUse.includes('o1') || modelToUse.includes('o3');
+    const tokenParam = isReasoningModel ? 'max_completion_tokens' : 'max_tokens';
+
     try {
       this.logger.info(`Making ChatGPT API request with model: ${modelToUse}`);
       
@@ -37,19 +41,19 @@ class ChatGptApiService extends BaseApiService {
         body: JSON.stringify({
           model: modelToUse,
           messages: [{ role: 'user', content: prompt }],
-          max_tokens: 4000
+          [tokenParam]: 4000
         })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           `API error (${response.status}): ${errorData.error?.message || response.statusText}`
         );
       }
-      
+
       const responseData = await response.json();
-      
+
       return {
         success: true,
         content: responseData.choices[0].message.content,
@@ -64,7 +68,7 @@ class ChatGptApiService extends BaseApiService {
       };
     } catch (error) {
       this.logger.error('API processing error:', error);
-      
+
       return {
         success: false,
         error: error.message,
