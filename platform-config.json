@@ -5,7 +5,8 @@
       "name": "Claude",
       "url": "https://claude.ai/new",
       "icon": "images/claude_logo.png",
-      "docUrl": "https://docs.anthropic.com/claude/reference/getting-started-with-the-api",
+      "docLink": "https://docs.anthropic.com/claude/reference/getting-started-with-the-api",
+      "modelApiLink": "https://console.anthropic.com/models",
       "consoleApiLink": "https://console.anthropic.com/",
       "api": {
         "endpoint": "https://api.anthropic.com/v1/messages",
@@ -16,6 +17,8 @@
             "temperature": 0.7,
             "parameterStyle": "standard",
             "contextWindow": 200000,
+            "inputTokenPrice": 3.00,
+            "outputTokenPrice": 15.00,
             "supportsTemperature": true,
             "supportsTopP": true
           },
@@ -25,6 +28,8 @@
             "temperature": 0.7,
             "parameterStyle": "standard",
             "contextWindow": 200000,
+            "inputTokenPrice": 0.25,
+            "outputTokenPrice": 1.25,
             "supportsTemperature": true,
             "supportsTopP": true
           },
@@ -34,6 +39,8 @@
             "temperature": 0.7,
             "parameterStyle": "standard",
             "contextWindow": 200000,
+            "inputTokenPrice": 3.00,
+            "outputTokenPrice": 15.00,
             "supportsTemperature": true,
             "supportsTopP": true
           },
@@ -43,6 +50,8 @@
             "temperature": 0.7,
             "parameterStyle": "standard",
             "contextWindow": 200000,
+            "inputTokenPrice": 15.00,
+            "outputTokenPrice": 75.00,
             "supportsTemperature": true,
             "supportsTopP": true
           }
@@ -57,78 +66,93 @@
       "name": "ChatGPT",
       "url": "https://chatgpt.com/",
       "icon": "images/chatgpt_logo.png",
-      "docUrl": "https://platform.openai.com/docs/api-reference",
+      "docLink": "https://platform.openai.com/docs/api-reference",
+      "modelApiLink": "https://platform.openai.com/models",
       "consoleApiLink": "https://platform.openai.com/",
       "api": {
         "endpoint": "https://api.openai.com/v1/chat/completions",
         "models": [
           {
             "id": "gpt-4.5-preview",
-            "maxTokens": 4000,
+            "maxTokens": 16384,
             "temperature": 0.7,
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
+            "inputTokenPrice": 75,
+            "outputTokenPrice": 150,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
           },
           {
             "id": "gpt-4o",
-            "maxTokens": 4000,
+            "maxTokens": 16384,
             "temperature": 0.7,
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
+            "inputTokenPrice": 5.00,
+            "outputTokenPrice": 15.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
           },
           {
             "id": "gpt-4o-mini",
-            "maxTokens": 4000,
+            "maxTokens": 16384,
             "temperature": 0.7,
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
+            "inputTokenPrice": 1.10,
+            "outputTokenPrice": 4.40,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
           },
           {
             "id": "o1",
-            "maxTokens": 4000,
+            "maxTokens": 200000,
             "parameterStyle": "reasoning",
             "tokenParameter": "max_completion_tokens",
             "contextWindow": 128000,
+            "inputTokenPrice": 15.00,
+            "outputTokenPrice": 60.00,
             "supportsTemperature": false,
             "supportsTopP": false
           },
           {
             "id": "o3-mini",
-            "maxTokens": 4000,
+            "maxTokens": 100000,
             "parameterStyle": "reasoning",
             "tokenParameter": "max_completion_tokens",
-            "contextWindow": 128000,
+            "contextWindow": 200000,
+            "inputTokenPrice": 1.10,
+            "outputTokenPrice": 4.40,
             "supportsTemperature": false,
             "supportsTopP": false
           },
           {
             "id": "o1-mini",
-            "maxTokens": 4000,
+            "maxTokens": 65536,
             "parameterStyle": "reasoning",
             "tokenParameter": "max_completion_tokens",
             "contextWindow": 128000,
+            "inputTokenPrice": 1.10,
+            "outputTokenPrice": 4.40,
             "supportsTemperature": false,
             "supportsTopP": false
           },
           {
             "id": "gpt-3.5-turbo",
-            "maxTokens": 4000,
+            "maxTokens": 4096,
             "temperature": 0.7,
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 16385,
+            "inputTokenPrice": 0.50,
+            "outputTokenPrice": 1.50,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -144,7 +168,8 @@
       "name": "DeepSeek",
       "url": "https://chat.deepseek.com/",
       "icon": "images/deepseek_logo.png",
-      "docUrl": "https://platform.deepseek.ai/docs",
+      "docLink": "https://platform.deepseek.ai/docs",
+      "modelApiLink": "https://platform.deepseek.com/models",
       "consoleApiLink": "https://platform.deepseek.com/",
       "api": {
         "endpoint": "https://api.deepseek.com/v1/chat/completions",
@@ -156,6 +181,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
+            "inputTokenPrice": 0.14,
+            "outputTokenPrice": 0.28,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -167,6 +194,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
+            "inputTokenPrice": 0.28,
+            "outputTokenPrice": 0.56,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -182,7 +211,7 @@
       "name": "Mistral",
       "url": "https://chat.mistral.ai/chat",
       "icon": "images/mistral_logo.png",
-      "docUrl": "https://docs.mistral.ai/api/",
+      "docLink": "https://docs.mistral.ai/api/",
       "consoleApiLink": "https://console.mistral.ai/",
       "api": {
         "endpoint": "https://api.mistral.ai/v1/chat/completions",
@@ -194,6 +223,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
+            "inputTokenPrice": 0.20,
+            "outputTokenPrice": 0.20,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -205,6 +236,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
+            "inputTokenPrice": 8.00,
+            "outputTokenPrice": 24.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -216,6 +249,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
+            "inputTokenPrice": 2.70,
+            "outputTokenPrice": 8.10,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -227,6 +262,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
+            "inputTokenPrice": 2.00,
+            "outputTokenPrice": 6.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -238,6 +275,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
+            "inputTokenPrice": 2.00,
+            "outputTokenPrice": 6.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -249,6 +288,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
+            "inputTokenPrice": 2.00,
+            "outputTokenPrice": 6.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -264,7 +305,8 @@
       "name": "Gemini",
       "url": "https://gemini.google.com/",
       "icon": "images/gemini_logo.png",
-      "docUrl": "https://ai.google.dev/docs",
+      "docLink": "https://ai.google.dev/docs",
+      "modelApiLink": "https://console.cloud.google.com/ai/gemini/models",
       "consoleApiLink": "https://ai.google.dev/",
       "api": {
         "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
@@ -276,6 +318,8 @@
             "topP": 0.95,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
+            "inputTokenPrice": 0.35,
+            "outputTokenPrice": 1.05,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -287,6 +331,8 @@
             "topP": 0.95,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
+            "inputTokenPrice": 0.35,
+            "outputTokenPrice": 1.05,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -298,6 +344,8 @@
             "topP": 0.95,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
+            "inputTokenPrice": 0.35,
+            "outputTokenPrice": 1.05,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -309,6 +357,8 @@
             "topP": 0.95,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
+            "inputTokenPrice": 0.35,
+            "outputTokenPrice": 1.05,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -320,6 +370,8 @@
             "topP": 0.95,
             "parameterStyle": "standard",
             "contextWindow": 2097152,
+            "inputTokenPrice": 7.00,
+            "outputTokenPrice": 21.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -335,7 +387,8 @@
       "name": "Grok",
       "url": "https://grok.com/",
       "icon": "images/grok_logo.png",
-      "docUrl": "https://x.ai/api-docs",
+      "docLink": "https://x.ai/api-docs",
+      "modelApiLink": "https://console.x.ai/models",
       "consoleApiLink": "https://console.x.ai/",
       "api": {
         "endpoint": "https://api.x.ai/v1/chat/completions",
@@ -347,6 +400,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
+            "inputTokenPrice": 0.00,
+            "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -358,6 +413,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
+            "inputTokenPrice": 0.00,
+            "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -369,6 +426,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
+            "inputTokenPrice": 0.00,
+            "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -380,6 +439,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
+            "inputTokenPrice": 0.00,
+            "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
