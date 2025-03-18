@@ -87,7 +87,7 @@ class ApiSettingsTab {
     header.innerHTML = `
       <h2 class="type-heading">API Settings</h2>
       <p class="section-description">
-        Configure API credentials for different AI platforms. These settings will be used when making API requests
+        Configure API credentials for different AI platforms and customize advanced settings for each model. These settings will be used when making API requests 
         directly from the browser extension.
       </p>
     `;
@@ -214,7 +214,6 @@ class ApiSettingsTab {
       <div class="platform-header-info">
         <h3 class="platform-title">${platform.name}</h3>
         <div class="platform-actions">
-          <a href="${platform.url}" target="_blank" class="platform-link">Visit Website</a>
           <a href="${platform.docUrl}" target="_blank" class="platform-link">API Documentation</a>
           <a href="${platform.modelApiLink}" target="_blank" class="platform-link">Model Documentation</a>
           <a href="${platform.consoleApiLink}" target="_blank" class="platform-link">API Console</a>
@@ -326,10 +325,38 @@ class ApiSettingsTab {
     const advancedSection = document.createElement('div');
     advancedSection.className = 'settings-section';
     
+    // Create a header container to hold both the title and reset button
+    const headerContainer = document.createElement('div');
+    headerContainer.className = 'section-header-with-actions';
+    headerContainer.style.display = 'flex';
+    headerContainer.style.justifyContent = 'space-between';
+    headerContainer.style.alignItems = 'center';
+    headerContainer.style.marginBottom = '15px';
+    
     const advancedTitle = document.createElement('h4');
     advancedTitle.className = 'section-subtitle';
     advancedTitle.textContent = 'Advanced Settings';
-    advancedSection.appendChild(advancedTitle);
+    
+    // Create reset button directly in the header
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'btn reset-btn';
+    resetBtn.textContent = 'Reset to Configuration Defaults';
+    resetBtn.style.marginLeft = 'auto';
+    resetBtn.addEventListener('click', async () => {
+      if (confirm(`Reset all settings for ${this.selectedModelId} to configuration defaults?`)) {
+        await this.apiSettingsController.resetModelToDefaults(platform.id, this.selectedModelId);
+        
+        // Get the container and re-render the model settings
+        const container = document.getElementById(`${platform.id}-advanced-settings-container`);
+        if (container) {
+          this.renderModelAdvancedSettings(container, platform, this.selectedModelId);
+        }
+      }
+    });
+    
+    headerContainer.appendChild(advancedTitle);
+    headerContainer.appendChild(resetBtn);
+    advancedSection.appendChild(headerContainer);
     
     // Add model selector for advanced settings
     const modelSelectorGroup = document.createElement('div');
@@ -456,25 +483,9 @@ class ApiSettingsTab {
       
       pricingSection.appendChild(pricingTitle);
       pricingSection.appendChild(pricingInfo);
+      pricingSection.style.marginBottom = '30px';
       container.appendChild(pricingSection);
     }
-    
-    // Add a reset button for model settings
-    const resetSection = document.createElement('div');
-    resetSection.className = 'reset-settings-section';
-    
-    const resetBtn = document.createElement('button');
-    resetBtn.className = 'btn reset-btn';
-    resetBtn.textContent = 'Reset to Configuration Defaults';
-    resetBtn.addEventListener('click', async () => {
-      if (confirm(`Reset all settings for ${modelId} to configuration defaults?`)) {
-        await this.apiSettingsController.resetModelToDefaults(platform.id, modelId);
-        this.renderModelAdvancedSettings(container, platform, modelId);
-      }
-    });
-    
-    resetSection.appendChild(resetBtn);
-    container.appendChild(resetSection);
     
     // Max tokens setting
     const tokensGroup = this.createSettingField(
