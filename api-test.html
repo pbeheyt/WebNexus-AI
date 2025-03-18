@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Integration Test Utility</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #3b78e7;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .result-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            min-height: 100px;
+            max-height: 400px;
+            overflow: auto;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .log-info {
+            background-color: #e8f0fe;
+            border-left: 4px solid #4285f4;
+        }
+        .log-success {
+            background-color: #e6f4ea;
+            border-left: 4px solid #34a853;
+        }
+        .log-error {
+            background-color: #fce8e6;
+            border-left: 4px solid #ea4335;
+        }
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .tab.active {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-bottom: 1px solid white;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: -1px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Integration Test Utility</h1>
+    
+    <div class="tab-container">
+        <div class="tab active" data-tab="credentials">Credentials</div>
+        <div class="tab" data-tab="api-test">API Testing</div>
+        <div class="tab" data-tab="batch-test">Batch Testing</div>
+    </div>
+    
+    <div id="credentials" class="tab-content active">
+        <div class="card">
+            <h2>Manage API Credentials</h2>
+            <div class="form-group">
+                <label for="platform-select">Select Platform:</label>
+                <select id="platform-select">
+                    <option value="claude">Claude</option>
+                    <option value="chatgpt">ChatGPT</option>
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="mistral">Mistral</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="grok">Grok</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="api-key">API Key:</label>
+                <input type="password" id="api-key" placeholder="Enter API key">
+            </div>
+            <div class="form-group">
+                <label for="model-select">Model:</label>
+                <select id="model-select">
+                    <!-- Will be populated dynamically -->
+                </select>
+            </div>
+            <div class="actions">
+                <button id="store-btn">Store Credentials</button>
+                <button id="get-btn">Get Stored Credentials</button>
+                <button id="remove-btn">Remove Credentials</button>
+                <button id="validate-btn">Validate Credentials</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="api-test" class="tab-content">
+        <div class="card">
+            <h2>Test API Integration</h2>
+            <div class="form-group">
+                <label for="test-platform-select">Select Platform:</label>
+                <select id="test-platform-select">
+                    <option value="claude">Claude</option>
+                    <option value="chatgpt">ChatGPT</option>
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="mistral">Mistral</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="grok">Grok</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="test-prompt">Test Prompt:</label>
+                <input type="text" id="test-prompt" value="Summarize this content in 1-2 sentences." placeholder="Enter test prompt">
+            </div>
+            <div class="actions">
+                <button id="run-test-btn">Run API Test</button>
+                <button id="check-available-btn">Check API Availability</button>
+                <button id="get-models-btn">Get Available Models</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="batch-test" class="tab-content">
+        <div class="card">
+            <h2>Batch Testing</h2>
+            <p>Test all platforms that have credentials stored.</p>
+            <div class="actions">
+                <button id="test-all-btn">Test All Platforms</button>
+                <button id="get-all-credentials-btn">Check All Credentials</button>
+                <button id="check-config-btn">Check Platform Config</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Test Results</h2>
+        <div id="result-container" class="result-container"></div>
+        <div class="actions">
+            <button id="clear-results-btn">Clear Results</button>
+        </div>
+    </div>
+
+    <script src="api-test.js"></script>
+</body>
+</html>

@@ -64,7 +64,9 @@
         "prompt-config.json", 
         "dist/*.bundle.js",
         "dist/pdf.worker.bundle.js",
-        "images/*.png"
+        "images/*.png",
+        "api-test.html", 
+        "api-test.js"
       ],
       "matches": ["<all_urls>"]
     }
