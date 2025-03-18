@@ -6,6 +6,7 @@
       "url": "https://claude.ai/new",
       "icon": "images/claude_logo.png",
       "docUrl": "https://docs.anthropic.com/claude/reference/getting-started-with-the-api",
+      "consoleApiLink": "https://console.anthropic.com/",
       "api": {
         "endpoint": "https://api.anthropic.com/v1/messages",
         "models": [
@@ -16,7 +17,7 @@
             "parameterStyle": "standard",
             "contextWindow": 200000,
             "supportsTemperature": true,
-            "supportsTopP": false
+            "supportsTopP": true
           },
           {
             "id": "claude-3-5-haiku-latest",
@@ -25,7 +26,7 @@
             "parameterStyle": "standard",
             "contextWindow": 200000,
             "supportsTemperature": true,
-            "supportsTopP": false
+            "supportsTopP": true
           },
           {
             "id": "claude-3-5-sonnet-latest",
@@ -34,7 +35,7 @@
             "parameterStyle": "standard",
             "contextWindow": 200000,
             "supportsTemperature": true,
-            "supportsTopP": false
+            "supportsTopP": true
           },
           {
             "id": "claude-3-opus-latest",
@@ -43,7 +44,7 @@
             "parameterStyle": "standard",
             "contextWindow": 200000,
             "supportsTemperature": true,
-            "supportsTopP": false
+            "supportsTopP": true
           }
         ],
         "defaultModel": "claude-3-7-sonnet-latest",
@@ -57,12 +58,13 @@
       "url": "https://chatgpt.com/",
       "icon": "images/chatgpt_logo.png",
       "docUrl": "https://platform.openai.com/docs/api-reference",
+      "consoleApiLink": "https://platform.openai.com/",
       "api": {
         "endpoint": "https://api.openai.com/v1/chat/completions",
         "models": [
           {
             "id": "gpt-4.5-preview",
-            "maxTokens": 4008,
+            "maxTokens": 4000,
             "temperature": 0.7,
             "topP": 1.0,
             "parameterStyle": "standard",
@@ -143,6 +145,7 @@
       "url": "https://chat.deepseek.com/",
       "icon": "images/deepseek_logo.png",
       "docUrl": "https://platform.deepseek.ai/docs",
+      "consoleApiLink": "https://platform.deepseek.com/",
       "api": {
         "endpoint": "https://api.deepseek.com/v1/chat/completions",
         "models": [
@@ -180,6 +183,7 @@
       "url": "https://chat.mistral.ai/chat",
       "icon": "images/mistral_logo.png",
       "docUrl": "https://docs.mistral.ai/api/",
+      "consoleApiLink": "https://console.mistral.ai/",
       "api": {
         "endpoint": "https://api.mistral.ai/v1/chat/completions",
         "models": [
@@ -261,6 +265,7 @@
       "url": "https://gemini.google.com/",
       "icon": "images/gemini_logo.png",
       "docUrl": "https://ai.google.dev/docs",
+      "consoleApiLink": "https://ai.google.dev/",
       "api": {
         "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
         "models": [
@@ -270,7 +275,7 @@
             "temperature": 0.7,
             "topP": 0.95,
             "parameterStyle": "standard",
-            "contextWindow": 32768,
+            "contextWindow": 1048576,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -281,7 +286,7 @@
             "temperature": 0.7,
             "topP": 0.95,
             "parameterStyle": "standard",
-            "contextWindow": 32768,
+            "contextWindow": 1048576,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -292,7 +297,7 @@
             "temperature": 0.7,
             "topP": 0.95,
             "parameterStyle": "standard",
-            "contextWindow": 32768,
+            "contextWindow": 1048576,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -303,7 +308,7 @@
             "temperature": 0.7,
             "topP": 0.95,
             "parameterStyle": "standard",
-            "contextWindow": 32768,
+            "contextWindow": 1048576,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -314,7 +319,7 @@
             "temperature": 0.7,
             "topP": 0.95,
             "parameterStyle": "standard",
-            "contextWindow": 1000000,
+            "contextWindow": 2097152,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "maxOutputTokens"
@@ -331,6 +336,7 @@
       "url": "https://grok.com/",
       "icon": "images/grok_logo.png",
       "docUrl": "https://x.ai/api-docs",
+      "consoleApiLink": "https://console.x.ai/",
       "api": {
         "endpoint": "https://api.x.ai/v1/chat/completions",
         "models": [
