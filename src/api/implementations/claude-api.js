@@ -28,7 +28,17 @@ class ClaudeApiService extends BaseApiService {
       const requestPayload = {
         model: model,
         max_tokens: params.effectiveMaxTokens,
-        messages: [{ role: 'user', content: text }]
+        messages: [
+          { 
+            role: 'user', 
+            content: [
+              {
+                type: "text",
+                text: text
+              }
+            ]
+          }
+        ]
       };
       
       // Add temperature if supported
@@ -37,7 +47,6 @@ class ClaudeApiService extends BaseApiService {
       }
       
       // Add system prompt if specified in advanced settings
-      // This now comes directly from params resolved by ModelParameterService
       if (params.systemPrompt) {
         requestPayload.system = params.systemPrompt;
       }
