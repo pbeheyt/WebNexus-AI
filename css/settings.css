@@ -314,7 +314,7 @@
   }
   
   .settings-input {
-    width: 80px !important;
+    width: 120px !important;
     padding: 10px;
     border-radius: 6px;
     background-color: var(--bg-surface);
