@@ -16,7 +16,8 @@ export const TABS = {
   CONTENT_CONFIGURATION: 'content-configuration',
   PROMPT_MANAGEMENT: 'prompt-management',
   TEMPLATE_CUSTOMIZATION: 'template-customization',
-  SHORTCUTS: 'shortcuts'
+  SHORTCUTS: 'shortcuts',
+  API_SETTINGS: 'api-settings'
 };
 
 // Human-readable labels for content types

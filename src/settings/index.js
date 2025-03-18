@@ -12,6 +12,8 @@ import SettingsController from './controllers/SettingsController.js';
 import TemplateCustomizationController from './controllers/TemplateCustomizationController.js';
 import ShortcutsController from './controllers/ShortcutsController.js';
 import ShortcutsTab from './ui/ShortcutsTab.js';
+import ApiSettingsController from './controllers/ApiSettingsController.js';
+import ApiSettingsTab from './ui/ApiSettingsTab.js';
 import MainController from './controllers/MainController.js';
 import { initializeTheme } from './themeManager.js';
 import configManager from '../services/ConfigManager.js';
@@ -66,6 +68,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     notificationManager
   );
   
+  // Initialize API settings controller
+  const apiSettingsController = new ApiSettingsController(
+    eventBus,
+    notificationManager
+  );
+  
   // Initialize UI components
   const promptList = new PromptList(
     promptController,
@@ -96,6 +104,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     notificationManager
   );
   
+  const apiSettingsTab = new ApiSettingsTab(
+    apiSettingsController,
+    eventBus,
+    notificationManager
+  );
+  
   // Initialize main controller
   const mainController = new MainController(
     tabManager,
@@ -105,6 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsForm,
     templateCustomizationController,
     shortcutsController,
+    apiSettingsController,
     promptController,
     settingsController,
     notificationManager,
@@ -121,5 +136,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const shortcutsContainer = document.getElementById('shortcuts');
   if (shortcutsContainer) {
     shortcutsTab.initialize(shortcutsContainer);
+  }
+  
+  // Initialize API settings tab
+  const apiSettingsContainer = document.getElementById('api-settings');
+  if (apiSettingsContainer) {
+    apiSettingsTab.initialize(apiSettingsContainer);
   }
 });

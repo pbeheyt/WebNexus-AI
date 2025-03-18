@@ -10,7 +10,8 @@ export default class MainController {
     promptDetail,
     settingsForm,
     templateCustomizationController,
-    shortcutsController,  // New controller
+    shortcutsController,
+    apiSettingsController,
     promptService,
     contentTypeService,
     notificationManager,
@@ -23,6 +24,7 @@ export default class MainController {
     this.settingsForm = settingsForm;
     this.templateCustomizationController = templateCustomizationController;
     this.shortcutsController = shortcutsController;
+    this.apiSettingsController = apiSettingsController;
     this.promptService = promptService;
     this.contentTypeService = contentTypeService;
     this.notificationManager = notificationManager;
