@@ -22,6 +22,7 @@ class ApiSettingsTab {
     this.handleSaveAdvancedSettings = this.handleSaveAdvancedSettings.bind(this);
     this.handleModelSelect = this.handleModelSelect.bind(this);
     this.renderModelAdvancedSettings = this.renderModelAdvancedSettings.bind(this);
+    this.formatPrice = this.formatPrice.bind(this);
     
     // Subscribe to events
     this.eventBus.subscribe('api:credentials:updated', this.handleCredentialsUpdated.bind(this));
@@ -215,6 +216,8 @@ class ApiSettingsTab {
         <div class="platform-actions">
           <a href="${platform.url}" target="_blank" class="platform-link">Visit Website</a>
           <a href="${platform.docUrl}" target="_blank" class="platform-link">API Documentation</a>
+          <a href="${platform.modelApiLink}" target="_blank" class="platform-link">Model Documentation</a>
+          <a href="${platform.consoleApiLink}" target="_blank" class="platform-link">API Console</a>
         </div>
       </div>
     `;
@@ -422,6 +425,40 @@ class ApiSettingsTab {
     // Get default settings from model config
     const configDefaults = this.apiSettingsController.getModelDefaultSettings(platform.id, modelId);
     
+    // Add pricing information section
+    if (modelConfig && (modelConfig.inputTokenPrice !== undefined || 
+                       modelConfig.outputTokenPrice !== undefined)) {
+      const pricingSection = document.createElement('div');
+      pricingSection.className = 'pricing-section';
+      
+      const pricingTitle = document.createElement('h5');
+      pricingTitle.className = 'pricing-title';
+      pricingTitle.textContent = 'Model Pricing';
+      
+      const pricingInfo = document.createElement('div');
+      pricingInfo.className = 'pricing-info';
+      
+      if (modelConfig.inputTokenPrice !== undefined) {
+        const inputPrice = document.createElement('div');
+        inputPrice.className = 'price-item';
+        inputPrice.innerHTML = `<span class="price-label">Input tokens:</span> 
+                               <span class="price-value">$${this.formatPrice(modelConfig.inputTokenPrice)} per 1M tokens</span>`;
+        pricingInfo.appendChild(inputPrice);
+      }
+      
+      if (modelConfig.outputTokenPrice !== undefined) {
+        const outputPrice = document.createElement('div');
+        outputPrice.className = 'price-item';
+        outputPrice.innerHTML = `<span class="price-label">Output tokens:</span> 
+                                <span class="price-value">$${this.formatPrice(modelConfig.outputTokenPrice)} per 1M tokens</span>`;
+        pricingInfo.appendChild(outputPrice);
+      }
+      
+      pricingSection.appendChild(pricingTitle);
+      pricingSection.appendChild(pricingInfo);
+      container.appendChild(pricingSection);
+    }
+    
     // Add a reset button for model settings
     const resetSection = document.createElement('div');
     resetSection.className = 'reset-settings-section';
@@ -534,6 +571,16 @@ class ApiSettingsTab {
     
     advancedActions.appendChild(saveAdvancedBtn);
     container.appendChild(advancedActions);
+  }
+  
+  /**
+   * Format price value for display
+   * @param {number|string} price Price value
+   * @returns {string} Formatted price
+   */
+  formatPrice(price) {
+    // Ensure price is displayed with appropriate decimal places
+    return typeof price === 'number' ? price.toFixed(2) : price;
   }
   
   /**

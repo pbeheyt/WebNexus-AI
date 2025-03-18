@@ -1296,3 +1296,43 @@
     font-size: 12px;
     padding: 6px 10px;
   }
+
+  /* Pricing section styling */
+  .pricing-section {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: var(--bg-surface-hover, #f8f9fa);
+    border-radius: 5px;
+    border: 1px solid var(--border-color, #e0e0e0);
+  }
+  
+  .pricing-title {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #202124);
+  }
+  
+  .pricing-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .price-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding: 4px 0;
+  }
+  
+  .price-label {
+    font-weight: 500;
+    color: var(--text-secondary, #5f6368);
+  }
+  
+  .price-value {
+    color: var(--text-primary, #202124);
+    font-family: monospace;
+  }

@@ -121,7 +121,9 @@ class ApiSettingsController {
         name: config.name,
         icon: config.icon,
         url: config.url,
-        docUrl: config.docUrl || this.getDefaultDocUrl(id),
+        docUrl: config.docLink || this.getDefaultDocUrl(id),
+        modelApiLink: config.modelApiLink || this.getDefaultModelApiLink(id),
+        consoleApiLink: config.consoleApiLink || '#',
         apiConfig: config.api,
         credentials: this.credentials[id] || null,
         advancedSettings: this.advancedSettings[id] || {}
@@ -145,6 +147,24 @@ class ApiSettingsController {
     };
     
     return docUrls[platformId] || '#';
+  }
+  
+  /**
+   * Get default model documentation URL for a platform
+   * @param {string} platformId Platform ID
+   * @returns {string} Model documentation URL
+   */
+  getDefaultModelApiLink(platformId) {
+    const modelUrls = {
+      'claude': 'https://docs.anthropic.com/claude/reference/models',
+      'chatgpt': 'https://platform.openai.com/docs/models',
+      'gemini': 'https://ai.google.dev/models/gemini',
+      'mistral': 'https://docs.mistral.ai/models/',
+      'deepseek': 'https://platform.deepseek.ai/docs/api/models',
+      'grok': 'https://x.ai/models'
+    };
+    
+    return modelUrls[platformId] || '#';
   }
   
   /**
