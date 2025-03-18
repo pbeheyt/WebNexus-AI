@@ -17,7 +17,7 @@ class GeminiApiService extends BaseApiService {
    */
   async _processWithApi(prompt) {
     const { apiKey, model } = this.credentials;
-    const defaultModel = this.config?.defaultModel || 'gemini-pro';
+    const defaultModel = this.config?.defaultModel || 'gemini-1.5-flash';
     const modelToUse = model || defaultModel;
     
     // Gemini API requires the model in the URL

@@ -10,6 +10,7 @@ const GeminiApiService = require('./implementations/gemini-api');
 const MistralApiService = require('./implementations/mistral-api');
 const DeepSeekApiService = require('./implementations/deepseek-api');
 const GrokApiService = require('./implementations/grok-api');
+const ModelManager = require('../services/ModelManager');
 
 /**
  * Test suite for API services with mock content data
@@ -20,6 +21,7 @@ class ApiTestHarness {
    */
   constructor() {
     this.logger = this._createLogger();
+    this.modelManager = ModelManager;
     this.mockDataFactory = {
       general: {
         contentType: 'general',
@@ -111,12 +113,134 @@ class ApiTestHarness {
       const result = await service.process(mockContentData, prompt);
       
       this.logger.info(`API test completed for ${service.platformId}`, { 
-        success: result.success 
+        success: result.success,
+        model: credentials.model || 'default'
       });
       
       return result;
     } catch (error) {
       this.logger.error(`API test failed for ${service.platformId}`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Test an API service with a specific model
+   * @param {string|BaseApiService} apiService - API service or provider ID
+   * @param {Object} options - Test options
+   * @param {string} [options.model] - Specific model to test
+   * @returns {Promise<Object>} Test result
+   */
+  async testWithModel(apiService, options = {}) {
+    // Get service instance
+    const service = typeof apiService === 'string' 
+      ? this.getApiService(apiService) 
+      : apiService;
+    
+    const platformId = service.platformId;
+    
+    try {
+      // Get available models for this platform
+      const availableModels = await this.modelManager.getAvailableModels(platformId);
+      
+      if (!availableModels || availableModels.length === 0) {
+        throw new Error(`No models available for platform: ${platformId}`);
+      }
+      
+      // Determine which model to test
+      let modelToTest;
+      
+      if (options.model) {
+        // Specific model requested
+        modelToTest = options.model;
+        
+        // Check if model exists in available models
+        if (!availableModels.includes(modelToTest)) {
+          this.logger.warn(`Requested model ${modelToTest} not found in available models for ${platformId}. Available models: ${availableModels.join(', ')}`);
+        }
+      } else {
+        // Use default model
+        modelToTest = await this.modelManager.getDefaultModel(platformId);
+        
+        if (!modelToTest) {
+          // If no default specified, use first available
+          modelToTest = availableModels[0];
+          this.logger.info(`No default model configured for ${platformId}, using first available: ${modelToTest}`);
+        }
+      }
+      
+      this.logger.info(`Testing with model: ${modelToTest} for platform: ${platformId}`);
+      
+      // Prepare credentials with model
+      const credentials = {
+        apiKey: options.apiKey || 'test-api-key',
+        model: modelToTest
+      };
+      
+      // Run test with these credentials
+      const result = await this.testWithMockData(service, {
+        ...options,
+        credentials
+      });
+      
+      return {
+        ...result,
+        testedModel: modelToTest
+      };
+    } catch (error) {
+      this.logger.error(`Model testing error:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Test all available models for a platform
+   * @param {string} platformId - Platform ID
+   * @param {Object} [options] - Test options
+   * @returns {Promise<Object>} Results for each model
+   */
+  async testAllModels(platformId, options = {}) {
+    try {
+      // Get available models
+      const availableModels = await this.modelManager.getAvailableModels(platformId);
+      
+      if (!availableModels || availableModels.length === 0) {
+        throw new Error(`No models available for platform: ${platformId}`);
+      }
+      
+      this.logger.info(`Testing all ${availableModels.length} models for platform: ${platformId}`);
+      
+      // Test each model
+      const results = {};
+      for (const model of availableModels) {
+        try {
+          this.logger.info(`Testing model: ${model}`);
+          
+          results[model] = await this.testWithModel(platformId, {
+            ...options,
+            model
+          });
+        } catch (error) {
+          this.logger.error(`Error testing model ${model}:`, error);
+          
+          results[model] = {
+            success: false,
+            error: error.message,
+            model,
+            platformId,
+            timestamp: new Date().toISOString()
+          };
+        }
+      }
+      
+      return {
+        platformId,
+        timestamp: new Date().toISOString(),
+        modelCount: availableModels.length,
+        results
+      };
+    } catch (error) {
+      this.logger.error(`Error testing all models:`, error);
       throw error;
     }
   }
@@ -132,7 +256,13 @@ class ApiTestHarness {
     
     for (const provider of providers) {
       try {
-        results[provider] = await this.testWithMockData(provider, options);
+        if (options.useModels) {
+          // Test with preferred/default model
+          results[provider] = await this.testWithModel(provider, options);
+        } else {
+          // Legacy test mode
+          results[provider] = await this.testWithMockData(provider, options);
+        }
       } catch (error) {
         results[provider] = { 
           success: false, 
@@ -144,6 +274,26 @@ class ApiTestHarness {
     }
     
     return results;
+  }
+  
+  /**
+   * Test a specific provider with all its models
+   * @param {string} provider - Provider ID
+   * @param {Object} options - Test options
+   * @returns {Promise<Object>} Test results
+   */
+  async testProviderAllModels(provider, options = {}) {
+    try {
+      return await this.testAllModels(provider, options);
+    } catch (error) {
+      this.logger.error(`Error testing all models for ${provider}:`, error);
+      return {
+        success: false,
+        error: error.message,
+        platformId: provider,
+        timestamp: new Date().toISOString()
+      };
+    }
   }
   
   /**

@@ -20,8 +20,11 @@ class DeepSeekApiService extends BaseApiService {
     const endpoint = this.config?.endpoint || 'https://api.deepseek.com/v1/chat/completions';
     const defaultModel = this.config?.defaultModel || 'deepseek-chat';
     
+    // Use provided model or default
+    const modelToUse = model || defaultModel;
+    
     try {
-      this.logger.info(`Making DeepSeek API request with model: ${model || defaultModel}`);
+      this.logger.info(`Making DeepSeek API request with model: ${modelToUse}`);
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -30,7 +33,7 @@ class DeepSeekApiService extends BaseApiService {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: model || defaultModel,
+          model: modelToUse,
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000
         })

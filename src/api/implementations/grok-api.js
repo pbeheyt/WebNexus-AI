@@ -18,10 +18,13 @@ class GrokApiService extends BaseApiService {
   async _processWithApi(prompt) {
     const { apiKey, model } = this.credentials;
     const endpoint = this.config?.endpoint || 'https://api.grok.ai/v1/chat/completions';
-    const defaultModel = this.config?.defaultModel || 'grok-1';
+    const defaultModel = this.config?.defaultModel || 'grok-3';
+    
+    // Use provided model or default
+    const modelToUse = model || defaultModel;
     
     try {
-      this.logger.info(`Making Grok API request with model: ${model || defaultModel}`);
+      this.logger.info(`Making Grok API request with model: ${modelToUse}`);
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -30,7 +33,7 @@ class GrokApiService extends BaseApiService {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: model || defaultModel,
+          model: modelToUse,
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000
         })

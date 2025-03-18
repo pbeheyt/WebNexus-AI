@@ -18,10 +18,13 @@ class MistralApiService extends BaseApiService {
   async _processWithApi(prompt) {
     const { apiKey, model } = this.credentials;
     const endpoint = this.config?.endpoint || 'https://api.mistral.ai/v1/chat/completions';
-    const defaultModel = this.config?.defaultModel || 'mistral-medium';
+    const defaultModel = this.config?.defaultModel || 'mistral-small-latest';
+    
+    // Use provided model or default
+    const modelToUse = model || defaultModel;
     
     try {
-      this.logger.info(`Making Mistral API request with model: ${model || defaultModel}`);
+      this.logger.info(`Making Mistral API request with model: ${modelToUse}`);
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -30,7 +33,7 @@ class MistralApiService extends BaseApiService {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: model || defaultModel,
+          model: modelToUse,
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000
         })

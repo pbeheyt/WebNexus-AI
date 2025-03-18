@@ -18,10 +18,15 @@ class ChatGptApiService extends BaseApiService {
   async _processWithApi(prompt) {
     const { apiKey, model } = this.credentials;
     const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
-    const defaultModel = this.config?.defaultModel || 'gpt-3.5-turbo';
+    
+    // Use configuration default with fallback
+    const defaultModel = this.config?.defaultModel || 'gpt-4o-o3';
+    
+    // Use provided model or default
+    const modelToUse = model || defaultModel;
     
     try {
-      this.logger.info(`Making ChatGPT API request with model: ${model || defaultModel}`);
+      this.logger.info(`Making ChatGPT API request with model: ${modelToUse}`);
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -30,7 +35,7 @@ class ChatGptApiService extends BaseApiService {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: model || defaultModel,
+          model: modelToUse,
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000
         })

@@ -18,10 +18,15 @@ class ClaudeApiService extends BaseApiService {
   async _processWithApi(prompt) {
     const { apiKey, model } = this.credentials;
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
-    const defaultModel = this.config?.defaultModel || 'claude-3-sonnet-20240229';
+    
+    // Use configuration-provided default model with a fallback for backwards compatibility
+    const defaultModel = this.config?.defaultModel || 'claude-3-7-sonnet-latest';
+    
+    // Choose the model to use, prioritizing the explicitly provided model
+    const modelToUse = model || defaultModel;
     
     try {
-      this.logger.info(`Making Claude API request with model: ${model || defaultModel}`);
+      this.logger.info(`Making Claude API request with model: ${modelToUse}`);
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -32,7 +37,7 @@ class ClaudeApiService extends BaseApiService {
           'anthropic-dangerous-direct-browser-access': true
         },
         body: JSON.stringify({
-          model: model || defaultModel,
+          model: modelToUse,
           max_tokens: 4000,
           messages: [{ role: 'user', content: prompt }]
         })
@@ -50,7 +55,7 @@ class ClaudeApiService extends BaseApiService {
       return {
         success: true,
         content: responseData.content[0].text,
-        model: responseData.model,
+        model: responseData.model, // Use actual model from response
         platformId: this.platformId,
         timestamp: new Date().toISOString(),
         usage: responseData.usage,

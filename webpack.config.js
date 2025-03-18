@@ -13,7 +13,8 @@ module.exports = {
     'selected-text-content': './src/content/selected-text-content.js',
     popup: './src/popup/index.js',
     settings: './src/settings/index.js',
-    'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry'
+    'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
+    'api-model-tester': './src/api/api-model-tester.js'
   },
   output: {
     filename: '[name].bundle.js',
