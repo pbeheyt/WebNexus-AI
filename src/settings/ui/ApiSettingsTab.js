@@ -404,53 +404,34 @@ class ApiSettingsTab {
     // Get settings for this model
     const settings = this.apiSettingsController.getAdvancedSettings(platform.id, modelId);
     
-    // Get overridden parameters (only relevant for model-specific settings)
-    const overriddenParams = modelId !== 'default' 
-      ? this.apiSettingsController.getOverriddenParameters(platform.id, modelId)
-      : {};
-    
     // Get model-specific config from platform
     let modelConfig = null;
     if (modelId !== 'default' && platform.apiConfig?.models) {
       modelConfig = platform.apiConfig.models.find(m => m.id === modelId);
     }
     
-    // Add status info for model-specific settings
+    // Get default settings from model config
+    const configDefaults = modelId !== 'default'
+      ? this.apiSettingsController.getModelDefaultSettings(platform.id, modelId)
+      : {};
+    
+    // Add a reset button for model settings
     if (modelId !== 'default') {
-      const statusInfo = document.createElement('div');
-      statusInfo.className = 'model-settings-status';
+      const resetSection = document.createElement('div');
+      resetSection.className = 'reset-settings-section';
       
-      const anyOverrides = Object.keys(overriddenParams).length > 0;
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'btn reset-btn';
+      resetBtn.textContent = 'Reset to Configuration Defaults';
+      resetBtn.addEventListener('click', async () => {
+        if (confirm(`Reset all settings for ${modelId} to configuration defaults?`)) {
+          await this.apiSettingsController.resetModelToDefaults(platform.id, modelId);
+          this.renderModelAdvancedSettings(container, platform, modelId);
+        }
+      });
       
-      statusInfo.innerHTML = `
-        <p class="help-text">
-          Configuring settings specific to <strong>${modelId}</strong>.
-          ${anyOverrides 
-            ? 'Parameters with <span class="override-indicator">✓</span> override platform defaults.' 
-            : 'Currently using platform default values for all parameters.'}
-        </p>
-      `;
-      
-      // Add reset button
-      if (anyOverrides) {
-        const resetBtn = document.createElement('button');
-        resetBtn.className = 'btn reset-btn';
-        resetBtn.textContent = 'Reset to Platform Defaults';
-        resetBtn.addEventListener('click', async () => {
-          if (confirm(`Reset all settings for ${modelId} to platform defaults?`)) {
-            await this.apiSettingsController.resetModelToDefaults(platform.id, modelId);
-            this.renderModelAdvancedSettings(container, platform, modelId);
-          }
-        });
-        
-        // Add button container
-        const btnContainer = document.createElement('div');
-        btnContainer.className = 'status-actions';
-        btnContainer.appendChild(resetBtn);
-        statusInfo.appendChild(btnContainer);
-      }
-      
-      container.appendChild(statusInfo);
+      resetSection.appendChild(resetBtn);
+      container.appendChild(resetSection);
     }
     
     // Max tokens setting
@@ -460,12 +441,24 @@ class ApiSettingsTab {
       'max-tokens',
       this.apiSettingsController.getTokensLabel(platform.id, modelConfig),
       'number',
-      settings.maxTokens || this.apiSettingsController.getDefaultMaxTokens(platform.id, modelConfig),
+      settings.maxTokens || configDefaults.maxTokens || this.apiSettingsController.getDefaultMaxTokens(platform.id, modelConfig),
       'Maximum number of tokens to generate in the response.',
-      overriddenParams.maxTokens,
       { min: 50, max: 32000 }
     );
     container.appendChild(tokensGroup);
+    
+    // Context window setting
+    const contextGroup = this.createSettingField(
+      platform.id,
+      modelId,
+      'context-window',
+      'Context Window:',
+      'number',
+      settings.contextWindow || configDefaults.contextWindow || this.apiSettingsController.getContextWindow(platform.id, modelConfig),
+      'Maximum number of tokens the model can process as context.',
+      { min: 1000, max: 1000000 }
+    );
+    container.appendChild(contextGroup);
     
     // Temperature setting (if supported by model)
     const supportsTemperature = modelConfig ? modelConfig.supportsTemperature !== false : true;
@@ -476,16 +469,15 @@ class ApiSettingsTab {
         'temperature',
         'Temperature:',
         'number',
-        settings.temperature !== undefined ? settings.temperature : 0.7,
+        settings.temperature !== undefined ? settings.temperature : (configDefaults.temperature || 0.7),
         'Controls randomness: lower values are more deterministic, higher values more creative.',
-        overriddenParams.temperature,
         { min: 0, max: 2, step: 0.1 }
       );
       container.appendChild(temperatureGroup);
     }
     
     // Add platform-specific settings
-    this.renderPlatformSpecificSettings(container, platform, modelId, settings, overriddenParams, modelConfig);
+    this.renderPlatformSpecificSettings(container, platform, modelId, settings, configDefaults, modelConfig);
     
     // Advanced settings actions
     const advancedActions = document.createElement('div');
@@ -508,16 +500,16 @@ class ApiSettingsTab {
    * @param {Object} platform Platform details
    * @param {string} modelId Model ID
    * @param {Object} settings Current settings
-   * @param {Object} overriddenParams Overridden parameters
+   * @param {Object} configDefaults Default values from config file
    * @param {Object} modelConfig Model-specific configuration
    */
-  renderPlatformSpecificSettings(container, platform, modelId, settings, overriddenParams, modelConfig) {
+  renderPlatformSpecificSettings(container, platform, modelId, settings, configDefaults, modelConfig) {
     switch (platform.id) {
       case 'chatgpt':
-        this.renderChatGptSettings(container, platform, modelId, settings, overriddenParams, modelConfig);
+        this.renderChatGptSettings(container, platform, modelId, settings, configDefaults, modelConfig);
         break;
       case 'claude':
-        this.renderClaudeSettings(container, platform, modelId, settings, overriddenParams, modelConfig);
+        this.renderClaudeSettings(container, platform, modelId, settings, configDefaults, modelConfig);
         break;
       // Add other platforms as needed
     }
@@ -529,10 +521,10 @@ class ApiSettingsTab {
    * @param {Object} platform Platform details
    * @param {string} modelId Model ID
    * @param {Object} settings Current settings
-   * @param {Object} overriddenParams Overridden parameters
+   * @param {Object} configDefaults Default values from config file
    * @param {Object} modelConfig Model-specific configuration
    */
-  renderClaudeSettings(container, platform, modelId, settings, overriddenParams, modelConfig) {
+  renderClaudeSettings(container, platform, modelId, settings, configDefaults, modelConfig) {
     // System prompt
     const systemGroup = document.createElement('div');
     systemGroup.className = 'form-group';
@@ -540,11 +532,6 @@ class ApiSettingsTab {
     const systemLabel = document.createElement('label');
     systemLabel.htmlFor = `${platform.id}-${modelId}-system-prompt`;
     systemLabel.textContent = 'System Prompt:';
-    
-    // Add override indicator if applicable
-    if (overriddenParams.systemPrompt) {
-      systemLabel.innerHTML += ' <span class="override-indicator">✓</span>';
-    }
     
     const systemInput = document.createElement('textarea');
     systemInput.id = `${platform.id}-${modelId}-system-prompt`;
@@ -569,10 +556,10 @@ class ApiSettingsTab {
    * @param {Object} platform Platform details
    * @param {string} modelId Model ID
    * @param {Object} settings Current settings
-   * @param {Object} overriddenParams Overridden parameters
+   * @param {Object} configDefaults Default values from config file
    * @param {Object} modelConfig Model-specific configuration
    */
-  renderChatGptSettings(container, platform, modelId, settings, overriddenParams, modelConfig) {
+  renderChatGptSettings(container, platform, modelId, settings, configDefaults, modelConfig) {
     // Top P setting (if supported)
     const supportsTopP = modelConfig ? modelConfig.supportsTopP !== false : true;
     if (supportsTopP) {
@@ -582,9 +569,8 @@ class ApiSettingsTab {
         'top-p',
         'Top P:',
         'number',
-        settings.topP !== undefined ? settings.topP : 1.0,
+        settings.topP !== undefined ? settings.topP : (configDefaults.topP || 1.0),
         'Alternative to temperature, controls diversity via nucleus sampling.',
-        overriddenParams.topP,
         { min: 0, max: 1, step: 0.01 }
       );
       container.appendChild(topPGroup);
@@ -597,11 +583,6 @@ class ApiSettingsTab {
     const systemLabel = document.createElement('label');
     systemLabel.htmlFor = `${platform.id}-${modelId}-system-prompt`;
     systemLabel.textContent = 'System Prompt:';
-    
-    // Add override indicator if applicable
-    if (overriddenParams.systemPrompt) {
-      systemLabel.innerHTML += ' <span class="override-indicator">✓</span>';
-    }
     
     const systemInput = document.createElement('textarea');
     systemInput.id = `${platform.id}-${modelId}-system-prompt`;
@@ -621,7 +602,7 @@ class ApiSettingsTab {
   }
   
   /**
-   * Create a setting field with override indicator
+   * Create a setting field
    * @param {string} platformId Platform ID
    * @param {string} modelId Model ID
    * @param {string} settingId Setting ID
@@ -629,22 +610,16 @@ class ApiSettingsTab {
    * @param {string} type Input type
    * @param {any} value Current value
    * @param {string} helpText Help text
-   * @param {boolean} isOverridden Whether setting is overridden
    * @param {Object} attributes Additional input attributes
    * @returns {HTMLElement} Form group element
    */
-  createSettingField(platformId, modelId, settingId, label, type, value, helpText, isOverridden, attributes = {}) {
+  createSettingField(platformId, modelId, settingId, label, type, value, helpText, attributes = {}) {
     const group = document.createElement('div');
     group.className = 'form-group';
     
     const labelElement = document.createElement('label');
     labelElement.htmlFor = `${platformId}-${modelId}-${settingId}`;
     labelElement.textContent = label;
-    
-    // Add override indicator if applicable
-    if (isOverridden) {
-      labelElement.innerHTML += ' <span class="override-indicator">✓</span>';
-    }
     
     const input = document.createElement('input');
     input.type = type;
@@ -891,6 +866,7 @@ class ApiSettingsTab {
       // Get input values
       const maxTokensInput = document.getElementById(`${platformId}-${modelId}-max-tokens`);
       const temperatureInput = document.getElementById(`${platformId}-${modelId}-temperature`);
+      const contextWindowInput = document.getElementById(`${platformId}-${modelId}-context-window`);
       
       if (!maxTokensInput) {
         this.notificationManager.error('Failed to find form elements');
@@ -907,6 +883,16 @@ class ApiSettingsTab {
         return;
       }
       settings.maxTokens = maxTokens;
+      
+      // Add context window
+      if (contextWindowInput) {
+        const contextWindow = parseInt(contextWindowInput.value, 10);
+        if (isNaN(contextWindow) || contextWindow < 1000 || contextWindow > 1000000) {
+          this.notificationManager.error('Context window must be a number between 1,000 and 1,000,000');
+          return;
+        }
+        settings.contextWindow = contextWindow;
+      }
       
       // Add temperature if element exists
       if (temperatureInput) {
@@ -953,13 +939,11 @@ class ApiSettingsTab {
       const success = await this.apiSettingsController.saveAdvancedSettings(platformId, settings, modelId);
       
       if (success) {
-        // Update the UI to show which parameters are now overridden
-        if (modelId !== 'default') {
-          const platform = this.platforms.find(p => p.id === platformId);
-          const container = document.getElementById(`${platformId}-advanced-settings-container`);
-          if (platform && container) {
-            this.renderModelAdvancedSettings(container, platform, modelId);
-          }
+        // Refresh the UI with updated settings
+        const platform = this.platforms.find(p => p.id === platformId);
+        const container = document.getElementById(`${platformId}-advanced-settings-container`);
+        if (platform && container) {
+          this.renderModelAdvancedSettings(container, platform, modelId);
         }
       }
     } catch (error) {
