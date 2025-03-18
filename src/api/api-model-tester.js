@@ -154,9 +154,11 @@ class ApiModelTester {
       // Populate model dropdown
       for (const model of models) {
         const option = document.createElement('option');
-        option.value = model;
-        option.textContent = model + (model === defaultModel ? ' (default)' : '');
-        option.selected = model === defaultModel;
+        // Handle both object models and string models for backward compatibility
+        const modelId = typeof model === 'object' ? model.id : model;
+        option.value = modelId;
+        option.textContent = modelId + (modelId === defaultModel ? ' (default)' : '');
+        option.selected = modelId === defaultModel;
         
         modelSelect.appendChild(option);
       }

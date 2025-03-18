@@ -116,7 +116,7 @@
             "maxTokens": 200000,
             "parameterStyle": "reasoning",
             "tokenParameter": "max_completion_tokens",
-            "contextWindow": 128000,
+            "contextWindow": 100000,
             "inputTokenPrice": 15.00,
             "outputTokenPrice": 60.00,
             "supportsTemperature": false,
@@ -307,19 +307,6 @@
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
-          },
-          {
-            "id": "mistral-ocr-latest",
-            "maxTokens": 4096,
-            "temperature": 0.7,
-            "topP": 1.0,
-            "parameterStyle": "standard",
-            "contextWindow": 8000,
-            "inputTokenPrice": 0.00,
-            "outputTokenPrice": 0.00,
-            "supportsTemperature": true,
-            "supportsTopP": true,
-            "tokenParameter": "max_tokens"
           }
         ],
         "defaultModel": "mistral-large-latest",
@@ -345,19 +332,6 @@
             "topP": 0.95,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
-            "inputTokenPrice": 0.00,
-            "outputTokenPrice": 0.00,
-            "supportsTemperature": true,
-            "supportsTopP": true,
-            "tokenParameter": "maxOutputTokens"
-          },
-          {
-            "id": "gemini-2.0-pro-exp-02-05",
-            "maxTokens": 8192,
-            "temperature": 0.7,
-            "topP": 0.95,
-            "parameterStyle": "standard",
-            "contextWindow": 2048576,
             "inputTokenPrice": 0.00,
             "outputTokenPrice": 0.00,
             "supportsTemperature": true,
