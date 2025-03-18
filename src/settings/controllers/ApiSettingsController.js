@@ -49,12 +49,73 @@ class ApiSettingsController {
       
       // Load advanced settings
       await this.loadAdvancedSettings();
+
+      // Initialize default settings if needed
+      await this.initializeDefaultSettings();
       
       return true;
     } catch (error) {
       console.error('Error initializing API settings controller:', error);
       this.notificationManager.error(`Failed to initialize API settings: ${error.message}`);
       return false;
+    }
+  }
+
+  /**
+   * Initialize default settings for platforms and models
+   * @returns {Promise<void>}
+   */
+  async initializeDefaultSettings() {
+    try {
+      let needsSaving = false;
+
+      // For each platform in the config
+      for (const [platformId, platformConfig] of Object.entries(this.platformConfig.aiPlatforms || {})) {
+        // Skip if no API configuration
+        if (!platformConfig.api) continue;
+
+        // Initialize platform settings if not present
+        if (!this.advancedSettings[platformId]) {
+          this.advancedSettings[platformId] = {
+            default: {
+              maxTokens: this.getDefaultMaxTokens(platformId),
+              temperature: 0.7
+            },
+            models: {}
+          };
+          needsSaving = true;
+        } else if (!this.advancedSettings[platformId].default) {
+          // Ensure the structure has a default section
+          this.advancedSettings[platformId].default = {
+            maxTokens: this.getDefaultMaxTokens(platformId),
+            temperature: 0.7
+          };
+          needsSaving = true;
+        }
+
+        // Ensure models section exists
+        if (!this.advancedSettings[platformId].models) {
+          this.advancedSettings[platformId].models = {};
+          needsSaving = true;
+        }
+
+        // Add platform-specific default parameters
+        if (platformId === 'chatgpt' && this.advancedSettings[platformId].default.topP === undefined) {
+          this.advancedSettings[platformId].default.topP = 1.0;
+          needsSaving = true;
+        } else if (platformId === 'claude' && this.advancedSettings[platformId].default.systemPrompt === undefined) {
+          this.advancedSettings[platformId].default.systemPrompt = '';
+          needsSaving = true;
+        }
+      }
+
+      // Save if changes were made
+      if (needsSaving) {
+        await chrome.storage.sync.set({ [this.API_SETTINGS_KEY]: this.advancedSettings });
+        console.log('Default API settings initialized');
+      }
+    } catch (error) {
+      console.error('Error initializing default settings:', error);
     }
   }
   
@@ -287,21 +348,68 @@ class ApiSettingsController {
   }
   
   /**
+   * Get advanced settings for a platform and model
+   * @param {string} platformId Platform ID
+   * @param {string} modelId Model ID (optional)
+   * @returns {Object} Advanced settings
+   */
+  getAdvancedSettings(platformId, modelId = null) {
+    const platformSettings = this.advancedSettings[platformId] || {};
+    
+    if (!modelId || modelId === 'default') {
+      return platformSettings.default || {};
+    }
+    
+    // Merge default with model-specific settings
+    const defaultSettings = platformSettings.default || {};
+    const modelSettings = platformSettings.models?.[modelId] || {};
+    
+    return { ...defaultSettings, ...modelSettings };
+  }
+  
+  /**
    * Save advanced settings for a platform
    * @param {string} platformId Platform ID
    * @param {Object} settings Settings object
+   * @param {string} modelId Model ID (optional)
    * @returns {Promise<boolean>} Success indicator
    */
-  async saveAdvancedSettings(platformId, settings) {
+  async saveAdvancedSettings(platformId, settings, modelId = null) {
     try {
       // Load current settings
       await this.loadAdvancedSettings();
       
-      // Update settings for this platform
-      this.advancedSettings[platformId] = {
-        ...this.advancedSettings[platformId],
-        ...settings
-      };
+      // Initialize platform settings if needed
+      if (!this.advancedSettings[platformId]) {
+        this.advancedSettings[platformId] = {
+          default: {},
+          models: {}
+        };
+      }
+      
+      // Ensure structure is correct
+      if (!this.advancedSettings[platformId].default) {
+        this.advancedSettings[platformId].default = {};
+      }
+      
+      if (!this.advancedSettings[platformId].models) {
+        this.advancedSettings[platformId].models = {};
+      }
+      
+      // Update appropriate settings
+      if (!modelId || modelId === 'default') {
+        // Update default settings
+        this.advancedSettings[platformId].default = {
+          ...this.advancedSettings[platformId].default,
+          ...settings
+        };
+      } else {
+        // Update model-specific settings
+        this.advancedSettings[platformId].models[modelId] = {
+          ...this.advancedSettings[platformId].models[modelId] || {},
+          ...settings
+        };
+      }
       
       // Save to storage
       await chrome.storage.sync.set({
@@ -309,12 +417,19 @@ class ApiSettingsController {
       });
       
       // Notify success
-      this.notificationManager.success(`Advanced settings saved for ${this.getPlatformName(platformId)}`);
+      const targetName = modelId && modelId !== 'default' 
+        ? `${modelId} model`
+        : `${this.getPlatformName(platformId)} defaults`;
+      
+      this.notificationManager.success(`Advanced settings saved for ${targetName}`);
       
       // Publish event
       this.eventBus.publish('api:settings:updated', {
         platformId,
-        settings: this.advancedSettings[platformId]
+        modelId: modelId || 'default',
+        settings: modelId && modelId !== 'default' 
+          ? this.advancedSettings[platformId].models[modelId]
+          : this.advancedSettings[platformId].default
       });
       
       return true;
@@ -326,12 +441,61 @@ class ApiSettingsController {
   }
   
   /**
-   * Get advanced settings for a platform
+   * Reset model settings to platform defaults
    * @param {string} platformId Platform ID
-   * @returns {Object} Advanced settings
+   * @param {string} modelId Model ID
+   * @returns {Promise<boolean>} Success indicator
    */
-  getAdvancedSettings(platformId) {
-    return this.advancedSettings[platformId] || {};
+  async resetModelToDefaults(platformId, modelId) {
+    try {
+      if (!this.advancedSettings[platformId]?.models?.[modelId]) {
+        // Nothing to reset
+        return true;
+      }
+      
+      // Remove model-specific settings
+      delete this.advancedSettings[platformId].models[modelId];
+      
+      // Save to storage
+      await chrome.storage.sync.set({
+        [this.API_SETTINGS_KEY]: this.advancedSettings
+      });
+      
+      // Notify success
+      this.notificationManager.success(`Reset ${modelId} to ${this.getPlatformName(platformId)} defaults`);
+      
+      // Publish event
+      this.eventBus.publish('api:settings:updated', {
+        platformId,
+        modelId,
+        settings: this.advancedSettings[platformId].default
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error resetting model settings:', error);
+      this.notificationManager.error(`Failed to reset model settings: ${error.message}`);
+      return false;
+    }
+  }
+  
+  /**
+   * Get overridden parameters for a model
+   * @param {string} platformId Platform ID
+   * @param {string} modelId Model ID
+   * @returns {Object} Object with overridden parameter names as keys
+   */
+  getOverriddenParameters(platformId, modelId) {
+    const defaultSettings = this.getAdvancedSettings(platformId, 'default');
+    const modelSettings = this.advancedSettings[platformId]?.models?.[modelId] || {};
+    
+    const overridden = {};
+    Object.keys(modelSettings).forEach(key => {
+      // Consider a parameter overridden if it exists in model settings
+      overridden[key] = true;
+    });
+    
+    return overridden;
   }
   
   /**
@@ -345,6 +509,62 @@ class ApiSettingsController {
     }
     
     return platformId.charAt(0).toUpperCase() + platformId.slice(1);
+  }
+  
+  /**
+   * Get token label for a platform
+   * @param {string} platformId Platform ID
+   * @param {Object} modelConfig Optional model-specific config
+   * @returns {string} Token label
+   */
+  getTokensLabel(platformId, modelConfig = null) {
+    // Check model-specific token parameter name
+    if (modelConfig && modelConfig.tokenParameter) {
+      if (modelConfig.tokenParameter === 'max_completion_tokens') {
+        return 'Max Completion Tokens:';
+      }
+      if (modelConfig.tokenParameter === 'maxOutputTokens') {
+        return 'Max Output Tokens:';
+      }
+    }
+    
+    // Platform-specific defaults
+    if (platformId === 'chatgpt' || platformId === 'grok') {
+      return 'Max Completion Tokens:';
+    }
+    
+    return 'Max Tokens:';
+  }
+  
+  /**
+   * Get default max tokens for a platform/model
+   * @param {string} platformId Platform ID
+   * @param {Object} modelConfig Optional model-specific config
+   * @returns {number} Default max tokens
+   */
+  getDefaultMaxTokens(platformId, modelConfig = null) {
+    // If model config provides a value, use it
+    if (modelConfig && modelConfig.maxTokens) {
+      return modelConfig.maxTokens;
+    }
+    
+    // Platform-specific defaults
+    switch (platformId) {
+      case 'claude':
+        return 4007;
+      case 'chatgpt':
+        return 2048;
+      case 'gemini':
+        return 2048;
+      case 'mistral':
+        return 4096;
+      case 'deepseek':
+        return 4096;
+      case 'grok':
+        return 4096;
+      default:
+        return 2048;
+    }
   }
 }
 

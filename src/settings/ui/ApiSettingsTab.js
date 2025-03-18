@@ -11,7 +11,7 @@ class ApiSettingsTab {
     this.container = null;
     this.platforms = [];
     this.selectedPlatformId = null;
-    this.modelsCache = {};
+    this.selectedModelId = 'default'; // Track selected model for settings
     
     // Bind methods
     this.render = this.render.bind(this);
@@ -20,6 +20,8 @@ class ApiSettingsTab {
     this.handleRemoveCredentials = this.handleRemoveCredentials.bind(this);
     this.handleTestCredentials = this.handleTestCredentials.bind(this);
     this.handleSaveAdvancedSettings = this.handleSaveAdvancedSettings.bind(this);
+    this.handleModelSelect = this.handleModelSelect.bind(this);
+    this.renderModelAdvancedSettings = this.renderModelAdvancedSettings.bind(this);
     
     // Subscribe to events
     this.eventBus.subscribe('api:credentials:updated', this.handleCredentialsUpdated.bind(this));
@@ -258,30 +260,6 @@ class ApiSettingsTab {
     keyGroup.appendChild(keyInput);
     keyGroup.appendChild(showKeyToggle);
     
-    // Model selection
-    const modelGroup = document.createElement('div');
-    modelGroup.className = 'form-group';
-    
-    const modelLabel = document.createElement('label');
-    modelLabel.htmlFor = `${platform.id}-model`;
-    modelLabel.textContent = 'Model:';
-    
-    const modelSelect = document.createElement('select');
-    modelSelect.id = `${platform.id}-model`;
-    modelSelect.className = 'model-select';
-    
-    // Add loading option
-    const loadingOption = document.createElement('option');
-    loadingOption.value = '';
-    loadingOption.textContent = 'Loading models...';
-    modelSelect.appendChild(loadingOption);
-    
-    modelGroup.appendChild(modelLabel);
-    modelGroup.appendChild(modelSelect);
-    
-    // Load models for the platform
-    this.loadModelsForPlatform(platform.id, modelSelect, platform.credentials?.model);
-    
     // API key status message
     const statusMessage = document.createElement('div');
     statusMessage.id = `${platform.id}-status`;
@@ -323,13 +301,21 @@ class ApiSettingsTab {
     actions.appendChild(saveBtn);
     
     credentialsSection.appendChild(keyGroup);
-    credentialsSection.appendChild(modelGroup);
     credentialsSection.appendChild(statusMessage);
     credentialsSection.appendChild(actions);
     
     container.appendChild(credentialsSection);
     
     // Advanced settings section
+    this.renderAdvancedSettingsSection(container, platform);
+  }
+  
+  /**
+   * Render advanced settings section
+   * @param {HTMLElement} container Container element
+   * @param {Object} platform Platform details
+   */
+  renderAdvancedSettingsSection(container, platform) {
     const advancedSection = document.createElement('div');
     advancedSection.className = 'settings-section';
     
@@ -338,76 +324,168 @@ class ApiSettingsTab {
     advancedTitle.textContent = 'Advanced Settings';
     advancedSection.appendChild(advancedTitle);
     
-    // Get advanced settings for this platform
-    const advancedSettings = platform.advancedSettings || {};
+    // Add model selector for advanced settings
+    const modelSelectorGroup = document.createElement('div');
+    modelSelectorGroup.className = 'form-group';
+    
+    const modelSelectorLabel = document.createElement('label');
+    modelSelectorLabel.htmlFor = `${platform.id}-settings-model-selector`;
+    modelSelectorLabel.textContent = 'Configure Settings For:';
+    
+    const modelSelector = document.createElement('select');
+    modelSelector.id = `${platform.id}-settings-model-selector`;
+    modelSelector.className = 'settings-model-selector';
+    
+    // Add "Platform Default" option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = 'default';
+    defaultOption.textContent = 'Platform Default Settings';
+    defaultOption.selected = this.selectedModelId === 'default';
+    modelSelector.appendChild(defaultOption);
+    
+    // Add model-specific options if models are available
+    if (platform.apiConfig?.models) {
+      // Create optgroup for models
+      const modelsGroup = document.createElement('optgroup');
+      modelsGroup.label = 'Model-Specific Settings';
+      
+      platform.apiConfig.models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.textContent = model.id;
+        option.selected = this.selectedModelId === model.id;
+        modelsGroup.appendChild(option);
+      });
+      
+      modelSelector.appendChild(modelsGroup);
+    }
+    
+    // Handle model selection change
+    modelSelector.addEventListener('change', () => {
+      this.handleModelSelect(platform.id, modelSelector.value);
+    });
+    
+    modelSelectorGroup.appendChild(modelSelectorLabel);
+    modelSelectorGroup.appendChild(modelSelector);
+    
+    const modelSelectorHelp = document.createElement('p');
+    modelSelectorHelp.className = 'help-text';
+    modelSelectorHelp.textContent = 'Choose whether to configure platform-wide defaults or model-specific settings.';
+    modelSelectorGroup.appendChild(modelSelectorHelp);
+    
+    advancedSection.appendChild(modelSelectorGroup);
+    
+    // Container for model-specific settings
+    const advancedSettingsContainer = document.createElement('div');
+    advancedSettingsContainer.id = `${platform.id}-advanced-settings-container`;
+    advancedSettingsContainer.className = 'model-advanced-settings';
+    advancedSection.appendChild(advancedSettingsContainer);
+    
+    // Render settings for selected model
+    this.renderModelAdvancedSettings(
+      advancedSettingsContainer,
+      platform,
+      this.selectedModelId
+    );
+    
+    container.appendChild(advancedSection);
+  }
+  
+  /**
+   * Render advanced settings for a specific model
+   * @param {HTMLElement} container Container element
+   * @param {Object} platform Platform details
+   * @param {string} modelId Model ID or 'default'
+   */
+  renderModelAdvancedSettings(container, platform, modelId) {
+    // Clear container
+    container.innerHTML = '';
+    
+    // Get settings for this model
+    const settings = this.apiSettingsController.getAdvancedSettings(platform.id, modelId);
+    
+    // Get overridden parameters (only relevant for model-specific settings)
+    const overriddenParams = modelId !== 'default' 
+      ? this.apiSettingsController.getOverriddenParameters(platform.id, modelId)
+      : {};
+    
+    // Get model-specific config from platform
+    let modelConfig = null;
+    if (modelId !== 'default' && platform.apiConfig?.models) {
+      modelConfig = platform.apiConfig.models.find(m => m.id === modelId);
+    }
+    
+    // Add status info for model-specific settings
+    if (modelId !== 'default') {
+      const statusInfo = document.createElement('div');
+      statusInfo.className = 'model-settings-status';
+      
+      const anyOverrides = Object.keys(overriddenParams).length > 0;
+      
+      statusInfo.innerHTML = `
+        <p class="help-text">
+          Configuring settings specific to <strong>${modelId}</strong>.
+          ${anyOverrides 
+            ? 'Parameters with <span class="override-indicator">✓</span> override platform defaults.' 
+            : 'Currently using platform default values for all parameters.'}
+        </p>
+      `;
+      
+      // Add reset button
+      if (anyOverrides) {
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'btn reset-btn';
+        resetBtn.textContent = 'Reset to Platform Defaults';
+        resetBtn.addEventListener('click', async () => {
+          if (confirm(`Reset all settings for ${modelId} to platform defaults?`)) {
+            await this.apiSettingsController.resetModelToDefaults(platform.id, modelId);
+            this.renderModelAdvancedSettings(container, platform, modelId);
+          }
+        });
+        
+        // Add button container
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'status-actions';
+        btnContainer.appendChild(resetBtn);
+        statusInfo.appendChild(btnContainer);
+      }
+      
+      container.appendChild(statusInfo);
+    }
     
     // Max tokens setting
-    const tokensGroup = document.createElement('div');
-    tokensGroup.className = 'form-group';
+    const tokensGroup = this.createSettingField(
+      platform.id,
+      modelId,
+      'max-tokens',
+      this.apiSettingsController.getTokensLabel(platform.id, modelConfig),
+      'number',
+      settings.maxTokens || this.apiSettingsController.getDefaultMaxTokens(platform.id, modelConfig),
+      'Maximum number of tokens to generate in the response.',
+      overriddenParams.maxTokens,
+      { min: 50, max: 32000 }
+    );
+    container.appendChild(tokensGroup);
     
-    const tokensLabel = document.createElement('label');
-    tokensLabel.htmlFor = `${platform.id}-max-tokens`;
-    tokensLabel.textContent = this.getTokensLabel(platform.id);
-    
-    const tokensInput = document.createElement('input');
-    tokensInput.type = 'number';
-    tokensInput.id = `${platform.id}-max-tokens`;
-    tokensInput.className = 'settings-input';
-    tokensInput.min = '50';
-    tokensInput.max = '32000';
-    tokensInput.value = advancedSettings.maxTokens || this.getDefaultMaxTokens(platform.id);
-    
-    const tokensHelp = document.createElement('p');
-    tokensHelp.className = 'help-text';
-    tokensHelp.textContent = 'Maximum number of tokens to generate in the response.';
-    
-    tokensGroup.appendChild(tokensLabel);
-    tokensGroup.appendChild(tokensInput);
-    tokensGroup.appendChild(tokensHelp);
-    
-    // Temperature setting
-    const temperatureGroup = document.createElement('div');
-    temperatureGroup.className = 'form-group';
-    
-    const temperatureLabel = document.createElement('label');
-    temperatureLabel.htmlFor = `${platform.id}-temperature`;
-    temperatureLabel.textContent = 'Temperature:';
-    
-    const temperatureInput = document.createElement('input');
-    temperatureInput.type = 'number';
-    temperatureInput.id = `${platform.id}-temperature`;
-    temperatureInput.className = 'settings-input';
-    temperatureInput.min = '0';
-    temperatureInput.max = '2';
-    temperatureInput.step = '0.1';
-    temperatureInput.value = advancedSettings.temperature || '0.7';
-    
-    const temperatureHelp = document.createElement('p');
-    temperatureHelp.className = 'help-text';
-    temperatureHelp.textContent = 'Controls randomness: lower values are more deterministic, higher values more creative.';
-    
-    temperatureGroup.appendChild(temperatureLabel);
-    temperatureGroup.appendChild(temperatureInput);
-    temperatureGroup.appendChild(temperatureHelp);
-    
-    // Additional platform-specific settings
-    let extraSettings = null;
-    switch (platform.id) {
-      case 'claude':
-        extraSettings = this.createClaudeSettings(platform, advancedSettings);
-        break;
-      case 'chatgpt':
-        extraSettings = this.createChatGptSettings(platform, advancedSettings);
-        break;
-      // Add other platforms as needed
+    // Temperature setting (if supported by model)
+    const supportsTemperature = modelConfig ? modelConfig.supportsTemperature !== false : true;
+    if (supportsTemperature) {
+      const temperatureGroup = this.createSettingField(
+        platform.id,
+        modelId,
+        'temperature',
+        'Temperature:',
+        'number',
+        settings.temperature !== undefined ? settings.temperature : 0.7,
+        'Controls randomness: lower values are more deterministic, higher values more creative.',
+        overriddenParams.temperature,
+        { min: 0, max: 2, step: 0.1 }
+      );
+      container.appendChild(temperatureGroup);
     }
     
-    advancedSection.appendChild(tokensGroup);
-    advancedSection.appendChild(temperatureGroup);
-    
-    if (extraSettings) {
-      advancedSection.appendChild(extraSettings);
-    }
+    // Add platform-specific settings
+    this.renderPlatformSpecificSettings(container, platform, modelId, settings, overriddenParams, modelConfig);
     
     // Advanced settings actions
     const advancedActions = document.createElement('div');
@@ -417,37 +495,62 @@ class ApiSettingsTab {
     saveAdvancedBtn.className = 'btn save-btn';
     saveAdvancedBtn.textContent = 'Save Settings';
     saveAdvancedBtn.addEventListener('click', () => {
-      this.handleSaveAdvancedSettings(platform.id);
+      this.handleSaveAdvancedSettings(platform.id, modelId);
     });
     
     advancedActions.appendChild(saveAdvancedBtn);
-    advancedSection.appendChild(advancedActions);
-    
-    container.appendChild(advancedSection);
+    container.appendChild(advancedActions);
   }
   
   /**
-   * Create Claude-specific settings
+   * Render platform-specific advanced settings
+   * @param {HTMLElement} container Container element
    * @param {Object} platform Platform details
-   * @param {Object} advancedSettings Advanced settings
-   * @returns {HTMLElement} Settings element
+   * @param {string} modelId Model ID
+   * @param {Object} settings Current settings
+   * @param {Object} overriddenParams Overridden parameters
+   * @param {Object} modelConfig Model-specific configuration
    */
-  createClaudeSettings(platform, advancedSettings) {
-    const container = document.createElement('div');
-    
+  renderPlatformSpecificSettings(container, platform, modelId, settings, overriddenParams, modelConfig) {
+    switch (platform.id) {
+      case 'chatgpt':
+        this.renderChatGptSettings(container, platform, modelId, settings, overriddenParams, modelConfig);
+        break;
+      case 'claude':
+        this.renderClaudeSettings(container, platform, modelId, settings, overriddenParams, modelConfig);
+        break;
+      // Add other platforms as needed
+    }
+  }
+  
+  /**
+   * Render Claude-specific settings
+   * @param {HTMLElement} container Container element
+   * @param {Object} platform Platform details
+   * @param {string} modelId Model ID
+   * @param {Object} settings Current settings
+   * @param {Object} overriddenParams Overridden parameters
+   * @param {Object} modelConfig Model-specific configuration
+   */
+  renderClaudeSettings(container, platform, modelId, settings, overriddenParams, modelConfig) {
     // System prompt
     const systemGroup = document.createElement('div');
     systemGroup.className = 'form-group';
     
     const systemLabel = document.createElement('label');
-    systemLabel.htmlFor = `${platform.id}-system-prompt`;
+    systemLabel.htmlFor = `${platform.id}-${modelId}-system-prompt`;
     systemLabel.textContent = 'System Prompt:';
     
+    // Add override indicator if applicable
+    if (overriddenParams.systemPrompt) {
+      systemLabel.innerHTML += ' <span class="override-indicator">✓</span>';
+    }
+    
     const systemInput = document.createElement('textarea');
-    systemInput.id = `${platform.id}-system-prompt`;
+    systemInput.id = `${platform.id}-${modelId}-system-prompt`;
     systemInput.className = 'system-prompt-input';
     systemInput.placeholder = 'Enter a system prompt for Claude API requests';
-    systemInput.value = advancedSettings.systemPrompt || '';
+    systemInput.value = settings.systemPrompt || '';
     
     const systemHelp = document.createElement('p');
     systemHelp.className = 'help-text';
@@ -458,57 +561,53 @@ class ApiSettingsTab {
     systemGroup.appendChild(systemHelp);
     
     container.appendChild(systemGroup);
-    
-    return container;
   }
   
   /**
-   * Create ChatGPT-specific settings
+   * Render ChatGPT-specific settings
+   * @param {HTMLElement} container Container element
    * @param {Object} platform Platform details
-   * @param {Object} advancedSettings Advanced settings
-   * @returns {HTMLElement} Settings element
+   * @param {string} modelId Model ID
+   * @param {Object} settings Current settings
+   * @param {Object} overriddenParams Overridden parameters
+   * @param {Object} modelConfig Model-specific configuration
    */
-  createChatGptSettings(platform, advancedSettings) {
-    const container = document.createElement('div');
-    
-    // Top P setting
-    const topPGroup = document.createElement('div');
-    topPGroup.className = 'form-group';
-    
-    const topPLabel = document.createElement('label');
-    topPLabel.htmlFor = `${platform.id}-top-p`;
-    topPLabel.textContent = 'Top P:';
-    
-    const topPInput = document.createElement('input');
-    topPInput.type = 'number';
-    topPInput.id = `${platform.id}-top-p`;
-    topPInput.className = 'settings-input';
-    topPInput.min = '0';
-    topPInput.max = '1';
-    topPInput.step = '0.01';
-    topPInput.value = advancedSettings.topP || '1';
-    
-    const topPHelp = document.createElement('p');
-    topPHelp.className = 'help-text';
-    topPHelp.textContent = 'Alternative to temperature, controls diversity via nucleus sampling.';
-    
-    topPGroup.appendChild(topPLabel);
-    topPGroup.appendChild(topPInput);
-    topPGroup.appendChild(topPHelp);
+  renderChatGptSettings(container, platform, modelId, settings, overriddenParams, modelConfig) {
+    // Top P setting (if supported)
+    const supportsTopP = modelConfig ? modelConfig.supportsTopP !== false : true;
+    if (supportsTopP) {
+      const topPGroup = this.createSettingField(
+        platform.id,
+        modelId,
+        'top-p',
+        'Top P:',
+        'number',
+        settings.topP !== undefined ? settings.topP : 1.0,
+        'Alternative to temperature, controls diversity via nucleus sampling.',
+        overriddenParams.topP,
+        { min: 0, max: 1, step: 0.01 }
+      );
+      container.appendChild(topPGroup);
+    }
     
     // System prompt
     const systemGroup = document.createElement('div');
     systemGroup.className = 'form-group';
     
     const systemLabel = document.createElement('label');
-    systemLabel.htmlFor = `${platform.id}-system-prompt`;
+    systemLabel.htmlFor = `${platform.id}-${modelId}-system-prompt`;
     systemLabel.textContent = 'System Prompt:';
     
+    // Add override indicator if applicable
+    if (overriddenParams.systemPrompt) {
+      systemLabel.innerHTML += ' <span class="override-indicator">✓</span>';
+    }
+    
     const systemInput = document.createElement('textarea');
-    systemInput.id = `${platform.id}-system-prompt`;
+    systemInput.id = `${platform.id}-${modelId}-system-prompt`;
     systemInput.className = 'system-prompt-input';
     systemInput.placeholder = 'Enter a system prompt for ChatGPT API requests';
-    systemInput.value = advancedSettings.systemPrompt || '';
+    systemInput.value = settings.systemPrompt || '';
     
     const systemHelp = document.createElement('p');
     systemHelp.className = 'help-text';
@@ -518,62 +617,55 @@ class ApiSettingsTab {
     systemGroup.appendChild(systemInput);
     systemGroup.appendChild(systemHelp);
     
-    container.appendChild(topPGroup);
     container.appendChild(systemGroup);
-    
-    return container;
   }
   
   /**
-   * Load models for a platform
+   * Create a setting field with override indicator
    * @param {string} platformId Platform ID
-   * @param {HTMLSelectElement} selectElement Select element
-   * @param {string} selectedModel Selected model ID
+   * @param {string} modelId Model ID
+   * @param {string} settingId Setting ID
+   * @param {string} label Field label
+   * @param {string} type Input type
+   * @param {any} value Current value
+   * @param {string} helpText Help text
+   * @param {boolean} isOverridden Whether setting is overridden
+   * @param {Object} attributes Additional input attributes
+   * @returns {HTMLElement} Form group element
    */
-  async loadModelsForPlatform(platformId, selectElement, selectedModel) {
-    try {
-      // Check if models are already in cache
-      if (!this.modelsCache[platformId]) {
-        // Get available models
-        this.modelsCache[platformId] = await this.apiSettingsController.getAvailableModels(platformId);
-      }
-      
-      const models = this.modelsCache[platformId];
-      
-      // Clear select element
-      selectElement.innerHTML = '';
-      
-      if (models && models.length > 0) {
-        // Add models to select element
-        models.forEach(model => {
-          const option = document.createElement('option');
-          option.value = model;
-          option.textContent = model;
-          
-          // Select the current model if available
-          if (selectedModel && model === selectedModel) {
-            option.selected = true;
-          }
-          
-          selectElement.appendChild(option);
-        });
-      } else {
-        // No models available
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'No models available';
-        selectElement.appendChild(option);
-      }
-    } catch (error) {
-      console.error(`Error loading models for ${platformId}:`, error);
-      
-      // Show error in select element
-      selectElement.innerHTML = '';
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = 'Error loading models';
-      selectElement.appendChild(option);
+  createSettingField(platformId, modelId, settingId, label, type, value, helpText, isOverridden, attributes = {}) {
+    const group = document.createElement('div');
+    group.className = 'form-group';
+    
+    const labelElement = document.createElement('label');
+    labelElement.htmlFor = `${platformId}-${modelId}-${settingId}`;
+    labelElement.textContent = label;
+    
+    // Add override indicator if applicable
+    if (isOverridden) {
+      labelElement.innerHTML += ' <span class="override-indicator">✓</span>';
     }
+    
+    const input = document.createElement('input');
+    input.type = type;
+    input.id = `${platformId}-${modelId}-${settingId}`;
+    input.className = 'settings-input';
+    input.value = value;
+    
+    // Apply any additional attributes
+    Object.entries(attributes).forEach(([attr, val]) => {
+      input.setAttribute(attr, val);
+    });
+    
+    const help = document.createElement('p');
+    help.className = 'help-text';
+    help.textContent = helpText;
+    
+    group.appendChild(labelElement);
+    group.appendChild(input);
+    group.appendChild(help);
+    
+    return group;
   }
   
   /**
@@ -629,257 +721,6 @@ class ApiSettingsTab {
       styleElement.id = 'api-settings-styles';
       document.head.appendChild(styleElement);
     }
-    
-    // Define styles
-    styleElement.textContent = `
-      .api-settings-layout {
-        display: flex;
-        gap: 24px;
-        min-height: 500px;
-      }
-      
-      .platform-sidebar {
-        flex: 0 0 250px;
-        border-right: 1px solid var(--border-color, #ddd);
-        padding-right: 20px;
-      }
-      
-      .platform-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      
-      .platform-item {
-        display: flex;
-        align-items: center;
-        padding: 12px;
-        margin-bottom: 8px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        position: relative;
-      }
-      
-      .platform-item:hover {
-        background-color: var(--bg-surface-hover, #f5f5f5);
-      }
-      
-      .platform-item.selected {
-        background-color: var(--bg-surface-active, #e6f4ea);
-      }
-      
-      .platform-item.has-credentials::after {
-        content: "";
-        position: absolute;
-        right: 12px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background-color: var(--color-accent, #34a853);
-      }
-      
-      .platform-icon {
-        width: 24px;
-        height: 24px;
-        margin-right: 12px;
-        object-fit: contain;
-      }
-      
-      .platform-icon-placeholder {
-        width: 24px;
-        height: 24px;
-        margin-right: 12px;
-        border-radius: 50%;
-        background-color: var(--color-primary, #4285f4);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-      }
-      
-      .platform-details-panel {
-        flex: 1;
-        min-width: 0;
-      }
-      
-      .platform-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 24px;
-      }
-      
-      .platform-icon-large {
-        width: 48px;
-        height: 48px;
-        margin-right: 16px;
-      }
-      
-      .platform-icon-placeholder-large {
-        width: 48px;
-        height: 48px;
-        margin-right: 16px;
-        border-radius: 50%;
-        background-color: var(--color-primary, #4285f4);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        font-weight: bold;
-      }
-      
-      .platform-header-info {
-        flex: 1;
-      }
-      
-      .platform-title {
-        margin: 0 0 8px 0;
-        font-size: 20px;
-      }
-      
-      .platform-actions {
-        display: flex;
-        gap: 12px;
-      }
-      
-      .platform-link {
-        color: var(--color-primary, #4285f4);
-        text-decoration: none;
-        font-size: 14px;
-      }
-      
-      .platform-link:hover {
-        text-decoration: underline;
-      }
-      
-      .settings-section {
-        background-color: var(--bg-surface, #ffffff);
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 24px;
-        border: 1px solid var(--border-color, #ddd);
-      }
-      
-      .section-subtitle {
-        margin-top: 0;
-        margin-bottom: 16px;
-        font-size: 16px;
-      }
-      
-      .form-group {
-        margin-bottom: 16px;
-        position: relative;
-      }
-      
-      .api-key-input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid var(--border-color, #ddd);
-        border-radius: 4px;
-        font-family: monospace;
-      }
-      
-      .show-key-toggle {
-        position: absolute;
-        right: 10px;
-        top: 32px;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        color: var(--color-primary, #4285f4);
-      }
-      
-      .model-select {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid var(--border-color, #ddd);
-        border-radius: 4px;
-      }
-      
-      .status-message {
-        margin: 16px 0;
-        padding: 10px;
-        border-radius: 4px;
-        background-color: var(--bg-surface-hover, #f5f5f5);
-      }
-      
-      .status-message.success {
-        background-color: var(--success-bg, #e6f4ea);
-        color: var(--success-color, #34a853);
-      }
-      
-      .status-message.error {
-        background-color: var(--error-bg, #fce8e6);
-        color: var(--error-color, #ea4335);
-      }
-      
-      .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 16px;
-      }
-      
-      .test-btn {
-        background-color: var(--bg-surface, #ffffff);
-        color: var(--color-primary, #4285f4);
-        border: 1px solid var(--color-primary, #4285f4);
-      }
-      
-      .save-btn {
-        background-color: var(--color-primary, #4285f4);
-        color: white;
-      }
-      
-      .remove-btn {
-        background-color: var(--bg-surface, #ffffff);
-        color: var(--error-color, #ea4335);
-        border: 1px solid var(--error-color, #ea4335);
-      }
-      
-      .system-prompt-input {
-        width: 100%;
-        min-height: 100px;
-        padding: 10px;
-        border: 1px solid var(--border-color, #ddd);
-        border-radius: 4px;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      }
-      
-      .help-text {
-        margin-top: 4px;
-        font-size: 12px;
-        color: var(--text-secondary, #70757a);
-      }
-      
-      .error-state, .loading-state {
-        padding: 40px;
-        text-align: center;
-        background-color: var(--bg-surface, #ffffff);
-        border-radius: 8px;
-        border: 1px solid var(--border-color, #ddd);
-      }
-      
-      .error-state .retry-btn {
-        margin-top: 16px;
-      }
-      
-      .credentials-badge {
-        margin-left: 8px;
-        display: inline-flex;
-        width: 16px;
-        height: 16px;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background-color: var(--color-accent, #34a853);
-        color: white;
-        font-size: 10px;
-        font-weight: bold;
-      }
-    `;
   }
   
   /**
@@ -890,7 +731,28 @@ class ApiSettingsTab {
     if (this.selectedPlatformId === platformId) return;
     
     this.selectedPlatformId = platformId;
+    this.selectedModelId = 'default'; // Reset to default when changing platforms
     this.render();
+  }
+  
+  /**
+   * Handle model selection for advanced settings
+   * @param {string} platformId Platform ID
+   * @param {string} modelId Model ID
+   */
+  handleModelSelect(platformId, modelId) {
+    this.selectedModelId = modelId;
+    
+    // Get the advanced settings container
+    const container = document.getElementById(`${platformId}-advanced-settings-container`);
+    if (!container) return;
+    
+    // Get the platform object
+    const platform = this.platforms.find(p => p.id === platformId);
+    if (!platform) return;
+    
+    // Render settings for the selected model
+    this.renderModelAdvancedSettings(container, platform, modelId);
   }
   
   /**
@@ -899,16 +761,14 @@ class ApiSettingsTab {
    */
   async handleSaveCredentials(platformId) {
     const apiKeyInput = document.getElementById(`${platformId}-api-key`);
-    const modelSelect = document.getElementById(`${platformId}-model`);
     const statusMessage = document.getElementById(`${platformId}-status`);
     
-    if (!apiKeyInput || !modelSelect || !statusMessage) {
+    if (!apiKeyInput || !statusMessage) {
       this.notificationManager.error('Failed to find form elements');
       return;
     }
     
     const apiKey = apiKeyInput.value.trim();
-    const model = modelSelect.value;
     
     if (!apiKey) {
       statusMessage.textContent = 'API key cannot be empty';
@@ -916,14 +776,13 @@ class ApiSettingsTab {
       return;
     }
     
-    // Disable inputs during save
+    // Disable input during save
     apiKeyInput.disabled = true;
-    modelSelect.disabled = true;
     statusMessage.textContent = 'Saving...';
     statusMessage.className = 'status-message';
     
     try {
-      const success = await this.apiSettingsController.saveCredentials(platformId, apiKey, model);
+      const success = await this.apiSettingsController.saveCredentials(platformId, apiKey);
       
       if (success) {
         statusMessage.textContent = 'API key saved successfully';
@@ -937,9 +796,8 @@ class ApiSettingsTab {
       statusMessage.textContent = `Error: ${error.message}`;
       statusMessage.className = 'status-message error';
     } finally {
-      // Re-enable inputs
+      // Re-enable input
       apiKeyInput.disabled = false;
-      modelSelect.disabled = false;
     }
   }
   
@@ -981,16 +839,14 @@ class ApiSettingsTab {
    */
   async handleTestCredentials(platformId) {
     const apiKeyInput = document.getElementById(`${platformId}-api-key`);
-    const modelSelect = document.getElementById(`${platformId}-model`);
     const statusMessage = document.getElementById(`${platformId}-status`);
     
-    if (!apiKeyInput || !modelSelect || !statusMessage) {
+    if (!apiKeyInput || !statusMessage) {
       this.notificationManager.error('Failed to find form elements');
       return;
     }
     
     const apiKey = apiKeyInput.value.trim();
-    const model = modelSelect.value;
     
     if (!apiKey) {
       statusMessage.textContent = 'API key cannot be empty';
@@ -1002,12 +858,11 @@ class ApiSettingsTab {
     statusMessage.textContent = 'Testing API key...';
     statusMessage.className = 'status-message';
     
-    // Disable inputs during test
+    // Disable input during test
     apiKeyInput.disabled = true;
-    modelSelect.disabled = true;
     
     try {
-      const result = await this.apiSettingsController.testApiKey(platformId, apiKey, model);
+      const result = await this.apiSettingsController.testApiKey(platformId, apiKey);
       
       if (result.success) {
         statusMessage.textContent = 'API key is valid';
@@ -1021,67 +876,73 @@ class ApiSettingsTab {
       statusMessage.textContent = `Error: ${error.message}`;
       statusMessage.className = 'status-message error';
     } finally {
-      // Re-enable inputs
+      // Re-enable input
       apiKeyInput.disabled = false;
-      modelSelect.disabled = false;
     }
   }
   
   /**
    * Handle save advanced settings button click
    * @param {string} platformId Platform ID
+   * @param {string} modelId Model ID or 'default'
    */
-  async handleSaveAdvancedSettings(platformId) {
+  async handleSaveAdvancedSettings(platformId, modelId) {
     try {
-      const maxTokensInput = document.getElementById(`${platformId}-max-tokens`);
-      const temperatureInput = document.getElementById(`${platformId}-temperature`);
+      // Get input values
+      const maxTokensInput = document.getElementById(`${platformId}-${modelId}-max-tokens`);
+      const temperatureInput = document.getElementById(`${platformId}-${modelId}-temperature`);
       
-      if (!maxTokensInput || !temperatureInput) {
+      if (!maxTokensInput) {
         this.notificationManager.error('Failed to find form elements');
         return;
       }
       
-      // Get values from inputs
-      const maxTokens = parseInt(maxTokensInput.value, 10);
-      const temperature = parseFloat(temperatureInput.value);
+      // Create settings object
+      const settings = {};
       
-      // Validate values
+      // Add max tokens
+      const maxTokens = parseInt(maxTokensInput.value, 10);
       if (isNaN(maxTokens) || maxTokens < 50 || maxTokens > 32000) {
         this.notificationManager.error('Max tokens must be a number between 50 and 32000');
         return;
       }
+      settings.maxTokens = maxTokens;
       
-      if (isNaN(temperature) || temperature < 0 || temperature > 2) {
-        this.notificationManager.error('Temperature must be a number between 0 and 2');
-        return;
+      // Add temperature if element exists
+      if (temperatureInput) {
+        const temperature = parseFloat(temperatureInput.value);
+        if (isNaN(temperature) || temperature < 0 || temperature > 2) {
+          this.notificationManager.error('Temperature must be a number between 0 and 2');
+          return;
+        }
+        settings.temperature = temperature;
       }
-      
-      // Create settings object
-      const settings = {
-        maxTokens,
-        temperature
-      };
       
       // Add platform-specific settings
       switch (platformId) {
         case 'chatgpt':
-          const topPInput = document.getElementById(`${platformId}-top-p`);
-          const systemPromptInput = document.getElementById(`${platformId}-system-prompt`);
-          
+          // Top P
+          const topPInput = document.getElementById(`${platformId}-${modelId}-top-p`);
           if (topPInput) {
             const topP = parseFloat(topPInput.value);
             if (!isNaN(topP) && topP >= 0 && topP <= 1) {
               settings.topP = topP;
+            } else if (topPInput.value.trim()) {
+              this.notificationManager.error('Top P must be a number between 0 and 1');
+              return;
             }
           }
           
-          if (systemPromptInput) {
-            settings.systemPrompt = systemPromptInput.value.trim();
+          // System prompt
+          const chatGptSystemPromptInput = document.getElementById(`${platformId}-${modelId}-system-prompt`);
+          if (chatGptSystemPromptInput) {
+            settings.systemPrompt = chatGptSystemPromptInput.value.trim();
           }
           break;
           
         case 'claude':
-          const claudeSystemPromptInput = document.getElementById(`${platformId}-system-prompt`);
+          // System prompt
+          const claudeSystemPromptInput = document.getElementById(`${platformId}-${modelId}-system-prompt`);
           if (claudeSystemPromptInput) {
             settings.systemPrompt = claudeSystemPromptInput.value.trim();
           }
@@ -1089,12 +950,17 @@ class ApiSettingsTab {
       }
       
       // Save settings
-      const success = await this.apiSettingsController.saveAdvancedSettings(platformId, settings);
+      const success = await this.apiSettingsController.saveAdvancedSettings(platformId, settings, modelId);
       
       if (success) {
-        this.notificationManager.success('Advanced settings saved successfully');
-      } else {
-        this.notificationManager.error('Failed to save advanced settings');
+        // Update the UI to show which parameters are now overridden
+        if (modelId !== 'default') {
+          const platform = this.platforms.find(p => p.id === platformId);
+          const container = document.getElementById(`${platformId}-advanced-settings-container`);
+          if (platform && container) {
+            this.renderModelAdvancedSettings(container, platform, modelId);
+          }
+        }
       }
     } catch (error) {
       console.error('Error saving advanced settings:', error);
@@ -1125,45 +991,21 @@ class ApiSettingsTab {
     if (this.selectedPlatformId === data.platformId) {
       this.apiSettingsController.initialize().then(() => {
         this.platforms = this.apiSettingsController.getPlatformsWithCredentials();
+        
+        // If this was a model-specific update, just re-render that part
+        if (data.modelId && this.selectedModelId === data.modelId) {
+          const platform = this.platforms.find(p => p.id === data.platformId);
+          const container = document.getElementById(`${data.platformId}-advanced-settings-container`);
+          
+          if (platform && container) {
+            this.renderModelAdvancedSettings(container, platform, data.modelId);
+            return;
+          }
+        }
+        
+        // Otherwise, re-render everything
         this.render();
       });
-    }
-  }
-  
-  /**
-   * Get token label for a platform
-   * @param {string} platformId Platform ID
-   * @returns {string} Token label
-   */
-  getTokensLabel(platformId) {
-    if (platformId === 'chatgpt' || platformId === 'grok') {
-      return 'Max Completion Tokens:';
-    }
-    
-    return 'Max Tokens:';
-  }
-  
-  /**
-   * Get default max tokens for a platform
-   * @param {string} platformId Platform ID
-   * @returns {number} Default max tokens
-   */
-  getDefaultMaxTokens(platformId) {
-    switch (platformId) {
-      case 'claude':
-        return 4000;
-      case 'chatgpt':
-        return 2048;
-      case 'gemini':
-        return 2048;
-      case 'mistral':
-        return 4096;
-      case 'deepseek':
-        return 4096;
-      case 'grok':
-        return 4096;
-      default:
-        return 2048;
     }
   }
 }
