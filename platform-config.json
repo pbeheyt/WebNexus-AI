@@ -7,7 +7,12 @@
       "icon": "images/claude_logo.png",
       "api": {
         "endpoint": "https://api.anthropic.com/v1/messages",
-        "models": ["claude-3-7-sonnet-latest", "claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"],
+        "models": [
+          "claude-3-7-sonnet-latest",
+          "claude-3-5-haiku-latest",
+          "claude-3-5-sonnet-latest",
+          "claude-3-opus-latest"
+        ],
         "defaultModel": "claude-3-7-sonnet-latest",
         "requiresModel": true,
         "authType": "header",
@@ -41,7 +46,10 @@
       "icon": "images/deepseek_logo.png",
       "api": {
         "endpoint": "https://api.deepseek.com/v1/chat/completions",
-        "models": ["deepseek-chat", "deepseek-reasoner"],
+        "models": [
+          "deepseek-chat",
+          "deepseek-reasoner"
+        ],
         "defaultModel": "deepseek-chat",
         "requiresModel": true,
         "authType": "bearer",
@@ -54,7 +62,10 @@
       "icon": "images/mistral_logo.png",
       "api": {
         "endpoint": "https://api.mistral.ai/v1/chat/completions",
-        "models": ["mistral-large-latest", "mistral-small-latest"],
+        "models": [
+          "mistral-large-latest",
+          "mistral-small-latest"
+        ],
         "defaultModel": "mistral-small-latest",
         "requiresModel": true,
         "authType": "bearer",
@@ -67,7 +78,10 @@
       "icon": "images/gemini_logo.png",
       "api": {
         "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
-        "models": ["gemini-1.5-flash", "gemini-1.5-pro"],
+        "models": [
+          "gemini-1.5-flash",
+          "gemini-1.5-pro"
+        ],
         "defaultModel": "gemini-1.5-flash",
         "requiresModel": true,
         "authType": "query",
@@ -80,7 +94,12 @@
       "icon": "images/grok_logo.png",
       "api": {
         "endpoint": "https://api.x.ai/v1/chat/completions",
-        "models": ["grok-beta", "grok-vision-beta", "grok-2-1212", "grok-2-vision-1212"],
+        "models": [
+          "grok-beta",
+          "grok-vision-beta",
+          "grok-2-1212",
+          "grok-2-vision-1212"
+        ],
         "defaultModel": "grok-2-1212",
         "requiresModel": true,
         "authType": "bearer",
