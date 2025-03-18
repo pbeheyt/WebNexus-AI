@@ -11,7 +11,7 @@ class ApiSettingsTab {
     this.container = null;
     this.platforms = [];
     this.selectedPlatformId = null;
-    this.selectedModelId = 'default'; // Track selected model for settings
+    this.selectedModelId = null; // Track selected model for settings, initialized to null
     
     // Bind methods
     this.render = this.render.bind(this);
@@ -46,6 +46,10 @@ class ApiSettingsTab {
       // Set first platform as selected by default
       if (this.platforms.length > 0) {
         this.selectedPlatformId = this.platforms[0].id;
+        // Set selectedModelId to the first model if available
+        if (this.platforms[0].apiConfig?.models?.length > 0) {
+          this.selectedModelId = this.platforms[0].apiConfig.models[0].id;
+        }
       }
       
       // Render the UI
@@ -336,28 +340,24 @@ class ApiSettingsTab {
     modelSelector.id = `${platform.id}-settings-model-selector`;
     modelSelector.className = 'settings-model-selector';
     
-    // Add "Platform Default" option
-    const defaultOption = document.createElement('option');
-    defaultOption.value = 'default';
-    defaultOption.textContent = 'Platform Default Settings';
-    defaultOption.selected = this.selectedModelId === 'default';
-    modelSelector.appendChild(defaultOption);
-    
     // Add model-specific options if models are available
     if (platform.apiConfig?.models) {
-      // Create optgroup for models
-      const modelsGroup = document.createElement('optgroup');
-      modelsGroup.label = 'Model-Specific Settings';
-      
       platform.apiConfig.models.forEach(model => {
         const option = document.createElement('option');
         option.value = model.id;
         option.textContent = model.id;
         option.selected = this.selectedModelId === model.id;
-        modelsGroup.appendChild(option);
+        modelSelector.appendChild(option);
       });
-      
-      modelSelector.appendChild(modelsGroup);
+    }
+    
+    // If no models, add a placeholder option
+    if (!platform.apiConfig?.models || platform.apiConfig.models.length === 0) {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'No models available';
+      option.disabled = true;
+      modelSelector.appendChild(option);
     }
     
     // Handle model selection change
@@ -370,7 +370,7 @@ class ApiSettingsTab {
     
     const modelSelectorHelp = document.createElement('p');
     modelSelectorHelp.className = 'help-text';
-    modelSelectorHelp.textContent = 'Choose whether to configure platform-wide defaults or model-specific settings.';
+    modelSelectorHelp.textContent = 'Select a model to configure its settings.';
     modelSelectorGroup.appendChild(modelSelectorHelp);
     
     advancedSection.appendChild(modelSelectorGroup);
@@ -381,12 +381,21 @@ class ApiSettingsTab {
     advancedSettingsContainer.className = 'model-advanced-settings';
     advancedSection.appendChild(advancedSettingsContainer);
     
-    // Render settings for selected model
-    this.renderModelAdvancedSettings(
-      advancedSettingsContainer,
-      platform,
-      this.selectedModelId
-    );
+    // Render settings for selected model if available, or select the first model
+    if (this.selectedModelId && platform.apiConfig?.models?.some(m => m.id === this.selectedModelId)) {
+      this.renderModelAdvancedSettings(
+        advancedSettingsContainer,
+        platform,
+        this.selectedModelId
+      );
+    } else if (platform.apiConfig?.models?.length > 0) {
+      this.selectedModelId = platform.apiConfig.models[0].id;
+      this.renderModelAdvancedSettings(
+        advancedSettingsContainer,
+        platform,
+        this.selectedModelId
+      );
+    }
     
     container.appendChild(advancedSection);
   }
@@ -395,7 +404,7 @@ class ApiSettingsTab {
    * Render advanced settings for a specific model
    * @param {HTMLElement} container Container element
    * @param {Object} platform Platform details
-   * @param {string} modelId Model ID or 'default'
+   * @param {string} modelId Model ID
    */
   renderModelAdvancedSettings(container, platform, modelId) {
     // Clear container
@@ -406,33 +415,29 @@ class ApiSettingsTab {
     
     // Get model-specific config from platform
     let modelConfig = null;
-    if (modelId !== 'default' && platform.apiConfig?.models) {
+    if (platform.apiConfig?.models) {
       modelConfig = platform.apiConfig.models.find(m => m.id === modelId);
     }
     
     // Get default settings from model config
-    const configDefaults = modelId !== 'default'
-      ? this.apiSettingsController.getModelDefaultSettings(platform.id, modelId)
-      : {};
+    const configDefaults = this.apiSettingsController.getModelDefaultSettings(platform.id, modelId);
     
     // Add a reset button for model settings
-    if (modelId !== 'default') {
-      const resetSection = document.createElement('div');
-      resetSection.className = 'reset-settings-section';
-      
-      const resetBtn = document.createElement('button');
-      resetBtn.className = 'btn reset-btn';
-      resetBtn.textContent = 'Reset to Configuration Defaults';
-      resetBtn.addEventListener('click', async () => {
-        if (confirm(`Reset all settings for ${modelId} to configuration defaults?`)) {
-          await this.apiSettingsController.resetModelToDefaults(platform.id, modelId);
-          this.renderModelAdvancedSettings(container, platform, modelId);
-        }
-      });
-      
-      resetSection.appendChild(resetBtn);
-      container.appendChild(resetSection);
-    }
+    const resetSection = document.createElement('div');
+    resetSection.className = 'reset-settings-section';
+    
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'btn reset-btn';
+    resetBtn.textContent = 'Reset to Configuration Defaults';
+    resetBtn.addEventListener('click', async () => {
+      if (confirm(`Reset all settings for ${modelId} to configuration defaults?`)) {
+        await this.apiSettingsController.resetModelToDefaults(platform.id, modelId);
+        this.renderModelAdvancedSettings(container, platform, modelId);
+      }
+    });
+    
+    resetSection.appendChild(resetBtn);
+    container.appendChild(resetSection);
     
     // Max tokens setting
     const tokensGroup = this.createSettingField(
@@ -706,7 +711,13 @@ class ApiSettingsTab {
     if (this.selectedPlatformId === platformId) return;
     
     this.selectedPlatformId = platformId;
-    this.selectedModelId = 'default'; // Reset to default when changing platforms
+    // Set selectedModelId to the first model if available
+    const platform = this.platforms.find(p => p.id === platformId);
+    if (platform && platform.apiConfig?.models?.length > 0) {
+      this.selectedModelId = platform.apiConfig.models[0].id;
+    } else {
+      this.selectedModelId = null;
+    }
     this.render();
   }
   
@@ -859,7 +870,7 @@ class ApiSettingsTab {
   /**
    * Handle save advanced settings button click
    * @param {string} platformId Platform ID
-   * @param {string} modelId Model ID or 'default'
+   * @param {string} modelId Model ID
    */
   async handleSaveAdvancedSettings(platformId, modelId) {
     try {
