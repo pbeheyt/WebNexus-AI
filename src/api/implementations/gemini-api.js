@@ -38,8 +38,11 @@ class GeminiApiService extends BaseApiService {
       // Create the request payload
       let fullContent = text;
       
-      // Add system prompt if specified in advanced settings
+      // Note: Gemini doesn't support system prompts natively
+      // This is kept for backward compatibility but will be
+      // hidden in the UI via the hasSystemPrompt flag
       if (params.systemPrompt) {
+        this.logger.warn('Gemini does not officially support system prompts, but appending as regular text');
         fullContent = `${params.systemPrompt}\n\n${text}`;
       }
       

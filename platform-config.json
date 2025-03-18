@@ -59,7 +59,8 @@
         "defaultModel": "claude-3-7-sonnet-latest",
         "requiresModel": true,
         "authType": "header",
-        "authHeaderName": "x-api-key"
+        "authHeaderName": "x-api-key",
+        "hasSystemPrompt": true
       }
     },
     "chatgpt": {
@@ -161,7 +162,8 @@
         "defaultModel": "gpt-4o",
         "requiresModel": true,
         "authType": "bearer",
-        "authHeaderName": "Authorization"
+        "authHeaderName": "Authorization",
+        "hasSystemPrompt": true
       }
     },
     "deepseek": {
@@ -204,7 +206,8 @@
         "defaultModel": "deepseek-chat",
         "requiresModel": true,
         "authType": "bearer",
-        "authHeaderName": "Authorization"
+        "authHeaderName": "Authorization",
+        "hasSystemPrompt": true
       }
     },
     "mistral": {
@@ -312,7 +315,8 @@
         "defaultModel": "mistral-large-latest",
         "requiresModel": true,
         "authType": "bearer",
-        "authHeaderName": "Authorization"
+        "authHeaderName": "Authorization",
+        "hasSystemPrompt": true
       }
     },
     "gemini": {
@@ -394,7 +398,8 @@
         "defaultModel": "gemini-2.0-flash",
         "requiresModel": true,
         "authType": "query",
-        "authParamName": "key"
+        "authParamName": "key",
+        "hasSystemPrompt": false
       }
     },
     "grok": {
@@ -463,7 +468,8 @@
         "defaultModel": "grok-2-1212",
         "requiresModel": true,
         "authType": "bearer",
-        "authHeaderName": "Authorization"
+        "authHeaderName": "Authorization",
+        "hasSystemPrompt": true
       }
     }
   }

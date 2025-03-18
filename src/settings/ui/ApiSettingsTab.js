@@ -449,7 +449,7 @@ class ApiSettingsTab {
     
     // Add pricing information section
     if (modelConfig && (modelConfig.inputTokenPrice !== undefined || 
-                       modelConfig.outputTokenPrice !== undefined)) {
+                      modelConfig.outputTokenPrice !== undefined)) {
       const pricingSection = document.createElement('div');
       pricingSection.className = 'pricing-section';
       
@@ -466,7 +466,7 @@ class ApiSettingsTab {
         const isInputFree = typeof modelConfig.inputTokenPrice === 'number' && Math.abs(modelConfig.inputTokenPrice) < 0.0001;
         const inputPriceDisplay = isInputFree ? "Free" : `$${this.formatPrice(modelConfig.inputTokenPrice)} per 1M tokens`;
         inputPrice.innerHTML = `<span class="price-label">Input tokens:</span> 
-                               <span class="price-value">${inputPriceDisplay}</span>`;
+                              <span class="price-value">${inputPriceDisplay}</span>`;
         pricingInfo.appendChild(inputPrice);
       }
       
@@ -544,29 +544,32 @@ class ApiSettingsTab {
       container.appendChild(topPGroup);
     }
     
-    // System prompt setting (assumed supported unless specified otherwise)
-    const systemGroup = document.createElement('div');
-    systemGroup.className = 'form-group';
-    
-    const systemLabel = document.createElement('label');
-    systemLabel.htmlFor = `${platform.id}-${modelId}-system-prompt`;
-    systemLabel.textContent = 'System Prompt:';
-    
-    const systemInput = document.createElement('textarea');
-    systemInput.id = `${platform.id}-${modelId}-system-prompt`;
-    systemInput.className = 'system-prompt-input';
-    systemInput.placeholder = 'Enter a system prompt for API requests';
-    systemInput.value = settings.systemPrompt || '';
-    
-    const systemHelp = document.createElement('p');
-    systemHelp.className = 'help-text';
-    systemHelp.textContent = 'Optional system prompt to provide context for API requests.';
-    
-    systemGroup.appendChild(systemLabel);
-    systemGroup.appendChild(systemInput);
-    systemGroup.appendChild(systemHelp);
-    
-    container.appendChild(systemGroup);
+    // System prompt setting (only if platform supports it)
+    const hasSystemPrompt = platform.apiConfig?.hasSystemPrompt !== false;
+    if (hasSystemPrompt) {
+      const systemGroup = document.createElement('div');
+      systemGroup.className = 'form-group';
+      
+      const systemLabel = document.createElement('label');
+      systemLabel.htmlFor = `${platform.id}-${modelId}-system-prompt`;
+      systemLabel.textContent = 'System Prompt:';
+      
+      const systemInput = document.createElement('textarea');
+      systemInput.id = `${platform.id}-${modelId}-system-prompt`;
+      systemInput.className = 'system-prompt-input';
+      systemInput.placeholder = 'Enter a system prompt for API requests';
+      systemInput.value = settings.systemPrompt || '';
+      
+      const systemHelp = document.createElement('p');
+      systemHelp.className = 'help-text';
+      systemHelp.textContent = 'Optional system prompt to provide context for API requests.';
+      
+      systemGroup.appendChild(systemLabel);
+      systemGroup.appendChild(systemInput);
+      systemGroup.appendChild(systemHelp);
+      
+      container.appendChild(systemGroup);
+    }
     
     // Advanced settings actions
     const advancedActions = document.createElement('div');
@@ -870,7 +873,14 @@ class ApiSettingsTab {
       const contextWindowInput = document.getElementById(`${platformId}-${modelId}-context-window`);
       const temperatureInput = document.getElementById(`${platformId}-${modelId}-temperature`);
       const topPInput = document.getElementById(`${platformId}-${modelId}-top-p`);
-      const systemPromptInput = document.getElementById(`${platformId}-${modelId}-system-prompt`);
+      
+      // Get the platform object to check if it supports system prompt
+      const platform = this.platforms.find(p => p.id === platformId);
+      const hasSystemPrompt = platform?.apiConfig?.hasSystemPrompt !== false;
+      
+      // Only get system prompt input if the platform supports it
+      const systemPromptInput = hasSystemPrompt ? 
+        document.getElementById(`${platformId}-${modelId}-system-prompt`) : null;
       
       if (!maxTokensInput) {
         this.notificationManager.error('Failed to find form elements');
@@ -918,9 +928,12 @@ class ApiSettingsTab {
         settings.topP = topP;
       }
       
-      // Add systemPrompt if input exists
-      if (systemPromptInput) {
+      // Add systemPrompt if input exists and platform supports it
+      if (hasSystemPrompt && systemPromptInput) {
         settings.systemPrompt = systemPromptInput.value.trim();
+      } else if (!hasSystemPrompt) {
+        // If the platform doesn't support system prompts, ensure it's not in the settings
+        settings.systemPrompt = '';
       }
       
       // Save settings
