@@ -481,91 +481,7 @@ class ApiSettingsTab {
       container.appendChild(temperatureGroup);
     }
     
-    // Add platform-specific settings
-    this.renderPlatformSpecificSettings(container, platform, modelId, settings, configDefaults, modelConfig);
-    
-    // Advanced settings actions
-    const advancedActions = document.createElement('div');
-    advancedActions.className = 'form-actions';
-    
-    const saveAdvancedBtn = document.createElement('button');
-    saveAdvancedBtn.className = 'btn save-btn';
-    saveAdvancedBtn.textContent = 'Save Settings';
-    saveAdvancedBtn.addEventListener('click', () => {
-      this.handleSaveAdvancedSettings(platform.id, modelId);
-    });
-    
-    advancedActions.appendChild(saveAdvancedBtn);
-    container.appendChild(advancedActions);
-  }
-  
-  /**
-   * Render platform-specific advanced settings
-   * @param {HTMLElement} container Container element
-   * @param {Object} platform Platform details
-   * @param {string} modelId Model ID
-   * @param {Object} settings Current settings
-   * @param {Object} configDefaults Default values from config file
-   * @param {Object} modelConfig Model-specific configuration
-   */
-  renderPlatformSpecificSettings(container, platform, modelId, settings, configDefaults, modelConfig) {
-    switch (platform.id) {
-      case 'chatgpt':
-        this.renderChatGptSettings(container, platform, modelId, settings, configDefaults, modelConfig);
-        break;
-      case 'claude':
-        this.renderClaudeSettings(container, platform, modelId, settings, configDefaults, modelConfig);
-        break;
-      // Add other platforms as needed
-    }
-  }
-  
-  /**
-   * Render Claude-specific settings
-   * @param {HTMLElement} container Container element
-   * @param {Object} platform Platform details
-   * @param {string} modelId Model ID
-   * @param {Object} settings Current settings
-   * @param {Object} configDefaults Default values from config file
-   * @param {Object} modelConfig Model-specific configuration
-   */
-  renderClaudeSettings(container, platform, modelId, settings, configDefaults, modelConfig) {
-    // System prompt
-    const systemGroup = document.createElement('div');
-    systemGroup.className = 'form-group';
-    
-    const systemLabel = document.createElement('label');
-    systemLabel.htmlFor = `${platform.id}-${modelId}-system-prompt`;
-    systemLabel.textContent = 'System Prompt:';
-    
-    const systemInput = document.createElement('textarea');
-    systemInput.id = `${platform.id}-${modelId}-system-prompt`;
-    systemInput.className = 'system-prompt-input';
-    systemInput.placeholder = 'Enter a system prompt for Claude API requests';
-    systemInput.value = settings.systemPrompt || '';
-    
-    const systemHelp = document.createElement('p');
-    systemHelp.className = 'help-text';
-    systemHelp.textContent = 'Optional system prompt to provide context for Claude API requests.';
-    
-    systemGroup.appendChild(systemLabel);
-    systemGroup.appendChild(systemInput);
-    systemGroup.appendChild(systemHelp);
-    
-    container.appendChild(systemGroup);
-  }
-  
-  /**
-   * Render ChatGPT-specific settings
-   * @param {HTMLElement} container Container element
-   * @param {Object} platform Platform details
-   * @param {string} modelId Model ID
-   * @param {Object} settings Current settings
-   * @param {Object} configDefaults Default values from config file
-   * @param {Object} modelConfig Model-specific configuration
-   */
-  renderChatGptSettings(container, platform, modelId, settings, configDefaults, modelConfig) {
-    // Top P setting (if supported)
+    // Top P setting (if supported by model)
     const supportsTopP = modelConfig ? modelConfig.supportsTopP !== false : true;
     if (supportsTopP) {
       const topPGroup = this.createSettingField(
@@ -581,7 +497,7 @@ class ApiSettingsTab {
       container.appendChild(topPGroup);
     }
     
-    // System prompt
+    // System prompt setting (assumed supported unless specified otherwise)
     const systemGroup = document.createElement('div');
     systemGroup.className = 'form-group';
     
@@ -592,18 +508,32 @@ class ApiSettingsTab {
     const systemInput = document.createElement('textarea');
     systemInput.id = `${platform.id}-${modelId}-system-prompt`;
     systemInput.className = 'system-prompt-input';
-    systemInput.placeholder = 'Enter a system prompt for ChatGPT API requests';
+    systemInput.placeholder = 'Enter a system prompt for API requests';
     systemInput.value = settings.systemPrompt || '';
     
     const systemHelp = document.createElement('p');
     systemHelp.className = 'help-text';
-    systemHelp.textContent = 'Optional system prompt to provide context for ChatGPT API requests.';
+    systemHelp.textContent = 'Optional system prompt to provide context for API requests.';
     
     systemGroup.appendChild(systemLabel);
     systemGroup.appendChild(systemInput);
     systemGroup.appendChild(systemHelp);
     
     container.appendChild(systemGroup);
+    
+    // Advanced settings actions
+    const advancedActions = document.createElement('div');
+    advancedActions.className = 'form-actions';
+    
+    const saveAdvancedBtn = document.createElement('button');
+    saveAdvancedBtn.className = 'btn save-btn';
+    saveAdvancedBtn.textContent = 'Save Settings';
+    saveAdvancedBtn.addEventListener('click', () => {
+      this.handleSaveAdvancedSettings(platform.id, modelId);
+    });
+    
+    advancedActions.appendChild(saveAdvancedBtn);
+    container.appendChild(advancedActions);
   }
   
   /**
@@ -626,16 +556,20 @@ class ApiSettingsTab {
     labelElement.htmlFor = `${platformId}-${modelId}-${settingId}`;
     labelElement.textContent = label;
     
-    const input = document.createElement('input');
-    input.type = type;
+    const input = type === 'textarea' ? document.createElement('textarea') : document.createElement('input');
+    if (type !== 'textarea') {
+      input.type = type;
+    }
     input.id = `${platformId}-${modelId}-${settingId}`;
-    input.className = 'settings-input';
+    input.className = type === 'textarea' ? 'system-prompt-input' : 'settings-input';
     input.value = value;
     
-    // Apply any additional attributes
-    Object.entries(attributes).forEach(([attr, val]) => {
-      input.setAttribute(attr, val);
-    });
+    // Apply any additional attributes for non-textarea inputs
+    if (type !== 'textarea') {
+      Object.entries(attributes).forEach(([attr, val]) => {
+        input.setAttribute(attr, val);
+      });
+    }
     
     const help = document.createElement('p');
     help.className = 'help-text';
@@ -876,8 +810,10 @@ class ApiSettingsTab {
     try {
       // Get input values
       const maxTokensInput = document.getElementById(`${platformId}-${modelId}-max-tokens`);
-      const temperatureInput = document.getElementById(`${platformId}-${modelId}-temperature`);
       const contextWindowInput = document.getElementById(`${platformId}-${modelId}-context-window`);
+      const temperatureInput = document.getElementById(`${platformId}-${modelId}-temperature`);
+      const topPInput = document.getElementById(`${platformId}-${modelId}-top-p`);
+      const systemPromptInput = document.getElementById(`${platformId}-${modelId}-system-prompt`);
       
       if (!maxTokensInput) {
         this.notificationManager.error('Failed to find form elements');
@@ -905,7 +841,7 @@ class ApiSettingsTab {
         settings.contextWindow = contextWindow;
       }
       
-      // Add temperature if element exists
+      // Add temperature if input exists
       if (temperatureInput) {
         const temperature = parseFloat(temperatureInput.value);
         if (isNaN(temperature) || temperature < 0 || temperature > 2) {
@@ -915,35 +851,19 @@ class ApiSettingsTab {
         settings.temperature = temperature;
       }
       
-      // Add platform-specific settings
-      switch (platformId) {
-        case 'chatgpt':
-          // Top P
-          const topPInput = document.getElementById(`${platformId}-${modelId}-top-p`);
-          if (topPInput) {
-            const topP = parseFloat(topPInput.value);
-            if (!isNaN(topP) && topP >= 0 && topP <= 1) {
-              settings.topP = topP;
-            } else if (topPInput.value.trim()) {
-              this.notificationManager.error('Top P must be a number between 0 and 1');
-              return;
-            }
-          }
-          
-          // System prompt
-          const chatGptSystemPromptInput = document.getElementById(`${platformId}-${modelId}-system-prompt`);
-          if (chatGptSystemPromptInput) {
-            settings.systemPrompt = chatGptSystemPromptInput.value.trim();
-          }
-          break;
-          
-        case 'claude':
-          // System prompt
-          const claudeSystemPromptInput = document.getElementById(`${platformId}-${modelId}-system-prompt`);
-          if (claudeSystemPromptInput) {
-            settings.systemPrompt = claudeSystemPromptInput.value.trim();
-          }
-          break;
+      // Add topP if input exists
+      if (topPInput) {
+        const topP = parseFloat(topPInput.value);
+        if (isNaN(topP) || topP < 0 || topP > 1) {
+          this.notificationManager.error('Top P must be a number between 0 and 1');
+          return;
+        }
+        settings.topP = topP;
+      }
+      
+      // Add systemPrompt if input exists
+      if (systemPromptInput) {
+        settings.systemPrompt = systemPromptInput.value.trim();
       }
       
       // Save settings
