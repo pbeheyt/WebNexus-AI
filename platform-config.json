@@ -67,7 +67,7 @@
       "url": "https://chatgpt.com/",
       "icon": "images/chatgpt_logo.png",
       "docLink": "https://platform.openai.com/docs/api-reference",
-      "modelApiLink": "https://platform.openai.com/models",
+      "modelApiLink": "https://platform.openai.com/docs/models",
       "consoleApiLink": "https://platform.openai.com/",
       "api": {
         "endpoint": "https://api.openai.com/v1/chat/completions",
@@ -168,7 +168,7 @@
       "name": "DeepSeek",
       "url": "https://chat.deepseek.com/",
       "icon": "images/deepseek_logo.png",
-      "docLink": "https://platform.deepseek.ai/docs",
+      "docLink": "https://api-docs.deepseek.com/",
       "modelApiLink": "https://api-docs.deepseek.com/quick_start/pricing",
       "consoleApiLink": "https://platform.deepseek.com/",
       "api": {
@@ -427,8 +427,8 @@
       "name": "Grok",
       "url": "https://grok.com/",
       "icon": "images/grok_logo.png",
-      "docLink": "https://x.ai/api-docs",
-      "modelApiLink": "https://console.x.ai/models",
+      "docLink": "https://docs.x.ai/docs/overview",
+      "modelApiLink": "https://docs.x.ai/docs/models",
       "consoleApiLink": "https://console.x.ai/",
       "api": {
         "endpoint": "https://api.x.ai/v1/chat/completions",
