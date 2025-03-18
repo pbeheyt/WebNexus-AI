@@ -4,32 +4,80 @@
     "claude": {
       "name": "Claude",
       "url": "https://claude.ai/new",
-      "icon": "images/claude_logo.png"
+      "icon": "images/claude_logo.png",
+      "api": {
+        "endpoint": "https://api.anthropic.com/v1/messages",
+        "models": ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240229"],
+        "defaultModel": "claude-3-sonnet-20240229",
+        "requiresModel": true,
+        "authType": "header",
+        "authHeaderName": "x-api-key"
+      }
     },
     "chatgpt": {
       "name": "ChatGPT",
       "url": "https://chatgpt.com/",
-      "icon": "images/chatgpt_logo.png"
+      "icon": "images/chatgpt_logo.png",
+      "api": {
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "models": ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"],
+        "defaultModel": "gpt-3.5-turbo",
+        "requiresModel": true,
+        "authType": "bearer",
+        "authHeaderName": "Authorization"
+      }
     },
     "deepseek": {
       "name": "DeepSeek",
       "url": "https://chat.deepseek.com/",
-      "icon": "images/deepseek_logo.png"
+      "icon": "images/deepseek_logo.png",
+      "api": {
+        "endpoint": "https://api.deepseek.com/v1/chat/completions", 
+        "models": ["deepseek-chat"],
+        "defaultModel": "deepseek-chat",
+        "requiresModel": true,
+        "authType": "bearer",
+        "authHeaderName": "Authorization"
+      }
     },
     "mistral": {
       "name": "Mistral",
       "url": "https://chat.mistral.ai/chat",
-      "icon": "images/mistral_logo.png"
+      "icon": "images/mistral_logo.png",
+      "api": {
+        "endpoint": "https://api.mistral.ai/v1/chat/completions",
+        "models": ["mistral-medium", "mistral-small", "mistral-large"],
+        "defaultModel": "mistral-medium",
+        "requiresModel": true,
+        "authType": "bearer",
+        "authHeaderName": "Authorization"
+      }
     },
     "gemini": {
       "name": "Gemini",
       "url": "https://gemini.google.com/",
-      "icon": "images/gemini_logo.png"
+      "icon": "images/gemini_logo.png",
+      "api": {
+        "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
+        "models": ["gemini-pro", "gemini-pro-1.5"],
+        "defaultModel": "gemini-pro",
+        "requiresModel": true,
+        "authType": "query",
+        "authParamName": "key"
+      }
     },
     "grok": {
       "name": "Grok",
       "url": "https://grok.com/",
-      "icon": "images/grok_logo.png"
+      "icon": "images/grok_logo.png",
+      "api": {
+        "endpoint": "https://api.grok.ai/v1/chat/completions",
+        "models": ["grok-1"],
+        "defaultModel": "grok-1",
+        "requiresModel": true,
+        "authType": "bearer",
+        "authHeaderName": "Authorization"
+      }
     }
   }
 }

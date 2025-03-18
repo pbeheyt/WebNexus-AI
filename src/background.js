@@ -6,6 +6,9 @@ import { CONTENT_TYPES, AI_PLATFORMS, STORAGE_KEYS } from './shared/constants.js
 import { determineContentType, getContentScriptFile } from './shared/content-utils.js';
 import configManager from './services/ConfigManager.js';
 import promptBuilder from './services/PromptBuilder.js';
+const ApiServiceManager = require('./services/ApiServiceManager');
+const CredentialManager = require('./services/CredentialManager');
+
 
 // Import logger utility
 const logger = require('./utils/logger');
@@ -417,18 +420,25 @@ async function summarizeContent(params) {
     hasSelection = false, 
     promptId = null, 
     platformId = null, 
-    commentAnalysisRequired = false 
+    commentAnalysisRequired = false,
+    useApi = false // New parameter for API mode
   } = params;
   
   try {
-    logger.background.info('Starting centralized content summarization process', params);
+    logger.background.info('Starting centralized content summarization process', { ...params, useApi });
+    
+    // Check if we should use API mode
+    if (useApi) {
+      return await summarizeContentViaApi(params);
+    }
     
     // 1. Reset previous state
     await chrome.storage.local.set({
       contentReady: false,
       extractedContent: null,
       aiPlatformTabId: null,
-      scriptInjected: false
+      scriptInjected: false,
+      currentSummarizationMode: 'browser' // Track that we're using browser mode
     });
     logger.background.info('Cleared previous extracted content and tab state');
     
@@ -517,6 +527,139 @@ async function summarizeContent(params) {
     return {
       success: false,
       error: error.message || 'Unknown error occurred'
+    };
+  }
+}
+
+/**
+ * Summarize content via API
+ * @param {Object} params - Parameters object
+ * @returns {Promise<Object>} Result object
+ */
+async function summarizeContentViaApi(params) {
+  const { 
+    tabId, 
+    url, 
+    hasSelection = false, 
+    promptId = null, 
+    platformId = null
+  } = params;
+  
+  try {
+    logger.background.info('Starting API-based summarization', params);
+    
+    // 1. Reset previous state
+    await chrome.storage.local.set({
+      contentReady: false,
+      extractedContent: null,
+      apiProcessingStatus: 'extracting'
+    });
+    
+    // 2. Extract content (uses existing extraction logic)
+    const contentType = determineContentType(url, hasSelection);
+    logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
+    
+    const extractionResult = await extractContent(tabId, url, hasSelection);
+    
+    if (!extractionResult) {
+      logger.background.warn('Content extraction completed with warnings');
+    }
+    
+    // 3. Get the extracted content
+    const { extractedContent } = await chrome.storage.local.get('extractedContent');
+    
+    if (!extractedContent) {
+      throw new Error('Failed to extract content');
+    }
+    
+    // YouTube transcript error check (similar to existing code)
+    if (contentType === CONTENT_TYPES.YOUTUBE) {
+      if (extractedContent?.error &&
+          extractedContent?.transcript &&
+          typeof extractedContent.transcript === 'string' &&
+          (extractedContent.transcript.includes('No transcript') ||
+          extractedContent.transcript.includes('Transcript is not available'))) {
+
+        logger.background.warn('YouTube transcript error detected, aborting API summarization');
+
+        return {
+          success: false,
+          youtubeTranscriptError: true,
+          errorMessage: extractedContent.message || 'Failed to retrieve YouTube transcript.'
+        };
+      }
+    }
+    
+    // 4. Get the prompt
+    const effectivePromptId = promptId || await getPreferredPromptId(contentType);
+    const promptContent = await getPromptContentById(effectivePromptId, contentType);
+    
+    if (!promptContent) {
+      throw new Error(`Prompt not found for ID: ${effectivePromptId}`);
+    }
+    
+    // 5. Determine platform to use
+    const effectivePlatformId = platformId || await getPreferredAiPlatform();
+    
+    // 6. Update processing status
+    await chrome.storage.local.set({
+      apiProcessingStatus: 'processing',
+      currentSummarizationMode: 'api',
+      apiSummarizationPlatform: effectivePlatformId,
+      apiSummarizationTimestamp: Date.now()
+    });
+    
+    // 7. Process with API
+    const apiResponse = await ApiServiceManager.processContent(
+      effectivePlatformId, 
+      extractedContent, 
+      promptContent
+    );
+    
+    // 8. Store the response
+    await chrome.storage.local.set({
+      apiProcessingStatus: apiResponse.success ? 'completed' : 'error',
+      apiResponse: apiResponse,
+      apiResponseTimestamp: Date.now()
+    });
+    
+    // 9. Notify the popup if open
+    try {
+      chrome.runtime.sendMessage({
+        action: apiResponse.success ? 'apiResponseReady' : 'apiProcessingError',
+        response: apiResponse
+      });
+    } catch (error) {
+      // Ignore if popup isn't open
+    }
+    
+    return {
+      success: apiResponse.success,
+      response: apiResponse,
+      contentType
+    };
+  } catch (error) {
+    logger.background.error('API summarization error:', error);
+    
+    // Update state for error
+    await chrome.storage.local.set({
+      apiProcessingStatus: 'error',
+      apiProcessingError: error.message
+    });
+    
+    // Notify popup if open
+    try {
+      chrome.runtime.sendMessage({
+        action: 'apiProcessingError',
+        error: error.message
+      });
+    } catch (msgError) {
+      // Ignore if popup isn't open
+    }
+    
+    return {
+      success: false,
+      error: error.message
     };
   }
 }
@@ -778,33 +921,170 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep channel open for async response
   }
 
-  // Handler for summarize requests from popup - now uses the centralized summarizeContent function
-  if (message.action === 'summarizeContent') {
-    (async () => {
-      try {
-        const { tabId, contentType, promptId, platformId, url, hasSelection, commentAnalysisRequired } = message;
-        logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}, hasSelection: ${hasSelection}`);
+// Update your existing 'summarizeContent' handler to support API mode
+if (message.action === 'summarizeContent') {
+  (async () => {
+    try {
+      const { tabId, contentType, promptId, platformId, url, hasSelection, commentAnalysisRequired, useApi } = message;
+      logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}, hasSelection: ${hasSelection}, useApi: ${useApi}`);
 
-        // Call centralized summarization function
-        const result = await summarizeContent({
-          tabId,
-          url,
-          hasSelection,
-          promptId,
-          platformId,
-          commentAnalysisRequired
-        });
+      // Call centralized summarization function with API mode parameter
+      const result = await summarizeContent({
+        tabId,
+        url,
+        hasSelection,
+        promptId,
+        platformId,
+        commentAnalysisRequired,
+        useApi // Pass through API mode flag
+      });
 
-        sendResponse(result);
-      } catch (error) {
-        logger.background.error('Error handling summarize content request:', error);
-        sendResponse({
-          success: false,
-          error: error.message
-        });
+      sendResponse(result);
+    } catch (error) {
+      logger.background.error('Error handling summarize content request:', error);
+      sendResponse({
+        success: false,
+        error: error.message
+      });
+    }
+  })();
+  return true; // Keep channel open for async response
+}
+
+// Handler for checking API mode availability
+if (message.action === 'checkApiModeAvailable') {
+  (async () => {
+    try {
+      const platformId = message.platformId || await getPreferredAiPlatform();
+      const isAvailable = await ApiServiceManager.isApiModeAvailable(platformId);
+      
+      sendResponse({
+        success: true,
+        isAvailable,
+        platformId
+      });
+    } catch (error) {
+      logger.background.error('Error checking API mode availability:', error);
+      sendResponse({
+        success: false,
+        error: error.message
+      });
+    }
+  })();
+  return true; // Keep channel open for async response
+}
+
+// Handler for getting API models
+if (message.action === 'getApiModels') {
+  (async () => {
+    try {
+      const platformId = message.platformId || await getPreferredAiPlatform();
+      const models = await ApiServiceManager.getAvailableModels(platformId);
+      
+      sendResponse({
+        success: true,
+        models,
+        platformId
+      });
+    } catch (error) {
+      logger.background.error('Error getting API models:', error);
+      sendResponse({
+        success: false,
+        error: error.message
+      });
+    }
+  })();
+  return true; // Keep channel open for async response
+}
+
+// Handler for credential operations
+if (message.action === 'credentialOperation') {
+  (async () => {
+    try {
+      const { operation, platformId, credentials } = message;
+      
+      switch (operation) {
+        case 'get':
+          const storedCredentials = await CredentialManager.getCredentials(platformId);
+          sendResponse({
+            success: true,
+            credentials: storedCredentials
+          });
+          break;
+          
+        case 'store':
+          const storeResult = await CredentialManager.storeCredentials(platformId, credentials);
+          sendResponse({
+            success: storeResult
+          });
+          break;
+          
+        case 'remove':
+          const removeResult = await CredentialManager.removeCredentials(platformId);
+          sendResponse({
+            success: removeResult
+          });
+          break;
+          
+        case 'validate':
+          const validationResult = await CredentialManager.validateCredentials(platformId, credentials);
+          sendResponse({
+            success: true,
+            validationResult
+          });
+          break;
+          
+        default:
+          throw new Error(`Unknown credential operation: ${operation}`);
       }
-    })();
-    return true; // Keep channel open for async response
+    } catch (error) {
+      logger.background.error('Error in credential operation:', error);
+      sendResponse({
+        success: false,
+        error: error.message
+      });
+    }
+  })();
+  return true; // Keep channel open for async response
+}
+
+// Handler for API-based summarization
+if (message.action === 'summarizeContentViaApi') {
+  (async () => {
+    try {
+      const result = await summarizeContentViaApi(message);
+      sendResponse(result);
+    } catch (error) {
+      logger.background.error('Error in API summarization:', error);
+      sendResponse({
+        success: false,
+        error: error.message
+      });
+    }
+  })();
+  return true; // Keep channel open for async response
+}
+
+// Handler for getting API response
+if (message.action === 'getApiResponse') {
+  (async () => {
+    try {
+      const result = await chrome.storage.local.get(['apiResponse', 'apiProcessingStatus', 'apiResponseTimestamp']);
+      sendResponse({
+        success: true,
+        response: result.apiResponse || null,
+        status: result.apiProcessingStatus || 'unknown',
+        timestamp: result.apiResponseTimestamp || null
+      });
+    } catch (error) {
+      logger.background.error('Error getting API response:', error);
+      sendResponse({
+        success: false,
+        error: error.message
+      });
+    }
+  })();
+  return true; // Keep channel open for async response
   }
 });
 
@@ -814,3 +1094,5 @@ chrome.storage.onChanged.addListener((changes, area) => {
     logger.background.info('Template configuration changed in storage');
   }
 });
+
+

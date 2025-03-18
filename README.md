@@ -100,11 +100,13 @@ The extension is built on Chrome's Extension Manifest V3 architecture with a mod
 
 ### AI Platform Integration
 
-The extension integrates with four AI platforms:
+The extension integrates with six AI platforms:
 - **Claude**: Anthropic's Claude AI assistant
 - **ChatGPT**: OpenAI's ChatGPT interface
 - **DeepSeek**: DeepSeek AI's interface
-- **Mistral**: Mistral AI's chat interface (NEW!)
+- **Mistral**: Mistral AI's chat interface
+- **Gemini**: Gamini AI's chat interface
+- **Grok**: Grok AI's chat interface
 
 ### User Interface
 
