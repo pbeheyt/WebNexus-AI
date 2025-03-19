@@ -16,7 +16,11 @@ export const THEMES = {
  * @param {string} theme - The theme to apply ('light' or 'dark')
  */
 export function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
+  if (theme === THEMES.DARK) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
 }
 
 /**

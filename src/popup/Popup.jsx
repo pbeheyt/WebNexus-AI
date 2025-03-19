@@ -296,8 +296,8 @@ export function Popup() {
   };
 
   return (
-    <div className="min-w-[320px] p-2 bg-background-primary text-text-primary">
-      <header className="flex items-center justify-between pb-1 mb-1 border-b border-border">
+    <div className="min-w-[320px] p-2 bg-theme-primary text-theme-primary">
+      <header className="flex items-center justify-between pb-1 mb-1 border-b border-theme">
         <h1 className="text-base font-semibold flex items-center gap-1.5">
           <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" fill="currentColor"/>
@@ -309,7 +309,7 @@ export function Popup() {
         <div className="flex items-center">
           <button
             onClick={toggleTheme}
-            className="p-1 text-text-secondary hover:text-primary hover:bg-background-active rounded transition-colors"
+            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
           >
             {theme === 'dark' ? (
@@ -333,7 +333,7 @@ export function Popup() {
 
           <button
             onClick={openSettings}
-            className="p-1 ml-1 text-text-secondary hover:text-primary hover:bg-background-active rounded transition-colors"
+            className="p-1 ml-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
             title="Manage Custom Prompts"
           >
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" stroke="currentColor">

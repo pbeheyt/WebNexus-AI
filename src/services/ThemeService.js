@@ -1,103 +1,103 @@
 // src/services/ThemeService.js
-import { THEME_STORAGE_KEY, THEMES, applyTheme, getSystemThemePreference } from '../utils/themeUtils';
+import { THEMES } from '../utils/themeUtils';
 
 /**
- * Service for managing theme across extension contexts
+ * Service for managing theme settings
  */
 class ThemeService {
   constructor() {
+    this.themeStorageKey = 'ui_preferences.theme';
     this.initialized = false;
-    this.currentTheme = null;
   }
 
   /**
-   * Initialize the theme service
-   * @returns {Promise<string>} The current theme
+   * Initialize theme service
+   * @returns {Promise<string>} Current theme
    */
   async initialize() {
     if (this.initialized) {
-      return this.currentTheme;
+      return this.getCurrentTheme();
     }
 
-    // Get theme from storage or system preference
-    const { [THEME_STORAGE_KEY]: storedTheme } = await chrome.storage.sync.get(THEME_STORAGE_KEY);
-    
-    this.currentTheme = storedTheme || 
-      (getSystemThemePreference() ? THEMES.DARK : THEMES.LIGHT);
-    
-    // Apply theme to document
-    applyTheme(this.currentTheme);
-    
-    // Set up storage change listener
-    chrome.storage.onChanged.addListener(this._handleStorageChange.bind(this));
-    
-    this.initialized = true;
-    return this.currentTheme;
+    try {
+      // Load from storage
+      const result = await chrome.storage.sync.get(this.themeStorageKey);
+      let theme = result[this.themeStorageKey];
+
+      // If no theme is saved or it's invalid, use system preference
+      if (!theme || (theme !== THEMES.LIGHT && theme !== THEMES.DARK)) {
+        theme = this.getSystemPreference();
+        // Save the detected preference
+        await this.saveTheme(theme);
+      }
+
+      // Apply theme to document
+      this.applyTheme(theme);
+      this.initialized = true;
+      return theme;
+    } catch (error) {
+      console.error('Theme service initialization error:', error);
+      // Fallback to light theme
+      this.applyTheme(THEMES.LIGHT);
+      return THEMES.LIGHT;
+    }
   }
 
   /**
-   * Get the current theme
-   * @returns {Promise<string>} The current theme
+   * Get system preference for dark mode
+   * @returns {string} Theme based on system preference
    */
-  async getTheme() {
-    if (!this.initialized) {
-      return this.initialize();
-    }
-    return this.currentTheme;
+  getSystemPreference() {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? THEMES.DARK : THEMES.LIGHT;
   }
 
   /**
-   * Set the current theme
-   * @param {string} theme - The theme to set ('light' or 'dark')
+   * Apply theme to document
+   * @param {string} theme - Theme to apply
+   */
+  applyTheme(theme) {
+    if (theme === THEMES.DARK) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+
+  /**
+   * Save theme preference
+   * @param {string} theme - Theme to save
    * @returns {Promise<void>}
    */
-  async setTheme(theme) {
-    if (!Object.values(THEMES).includes(theme)) {
-      throw new Error(`Invalid theme: ${theme}`);
+  async saveTheme(theme) {
+    try {
+      await chrome.storage.sync.set({ [this.themeStorageKey]: theme });
+    } catch (error) {
+      console.error('Error saving theme preference:', error);
     }
+  }
 
-    if (!this.initialized) {
-      await this.initialize();
-    }
-
-    // Only update if changed
-    if (this.currentTheme !== theme) {
-      this.currentTheme = theme;
-      
-      // Save to storage (this will trigger update in other contexts)
-      await chrome.storage.sync.set({ [THEME_STORAGE_KEY]: theme });
-      
-      // Apply immediately in current context
-      applyTheme(theme);
-    }
+  /**
+   * Get current theme
+   * @returns {string} Current theme
+   */
+  getCurrentTheme() {
+    return document.documentElement.classList.contains('dark') ? THEMES.DARK : THEMES.LIGHT;
   }
 
   /**
    * Toggle between light and dark themes
-   * @returns {Promise<string>} The new theme
+   * @returns {Promise<string>} New theme
    */
   async toggleTheme() {
-    const currentTheme = await this.getTheme();
-    const newTheme = currentTheme === THEMES.LIGHT ? THEMES.DARK : THEMES.LIGHT;
-    await this.setTheme(newTheme);
+    const currentTheme = this.getCurrentTheme();
+    const newTheme = currentTheme === THEMES.DARK ? THEMES.LIGHT : THEMES.DARK;
+    
+    this.applyTheme(newTheme);
+    await this.saveTheme(newTheme);
+    
     return newTheme;
-  }
-
-  /**
-   * Handle storage changes
-   * @private
-   */
-  _handleStorageChange(changes, namespace) {
-    if (namespace === 'sync' && THEME_STORAGE_KEY in changes) {
-      const newTheme = changes[THEME_STORAGE_KEY].newValue;
-      if (newTheme !== this.currentTheme) {
-        this.currentTheme = newTheme;
-        applyTheme(newTheme);
-      }
-    }
   }
 }
 
-// Create and export singleton instance
-const themeService = new ThemeService();
-export default themeService;
+export default new ThemeService();
