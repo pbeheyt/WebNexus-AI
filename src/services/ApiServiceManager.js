@@ -19,7 +19,7 @@ class ApiServiceManager {
    * @param {string} prompt - Formatted prompt
    * @returns {Promise<Object>} API response
    */
-  async processContent(platformId, contentData, prompt) {
+  async processContent(platformId, contentData, prompt, modelId = null) {
     try {
       logger.info(`Processing content through ${platformId} API`);
       
@@ -27,6 +27,11 @@ class ApiServiceManager {
       const credentials = await this.credentialManager.getCredentials(platformId);
       if (!credentials) {
         throw new Error(`No API credentials found for ${platformId}`);
+      }
+
+      // Add model to credentials if provided
+      if (modelId) {
+        credentials.model = modelId;
       }
       
       // Create API service

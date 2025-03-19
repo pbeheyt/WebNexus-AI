@@ -15,7 +15,7 @@ import QuickPromptEditor from './ui/QuickPromptEditor.js';
 import StatusManager from './ui/StatusManager.js';
 import SummarizeController from './controllers/SummarizeController.js';
 import MainController from './controllers/MainController.js';
-import ApiModeToggle from './ui/ApiModeToggle.js'; // Import new components
+import ApiModeToggle from './ui/ApiModeToggle.js';
 import ModelSelector from './ui/ModelSelector.js';
 import { initializeTheme } from './themeManager';
 import configManager from '../services/ConfigManager.js';

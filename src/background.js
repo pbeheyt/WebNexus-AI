@@ -438,7 +438,7 @@ async function summarizeContent(params) {
       extractedContent: null,
       aiPlatformTabId: null,
       scriptInjected: false,
-      currentSummarizationMode: 'browser' // Track that we're using browser mode
+      currentSummarizationMode: 'browser',
     });
     logger.background.info('Cleared previous extracted content and tab state');
     
@@ -543,8 +543,9 @@ async function summarizeContentViaApi(params) {
     hasSelection = false,
     promptId = null,
     platformId = null,
-    testMode = true,    // Add this parameter
-    testContent = null   // Add this parameter
+    modelId = null,
+    testMode = false,
+    testContent = false
   } = params;
 
   try {
@@ -640,7 +641,8 @@ async function summarizeContentViaApi(params) {
       apiProcessingStatus: 'processing',
       currentSummarizationMode: 'api',
       apiSummarizationPlatform: effectivePlatformId,
-      apiSummarizationTimestamp: Date.now()
+      apiSummarizationTimestamp: Date.now(),
+      selectedApiModel: modelId
     });
 
     // 7. Process with API
