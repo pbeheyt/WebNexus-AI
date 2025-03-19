@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* Import your existing global CSS for variables */
-/* @import url('../../css/global.css'); */
+@import url('../../css/global.css');
 
 /* Tailwind component abstractions */
 @layer components {

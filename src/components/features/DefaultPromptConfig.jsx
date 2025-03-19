@@ -1,10 +1,13 @@
+// src/components/features/DefaultPromptConfig.jsx
 import { useEffect, useState } from 'react';
 import { Toggle } from '../ui/Toggle';
 import { useContent } from '../context/ContentContext';
+import { useStatus } from '../context/StatusContext';
 import configManager from '../../services/ConfigManager';
 
 export function DefaultPromptConfig() {
   const { contentType } = useContent();
+  const { notifyParameterChanged } = useStatus();
   const [parameters, setParameters] = useState({});
   const [paramOptions, setParamOptions] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +67,19 @@ export function DefaultPromptConfig() {
       
       // Save to storage
       await chrome.storage.sync.set({ default_prompt_preferences: preferences });
+      
+      // Format value for readability
+      let displayValue = value;
+      if (typeof value === 'boolean') {
+        displayValue = value ? 'enabled' : 'disabled';
+      } else if (typeof value === 'string') {
+        // Format camelCase strings for display
+        displayValue = value.replace(/([A-Z])/g, ' $1')
+          .toLowerCase().replace(/^./, str => str.toUpperCase());
+      }
+      
+      // Show notification
+      notifyParameterChanged(paramKey, displayValue);
     } catch (error) {
       console.error('Error updating parameter:', error);
     }

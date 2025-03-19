@@ -1,23 +1,42 @@
-import { useState, useEffect } from 'react';
+// src/components/features/QuickPromptEditor.jsx
+import { useState, useEffect, useCallback } from 'react';
 import { TextArea } from '../ui/TextArea';
 import { usePrompts } from '../context/PromptContext';
 import { useContent } from '../context/ContentContext';
+import { useStatus } from '../context/StatusContext';
 
 export function QuickPromptEditor() {
   const { quickPromptText, updateQuickPrompt } = usePrompts();
   const { contentType } = useContent();
+  const { notifyQuickPromptUpdated } = useStatus();
   const [text, setText] = useState(quickPromptText);
   const [isFocused, setIsFocused] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(0);
   
   // Update text when quickPromptText or contentType changes
   useEffect(() => {
     setText(quickPromptText);
   }, [quickPromptText, contentType]);
   
+  // Debounced update function
+  const debouncedUpdatePrompt = useCallback(
+    async (newText) => {
+      const now = Date.now();
+      if (now - lastUpdateTime > 500) {  // 500ms debounce
+        const success = await updateQuickPrompt(newText);
+        if (success) {
+          notifyQuickPromptUpdated();
+        }
+        setLastUpdateTime(now);
+      }
+    },
+    [updateQuickPrompt, notifyQuickPromptUpdated, lastUpdateTime]
+  );
+  
   const handleChange = (e) => {
     const newText = e.target.value;
     setText(newText);
-    updateQuickPrompt(newText);
+    debouncedUpdatePrompt(newText);
   };
   
   const getPlaceholderText = () => {

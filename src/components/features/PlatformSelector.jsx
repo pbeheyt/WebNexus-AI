@@ -1,8 +1,21 @@
+// src/components/features/PlatformSelector.jsx
 import { PlatformCard } from '../ui/PlatformCard';
 import { usePlatforms } from '../context/PlatformContext';
+import { useStatus } from '../context/StatusContext';
 
 export function PlatformSelector() {
   const { platforms, selectedPlatformId, selectPlatform, isLoading } = usePlatforms();
+  const { notifyPlatformChanged } = useStatus();
+  
+  const handlePlatformSelect = async (platformId) => {
+    if (platformId === selectedPlatformId) return;
+    
+    const success = await selectPlatform(platformId);
+    if (success) {
+      const platformName = platforms.find(p => p.id === platformId)?.name || platformId;
+      notifyPlatformChanged(platformName);
+    }
+  };
   
   if (isLoading) {
     return (
@@ -26,7 +39,7 @@ export function PlatformSelector() {
           name={platform.name}
           iconUrl={platform.iconUrl}
           selected={platform.id === selectedPlatformId}
-          onClick={selectPlatform}
+          onClick={handlePlatformSelect}
         />
       ))}
     </div>

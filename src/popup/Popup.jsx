@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+// src/popup/Popup.jsx
+import { useEffect } from 'react';
 import { useContent } from '../components/context/ContentContext';
 import { usePrompts } from '../components/context/PromptContext';
 import { useTheme } from '../components/context/ThemeContext';
+import { useStatus } from '../components/context/StatusContext';
 import { Button } from '../components/ui/Button';
 import { StatusMessage } from '../components/ui/StatusMessage';
 import { Toast } from '../components/ui/Toast';
@@ -12,16 +14,41 @@ import { QuickPromptEditor } from '../components/features/QuickPromptEditor';
 import { DefaultPromptConfig } from '../components/features/DefaultPromptConfig';
 import { CustomPromptSelector } from '../components/features/CustomPromptSelector';
 import { PROMPT_TYPES } from '../shared/constants';
+import { useState } from 'react';
 
 export function Popup() {
   const { theme, toggleTheme } = useTheme();
   const { contentType, currentTab, isSupported } = useContent();
   const { promptType, quickPromptText } = usePrompts();
+  const { 
+    statusMessage, 
+    updateStatus, 
+    toastState,
+    showToastMessage
+  } = useStatus();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('Ready to summarize.');
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('info');
-  const [showToast, setShowToast] = useState(false);
+  
+  // Listen for messages from background script
+  useEffect(() => {
+    const messageListener = (message) => {
+      if (message.action === 'youtubeTranscriptError') {
+        showToastMessage(message.message || 'Failed to retrieve YouTube transcript.', 'error');
+      } else if (message.action === 'youtubeCommentsNotLoaded') {
+        showToastMessage('Comments exist but are not loaded. Scroll down to load them.', 'warning');
+      }
+    };
+    
+    chrome.runtime.onMessage.addListener(messageListener);
+    
+    return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
+    };
+  }, [showToastMessage]);
+  
+  // Reset status when content type changes
+  useEffect(() => {
+    updateStatus('Ready to summarize.');
+  }, [contentType, updateStatus]);
   
   const openSettings = () => {
     try {
@@ -37,13 +64,13 @@ export function Popup() {
     
     // Check if quick prompt is empty when using quick prompt type
     if (promptType === PROMPT_TYPES.QUICK && !quickPromptText.trim()) {
-      setStatusMessage('Please enter a prompt in the Quick Prompt editor');
+      updateStatus('Please enter a prompt in the Quick Prompt editor');
       showToastMessage('Quick Prompt cannot be empty', 'error');
       return;
     }
     
     setIsProcessing(true);
-    setStatusMessage('Processing content...');
+    updateStatus('Processing content...');
     
     try {
       // Implementation for summarization using chrome.runtime.sendMessage 
@@ -51,21 +78,15 @@ export function Popup() {
       
       // For this example, we'll just simulate a successful process
       setTimeout(() => {
-        setStatusMessage('Opening AI platform...');
+        updateStatus('Opening AI platform...');
         setTimeout(() => window.close(), 1000);
       }, 1000);
     } catch (error) {
       console.error('Summarize error:', error);
       setIsProcessing(false);
-      setStatusMessage(`Error: ${error.message}`);
+      updateStatus(`Error: ${error.message}`);
       showToastMessage(`Error: ${error.message}`, 'error');
     }
-  };
-  
-  const showToastMessage = (message, type = 'info') => {
-    setToastMessage(message);
-    setToastType(type);
-    setShowToast(true);
   };
   
   return (
@@ -143,10 +164,11 @@ export function Popup() {
       <StatusMessage message={statusMessage} className="mt-2" />
       
       <Toast 
-        message={toastMessage} 
-        type={toastType} 
-        visible={showToast} 
-        onClose={() => setShowToast(false)} 
+        message={toastState.message} 
+        type={toastState.type} 
+        visible={toastState.visible} 
+        onClose={() => toastState.setVisible(false)} 
+        duration={5000}
       />
     </div>
   );

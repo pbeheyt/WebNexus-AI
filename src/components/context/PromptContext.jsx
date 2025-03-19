@@ -1,11 +1,14 @@
+// src/components/context/PromptContext.jsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import { PROMPT_TYPES, STORAGE_KEYS } from '../../shared/constants';
 import { useContent } from './ContentContext';
+import { useStatus } from './StatusContext';
 
 const PromptContext = createContext(null);
 
 export function PromptProvider({ children }) {
   const { contentType } = useContent();
+  const { updateStatus } = useStatus();
   const [promptType, setPromptType] = useState(PROMPT_TYPES.DEFAULT);
   const [selectedPromptId, setSelectedPromptId] = useState(null);
   const [quickPromptText, setQuickPromptText] = useState('');
@@ -50,18 +53,21 @@ export function PromptProvider({ children }) {
           
           setQuickPromptText(quickPrompts?.[contentType] || '');
         }
+        
+        updateStatus('Prompt settings loaded');
       } catch (error) {
         console.error('Error loading prompt preferences:', error);
+        updateStatus('Error loading prompt settings', 'error');
       } finally {
         setIsLoading(false);
       }
     };
     
     loadPromptPreferences();
-  }, [contentType]);
+  }, [contentType, updateStatus]);
   
   const changePromptType = async (newType) => {
-    if (newType === promptType || !contentType) return;
+    if (newType === promptType || !contentType) return false;
     
     try {
       // Save prompt type preference
@@ -91,7 +97,7 @@ export function PromptProvider({ children }) {
   };
   
   const selectPrompt = async (promptId) => {
-    if (!contentType || !promptType) return false;
+    if (!contentType || !promptType || promptId === selectedPromptId) return false;
     
     try {
       // Save selected prompt ID
