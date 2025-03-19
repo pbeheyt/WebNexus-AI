@@ -486,58 +486,70 @@ class ApiSettingsTab {
       container.appendChild(pricingSection);
     }
     
-    // Max tokens setting
+    // Max tokens setting - Dynamic range from 0 to model's maxTokens
+    const maxTokensValue = settings.maxTokens || configDefaults.maxTokens || this.apiSettingsController.getDefaultMaxTokens(platform.id, modelConfig);
+    const maxTokensMax = modelConfig?.maxTokens || configDefaults.maxTokens || 32000;
+    
     const tokensGroup = this.createSettingField(
       platform.id,
       modelId,
       'max-tokens',
       this.apiSettingsController.getTokensLabel(platform.id, modelConfig),
       'number',
-      settings.maxTokens || configDefaults.maxTokens || this.apiSettingsController.getDefaultMaxTokens(platform.id, modelConfig),
+      maxTokensValue,
       'Maximum number of tokens to generate in the response.',
-      { min: 50, max: 32000 }
+      { min: 0, max: maxTokensMax }
     );
     container.appendChild(tokensGroup);
     
-    // Context window setting
+    // Context window setting - Dynamic range from 0 to model's contextWindow
+    const contextWindowValue = settings.contextWindow || configDefaults.contextWindow || this.apiSettingsController.getContextWindow(platform.id, modelConfig);
+    const contextWindowMax = modelConfig?.contextWindow || configDefaults.contextWindow || 16000;
+    
     const contextGroup = this.createSettingField(
       platform.id,
       modelId,
       'context-window',
       'Context Window:',
       'number',
-      settings.contextWindow || configDefaults.contextWindow || this.apiSettingsController.getContextWindow(platform.id, modelConfig),
+      contextWindowValue,
       'Maximum number of tokens the model can process as context.',
-      { min: 1000, max: 1000000 }
+      { min: 0, max: contextWindowMax }
     );
     container.appendChild(contextGroup);
     
-    // Temperature setting (if supported by model)
+    // Temperature setting (if supported by model) - Dynamic range from minTemperature to maxTemperature
     const supportsTemperature = modelConfig ? modelConfig.supportsTemperature !== false : true;
     if (supportsTemperature) {
+      const temperatureValue = settings.temperature !== undefined ? settings.temperature : (configDefaults.temperature || 0.7);
+      const minTemp = modelConfig?.minTemperature !== undefined ? modelConfig.minTemperature : 0;
+      const maxTemp = modelConfig?.maxTemperature !== undefined ? modelConfig.maxTemperature : 2;
+      
       const temperatureGroup = this.createSettingField(
         platform.id,
         modelId,
         'temperature',
         'Temperature:',
         'number',
-        settings.temperature !== undefined ? settings.temperature : (configDefaults.temperature || 0.7),
+        temperatureValue,
         'Controls randomness: lower values are more deterministic, higher values more creative.',
-        { min: 0, max: 2, step: 0.1 }
+        { min: minTemp, max: maxTemp, step: 0.1 }
       );
       container.appendChild(temperatureGroup);
     }
     
-    // Top P setting (if supported by model)
+    // Top P setting (if supported by model) - Range always 0 to 1
     const supportsTopP = modelConfig ? modelConfig.supportsTopP !== false : true;
     if (supportsTopP) {
+      const topPValue = settings.topP !== undefined ? settings.topP : (configDefaults.topP || 1.0);
+      
       const topPGroup = this.createSettingField(
         platform.id,
         modelId,
         'top-p',
         'Top P:',
         'number',
-        settings.topP !== undefined ? settings.topP : (configDefaults.topP || 1.0),
+        topPValue,
         'Alternative to temperature, controls diversity via nucleus sampling.',
         { min: 0, max: 1, step: 0.01 }
       );
@@ -878,6 +890,9 @@ class ApiSettingsTab {
       const platform = this.platforms.find(p => p.id === platformId);
       const hasSystemPrompt = platform?.apiConfig?.hasSystemPrompt !== false;
       
+      // Get model-specific config
+      const modelConfig = platform?.apiConfig?.models?.find(m => m.id === modelId);
+      
       // Only get system prompt input if the platform supports it
       const systemPromptInput = hasSystemPrompt ? 
         document.getElementById(`${platformId}-${modelId}-system-prompt`) : null;
@@ -890,29 +905,33 @@ class ApiSettingsTab {
       // Create settings object
       const settings = {};
       
-      // Add max tokens
+      // Add max tokens with dynamic validation
       const maxTokens = parseInt(maxTokensInput.value, 10);
-      if (isNaN(maxTokens) || maxTokens < 50 || maxTokens > 32000) {
-        this.notificationManager.error('Max tokens must be a number between 50 and 32000');
+      const maxTokensMax = modelConfig?.maxTokens || 32000;
+      if (isNaN(maxTokens) || maxTokens < 0 || maxTokens > maxTokensMax) {
+        this.notificationManager.error(`Max tokens must be a number between 0 and ${maxTokensMax}`);
         return;
       }
       settings.maxTokens = maxTokens;
       
-      // Add context window
+      // Add context window with dynamic validation
       if (contextWindowInput) {
         const contextWindow = parseInt(contextWindowInput.value, 10);
-        if (isNaN(contextWindow) || contextWindow < 1000 || contextWindow > 1000000) {
-          this.notificationManager.error('Context window must be a number between 1,000 and 1,000,000');
+        const contextWindowMax = modelConfig?.contextWindow || 16000;
+        if (isNaN(contextWindow) || contextWindow < 0 || contextWindow > contextWindowMax) {
+          this.notificationManager.error(`Context window must be a number between 0 and ${contextWindowMax}`);
           return;
         }
         settings.contextWindow = contextWindow;
       }
       
-      // Add temperature if input exists
+      // Add temperature if input exists with dynamic validation
       if (temperatureInput) {
         const temperature = parseFloat(temperatureInput.value);
-        if (isNaN(temperature) || temperature < 0 || temperature > 2) {
-          this.notificationManager.error('Temperature must be a number between 0 and 2');
+        const minTemp = modelConfig?.minTemperature !== undefined ? modelConfig.minTemperature : 0;
+        const maxTemp = modelConfig?.maxTemperature !== undefined ? modelConfig.maxTemperature : 2;
+        if (isNaN(temperature) || temperature < minTemp || temperature > maxTemp) {
+          this.notificationManager.error(`Temperature must be a number between ${minTemp} and ${maxTemp}`);
           return;
         }
         settings.temperature = temperature;
