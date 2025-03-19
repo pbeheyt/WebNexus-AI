@@ -12,7 +12,7 @@ module.exports = {
     'platform-content': './src/content/platform-content.js',
     'selected-text-content': './src/content/selected-text-content.js',
     popup: './src/popup/index.jsx',
-    settings: './src/settings/index.js',
+    settings: './src/settings/index.jsx',
     // 'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
     'api-model-tester': './src/api/api-model-tester.js'
   },

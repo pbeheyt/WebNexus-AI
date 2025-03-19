@@ -1,0 +1,110 @@
+import React, { useState, useEffect } from 'react';
+import { useNotification } from '../../contexts/NotificationContext';
+import { SHARED_TYPE } from '../../../shared/constants';
+
+const CUSTOM_PROMPTS_KEY = 'custom_prompts_by_type';
+
+const PromptList = ({ 
+  filterValue, 
+  contentTypeLabels, 
+  onSelectPrompt, 
+  selectedPromptId,
+  isLoading 
+}) => {
+  const { error } = useNotification();
+  const [prompts, setPrompts] = useState([]);
+  const [filteredPrompts, setFilteredPrompts] = useState([]);
+  const [localLoading, setLocalLoading] = useState(true);
+  
+  // Load prompts when component mounts
+  useEffect(() => {
+    const loadPrompts = async () => {
+      setLocalLoading(true);
+      
+      try {
+        const result = await chrome.storage.sync.get(CUSTOM_PROMPTS_KEY);
+        const customPromptsByType = result[CUSTOM_PROMPTS_KEY] || {};
+        
+        // Collect all prompts
+        const allPrompts = [];
+        
+        Object.entries(customPromptsByType).forEach(([type, data]) => {
+          if (data.prompts) {
+            Object.entries(data.prompts).forEach(([id, prompt]) => {
+              allPrompts.push({
+                id,
+                prompt,
+                contentType: type,
+                contentTypeLabel: contentTypeLabels[type] || type
+              });
+            });
+          }
+        });
+        
+        // Sort prompts by update time (most recent first)
+        allPrompts.sort((a, b) => {
+          return new Date(b.prompt.updatedAt || 0) - new Date(a.prompt.updatedAt || 0);
+        });
+        
+        setPrompts(allPrompts);
+      } catch (err) {
+        console.error('Error loading prompts:', err);
+        error('Failed to load prompts');
+      } finally {
+        setLocalLoading(false);
+      }
+    };
+    
+    loadPrompts();
+  }, [contentTypeLabels, error, selectedPromptId]);
+  
+  // Filter prompts when filter value changes
+  useEffect(() => {
+    if (filterValue === 'all') {
+      setFilteredPrompts(prompts);
+    } else {
+      setFilteredPrompts(prompts.filter(item => item.contentType === filterValue));
+    }
+  }, [filterValue, prompts]);
+  
+  if (isLoading || localLoading) {
+    return (
+      <div className="animate-pulse space-y-3">
+        <div className="h-20 bg-theme-hover rounded-lg"></div>
+        <div className="h-20 bg-theme-hover rounded-lg"></div>
+        <div className="h-20 bg-theme-hover rounded-lg"></div>
+      </div>
+    );
+  }
+  
+  if (filteredPrompts.length === 0) {
+    return (
+      <div className="empty-state bg-theme-surface p-5 text-center text-theme-secondary rounded-lg">
+        <p>No prompts available{filterValue !== 'all' ? ` for ${contentTypeLabels[filterValue]}` : ''}. Create a new prompt to get started.</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="prompt-list max-h-[500px] overflow-y-auto pr-2">
+      {filteredPrompts.map((item) => (
+        <div
+          key={item.id}
+          className={`prompt-item border border-theme rounded-lg p-4 mb-3 bg-theme-surface cursor-pointer transition-all hover:bg-theme-hover hover:border-primary ${
+            selectedPromptId === item.id ? 'border-primary bg-theme-active shadow-sm' : ''
+          }`}
+          onClick={() => onSelectPrompt(item)}
+        >
+          <div className="prompt-header flex justify-between items-center mb-2">
+            <h3 className="prompt-title font-medium text-sm truncate">
+              {item.prompt.name}
+            </h3>
+          </div>
+          <small className="text-theme-secondary text-xs">{item.contentTypeLabel}</small>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default PromptList;
