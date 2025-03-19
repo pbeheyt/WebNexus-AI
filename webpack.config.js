@@ -1,5 +1,5 @@
 const path = require('path');
-const pdfWorkerPath = require.resolve('pdfjs-dist/build/pdf.worker.entry');
+// const pdfWorkerPath = require.resolve('pdfjs-dist/build/pdf.worker.entry');
 
 module.exports = {
   entry: {
@@ -8,24 +8,25 @@ module.exports = {
     'youtube-content': './src/content/youtube-content.js',
     'reddit-content': './src/content/reddit-content.js',
     'general-content': './src/content/general-content.js',
-    'pdf-content': './src/content/pdf-content.js',
+    // 'pdf-content': './src/content/pdf-content.js',
     'platform-content': './src/content/platform-content.js',
     'selected-text-content': './src/content/selected-text-content.js',
-    popup: './src/popup/index.js',
+    popup: './src/popup/index.jsx',
     settings: './src/settings/index.js',
-    'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
+    // 'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
     'api-model-tester': './src/api/api-model-tester.js'
   },
   output: {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist')
+    // Removed chunkFormat: 'array-push'
   },
-  mode: 'production',
+  mode: 'development',
   devtool: 'source-map',
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
@@ -33,19 +34,24 @@ module.exports = {
             presets: [
               ['@babel/preset-env', {
                 targets: {
-                  chrome: "88"
+                  chrome: "123"
                 },
                 useBuiltIns: "usage",
                 corejs: 3
-              }]
+              }],
+              ['@babel/preset-react', { runtime: 'automatic' }]
             ]
           }
         }
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader', 'postcss-loader']
       }
     ]
   },
   resolve: {
-    extensions: ['.js'],
+    extensions: ['.js', '.jsx'],
     modules: [
       'node_modules',
       path.resolve(__dirname, 'src')
