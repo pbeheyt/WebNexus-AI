@@ -1,9 +1,10 @@
 // src/popup/Popup.jsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useContent } from '../components/context/ContentContext';
 import { usePrompts } from '../components/context/PromptContext';
 import { useTheme } from '../components/context/ThemeContext';
 import { useStatus } from '../components/context/StatusContext';
+import { usePlatforms } from '../components/context/PlatformContext';
 import { Button } from '../components/ui/Button';
 import { StatusMessage } from '../components/ui/StatusMessage';
 import { Toast } from '../components/ui/Toast';
@@ -13,43 +14,50 @@ import { PromptTypeToggle } from '../components/features/PromptTypeToggle';
 import { QuickPromptEditor } from '../components/features/QuickPromptEditor';
 import { DefaultPromptConfig } from '../components/features/DefaultPromptConfig';
 import { CustomPromptSelector } from '../components/features/CustomPromptSelector';
-import { PROMPT_TYPES } from '../shared/constants';
-import { useState } from 'react';
+import { PROMPT_TYPES, STORAGE_KEYS } from '../shared/constants';
+import { getContentScriptFile } from '../shared/content-utils';
 
 export function Popup() {
   const { theme, toggleTheme } = useTheme();
-  const { contentType, currentTab, isSupported } = useContent();
-  const { promptType, quickPromptText } = usePrompts();
-  const { 
-    statusMessage, 
-    updateStatus, 
+  const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
+  const { promptType, selectedPromptId, quickPromptText } = usePrompts();
+  const { platforms, selectedPlatformId, selectPlatform } = usePlatforms();
+  const {
+    statusMessage,
+    updateStatus,
     toastState,
-    showToastMessage
+    showToastMessage,
+    notifyYouTubeError,
+    notifyCommentsNotLoaded
   } = useStatus();
+
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Listen for messages from background script
+
+  // Listen for messages from background script (YouTube errors, etc.)
   useEffect(() => {
     const messageListener = (message) => {
       if (message.action === 'youtubeTranscriptError') {
-        showToastMessage(message.message || 'Failed to retrieve YouTube transcript.', 'error');
+        notifyYouTubeError(message.message || 'Failed to retrieve YouTube transcript.');
+        setIsProcessing(false);
       } else if (message.action === 'youtubeCommentsNotLoaded') {
-        showToastMessage('Comments exist but are not loaded. Scroll down to load them.', 'warning');
+        notifyCommentsNotLoaded();
+        setIsProcessing(false);
+      } else if (message.action === 'apiResponseReady') {
+        updateStatus('API response ready');
+        setIsProcessing(false);
+      } else if (message.action === 'apiProcessingError') {
+        showToastMessage(`API processing error: ${message.error || 'Unknown error'}`, 'error');
+        setIsProcessing(false);
       }
     };
-    
+
     chrome.runtime.onMessage.addListener(messageListener);
-    
+
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
     };
-  }, [showToastMessage]);
-  
-  // Reset status when content type changes
-  useEffect(() => {
-    updateStatus('Ready to summarize.');
-  }, [contentType, updateStatus]);
-  
+  }, [notifyYouTubeError, notifyCommentsNotLoaded, updateStatus, showToastMessage]);
+
   const openSettings = () => {
     try {
       chrome.runtime.openOptionsPage();
@@ -58,37 +66,235 @@ export function Popup() {
       chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
     }
   };
-  
+
+  /**
+   * Checks if content script is loaded in the tab
+   * @param {number} tabId - The tab ID
+   * @returns {Promise<boolean>} Whether content script is loaded
+   */
+  const isContentScriptLoaded = async (tabId) => {
+    return new Promise((resolve) => {
+      try {
+        console.log(`Checking if content script is loaded in tab ${tabId}...`);
+        chrome.tabs.sendMessage(tabId, { action: 'ping' }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.log('Content script not loaded:', chrome.runtime.lastError.message);
+            resolve(false);
+          } else {
+            console.log('Content script response:', response);
+            resolve(!!(response && response.ready));
+          }
+        });
+      } catch (error) {
+        console.error('Error checking content script:', error);
+        resolve(false);
+      }
+    });
+  };
+
+  /**
+   * Injects content script into tab
+   * @param {number} tabId - The tab ID
+   * @returns {Promise<boolean>} Whether injection succeeded
+   */
+  const injectContentScript = async (tabId) => {
+    try {
+      const hasSelection = contentType === 'selected_text';
+      // Use the shared utility function to determine script path
+      const scriptFile = getContentScriptFile(contentType, hasSelection);
+
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: [scriptFile]
+      });
+
+      // Wait a moment for script to initialize
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return true;
+    } catch (error) {
+      console.error('Error injecting content script:', error);
+      return false;
+    }
+  };
+
+  /**
+   * Get prompt content by ID
+   * @param {string} promptId - The prompt ID
+   * @param {string} contentType - The content type
+   * @returns {Promise<string|null>} The prompt content
+   */
+  const getPromptContent = async (promptId, contentType) => {
+    // Handle quick prompt
+    if (promptId === "quick") {
+      const result = await chrome.storage.sync.get('quick_prompts');
+      return result.quick_prompts?.[contentType] || null;
+    }
+
+    // If ID matches content type, it's a default prompt
+    if (promptId === contentType) {
+      try {
+        // Get user preferences
+        const userPreferences = await chrome.storage.sync.get('default_prompt_preferences');
+        const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
+
+        // Get promptBuilder
+        const promptBuilder = await import('../services/PromptBuilder').then(m => m.default);
+
+        // Build prompt using the preferences
+        return await promptBuilder.buildPrompt(contentType, typePreferences);
+      } catch (error) {
+        console.error('Error building default prompt:', error);
+        return null;
+      }
+    }
+
+    // For custom prompts
+    try {
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+
+      // First try to find the prompt in the content-specific storage
+      let promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS]?.[contentType]?.prompts?.[promptId]?.content;
+
+      // If not found, check in the shared storage
+      if (!promptContent && result[STORAGE_KEYS.CUSTOM_PROMPTS]?.shared?.prompts?.[promptId]) {
+        promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS].shared.prompts[promptId].content;
+      }
+
+      return promptContent || null;
+    } catch (error) {
+      console.error('Error loading custom prompt:', error);
+      return null;
+    }
+  };
+
   const handleSummarize = async () => {
-    if (isProcessing || !isSupported) return;
-    
+    if (isProcessing || !isSupported || contentLoading || !currentTab?.id) return;
+
     // Check if quick prompt is empty when using quick prompt type
     if (promptType === PROMPT_TYPES.QUICK && !quickPromptText.trim()) {
       updateStatus('Please enter a prompt in the Quick Prompt editor');
       showToastMessage('Quick Prompt cannot be empty', 'error');
       return;
     }
-    
+
     setIsProcessing(true);
-    updateStatus('Processing content...');
-    
+    updateStatus('Checking page content...', true);
+
     try {
-      // Implementation for summarization using chrome.runtime.sendMessage 
-      // would go here, similar to the original SummarizeController
-      
-      // For this example, we'll just simulate a successful process
-      setTimeout(() => {
-        updateStatus('Opening AI platform...');
-        setTimeout(() => window.close(), 1000);
-      }, 1000);
+      // 1. Check if content script is loaded
+      let scriptLoaded = await isContentScriptLoaded(currentTab.id);
+
+      // 2. If not loaded, inject it
+      if (!scriptLoaded) {
+        updateStatus('Initializing content extraction...', true);
+
+        const injected = await injectContentScript(currentTab.id);
+
+        if (!injected) {
+          updateStatus('Failed to initialize content extraction', false);
+          setIsProcessing(false);
+          showToastMessage('Failed to initialize content extraction', 'error');
+          return;
+        }
+
+        // Verify script is now loaded - wait longer to be safe
+        await new Promise(resolve => setTimeout(resolve, 500));
+        scriptLoaded = await isContentScriptLoaded(currentTab.id);
+
+        if (!scriptLoaded) {
+          updateStatus('Content script initialization failed', false);
+          setIsProcessing(false);
+          showToastMessage('Content script initialization failed', 'error');
+          return;
+        }
+      }
+
+      // 3. Get prompt content
+      const promptContent = await getPromptContent(selectedPromptId, contentType);
+
+      if (!promptContent) {
+        updateStatus('Error: Could not load prompt content', false);
+        setIsProcessing(false);
+        showToastMessage('Could not load prompt content', 'error');
+        return;
+      }
+
+      // 4. YouTube-specific checks for commentAnalysis
+      let commentAnalysisRequired = false;
+      if (contentType === 'youtube' && promptType === PROMPT_TYPES.DEFAULT) {
+        const preferences = await chrome.storage.sync.get('default_prompt_preferences');
+        const youtubePrefs = preferences.default_prompt_preferences?.youtube || {};
+        commentAnalysisRequired = youtubePrefs.commentAnalysis === true;
+      }
+
+      // 5. Clear any existing content in storage
+      await chrome.storage.local.set({
+        contentReady: false,
+        extractedContent: null,
+        aiPlatformTabId: null,
+        scriptInjected: false,
+        prePrompt: promptContent
+      });
+
+      // 6. Send message to background script
+      updateStatus(`Processing content with ${selectedPlatformId}...`, true);
+
+      const hasSelection = contentType === 'selected_text';
+
+      const response = await chrome.runtime.sendMessage({
+        action: 'summarizeContent',
+        tabId: currentTab.id,
+        contentType,
+        promptId: selectedPromptId,
+        platformId: selectedPlatformId,
+        url: currentTab.url,
+        hasSelection,
+        commentAnalysisRequired
+      });
+
+      // 7. Handle responses
+      if (response) {
+        // Check if YouTube transcript error occurred
+        if (response.youtubeTranscriptError) {
+          updateStatus(`Error: ${response.errorMessage || 'No transcript available for this YouTube video.'}`, false);
+          showToastMessage(response.errorMessage || 'No transcript available for this YouTube video.', 'error');
+          setIsProcessing(false);
+          return;
+        }
+
+        // Check if YouTube comments error occurred
+        if (response.youtubeCommentsError) {
+          updateStatus(response.errorMessage || 'Comments exist but are not loaded. Scroll down on YouTube to load comments before summarizing.', false);
+          showToastMessage(response.errorMessage || 'Comments exist but are not loaded. Scroll down to load them.', 'warning');
+          setIsProcessing(false);
+          return;
+        }
+
+        if (response.success) {
+          updateStatus(`Opening AI platform...`, true);
+
+          // Close popup after delay
+          setTimeout(() => window.close(), 2000);
+          return;
+        } else {
+          updateStatus(`Error: ${response.error || 'Unknown error'}`, false);
+          showToastMessage(`Error: ${response.error || 'Unknown error'}`, 'error');
+          setIsProcessing(false);
+          return;
+        }
+      } else {
+        updateStatus('No response from background service worker', false);
+        showToastMessage('No response from background service worker', 'error');
+        setIsProcessing(false);
+      }
     } catch (error) {
       console.error('Summarize error:', error);
-      setIsProcessing(false);
-      updateStatus(`Error: ${error.message}`);
+      updateStatus(`Error: ${error.message}`, false);
       showToastMessage(`Error: ${error.message}`, 'error');
+      setIsProcessing(false);
     }
   };
-  
+
   return (
     <div className="min-w-[320px] p-2 bg-background-primary text-text-primary">
       <header className="flex items-center justify-between pb-1 mb-1 border-b border-border">
@@ -99,9 +305,9 @@ export function Popup() {
           </svg>
           AI Content Summarizer
         </h1>
-        
+
         <div className="flex items-center">
-          <button 
+          <button
             onClick={toggleTheme}
             className="p-1 text-text-secondary hover:text-primary hover:bg-background-active rounded transition-colors"
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
@@ -124,7 +330,7 @@ export function Popup() {
               </svg>
             )}
           </button>
-          
+
           <button
             onClick={openSettings}
             className="p-1 ml-1 text-text-secondary hover:text-primary hover:bg-background-active rounded transition-colors"
@@ -136,38 +342,38 @@ export function Popup() {
           </button>
         </div>
       </header>
-      
+
       <Button
         onClick={handleSummarize}
-        disabled={isProcessing || !isSupported}
+        disabled={isProcessing || !isSupported || contentLoading || !currentTab?.id}
         className="w-full mb-2"
       >
         {isProcessing ? 'Processing...' : 'Summarize Content'}
       </Button>
-      
+
       <ContentTypeDisplay />
-      
+
       <div className="mt-2">
         <PlatformSelector />
       </div>
-      
+
       <div className="mt-2">
         <PromptTypeToggle />
       </div>
-      
+
       <div className="mt-2">
         {promptType === PROMPT_TYPES.DEFAULT && <DefaultPromptConfig />}
         {promptType === PROMPT_TYPES.CUSTOM && <CustomPromptSelector />}
         {promptType === PROMPT_TYPES.QUICK && <QuickPromptEditor />}
       </div>
-      
+
       <StatusMessage message={statusMessage} className="mt-2" />
-      
-      <Toast 
-        message={toastState.message} 
-        type={toastState.type} 
-        visible={toastState.visible} 
-        onClose={() => toastState.setVisible(false)} 
+
+      <Toast
+        message={toastState.message}
+        type={toastState.type}
+        visible={toastState.visible}
+        onClose={() => toastState.setVisible(false)}
         duration={5000}
       />
     </div>
