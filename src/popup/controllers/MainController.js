@@ -16,7 +16,9 @@ export default class MainController {
     promptTypeToggle,
     customPromptSelector,
     defaultPromptConfigPanel,
-    quickPromptEditor
+    quickPromptEditor,
+    apiModeToggle,
+    modelSelector
   ) {
     this.tabService = tabService;
     this.contentService = contentService;
@@ -32,6 +34,8 @@ export default class MainController {
     this.customPromptSelector = customPromptSelector;
     this.defaultPromptConfigPanel = defaultPromptConfigPanel;
     this.quickPromptEditor = quickPromptEditor;
+    this.apiModeToggle = apiModeToggle;
+    this.modelSelector = modelSelector;
 
     this.state = {
       currentTab: null,
@@ -41,10 +45,13 @@ export default class MainController {
       selectedPlatformId: null,
       selectedPromptId: null,
       isProcessing: false,
-      promptType: PROMPT_TYPES.DEFAULT  // Changed from isDefaultPromptType boolean to string enum
+      promptType: PROMPT_TYPES.DEFAULT,
+      apiModeEnabled: false,
+      selectedModelId: null,
+      availableModels: []
     };
 
-    this.selectionCheckInterval = null; // Add this property
+    this.selectionCheckInterval = null;
   }
 
   /**
@@ -170,6 +177,9 @@ export default class MainController {
         }
       }
 
+      // Initialize API mode components
+      await this.initializeApiMode();
+
       // Start monitoring for selection changes
       this.setupSelectionMonitoring();
 
@@ -179,6 +189,276 @@ export default class MainController {
       console.error('Initialization error:', error);
       this.statusManager.updateStatus(`Error: ${error.message}`, false, false);
     }
+  }
+
+  /**
+   * Initialize API mode components
+   */
+  async initializeApiMode() {
+    try {
+      if (!this.apiModeToggle || !this.state.selectedPlatformId) return;
+
+      // Check if API mode is available for the platform
+      const isApiModeAvailable = await this.checkApiModeAvailable();
+
+      if (!isApiModeAvailable) {
+        // Hide API mode toggle if not available
+        const apiModeSection = document.getElementById('apiModeSection');
+        if (apiModeSection) {
+          apiModeSection.style.display = 'none';
+        }
+        return;
+      }
+
+      // Get saved API mode preferences
+      const apiModePrefs = await this.getApiModePreferences();
+
+      // Initialize API mode toggle with saved preferences
+      await this.apiModeToggle.initialize(
+        this.state.selectedPlatformId,
+        apiModePrefs.enabled
+      );
+
+      // Update internal state
+      this.state.apiModeEnabled = apiModePrefs.enabled;
+      this.state.selectedModelId = apiModePrefs.model;
+
+      // If API mode is enabled, set up model selector
+      if (this.state.apiModeEnabled) {
+        await this.initializeModelSelector();
+      }
+
+      // Update UI visibility
+      this.updateApiModeVisibility();
+    } catch (error) {
+      console.error('Error initializing API mode:', error);
+    }
+  }
+
+  /**
+   * Initialize model selector component
+   */
+  async initializeModelSelector() {
+    try {
+      if (!this.modelSelector || !this.state.selectedPlatformId) return;
+
+      // Load available models for the current platform
+      const models = await this.getApiModels();
+      this.state.availableModels = models;
+
+      // Get the selected model (saved preference or default)
+      let selectedModel = this.state.selectedModelId;
+      if (!selectedModel && models.length > 0) {
+        // Use default model or first available
+        selectedModel = models.find(m => m.isDefault)?.id || models[0].id;
+        this.state.selectedModelId = selectedModel;
+      }
+
+      // Initialize the model selector component
+      this.modelSelector.initialize(
+        this.state.selectedPlatformId,
+        models,
+        selectedModel
+      );
+
+      // Make model selector visible if API mode is enabled
+      this.modelSelector.setVisible(this.state.apiModeEnabled);
+    } catch (error) {
+      console.error('Error initializing model selector:', error);
+    }
+  }
+
+  /**
+   * Handle API mode toggle change
+   * @param {boolean} enabled - New enabled state
+   * @param {string} platformId - Platform ID
+   */
+  async handleApiModeToggle(enabled, platformId) {
+    try {
+      // Update state
+      this.state.apiModeEnabled = enabled;
+
+      // Save preference
+      await this.saveApiModePreferences();
+
+      // Update UI visibility
+      this.updateApiModeVisibility();
+
+      // Initialize or update model selector if enabled
+      if (enabled) {
+        await this.initializeModelSelector();
+      }
+    } catch (error) {
+      console.error('Error handling API mode toggle:', error);
+    }
+  }
+
+  /**
+   * Handle model selection change
+   * @param {string} modelId - Selected model ID
+   * @param {string} platformId - Platform ID
+   */
+  async handleModelChange(modelId, platformId) {
+    try {
+      // Update state
+      this.state.selectedModelId = modelId;
+
+      // Save preference
+      await this.saveApiModePreferences();
+    } catch (error) {
+      console.error('Error handling model change:', error);
+    }
+  }
+
+  /**
+   * Update API mode component visibility
+   */
+  updateApiModeVisibility() {
+    // Update model selector visibility
+    if (this.modelSelector) {
+      this.modelSelector.setVisible(this.state.apiModeEnabled);
+    }
+
+    // Update status message to show API mode is active
+    if (this.state.apiModeEnabled) {
+      this.statusManager.updateStatus(`API Mode active - using ${this.state.selectedPlatformId} API`);
+    }
+  }
+
+  /**
+   * Check if API mode is available for the current platform
+   * @returns {Promise<boolean>} - Availability result
+   */
+  async checkApiModeAvailable() {
+    try {
+      if (!this.state.selectedPlatformId) return false;
+
+      // Call background script to check API mode availability
+      const response = await chrome.runtime.sendMessage({
+        action: 'checkApiModeAvailable',
+        platformId: this.state.selectedPlatformId
+      });
+
+      return response && response.success && response.isAvailable;
+    } catch (error) {
+      console.error('Error checking API mode availability:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get available API models for the current platform
+   * @returns {Promise<Array>} - Available models
+   */
+  async getApiModels() {
+    try {
+      if (!this.state.selectedPlatformId) return [];
+
+      // Call background script to get available models
+      const response = await chrome.runtime.sendMessage({
+        action: 'getApiModels',
+        platformId: this.state.selectedPlatformId
+      });
+
+      if (response && response.success && response.models) {
+        return response.models;
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Error getting API models:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get API mode preferences for the current platform
+   * @returns {Promise<Object>} - API mode preferences
+   */
+  async getApiModePreferences() {
+    try {
+      // Call background script to get API mode preferences
+      const response = await chrome.runtime.sendMessage({
+        action: 'getApiModePreferences',
+        platformId: this.state.selectedPlatformId
+      });
+
+      if (response && response.success) {
+        return response.preferences;
+      }
+
+      return { enabled: false, model: null };
+    } catch (error) {
+      console.error('Error getting API mode preferences:', error);
+      return { enabled: false, model: null };
+    }
+  }
+
+  /**
+   * Save API mode preferences
+   * @returns {Promise<boolean>} - Success indicator
+   */
+  async saveApiModePreferences() {
+    try {
+      // Call background script to save API mode preferences
+      const response = await chrome.runtime.sendMessage({
+        action: 'saveApiModePreferences',
+        platformId: this.state.selectedPlatformId,
+        preferences: {
+          enabled: this.state.apiModeEnabled,
+          model: this.state.selectedModelId
+        }
+      });
+
+      return response && response.success;
+    } catch (error) {
+      console.error('Error saving API mode preferences:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle summarize action
+   */
+  async handleSummarize() {
+    if (this.state.isProcessing || !this.state.isSupported) return;
+
+    // Check if quick prompt is empty when using quick prompt type
+    if (this.state.promptType === PROMPT_TYPES.QUICK && this.quickPromptEditor) {
+      const quickPromptText = this.quickPromptEditor.getText();
+      if (!quickPromptText.trim()) {
+        this.statusManager.updateStatus('Please enter a prompt in the Quick Prompt editor', false, true);
+        this.statusManager.showToast('Quick Prompt cannot be empty', 'error');
+        return;
+      }
+    }
+
+    this.state.isProcessing = true;
+
+    // Determine if we're dealing with selected text
+    const hasSelection = this.state.contentType === CONTENT_TYPES.SELECTED_TEXT;
+
+    // Ensure clean state before summarizing
+    try {
+      await chrome.storage.local.set({ youtubeCommentsNotLoaded: false });
+    } catch (error) {
+      console.error('Error resetting comment notification state:', error);
+    }
+
+    await this.summarizeController.summarize(
+      this.state.currentTab.id,
+      this.state.contentType,
+      this.state.currentTab.url,
+      this.state.selectedPromptId,
+      this.state.selectedPlatformId,
+      hasSelection,
+      this.state.apiModeEnabled,
+      this.state.selectedModelId,
+      (message, isProcessing = true) => {
+        this.statusManager.updateStatus(message, isProcessing, this.state.isSupported);
+        this.state.isProcessing = isProcessing;
+      }
+    );
   }
 
   /**
@@ -205,6 +485,9 @@ export default class MainController {
 
       const platformName = this.state.platforms.find(p => p.id === platformId)?.name || platformId;
       this.statusManager.updateStatus(`Platform set to ${platformName}`);
+
+      // Update API mode components when platform changes
+      await this.initializeApiMode();
     } catch (error) {
       console.error('Platform change error:', error);
       this.statusManager.updateStatus(`Error changing platform: ${error.message}`);
@@ -385,18 +668,6 @@ export default class MainController {
   }
 
   /**
-   * Initialize custom prompt selector
-   */
-  async initializeCustomPromptSelector() {
-    try {
-      await this.customPromptSelector.initialize(this.state.contentType);
-    } catch (error) {
-      console.error('Error initializing custom prompt selector:', error);
-      this.statusManager.updateStatus(`Error: ${error.message}`);
-    }
-  }
-
-  /**
    * Initialize quick prompt editor
    */
   async initializeQuickPromptEditor() {
@@ -476,48 +747,6 @@ export default class MainController {
         await this.initializeCustomPromptSelector();
       }
     }
-  }
-
-  /**
-   * Handle summarize action
-   */
-  async handleSummarize() {
-    if (this.state.isProcessing || !this.state.isSupported) return;
-
-    // Check if quick prompt is empty when using quick prompt type
-    if (this.state.promptType === PROMPT_TYPES.QUICK && this.quickPromptEditor) {
-      const quickPromptText = this.quickPromptEditor.getText();
-      if (!quickPromptText.trim()) {
-        this.statusManager.updateStatus('Please enter a prompt in the Quick Prompt editor', false, true);
-        this.statusManager.showToast('Quick Prompt cannot be empty', 'error');
-        return;
-      }
-    }
-
-    this.state.isProcessing = true;
-
-    // Determine if we're dealing with selected text
-    const hasSelection = this.state.contentType === CONTENT_TYPES.SELECTED_TEXT;
-
-    // Ensure clean state before summarizing
-    try {
-      await chrome.storage.local.set({ youtubeCommentsNotLoaded: false });
-    } catch (error) {
-      console.error('Error resetting comment notification state:', error);
-    }
-
-    await this.summarizeController.summarize(
-      this.state.currentTab.id,
-      this.state.contentType,
-      this.state.currentTab.url,
-      this.state.selectedPromptId,
-      this.state.selectedPlatformId,
-      hasSelection, // Pass selection state
-      (message, isProcessing = true) => {
-        this.statusManager.updateStatus(message, isProcessing, this.state.isSupported);
-        this.state.isProcessing = isProcessing;
-      }
-    );
   }
 
   /**

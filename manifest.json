@@ -67,7 +67,8 @@
         "images/*.png",
         "api-test.html", 
         "api-test.js",
-        "model-test.html"
+        "model-test.html",
+        "sidebar.html"
       ],
       "matches": ["<all_urls>"]
     }

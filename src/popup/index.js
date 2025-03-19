@@ -15,6 +15,8 @@ import QuickPromptEditor from './ui/QuickPromptEditor.js';
 import StatusManager from './ui/StatusManager.js';
 import SummarizeController from './controllers/SummarizeController.js';
 import MainController from './controllers/MainController.js';
+import ApiModeToggle from './ui/ApiModeToggle.js'; // Import new components
+import ModelSelector from './ui/ModelSelector.js';
 import { initializeTheme } from './themeManager';
 import configManager from '../services/ConfigManager.js';
 import promptBuilder from '../services/PromptBuilder.js';
@@ -33,6 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const defaultPromptConfigContainer = document.getElementById('defaultPromptConfig');
   const customPromptSelectorContainer = document.getElementById('customPromptSelector');
   const quickPromptEditorContainer = document.getElementById('quickPromptEditor');
+  
+  // Get API mode containers
+  const apiModeContainer = document.getElementById('apiModeToggle');
+  const modelSelectorContainer = document.getElementById('modelSelector');
 
   // Initialize services
   const storageService = new StorageService();
@@ -87,6 +93,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     statusManager
   );
 
+  // Initialize API mode components
+  const apiModeToggle = new ApiModeToggle(
+    apiModeContainer,
+    (enabled, platformId) => mainController.handleApiModeToggle(enabled, platformId),
+    statusManager
+  );
+
+  const modelSelector = new ModelSelector(
+    modelSelectorContainer,
+    (modelId, platformId) => mainController.handleModelChange(modelId, platformId),
+    statusManager
+  );
+
   // Initialize controllers
   const summarizeController = new SummarizeController(
     contentService,
@@ -108,7 +127,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     promptTypeToggle,
     customPromptSelector,
     DefaultPromptConfigPanel,
-    quickPromptEditor
+    quickPromptEditor,
+    apiModeToggle,
+    modelSelector
   );
 
   // Subscribe to config changes
@@ -163,6 +184,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'youtubeCommentsNotLoaded') {
       statusManager.notifyCommentsNotLoaded();
+    } else if (message.action === 'apiResponseReady') {
+      // Handle API response ready event
+      statusManager.updateStatus('API response ready', false);
+    } else if (message.action === 'apiProcessingError') {
+      // Handle API processing error event
+      statusManager.updateStatus(`API error: ${message.error || 'Unknown error'}`, false);
     }
   });
 

@@ -1121,6 +1121,98 @@ if (message.action === 'getApiResponse') {
   })();
   return true; // Keep channel open for async response
   }
+
+  // Handler for checking API mode availability
+  if (message.action === 'checkApiModeAvailable') {
+    (async () => {
+      try {
+        const platformId = message.platformId || await getPreferredAiPlatform();
+        const isAvailable = await ApiServiceManager.isApiModeAvailable(platformId);
+        
+        sendResponse({
+          success: true,
+          isAvailable,
+          platformId
+        });
+      } catch (error) {
+        logger.background.error('Error checking API mode availability:', error);
+        sendResponse({
+          success: false,
+          error: error.message
+        });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
+
+  // Handler for getting API models
+  if (message.action === 'getApiModels') {
+    (async () => {
+      try {
+        const platformId = message.platformId || await getPreferredAiPlatform();
+        const models = await ApiServiceManager.getAvailableModels(platformId);
+        
+        sendResponse({
+          success: true,
+          models,
+          platformId
+        });
+      } catch (error) {
+        logger.background.error('Error getting API models:', error);
+        sendResponse({
+          success: false,
+          error: error.message
+        });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
+
+  // Handler for API mode preferences
+  if (message.action === 'getApiModePreferences') {
+    (async () => {
+      try {
+        const platformId = message.platformId || await getPreferredAiPlatform();
+        const apiModePreferenceManager = require('./services/ApiModePreferenceManager');
+        const preferences = await apiModePreferenceManager.getPreference(platformId);
+        
+        sendResponse({
+          success: true,
+          preferences,
+          platformId
+        });
+      } catch (error) {
+        logger.background.error('Error getting API mode preferences:', error);
+        sendResponse({
+          success: false,
+          error: error.message
+        });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
+
+  // Handler for saving API mode preferences
+  if (message.action === 'saveApiModePreferences') {
+    (async () => {
+      try {
+        const { platformId, preferences } = message;
+        const apiModePreferenceManager = require('./services/ApiModePreferenceManager');
+        const result = await apiModePreferenceManager.storePreference(platformId, preferences);
+        
+        sendResponse({
+          success: result
+        });
+      } catch (error) {
+        logger.background.error('Error saving API mode preferences:', error);
+        sendResponse({
+          success: false,
+          error: error.message
+        });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
 });
 
 // Listen for configuration changes

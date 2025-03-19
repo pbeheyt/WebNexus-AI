@@ -11,8 +11,10 @@ module.exports = {
     'pdf-content': './src/content/pdf-content.js',
     'platform-content': './src/content/platform-content.js',
     'selected-text-content': './src/content/selected-text-content.js',
+    'sidebar-injector': './src/content/sidebar-injector.js',
     popup: './src/popup/index.js',
     settings: './src/settings/index.js',
+    sidebar: './src/sidebar/index.js',
     'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
     'api-model-tester': './src/api/api-model-tester.js'
   },
@@ -25,7 +27,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
@@ -38,14 +40,21 @@ module.exports = {
                 useBuiltIns: "usage",
                 corejs: 3
               }]
+            ],
+            plugins: [
+              ['@babel/plugin-transform-react-jsx', { pragma: 'h' }]
             ]
           }
         }
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
       }
     ]
   },
   resolve: {
-    extensions: ['.js'],
+    extensions: ['.js', '.jsx'],
     modules: [
       'node_modules',
       path.resolve(__dirname, 'src')
@@ -53,6 +62,10 @@ module.exports = {
     fallback: {
       "path": false,
       "fs": false
+    },
+    alias: {
+      'react': 'preact/compat',
+      'react-dom': 'preact/compat'
     }
   },
   optimization: {

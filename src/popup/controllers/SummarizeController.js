@@ -16,10 +16,12 @@ export default class SummarizeController {
    * @param {string} selectedPromptId - Selected prompt ID
    * @param {string} selectedPlatformId - Selected AI platform ID
    * @param {boolean} hasSelection - Whether text is selected
+   * @param {boolean} useApi - Whether to use API mode
+   * @param {string} modelId - Selected model ID when API mode is enabled
    * @param {Function} statusCallback - Callback for status updates
    * @returns {Promise<boolean>} - Whether summarization succeeded
    */
-  async summarize(tabId, contentType, url, selectedPromptId, selectedPlatformId, hasSelection = false, statusCallback) {
+  async summarize(tabId, contentType, url, selectedPromptId, selectedPlatformId, hasSelection = false, useApi = false, modelId = null, statusCallback) {
     try {
       statusCallback('Checking page content...', true);
       
@@ -80,8 +82,10 @@ export default class SummarizeController {
         promptId: selectedPromptId,
         platformId: selectedPlatformId,
         url,
-        hasSelection, // Pass selection flag
-        commentAnalysisRequired
+        hasSelection,
+        commentAnalysisRequired,
+        useApi,
+        modelId
       });
       
       // Check if YouTube transcript error occurred (only if not using selection)
@@ -97,11 +101,43 @@ export default class SummarizeController {
       }
       
       if (response && response.success) {
-        statusCallback(`Opening AI platform...`, true);
-        
-        // Close popup after delay
-        setTimeout(() => window.close(), 2000);
-        return true;
+        if (useApi) {
+          // Set status for API mode
+          statusCallback(`Processing via API... This might take a few moments.`, true);
+          
+          // For API mode, we need to wait for and handle the response
+          const handleApiResponse = async () => {
+            // Get API response from storage
+            const apiResponse = await this.storageService.get('apiResponse', 'local');
+            const apiStatus = await this.storageService.get('apiProcessingStatus', 'local');
+            
+            if (apiStatus === 'completed') {
+              // API processing complete
+              statusCallback(`Content processed successfully via API`, false);
+              // Handle completed API response - this would open the sidebar
+              this.handleApiResponseComplete(apiResponse);
+              return true;
+            } else if (apiStatus === 'error') {
+              // API processing error
+              statusCallback(`Error: API processing failed - ${apiResponse?.error || 'Unknown error'}`, false);
+              return false;
+            } else {
+              // Still processing
+              setTimeout(handleApiResponse, 1000); // Check again in 1 second
+            }
+          };
+          
+          // Start checking for API response
+          handleApiResponse();
+          return true;
+        } else {
+          // Regular mode - open AI platform
+          statusCallback(`Opening AI platform...`, true);
+          
+          // Close popup after delay
+          setTimeout(() => window.close(), 2000);
+          return true;
+        }
       } else {
         statusCallback(`Error: ${response?.error || 'Unknown error'}`, false);
         return false;
@@ -110,6 +146,91 @@ export default class SummarizeController {
       console.error('Summarize error:', error);
       statusCallback(`Error: ${error.message}`, false);
       return false;
+    }
+  }
+
+  /**
+   * Handle completed API response by activating the sidebar
+   * @param {Object} apiResponse - API response data
+   */
+  async handleApiResponseComplete(apiResponse) {
+    try {
+      // Get the current active tab
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tabs || tabs.length === 0) {
+        console.error('No active tab found');
+        return;
+      }
+      
+      const activeTab = tabs[0];
+
+      // Create conversation data from API response
+      const conversation = [];
+      
+      // Get the original prompt content
+      const { prePrompt } = await this.storageService.get('prePrompt', 'local') || {};
+      
+      // Get platform info
+      const { 
+        apiSummarizationPlatform,
+        selectedApiModel 
+      } = await this.storageService.get([
+        'apiSummarizationPlatform',
+        'selectedApiModel'
+      ], 'local') || {};
+      
+      // Get the original extracted content
+      const { extractedContent } = await this.storageService.get('extractedContent', 'local') || {};
+      
+      // Add user message (the prompt + content that was sent)
+      if (prePrompt && extractedContent) {
+        conversation.push({
+          role: 'user',
+          content: 'Content: [Extracted web content]\n\nInstructions: ' + prePrompt,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Add assistant response
+      if (apiResponse && apiResponse.success && apiResponse.content) {
+        conversation.push({
+          role: 'assistant',
+          content: apiResponse.content,
+          timestamp: new Date().toISOString(),
+          model: apiResponse.model
+        });
+      }
+      
+      // First inject the sidebar script if needed
+      await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        files: ['dist/sidebar-injector.bundle.js']
+      });
+      
+      // Wait a moment for script to initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Tell the sidebar-injector to show the sidebar with the conversation
+      await chrome.tabs.sendMessage(activeTab.id, {
+        action: 'showSidebar',
+        conversationData: conversation,
+        platformInfo: {
+          platformId: apiSummarizationPlatform || 'unknown',
+          platformName: apiSummarizationPlatform ? 
+            apiSummarizationPlatform.charAt(0).toUpperCase() + 
+            apiSummarizationPlatform.slice(1) : 'AI Platform',
+          modelId: selectedApiModel || apiResponse.model || 'unknown'
+        }
+      });
+      
+      // Store conversation for later reference
+      await this.storageService.set({
+        'sidebarConversation': conversation
+      }, 'local');
+      
+      console.log('Sidebar activated with API response');
+    } catch (error) {
+      console.error('Error activating sidebar:', error);
     }
   }
 }

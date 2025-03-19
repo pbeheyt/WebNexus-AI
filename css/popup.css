@@ -451,3 +451,146 @@ button.btn-summarize:disabled {
 .hidden {
   display: none;
 }
+
+/* API Mode Toggle styles */
+.api-mode-section {
+  margin: 10px 0;
+  padding: 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.api-mode-toggle-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.api-mode-toggle-label {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.api-mode-tooltip {
+  position: relative;
+  display: inline-flex;
+  margin-left: 5px;
+}
+
+.info-icon {
+  color: var(--color-secondary);
+  cursor: help;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-weight: normal;
+  font-size: 0.85em;
+}
+
+.api-mode-tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.toggle-switch-container {
+  position: relative;
+  width: 40px;
+  height: 20px;
+}
+
+.toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--toggle-bg-off);
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.toggle-switch:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.toggle-input:checked + .toggle-switch {
+  background-color: var(--color-primary);
+}
+
+.toggle-input:checked + .toggle-switch:before {
+  transform: translateX(20px);
+}
+
+/* Model Selector styles */
+.model-selector-group {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.model-selector-label {
+  font-size: 0.85em;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+}
+
+.model-selector-select {
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.9em;
+  width: 100%;
+}
+
+.no-models-message {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.85em;
+  padding: 4px 0;
+}
+
+/* CSS Variables (append to existing variables) */
+:root {
+  --toggle-bg-off: #ccc;
+  --tooltip-bg: #333;
+  --tooltip-text: #fff;
+}
+
+[data-theme="dark"] {
+  --toggle-bg-off: #444;
+  --tooltip-bg: #666;
+  --tooltip-text: #fff;
+}
