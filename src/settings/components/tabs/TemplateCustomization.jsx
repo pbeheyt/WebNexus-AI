@@ -257,15 +257,21 @@ const TemplateCustomization = () => {
   
   return (
     <div className="template-customization-container">
-      <div className="customize-header">
-        <h2 className="type-heading mb-4 pb-3 border-b border-theme text-lg font-medium">Customize Prompt Templates</h2>
-        <p className="section-description text-theme-secondary mb-4">
-          Customize the default prompt templates used by the extension. These templates are used when creating summaries.
-        </p>
-        <div className="template-actions flex justify-end">
+      <div className="customize-header mb-6">
+        <h2 className="type-heading mb-4 pb-3 border-b border-theme text-lg font-medium">
+          Customize Prompt Templates
+        </h2>
+        
+        <div className="flex justify-between items-center mb-4">
+          <p className="section-description text-theme-secondary max-w-3xl">
+            Customize the default prompt templates used by the extension. These templates 
+            are used when creating summaries.
+          </p>
+          
           <Button
             variant="danger"
             onClick={handleResetTemplates}
+            className="flex-shrink-0 ml-4"
           >
             Reset to Default
           </Button>
