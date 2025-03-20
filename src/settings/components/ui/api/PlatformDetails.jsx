@@ -199,6 +199,14 @@ const PlatformDetails = ({
             >
               Model Documentation
             </a>
+            <a 
+              href={platform.consoleApiLink || '#'} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="platform-link text-primary hover:underline text-sm"
+            >
+              API Console
+            </a>
           </div>
         </div>
       </div>

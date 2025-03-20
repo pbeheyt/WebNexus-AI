@@ -32,8 +32,8 @@ const ApiSettings = () => {
           name: platform.name,
           url: platform.url,
           iconUrl: chrome.runtime.getURL(platform.icon),
-          docUrl: platform.docLink || getDefaultDocUrl(id),
-          modelApiLink: platform.modelApiLink || getDefaultModelApiLink(id),
+          docUrl: platform.docLink || '#',
+          modelApiLink: platform.modelApiLink || '#',
           consoleApiLink: platform.consoleApiLink || '#',
           apiConfig: platform.api
         }));
@@ -70,32 +70,6 @@ const ApiSettings = () => {
     
     initialize();
   }, [error]);
-  
-  const getDefaultDocUrl = (platformId) => {
-    const docUrls = {
-      'claude': 'https://docs.anthropic.com/claude/reference/getting-started-with-the-api',
-      'chatgpt': 'https://platform.openai.com/docs/api-reference',
-      'gemini': 'https://ai.google.dev/docs',
-      'mistral': 'https://docs.mistral.ai/',
-      'deepseek': 'https://platform.deepseek.ai/',
-      'grok': 'https://x.ai/api-docs'
-    };
-    
-    return docUrls[platformId] || '#';
-  };
-  
-  const getDefaultModelApiLink = (platformId) => {
-    const modelUrls = {
-      'claude': 'https://docs.anthropic.com/claude/reference/models',
-      'chatgpt': 'https://platform.openai.com/docs/models',
-      'gemini': 'https://ai.google.dev/models/gemini',
-      'mistral': 'https://docs.mistral.ai/models/',
-      'deepseek': 'https://platform.deepseek.ai/docs/api/models',
-      'grok': 'https://x.ai/models'
-    };
-    
-    return modelUrls[platformId] || '#';
-  };
   
   const handleSelectPlatform = (platformId) => {
     setSelectedPlatformId(platformId);
