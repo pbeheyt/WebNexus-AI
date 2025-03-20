@@ -47,32 +47,62 @@ export function SidebarChatProvider({ children }) {
     }
   }, [currentTab?.url, resetExtraction]);
 
-  // Add listener for stream chunks
   useEffect(() => {
-    const handleStreamChunk = (message, sender) => {
+    const handleStreamChunk = (message) => {
       if (message.action === 'streamChunk' && streamingMessageId) {
         const { streamId, chunkData } = message;
 
-        // Process chunk
+        // Ensure chunkData is properly formatted
+        if (!chunkData) {
+          console.error('Invalid chunk data received:', message);
+          return;
+        }
+
+        // Process chunk content - ensure it's a string
+        const chunkContent = typeof chunkData.chunk === 'string'
+          ? chunkData.chunk
+          : (chunkData.chunk ? JSON.stringify(chunkData.chunk) : '');
+
         if (chunkData.done) {
-          // Streaming complete
+          // Streaming complete - CRITICAL: Update state to remove streaming indicator
           setStreamingMessageId(null);
           setIsProcessing(false);
+
+          // Get final content - either from fullContent or accumulated content
+          const finalContent = chunkData.fullContent || streamingContent;
 
           // Update final message content
           setMessages(prev => prev.map(msg =>
             msg.id === streamingMessageId
-              ? { ...msg, content: chunkData.fullContent || streamingContent }
+              ? {
+                  ...msg,
+                  content: finalContent,
+                  isStreaming: false, // Explicitly mark as not streaming
+                  model: chunkData.model || selectedModel
+                }
               : msg
           ));
-        } else {
+
+          // Save to history
+          try {
+            ChatHistoryService.saveHistory(currentPageUrl,
+              messages.map(msg =>
+                msg.id === streamingMessageId
+                  ? { ...msg, content: finalContent, isStreaming: false }
+                  : msg
+              )
+            );
+          } catch (err) {
+            console.error('Error saving chat history:', err);
+          }
+        } else if (chunkContent) {
           // Append chunk to streaming content
-          setStreamingContent(prev => prev + chunkData.chunk);
+          setStreamingContent(prev => prev + chunkContent);
 
           // Update message with current accumulated content
           setMessages(prev => prev.map(msg =>
             msg.id === streamingMessageId
-              ? { ...msg, content: prev + chunkData.chunk }
+              ? { ...msg, content: streamingContent + chunkContent }
               : msg
           ));
         }
@@ -85,7 +115,7 @@ export function SidebarChatProvider({ children }) {
     return () => {
       chrome.runtime.onMessage.removeListener(handleStreamChunk);
     };
-  }, [streamingMessageId, streamingContent]);
+  }, [streamingMessageId, streamingContent, messages, currentPageUrl, selectedModel]);
 
   // Send a message and get a response
   const sendMessage = async (text = inputValue) => {
@@ -118,7 +148,7 @@ export function SidebarChatProvider({ children }) {
       timestamp: new Date().toISOString()
     };
 
-    // Create placeholder for assistant response
+    // Create placeholder for assistant response with explicit streaming flag
     const assistantMessageId = `msg_${Date.now() + 1}`;
     const assistantMessage = {
       id: assistantMessageId,
@@ -126,7 +156,7 @@ export function SidebarChatProvider({ children }) {
       content: '', // Empty initially, will be streamed
       model: selectedModel,
       timestamp: new Date().toISOString(),
-      isStreaming: true
+      isStreaming: true // Explicit boolean flag
     };
 
     // Update UI with user message and assistant placeholder
@@ -163,7 +193,8 @@ export function SidebarChatProvider({ children }) {
           ? {
               ...msg,
               role: MESSAGE_ROLES.SYSTEM,
-              content: `Error: ${error.message || 'Failed to process request'}`
+              content: `Error: ${error.message || 'Failed to process request'}`,
+              isStreaming: false // Turn off streaming state
             }
           : msg
       ));

@@ -719,17 +719,21 @@ async function summarizeContentViaApi(params) {
 
     // Define the chunk handler
     const handleChunk = async (chunkData) => {
-      const { chunk, done, model } = chunkData;
-
+      // Ensure chunkData is properly formatted
+      if (!chunkData) return;
+      
+      const chunk = typeof chunkData.chunk === 'string' ? chunkData.chunk : '';
+      const done = !!chunkData.done; // Ensure boolean
+      
       if (chunk) {
         fullContent += chunk;
-
+        
         // Update storage with latest content
         await chrome.storage.local.set({
           streamContent: fullContent
         });
-
-        // Send to content script if this is from the sidebar
+        
+        // Send to content script
         if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
           try {
             chrome.tabs.sendMessage(tabId, {
@@ -738,32 +742,35 @@ async function summarizeContentViaApi(params) {
               chunkData: {
                 chunk,
                 done: false,
-                model
+                model: chunkData.model || modelToUse
               }
             });
           } catch (err) {
             // Ignore if content script isn't available
-            logger.background.warn('Error sending stream chunk to content script:', err);
+            logger.background.warn('Error sending stream chunk:', err);
           }
         }
       }
-
+      
+      // CRITICAL: Always send a final message when done, even if there's no new content
       if (done) {
-        // Final update with complete content
         const finalResponse = {
-          ...initialResponse,
+          success: true,
           status: 'completed',
           content: fullContent,
-          model: model || 'unknown'
+          model: chunkData.model || modelToUse,
+          platformId: effectivePlatformId,
+          timestamp: Date.now()
         };
-
+        
+        // Update final status in storage
         await chrome.storage.local.set({
           apiProcessingStatus: 'completed',
           apiResponse: finalResponse,
           apiResponseTimestamp: Date.now()
         });
-
-        // Send completion to content script
+        
+        // Ensure the completion message is sent
         if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
           try {
             chrome.tabs.sendMessage(tabId, {
@@ -771,13 +778,13 @@ async function summarizeContentViaApi(params) {
               streamId,
               chunkData: {
                 chunk: '',
-                done: true,
-                model,
+                done: true, // Explicitly mark as done
+                model: chunkData.model || modelToUse,
                 fullContent
               }
             });
           } catch (err) {
-            // Ignore if content script isn't available
+            logger.background.warn('Error sending stream completion:', err);
           }
         }
 
