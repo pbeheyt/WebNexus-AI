@@ -65,12 +65,22 @@ class TemplateService {
     return this.configManager.updateConfig(config => {
       const newConfig = { ...config };
       
+      let parameter;
       if (contentType === 'shared') {
-        if (newConfig.sharedParameters[parameterId]?.values?.[valueKey] !== undefined) {
-          newConfig.sharedParameters[parameterId].values[valueKey] = newValue;
+        parameter = newConfig.sharedParameters[parameterId];
+      } else {
+        parameter = newConfig.defaultPrompts[contentType]?.parameters?.[parameterId];
+      }
+      
+      if (parameter) {
+        // Ensure values object exists for list and checkbox types
+        if (['list', 'checkbox'].includes(parameter.type)) {
+          if (!parameter.values) {
+            parameter.values = {};
+          }
+          // Add or update the value regardless of whether it existed before
+          parameter.values[valueKey] = newValue;
         }
-      } else if (newConfig.defaultPrompts[contentType]?.parameters?.[parameterId]?.values?.[valueKey] !== undefined) {
-        newConfig.defaultPrompts[contentType].parameters[parameterId].values[valueKey] = newValue;
       }
       
       return newConfig;

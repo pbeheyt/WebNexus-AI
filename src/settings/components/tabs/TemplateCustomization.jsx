@@ -208,14 +208,32 @@ const TemplateCustomization = () => {
       }
       
       if (updates.values) {
+        // Get current parameter data to check existing values
+        const currentParams = await loadParametersForType(sectionId);
+        const parameter = currentParams.find(p => p.id === parameterId);
+        
         // For checkbox or list parameters with values object
         for (const [key, value] of Object.entries(updates.values)) {
-          await templateService.updateParameterValue(
-            sectionId === 'shared' ? 'shared' : sectionId,
-            parameterId,
-            key,
-            value
-          );
+          // Check if this is an existing value or a new one
+          const isExistingValue = parameter?.values && parameter.values[key] !== undefined;
+          
+          if (isExistingValue) {
+            // Update existing value
+            await templateService.updateParameterValue(
+              sectionId === 'shared' ? 'shared' : sectionId,
+              parameterId,
+              key,
+              value
+            );
+          } else {
+            // Add new value
+            await templateService.addParameterValue(
+              sectionId === 'shared' ? 'shared' : sectionId,
+              parameterId,
+              key,
+              value
+            );
+          }
         }
       }
       
