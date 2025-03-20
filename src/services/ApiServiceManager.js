@@ -2,6 +2,7 @@
 
 const ApiFactory = require('../api/api-factory');
 const CredentialManager = require('./CredentialManager');
+const ModelParameterService = require('./ModelParameterService');
 const logger = require('../utils/logger').service;
 
 /**
@@ -10,10 +11,11 @@ const logger = require('../utils/logger').service;
 class ApiServiceManager {
   constructor() {
     this.credentialManager = CredentialManager;
+    this.modelParameterService = ModelParameterService;
   }
 
   /**
-   * Process content through API
+   * Process content through API - now with centralized model selection
    * @param {string} platformId - Platform identifier
    * @param {Object} contentData - Extracted content data
    * @param {string} prompt - Formatted prompt
@@ -35,9 +37,15 @@ class ApiServiceManager {
         throw new Error(`API service not available for ${platformId}`);
       }
       
-      // Initialize and process
+      // Initialize API service
       await apiService.initialize(credentials);
-      return await apiService.process(contentData, prompt);
+      
+      // Use ModelParameterService to determine the model
+      const modelToUse = await this.modelParameterService.determineModelToUse(platformId);
+      logger.info(`Using model from ModelParameterService: ${modelToUse}`);
+      
+      // Process with determined model
+      return await apiService.process(contentData, prompt, modelToUse);
     } catch (error) {
       logger.error(`Error processing content through ${platformId} API:`, error);
       return {
@@ -97,42 +105,6 @@ class ApiServiceManager {
     } catch (error) {
       logger.error(`Error getting available models for ${platformId}:`, error);
       return null;
-    }
-  }
-
-  async processContent(platformId, contentData, prompt, model = null) {
-    try {
-      logger.info(`Processing content through ${platformId} API with model: ${model || 'default'}`);
-      
-      // Get credentials
-      const credentials = await this.credentialManager.getCredentials(platformId);
-      if (!credentials) {
-        throw new Error(`No API credentials found for ${platformId}`);
-      }
-      
-      // Create API service
-      const apiService = ApiFactory.createApiService(platformId);
-      if (!apiService) {
-        throw new Error(`API service not available for ${platformId}`);
-      }
-      
-      // Initialize and process with model if provided
-      await apiService.initialize(credentials);
-      
-      // Process with specified model if provided
-      if (model) {
-        return await apiService.process(contentData, prompt, model);
-      } else {
-        return await apiService.process(contentData, prompt);
-      }
-    } catch (error) {
-      logger.error(`Error processing content through ${platformId} API:`, error);
-      return {
-        success: false,
-        error: error.message,
-        platformId,
-        timestamp: new Date().toISOString()
-      };
     }
   }
 }

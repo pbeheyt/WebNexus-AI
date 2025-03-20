@@ -22,11 +22,14 @@ class MistralApiService extends BaseApiService {
     const endpoint = this.config?.endpoint || 'https://api.mistral.ai/v1/chat/completions';
     
     try {
-      this.logger.info(`Making Mistral API request with model: ${model}`);
+      // Use params.model if available (from sidebar selection), otherwise fall back to passed model
+      const modelToUse = params.model || model;
+      
+      this.logger.info(`Making Mistral API request with model: ${modelToUse}`);
       
       // Create the request payload
       const requestPayload = {
-        model: model
+        model: modelToUse // Use the determined model
       };
       
       // Add messages array with system prompt if available
@@ -84,7 +87,7 @@ class MistralApiService extends BaseApiService {
           responseId: responseData.id,
           finishReason: responseData.choices[0].finish_reason,
           parameters: {
-            modelUsed: model,
+            modelUsed: modelToUse,
             maxTokens: params.effectiveMaxTokens,
             temperature: params.supportsTemperature ? params.temperature : null,
             topP: params.supportsTopP ? params.topP : null

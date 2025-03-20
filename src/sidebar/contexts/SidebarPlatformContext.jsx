@@ -156,7 +156,6 @@ export function SidebarPlatformProvider({ children }) {
     await loadModels(platformId);
   };
   
-  // Select model
   const selectModel = async (modelId) => {
     if (modelId === selectedModel) return;
     
@@ -167,9 +166,11 @@ export function SidebarPlatformProvider({ children }) {
       await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
     
     const preferences = modelPreferences || {};
-    preferences[selectedPlatformId] = modelId;
+    preferences[selectedPlatformId] = modelId; // This is the correct format
     
     await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEBAR_MODEL]: preferences });
+    
+    console.log(`[Sidebar] Saved model selection for ${selectedPlatformId}: ${modelId}`);
   };
   
   return (

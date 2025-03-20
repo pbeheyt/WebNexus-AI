@@ -8,6 +8,7 @@ class ModelParameterService {
   constructor() {
     this.cachedConfig = null;
     this.STORAGE_KEY = 'api_advanced_settings';
+    this.SIDEBAR_MODEL_KEY = 'sidebar_model_preference';
   }
 
   /**
@@ -76,6 +77,78 @@ class ModelParameterService {
       console.error('Error getting user model settings:', error);
       return {};
     }
+  }
+
+  /**
+   * Get sidebar-selected model if available
+   * @param {string} platformId - Platform ID
+   * @returns {Promise<string|null>} Selected model or null
+   */
+  async getSidebarModelSelection(platformId) {
+    try {
+      const result = await chrome.storage.sync.get(this.SIDEBAR_MODEL_KEY);
+      const modelPreferences = result[this.SIDEBAR_MODEL_KEY] || {};
+      
+      // Check if a model is selected for this platform
+      if (modelPreferences[platformId]) {
+        const selectedModel = modelPreferences[platformId];
+        console.log(`[ModelParameterService] Found sidebar model selection for ${platformId}: ${selectedModel}`);
+        return selectedModel;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting sidebar model selection:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Determine which model to use based on all available sources
+   * @param {string} platformId - Platform ID
+   * @returns {Promise<string>} Model ID to use
+   */
+  async determineModelToUse(platformId) {
+    // Priority order:
+    // 1. Sidebar-selected model (if available)
+    // 2. User settings from advanced settings
+    // 3. Default model from platform config
+    
+    // Check for sidebar selection
+    const sidebarModel = await this.getSidebarModelSelection(platformId);
+    if (sidebarModel) {
+      console.log(`[ModelParameterService] Using sidebar-selected model: ${sidebarModel}`);
+      return sidebarModel;
+    }
+    
+    // Try to get user settings
+    const userSettings = await this.getUserModelSettings(platformId, null);
+    if (userSettings.model) {
+      console.log(`[ModelParameterService] Using model from user settings: ${userSettings.model}`);
+      return userSettings.model;
+    }
+    
+    // Fall back to default model from platform config
+    const config = await this.loadPlatformConfig();
+    const defaultModel = config?.aiPlatforms?.[platformId]?.api?.defaultModel;
+    
+    if (defaultModel) {
+      console.log(`[ModelParameterService] Using default model from config: ${defaultModel}`);
+      return defaultModel;
+    }
+    
+    // Fallback to hardcoded defaults
+    const defaults = {
+      'chatgpt': 'gpt-4o',
+      'claude': 'claude-3-7-sonnet-latest',
+      'gemini': 'gemini-1.5-flash',
+      'mistral': 'mistral-large-latest',
+      'deepseek': 'deepseek-chat',
+      'grok': 'grok-2-1212'
+    };
+    
+    console.log(`[ModelParameterService] Using fallback default model: ${defaults[platformId] || 'gpt-4o'}`);
+    return defaults[platformId] || 'gpt-4o';
   }
 
   /**
@@ -153,20 +226,22 @@ class ModelParameterService {
   /**
    * Resolve parameters for a specific model, combining defaults and user settings
    * @param {string} platformId - Platform ID
-   * @param {string} modelId - Model ID
    * @param {string} prompt - The prompt to send (for token calculations)
    * @returns {Promise<Object>} Resolved parameters
    */
-  async resolveParameters(platformId, modelId, prompt) {
+  async resolveParameters(platformId, prompt) {
     try {
-      // Get model config from platform config
-      const modelConfig = await this.getModelConfig(platformId, modelId);
+      // Determine which model to actually use (centralized model selection)
+      const modelToUse = await this.determineModelToUse(platformId);
+      
+      // Get model config from platform config for the resolved model
+      const modelConfig = await this.getModelConfig(platformId, modelToUse);
       if (!modelConfig) {
-        throw new Error(`Model configuration not found for ${modelId}`);
+        throw new Error(`Model configuration not found for ${modelToUse}`);
       }
       
       // Get user settings for this model
-      const userSettings = await this.getUserModelSettings(platformId, modelId);
+      const userSettings = await this.getUserModelSettings(platformId, modelToUse);
       
       // Start with model defaults
       const params = {
@@ -177,13 +252,10 @@ class ModelParameterService {
         tokenParameter: modelConfig.tokenParameter || 'max_tokens',
         contextWindow: modelConfig.contextWindow || 8192,
         supportsTemperature: modelConfig.supportsTemperature !== false,
-        supportsTopP: modelConfig.supportsTopP !== false
+        supportsTopP: modelConfig.supportsTopP !== false,
+        model: modelToUse // Add the resolved model to params
       };
       
-      console.log('modelConfig1', modelConfig);
-      console.log('params1', params);
-      console.log('userSettings', userSettings);
-
       // Override with user settings if provided
       if (userSettings.maxTokens !== undefined) params.maxTokens = userSettings.maxTokens;
       if (userSettings.contextWindow !== undefined) params.contextWindow = userSettings.contextWindow;
@@ -193,9 +265,6 @@ class ModelParameterService {
       // Add system prompt if provided
       if (userSettings.systemPrompt !== undefined) params.systemPrompt = userSettings.systemPrompt;
       
-      console.log('params2', params);
-
-
       // Calculate available completion tokens based on prompt size
       if (prompt) {
         params.effectiveMaxTokens = TokenCalculationService.calculateAvailableCompletionTokens(
@@ -207,7 +276,7 @@ class ModelParameterService {
         params.effectiveMaxTokens = params.maxTokens;
       }
       
-      console.log(`[ModelParameterService] Resolved parameters for ${platformId}/${modelId}:`, params);
+      console.log(`[ModelParameterService] Resolved parameters for ${platformId}/${modelToUse}:`, params);
       
       return params;
     } catch (error) {
@@ -222,7 +291,8 @@ class ModelParameterService {
         parameterStyle: 'standard',
         tokenParameter: 'max_tokens',
         supportsTemperature: true,
-        supportsTopP: true
+        supportsTopP: true,
+        model: await this.determineModelToUse(platformId) // Use determined model even in error case
       };
     }
   }

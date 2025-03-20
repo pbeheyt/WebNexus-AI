@@ -10,8 +10,8 @@ export function useApiProcess() {
   const [error, setError] = useState(null);
   
   const processContent = useCallback(async (prompt, extractedContent) => {
-    if (!selectedPlatformId || !selectedModel) {
-      setError('Missing platform or model selection');
+    if (!selectedPlatformId) {
+      setError('Missing platform selection');
       return null;
     }
     
@@ -28,12 +28,14 @@ export function useApiProcess() {
     setIsProcessing(true);
     setError(null);
     
+    console.log('Processing content:', extractedContent);
+    // Model selection is now handled by the background service
+
     try {
-      // Enhanced request to background script with source information
+      // Enhanced request to background script with source information, but no model
       const response = await chrome.runtime.sendMessage({
         action: 'sidebarApiProcess',
         platformId: selectedPlatformId,
-        model: selectedModel,
         prompt,
         extractedContent,
         url: extractedContent.pageUrl || (currentTab ? currentTab.url : window.location.href),
@@ -54,7 +56,7 @@ export function useApiProcess() {
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedPlatformId, selectedModel, hasCredentials, currentTab, contentType]);
+  }, [selectedPlatformId, hasCredentials, currentTab, contentType]);
   
   return {
     processContent,

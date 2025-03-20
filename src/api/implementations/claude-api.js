@@ -22,11 +22,14 @@ class ClaudeApiService extends BaseApiService {
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
     
     try {
-      this.logger.info(`Making Claude API request with model: ${model}`);
+      // Use params.model if available (from sidebar selection), otherwise fall back to passed model
+      const modelToUse = params.model || model;
+      
+      this.logger.info(`Making Claude API request with model: ${modelToUse}`);
       
       // Create the request payload with model-specific parameters
       const requestPayload = {
-        model: model,
+        model: modelToUse, // Use the determined model
         max_tokens: params.effectiveMaxTokens,
         messages: [
           { 
@@ -81,7 +84,7 @@ class ClaudeApiService extends BaseApiService {
         metadata: {
           responseId: responseData.id,
           parameters: {
-            modelUsed: model,
+            modelUsed: modelToUse,
             maxTokens: params.effectiveMaxTokens,
             temperature: params.temperature
           }

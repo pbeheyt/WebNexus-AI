@@ -267,25 +267,22 @@ ${formattedContent}`;
   }
 
   /**
-   * Process text with the API with model-specific parameters
+   * Process text with the API using centralized model selection
    * @param {string} text - Prompt text to process
    * @returns {Promise<Object>} API response
    */
   async _processWithApi(text) {
-    const { apiKey, model } = this.credentials;
-
-    // Determine which model to use (provided or default)
-    const platformConfig = this.config;
-    const defaultModel = platformConfig?.defaultModel || this._getDefaultModel();
-    const modelToUse = model || defaultModel;
+    const { apiKey } = this.credentials;
 
     try {
-      // Resolve model-specific parameters
+      // Get model and parameters from centralized ModelParameterService
       const params = await ModelParameterService.resolveParameters(
         this.platformId,
-        modelToUse,
         text
       );
+
+      // Extract model from the resolved parameters
+      const modelToUse = params.model;
 
       // Log parameters being used
       this.logger.info(`Using model ${modelToUse} with parameters:`, {
@@ -312,24 +309,6 @@ ${formattedContent}`;
    */
   async _processWithModel(text, model, apiKey, params) {
     throw new Error('_processWithModel must be implemented by subclasses');
-  }
-
-  /**
-   * Get default model for this platform
-   * @returns {string} Default model ID
-   */
-  _getDefaultModel() {
-    // Platform-specific defaults
-    const defaults = {
-      'chatgpt': 'gpt-4o',
-      'claude': 'claude-3-7-sonnet-latest',
-      'gemini': 'gemini-1.5-flash',
-      'mistral': 'mistral-large-latest',
-      'deepseek': 'deepseek-chat',
-      'grok': 'grok-2-1212'
-    };
-
-    return defaults[this.platformId] || 'gpt-4o';
   }
 
   /**

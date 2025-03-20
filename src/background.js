@@ -562,6 +562,7 @@ async function summarizeContent(params) {
 /**
  * Summarize content via API - source-aware
  */
+// Replace the summarizeContentViaApi function with this version
 async function summarizeContentViaApi(params) {
   const {
     tabId,
@@ -572,7 +573,7 @@ async function summarizeContentViaApi(params) {
     testMode = true,
     testContent = null,
     source = INTERFACE_SOURCES.POPUP,
-    model = null
+    customPrompt = null
   } = params;
 
   try {
@@ -596,8 +597,6 @@ async function summarizeContentViaApi(params) {
         extractedContent = testContent;
         logger.background.info('extractedContent type for API testing', { extractedContent });
       } else {
-        logger.background.info('on est la');
-
         // Import your test harness or access it from a global
         const apiTestHarness = require('./api/api-test-utils');
         const contentType = determineContentType(url, hasSelection);
@@ -654,8 +653,13 @@ async function summarizeContentViaApi(params) {
     }
 
     // 4. Get the prompt
-    const effectivePromptId = promptId || await getPreferredPromptId(extractedContent.contentType);
-    const promptContent = await getPromptContentById(effectivePromptId, extractedContent.contentType);
+    let promptContent;
+    if (customPrompt) {
+      promptContent = customPrompt;
+    } else {
+      const effectivePromptId = promptId || await getPreferredPromptId(extractedContent.contentType);
+      promptContent = await getPromptContentById(effectivePromptId, extractedContent.contentType);
+    }
 
     if (!promptContent) {
       throw new Error(`Prompt not found for ID: ${effectivePromptId}`);
@@ -675,12 +679,13 @@ async function summarizeContentViaApi(params) {
       apiSummarizationTimestamp: Date.now()
     });
 
-    // 8. Process with API
+    logger.background.info(`Using prompt ID: ${promptId}, platform: ${effectivePlatformId}`);
+    
+    // 8. Process with API (model is now determined in ApiServiceManager)
     const apiResponse = await ApiServiceManager.processContent(
       effectivePlatformId,
       extractedContent,
-      promptContent,
-      model // Pass model parameter from request
+      promptContent
     );
 
     // 9. Store the response
@@ -730,7 +735,6 @@ async function summarizeContentViaApi(params) {
     };
   }
 }
-
 
 /**
  * Handle context menu click - now uses the centralized summarizeContent function
@@ -1170,22 +1174,22 @@ if (message.action === 'getApiResponse') {
     return true; // Keep channel open for async response
   }
 
+  // Handle sidebar API process request - updated to remove model dependency
   if (message.action === 'sidebarApiProcess') {
     (async () => {
       try {
-        // Extract all required parameters for API processing
+        // Extract all required parameters for API processing (model removed)
         const {
           platformId,
-          model,
           prompt,
           extractedContent,
           url,
           tabId
         } = message;
         
-        logger.background.info(`Processing sidebar API request: platform=${platformId}, model=${model}`);
+        logger.background.info(`Processing sidebar API request: platform=${platformId}`);
         
-        // Call API function with sidebar source
+        // Call API function with sidebar source, no model parameter
         const result = await summarizeContentViaApi({
           tabId,
           url,
@@ -1194,7 +1198,6 @@ if (message.action === 'getApiResponse') {
           testContent: extractedContent,
           useApi: true,
           source: INTERFACE_SOURCES.SIDEBAR,
-          model: model,
           customPrompt: prompt
         });
         

@@ -19,17 +19,20 @@ class GeminiApiService extends BaseApiService {
    * @returns {Promise<Object>} API response
    */
   async _processWithModel(text, model, apiKey, params) {
+    // Use params.model if available (from sidebar selection), otherwise fall back to passed model
+    const modelToUse = params.model || model;
+    
     // Get endpoint from config or use default
     let endpoint = this.config?.endpoint || 
-                   `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
+                   `https://generativelanguage.googleapis.com/v1/models/${modelToUse}:generateContent`;
 
     // Replace {model} placeholder if present
     if (endpoint.includes('{model}')) {
-      endpoint = endpoint.replace('{model}', model);
+      endpoint = endpoint.replace('{model}', modelToUse);
     }
 
     try {
-      this.logger.info(`Making Gemini API request with model: ${model}`);
+      this.logger.info(`Making Gemini API request with model: ${modelToUse}`);
 
       // Gemini API uses API key as a query parameter
       const url = new URL(endpoint);
@@ -97,7 +100,7 @@ class GeminiApiService extends BaseApiService {
       return {
         success: true,
         content: content,
-        model: model,
+        model: modelToUse,
         platformId: this.platformId,
         timestamp: new Date().toISOString(),
         usage: responseData.usageMetadata,
@@ -105,7 +108,7 @@ class GeminiApiService extends BaseApiService {
           responseId: responseData.candidates[0].finishReason,
           safetyRatings: responseData.candidates[0].safetyRatings,
           parameters: {
-            modelUsed: model,
+            modelUsed: modelToUse,
             maxTokens: params.effectiveMaxTokens,
             temperature: params.supportsTemperature ? params.temperature : null,
             topP: params.supportsTopP ? params.topP : null
