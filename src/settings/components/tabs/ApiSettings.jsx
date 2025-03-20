@@ -13,9 +13,10 @@ const ApiSettings = () => {
   const [credentials, setCredentials] = useState({});
   const [advancedSettings, setAdvancedSettings] = useState({});
   
+  // Load initial data only once or when explicitly needed
   useEffect(() => {
     const initialize = async () => {
-      setIsLoading(true);
+      if (!isLoading) return; // Prevent unnecessary re-initialization
       
       try {
         // Load platform config
@@ -52,8 +53,8 @@ const ApiSettings = () => {
         
         setCredentials(loadedCredentials);
         
-        // Set first platform as selected by default
-        if (platformList.length > 0) {
+        // Set first platform as selected ONLY if no platform is currently selected
+        if (selectedPlatformId === null && platformList.length > 0) {
           setSelectedPlatformId(platformList[0].id);
         }
         
@@ -69,14 +70,14 @@ const ApiSettings = () => {
     };
     
     initialize();
-  }, [error]);
+  }, [isLoading, error, selectedPlatformId]);
   
   const handleSelectPlatform = (platformId) => {
     setSelectedPlatformId(platformId);
   };
   
   const handleCredentialsUpdated = (platformId, newCredentials) => {
-    // Update local state
+    // Update local state without changing selected platform
     setCredentials(prev => ({
       ...prev,
       [platformId]: newCredentials
@@ -84,7 +85,7 @@ const ApiSettings = () => {
   };
   
   const handleCredentialsRemoved = (platformId) => {
-    // Update local state
+    // Update local state without changing selected platform
     setCredentials(prev => {
       const updated = { ...prev };
       delete updated[platformId];
@@ -105,6 +106,7 @@ const ApiSettings = () => {
       }
       
       if (!modelId || modelId === 'default') {
+        // Update default settings
         updated[platformId].default = {
           ...updated[platformId].default,
           ...settings
@@ -114,6 +116,7 @@ const ApiSettings = () => {
           updated[platformId].models = {};
         }
         
+        // Update model-specific settings
         updated[platformId].models[modelId] = {
           ...updated[platformId].models?.[modelId] || {},
           ...settings
@@ -122,6 +125,11 @@ const ApiSettings = () => {
       
       return updated;
     });
+  };
+  
+  // Force refresh method to explicitly reload data when needed
+  const refreshData = () => {
+    setIsLoading(true);
   };
   
   // Show loading state
@@ -155,12 +163,14 @@ const ApiSettings = () => {
         
         {selectedPlatform ? (
           <PlatformDetails
+            key={selectedPlatform.id} // Add key to force re-mount when platform changes
             platform={selectedPlatform}
             credentials={credentials[selectedPlatformId]}
             advancedSettings={advancedSettings[selectedPlatformId] || {}}
             onCredentialsUpdated={handleCredentialsUpdated}
             onCredentialsRemoved={handleCredentialsRemoved}
             onAdvancedSettingsUpdated={handleAdvancedSettingsUpdated}
+            refreshData={refreshData}
           />
         ) : (
           <div className="platform-details-panel flex-1 bg-theme-surface p-8 text-center text-theme-secondary rounded-lg border border-theme">

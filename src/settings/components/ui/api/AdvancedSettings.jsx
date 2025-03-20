@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../../common/Button';
 import { useNotification } from '../../../contexts/NotificationContext';
 
@@ -59,7 +59,7 @@ const AdvancedSettings = ({
   
   const defaultSettings = getDefaultSettings();
   
-  // Form state
+  // Form state with proper initialization
   const [formValues, setFormValues] = useState({
     maxTokens: settings.maxTokens || defaultSettings.maxTokens,
     temperature: settings.temperature || defaultSettings.temperature,
@@ -67,6 +67,20 @@ const AdvancedSettings = ({
     contextWindow: settings.contextWindow || defaultSettings.contextWindow,
     systemPrompt: settings.systemPrompt || ''
   });
+  
+  // Update form values when selected model or settings change
+  useEffect(() => {
+    const currentSettings = getModelSettings();
+    const modelDefaults = getDefaultSettings();
+    
+    setFormValues({
+      maxTokens: currentSettings.maxTokens || modelDefaults.maxTokens,
+      temperature: currentSettings.temperature !== undefined ? currentSettings.temperature : modelDefaults.temperature,
+      topP: currentSettings.topP !== undefined ? currentSettings.topP : modelDefaults.topP,
+      contextWindow: currentSettings.contextWindow || modelDefaults.contextWindow,
+      systemPrompt: currentSettings.systemPrompt || ''
+    });
+  }, [selectedModelId, advancedSettings]);
   
   const handleChange = (e) => {
     const { name, value } = e.target;

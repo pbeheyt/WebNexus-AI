@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNotification } from '../../../contexts/NotificationContext';
 import Button from '../../common/Button';
 import AdvancedSettings from './AdvancedSettings';
@@ -12,22 +12,33 @@ const PlatformDetails = ({
   advancedSettings,
   onCredentialsUpdated,
   onCredentialsRemoved,
-  onAdvancedSettingsUpdated
+  onAdvancedSettingsUpdated,
+  refreshData
 }) => {
   const { success, error } = useNotification();
-  const [apiKey, setApiKey] = useState(credentials?.apiKey || '');
+  const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
-  const [isTestingKey, setIsTestingKey] = useState(false);
-  const [testResult, setTestResult] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState(
     platform.apiConfig?.models?.length > 0 ? platform.apiConfig.models[0].id : 'default'
   );
+  
+  // Synchronize API key state with platform credentials when platform changes
+  useEffect(() => {
+    if (credentials?.apiKey) {
+      setApiKey(credentials.apiKey);
+    } else {
+      setApiKey('');
+    }
+  }, [platform.id, credentials]);
   
   const handleSaveCredentials = async () => {
     if (!apiKey.trim()) {
       error('API key cannot be empty');
       return;
     }
+    
+    setIsSaving(true);
     
     try {
       // Create credentials object
@@ -36,10 +47,17 @@ const PlatformDetails = ({
         model: selectedModelId
       };
       
-      // Simple validation can be enhanced based on platform requirements
-      // For now, just check if the key has a reasonable length
-      if (apiKey.length < 10) {
-        error('API key seems too short. Please check your key.');
+      // Validate the API key before saving
+      const credentialManager = await import('../../../../services/CredentialManager')
+        .then(module => module.default || module);
+      
+      const validationResult = await credentialManager.validateCredentials(
+        platform.id,
+        newCredentials
+      );
+      
+      if (!validationResult.isValid) {
+        error(`Invalid API key: ${validationResult.message}`);
         return;
       }
       
@@ -53,6 +71,8 @@ const PlatformDetails = ({
     } catch (err) {
       console.error('Error saving API key:', err);
       error(`Failed to save API key: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -70,40 +90,6 @@ const PlatformDetails = ({
     } catch (err) {
       console.error('Error removing API key:', err);
       error(`Failed to remove API key: ${err.message}`);
-    }
-  };
-  
-  const handleTestApiKey = async () => {
-    if (!apiKey.trim()) {
-      error('API key cannot be empty');
-      return;
-    }
-    
-    setIsTestingKey(true);
-    setTestResult(null);
-    
-    try {
-      // Simple validation for now
-      // In a real implementation, you would use the API service to test the key
-      if (apiKey.length < 10) {
-        throw new Error('API key seems too short');
-      }
-      
-      // Simulate API test
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTestResult({
-        success: true,
-        message: 'API key is valid'
-      });
-    } catch (err) {
-      console.error('Error testing API key:', err);
-      setTestResult({
-        success: false,
-        message: `Invalid API key: ${err.message}`
-      });
-    } finally {
-      setIsTestingKey(false);
     }
   };
   
@@ -140,7 +126,7 @@ const PlatformDetails = ({
         
         // Update model-specific settings
         currentSettings[platform.id].models[modelId] = {
-          ...currentSettings[platform.id].models[modelId] || {},
+          ...currentSettings[platform.id].models?.[modelId] || {},
           ...settings
         };
       }
@@ -215,37 +201,31 @@ const PlatformDetails = ({
       <div className="settings-section bg-theme-surface p-5 rounded-lg border border-theme mb-6">
         <h4 className="section-subtitle text-lg font-medium mb-4">API Credentials</h4>
         
-        <div className="form-group mb-4 relative">
+        <div className="form-group mb-4">
           <label 
             htmlFor={`${platform.id}-api-key`}
             className="block mb-2 text-sm font-medium text-theme-secondary"
           >
             API Key:
           </label>
-          <input
-            type={showApiKey ? 'text' : 'password'}
-            id={`${platform.id}-api-key`}
-            className="api-key-input w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md font-mono"
-            placeholder="Enter your API key"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-          />
-          <button
-            type="button"
-            className="show-key-toggle absolute right-3 top-9 text-primary"
-            onClick={() => setShowApiKey(!showApiKey)}
-          >
-            {showApiKey ? 'Hide' : 'Show'}
-          </button>
-        </div>
-        
-        {testResult && (
-          <div className={`status-message p-3 rounded-md mb-4 ${
-            testResult.success ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
-          }`}>
-            {testResult.message}
+          <div className="relative flex items-center">
+            <input
+              type={showApiKey ? 'text' : 'password'}
+              id={`${platform.id}-api-key`}
+              className="api-key-input w-full p-2 pr-16 bg-theme-surface text-theme-primary border border-theme rounded-md font-mono"
+              placeholder={credentials?.apiKey ? "••••••••••••••••••••••••••" : "Enter your API key"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+            />
+            <button
+              type="button"
+              className="show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-theme-surface rounded"
+              onClick={() => setShowApiKey(!showApiKey)}
+            >
+              {showApiKey ? 'Hide' : 'Show'}
+            </button>
           </div>
-        )}
+        </div>
         
         <div className="form-actions flex justify-end gap-3">
           {credentials && (
@@ -258,17 +238,10 @@ const PlatformDetails = ({
           )}
           
           <Button
-            variant="secondary"
-            onClick={handleTestApiKey}
-            disabled={isTestingKey}
-          >
-            {isTestingKey ? 'Testing...' : 'Test Key'}
-          </Button>
-          
-          <Button
             onClick={handleSaveCredentials}
+            disabled={isSaving}
           >
-            {credentials ? 'Update Key' : 'Save Key'}
+            {isSaving ? 'Saving...' : (credentials ? 'Update Key' : 'Save Key')}
           </Button>
         </div>
       </div>
