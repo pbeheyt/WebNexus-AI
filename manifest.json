@@ -70,7 +70,10 @@
         "images/*.png",
         "api-test.html", 
         "api-test.js",
-        "model-test.html"
+        "model-test.html",
+        "sidebar.html",
+        "sidebar.css", 
+        "sidebar.bundle.js"
       ],
       "matches": ["<all_urls>"]
     }

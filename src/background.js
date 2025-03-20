@@ -8,6 +8,7 @@ import configManager from './services/ConfigManager.js';
 import promptBuilder from './services/PromptBuilder.js';
 const ApiServiceManager = require('./services/ApiServiceManager');
 const CredentialManager = require('./services/CredentialManager');
+const sidebarStateManager = require('./services/SidebarStateManager');
 
 
 // Import logger utility
@@ -20,6 +21,7 @@ async function initializeConfiguration() {
   try {
     // Initialize configuration
     await configManager.initialize();
+    sidebarStateManager.initialize();
     logger.background.info('Configuration initialized');
   } catch (error) {
     logger.background.error('Error initializing configuration:', error);
@@ -1121,6 +1123,22 @@ if (message.action === 'getApiResponse') {
   })();
   return true; // Keep channel open for async response
   }
+
+  // Handle sidebar toggle request
+  if (message.action === 'toggleSidebar') {
+    (async () => {
+      try {
+        const sidebarManager = require('./services/SidebarStateManager');
+        const result = await sidebarManager._handleToggleSidebar(message, sender, sendResponse);
+        sendResponse(result);
+      } catch (error) {
+        logger.background.error('Error handling sidebar toggle:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
+
 });
 
 // Listen for configuration changes
