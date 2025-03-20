@@ -10,6 +10,7 @@ const SettingsForm = ({
   const { success } = useNotification();
   const [formValues, setFormValues] = useState(settings);
   const [savingField, setSavingField] = useState(null);
+  const [changedFields, setChangedFields] = useState({});
   
   const handleInputChange = (key, value) => {
     // Handle numeric inputs
@@ -22,9 +23,17 @@ const SettingsForm = ({
       ...prev,
       [key]: value
     }));
+    
+    // Track which fields have changes
+    setChangedFields(prev => ({
+      ...prev,
+      [key]: value !== settings[key]
+    }));
   };
   
-  const handleSave = async (key) => {
+  const handleUpdate = async (key) => {
+    if (!changedFields[key]) return;
+    
     setSavingField(key);
     
     const field = fields.find(f => f.key === key);
@@ -41,6 +50,10 @@ const SettingsForm = ({
     
     if (result) {
       success(`Updated ${field.label.replace(':', '')}`);
+      setChangedFields(prev => ({
+        ...prev,
+        [key]: false
+      }));
     }
     
     setSavingField(null);
@@ -70,13 +83,13 @@ const SettingsForm = ({
           )}
           
           <Button
-            variant="secondary"
+            variant={changedFields[field.key] ? "primary" : "inactive"}
             size="sm"
             className="ml-3"
-            onClick={() => handleSave(field.key)}
-            disabled={savingField === field.key}
+            onClick={() => handleUpdate(field.key)}
+            disabled={!changedFields[field.key] || savingField === field.key}
           >
-            {savingField === field.key ? 'Saving...' : 'Save'}
+            {savingField === field.key ? 'Updating...' : 'Update'}
           </Button>
           
           {field.helpText && (
