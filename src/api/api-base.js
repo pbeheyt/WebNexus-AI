@@ -300,6 +300,40 @@ ${formattedContent}`;
   }
 
   /**
+   * Process text with the API using centralized model selection with streaming support
+   * @param {string} text - Prompt text to process
+   * @param {function} onChunk - Callback function for receiving text chunks
+   * @returns {Promise<Object>} API response metadata
+   */
+  async _processWithApiStreaming(text, onChunk) {
+    const { apiKey } = this.credentials;
+
+    try {
+      // Get model and parameters from centralized ModelParameterService
+      const params = await ModelParameterService.resolveParameters(
+        this.platformId,
+        text
+      );
+
+      // Extract model from the resolved parameters
+      const modelToUse = params.model;
+
+      // Log parameters being used
+      this.logger.info(`Using model ${modelToUse} for streaming with parameters:`, {
+        effectiveMaxTokens: params.effectiveMaxTokens,
+        temperature: params.temperature,
+        parameterStyle: params.parameterStyle
+      });
+
+      // Each implementation must handle the streaming appropriately
+      return this._processWithModelStreaming(text, modelToUse, apiKey, params, onChunk);
+    } catch (error) {
+      this.logger.error('Error in _processWithApiStreaming:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Process with model-specific parameters
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
@@ -310,6 +344,20 @@ ${formattedContent}`;
   async _processWithModel(text, model, apiKey, params) {
     throw new Error('_processWithModel must be implemented by subclasses');
   }
+
+  /**
+   * Process with model-specific parameters with streaming support
+   * @param {string} text - Prompt text
+   * @param {string} model - Model ID to use
+   * @param {string} apiKey - API key
+   * @param {Object} params - Resolved parameters
+   * @param {function} onChunk - Callback function for receiving text chunks
+   * @returns {Promise<Object>} API response metadata
+   */
+  async _processWithModelStreaming(text, model, apiKey, params, onChunk) {
+    throw new Error('_processWithModelStreaming must be implemented by subclasses');
+  }
+
 
   /**
    * Create a logger instance

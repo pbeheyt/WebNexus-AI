@@ -560,9 +560,8 @@ async function summarizeContent(params) {
 }
 
 /**
- * Summarize content via API - source-aware
+ * Summarize content via API with streaming support - source-aware
  */
-// Replace the summarizeContentViaApi function with this version
 async function summarizeContentViaApi(params) {
   const {
     tabId,
@@ -577,7 +576,7 @@ async function summarizeContentViaApi(params) {
   } = params;
 
   try {
-    logger.background.info(`Starting API-based summarization from ${source}`, params);
+    logger.background.info(`Starting API-based summarization with streaming from ${source}`, params);
 
     // 1. Reset previous state
     await chrome.storage.local.set({
@@ -634,7 +633,7 @@ async function summarizeContentViaApi(params) {
       }
     }
 
-    // YouTube transcript error check (similar to existing code)
+    // YouTube transcript error check
     if (extractedContent.contentType === CONTENT_TYPES.YOUTUBE) {
       if (extractedContent?.error &&
           extractedContent?.transcript &&
@@ -667,7 +666,7 @@ async function summarizeContentViaApi(params) {
 
     // 5. Determine platform to use - source-aware
     const effectivePlatformId = platformId || await getPreferredAiPlatform(source);
-    
+
     // 6. Verify credentials
     await verifyApiCredentials(effectivePlatformId);
 
@@ -680,33 +679,132 @@ async function summarizeContentViaApi(params) {
     });
 
     logger.background.info(`Using prompt ID: ${promptId}, platform: ${effectivePlatformId}`);
-    
-    // 8. Process with API (model is now determined in ApiServiceManager)
+
+    // Generate a unique stream ID for this request
+    const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    // Store initial response information
+    const initialResponse = {
+      success: true,
+      streamId,
+      status: 'streaming',
+      platformId: effectivePlatformId,
+      timestamp: Date.now(),
+      content: '' // Will be populated as streaming progresses
+    };
+
+    await chrome.storage.local.set({
+      apiProcessingStatus: 'streaming',
+      apiResponse: initialResponse,
+      streamContent: '',
+      streamId
+    });
+
+    // Notify the content script about streaming start if this is from the sidebar
+    if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+      try {
+        chrome.tabs.sendMessage(tabId, {
+          action: 'streamStart',
+          streamId,
+          platformId: effectivePlatformId
+        });
+      } catch (err) {
+        // Ignore if content script isn't available
+        logger.background.warn('Error notifying content script about stream start:', err);
+      }
+    }
+
+    // 8. Process with API using streaming
+    let fullContent = '';
+
+    // Define the chunk handler
+    const handleChunk = async (chunkData) => {
+      const { chunk, done, model } = chunkData;
+
+      if (chunk) {
+        fullContent += chunk;
+
+        // Update storage with latest content
+        await chrome.storage.local.set({
+          streamContent: fullContent
+        });
+
+        // Send to content script if this is from the sidebar
+        if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+          try {
+            chrome.tabs.sendMessage(tabId, {
+              action: 'streamChunk',
+              streamId,
+              chunkData: {
+                chunk,
+                done: false,
+                model
+              }
+            });
+          } catch (err) {
+            // Ignore if content script isn't available
+            logger.background.warn('Error sending stream chunk to content script:', err);
+          }
+        }
+      }
+
+      if (done) {
+        // Final update with complete content
+        const finalResponse = {
+          ...initialResponse,
+          status: 'completed',
+          content: fullContent,
+          model: model || 'unknown'
+        };
+
+        await chrome.storage.local.set({
+          apiProcessingStatus: 'completed',
+          apiResponse: finalResponse,
+          apiResponseTimestamp: Date.now()
+        });
+
+        // Send completion to content script
+        if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+          try {
+            chrome.tabs.sendMessage(tabId, {
+              action: 'streamChunk',
+              streamId,
+              chunkData: {
+                chunk: '',
+                done: true,
+                model,
+                fullContent
+              }
+            });
+          } catch (err) {
+            // Ignore if content script isn't available
+          }
+        }
+
+        // Notify the popup if open
+        try {
+          chrome.runtime.sendMessage({
+            action: 'apiResponseReady',
+            response: finalResponse
+          });
+        } catch (error) {
+          // Ignore if popup isn't open
+        }
+      }
+    };
+
+    // Process with API using streaming
     const apiResponse = await ApiServiceManager.processContent(
       effectivePlatformId,
       extractedContent,
-      promptContent
+      promptContent,
+      handleChunk // Pass chunk handler callback
     );
 
-    // 9. Store the response
-    await chrome.storage.local.set({
-      apiProcessingStatus: apiResponse.success ? 'completed' : 'error',
-      apiResponse: apiResponse,
-      apiResponseTimestamp: Date.now()
-    });
-
-    // 10. Notify the popup if open
-    try {
-      chrome.runtime.sendMessage({
-        action: apiResponse.success ? 'apiResponseReady' : 'apiProcessingError',
-        response: apiResponse
-      });
-    } catch (error) {
-      // Ignore if popup isn't open
-    }
-
+    // If we get here without an error, streaming completed successfully
     return {
-      success: apiResponse.success,
+      success: true,
+      streamId,
       response: apiResponse,
       contentType: extractedContent.contentType
     };
@@ -735,6 +833,7 @@ async function summarizeContentViaApi(params) {
     };
   }
 }
+
 
 /**
  * Handle context menu click - now uses the centralized summarizeContent function
@@ -1212,6 +1311,62 @@ if (message.action === 'getApiResponse') {
     })();
     return true; // Keep channel open for async response
   }
+
+  // // Handler for API-based streaming summarization
+  // if (message.action === 'sidebarApiProcessStreaming') {
+  //   (async () => {
+  //     try {
+  //       // Extract parameters from message
+  //       const {
+  //         platformId,
+  //         prompt,
+  //         extractedContent,
+  //         url,
+  //         tabId
+  //       } = message;
+        
+  //       logger.background.info(`Processing sidebar API streaming request: platform=${platformId}`);
+        
+  //       // Get API service for this platform
+  //       const apiService = await ApiServiceManager.getApiService(platformId);
+  //       if (!apiService) {
+  //         throw new Error(`API service not available for ${platformId}`);
+  //       }
+        
+  //       // Initialize the API service (with credentials)
+  //       const credentials = await CredentialManager.getCredentials(platformId);
+  //       await apiService.initialize(credentials);
+        
+  //       // Create unique stream ID for this request
+  //       const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        
+  //       // Send initial response with stream ID
+  //       sendResponse({
+  //         success: true,
+  //         streamId,
+  //         status: 'streaming_started'
+  //       });
+        
+  //       // Process with streaming enabled and send chunks back to sidebar
+  //       await apiService._processWithApiStreaming(prompt, (chunkData) => {
+  //         // Send each chunk back to sidebar via message
+  //         chrome.tabs.sendMessage(tabId, {
+  //           action: 'streamChunk',
+  //           streamId,
+  //           chunkData
+  //         });
+  //       });
+        
+  //     } catch (error) {
+  //       logger.background.error('Error in API streaming:', error);
+  //       sendResponse({
+  //         success: false,
+  //         error: error.message
+  //       });
+  //     }
+  //   })();
+  //   return true; // Keep channel open for async response
+  // }
 
 });
 

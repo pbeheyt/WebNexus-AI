@@ -15,15 +15,16 @@ class ApiServiceManager {
   }
 
   /**
-   * Process content through API - now with centralized model selection
+   * Process content through API with streaming as the core functionality
    * @param {string} platformId - Platform identifier
    * @param {Object} contentData - Extracted content data
    * @param {string} prompt - Formatted prompt
+   * @param {Function} [onChunk] - Optional callback for stream chunks
    * @returns {Promise<Object>} API response
    */
-  async processContent(platformId, contentData, prompt) {
+  async processContent(platformId, contentData, prompt, onChunk = null) {
     try {
-      logger.info(`Processing content through ${platformId} API`);
+      logger.info(`Processing content through ${platformId} API with streaming enabled`);
       
       // Get credentials
       const credentials = await this.credentialManager.getCredentials(platformId);
@@ -44,8 +45,17 @@ class ApiServiceManager {
       const modelToUse = await this.modelParameterService.determineModelToUse(platformId);
       logger.info(`Using model from ModelParameterService: ${modelToUse}`);
       
-      // Process with determined model
-      return await apiService.process(contentData, prompt, modelToUse);
+      // Process with streaming or fallback to non-streaming
+      if (onChunk) {
+        // Format content for structured prompt
+        const formattedContent = apiService._formatContent(contentData);
+        const structuredPrompt = apiService._createStructuredPrompt(prompt, formattedContent);
+        
+        return await apiService._processWithApiStreaming(structuredPrompt, onChunk);
+      } else {
+        // Use regular process method for backward compatibility
+        return await apiService.process(contentData, prompt, modelToUse);
+      }
     } catch (error) {
       logger.error(`Error processing content through ${platformId} API:`, error);
       return {
