@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../../common/Button';
 import { useNotification } from '../../../contexts/NotificationContext';
 import ValueEditor from './ValueEditor';
@@ -18,6 +18,16 @@ const ParameterEditor = ({
   const [showAddValueModal, setShowAddValueModal] = useState(false);
   const [newValueData, setNewValueData] = useState({ key: '', value: '' });
   const [valueErrors, setValueErrors] = useState({});
+  
+  // Move these hooks from renderSingleValue to the component top level
+  const [singleValue, setSingleValue] = useState(parameter.value || '');
+  const [hasChanges, setHasChanges] = useState(false);
+  
+  // Update singleValue when parameter.value changes
+  useEffect(() => {
+    setSingleValue(parameter.value || '');
+    setHasChanges(false);
+  }, [parameter.value]);
   
   // Handle parameter name change
   const handleNameChange = async () => {
@@ -152,6 +162,18 @@ const ParameterEditor = ({
     } catch (err) {
       error('Failed to add value');
     }
+  };
+  
+  // Handle single value change
+  const handleSingleValueChange = (e) => {
+    setSingleValue(e.target.value);
+    setHasChanges(e.target.value !== parameter.value);
+  };
+  
+  // Update single value
+  const updateSingleValue = () => {
+    handleValueChange('value', singleValue);
+    setHasChanges(false);
   };
   
   // Render the add value modal
@@ -304,21 +326,8 @@ const ParameterEditor = ({
     );
   };
   
-  // Render single-type value
+  // Render single-type value - FIXED: No longer declares state variables
   const renderSingleValue = () => {
-    const [singleValue, setSingleValue] = useState(parameter.value || '');
-    const [hasChanges, setHasChanges] = useState(false);
-    
-    const handleSingleValueChange = (e) => {
-      setSingleValue(e.target.value);
-      setHasChanges(e.target.value !== parameter.value);
-    };
-    
-    const updateSingleValue = () => {
-      handleValueChange('value', singleValue);
-      setHasChanges(false);
-    };
-    
     return (
       <div className="values-section mt-4">
         <h4 className="text-sm font-medium mb-2">Instruction Value:</h4>
@@ -331,11 +340,12 @@ const ParameterEditor = ({
         
         <Button
           size="sm"
+          variant={hasChanges ? "primary" : "inactive"}
           className="mt-2"
           onClick={updateSingleValue}
           disabled={!hasChanges}
         >
-          {hasChanges ? "Update" : "No Changes"}
+          Update
         </Button>
       </div>
     );

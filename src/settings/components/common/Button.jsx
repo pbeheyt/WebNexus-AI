@@ -24,11 +24,14 @@ const Button = ({
     primary: 'bg-primary text-white hover:bg-primary-hover',
     secondary: 'bg-theme-surface text-theme-primary border border-theme hover:border-primary',
     danger: 'bg-error text-white hover:bg-red-600',
-    success: 'bg-success text-white hover:bg-green-600'
+    success: 'bg-success text-white hover:bg-green-600',
+    inactive: 'bg-gray-400 text-gray-100 cursor-not-allowed opacity-50' // New inactive variant
   };
   
-  // Disabled class
-  const disabledClass = disabled ? 'bg-gray-500 text-gray-300 cursor-not-allowed hover:bg-gray-500' : '';
+  // Disabled class - don't apply if using inactive variant
+  const disabledClass = disabled && variant !== 'inactive' 
+    ? 'bg-gray-500 text-gray-300 cursor-not-allowed hover:bg-gray-500' 
+    : '';
   
   // Combined classes
   const combinedClasses = [
