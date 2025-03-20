@@ -1319,62 +1319,6 @@ if (message.action === 'getApiResponse') {
     return true; // Keep channel open for async response
   }
 
-  // // Handler for API-based streaming summarization
-  // if (message.action === 'sidebarApiProcessStreaming') {
-  //   (async () => {
-  //     try {
-  //       // Extract parameters from message
-  //       const {
-  //         platformId,
-  //         prompt,
-  //         extractedContent,
-  //         url,
-  //         tabId
-  //       } = message;
-        
-  //       logger.background.info(`Processing sidebar API streaming request: platform=${platformId}`);
-        
-  //       // Get API service for this platform
-  //       const apiService = await ApiServiceManager.getApiService(platformId);
-  //       if (!apiService) {
-  //         throw new Error(`API service not available for ${platformId}`);
-  //       }
-        
-  //       // Initialize the API service (with credentials)
-  //       const credentials = await CredentialManager.getCredentials(platformId);
-  //       await apiService.initialize(credentials);
-        
-  //       // Create unique stream ID for this request
-  //       const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        
-  //       // Send initial response with stream ID
-  //       sendResponse({
-  //         success: true,
-  //         streamId,
-  //         status: 'streaming_started'
-  //       });
-        
-  //       // Process with streaming enabled and send chunks back to sidebar
-  //       await apiService._processWithApiStreaming(prompt, (chunkData) => {
-  //         // Send each chunk back to sidebar via message
-  //         chrome.tabs.sendMessage(tabId, {
-  //           action: 'streamChunk',
-  //           streamId,
-  //           chunkData
-  //         });
-  //       });
-        
-  //     } catch (error) {
-  //       logger.background.error('Error in API streaming:', error);
-  //       sendResponse({
-  //         success: false,
-  //         error: error.message
-  //       });
-  //     }
-  //   })();
-  //   return true; // Keep channel open for async response
-  // }
-
 });
 
 // Listen for configuration changes
