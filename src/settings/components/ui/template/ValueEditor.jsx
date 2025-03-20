@@ -36,14 +36,13 @@ const ValueEditor = ({
       />
       
       <div className="value-actions flex justify-end items-center gap-2 mt-2">
-        {hasChanges && (
-          <Button
-            size="sm"
-            onClick={handleSave}
-          >
-            Update
-          </Button>
-        )}
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={!hasChanges}
+        >
+          {hasChanges ? "Update" : "No Changes"}
+        </Button>
         
         {showDeleteButton && (
           <Button

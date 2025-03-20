@@ -15,6 +15,9 @@ const ParameterEditor = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [parameterName, setParameterName] = useState(parameter.param_name);
+  const [showAddValueModal, setShowAddValueModal] = useState(false);
+  const [newValueData, setNewValueData] = useState({ key: '', value: '' });
+  const [valueErrors, setValueErrors] = useState({});
   
   // Handle parameter name change
   const handleNameChange = async () => {
@@ -24,7 +27,7 @@ const ParameterEditor = ({
     }
     
     if (!parameterName.trim()) {
-      error('Parameter name cannot be empty');
+      error('Instruction name cannot be empty');
       setParameterName(parameter.param_name);
       setIsEditingName(false);
       return;
@@ -33,10 +36,10 @@ const ParameterEditor = ({
     try {
       const result = await onUpdate({ param_name: parameterName });
       if (result) {
-        success('Parameter name updated');
+        success('Instruction name updated');
       }
     } catch (err) {
-      error('Failed to update parameter name');
+      error('Failed to update instruction name');
       setParameterName(parameter.param_name);
     } finally {
       setIsEditingName(false);
@@ -86,7 +89,7 @@ const ParameterEditor = ({
         
         // Only allow deletion if there's at least one value left
         if (Object.keys(updatedValues).length === 0) {
-          error('Cannot delete the last value. Parameter must have at least one value.');
+          error('Cannot delete the last value. Instruction must have at least one value.');
           return;
         }
         
@@ -100,34 +103,134 @@ const ParameterEditor = ({
     }
   };
   
+  // Open add value modal
+  const handleOpenAddValueModal = () => {
+    setNewValueData({ key: '', value: '' });
+    setValueErrors({});
+    setShowAddValueModal(true);
+  };
+  
+  // Validate new value data
+  const validateNewValue = () => {
+    const errors = {};
+    if (!newValueData.key.trim()) {
+      errors.key = 'Option key is required';
+    }
+    if (!newValueData.value.trim()) {
+      errors.value = 'Option value is required';
+    }
+    
+    // Check if key already exists
+    if (parameter.type === 'list' && 
+        parameter.values && 
+        parameter.values[newValueData.key] !== undefined) {
+      errors.key = `Key "${newValueData.key}" already exists`;
+    }
+    
+    setValueErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  
   // Handle adding a new value
-  const handleAddValue = async (valueKey, valueContent) => {
+  const handleAddValue = async () => {
+    if (!validateNewValue()) {
+      return;
+    }
+    
     try {
-      if (!valueKey.trim() || !valueContent.trim()) {
-        error('Value key and content are required');
-        return;
-      }
+      // Create updated values object
+      const updatedValues = {
+        ...(parameter.values || {}),
+        [newValueData.key]: newValueData.value
+      };
       
-      if (parameter.type === 'list') {
-        // Make sure the key doesn't already exist
-        if (parameter.values && parameter.values[valueKey]) {
-          error(`Value key "${valueKey}" already exists`);
-          return;
-        }
-        
-        const updatedValues = {
-          ...(parameter.values || {}),
-          [valueKey]: valueContent
-        };
-        
-        const result = await onUpdate({ values: updatedValues });
-        if (result) {
-          success('Value added successfully');
-        }
+      const result = await onUpdate({ values: updatedValues });
+      if (result) {
+        success('Value added successfully');
+        setShowAddValueModal(false);
       }
     } catch (err) {
       error('Failed to add value');
     }
+  };
+  
+  // Render the add value modal
+  const renderAddValueModal = () => {
+    if (!showAddValueModal) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-theme-primary rounded-lg w-[500px] max-w-[90%]">
+          <div className="p-4 border-b border-theme flex items-center justify-between">
+            <h3 className="text-lg font-medium">Add Value Option</h3>
+            <button 
+              className="text-2xl text-theme-secondary hover:text-theme-primary"
+              onClick={() => setShowAddValueModal(false)}
+            >
+              &times;
+            </button>
+          </div>
+          
+          <div className="p-4">
+            <div className="mb-4">
+              <label className="block mb-1 text-sm font-medium text-theme-secondary">
+                Option Key:
+              </label>
+              <input
+                type="text"
+                className={`w-full px-3 py-2 border ${valueErrors.key ? 'border-error' : 'border-theme'} rounded-md bg-theme-surface`}
+                placeholder="e.g., detailed, technical"
+                value={newValueData.key}
+                onChange={(e) => {
+                  setNewValueData(prev => ({ ...prev, key: e.target.value }));
+                  if (valueErrors.key) setValueErrors(prev => ({ ...prev, key: null }));
+                }}
+              />
+              {valueErrors.key && (
+                <p className="text-error text-xs mt-1">{valueErrors.key}</p>
+              )}
+              <p className="text-xs text-theme-secondary mt-1">
+                This is the internal identifier for the value option.
+              </p>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block mb-1 text-sm font-medium text-theme-secondary">
+                Option Value:
+              </label>
+              <textarea
+                className={`w-full px-3 py-2 border ${valueErrors.value ? 'border-error' : 'border-theme'} rounded-md bg-theme-surface min-h-[100px]`}
+                placeholder="Enter the value content"
+                value={newValueData.value}
+                onChange={(e) => {
+                  setNewValueData(prev => ({ ...prev, value: e.target.value }));
+                  if (valueErrors.value) setValueErrors(prev => ({ ...prev, value: null }));
+                }}
+              />
+              {valueErrors.value && (
+                <p className="text-error text-xs mt-1">{valueErrors.value}</p>
+              )}
+              <p className="text-xs text-theme-secondary mt-1">
+                This is the actual template content that will be used in prompts.
+              </p>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-theme">
+              <Button
+                variant="secondary"
+                onClick={() => setShowAddValueModal(false)}
+              >
+                Cancel
+              </Button>
+              
+              <Button onClick={handleAddValue}>
+                Add Value
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
   
   // Render values based on parameter type
@@ -166,12 +269,7 @@ const ParameterEditor = ({
         <Button
           size="sm"
           className="mt-4"
-          onClick={() => {
-            const key = prompt('Enter a key for the new value:');
-            if (key) {
-              handleAddValue(key, '');
-            }
-          }}
+          onClick={handleOpenAddValueModal}
         >
           + Add Value Option
         </Button>
@@ -185,26 +283,22 @@ const ParameterEditor = ({
       <div className="values-section mt-4">
         <h4 className="text-sm font-medium mb-2">Checkbox Options:</h4>
         
-        <div className="checkbox-values space-y-4">
-          <div className="checkbox-value">
-            <h5 className="text-sm mb-1">When Checked (True):</h5>
-            <textarea
-              className="w-full px-3 py-2 border border-theme rounded-md bg-theme-surface text-theme-primary"
-              value={parameter.values?.true || ''}
-              onChange={(e) => handleValueChange('true', e.target.value)}
-              rows={3}
-            />
-          </div>
+        <div className="checkbox-values space-y-3">
+          <ValueEditor
+            valueKey="true"
+            value={parameter.values?.true || ''}
+            onValueChange={(newValue) => handleValueChange('true', newValue)}
+            onDeleteValue={null}
+            showDeleteButton={false}
+          />
           
-          <div className="checkbox-value">
-            <h5 className="text-sm mb-1">When Unchecked (False):</h5>
-            <textarea
-              className="w-full px-3 py-2 border border-theme rounded-md bg-theme-surface text-theme-primary"
-              value={parameter.values?.false || ''}
-              onChange={(e) => handleValueChange('false', e.target.value)}
-              rows={3}
-            />
-          </div>
+          <ValueEditor
+            valueKey="false"
+            value={parameter.values?.false || ''}
+            onValueChange={(newValue) => handleValueChange('false', newValue)}
+            onDeleteValue={null}
+            showDeleteButton={false}
+          />
         </div>
       </div>
     );
@@ -212,16 +306,37 @@ const ParameterEditor = ({
   
   // Render single-type value
   const renderSingleValue = () => {
+    const [singleValue, setSingleValue] = useState(parameter.value || '');
+    const [hasChanges, setHasChanges] = useState(false);
+    
+    const handleSingleValueChange = (e) => {
+      setSingleValue(e.target.value);
+      setHasChanges(e.target.value !== parameter.value);
+    };
+    
+    const updateSingleValue = () => {
+      handleValueChange('value', singleValue);
+      setHasChanges(false);
+    };
+    
     return (
       <div className="values-section mt-4">
-        <h4 className="text-sm font-medium mb-2">Parameter Value:</h4>
+        <h4 className="text-sm font-medium mb-2">Instruction Value:</h4>
         
         <textarea
-          className="w-full px-3 py-2 border border-theme rounded-md bg-theme-surface text-theme-primary"
-          value={parameter.value || ''}
-          onChange={(e) => handleValueChange('value', e.target.value)}
-          rows={4}
+          className="w-full px-3 py-2 border border-theme rounded-md bg-theme-surface text-theme-primary min-h-[100px]"
+          value={singleValue}
+          onChange={handleSingleValueChange}
         />
+        
+        <Button
+          size="sm"
+          className="mt-2"
+          onClick={updateSingleValue}
+          disabled={!hasChanges}
+        >
+          {hasChanges ? "Update" : "No Changes"}
+        </Button>
       </div>
     );
   };
@@ -269,7 +384,7 @@ const ParameterEditor = ({
           <div className="flex-grow"></div>
         </div>
         
-        <div className="essential-parameter-actions flex gap-1">
+        <div className="essential-parameter-actions flex gap-2">
           {!isFirst && (
             <button
               className="btn btn-sm move-up-btn bg-theme-surface text-theme-primary border border-theme hover:bg-theme-hover px-1.5 py-0.5 rounded"
@@ -293,7 +408,7 @@ const ParameterEditor = ({
           <button
             className="btn btn-sm btn-danger bg-error text-white hover:bg-red-600 px-1.5 py-0.5 rounded"
             onClick={onDelete}
-            title="Delete Parameter"
+            title="Delete Instruction"
           >
             ×
           </button>
@@ -315,6 +430,9 @@ const ParameterEditor = ({
           </div>
         </>
       )}
+      
+      {/* Add Value Modal */}
+      {renderAddValueModal()}
     </div>
   );
 };

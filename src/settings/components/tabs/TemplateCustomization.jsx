@@ -9,12 +9,12 @@ const TemplateCustomization = () => {
   const { success, error } = useNotification();
   const [isLoading, setIsLoading] = useState(true);
   const [contentTypes, setContentTypes] = useState([
-    { id: 'shared', label: 'Shared Parameters' },
-    { id: 'general', label: 'Web Content Parameters' },
-    { id: 'reddit', label: 'Reddit Parameters' },
-    { id: 'youtube', label: 'YouTube Parameters' },
-    { id: 'pdf', label: 'PDF Document Parameters' },
-    { id: 'selected_text', label: 'Selected Text Parameters' }
+    { id: 'shared', label: 'Shared Instructions' },
+    { id: 'general', label: 'Web Content Instructions' },
+    { id: 'reddit', label: 'Reddit Instructions' },
+    { id: 'youtube', label: 'YouTube Instructions' },
+    { id: 'pdf', label: 'PDF Document Instructions' },
+    { id: 'selected_text', label: 'Selected Text Instructions' }
   ]);
   const [parameters, setParameters] = useState({});
   const [expandedSections, setExpandedSections] = useState({});
@@ -31,7 +31,6 @@ const TemplateCustomization = () => {
         const loadedParameters = {};
         
         for (const type of contentTypes) {
-          console.log(`Loading parameters for ${type.id}`);
           loadedParameters[type.id] = await loadParametersForType(type.id);
           
           // Initialize expanded state (default to expanded)
@@ -42,10 +41,9 @@ const TemplateCustomization = () => {
         }
         
         setParameters(loadedParameters);
-        console.log('Loaded parameters:', loadedParameters);
       } catch (err) {
         console.error('Error loading templates:', err);
-        error('Failed to load template parameters');
+        error('Failed to load template instructions');
       } finally {
         setIsLoading(false);
       }
@@ -61,8 +59,8 @@ const TemplateCustomization = () => {
       const params = await templateService.getParameters(contentType);
       return params || [];
     } catch (err) {
-      console.error(`Error loading parameters for ${contentType}:`, err);
-      error(`Failed to load parameters for ${contentType}: ${err.message}`);
+      console.error(`Error loading instructions for ${contentType}:`, err);
+      error(`Failed to load instructions for ${contentType}: ${err.message}`);
       return [];
     }
   };
@@ -78,8 +76,8 @@ const TemplateCustomization = () => {
       
       return true;
     } catch (err) {
-      console.error(`Error saving parameters for ${contentType}:`, err);
-      error(`Failed to save parameters: ${err.message}`);
+      console.error(`Error saving instructions for ${contentType}:`, err);
+      error(`Failed to save instructions: ${err.message}`);
       return false;
     }
   };
@@ -125,9 +123,9 @@ const TemplateCustomization = () => {
       );
       
       // Save parameters
-      const success = await saveParametersForType(addingSectionId, currentParams);
+      const saveSuccess = await saveParametersForType(addingSectionId, currentParams);
       
-      if (success) {
+      if (saveSuccess) {
         // Close modal
         setShowAddModal(false);
         setAddingSectionId(null);
@@ -140,24 +138,13 @@ const TemplateCustomization = () => {
         }));
       }
     } catch (err) {
-      console.error('Error adding parameter:', err);
-      error(`Failed to add parameter: ${err.message}`);
+      console.error('Error adding instruction:', err);
+      error(`Failed to add instruction: ${err.message}`);
     }
   };
   
   const handleReorderParameter = async (sectionId, parameterId, newOrder) => {
     try {
-      // Get current parameters for this section
-      const currentParams = [...(parameters[sectionId] || [])];
-      
-      // Find parameter index
-      const paramIndex = currentParams.findIndex(p => p.id === parameterId);
-      if (paramIndex === -1) return;
-      
-      // Ensure new order is valid
-      if (newOrder < 0) newOrder = 0;
-      if (newOrder >= currentParams.length) newOrder = currentParams.length - 1;
-      
       // Call templateService to reorder
       await templateService.reorderParameter(
         sectionId === 'shared' ? 'shared' : sectionId,
@@ -172,14 +159,14 @@ const TemplateCustomization = () => {
         [sectionId]: refreshedParams
       }));
     } catch (err) {
-      console.error('Error reordering parameter:', err);
-      error(`Failed to reorder parameter: ${err.message}`);
+      console.error('Error reordering instruction:', err);
+      error(`Failed to reorder instruction: ${err.message}`);
     }
   };
   
   const handleDeleteParameter = async (sectionId, parameterId) => {
     try {
-      if (!window.confirm('Are you sure you want to delete this parameter?')) {
+      if (!window.confirm('Are you sure you want to delete this instruction?')) {
         return;
       }
       
@@ -196,8 +183,8 @@ const TemplateCustomization = () => {
         [sectionId]: refreshedParams
       }));
     } catch (err) {
-      console.error('Error deleting parameter:', err);
-      error(`Failed to delete parameter: ${err.message}`);
+      console.error('Error deleting instruction:', err);
+      error(`Failed to delete instruction: ${err.message}`);
     }
   };
   
@@ -241,8 +228,8 @@ const TemplateCustomization = () => {
       
       return true;
     } catch (err) {
-      console.error('Error updating parameter:', err);
-      error(`Failed to update parameter: ${err.message}`);
+      console.error('Error updating instruction:', err);
+      error(`Failed to update instruction: ${err.message}`);
       return false;
     }
   };
@@ -255,15 +242,8 @@ const TemplateCustomization = () => {
     try {
       setIsLoading(true);
       
-      // Reset all templates using templateService or configManager
-      for (const type of contentTypes) {
-        // This would normally call an API or service method to reset templates
-        // For now, we'll just clear our local parameters
-        setParameters(prev => ({
-          ...prev,
-          [type.id]: []
-        }));
-      }
+      // Reset all templates to default
+      await templateService.resetTemplates();
       
       success('Templates reset to default');
       
@@ -285,7 +265,7 @@ const TemplateCustomization = () => {
     return (
       <div className="p-8 text-center">
         <div className="inline-block animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        <p className="mt-4">Loading template parameters...</p>
+        <p className="mt-4">Loading template instructions...</p>
       </div>
     );
   }

@@ -32,14 +32,14 @@ const TemplateSection = ({
           size="sm"
           onClick={onAddParameter}
         >
-          + Add Parameter
+          + Add Instruction
         </Button>
       </div>
       
       <div className={`parameter-list p-4 ${expanded ? '' : 'hidden'}`}>
         {sortedParameters.length === 0 ? (
           <div className="empty-parameters p-4 text-center text-theme-secondary bg-theme-hover rounded-md">
-            <p>No parameters found. Click "Add Parameter" to create one.</p>
+            <p>No instructions found. Click "Add Instruction" to create one.</p>
           </div>
         ) : (
           sortedParameters.map((param, index) => (
