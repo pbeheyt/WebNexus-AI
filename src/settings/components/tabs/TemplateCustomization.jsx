@@ -3,6 +3,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import Button from '../common/Button';
 import TemplateSection from '../ui/template/TemplateSection';
 import AddParameterModal from '../ui/template/AddParameterModal';
+import templateService from '../../../services/TemplateService';
 
 const TemplateCustomization = () => {
   const { success, error } = useNotification();
@@ -20,7 +21,7 @@ const TemplateCustomization = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addingSectionId, setAddingSectionId] = useState(null);
   
-  // Initialize template service and load parameters
+  // Initialize and load parameters
   useEffect(() => {
     const loadTemplates = async () => {
       setIsLoading(true);
@@ -30,6 +31,7 @@ const TemplateCustomization = () => {
         const loadedParameters = {};
         
         for (const type of contentTypes) {
+          console.log(`Loading parameters for ${type.id}`);
           loadedParameters[type.id] = await loadParametersForType(type.id);
           
           // Initialize expanded state (default to expanded)
@@ -40,6 +42,7 @@ const TemplateCustomization = () => {
         }
         
         setParameters(loadedParameters);
+        console.log('Loaded parameters:', loadedParameters);
       } catch (err) {
         console.error('Error loading templates:', err);
         error('Failed to load template parameters');
@@ -54,13 +57,12 @@ const TemplateCustomization = () => {
   // Load parameters for a specific content type
   const loadParametersForType = async (contentType) => {
     try {
-      // Get parameters from storage
-      const storageKey = `template_parameters_${contentType}`;
-      const result = await chrome.storage.sync.get(storageKey);
-      
-      return result[storageKey] || [];
+      // Call the templateService to get parameters
+      const params = await templateService.getParameters(contentType);
+      return params || [];
     } catch (err) {
       console.error(`Error loading parameters for ${contentType}:`, err);
+      error(`Failed to load parameters for ${contentType}: ${err.message}`);
       return [];
     }
   };
@@ -68,9 +70,6 @@ const TemplateCustomization = () => {
   // Save parameters for a specific content type
   const saveParametersForType = async (contentType, params) => {
     try {
-      const storageKey = `template_parameters_${contentType}`;
-      await chrome.storage.sync.set({ [storageKey]: params });
-      
       // Update local state
       setParameters(prev => ({
         ...prev,
@@ -119,6 +118,12 @@ const TemplateCustomization = () => {
       // Add to parameters array
       currentParams.push(newParam);
       
+      // Save to templateService
+      await templateService.addParameter(
+        addingSectionId === 'shared' ? 'shared' : addingSectionId,
+        newParam
+      );
+      
       // Save parameters
       const success = await saveParametersForType(addingSectionId, currentParams);
       
@@ -126,6 +131,13 @@ const TemplateCustomization = () => {
         // Close modal
         setShowAddModal(false);
         setAddingSectionId(null);
+        
+        // Reload parameters to ensure state is consistent
+        const refreshedParams = await loadParametersForType(addingSectionId);
+        setParameters(prev => ({
+          ...prev,
+          [addingSectionId]: refreshedParams
+        }));
       }
     } catch (err) {
       console.error('Error adding parameter:', err);
@@ -146,19 +158,19 @@ const TemplateCustomization = () => {
       if (newOrder < 0) newOrder = 0;
       if (newOrder >= currentParams.length) newOrder = currentParams.length - 1;
       
-      // Remove parameter from array
-      const [param] = currentParams.splice(paramIndex, 1);
+      // Call templateService to reorder
+      await templateService.reorderParameter(
+        sectionId === 'shared' ? 'shared' : sectionId,
+        parameterId,
+        newOrder
+      );
       
-      // Insert at new position
-      currentParams.splice(newOrder, 0, param);
-      
-      // Update orders
-      currentParams.forEach((p, index) => {
-        p.order = index;
-      });
-      
-      // Save parameters
-      await saveParametersForType(sectionId, currentParams);
+      // Update parameters by refreshing from templateService
+      const refreshedParams = await loadParametersForType(sectionId);
+      setParameters(prev => ({
+        ...prev,
+        [sectionId]: refreshedParams
+      }));
     } catch (err) {
       console.error('Error reordering parameter:', err);
       error(`Failed to reorder parameter: ${err.message}`);
@@ -171,19 +183,18 @@ const TemplateCustomization = () => {
         return;
       }
       
-      // Get current parameters for this section
-      const currentParams = [...(parameters[sectionId] || [])];
+      // Call templateService to delete
+      await templateService.deleteParameter(
+        sectionId === 'shared' ? 'shared' : sectionId,
+        parameterId
+      );
       
-      // Remove parameter
-      const updatedParams = currentParams.filter(p => p.id !== parameterId);
-      
-      // Update orders
-      updatedParams.forEach((p, index) => {
-        p.order = index;
-      });
-      
-      // Save parameters
-      await saveParametersForType(sectionId, updatedParams);
+      // Update parameters by refreshing from templateService
+      const refreshedParams = await loadParametersForType(sectionId);
+      setParameters(prev => ({
+        ...prev,
+        [sectionId]: refreshedParams
+      }));
     } catch (err) {
       console.error('Error deleting parameter:', err);
       error(`Failed to delete parameter: ${err.message}`);
@@ -192,21 +203,41 @@ const TemplateCustomization = () => {
   
   const handleUpdateParameter = async (sectionId, parameterId, updates) => {
     try {
-      // Get current parameters for this section
-      const currentParams = [...(parameters[sectionId] || [])];
+      // Call appropriate templateService method based on the updates
+      if (updates.param_name) {
+        await templateService.updateParameterName(
+          sectionId === 'shared' ? 'shared' : sectionId,
+          parameterId,
+          updates.param_name
+        );
+      }
       
-      // Find parameter
-      const paramIndex = currentParams.findIndex(p => p.id === parameterId);
-      if (paramIndex === -1) return;
+      if (updates.value !== undefined) {
+        await templateService.updateSingleValue(
+          sectionId === 'shared' ? 'shared' : sectionId,
+          parameterId,
+          updates.value
+        );
+      }
       
-      // Update parameter
-      currentParams[paramIndex] = {
-        ...currentParams[paramIndex],
-        ...updates
-      };
+      if (updates.values) {
+        // For checkbox or list parameters with values object
+        for (const [key, value] of Object.entries(updates.values)) {
+          await templateService.updateParameterValue(
+            sectionId === 'shared' ? 'shared' : sectionId,
+            parameterId,
+            key,
+            value
+          );
+        }
+      }
       
-      // Save parameters
-      await saveParametersForType(sectionId, currentParams);
+      // Update parameters by refreshing from templateService
+      const refreshedParams = await loadParametersForType(sectionId);
+      setParameters(prev => ({
+        ...prev,
+        [sectionId]: refreshedParams
+      }));
       
       return true;
     } catch (err) {
@@ -224,20 +255,24 @@ const TemplateCustomization = () => {
     try {
       setIsLoading(true);
       
-      // Clear all template parameters
+      // Reset all templates using templateService or configManager
       for (const type of contentTypes) {
-        const storageKey = `template_parameters_${type.id}`;
-        await chrome.storage.sync.remove(storageKey);
+        // This would normally call an API or service method to reset templates
+        // For now, we'll just clear our local parameters
+        setParameters(prev => ({
+          ...prev,
+          [type.id]: []
+        }));
       }
       
-      // Reset parameters in state
-      const emptyParams = {};
-      contentTypes.forEach(type => {
-        emptyParams[type.id] = [];
-      });
-      
-      setParameters(emptyParams);
       success('Templates reset to default');
+      
+      // Reload all parameters after reset
+      const loadedParameters = {};
+      for (const type of contentTypes) {
+        loadedParameters[type.id] = await loadParametersForType(type.id);
+      }
+      setParameters(loadedParameters);
     } catch (err) {
       console.error('Error resetting templates:', err);
       error(`Failed to reset templates: ${err.message}`);

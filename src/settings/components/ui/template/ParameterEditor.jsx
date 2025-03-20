@@ -229,11 +229,11 @@ const ParameterEditor = ({
   return (
     <div className="parameter-editor bg-theme-surface rounded-lg p-4 mb-4 border border-theme border-l-4 border-l-primary">
       <div className="parameter-header flex justify-between items-center">
-        <div className="parameter-name-wrapper flex items-center flex-grow">
+        <div className="parameter-name-wrapper flex items-center">
           {isEditingName ? (
             <input
               type="text"
-              className="parameter-name-input flex-1 px-2 py-1 border border-theme rounded-md bg-theme-primary"
+              className="parameter-name-input px-2 py-1 border border-theme rounded-md bg-theme-primary"
               value={parameterName}
               onChange={(e) => setParameterName(e.target.value)}
               onBlur={handleNameChange}
@@ -248,7 +248,7 @@ const ParameterEditor = ({
             />
           ) : (
             <div
-              className="parameter-name flex-1 font-medium cursor-pointer"
+              className="parameter-name font-medium cursor-pointer"
               onClick={() => setIsEditingName(true)}
             >
               {parameter.param_name}
@@ -260,11 +260,13 @@ const ParameterEditor = ({
           </span>
           
           <button
-            className="toggle-details-btn ml-2 text-xs text-theme-secondary opacity-80 hover:text-primary hover:opacity-100"
+            className="toggle-details-btn ml-3 text-xs text-theme-secondary opacity-80 hover:text-primary hover:opacity-100"
             onClick={() => setIsExpanded(!isExpanded)}
           >
             {isExpanded ? '▼' : '▶'}
           </button>
+          
+          <div className="flex-grow"></div>
         </div>
         
         <div className="essential-parameter-actions flex gap-1">
