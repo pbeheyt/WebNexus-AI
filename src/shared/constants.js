@@ -45,7 +45,20 @@ export const STORAGE_KEYS = {
   SELECTED_PROMPT_IDS: 'selected_prompt_ids',
   QUICK_PROMPTS: 'quick_prompts',
   PLATFORM_STORAGE_KEY: 'preferred_ai_platform',
-  SHORTCUT_SETTINGS: 'shortcut_settings'
+  SHORTCUT_SETTINGS: 'shortcut_settings',
+  // New sidebar-specific storage keys
+  SIDEBAR_PLATFORM: 'sidebar_platform_preference',
+  SIDEBAR_MODEL: 'sidebar_model_preference',
+  SIDEBAR_VISIBLE: 'sidebar_visible',
+  CHAT_HISTORY: 'sidebar_chat_history'
+};
+
+/**
+ * Interface sources for API requests
+ */
+export const INTERFACE_SOURCES = {
+  POPUP: 'popup',
+  SIDEBAR: 'sidebar'
 };
 
 /**

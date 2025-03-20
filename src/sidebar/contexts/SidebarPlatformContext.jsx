@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { STORAGE_KEYS } from '../constants';
+import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
 
 const SidebarPlatformContext = createContext(null);
 
@@ -9,6 +9,7 @@ export function SidebarPlatformProvider({ children }) {
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCredentials, setHasCredentials] = useState(false);
   
   // Load platforms and models
   useEffect(() => {
@@ -42,6 +43,9 @@ export function SidebarPlatformProvider({ children }) {
         
         // Load models for selected platform
         await loadModels(platformId);
+        
+        // Check for credentials
+        await checkCredentials(platformId);
       } catch (error) {
         console.error('Error loading platforms:', error);
       } finally {
@@ -52,13 +56,33 @@ export function SidebarPlatformProvider({ children }) {
     loadPlatforms();
   }, []);
   
+  // Check if credentials exist for platform
+  const checkCredentials = async (platformId) => {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'credentialOperation',
+        operation: 'get',
+        platformId
+      });
+      
+      const hasValidCredentials = response && response.success && response.credentials;
+      setHasCredentials(hasValidCredentials);
+      return hasValidCredentials;
+    } catch (error) {
+      console.error(`Error checking credentials for ${platformId}:`, error);
+      setHasCredentials(false);
+      return false;
+    }
+  };
+  
   // Load models for a platform
   const loadModels = async (platformId) => {
     try {
       // Request models from background script
       const response = await chrome.runtime.sendMessage({
         action: 'getApiModels',
-        platformId
+        platformId,
+        source: INTERFACE_SOURCES.SIDEBAR
       });
       
       if (response && response.success && response.models) {
@@ -82,11 +106,13 @@ export function SidebarPlatformProvider({ children }) {
             modelToUse = platformConfig.api.defaultModel;
           } else if (response.models.length > 0) {
             if (Array.isArray(response.models)) {
-              modelToUse = response.models[0].id || response.models[0];
+              modelToUse = typeof response.models[0] === 'object' 
+                ? response.models[0].id 
+                : response.models[0];
             } else if (typeof response.models === 'object') {
               // Handle case where models might be an object
               const firstModel = Object.values(response.models)[0];
-              modelToUse = firstModel.id || firstModel;
+              modelToUse = typeof firstModel === 'object' ? firstModel.id : firstModel;
             }
           }
         }
@@ -120,8 +146,11 @@ export function SidebarPlatformProvider({ children }) {
     
     setSelectedPlatformId(platformId);
     
-    // Save preference
+    // Save preference in sidebar-specific storage
     await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEBAR_PLATFORM]: platformId });
+    
+    // Check credentials for this platform
+    await checkCredentials(platformId);
     
     // Load models for new platform
     await loadModels(platformId);
@@ -133,7 +162,7 @@ export function SidebarPlatformProvider({ children }) {
     
     setSelectedModel(modelId);
     
-    // Save preference for this platform
+    // Save preference for this platform in sidebar-specific storage
     const { [STORAGE_KEYS.SIDEBAR_MODEL]: modelPreferences } = 
       await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
     
@@ -143,21 +172,6 @@ export function SidebarPlatformProvider({ children }) {
     await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEBAR_MODEL]: preferences });
   };
   
-  // Check if API mode is available
-  const checkApiAvailability = async () => {
-    try {
-      const response = await chrome.runtime.sendMessage({
-        action: 'checkApiModeAvailable',
-        platformId: selectedPlatformId
-      });
-      
-      return response && response.success && response.isAvailable;
-    } catch (error) {
-      console.error('Error checking API availability:', error);
-      return false;
-    }
-  };
-  
   return (
     <SidebarPlatformContext.Provider value={{
       platforms,
@@ -165,9 +179,10 @@ export function SidebarPlatformProvider({ children }) {
       models,
       selectedModel,
       isLoading,
+      hasCredentials,
       selectPlatform,
       selectModel,
-      checkApiAvailability
+      checkCredentials
     }}>
       {children}
     </SidebarPlatformContext.Provider>

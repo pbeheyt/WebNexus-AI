@@ -99,6 +99,42 @@ class ApiServiceManager {
       return null;
     }
   }
+
+  async processContent(platformId, contentData, prompt, model = null) {
+    try {
+      logger.info(`Processing content through ${platformId} API with model: ${model || 'default'}`);
+      
+      // Get credentials
+      const credentials = await this.credentialManager.getCredentials(platformId);
+      if (!credentials) {
+        throw new Error(`No API credentials found for ${platformId}`);
+      }
+      
+      // Create API service
+      const apiService = ApiFactory.createApiService(platformId);
+      if (!apiService) {
+        throw new Error(`API service not available for ${platformId}`);
+      }
+      
+      // Initialize and process with model if provided
+      await apiService.initialize(credentials);
+      
+      // Process with specified model if provided
+      if (model) {
+        return await apiService.process(contentData, prompt, model);
+      } else {
+        return await apiService.process(contentData, prompt);
+      }
+    } catch (error) {
+      logger.error(`Error processing content through ${platformId} API:`, error);
+      return {
+        success: false,
+        error: error.message,
+        platformId,
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
 }
 
 // Export singleton instance

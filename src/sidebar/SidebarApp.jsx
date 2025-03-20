@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { SidebarPlatformProvider } from './contexts/SidebarPlatformContext';
 import { SidebarChatProvider } from './contexts/SidebarChatContext';
 import { SidebarThemeProvider } from './contexts/SidebarThemeContext';
+import { SidebarContentProvider } from './contexts/SidebarContentContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
+import ContentTypeDisplay from './components/ContentTypeDisplay';
 import { MESSAGE_TYPES } from './constants';
 
 export default function SidebarApp() {
@@ -70,15 +72,20 @@ export default function SidebarApp() {
   
   return (
     <SidebarThemeProvider>
-      <SidebarPlatformProvider>
-        <SidebarChatProvider>
-          <div className="flex flex-col h-screen w-full overflow-hidden">
-            <Header onClose={handleClose} />
-            <ChatArea />
-            <UserInput />
-          </div>
-        </SidebarChatProvider>
-      </SidebarPlatformProvider>
+      <SidebarContentProvider>
+        <SidebarPlatformProvider>
+          <SidebarChatProvider>
+            <div className="flex flex-col h-screen w-full overflow-hidden">
+              <Header onClose={handleClose} />
+              <div className="p-2">
+                <ContentTypeDisplay />
+              </div>
+              <ChatArea />
+              <UserInput />
+            </div>
+          </SidebarChatProvider>
+        </SidebarPlatformProvider>
+      </SidebarContentProvider>
     </SidebarThemeProvider>
   );
 }

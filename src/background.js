@@ -2,7 +2,7 @@
 // UPDATED VERSION - With centralized summarization workflow
 
 // Import from shared modules
-import { CONTENT_TYPES, AI_PLATFORMS, STORAGE_KEYS } from './shared/constants.js';
+import { CONTENT_TYPES, INTERFACE_SOURCES, AI_PLATFORMS, STORAGE_KEYS } from './shared/constants.js';
 import { determineContentType, getContentScriptFile } from './shared/content-utils.js';
 import configManager from './services/ConfigManager.js';
 import promptBuilder from './services/PromptBuilder.js';
@@ -50,16 +50,22 @@ async function getPlatformConfig(platformId) {
 }
 
 /**
- * Get preferred AI platform or default
+ * Get preferred AI platform or default - source-aware
  */
-async function getPreferredAiPlatform() {
+async function getPreferredAiPlatform(source = INTERFACE_SOURCES.POPUP) {
   try {
-    logger.background.info('Getting preferred AI platform');
-    const result = await chrome.storage.sync.get(STORAGE_KEYS.PLATFORM_STORAGE_KEY);
+    logger.background.info(`Getting preferred AI platform for ${source}`);
+    
+    // Use source-specific storage key
+    const storageKey = source === INTERFACE_SOURCES.SIDEBAR 
+      ? STORAGE_KEYS.SIDEBAR_PLATFORM 
+      : STORAGE_KEYS.PLATFORM_STORAGE_KEY;
+    
+    const result = await chrome.storage.sync.get(storageKey);
 
-    if (result[STORAGE_KEYS.PLATFORM_STORAGE_KEY]) {
-      logger.background.info(`Found preferred platform: ${result[STORAGE_KEYS.PLATFORM_STORAGE_KEY]}`);
-      return result[STORAGE_KEYS.PLATFORM_STORAGE_KEY];
+    if (result[storageKey]) {
+      logger.background.info(`Found preferred platform for ${source}: ${result[storageKey]}`);
+      return result[storageKey];
     }
 
     // Check config for default platform
@@ -71,12 +77,32 @@ async function getPreferredAiPlatform() {
       return config.defaultAiPlatform;
     }
 
-    // Fallback to Claude
-    logger.background.info('No preferred platform found, using Chatgpt as default');
+    // Fallback to ChatGPT
+    logger.background.info('No preferred platform found, using ChatGPT as default');
     return AI_PLATFORMS.CHATGPT;
   } catch (error) {
     logger.background.error('Error getting preferred AI platform:', error);
-    return AI_PLATFORMS.CHATGPT; // Fallback to Claude
+    return AI_PLATFORMS.CHATGPT; // Fallback to ChatGPT
+  }
+}
+
+/**
+ * Verify API credentials exist for a platform
+ */
+async function verifyApiCredentials(platformId) {
+  try {
+    logger.background.info(`Verifying API credentials for ${platformId}`);
+    const hasCredentials = await CredentialManager.hasCredentials(platformId);
+    
+    if (!hasCredentials) {
+      logger.background.error(`No API credentials found for ${platformId}`);
+      throw new Error(`No API credentials found for ${platformId}`);
+    }
+    
+    return true;
+  } catch (error) {
+    logger.background.error(`Credential verification error: ${error.message}`);
+    throw error;
   }
 }
 
@@ -534,9 +560,7 @@ async function summarizeContent(params) {
 }
 
 /**
- * Summarize content via API
- * @param {Object} params - Parameters object
- * @returns {Promise<Object>} Result object
+ * Summarize content via API - source-aware
  */
 async function summarizeContentViaApi(params) {
   const {
@@ -545,12 +569,14 @@ async function summarizeContentViaApi(params) {
     hasSelection = false,
     promptId = null,
     platformId = null,
-    testMode = true,    // Add this parameter
-    testContent = null   // Add this parameter
+    testMode = true,
+    testContent = null,
+    source = INTERFACE_SOURCES.POPUP,
+    model = null
   } = params;
 
   try {
-    logger.background.info('Starting API-based summarization', params);
+    logger.background.info(`Starting API-based summarization from ${source}`, params);
 
     // 1. Reset previous state
     await chrome.storage.local.set({
@@ -568,14 +594,14 @@ async function summarizeContentViaApi(params) {
       // Use provided test content or generate from mockDataFactory
       if (testContent) {
         extractedContent = testContent;
-        logger.background.info(' extractedContent type for API testing', { extractedContent });
+        logger.background.info('extractedContent type for API testing', { extractedContent });
       } else {
-        logger.background.info(' on est la');
+        logger.background.info('on est la');
 
         // Import your test harness or access it from a global
         const apiTestHarness = require('./api/api-test-utils');
         const contentType = determineContentType(url, hasSelection);
-        logger.background.info(' content type for API testing', { contentType });
+        logger.background.info('content type for API testing', { contentType });
         extractedContent = apiTestHarness.mockDataFactory[contentType] ||
                           apiTestHarness.mockDataFactory.general;
       }
@@ -601,7 +627,8 @@ async function summarizeContentViaApi(params) {
       }
 
       // Get the extracted content
-      const { extractedContent } = await chrome.storage.local.get('extractedContent');
+      const result = await chrome.storage.local.get('extractedContent');
+      extractedContent = result.extractedContent;
 
       if (!extractedContent) {
         throw new Error('Failed to extract content');
@@ -634,10 +661,13 @@ async function summarizeContentViaApi(params) {
       throw new Error(`Prompt not found for ID: ${effectivePromptId}`);
     }
 
-    // 5. Determine platform to use
-    const effectivePlatformId = platformId || await getPreferredAiPlatform();
+    // 5. Determine platform to use - source-aware
+    const effectivePlatformId = platformId || await getPreferredAiPlatform(source);
+    
+    // 6. Verify credentials
+    await verifyApiCredentials(effectivePlatformId);
 
-    // 6. Update processing status
+    // 7. Update processing status
     await chrome.storage.local.set({
       apiProcessingStatus: 'processing',
       currentSummarizationMode: 'api',
@@ -645,21 +675,22 @@ async function summarizeContentViaApi(params) {
       apiSummarizationTimestamp: Date.now()
     });
 
-    // 7. Process with API
+    // 8. Process with API
     const apiResponse = await ApiServiceManager.processContent(
       effectivePlatformId,
       extractedContent,
-      promptContent
+      promptContent,
+      model // Pass model parameter from request
     );
 
-    // 8. Store the response
+    // 9. Store the response
     await chrome.storage.local.set({
       apiProcessingStatus: apiResponse.success ? 'completed' : 'error',
       apiResponse: apiResponse,
       apiResponseTimestamp: Date.now()
     });
 
-    // 9. Notify the popup if open
+    // 10. Notify the popup if open
     try {
       chrome.runtime.sendMessage({
         action: apiResponse.success ? 'apiResponseReady' : 'apiProcessingError',
@@ -1134,6 +1165,46 @@ if (message.action === 'getApiResponse') {
       } catch (error) {
         logger.background.error('Error handling sidebar toggle:', error);
         sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
+
+  if (message.action === 'sidebarApiProcess') {
+    (async () => {
+      try {
+        // Extract all required parameters for API processing
+        const {
+          platformId,
+          model,
+          prompt,
+          extractedContent,
+          url,
+          tabId
+        } = message;
+        
+        logger.background.info(`Processing sidebar API request: platform=${platformId}, model=${model}`);
+        
+        // Call API function with sidebar source
+        const result = await summarizeContentViaApi({
+          tabId,
+          url,
+          platformId,
+          testMode: !!extractedContent,
+          testContent: extractedContent,
+          useApi: true,
+          source: INTERFACE_SOURCES.SIDEBAR,
+          model: model,
+          customPrompt: prompt
+        });
+        
+        sendResponse(result);
+      } catch (error) {
+        logger.background.error('Error handling sidebar API request:', error);
+        sendResponse({
+          success: false,
+          error: error.message
+        });
       }
     })();
     return true; // Keep channel open for async response
