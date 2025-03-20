@@ -6,11 +6,29 @@ function ChatMessage({ message }) {
   const isSystem = message.role === MESSAGE_ROLES.SYSTEM;
   const isStreaming = message.isStreaming === true; // Explicit check
   
+  // Format message content with proper paragraph breaks
+  const formatContent = (content) => {
+    if (!content) return null;
+    
+    // Split content by double line breaks (paragraphs)
+    return content.split('\n\n').map((paragraph, pIndex) => (
+      <p key={`p-${pIndex}`} className={pIndex > 0 ? 'mt-3' : ''}>
+        {/* Split each paragraph by single line breaks */}
+        {paragraph.split('\n').map((line, lIndex) => (
+          <React.Fragment key={`l-${pIndex}-${lIndex}`}>
+            {lIndex > 0 && <br />}
+            {line}
+          </React.Fragment>
+        ))}
+      </p>
+    ));
+  };
+  
   // Format system messages (typically errors) with different style
   if (isSystem) {
     return (
       <div className="p-3 rounded-lg w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-3 py-2">
-        <div>{message.content}</div>
+        <div>{formatContent(message.content)}</div>
       </div>
     );
   }
@@ -21,7 +39,7 @@ function ChatMessage({ message }) {
         ? 'bg-blue-500 text-white rounded-tl-xl rounded-tr-xl rounded-br-xl rounded-bl-none ml-auto' 
         : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl'
     }`}>
-      <div>{message.content}</div>
+      <div className="whitespace-pre-wrap">{formatContent(message.content)}</div>
       
       {/* Streaming indicator - shown only if isStreaming is explicitly true */}
       {isStreaming && (
