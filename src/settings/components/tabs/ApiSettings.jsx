@@ -4,6 +4,7 @@ import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
 
 const API_SETTINGS_KEY = 'api_advanced_settings';
+const API_CREDENTIALS_KEY = 'api_credentials'; // Single key for all credentials
 
 const ApiSettings = () => {
   const { error } = useNotification();
@@ -41,17 +42,34 @@ const ApiSettings = () => {
         
         setPlatforms(platformList);
         
-        // Load credentials for all platforms
-        const loadedCredentials = {};
+        // Load all credentials from a single key
+        let allCredentials = {};
         
-        for (const platform of platformList) {
-          const result = await chrome.storage.local.get(`api_credentials_${platform.id}`);
-          if (result[`api_credentials_${platform.id}`]) {
-            loadedCredentials[platform.id] = result[`api_credentials_${platform.id}`];
+        // First try to get all credentials from the unified key
+        const mainResult = await chrome.storage.local.get(API_CREDENTIALS_KEY);
+        if (mainResult[API_CREDENTIALS_KEY]) {
+          allCredentials = mainResult[API_CREDENTIALS_KEY];
+        } else {
+          // Migration: If not found, try to get from individual platform keys for backward compatibility
+          for (const platform of platformList) {
+            const result = await chrome.storage.local.get(`api_credentials_${platform.id}`);
+            if (result[`api_credentials_${platform.id}`]) {
+              allCredentials[platform.id] = result[`api_credentials_${platform.id}`];
+            }
+          }
+          
+          // Save migrated credentials to the new format if any were found
+          if (Object.keys(allCredentials).length > 0) {
+            await chrome.storage.local.set({ [API_CREDENTIALS_KEY]: allCredentials });
+            
+            // Clean up old keys
+            for (const platform of platformList) {
+              await chrome.storage.local.remove(`api_credentials_${platform.id}`);
+            }
           }
         }
         
-        setCredentials(loadedCredentials);
+        setCredentials(allCredentials);
         
         // Set first platform as selected ONLY if no platform is currently selected
         if (selectedPlatformId === null && platformList.length > 0) {
@@ -77,20 +95,25 @@ const ApiSettings = () => {
   };
   
   const handleCredentialsUpdated = (platformId, newCredentials) => {
-    // Update local state without changing selected platform
-    setCredentials(prev => ({
-      ...prev,
+    // Update local state AND storage with the unified format
+    const updatedCredentials = {
+      ...credentials,
       [platformId]: newCredentials
-    }));
+    };
+    
+    setCredentials(updatedCredentials);
+    
+    // Update storage (handled by PlatformDetails)
   };
   
   const handleCredentialsRemoved = (platformId) => {
-    // Update local state without changing selected platform
-    setCredentials(prev => {
-      const updated = { ...prev };
-      delete updated[platformId];
-      return updated;
-    });
+    // Update local state
+    const updatedCredentials = { ...credentials };
+    delete updatedCredentials[platformId];
+    
+    setCredentials(updatedCredentials);
+    
+    // Update storage (handled by PlatformDetails)
   };
   
   const handleAdvancedSettingsUpdated = (platformId, modelId, settings) => {
@@ -171,6 +194,7 @@ const ApiSettings = () => {
             onCredentialsRemoved={handleCredentialsRemoved}
             onAdvancedSettingsUpdated={handleAdvancedSettingsUpdated}
             refreshData={refreshData}
+            credentialsKey={API_CREDENTIALS_KEY}
           />
         ) : (
           <div className="platform-details-panel flex-1 bg-theme-surface p-8 text-center text-theme-secondary rounded-lg border border-theme">

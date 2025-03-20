@@ -3,7 +3,6 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import Button from '../../common/Button';
 import AdvancedSettings from './AdvancedSettings';
 
-const API_CREDENTIALS_KEY_PREFIX = 'api_credentials_';
 const API_SETTINGS_KEY = 'api_advanced_settings';
 
 const PlatformDetails = ({
@@ -13,7 +12,8 @@ const PlatformDetails = ({
   onCredentialsUpdated,
   onCredentialsRemoved,
   onAdvancedSettingsUpdated,
-  refreshData
+  refreshData,
+  credentialsKey
 }) => {
   const { success, error } = useNotification();
   const [apiKey, setApiKey] = useState('');
@@ -61,9 +61,16 @@ const PlatformDetails = ({
         return;
       }
       
-      // Save credentials to storage
+      // Get current credentials from storage
+      const result = await chrome.storage.local.get(credentialsKey);
+      const allCredentials = result[credentialsKey] || {};
+      
+      // Update credentials for this platform
+      allCredentials[platform.id] = newCredentials;
+      
+      // Save all credentials under a single key
       await chrome.storage.local.set({
-        [`${API_CREDENTIALS_KEY_PREFIX}${platform.id}`]: newCredentials
+        [credentialsKey]: allCredentials
       });
       
       onCredentialsUpdated(platform.id, newCredentials);
@@ -82,7 +89,17 @@ const PlatformDetails = ({
     }
     
     try {
-      await chrome.storage.local.remove(`${API_CREDENTIALS_KEY_PREFIX}${platform.id}`);
+      // Get current credentials from storage
+      const result = await chrome.storage.local.get(credentialsKey);
+      const allCredentials = result[credentialsKey] || {};
+      
+      // Remove credentials for this platform
+      delete allCredentials[platform.id];
+      
+      // Save updated credentials
+      await chrome.storage.local.set({
+        [credentialsKey]: allCredentials
+      });
       
       onCredentialsRemoved(platform.id);
       success(`API key removed for ${platform.name}`);

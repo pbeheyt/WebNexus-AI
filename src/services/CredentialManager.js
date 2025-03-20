@@ -17,7 +17,7 @@ class CredentialManager {
   async getCredentials(platformId) {
     try {
       this.logger.info(`Getting credentials for ${platformId}`);
-      const result = await chrome.storage.sync.get(this.STORAGE_KEY);
+      const result = await chrome.storage.local.get(this.STORAGE_KEY);
       const credentials = result[this.STORAGE_KEY] || {};
       return credentials[platformId] || null;
     } catch (error) {
@@ -35,13 +35,13 @@ class CredentialManager {
   async storeCredentials(platformId, credentials) {
     try {
       this.logger.info(`Storing credentials for ${platformId}`);
-      const result = await chrome.storage.sync.get(this.STORAGE_KEY);
+      const result = await chrome.storage.local.get(this.STORAGE_KEY);
       const allCredentials = result[this.STORAGE_KEY] || {};
       
       // Update credentials for this platform
       allCredentials[platformId] = credentials;
       
-      await chrome.storage.sync.set({ [this.STORAGE_KEY]: allCredentials });
+      await chrome.storage.local.set({ [this.STORAGE_KEY]: allCredentials });
       return true;
     } catch (error) {
       this.logger.error('Error storing credentials:', error);
@@ -57,12 +57,12 @@ class CredentialManager {
   async removeCredentials(platformId) {
     try {
       this.logger.info(`Removing credentials for ${platformId}`);
-      const result = await chrome.storage.sync.get(this.STORAGE_KEY);
+      const result = await chrome.storage.local.get(this.STORAGE_KEY);
       const allCredentials = result[this.STORAGE_KEY] || {};
       
       if (allCredentials[platformId]) {
         delete allCredentials[platformId];
-        await chrome.storage.sync.set({ [this.STORAGE_KEY]: allCredentials });
+        await chrome.storage.local.set({ [this.STORAGE_KEY]: allCredentials });
       }
       
       return true;
