@@ -68,12 +68,8 @@
         "dist/*.bundle.js",
         "dist/pdf.worker.bundle.js",
         "images/*.png",
-        "api-test.html", 
-        "api-test.js",
         "model-test.html",
-        "sidebar.html",
-        "sidebar.css", 
-        "sidebar.bundle.js"
+        "sidebar.html"
       ],
       "matches": ["<all_urls>"]
     }
