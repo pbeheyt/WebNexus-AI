@@ -1,15 +1,18 @@
+// src/sidebar/SidebarApp.jsx
 import React, { useEffect, useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext'; // ✅ Updated import
 import { SidebarPlatformProvider } from './contexts/SidebarPlatformContext';
 import { SidebarChatProvider } from './contexts/SidebarChatContext';
-import { SidebarThemeProvider } from './contexts/SidebarThemeContext';
 import { SidebarContentProvider } from './contexts/SidebarContentContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
 import ContentTypeDisplay from './components/ContentTypeDisplay';
 import { MESSAGE_TYPES } from './constants';
+import themeService from '../services/ThemeService';
 
 export default function SidebarApp() {
+  const { theme } = useTheme(); // ✅ Use centralized theme context
   const [isReady, setIsReady] = useState(false);
   
   useEffect(() => {
@@ -22,28 +25,35 @@ export default function SidebarApp() {
       
       switch (event.data.type) {
         case MESSAGE_TYPES.EXTRACTION_COMPLETE:
-          // Handle extraction completion
           console.log('Content extraction complete:', event.data.content);
           break;
           
         case MESSAGE_TYPES.PAGE_INFO_UPDATED:
-          // Handle page info update
           console.log('Page info updated:', event.data.pageInfo);
           break;
           
         case MESSAGE_TYPES.THEME_CHANGED:
-          // Handle theme change from parent
-          console.log('Theme changed:', event.data.theme);
-          document.documentElement.setAttribute('data-theme', event.data.theme);
+          // No need to use direct service, theme context will handle it
+          console.log('Theme changed from parent:', event.data.theme);
           break;
           
         default:
-          // Ignore unknown message types
           break;
       }
     };
     
     window.addEventListener('message', handleMessage);
+    
+    // Update parent frame about theme changes
+    const notifyParentAboutTheme = () => {
+      window.parent.postMessage({ 
+        type: MESSAGE_TYPES.THEME_CHANGED, 
+        theme 
+      }, '*');
+    };
+    
+    // Run once on mount and whenever theme changes
+    notifyParentAboutTheme();
     
     // Signal to parent that sidebar is ready
     setTimeout(() => {
@@ -54,7 +64,7 @@ export default function SidebarApp() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, []);
+  }, [theme]); // ✅ Add theme as dependency
   
   // Handle sidebar close button
   const handleClose = () => {
@@ -71,21 +81,19 @@ export default function SidebarApp() {
   }
   
   return (
-    <SidebarThemeProvider>
-      <SidebarContentProvider>
-        <SidebarPlatformProvider>
-          <SidebarChatProvider>
-            <div className="flex flex-col h-screen w-full overflow-hidden">
-              <Header onClose={handleClose} />
-              <div className="p-2">
-                <ContentTypeDisplay />
-              </div>
-              <ChatArea />
-              <UserInput />
+    <SidebarContentProvider>
+      <SidebarPlatformProvider>
+        <SidebarChatProvider>
+          <div className="flex flex-col h-screen w-full overflow-hidden">
+            <Header onClose={handleClose} />
+            <div className="p-2">
+              <ContentTypeDisplay />
             </div>
-          </SidebarChatProvider>
-        </SidebarPlatformProvider>
-      </SidebarContentProvider>
-    </SidebarThemeProvider>
+            <ChatArea />
+            <UserInput />
+          </div>
+        </SidebarChatProvider>
+      </SidebarPlatformProvider>
+    </SidebarContentProvider>
   );
 }

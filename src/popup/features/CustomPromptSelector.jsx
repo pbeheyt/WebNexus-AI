@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useContent } from '../context/ContentContext';
-import { usePrompts } from '../context/PromptContext';
-import { useStatus } from '../context/StatusContext';
+import { useContent } from '../contexts/ContentContext';
+import { usePrompts } from '../contexts/PromptContext';
+import { useStatus } from '../contexts/StatusContext';
 import { SHARED_TYPE } from '../../shared/constants';
 
 export function CustomPromptSelector() {

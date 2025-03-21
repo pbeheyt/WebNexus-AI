@@ -1,5 +1,5 @@
-// src/components/ui/Toast.jsx
-import { useEffect, useState } from 'react';
+// src/components/Toast.jsx
+import React, { useEffect, useState } from 'react';
 
 export function Toast({ 
   message, 

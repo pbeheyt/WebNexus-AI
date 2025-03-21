@@ -1,3 +1,6 @@
+// src/components/Toggle.jsx
+import React from 'react';
+
 export function Toggle({
   checked = false,
   onChange,

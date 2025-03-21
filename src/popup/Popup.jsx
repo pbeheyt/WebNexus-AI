@@ -1,19 +1,19 @@
 // src/popup/Popup.jsx
 import { useEffect, useState } from 'react';
-import { useContent } from '../components/context/ContentContext';
-import { usePrompts } from '../components/context/PromptContext';
-import { useTheme } from '../components/context/ThemeContext';
-import { useStatus } from '../components/context/StatusContext';
-import { usePlatforms } from '../components/context/PlatformContext';
-import { Button } from '../components/ui/Button';
-import { StatusMessage } from '../components/ui/StatusMessage';
-import { Toast } from '../components/ui/Toast';
-import { ContentTypeDisplay } from '../components/features/ContentTypeDisplay';
-import { PlatformSelector } from '../components/features/PlatformSelector';
-import { PromptTypeToggle } from '../components/features/PromptTypeToggle';
-import { QuickPromptEditor } from '../components/features/QuickPromptEditor';
-import { DefaultPromptConfig } from '../components/features/DefaultPromptConfig';
-import { CustomPromptSelector } from '../components/features/CustomPromptSelector';
+import { useContent } from './contexts/ContentContext';
+import { usePrompts } from './contexts/PromptContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useStatus } from './contexts/StatusContext';
+import { usePlatforms } from './contexts/PlatformContext';
+import { Button } from '../components/Button';
+import { StatusMessage } from '../components/StatusMessage';
+import { Toast } from '../components/Toast';
+import { ContentTypeDisplay } from './features/ContentTypeDisplay';
+import { PlatformSelector } from './features/PlatformSelector';
+import { PromptTypeToggle } from './features/PromptTypeToggle';
+import { QuickPromptEditor } from './features/QuickPromptEditor';
+import { DefaultPromptConfig } from './features/DefaultPromptConfig';
+import { CustomPromptSelector } from './features/CustomPromptSelector';
 import { PROMPT_TYPES, STORAGE_KEYS } from '../shared/constants';
 import { getContentScriptFile } from '../shared/content-utils';
 

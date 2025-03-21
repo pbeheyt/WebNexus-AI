@@ -1,5 +1,6 @@
+// src/settings/SettingsApp.jsx
 import React from 'react';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider } from '../contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { TabProvider } from './contexts/TabContext';
 import TabNavigation from './components/layout/TabNavigation';

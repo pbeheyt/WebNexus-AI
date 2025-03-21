@@ -1,4 +1,6 @@
-// src/components/ui/StatusMessage.jsx
+// src/components/StatusMessage.jsx
+import React from 'react';
+
 export function StatusMessage({ message, type = 'info', className = '' }) {
   const typeClasses = {
     info: 'text-text-secondary',

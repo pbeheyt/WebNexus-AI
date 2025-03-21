@@ -1,3 +1,6 @@
+// src/components/Button.jsx
+import React from 'react';
+
 export function Button({
   children,
   variant = 'primary',

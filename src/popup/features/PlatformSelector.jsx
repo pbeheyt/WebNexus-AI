@@ -1,7 +1,7 @@
 // src/components/features/PlatformSelector.jsx
 import { PlatformCard } from '../ui/PlatformCard';
-import { usePlatforms } from '../context/PlatformContext';
-import { useStatus } from '../context/StatusContext';
+import { usePlatforms } from '../contexts/PlatformContext';
+import { useStatus } from '../contexts/StatusContext';
 
 export function PlatformSelector() {
   const { platforms, selectedPlatformId, selectPlatform, isLoading } = usePlatforms();

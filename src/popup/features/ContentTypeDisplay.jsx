@@ -1,4 +1,4 @@
-import { useContent } from '../context/ContentContext';
+import { useContent } from '../contexts/ContentContext';
 import { CONTENT_TYPES } from '../../shared/constants';
 
 export function ContentTypeDisplay() {

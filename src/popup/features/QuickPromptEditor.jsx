@@ -1,9 +1,9 @@
 // src/components/features/QuickPromptEditor.jsx
 import { useState, useEffect, useCallback } from 'react';
 import { TextArea } from '../ui/TextArea';
-import { usePrompts } from '../context/PromptContext';
-import { useContent } from '../context/ContentContext';
-import { useStatus } from '../context/StatusContext';
+import { usePrompts } from '../contexts/PromptContext';
+import { useContent } from '../contexts/ContentContext';
+import { useStatus } from '../contexts/StatusContext';
 
 export function QuickPromptEditor() {
   const { quickPromptText, updateQuickPrompt } = usePrompts();
