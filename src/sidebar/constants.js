@@ -2,7 +2,6 @@
 export const MESSAGE_TYPES = {
   // Sidebar → Parent
   SIDEBAR_READY: 'SIDEBAR_READY',
-  REQUEST_EXTRACTION: 'REQUEST_EXTRACTION',
   TOGGLE_SIDEBAR: 'TOGGLE_SIDEBAR',
   
   // Parent → Sidebar

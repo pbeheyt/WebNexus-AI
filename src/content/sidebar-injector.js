@@ -184,12 +184,6 @@ class SidebarInjector {
         this.toggle(event.data.visible);
         break;
         
-      case 'REQUEST_EXTRACTION':
-        // Relay to background script
-        console.log('SidebarInjector: Content extraction requested from iframe');
-        this._requestContentExtraction();
-        break;
-        
       default:
         // Unknown message type
         console.log(`SidebarInjector: Unknown iframe message type: ${type}`);
@@ -297,59 +291,6 @@ class SidebarInjector {
         type: 'SIDEBAR_VISIBILITY_CHANGED',
         visible
       }, '*');
-    }
-  }
-  
-  /**
-   * Request content extraction from background script
-   * @private
-   */
-  async _requestContentExtraction() {
-    try {
-      console.log('SidebarInjector: Requesting content extraction');
-      
-      // Get current tab
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const currentTab = tabs[0];
-      
-      if (!currentTab || !currentTab.id) {
-        throw new Error('No active tab found');
-      }
-      
-      // Request content extraction
-      const response = await chrome.runtime.sendMessage({
-        action: 'summarizeContent',
-        tabId: currentTab.id,
-        url: currentTab.url,
-        hasSelection: false,
-        useApi: true
-      });
-      
-      if (!response || !response.success) {
-        throw new Error(response?.error || 'Content extraction failed');
-      }
-      
-      // Get extracted content
-      const { extractedContent } = await chrome.storage.local.get('extractedContent');
-      
-      // Forward to iframe
-      if (this.iframe && extractedContent) {
-        console.log('SidebarInjector: Forwarding extracted content to iframe');
-        this.iframe.contentWindow.postMessage({
-          type: 'EXTRACTION_COMPLETE',
-          content: extractedContent
-        }, '*');
-      }
-    } catch (error) {
-      console.error('SidebarInjector: Error requesting content extraction:', error);
-      
-      // Notify iframe of error
-      if (this.iframe) {
-        this.iframe.contentWindow.postMessage({
-          type: 'EXTRACTION_ERROR',
-          error: error.message || 'Content extraction failed'
-        }, '*');
-      }
     }
   }
   

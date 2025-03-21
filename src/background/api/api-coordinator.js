@@ -108,7 +108,7 @@ export async function summarizeContentViaApi(params) {
     hasSelection = false,
     promptId = null,
     platformId = null,
-    testMode = true,
+    testMode = false,
     testContent = null,
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null

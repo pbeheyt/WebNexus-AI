@@ -22,11 +22,9 @@ export function SidebarChatProvider({ children }) {
 
   // Use the centralized content processing hook
   const {
-    extractContent,
     processContentStreaming,
     extractionStatus,
     error: processingError,
-    isExtracting,
     reset: resetContentProcessing
   } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
 
@@ -177,31 +175,21 @@ export function SidebarChatProvider({ children }) {
     setStreamingContent('');
 
     try {
-      // Extract content if not already done
-      const content = await extractContent({
-        hasSelection: false,
-        forceReExtract: false
-      });
-
-      if (!content) {
-        throw new Error('No content extracted to analyze');
-      }
-
       // Create a stream handler function that will be called by the hook
       const handleStreamChunk = (chunkData) => {
         // The chunk handling is now done by the useEffect above
         // This function is just a pass-through for the hook
       };
 
-      // Process with streaming API using the new hook
-      const streamId = await processContentStreaming({
+      // Process with streaming API using the hook - background will handle extraction
+      const result = await processContentStreaming({
         platformId: selectedPlatformId,
         modelId: selectedModel,
         promptContent: text.trim(),
         onStreamChunk: handleStreamChunk
       });
 
-      if (!streamId) {
+      if (!result || !result.success) {
         throw new Error('Failed to initialize streaming');
       }
 

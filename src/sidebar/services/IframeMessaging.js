@@ -48,13 +48,6 @@ class IframeMessaging {
   }
   
   /**
-   * Request content extraction
-   */
-  requestExtraction() {
-    this.sendMessage(MESSAGE_TYPES.REQUEST_EXTRACTION);
-  }
-  
-  /**
    * Handle incoming messages
    * @private
    * @param {MessageEvent} event - Message event
