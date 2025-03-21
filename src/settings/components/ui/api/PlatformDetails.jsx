@@ -16,6 +16,8 @@ const PlatformDetails = ({
 }) => {
   const { success, error } = useNotification();
   const [apiKey, setApiKey] = useState('');
+  const [originalApiKey, setOriginalApiKey] = useState('');
+  const [hasApiKeyChanges, setHasApiKeyChanges] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState(
@@ -26,11 +28,29 @@ const PlatformDetails = ({
   useEffect(() => {
     if (credentials?.apiKey) {
       setApiKey(credentials.apiKey);
+      setOriginalApiKey(credentials.apiKey);
     } else {
       setApiKey('');
+      setOriginalApiKey('');
     }
+    setHasApiKeyChanges(false);
   }, [platform.id, credentials]);
   
+  // Check for API key changes
+  const handleApiKeyChange = (e) => {
+    const newApiKey = e.target.value;
+    setApiKey(newApiKey);
+    
+    // Check if the API key has changed from its original value
+    if (credentials) {
+      // For existing credentials, compare with original
+      setHasApiKeyChanges(newApiKey !== originalApiKey);
+    } else {
+      // For new credentials, any non-empty value is a change
+      setHasApiKeyChanges(newApiKey.trim() !== '');
+    }
+  };
+
   const handleSaveCredentials = async () => {
     if (!apiKey.trim()) {
       error('API key cannot be empty');
@@ -74,6 +94,10 @@ const PlatformDetails = ({
       
       onCredentialsUpdated(platform.id, newCredentials);
       success(`API key saved for ${platform.name}`);
+      
+      // Update original key reference after successful save
+      setOriginalApiKey(apiKey);
+      setHasApiKeyChanges(false);
     } catch (err) {
       console.error('Error saving API key:', err);
       error(`Failed to save API key: ${err.message}`);
@@ -103,6 +127,8 @@ const PlatformDetails = ({
       onCredentialsRemoved(platform.id);
       success(`API key removed for ${platform.name}`);
       setApiKey('');
+      setOriginalApiKey('');
+      setHasApiKeyChanges(false);
     } catch (err) {
       console.error('Error removing API key:', err);
       error(`Failed to remove API key: ${err.message}`);
@@ -231,7 +257,7 @@ const PlatformDetails = ({
               className="api-key-input w-full p-2 pr-16 bg-theme-surface text-theme-primary border border-theme rounded-md font-mono"
               placeholder={credentials?.apiKey ? "••••••••••••••••••••••••••" : "Enter your API key"}
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              onChange={handleApiKeyChange}
             />
             <button
               type="button"
@@ -255,7 +281,8 @@ const PlatformDetails = ({
           
           <Button
             onClick={handleSaveCredentials}
-            disabled={isSaving}
+            disabled={isSaving || !hasApiKeyChanges}
+            variant={!hasApiKeyChanges ? 'inactive' : 'primary'}
           >
             {isSaving ? 'Saving...' : (credentials ? 'Update Key' : 'Save Key')}
           </Button>

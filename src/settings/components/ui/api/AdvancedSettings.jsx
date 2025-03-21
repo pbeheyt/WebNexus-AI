@@ -10,6 +10,7 @@ const AdvancedSettings = ({
 }) => {
   const { error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const models = platform.apiConfig?.models || [];
   
   // Get model config for selected model
@@ -67,40 +68,80 @@ const AdvancedSettings = ({
     systemPrompt: settings.systemPrompt || ''
   });
   
+  // Original values reference for comparison
+  const [originalValues, setOriginalValues] = useState({...formValues});
+  
   // Update form values when selected model or settings change
   useEffect(() => {
     const currentSettings = getModelSettings();
     const modelDefaults = getDefaultSettings();
     
-    setFormValues({
+    const newFormValues = {
       maxTokens: currentSettings.maxTokens || modelDefaults.maxTokens,
       temperature: currentSettings.temperature !== undefined ? currentSettings.temperature : modelDefaults.temperature,
       topP: currentSettings.topP !== undefined ? currentSettings.topP : modelDefaults.topP,
       contextWindow: currentSettings.contextWindow || modelDefaults.contextWindow,
       systemPrompt: currentSettings.systemPrompt || ''
-    });
+    };
+    
+    setFormValues(newFormValues);
+    setOriginalValues(newFormValues);
+    setHasChanges(false);
   }, [selectedModelId, advancedSettings]);
+  
+  // Check if current form values differ from original values
+  const checkForChanges = (currentValues, originalVals) => {
+    // Check properties that exist in both objects
+    for (const key in currentValues) {
+      // Skip comparing undefined values
+      if (currentValues[key] === undefined && originalVals[key] === undefined) {
+        continue;
+      }
+      
+      // For strings (like system prompt), check if they differ
+      if (typeof currentValues[key] === 'string' && currentValues[key] !== originalVals[key]) {
+        return true;
+      }
+      
+      // For numbers, check if they differ
+      if (typeof currentValues[key] === 'number' && 
+          (!Object.is(currentValues[key], originalVals[key]))) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
   
   const handleChange = (e) => {
     const { name, value } = e.target;
     
+    // Create updated values to check for changes
+    let updatedValues = {...formValues};
+    
     // Convert numeric values
     if (['maxTokens', 'contextWindow'].includes(name)) {
-      setFormValues(prev => ({
-        ...prev,
+      updatedValues = {
+        ...updatedValues,
         [name]: parseInt(value, 10) || 0
-      }));
+      };
     } else if (['temperature', 'topP'].includes(name)) {
-      setFormValues(prev => ({
-        ...prev,
+      updatedValues = {
+        ...updatedValues,
         [name]: parseFloat(value) || 0
-      }));
+      };
     } else {
-      setFormValues(prev => ({
-        ...prev,
+      updatedValues = {
+        ...updatedValues,
         [name]: value
-      }));
+      };
     }
+    
+    // Update form values
+    setFormValues(updatedValues);
+    
+    // Check if values have changed from original
+    setHasChanges(checkForChanges(updatedValues, originalValues));
   };
   
   const handleModelChange = (e) => {
@@ -159,6 +200,10 @@ const AdvancedSettings = ({
       if (!success) {
         throw new Error('Failed to save settings');
       }
+      
+      // Update original values after successful save
+      setOriginalValues({...formValues});
+      setHasChanges(false);
     } catch (err) {
       console.error('Error saving settings:', err);
       error(`Error: ${err.message}`);
@@ -239,6 +284,7 @@ const AdvancedSettings = ({
           </div>
         )}
         
+        {/* Rest of the form fields... */}
         {/* Max tokens setting */}
         <div className="form-group mb-4">
           <label 
@@ -363,7 +409,8 @@ const AdvancedSettings = ({
         <div className="form-actions flex justify-end">
           <Button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || !hasChanges}
+            variant={!hasChanges ? 'inactive' : 'primary'}
           >
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
