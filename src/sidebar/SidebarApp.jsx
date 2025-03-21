@@ -1,18 +1,13 @@
-// src/sidebar/SidebarApp.jsx
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { SidebarPlatformProvider } from './contexts/SidebarPlatformContext';
-import { SidebarChatProvider } from './contexts/SidebarChatContext';
-import { SidebarContentProvider } from './contexts/SidebarContentContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
 import ContentTypeDisplay from './components/ContentTypeDisplay';
 import { MESSAGE_TYPES } from './constants';
-import themeService from '../services/ThemeService';
 
 export default function SidebarApp() {
-  const { theme } = useTheme(); // ✅ Use centralized theme context
+  const { theme } = useTheme();
   const [isReady, setIsReady] = useState(false);
   
   useEffect(() => {
@@ -64,7 +59,7 @@ export default function SidebarApp() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [theme]); // ✅ Add theme as dependency
+  }, [theme]);
   
   // Handle sidebar close button
   const handleClose = () => {
@@ -81,19 +76,13 @@ export default function SidebarApp() {
   }
   
   return (
-    <SidebarContentProvider>
-      <SidebarPlatformProvider>
-        <SidebarChatProvider>
-          <div className="flex flex-col h-screen w-full overflow-hidden">
-            <Header onClose={handleClose} />
-            <div className="p-2">
-              <ContentTypeDisplay />
-            </div>
-            <ChatArea />
-            <UserInput />
-          </div>
-        </SidebarChatProvider>
-      </SidebarPlatformProvider>
-    </SidebarContentProvider>
+    <div className="flex flex-col h-screen w-full overflow-hidden">
+      <Header onClose={handleClose} />
+      <div className="p-2">
+        <ContentTypeDisplay />
+      </div>
+      <ChatArea />
+      <UserInput />
+    </div>
   );
 }

@@ -1,6 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SettingsApp from './SettingsApp';
+import { ThemeProvider } from '../contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { TabProvider } from './contexts/TabContext';
 import '../styles/index.css';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,7 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
   
   root.render(
     <React.StrictMode>
-      <SettingsApp />
+      <ThemeProvider>
+        <NotificationProvider>
+          <TabProvider>
+            <SettingsApp />
+          </TabProvider>
+        </NotificationProvider>
+      </ThemeProvider>
     </React.StrictMode>
   );
 });
