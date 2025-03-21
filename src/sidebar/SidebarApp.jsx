@@ -1,6 +1,6 @@
 // src/sidebar/SidebarApp.jsx
 import React, { useEffect, useState } from 'react';
-import { useTheme } from '../contexts/ThemeContext'; // ✅ Updated import
+import { useTheme } from '../contexts/ThemeContext';
 import { SidebarPlatformProvider } from './contexts/SidebarPlatformContext';
 import { SidebarChatProvider } from './contexts/SidebarChatContext';
 import { SidebarContentProvider } from './contexts/SidebarContentContext';

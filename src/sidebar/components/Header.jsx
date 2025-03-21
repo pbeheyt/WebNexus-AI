@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSidebarPlatform } from '../contexts/SidebarPlatformContext';
-import { useSidebarTheme } from '../contexts/SidebarThemeContext';
+import { useTheme } from '../../contexts/ThemeContext'; // Updated import path
 import ModelSelector from './ModelSelector';
 
 function Header({ onClose }) {
   const { platforms, selectedPlatformId, selectPlatform } = useSidebarPlatform();
-  const { theme, toggleTheme } = useSidebarTheme();
+  const { theme, toggleTheme } = useTheme(); // Use global theme context
 
   return (
     <div className="border-b border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-2">
