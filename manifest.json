@@ -58,6 +58,12 @@
         "default": "Ctrl+Shift+Z"
       },
       "description": "Summarize current page"
+    },
+    "toggle-sidebar": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Q"
+      },
+      "description": "Toggle sidebar"
     }
   },
   "web_accessible_resources": [

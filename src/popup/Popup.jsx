@@ -76,6 +76,34 @@ export function Popup() {
     }
   };
 
+  // Function to toggle sidebar
+  const toggleSidebar = async () => {
+    try {
+      // If we have a current tab, send the toggle message
+      if (currentTab?.id) {
+        updateStatus('Toggling sidebar...', true);
+        
+        const response = await chrome.runtime.sendMessage({
+          action: 'toggleSidebar',
+          tabId: currentTab.id
+        });
+        
+        if (response && response.success) {
+          updateStatus(`Sidebar ${response.visible ? 'opened' : 'closed'}`);
+        } else if (response && response.error) {
+          updateStatus(`Error: ${response.error}`);
+          showToastMessage(`Failed to toggle sidebar: ${response.error}`, 'error');
+        }
+      } else {
+        showToastMessage('No active tab found', 'error');
+      }
+    } catch (error) {
+      console.error('Error toggling sidebar:', error);
+      showToastMessage('Failed to toggle sidebar. Try refreshing the page.', 'error');
+      updateStatus('Error toggling sidebar');
+    }
+  };
+
   /**
    * Get prompt content by ID
    * @param {string} promptId - The prompt ID
@@ -230,6 +258,18 @@ export function Popup() {
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21.21 12.79z"></path>
               </svg>
             )}
+          </button>
+
+          {/* Sidebar Toggle Button */}
+          <button
+            onClick={toggleSidebar}
+            className="p-1 ml-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
+            title="Toggle Sidebar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" stroke="currentColor">
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+              <line x1="15" y1="3" x2="15" y2="21" stroke="currentColor" strokeWidth="2"/>
+            </svg>
           </button>
 
           <button

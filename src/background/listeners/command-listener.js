@@ -74,4 +74,29 @@ async function handleCommand(command) {
       logger.background.error('Error handling keyboard shortcut:', error);
     }
   }
+  // Add handling for the sidebar toggle command
+  else if (command === "toggle-sidebar") {
+    try {
+      logger.background.info('Keyboard shortcut triggered: toggle-sidebar');
+      
+      // Get active tab
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tabs || tabs.length === 0) {
+        logger.background.warn('No active tab found');
+        return;
+      }
+      
+      const activeTab = tabs[0];
+      logger.background.info(`Active tab for sidebar toggle: ${activeTab.id}`);
+      
+      // Toggle sidebar using existing functionality
+      await chrome.runtime.sendMessage({
+        action: 'toggleSidebar',
+        tabId: activeTab.id
+      });
+      
+    } catch (error) {
+      logger.background.error('Error handling sidebar toggle shortcut:', error);
+    }
+  }
 }
