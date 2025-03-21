@@ -1,5 +1,9 @@
-import { forwardRef, useEffect, useRef } from 'react';
+// src/components/form/TextArea.jsx
+import React, { forwardRef, useEffect, useRef } from 'react';
 
+/**
+ * Enhanced textarea component with auto-resize capability.
+ */
 export const TextArea = forwardRef(({
   value,
   onChange,
@@ -7,6 +11,8 @@ export const TextArea = forwardRef(({
   maxLength,
   className = '',
   autoResize = true,
+  minHeight = 80,
+  maxHeight = 300,
   ...props
 }, ref) => {
   const textareaRef = useRef(null);
@@ -21,11 +27,11 @@ export const TextArea = forwardRef(({
     if (autoResize && textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.max(
-        80, 
-        Math.min(textareaRef.current.scrollHeight, 300)
+        minHeight, 
+        Math.min(textareaRef.current.scrollHeight, maxHeight)
       )}px`;
     }
-  }, [value, autoResize]);
+  }, [value, autoResize, minHeight, maxHeight]);
   
   return (
     <textarea
@@ -34,10 +40,13 @@ export const TextArea = forwardRef(({
       onChange={onChange}
       placeholder={placeholder}
       maxLength={maxLength}
-      className={`w-full min-h-[100px] p-3 bg-transparent border-none outline-none text-text-primary text-sm resize-vertical ${className}`}
+      className={`w-full min-h-[${minHeight}px] p-3 bg-transparent border-none outline-none text-theme-primary text-sm resize-vertical ${className}`}
+      style={{ minHeight: `${minHeight}px` }}
       {...props}
     />
   );
 });
 
 TextArea.displayName = 'TextArea';
+
+export default TextArea;

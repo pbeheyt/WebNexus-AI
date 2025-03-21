@@ -30,3 +30,5 @@ export function PlatformCard({
     </label>
   );
 }
+
+export default PlatformCard;

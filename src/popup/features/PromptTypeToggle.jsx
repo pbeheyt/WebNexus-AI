@@ -1,5 +1,5 @@
 // src/components/features/PromptTypeToggle.jsx
-import { RadioGroup } from '../ui/RadioGroup';
+import { RadioGroup } from '../../components';
 import { usePrompts } from '../contexts/PromptContext';
 import { useStatus } from '../contexts/StatusContext';
 import { PROMPT_TYPES } from '../../shared/constants';

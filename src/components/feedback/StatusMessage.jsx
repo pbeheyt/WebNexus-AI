@@ -1,9 +1,17 @@
-// src/components/StatusMessage.jsx
+// src/components/feedback/StatusMessage.jsx
 import React from 'react';
 
+/**
+ * Component for displaying inline status messages.
+ * 
+ * @param {Object} props - Component props
+ * @param {string} props.message - The message to display
+ * @param {string} [props.type='info'] - Message type (info, success, warning, error)
+ * @param {string} [props.className=''] - Additional CSS classes
+ */
 export function StatusMessage({ message, type = 'info', className = '' }) {
   const typeClasses = {
-    info: 'text-text-secondary',
+    info: 'text-theme-secondary',
     success: 'text-success',
     warning: 'text-warning',
     error: 'text-error',
@@ -15,3 +23,5 @@ export function StatusMessage({ message, type = 'info', className = '' }) {
     </div>
   );
 }
+
+export default StatusMessage;

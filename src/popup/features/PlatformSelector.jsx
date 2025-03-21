@@ -1,5 +1,5 @@
 // src/components/features/PlatformSelector.jsx
-import { PlatformCard } from '../ui/PlatformCard';
+import { PlatformCard } from '../../components';
 import { usePlatforms } from '../contexts/PlatformContext';
 import { useStatus } from '../contexts/StatusContext';
 
