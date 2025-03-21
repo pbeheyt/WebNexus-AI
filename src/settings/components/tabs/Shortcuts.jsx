@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNotification } from '../../contexts/NotificationContext';
-import Button from '../common/Button';
+import { Button, useNotification } from '../../../components';
 
 const SHORTCUT_SETTINGS_KEY = 'shortcut_settings';
 

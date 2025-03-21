@@ -1,6 +1,7 @@
 // src/settings/components/layout/Header.jsx
 import React from 'react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { Button } from '../../../components';
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
@@ -44,12 +45,13 @@ const Header = () => {
           )}
         </button>
         
-        <button 
+        <Button 
           onClick={handleBackClick}
-          className="back-btn bg-transparent text-primary border border-primary py-2 px-3 rounded-md hover:bg-primary/10 transition-colors"
+          variant="secondary"
+          className="back-btn py-2 px-3"
         >
           ← Back to Summarizer
-        </button>
+        </Button>
       </div>
     </header>
   );

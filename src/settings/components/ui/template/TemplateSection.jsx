@@ -1,5 +1,6 @@
+// src/settings/components/ui/template/TemplateSection.jsx
 import React from 'react';
-import Button from '../../common/Button';
+import { Button, Accordion } from '../../../../components';
 import ParameterEditor from './ParameterEditor';
 
 const TemplateSection = ({
@@ -16,18 +17,13 @@ const TemplateSection = ({
   const sortedParameters = [...parameters].sort((a, b) => a.order - b.order);
   
   return (
-    <div className="template-section mb-5 bg-theme-surface rounded-lg overflow-hidden border border-theme">
-      <div className="template-section-header px-4 py-3 bg-theme-surface border-b border-theme flex justify-between items-center">
-        <div 
-          className="section-title-wrapper flex items-center cursor-pointer"
-          onClick={onToggle}
-        >
-          <h3 className="text-base font-medium">{title}</h3>
-          <span className="section-collapse-indicator ml-2 text-theme-secondary">
-            {expanded ? '▼' : '▶'}
-          </span>
-        </div>
-        
+    <Accordion
+      title={title}
+      defaultExpanded={expanded}
+      onToggle={onToggle}
+      className="mb-5"
+    >
+      <div className="flex justify-end mb-4">
         <Button
           size="sm"
           onClick={onAddParameter}
@@ -36,7 +32,7 @@ const TemplateSection = ({
         </Button>
       </div>
       
-      <div className={`parameter-list p-4 ${expanded ? '' : 'hidden'}`}>
+      <div className="parameter-list">
         {sortedParameters.length === 0 ? (
           <div className="empty-parameters p-4 text-center text-theme-secondary bg-theme-hover rounded-md">
             <p>No instructions found. Click "Add Instruction" to create one.</p>
@@ -55,7 +51,7 @@ const TemplateSection = ({
           ))
         )}
       </div>
-    </div>
+    </Accordion>
   );
 };
 

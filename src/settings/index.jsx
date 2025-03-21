@@ -1,8 +1,9 @@
+// src/settings/index.jsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SettingsApp from './SettingsApp';
 import { ThemeProvider } from '../contexts/ThemeContext';
-import { NotificationProvider } from './contexts/NotificationContext';
+import { NotificationProvider } from '../components';
 import { TabProvider } from './contexts/TabContext';
 import '../styles/index.css';
 

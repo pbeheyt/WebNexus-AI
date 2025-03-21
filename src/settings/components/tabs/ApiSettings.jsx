@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNotification } from '../../contexts/NotificationContext';
+import { useNotification } from '../../../components';
 import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
 

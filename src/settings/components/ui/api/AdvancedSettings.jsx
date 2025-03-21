@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../../common/Button';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { Button, useNotification } from '../../../../components';
 
 const AdvancedSettings = ({
   platform,

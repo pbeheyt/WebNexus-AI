@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNotification } from '../../contexts/NotificationContext';
+import { useNotification } from '../../../components';
 import { SHARED_TYPE } from '../../../shared/constants';
 
 const CUSTOM_PROMPTS_KEY = 'custom_prompts_by_type';

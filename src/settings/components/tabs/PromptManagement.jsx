@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNotification } from '../../contexts/NotificationContext';
+import { useNotification } from '../../../components';
 import PromptList from '../ui/PromptList';
 import PromptDetail from '../ui/PromptDetail';
 import PromptForm from '../ui/PromptForm';

@@ -1,6 +1,7 @@
+// src/settings/components/tabs/ContentConfiguration.jsx
 import React, { useState, useEffect } from 'react';
-import { useNotification } from '../../contexts/NotificationContext';
-import ContentTypeAccordion from '../ui/ContentTypeAccordion';
+import { useNotification } from '../../../components';
+import { Accordion } from '../../../components';
 import SettingsForm from '../ui/SettingsForm';
 
 const ContentConfiguration = () => {
@@ -95,9 +96,9 @@ const ContentConfiguration = () => {
     <div>
       <h2 className="type-heading mb-4 pb-3 border-b border-theme text-lg font-medium">Content Extraction Settings</h2>
       
-      <ContentTypeAccordion
+      <Accordion
         title="Reddit Posts"
-        expanded={expandedSections.reddit}
+        defaultExpanded={expandedSections.reddit}
         onToggle={() => toggleSection('reddit')}
       >
         <SettingsForm
@@ -114,11 +115,11 @@ const ContentConfiguration = () => {
             }
           ]}
         />
-      </ContentTypeAccordion>
+      </Accordion>
       
-      <ContentTypeAccordion
+      <Accordion
         title="YouTube Videos"
-        expanded={expandedSections.youtube}
+        defaultExpanded={expandedSections.youtube}
         onToggle={() => toggleSection('youtube')}
       >
         <SettingsForm
@@ -135,7 +136,7 @@ const ContentConfiguration = () => {
             }
           ]}
         />
-      </ContentTypeAccordion>
+      </Accordion>
     </div>
   );
 };

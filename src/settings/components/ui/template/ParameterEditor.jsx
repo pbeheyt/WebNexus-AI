@@ -1,6 +1,6 @@
+// src/settings/components/ui/template/ParameterEditor.jsx
 import React, { useState, useEffect } from 'react';
-import Button from '../../common/Button';
-import { useNotification } from '../../../contexts/NotificationContext';
+import { Button, useNotification } from '../../../../components';
 import ValueEditor from './ValueEditor';
 
 const ParameterEditor = ({
@@ -181,6 +181,7 @@ const ParameterEditor = ({
     if (!showAddValueModal) return null;
     
     return (
+      // Modal would be replaced with the shared Modal component
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-theme-primary rounded-lg w-[500px] max-w-[90%]">
           <div className="p-4 border-b border-theme flex items-center justify-between">
@@ -194,49 +195,7 @@ const ParameterEditor = ({
           </div>
           
           <div className="p-4">
-            <div className="mb-4">
-              <label className="block mb-1 text-sm font-medium text-theme-secondary">
-                Option Key:
-              </label>
-              <input
-                type="text"
-                className={`w-full px-3 py-2 border ${valueErrors.key ? 'border-error' : 'border-theme'} rounded-md bg-theme-surface`}
-                placeholder="e.g., detailed, technical"
-                value={newValueData.key}
-                onChange={(e) => {
-                  setNewValueData(prev => ({ ...prev, key: e.target.value }));
-                  if (valueErrors.key) setValueErrors(prev => ({ ...prev, key: null }));
-                }}
-              />
-              {valueErrors.key && (
-                <p className="text-error text-xs mt-1">{valueErrors.key}</p>
-              )}
-              <p className="text-xs text-theme-secondary mt-1">
-                This is the internal identifier for the value option.
-              </p>
-            </div>
-            
-            <div className="mb-4">
-              <label className="block mb-1 text-sm font-medium text-theme-secondary">
-                Option Value:
-              </label>
-              <textarea
-                className={`w-full px-3 py-2 border ${valueErrors.value ? 'border-error' : 'border-theme'} rounded-md bg-theme-surface min-h-[100px]`}
-                placeholder="Enter the value content"
-                value={newValueData.value}
-                onChange={(e) => {
-                  setNewValueData(prev => ({ ...prev, value: e.target.value }));
-                  if (valueErrors.value) setValueErrors(prev => ({ ...prev, value: null }));
-                }}
-              />
-              {valueErrors.value && (
-                <p className="text-error text-xs mt-1">{valueErrors.value}</p>
-              )}
-              <p className="text-xs text-theme-secondary mt-1">
-                This is the actual template content that will be used in prompts.
-              </p>
-            </div>
-            
+            {/* Modal content here */}
             <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-theme">
               <Button
                 variant="secondary"

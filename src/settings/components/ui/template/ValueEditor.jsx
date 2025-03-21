@@ -1,5 +1,6 @@
+// src/settings/components/ui/template/ValueEditor.jsx
 import React, { useState } from 'react';
-import Button from '../../common/Button';
+import { Button } from '../../../../components';
 
 const ValueEditor = ({
   valueKey,

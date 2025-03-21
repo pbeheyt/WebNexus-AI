@@ -1,6 +1,6 @@
+// src/settings/components/ui/PromptForm.jsx
 import React, { useState } from 'react';
-import Button from '../common/Button';
-import { useNotification } from '../../contexts/NotificationContext';
+import { Button, useNotification } from '../../../components';
 import { SHARED_TYPE } from '../../../shared/constants';
 
 // Content types from original constants

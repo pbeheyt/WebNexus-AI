@@ -1,6 +1,6 @@
+// src/settings/components/ui/PromptDetail.jsx
 import React from 'react';
-import Button from '../common/Button';
-import { useNotification } from '../../contexts/NotificationContext';
+import { Button, useNotification } from '../../../components';
 
 const CUSTOM_PROMPTS_KEY = 'custom_prompts_by_type';
 

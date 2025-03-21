@@ -1,6 +1,6 @@
+// src/settings/components/ui/SettingsForm.jsx
 import React, { useState } from 'react';
-import { useNotification } from '../../contexts/NotificationContext';
-import Button from '../common/Button';
+import { useNotification, Button } from '../../../components';
 
 const SettingsForm = ({ 
   settings, 

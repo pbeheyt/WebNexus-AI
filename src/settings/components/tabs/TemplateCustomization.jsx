@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNotification } from '../../contexts/NotificationContext';
-import Button from '../common/Button';
+import { Button, useNotification } from '../../../components';
 import TemplateSection from '../ui/template/TemplateSection';
 import AddParameterModal from '../ui/template/AddParameterModal';
 import templateService from '../../../services/TemplateService';
