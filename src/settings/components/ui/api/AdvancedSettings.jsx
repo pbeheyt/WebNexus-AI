@@ -11,6 +11,7 @@ const AdvancedSettings = ({
   const { error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isAtDefaults, setIsAtDefaults] = useState(false);
   const models = platform.apiConfig?.models || [];
   
   // Get model config for selected model
@@ -71,6 +72,30 @@ const AdvancedSettings = ({
   // Original values reference for comparison
   const [originalValues, setOriginalValues] = useState({...formValues});
   
+  // Check if current form values match default settings
+  const checkIfAtDefaults = (formVals) => {
+    const modelDefaults = getDefaultSettings();
+    
+    // Check each property that should be compared
+    if (formVals.maxTokens !== modelDefaults.maxTokens) return false;
+    if (formVals.contextWindow !== modelDefaults.contextWindow) return false;
+    
+    // Only check temperature if it exists in both objects
+    if ('temperature' in formVals && 'temperature' in modelDefaults) {
+      if (formVals.temperature !== modelDefaults.temperature) return false;
+    }
+    
+    // Only check topP if it exists in both objects
+    if ('topP' in formVals && 'topP' in modelDefaults) {
+      if (formVals.topP !== modelDefaults.topP) return false;
+    }
+    
+    // Check if system prompt is empty (default state)
+    if (formVals.systemPrompt && formVals.systemPrompt.trim() !== '') return false;
+    
+    return true;
+  };
+
   // Update form values when selected model or settings change
   useEffect(() => {
     const currentSettings = getModelSettings();
@@ -87,6 +112,9 @@ const AdvancedSettings = ({
     setFormValues(newFormValues);
     setOriginalValues(newFormValues);
     setHasChanges(false);
+    
+    // Check if values are already at defaults
+    setIsAtDefaults(checkIfAtDefaults(newFormValues));
   }, [selectedModelId, advancedSettings]);
   
   // Check if current form values differ from original values
@@ -142,6 +170,9 @@ const AdvancedSettings = ({
     
     // Check if values have changed from original
     setHasChanges(checkForChanges(updatedValues, originalValues));
+    
+    // Check if current values match defaults
+    setIsAtDefaults(checkIfAtDefaults(updatedValues));
   };
   
   const handleModelChange = (e) => {
@@ -204,6 +235,9 @@ const AdvancedSettings = ({
       // Update original values after successful save
       setOriginalValues({...formValues});
       setHasChanges(false);
+      
+      // Update defaults check
+      setIsAtDefaults(checkIfAtDefaults(formValues));
     } catch (err) {
       console.error('Error saving settings:', err);
       error(`Error: ${err.message}`);
@@ -222,9 +256,36 @@ const AdvancedSettings = ({
         <h4 className="section-subtitle text-lg font-medium">Advanced Settings</h4>
         
         <Button
-          variant="danger"
+          variant={isAtDefaults ? "inactive" : "danger"}
           size="sm"
-          onClick={() => onSettingsUpdate(selectedModelId, defaultSettings)}
+          disabled={isAtDefaults}
+          onClick={() => {
+            if (!isAtDefaults) {
+              // Immediately update form values to defaults
+              const defaults = getDefaultSettings();
+              setFormValues({
+                maxTokens: defaults.maxTokens,
+                temperature: defaults.temperature,
+                topP: defaults.topP,
+                contextWindow: defaults.contextWindow,
+                systemPrompt: ''
+              });
+              
+              // Update state tracking
+              setOriginalValues({
+                maxTokens: defaults.maxTokens,
+                temperature: defaults.temperature,
+                topP: defaults.topP,
+                contextWindow: defaults.contextWindow,
+                systemPrompt: ''
+              });
+              setHasChanges(false);
+              setIsAtDefaults(true);
+              
+              // Then save to storage
+              onSettingsUpdate(selectedModelId, defaults);
+            }
+          }}
         >
           Reset to Configuration Defaults
         </Button>
