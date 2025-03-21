@@ -113,6 +113,11 @@ function registerApiHandlers() {
     handleApiModelRequest('sidebarApiProcess', message, sendResponse);
     return true; // Keep channel open for async response
   });
+
+  messageHandlers.set('cancelStream', (message, sender, sendResponse) => {
+    handleApiModelRequest('cancelStream', message, sendResponse);
+    return true; // Keep channel open for async response
+  });
 }
 
 /**

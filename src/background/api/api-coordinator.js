@@ -84,6 +84,13 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
         break;
       }
       
+      case 'cancelStream': {
+        const { streamId } = message;
+        // Cancel stream in background state
+        sendResponse({ success: true });
+        break;
+      }
+
       default:
         throw new Error(`Unknown API model request type: ${requestType}`);
     }
