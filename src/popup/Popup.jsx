@@ -15,7 +15,8 @@ import { QuickPromptEditor } from './features/QuickPromptEditor';
 import { DefaultPromptConfig } from './features/DefaultPromptConfig';
 import { CustomPromptSelector } from './features/CustomPromptSelector';
 import { PROMPT_TYPES, STORAGE_KEYS } from '../shared/constants';
-import { getContentScriptFile } from '../shared/content-utils';
+import { INTERFACE_SOURCES } from '../shared/constants';
+import { useContentProcessing } from '../hooks/useContentProcessing';
 
 export function Popup() {
   const { theme, toggleTheme } = useTheme();
@@ -30,6 +31,14 @@ export function Popup() {
     notifyYouTubeError,
     notifyCommentsNotLoaded
   } = useStatus();
+
+  // Use the hook and extract all needed functions and states
+  const {
+    processContent,
+    isProcessing: isProcessingContent,
+    hasError,
+    error
+  } = useContentProcessing(INTERFACE_SOURCES.POPUP);
 
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -64,56 +73,6 @@ export function Popup() {
     } catch (error) {
       console.error('Could not open options page:', error);
       chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
-    }
-  };
-
-  /**
-   * Checks if content script is loaded in the tab
-   * @param {number} tabId - The tab ID
-   * @returns {Promise<boolean>} Whether content script is loaded
-   */
-  const isContentScriptLoaded = async (tabId) => {
-    return new Promise((resolve) => {
-      try {
-        console.log(`Checking if content script is loaded in tab ${tabId}...`);
-        chrome.tabs.sendMessage(tabId, { action: 'ping' }, (response) => {
-          if (chrome.runtime.lastError) {
-            console.log('Content script not loaded:', chrome.runtime.lastError.message);
-            resolve(false);
-          } else {
-            console.log('Content script response:', response);
-            resolve(!!(response && response.ready));
-          }
-        });
-      } catch (error) {
-        console.error('Error checking content script:', error);
-        resolve(false);
-      }
-    });
-  };
-
-  /**
-   * Injects content script into tab
-   * @param {number} tabId - The tab ID
-   * @returns {Promise<boolean>} Whether injection succeeded
-   */
-  const injectContentScript = async (tabId) => {
-    try {
-      const hasSelection = contentType === 'selected_text';
-      // Use the shared utility function to determine script path
-      const scriptFile = getContentScriptFile(contentType, hasSelection);
-
-      await chrome.scripting.executeScript({
-        target: { tabId },
-        files: [scriptFile]
-      });
-
-      // Wait a moment for script to initialize
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return true;
-    } catch (error) {
-      console.error('Error injecting content script:', error);
-      return false;
     }
   };
 
@@ -168,7 +127,7 @@ export function Popup() {
   };
 
   const handleSummarize = async () => {
-    if (isProcessing || !isSupported || contentLoading || !currentTab?.id) return;
+    if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id) return;
 
     // Check if quick prompt is empty when using quick prompt type
     if (promptType === PROMPT_TYPES.QUICK && !quickPromptText.trim()) {
@@ -181,35 +140,7 @@ export function Popup() {
     updateStatus('Checking page content...', true);
 
     try {
-      // 1. Check if content script is loaded
-      let scriptLoaded = await isContentScriptLoaded(currentTab.id);
-
-      // 2. If not loaded, inject it
-      if (!scriptLoaded) {
-        updateStatus('Initializing content extraction...', true);
-
-        const injected = await injectContentScript(currentTab.id);
-
-        if (!injected) {
-          updateStatus('Failed to initialize content extraction', false);
-          setIsProcessing(false);
-          showToastMessage('Failed to initialize content extraction', 'error');
-          return;
-        }
-
-        // Verify script is now loaded - wait longer to be safe
-        await new Promise(resolve => setTimeout(resolve, 500));
-        scriptLoaded = await isContentScriptLoaded(currentTab.id);
-
-        if (!scriptLoaded) {
-          updateStatus('Content script initialization failed', false);
-          setIsProcessing(false);
-          showToastMessage('Content script initialization failed', 'error');
-          return;
-        }
-      }
-
-      // 3. Get prompt content
+      // Get prompt content
       const promptContent = await getPromptContent(selectedPromptId, contentType);
 
       if (!promptContent) {
@@ -219,7 +150,7 @@ export function Popup() {
         return;
       }
 
-      // 4. YouTube-specific checks for commentAnalysis
+      // Check for YouTube-specific requirements
       let commentAnalysisRequired = false;
       if (contentType === 'youtube' && promptType === PROMPT_TYPES.DEFAULT) {
         const preferences = await chrome.storage.sync.get('default_prompt_preferences');
@@ -227,7 +158,7 @@ export function Popup() {
         commentAnalysisRequired = youtubePrefs.commentAnalysis === true;
       }
 
-      // 5. Clear any existing content in storage
+      // Clear any existing content in storage
       await chrome.storage.local.set({
         contentReady: false,
         extractedContent: null,
@@ -236,55 +167,25 @@ export function Popup() {
         prePrompt: promptContent
       });
 
-      // 6. Send message to background script
+      // Process content using the hook (extraction is now handled internally)
       updateStatus(`Processing content with ${selectedPlatformId}...`, true);
 
       const hasSelection = contentType === 'selected_text';
 
-      const response = await chrome.runtime.sendMessage({
-        action: 'summarizeContent',
-        tabId: currentTab.id,
-        contentType,
-        promptId: selectedPromptId,
+      const result = await processContent({
         platformId: selectedPlatformId,
-        url: currentTab.url,
+        promptId: selectedPromptId,
+        promptContent,
         hasSelection,
-        commentAnalysisRequired
+        commentAnalysisRequired,
+        useApi: false
       });
 
-      // 7. Handle responses
-      if (response) {
-        // Check if YouTube transcript error occurred
-        if (response.youtubeTranscriptError) {
-          updateStatus(`Error: ${response.errorMessage || 'No transcript available for this YouTube video.'}`, false);
-          showToastMessage(response.errorMessage || 'No transcript available for this YouTube video.', 'error');
-          setIsProcessing(false);
-          return;
-        }
-
-        // Check if YouTube comments error occurred
-        if (response.youtubeCommentsError) {
-          updateStatus(response.errorMessage || 'Comments exist but are not loaded. Scroll down on YouTube to load comments before summarizing.', false);
-          showToastMessage(response.errorMessage || 'Comments exist but are not loaded. Scroll down to load them.', 'warning');
-          setIsProcessing(false);
-          return;
-        }
-
-        if (response.success) {
-          updateStatus(`Opening AI platform...`, true);
-
-          // Close popup after delay
-          setTimeout(() => window.close(), 2000);
-          return;
-        } else {
-          updateStatus(`Error: ${response.error || 'Unknown error'}`, false);
-          showToastMessage(`Error: ${response.error || 'Unknown error'}`, 'error');
-          setIsProcessing(false);
-          return;
-        }
+      if (result.success) {
+        updateStatus('Opening AI platform...', true);
       } else {
-        updateStatus('No response from background service worker', false);
-        showToastMessage('No response from background service worker', 'error');
+        updateStatus(`Error: ${result.error || 'Unknown error'}`, false);
+        showToastMessage(`Error: ${result.error || 'Unknown error'}`, 'error');
         setIsProcessing(false);
       }
     } catch (error) {
@@ -345,10 +246,10 @@ export function Popup() {
 
       <Button
         onClick={handleSummarize}
-        disabled={isProcessing || !isSupported || contentLoading || !currentTab?.id}
+        disabled={isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id}
         className="w-full mb-2"
       >
-        {isProcessing ? 'Processing...' : 'Summarize Content'}
+        {isProcessingContent || isProcessing ? 'Processing...' : 'Summarize Content'}
       </Button>
 
       <ContentTypeDisplay />

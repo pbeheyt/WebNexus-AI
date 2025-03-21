@@ -1,10 +1,12 @@
+// src/sidebar/contexts/SidebarChatContext.jsx
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useSidebarPlatform } from './SidebarPlatformContext';
 import { useSidebarContent } from './SidebarContentContext';
 import ChatHistoryService from '../services/ChatHistoryService';
-import { useApiProcess } from '../hooks/useApiProcess';
-import { useExtraction } from '../hooks/useExtraction';
+import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
+import { INTERFACE_SOURCES } from '../../shared/constants';
 
 const SidebarChatContext = createContext(null);
 
@@ -18,8 +20,15 @@ export function SidebarChatProvider({ children }) {
   const [streamingMessageId, setStreamingMessageId] = useState(null);
   const [streamingContent, setStreamingContent] = useState('');
 
-  const { extractContent, extractionStatus, hasExtractedContent, resetExtraction } = useExtraction();
-  const { processContent, processContentStreaming, error: apiError } = useApiProcess();
+  // Use the centralized content processing hook
+  const {
+    extractContent,
+    processContentStreaming,
+    extractionStatus,
+    error: processingError,
+    isExtracting,
+    reset: resetContentProcessing
+  } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
 
   // Get current page URL and initialize chat history
   useEffect(() => {
@@ -43,9 +52,9 @@ export function SidebarChatProvider({ children }) {
   // Reset extraction when the tab changes
   useEffect(() => {
     if (currentTab?.url) {
-      resetExtraction();
+      resetContentProcessing();
     }
-  }, [currentTab?.url, resetExtraction]);
+  }, [currentTab?.url, resetContentProcessing]);
 
   useEffect(() => {
     const handleStreamChunk = (message) => {
@@ -169,14 +178,28 @@ export function SidebarChatProvider({ children }) {
 
     try {
       // Extract content if not already done
-      const content = await extractContent();
+      const content = await extractContent({
+        hasSelection: false,
+        forceReExtract: false
+      });
 
       if (!content) {
         throw new Error('No content extracted to analyze');
       }
 
-      // Process with streaming API
-      const streamId = await processContentStreaming(text.trim(), content);
+      // Create a stream handler function that will be called by the hook
+      const handleStreamChunk = (chunkData) => {
+        // The chunk handling is now done by the useEffect above
+        // This function is just a pass-through for the hook
+      };
+
+      // Process with streaming API using the new hook
+      const streamId = await processContentStreaming({
+        platformId: selectedPlatformId,
+        modelId: selectedModel,
+        promptContent: text.trim(),
+        onStreamChunk: handleStreamChunk
+      });
 
       if (!streamId) {
         throw new Error('Failed to initialize streaming');
@@ -219,7 +242,7 @@ export function SidebarChatProvider({ children }) {
       clearChat,
       isProcessing,
       extractionStatus,
-      apiError,
+      apiError: processingError,
       contentType
     }}>
       {children}
