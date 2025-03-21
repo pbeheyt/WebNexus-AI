@@ -1,14 +1,17 @@
+// src/sidebar/SidebarApp.jsx
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
-import ContentTypeDisplay from './components/ContentTypeDisplay';
+import { ContentTypeBadge } from '../components';
+import { useSidebarContent } from './contexts/SidebarContentContext';
 import { MESSAGE_TYPES } from './constants';
 
 export default function SidebarApp() {
   const { theme } = useTheme();
   const [isReady, setIsReady] = useState(false);
+  const { contentType, isLoading, isTextSelected } = useSidebarContent();
   
   useEffect(() => {
     // Set up message listener for parent frame communication
@@ -79,7 +82,12 @@ export default function SidebarApp() {
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Header onClose={handleClose} />
       <div className="p-2">
-        <ContentTypeDisplay />
+        <ContentTypeBadge
+          contentType={contentType}
+          isLoading={isLoading}
+          isTextSelected={isTextSelected}
+          className="w-full"
+        />
       </div>
       <ChatArea />
       <UserInput />

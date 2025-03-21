@@ -1,6 +1,7 @@
+// src/sidebar/components/ChatArea.jsx
 import React, { useEffect, useRef } from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
-import ChatMessage from './ChatMessage';
+import { MessageBubble } from '../../components/messaging/MessageBubble';
 
 function ChatArea() {
   const { messages, isProcessing } = useSidebarChat();
@@ -28,7 +29,13 @@ function ChatArea() {
   return (
     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
       {messages.map((message) => (
-        <ChatMessage key={message.id} message={message} />
+        <MessageBubble
+          key={message.id}
+          content={message.content}
+          role={message.role}
+          isStreaming={message.isStreaming}
+          model={message.model}
+        />
       ))}
       
       {isProcessing && (
