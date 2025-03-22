@@ -2,6 +2,7 @@
 
 import { summarizeContent } from '../services/summarization.js';
 import { detectTextSelection } from '../services/content-extraction.js';
+import { toggleSidebar } from '../services/sidebar-manager.js'; // Import the function directly
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import logger from '../../utils/logger.js';
 
@@ -89,11 +90,17 @@ async function handleCommand(command) {
       const activeTab = tabs[0];
       logger.background.info(`Active tab for sidebar toggle: ${activeTab.id}`);
       
-      // Toggle sidebar using existing functionality
-      await chrome.runtime.sendMessage({
-        action: 'toggleSidebar',
-        tabId: activeTab.id
-      });
+      // FIXED: Call toggleSidebar directly with appropriate parameters
+      // This bypasses the message routing system and directly invokes the service
+      await toggleSidebar(
+        { tabId: activeTab.id },  // message object with tabId
+        { tab: activeTab },       // sender object with tab info
+        (response) => {           // sendResponse callback
+          if (!response.success) {
+            logger.background.error('Sidebar toggle failed:', response);
+          }
+        }
+      );
       
     } catch (error) {
       logger.background.error('Error handling sidebar toggle shortcut:', error);
