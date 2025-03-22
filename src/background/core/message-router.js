@@ -43,6 +43,12 @@ export function setupMessageRouter() {
       return false;
     }
     
+    // Handle getCurrentTabId for tab-specific sidebar functionality
+    if (message.action === 'getCurrentTabId') {
+      sendResponse({ tabId: sender.tab ? sender.tab.id : null });
+      return false;
+    }
+    
     logger.background.warn(`No handler registered for message action: ${message.action}`);
     return false;
   });
@@ -70,6 +76,16 @@ function registerCoreHandlers() {
   // Error notification handler
   messageHandlers.set('notifyError', (message, sender, sendResponse) => {
     logger.background.error('Error from content script:', message.error);
+    return false;
+  });
+  
+  // Tab ID provider for content scripts
+  messageHandlers.set('getCurrentTabId', (message, sender, sendResponse) => {
+    if (sender.tab) {
+      sendResponse({ tabId: sender.tab.id });
+    } else {
+      sendResponse({ tabId: null, error: 'Not in a tab context' });
+    }
     return false;
   });
 }

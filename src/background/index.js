@@ -3,6 +3,7 @@
 import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
+import { setupTabStateListener } from './listeners/tab-state-listener.js';
 import { setupCommandListener } from './listeners/command-listener.js';
 import { setupContextMenuListener } from './listeners/context-menu-listener.js';
 import { createContextMenus } from './listeners/context-menu-listener.js';
@@ -23,6 +24,7 @@ async function startBackgroundService() {
     
     // 4. Set up event listeners
     setupTabListener();
+    setupTabStateListener();
     setupCommandListener();
     setupContextMenuListener();
 

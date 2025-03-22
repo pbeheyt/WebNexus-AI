@@ -2,6 +2,7 @@ import { STORAGE_KEYS } from '../sidebar/constants';
 
 /**
  * Manages sidebar iframe injection and communication with singleton pattern enforcement
+ * Now supports tab-specific visibility state
  */
 class SidebarInjector {
   constructor() {
@@ -15,6 +16,7 @@ class SidebarInjector {
     this.visible = false;
     this.initialized = false;
     this.pendingInitialization = false;
+    this.tabId = null;
     
     // Store instance for singleton pattern
     SidebarInjector.instance = this;
@@ -43,12 +45,20 @@ class SidebarInjector {
     console.log('SidebarInjector: Initializing...');
     
     try {
-      // Check if sidebar should be visible from storage
-      const { [STORAGE_KEYS.SIDEBAR_VISIBLE]: sidebarVisible } = 
-        await chrome.storage.local.get(STORAGE_KEYS.SIDEBAR_VISIBLE);
+      // Get current tab ID
+      try {
+        // This only works if called from a content script
+        this.tabId = await this._getCurrentTabId();
+        console.log(`SidebarInjector: Current tab ID: ${this.tabId}`);
+      } catch (err) {
+        console.error('SidebarInjector: Failed to get tab ID:', err);
+      }
       
-      this.visible = sidebarVisible === true;
-      console.log(`SidebarInjector: Initial visibility from storage: ${this.visible}`);
+      // Check if sidebar should be visible for this tab
+      const visible = await this._getTabVisibilityState();
+      this.visible = visible;
+      
+      console.log(`SidebarInjector: Initial visibility for tab: ${this.visible}`);
       
       // Check for existing iframe before creating a new one
       const existingIframe = document.getElementById('ai-content-sidebar-iframe');
@@ -75,6 +85,66 @@ class SidebarInjector {
     }
     
     return this;
+  }
+  
+  /**
+   * Get current tab ID using chrome runtime API
+   * @private
+   * @returns {Promise<number>} Tab ID
+   */
+  async _getCurrentTabId() {
+    return new Promise((resolve, reject) => {
+      try {
+        chrome.runtime.sendMessage({ action: 'getCurrentTabId' }, (response) => {
+          if (chrome.runtime.lastError) {
+            // Alternative method if message fails
+            chrome.runtime.sendMessage({ action: 'ping' }, { frameId: 0 }, (pingResponse) => {
+              if (chrome.runtime.lastError || !pingResponse || !pingResponse.tabId) {
+                reject(new Error('Could not determine tab ID'));
+              } else {
+                resolve(pingResponse.tabId);
+              }
+            });
+          } else if (response && response.tabId) {
+            resolve(response.tabId);
+          } else {
+            reject(new Error('Invalid response for tab ID request'));
+          }
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+  
+  /**
+   * Get visibility state for current tab
+   * @private
+   * @returns {Promise<boolean>} Visibility state
+   */
+  async _getTabVisibilityState() {
+    try {
+      // Request visibility state from background
+      return new Promise((resolve) => {
+        chrome.runtime.sendMessage(
+          { 
+            action: 'getSidebarState',
+            tabId: this.tabId 
+          }, 
+          (response) => {
+            if (chrome.runtime.lastError || !response || !response.success) {
+              console.warn('SidebarInjector: Failed to get tab visibility state, defaulting to hidden');
+              resolve(false);
+            } else {
+              resolve(response.state.visible === true);
+            }
+          }
+        );
+      });
+    } catch (error) {
+      console.error('SidebarInjector: Error getting tab visibility state:', error);
+      return false;
+    }
   }
   
   /**
@@ -210,7 +280,7 @@ class SidebarInjector {
       case 'ping':
         // Simple ping to check if content script is loaded
         console.log('SidebarInjector: Ping received, responding with ready status');
-        sendResponse({ ready: true });
+        sendResponse({ ready: true, tabId: this.tabId });
         return false;
         
       case 'toggleSidebar':
@@ -222,7 +292,8 @@ class SidebarInjector {
           sendResponse({ 
             success: true, 
             visible: this.visible,
-            initialized: this.initialized
+            initialized: this.initialized,
+            tabId: this.tabId
           });
         }
         return false;
@@ -250,7 +321,7 @@ class SidebarInjector {
   }
   
   /**
-   * Toggle sidebar visibility with improved state handling
+   * Toggle sidebar visibility with tab-specific state handling
    * @param {boolean} visible - Visibility state
    */
   toggle(visible = !this.visible) {
@@ -281,9 +352,13 @@ class SidebarInjector {
       }
     }
     
-    // Persist state
-    console.log(`SidebarInjector: Saving visibility state: ${visible}`);
-    chrome.storage.local.set({ [STORAGE_KEYS.SIDEBAR_VISIBLE]: visible });
+    // Persist state for this tab
+    console.log(`SidebarInjector: Saving visibility state for tab ${this.tabId}: ${visible}`);
+    chrome.runtime.sendMessage({
+      action: 'toggleSidebar',
+      visible: visible,
+      tabId: this.tabId
+    });
     
     // Notify iframe of state change
     if (this.iframe) {

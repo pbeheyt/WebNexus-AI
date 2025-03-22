@@ -1,86 +1,117 @@
-// src/background/services/sidebar-manager.js - Sidebar management
+// src/background/services/sidebar-manager.js - Tab-specific sidebar management
 
 import SidebarStateManager from '../../services/SidebarStateManager.js';
 import { injectContentScript } from './content-extraction.js';
 import logger from '../../utils/logger.js';
 
 /**
- * Toggle sidebar visibility
+ * Toggle sidebar visibility for specific tab
  * @param {Object} message - Message object
  * @param {Object} sender - Message sender
  * @param {Function} sendResponse - Response function
  */
 export async function toggleSidebar(message, sender, sendResponse) {
   try {
-    logger.background.info('Handling sidebar toggle request');
-    
-    // Default to toggling current state if no visibility specified
-    let visible = message.visible;
-    
-    if (visible === undefined) {
-      const state = await SidebarStateManager.getSidebarState();
-      visible = !state.visible;
-    }
-    
-    // Save sidebar state
-    await SidebarStateManager.setSidebarVisibility(visible);
+    logger.background.info('Handling tab-specific sidebar toggle request');
     
     // Get target tab ID
     const tabId = message.tabId || (sender.tab && sender.tab.id);
+    let targetTabId;
     
     if (!tabId) {
       // Get active tab if no tab ID specified
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const activeTab = tabs[0];
       
-      if (activeTab && activeTab.id) {
-        await ensureSidebarScriptInjected(activeTab.id);
-        // Send toggle command to active tab
-        chrome.tabs.sendMessage(activeTab.id, {
-          action: 'toggleSidebar',
-          visible
-        }).catch(err => {
-          logger.background.error(`Error sending toggle message to tab ${activeTab.id}:`, err);
-        });
-      } else {
+      if (!activeTab || !activeTab.id) {
         throw new Error('No active tab found');
       }
+      
+      targetTabId = activeTab.id;
     } else {
-      await ensureSidebarScriptInjected(tabId);
-      // Send toggle command to specified tab
-      chrome.tabs.sendMessage(tabId, {
+      targetTabId = tabId;
+    }
+    
+    // Default to toggling current state if no visibility specified
+    let visible = message.visible;
+    
+    if (visible === undefined) {
+      const state = await SidebarStateManager.getSidebarState(targetTabId);
+      visible = !state.visible;
+    }
+    
+    // Save sidebar state for this tab
+    await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, visible);
+    
+    // Ensure script is injected before sending message
+    await ensureSidebarScriptInjected(targetTabId);
+    
+    // Send toggle command to tab
+    try {
+      await chrome.tabs.sendMessage(targetTabId, {
         action: 'toggleSidebar',
-        visible
-      }).catch(err => {
-        logger.background.error(`Error sending toggle message to tab ${tabId}:`, err);
+        visible,
+        tabId: targetTabId
+      });
+    } catch (err) {
+      logger.background.error(`Error sending toggle message to tab ${targetTabId}:`, err);
+      // If message fails, try re-injecting script and sending again
+      await injectContentScript(targetTabId, 'dist/sidebar-injector.bundle.js');
+      await chrome.tabs.sendMessage(targetTabId, {
+        action: 'toggleSidebar',
+        visible,
+        tabId: targetTabId
       });
     }
     
-    sendResponse({ success: true, visible });
+    sendResponse({ 
+      success: true, 
+      visible, 
+      tabId: targetTabId 
+    });
   } catch (error) {
-    logger.background.error('Error handling sidebar toggle:', error);
+    logger.background.error('Error handling tab-specific sidebar toggle:', error);
     sendResponse({ success: false, error: error.message });
   }
 }
 
 /**
- * Get sidebar state
+ * Get sidebar state for specific tab
  * @param {Object} message - Message object
  * @param {Object} sender - Message sender
  * @param {Function} sendResponse - Response function
  */
 export async function getSidebarState(message, sender, sendResponse) {
   try {
-    logger.background.info('Handling sidebar state query');
+    logger.background.info('Handling tab-specific sidebar state query');
     
-    const state = await SidebarStateManager.getSidebarState();
+    // Get target tab ID
+    const tabId = message.tabId || (sender.tab && sender.tab.id);
+    let targetTabId;
+    
+    if (!tabId) {
+      // Get active tab if no tab ID specified
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const activeTab = tabs[0];
+      
+      if (!activeTab || !activeTab.id) {
+        throw new Error('No active tab found');
+      }
+      
+      targetTabId = activeTab.id;
+    } else {
+      targetTabId = tabId;
+    }
+    
+    const state = await SidebarStateManager.getSidebarState(targetTabId);
     
     sendResponse({
       success: true,
-      state
+      state,
+      tabId: targetTabId
     });
   } catch (error) {
-    logger.background.error('Error handling sidebar state query:', error);
+    logger.background.error('Error handling tab-specific sidebar state query:', error);
     sendResponse({ success: false, error: error.message });
   }
 }

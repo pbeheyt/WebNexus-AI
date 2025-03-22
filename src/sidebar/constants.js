@@ -13,10 +13,11 @@ export const MESSAGE_TYPES = {
 
 // Local storage keys
 export const STORAGE_KEYS = {
-  SIDEBAR_VISIBLE: 'sidebar_visible',
+  // SIDEBAR_VISIBLE: 'sidebar_visible',
   SIDEBAR_PLATFORM: 'sidebar_platform_preference',
   SIDEBAR_MODEL: 'sidebar_model_preference',
   CHAT_HISTORY: 'sidebar_chat_history',
+  TAB_SIDEBAR_STATES: 'tab_sidebar_states',
   THEME: 'ui_preferences.theme'
 };
 
