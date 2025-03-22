@@ -7,6 +7,7 @@ import { handleApiModelRequest } from '../api/api-coordinator.js';
 import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
 import { toggleSidebar, getSidebarState } from '../services/sidebar-manager.js';
 import { clearQuickPrompt } from '../services/prompt-resolver.js';
+import { handleThemeOperation } from '../services/theme-service.js';
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -170,6 +171,18 @@ function registerServiceHandlers() {
   // Get sidebar state
   messageHandlers.set('getSidebarState', (message, sender, sendResponse) => {
     getSidebarState(message, sender, sendResponse);
+    return true; // Keep channel open for async response
+  });
+
+  // Get theme
+  messageHandlers.set('getTheme', (message, sender, sendResponse) => {
+    handleThemeOperation(message, sendResponse);
+    return true; // Keep channel open for async response
+  });
+
+  // Set theme
+  messageHandlers.set('setTheme', (message, sender, sendResponse) => {
+    handleThemeOperation(message, sendResponse);
     return true; // Keep channel open for async response
   });
 }

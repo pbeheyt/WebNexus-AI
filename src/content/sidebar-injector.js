@@ -17,6 +17,7 @@ class SidebarInjector {
     this.initialized = false;
     this.pendingInitialization = false;
     this.tabId = null;
+    this.currentTheme = 'light'; // Default cached theme
     
     // Store instance for singleton pattern
     SidebarInjector.instance = this;
@@ -59,6 +60,13 @@ class SidebarInjector {
       this.visible = visible;
       
       console.log(`SidebarInjector: Initial visibility for tab: ${this.visible}`);
+      
+      // Preload theme cache before iframe creation
+      try {
+        await this._preloadTheme();
+      } catch (err) {
+        console.warn('SidebarInjector: Failed to preload theme:', err);
+      }
       
       // Check for existing iframe before creating a new one
       const existingIframe = document.getElementById('ai-content-sidebar-iframe');
@@ -145,6 +153,44 @@ class SidebarInjector {
       console.error('SidebarInjector: Error getting tab visibility state:', error);
       return false;
     }
+  }
+  
+  /**
+   * Preload theme to avoid extension context issues
+   * @private
+   */
+  async _preloadTheme() {
+    return new Promise((resolve, reject) => {
+      try {
+        chrome.runtime.sendMessage({ action: 'getTheme' }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+            return;
+          }
+          
+          if (response && response.theme) {
+            this.currentTheme = response.theme;
+            console.log(`SidebarInjector: Preloaded theme: ${this.currentTheme}`);
+            resolve(this.currentTheme);
+          } else {
+            // Fallback to storage directly if background service isn't responding
+            chrome.storage.sync.get(STORAGE_KEYS.THEME, (result) => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+                return;
+              }
+              
+              this.currentTheme = result[STORAGE_KEYS.THEME] || 'light';
+              console.log(`SidebarInjector: Fallback theme loaded: ${this.currentTheme}`);
+              resolve(this.currentTheme);
+            });
+          }
+        });
+      } catch (err) {
+        console.warn('SidebarInjector: Theme preload failed, using default:', err);
+        resolve('light'); // Default fallback
+      }
+    });
   }
   
   /**
@@ -254,6 +300,22 @@ class SidebarInjector {
         this.toggle(event.data.visible);
         break;
         
+      case 'THEME_CHANGED':
+        // Handle theme change notification from iframe
+        console.log(`SidebarInjector: Theme change from iframe: ${event.data.theme}`);
+        this.currentTheme = event.data.theme;
+        
+        // Propagate to background for storage
+        try {
+          chrome.runtime.sendMessage({ 
+            action: 'setTheme', 
+            theme: event.data.theme 
+          });
+        } catch (error) {
+          console.warn('SidebarInjector: Failed to propagate theme change:', error);
+        }
+        break;
+        
       default:
         // Unknown message type
         console.log(`SidebarInjector: Unknown iframe message type: ${type}`);
@@ -306,6 +368,21 @@ class SidebarInjector {
             type: 'EXTRACTION_COMPLETE',
             content: message.content
           }, '*');
+        }
+        
+        if (sendResponse) {
+          sendResponse({ success: true });
+        }
+        return false;
+        
+      case 'themeUpdated':
+        // Theme was updated from background service
+        console.log(`SidebarInjector: Theme update from background: ${message.theme}`);
+        this.currentTheme = message.theme;
+        
+        // Forward to iframe if available
+        if (this.iframe) {
+          this._syncTheme();
         }
         
         if (sendResponse) {
@@ -370,23 +447,55 @@ class SidebarInjector {
   }
   
   /**
-   * Sync theme with iframe
+   * Sync theme with iframe using cached theme to avoid direct Chrome API calls
    * @private
    */
-  async _syncTheme() {
+  _syncTheme() {
     try {
-      const { [STORAGE_KEYS.THEME]: theme } = await chrome.storage.sync.get(STORAGE_KEYS.THEME);
+      // Use cached theme value to avoid Chrome API direct access
+      console.log(`SidebarInjector: Syncing theme: ${this.currentTheme}`);
       
-      if (this.iframe && theme) {
-        console.log(`SidebarInjector: Syncing theme: ${theme}`);
+      if (this.iframe) {
         this.iframe.contentWindow.postMessage({
           type: 'THEME_CHANGED',
-          theme
+          theme: this.currentTheme
         }, '*');
       }
+      
+      // Asynchronously refresh cached theme from background
+      this._refreshCachedTheme().catch(err => {
+        console.warn('SidebarInjector: Failed to refresh theme cache:', err);
+      });
     } catch (error) {
       console.error('SidebarInjector: Error syncing theme:', error);
     }
+  }
+  
+  /**
+   * Refresh cached theme value via background service
+   * @private
+   * @returns {Promise<string>} Current theme
+   */
+  async _refreshCachedTheme() {
+    return new Promise((resolve, reject) => {
+      try {
+        chrome.runtime.sendMessage({ action: 'getTheme' }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+            return;
+          }
+          
+          if (response && response.theme) {
+            this.currentTheme = response.theme;
+            resolve(this.currentTheme);
+          } else {
+            reject(new Error('Invalid theme response'));
+          }
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 }
 
