@@ -1,7 +1,7 @@
 // In src/sidebar/contexts/SidebarChatContext.jsx
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useSidebarPlatform } from './SidebarPlatformContext';
+import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../components';
 import ChatHistoryService from '../services/ChatHistoryService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';

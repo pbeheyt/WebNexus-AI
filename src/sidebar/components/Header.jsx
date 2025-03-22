@@ -1,6 +1,6 @@
 import React from 'react';
-import { useSidebarPlatform } from '../contexts/SidebarPlatformContext';
-import { useTheme } from '../../contexts/ThemeContext'; // Updated import path
+import { useSidebarPlatform } from '../../contexts/platform';
+import { useTheme } from '../../contexts/ThemeContext';
 import ModelSelector from './ModelSelector';
 
 function Header({ onClose }) {
