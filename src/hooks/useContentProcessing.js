@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { INTERFACE_SOURCES, CONTENT_TYPES } from '../shared/constants';
+import { determineContentType } from '../shared/content-utils';
 
 /**
  * Hook for unified content extraction and processing
@@ -42,6 +43,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         const [tab] = await chrome.tabs.query(queryOptions);
         if (tab) {
           setCurrentTab(tab);
+          // Use the imported determineContentType function
           const type = tab.url ? determineContentType(tab.url) : CONTENT_TYPES.GENERAL;
           setContentType(type);
         }
@@ -51,19 +53,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     };
 
     getCurrentTab();
-  }, []);
-
-  /**
-   * Determines content type based on URL
-   * @param {string} url - URL to analyze
-   * @returns {string} - Content type
-   */
-  const determineContentType = useCallback((url) => {
-    console.log('Determining content type for URL:', url);
-    if (url.includes('youtube.com/watch')) return CONTENT_TYPES.YOUTUBE;
-    if (url.includes('reddit.com')) return CONTENT_TYPES.REDDIT;
-    if (url.endsWith('.pdf')) return CONTENT_TYPES.PDF;
-    return CONTENT_TYPES.GENERAL;
   }, []);
 
   /**
@@ -152,11 +141,16 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         };
 
         chrome.runtime.onMessage.addListener(messageListener);
-        return response.streamId;
+        
+        // Return consistent object format instead of just streamId
+        return { 
+          success: true, 
+          streamId: response.streamId 
+        };
       } else if (useApi) {
         setProcessedContent(response.response);
         setProcessingStatus('success');
-        return response.response;
+        return response;
       } else {
         setProcessingStatus('success');
         return response;
@@ -172,7 +166,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   /**
    * Process content with streaming (optimized for sidebar chat)
    * @param {Object} options - Processing options
-   * @returns {Promise<string>} - Stream ID
+   * @returns {Promise<Object>} - Processing result with stream ID
    */
   const processContentStreaming = useCallback(async (options = {}) => {
     const streamingOptions = {
