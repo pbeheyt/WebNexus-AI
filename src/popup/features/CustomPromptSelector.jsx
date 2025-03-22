@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useContent } from '../contexts/ContentContext';
+import { useContent } from '../../components';
 import { usePrompts } from '../contexts/PromptContext';
 import { useStatus } from '../contexts/StatusContext';
 import { SHARED_TYPE } from '../../shared/constants';

@@ -1,7 +1,7 @@
 // src/components/context/PromptContext.jsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import { PROMPT_TYPES, STORAGE_KEYS } from '../../shared/constants';
-import { useContent } from './ContentContext';
+import { useContent } from '../../components';
 import { useStatus } from './StatusContext';
 
 const PromptContext = createContext(null);

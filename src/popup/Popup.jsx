@@ -1,6 +1,6 @@
 // src/popup/Popup.jsx
 import { useEffect, useState } from 'react';
-import { useContent } from './contexts/ContentContext';
+// import { useContent } from './contexts/ContentContext';
 import { usePrompts } from './contexts/PromptContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStatus } from './contexts/StatusContext';
@@ -8,7 +8,7 @@ import { usePlatforms } from './contexts/PlatformContext';
 import { Button } from '../components';
 import { StatusMessage } from '../components';
 import { Toast } from '../components';
-import { ContentTypeDisplay } from './features/ContentTypeDisplay';
+import { useContent, ContentTypeDisplay } from '../components';
 import { PlatformSelector } from './features/PlatformSelector';
 import { PromptTypeToggle } from './features/PromptTypeToggle';
 import { QuickPromptEditor } from './features/QuickPromptEditor';

@@ -1,7 +1,6 @@
 // src/components/features/DefaultPromptConfig.jsx
 import { useEffect, useState } from 'react';
-import { Toggle } from '../../components';
-import { useContent } from '../contexts/ContentContext';
+import { Toggle, useContent } from '../../components';
 import { useStatus } from '../contexts/StatusContext';
 import configManager from '../../services/ConfigManager';
 

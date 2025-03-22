@@ -24,4 +24,5 @@ export { MessageBubble } from './messaging/MessageBubble';
 export { MessageInput } from './messaging/MessageInput';
 
 // Display components
-export { ContentTypeBadge } from './display/ContentTypeBadge';
+export { ContentProvider, useContent } from './content/ContentContext';
+export { ContentTypeDisplay } from './content/ContentTypeDisplay';

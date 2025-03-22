@@ -1,8 +1,7 @@
 // src/components/features/QuickPromptEditor.jsx
 import { useState, useEffect, useCallback } from 'react';
-import { TextArea } from '../../components';
+import { TextArea, useContent } from '../../components';
 import { usePrompts } from '../contexts/PromptContext';
-import { useContent } from '../contexts/ContentContext';
 import { useStatus } from '../contexts/StatusContext';
 
 export function QuickPromptEditor() {

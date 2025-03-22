@@ -1,26 +1,20 @@
-// src/components/display/ContentTypeBadge.jsx
+// src/components/content/ContentTypeDisplay.jsx
 import React from 'react';
+import { CONTENT_TYPES } from '../../shared/constants';
+import { useContent } from './ContentContext';
 
 /**
- * A badge component that displays content type with icon and color
+ * Component to display the detected content type with icon and styling
  * 
  * @param {Object} props - Component props
- * @param {string} props.contentType - Content type identifier
- * @param {boolean} props.isLoading - Whether content type is loading
- * @param {boolean} props.isTextSelected - Whether text is selected
- * @param {Object} props.contentTypeConfigs - Custom content type configurations
- * @param {string} props.className - Additional CSS classes
+ * @param {string} [props.className=''] - Additional CSS classes
  */
-export function ContentTypeBadge({
-  contentType,
-  isLoading = false,
-  isTextSelected = false,
-  contentTypeConfigs = null,
-  className = ''
-}) {
-  // Default content type configurations
-  const defaultContentTypeConfigs = {
-    'youtube': {
+export function ContentTypeDisplay({ className = '' }) {
+  const { contentType, isLoading, isTextSelected } = useContent();
+  
+  // Content type configuration with icons and colors
+  const contentTypeConfig = {
+    [CONTENT_TYPES.YOUTUBE]: {
       label: 'YouTube Video',
       color: '#FF0000',
       icon: (
@@ -32,7 +26,7 @@ export function ContentTypeBadge({
         </svg>
       )
     },
-    'reddit': {
+    [CONTENT_TYPES.REDDIT]: {
       label: 'Reddit Post',
       color: '#FF4500',
       icon: (
@@ -48,7 +42,7 @@ export function ContentTypeBadge({
         </svg>
       )
     },
-    'pdf': {
+    [CONTENT_TYPES.PDF]: {
       label: 'PDF Document',
       color: '#F40F02',
       icon: (
@@ -61,9 +55,9 @@ export function ContentTypeBadge({
         </svg>
       )
     },
-    'general': {
+    [CONTENT_TYPES.GENERAL]: {
       label: 'Web Content',
-      color: '#3B82F6',
+      color: 'var(--color-primary)',
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="2" y="2" width="20" height="20" rx="2" stroke="currentColor" strokeWidth="1.5"/>
@@ -77,7 +71,7 @@ export function ContentTypeBadge({
         </svg>
       )
     },
-    'selected_text': {
+    [CONTENT_TYPES.SELECTED_TEXT]: {
       label: 'Selected Text',
       color: '#3498db',
       icon: (
@@ -95,22 +89,18 @@ export function ContentTypeBadge({
   // Loading state
   if (isLoading) {
     return (
-      <div className={`flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm ${className}`}>
+      <div className={`flex items-center gap-2 p-2 bg-theme-surface border border-theme rounded-md text-sm ${className}`}>
         <div className="animate-spin h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full"></div>
         <span>Detecting page type...</span>
       </div>
     );
   }
   
-  // Use provided config map or default
-  const configMap = contentTypeConfigs || defaultContentTypeConfigs;
-  
-  // Get config for this content type or fallback to general
-  const typeConfig = configMap[contentType] || configMap['general'];
+  const typeConfig = contentTypeConfig[contentType] || contentTypeConfig[CONTENT_TYPES.GENERAL];
   
   return (
     <div 
-      className={`flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm ${className}`}
+      className={`flex items-center gap-2 p-2 bg-theme-surface border border-theme rounded-md text-sm ${className}`}
       style={{ borderLeftColor: typeConfig.color, borderLeftWidth: '3px' }}
     >
       {typeConfig.icon}
@@ -118,5 +108,3 @@ export function ContentTypeBadge({
     </div>
   );
 }
-
-export default ContentTypeBadge;
