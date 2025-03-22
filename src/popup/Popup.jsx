@@ -1,10 +1,8 @@
-// src/popup/Popup.jsx
 import { useEffect, useState } from 'react';
-// import { useContent } from './contexts/ContentContext';
 import { usePrompts } from './contexts/PromptContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStatus } from './contexts/StatusContext';
-import { usePlatforms } from './contexts/PlatformContext';
+import { usePopupPlatform } from '../contexts/platform';
 import { Button } from '../components';
 import { StatusMessage } from '../components';
 import { Toast } from '../components';
@@ -22,7 +20,7 @@ export function Popup() {
   const { theme, toggleTheme } = useTheme();
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
   const { promptType, selectedPromptId, quickPromptText } = usePrompts();
-  const { platforms, selectedPlatformId, selectPlatform } = usePlatforms();
+  const { platforms, selectedPlatformId, selectPlatform } = usePopupPlatform(); // Updated hook
   const {
     statusMessage,
     updateStatus,

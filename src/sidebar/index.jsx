@@ -1,8 +1,9 @@
+// src/sidebar/index.jsx - Updated
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SidebarApp from './SidebarApp';
 import { ThemeProvider } from '../contexts/ThemeContext';
-import { SidebarPlatformProvider } from './contexts/SidebarPlatformContext';
+import { SidebarPlatformProvider } from '../contexts/platform';
 import { SidebarChatProvider } from './contexts/SidebarChatContext';
 import { ContentProvider } from '../components';
 import '../styles/index.css';
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   root.render(
     <ThemeProvider>
       <ContentProvider>
-        <SidebarPlatformProvider>
+        <SidebarPlatformProvider> {/* Updated provider */}
           <SidebarChatProvider>
             <SidebarApp />
           </SidebarChatProvider>

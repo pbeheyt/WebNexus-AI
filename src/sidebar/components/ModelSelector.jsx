@@ -1,6 +1,6 @@
 // src/sidebar/components/ModelSelector.jsx
 import React from 'react';
-import { useSidebarPlatform } from '../contexts/SidebarPlatformContext';
+import { useSidebarPlatform } from '../../contexts/platform';
 import { SelectList } from '../../components/form/SelectList';
 
 function ModelSelector() {

@@ -1,10 +1,10 @@
-// src/components/features/PlatformSelector.jsx
+// src/popup/features/PlatformSelector.jsx
 import { PlatformCard } from '../../components';
-import { usePlatforms } from '../contexts/PlatformContext';
+import { usePopupPlatform } from '../../contexts/platform';
 import { useStatus } from '../contexts/StatusContext';
 
 export function PlatformSelector() {
-  const { platforms, selectedPlatformId, selectPlatform, isLoading } = usePlatforms();
+  const { platforms, selectedPlatformId, selectPlatform, isLoading } = usePopupPlatform(); // Using the popup-specific hook
   const { notifyPlatformChanged } = useStatus();
   
   const handlePlatformSelect = async (platformId) => {

@@ -1,10 +1,10 @@
-// src/popup/index.jsx
+// src/popup/index.jsx - Updated
 import { createRoot } from 'react-dom/client';
 import { Popup } from './Popup';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { StatusProvider } from './contexts/StatusContext';
-import { PlatformProvider } from './contexts/PlatformContext';
 import { ContentProvider } from '../components';
+import { PopupPlatformProvider } from '../contexts/platform';
 import { PromptProvider } from './contexts/PromptContext';
 import '../styles/index.css';
 
@@ -16,11 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     <ThemeProvider>
       <StatusProvider>
         <ContentProvider>
-          <PlatformProvider>
+          <PopupPlatformProvider> {/* Updated provider */}
             <PromptProvider>
               <Popup />
             </PromptProvider>
-          </PlatformProvider>
+          </PopupPlatformProvider>
         </ContentProvider>
       </StatusProvider>
     </ThemeProvider>
