@@ -1,19 +1,19 @@
-// src/background/services/summarization.js - Core summarization logic
+// src/background/services/content-processing.js - Core content processing logic
 
 import { determineContentType } from '../../shared/content-utils.js';
 import { extractContent, checkYouTubeCommentsStatus, checkYouTubeTranscriptAvailability } from './content-extraction.js';
 import { getPreferredPromptId, getPromptContentById } from './prompt-resolver.js';
 import { getPreferredAiPlatform, openAiPlatformWithContent } from './platform-integration.js';
 import { resetExtractionState, savePlatformTabInfo, trackQuickPromptUsage } from '../core/state-manager.js';
-import { summarizeContentViaApi } from '../api/api-coordinator.js';
+import { processContentViaApi } from '../api/api-coordinator.js';
 import logger from '../../utils/logger.js';
 
 /**
- * Centralized function to handle content summarization
- * @param {Object} params - Parameters object containing all necessary info for summarization
+ * Centralized function to handle content processing
+ * @param {Object} params - Parameters object containing all necessary info for content processing
  * @returns {Promise<Object>} Result object with success/error information
  */
-export async function summarizeContent(params) {
+export async function processContent(params) {
   const { 
     tabId, 
     url, 
@@ -25,11 +25,11 @@ export async function summarizeContent(params) {
   } = params;
   
   try {
-    logger.background.info('Starting centralized content summarization process', { ...params, useApi });
+    logger.background.info('Starting centralized content processing', { ...params, useApi });
     
     // Check if we should use API mode
     if (useApi) {
-      return await summarizeContentViaApi(params);
+      return await processContentViaApi(params);
     }
     
     // 1. Reset previous state
@@ -104,7 +104,7 @@ export async function summarizeContent(params) {
       contentType
     };
   } catch (error) {
-    logger.background.error('Error in summarizeContent:', error);
+    logger.background.error('Error in processContent:', error);
     return {
       success: false,
       error: error.message || 'Unknown error occurred'
@@ -113,17 +113,17 @@ export async function summarizeContent(params) {
 }
 
 /**
- * Handle summarize content request from message
+ * Handle process content request from message
  * @param {Object} message - Message object
  * @param {Function} sendResponse - Response function
  */
-export async function handleSummarizeContentRequest(message, sendResponse) {
+export async function handleProcessContentRequest(message, sendResponse) {
   try {
     const { tabId, contentType, promptId, platformId, url, hasSelection, commentAnalysisRequired, useApi } = message;
-    logger.background.info(`Summarize content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}, hasSelection: ${hasSelection}, useApi: ${useApi}`);
+    logger.background.info(`Process content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}, hasSelection: ${hasSelection}, useApi: ${useApi}`);
 
-    // Call centralized summarization function with API mode parameter
-    const result = await summarizeContent({
+    // Call centralized content processing function with API mode parameter
+    const result = await processContent({
       tabId,
       url,
       hasSelection,
@@ -135,7 +135,7 @@ export async function handleSummarizeContentRequest(message, sendResponse) {
 
     sendResponse(result);
   } catch (error) {
-    logger.background.error('Error handling summarize content request:', error);
+    logger.background.error('Error handling process content request:', error);
     sendResponse({
       success: false,
       error: error.message
@@ -144,16 +144,16 @@ export async function handleSummarizeContentRequest(message, sendResponse) {
 }
 
 /**
- * Handle API summarization request from message
+ * Handle API content processing request from message
  * @param {Object} message - Message object
  * @param {Function} sendResponse - Response function
  */
-export async function handleSummarizeContentViaApiRequest(message, sendResponse) {
+export async function handleProcessContentViaApiRequest(message, sendResponse) {
   try {
-    const result = await summarizeContentViaApi(message);
+    const result = await processContentViaApi(message);
     sendResponse(result);
   } catch (error) {
-    logger.background.error('Error in API summarization:', error);
+    logger.background.error('Error in API content porcessing:', error);
     sendResponse({
       success: false,
       error: error.message

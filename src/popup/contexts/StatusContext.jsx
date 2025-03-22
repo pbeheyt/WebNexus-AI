@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback } from 'react';
 const StatusContext = createContext(null);
 
 export function StatusProvider({ children }) {
-  const [statusMessage, setStatusMessage] = useState('Ready to summarize.');
+  const [statusMessage, setStatusMessage] = useState('Ready to process.');
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('info');
   const [showToast, setShowToast] = useState(false);

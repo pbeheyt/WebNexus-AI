@@ -16,7 +16,7 @@ export async function resetState() {
       extractedContent: null,
       apiProcessingStatus: null,
       apiResponse: null,
-      currentSummarizationMode: null
+      currentContentProcessingMode: null
     });
   } catch (error) {
     logger.background.error('Error resetting state:', error);
@@ -109,9 +109,9 @@ export async function updateApiProcessingStatus(status, platformId) {
   try {
     await chrome.storage.local.set({
       apiProcessingStatus: status,
-      currentSummarizationMode: 'api',
-      apiSummarizationPlatform: platformId,
-      apiSummarizationTimestamp: Date.now()
+      currentContentProcessingMode: 'api',
+      apiContentProcessingPlatform: platformId,
+      apiContentProcessingTimestamp: Date.now()
     });
     logger.background.info(`API processing status updated: ${status}`);
   } catch (error) {

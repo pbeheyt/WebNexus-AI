@@ -159,7 +159,7 @@ export function Popup() {
     }
   };
 
-  const handleSummarize = async () => {
+  const handleProcess = async () => {
     if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id) return;
 
     // Check if quick prompt is empty when using quick prompt type
@@ -222,7 +222,7 @@ export function Popup() {
         setIsProcessing(false);
       }
     } catch (error) {
-      console.error('Summarize error:', error);
+      console.error('Process error:', error);
       updateStatus(`Error: ${error.message}`, false);
       showToastMessage(`Error: ${error.message}`, 'error');
       setIsProcessing(false);
@@ -305,11 +305,11 @@ export function Popup() {
       </header>
 
       <Button
-        onClick={handleSummarize}
+        onClick={handleProcess}
         disabled={isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id}
         className="w-full mb-2"
       >
-        {isProcessingContent || isProcessing ? 'Processing...' : 'Summarize Content'}
+        {isProcessingContent || isProcessing ? 'Processing...' : 'Process Content'}
       </Button>
 
       <ContentTypeDisplay />

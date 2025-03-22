@@ -6,7 +6,7 @@ const SHORTCUT_SETTINGS_KEY = 'shortcut_settings';
 const Shortcuts = () => {
   const { success, error } = useNotification();
   const [settings, setSettings] = useState({
-    summarization_behavior: 'selection'
+    content_processing_behavior: 'selection'
   });
   const [commands, setCommands] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,7 +30,7 @@ const Shortcuts = () => {
         } else {
           // Fallback for when commands API is unavailable 
           setCommands([
-            { name: 'summarize-page', description: 'Summarize current page', shortcut: 'Not set' },
+            { name: 'process-page', description: 'Process current page', shortcut: 'Not set' },
             { name: 'open-popup', description: 'Activate the extension', shortcut: 'Not set' }
           ]);
         }
@@ -134,36 +134,36 @@ const Shortcuts = () => {
         <h3 className="section-subtitle text-lg font-medium mb-4">Shortcut Behavior</h3>
         
         <div className="shortcut-option-group mb-5">
-          <h4 className="option-title text-base font-medium mb-3">Summarization Shortcut Behavior</h4>
+          <h4 className="option-title text-base font-medium mb-3">Content Processing Shortcut Behavior</h4>
           
           <div className="radio-group-setting ml-4 space-y-3">
             <div className="radio-option flex items-center">
               <input
                 type="radio"
-                id="page-summarize"
-                name="summarize-behavior"
-                checked={settings.summarization_behavior === 'page'}
-                onChange={() => updateSettings({ summarization_behavior: 'page' })}
+                id="page-process"
+                name="process-behavior"
+                checked={settings.content_processing_behavior === 'page'}
+                onChange={() => updateSettings({ content_processing_behavior: 'page' })}
                 className="mr-2"
                 disabled={isSaving}
               />
-              <label htmlFor="page-summarize" className="cursor-pointer">
-                Summarize entire page
+              <label htmlFor="page-process" className="cursor-pointer">
+                Process entire page
               </label>
             </div>
             
             <div className="radio-option flex items-center">
               <input
                 type="radio"
-                id="selection-summarize"
-                name="summarize-behavior"
-                checked={settings.summarization_behavior === 'selection'}
-                onChange={() => updateSettings({ summarization_behavior: 'selection' })}
+                id="selection-process"
+                name="process-behavior"
+                checked={settings.content_processing_behavior === 'selection'}
+                onChange={() => updateSettings({ content_processing_behavior: 'selection' })}
                 className="mr-2"
                 disabled={isSaving}
               />
-              <label htmlFor="selection-summarize" className="cursor-pointer">
-                Summarize selected text (if no selection, falls back to page)
+              <label htmlFor="selection-process" className="cursor-pointer">
+                Process selected text (if no selection, falls back to page)
               </label>
             </div>
           </div>

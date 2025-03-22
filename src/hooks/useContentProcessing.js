@@ -95,7 +95,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     try {
       // This now uses the consolidated background flow that handles extraction internally
       const request = {
-        action: useApi ? 'summarizeContentViaApi' : 'summarizeContent',
+        action: useApi ? 'processContentViaApi' : 'processContent',
         tabId: currentTab.id,
         url: currentTab.url,
         platformId,

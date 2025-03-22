@@ -1,6 +1,6 @@
 // src/background/listeners/command-listener.js - Keyboard shortcuts
 
-import { summarizeContent } from '../services/summarization.js';
+import { processContent } from '../services/content-processing.js';
 import { detectTextSelection } from '../services/content-extraction.js';
 import { toggleSidebar } from '../services/sidebar-manager.js'; // Import the function directly
 import { STORAGE_KEYS } from '../../shared/constants.js';
@@ -19,9 +19,9 @@ export function setupCommandListener() {
  * @param {string} command - Command name
  */
 async function handleCommand(command) {
-  if (command === "summarize-page") {
+  if (command === "process-page") {
     try {
-      logger.background.info('Keyboard shortcut triggered: summarize-page');
+      logger.background.info('Keyboard shortcut triggered: process-page');
       
       // Get active tab
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -39,8 +39,8 @@ async function handleCommand(command) {
       try {
         const result = await chrome.storage.sync.get(STORAGE_KEYS.SHORTCUT_SETTINGS);
         if (result[STORAGE_KEYS.SHORTCUT_SETTINGS] && 
-            result[STORAGE_KEYS.SHORTCUT_SETTINGS].summarization_behavior) {
-          useSelection = result[STORAGE_KEYS.SHORTCUT_SETTINGS].summarization_behavior === 'selection';
+            result[STORAGE_KEYS.SHORTCUT_SETTINGS].content_processing_behavior) {
+          useSelection = result[STORAGE_KEYS.SHORTCUT_SETTINGS].content_processing_behavior === 'selection';
           logger.background.info(`Using shortcut behavior from settings: ${useSelection ? 'Respect selection' : 'Always full page'}`);
         }
       } catch (error) {
@@ -56,10 +56,10 @@ async function handleCommand(command) {
         hasSelection = await detectTextSelection(activeTab.id);
       }
 
-      logger.background.info(`Summarize content request from keyboard`);
+      logger.background.info(`process content request from keyboard`);
       
-      // Use centralized summarization process
-      const result = await summarizeContent({
+      // Use centralized content processing
+      const result = await processContent({
         tabId: activeTab.id,
         url: activeTab.url,
         hasSelection

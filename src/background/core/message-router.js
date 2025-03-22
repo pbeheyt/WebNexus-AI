@@ -4,7 +4,7 @@ import logger from '../../utils/logger.js';
 import { determineContentType } from '../../shared/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
-import { handleSummarizeContentRequest, handleSummarizeContentViaApiRequest } from '../services/summarization.js';
+import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
 import { toggleSidebar, getSidebarState } from '../services/sidebar-manager.js';
 import { clearQuickPrompt } from '../services/prompt-resolver.js';
 
@@ -112,9 +112,9 @@ function registerApiHandlers() {
     return true; // Keep channel open for async response
   });
   
-  // API summarization
-  messageHandlers.set('summarizeContentViaApi', (message, sender, sendResponse) => {
-    handleSummarizeContentViaApiRequest(message, sendResponse);
+  // API content processing
+  messageHandlers.set('processContentViaApi', (message, sender, sendResponse) => {
+    handleProcessContentViaApiRequest(message, sendResponse);
     return true; // Keep channel open for async response
   });
   
@@ -140,9 +140,9 @@ function registerApiHandlers() {
  * Register service-related message handlers
  */
 function registerServiceHandlers() {
-  // Summarize content
-  messageHandlers.set('summarizeContent', (message, sender, sendResponse) => {
-    handleSummarizeContentRequest(message, sendResponse);
+  // Process content
+  messageHandlers.set('processContent', (message, sender, sendResponse) => {
+    handleProcessContentRequest(message, sendResponse);
     return true; // Keep channel open for async response
   });
   

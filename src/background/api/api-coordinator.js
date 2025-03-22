@@ -69,7 +69,7 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
         logger.background.info(`Processing sidebar API request: platform=${platformId}`);
         
         // Call API function with sidebar source
-        const result = await summarizeContentViaApi({
+        const result = await ProcessContentViaApi({
           tabId,
           url,
           platformId,
@@ -104,11 +104,11 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
 }
 
 /**
- * Summarize content via API with streaming support
- * @param {Object} params - Parameters for summarization
+ * Process content via API with streaming support
+ * @param {Object} params - Parameters for content processing
  * @returns {Promise<Object>} Result information
  */
-export async function summarizeContentViaApi(params) {
+export async function processContentViaApi(params) {
   const {
     tabId,
     url,
@@ -122,7 +122,7 @@ export async function summarizeContentViaApi(params) {
   } = params;
 
   try {
-    logger.background.info(`Starting API-based summarization with streaming from ${source}`, params);
+    logger.background.info(`Starting API-based content processing with streaming from ${source}`, params);
 
     // 1. Reset previous state
     await resetExtractionState();
@@ -255,7 +255,7 @@ export async function summarizeContentViaApi(params) {
       throw processingError;
     }
   } catch (error) {
-    logger.background.error('API summarization error:', error);
+    logger.background.error('API content processing error:', error);
 
     // Ensure error state is set
     await setApiProcessingError(error.message);

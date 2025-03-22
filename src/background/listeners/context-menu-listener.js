@@ -1,6 +1,6 @@
 // src/background/listeners/context-menu-listener.js - Context menu handling
 
-import { summarizeContent } from '../services/summarization.js';
+import { processContent } from '../services/content-processing.js';
 import logger from '../../utils/logger.js';
 
 /**
@@ -21,14 +21,14 @@ export async function createContextMenus() {
   
   // Create context menus
   chrome.contextMenus.create({
-    id: 'summarizeContent',
-    title: 'Summarize with AI',
+    id: 'processContent',
+    title: 'process with AI',
     contexts: ['page']
   });
 
   chrome.contextMenus.create({
-    id: 'summarizeSelection',
-    title: 'Summarize Selection with AI',
+    id: 'processSelection',
+    title: 'process Selection with AI',
     contexts: ['selection']
   });
   
@@ -44,12 +44,12 @@ async function handleContextMenuClick(info, tab) {
   logger.background.info('Context menu clicked', { info, tabId: tab.id });
 
   // Determine if there's a text selection
-  const hasSelection = info.menuItemId === 'summarizeSelection' || !!info.selectionText;
+  const hasSelection = info.menuItemId === 'processSelection' || !!info.selectionText;
   
-  logger.background.info(`Summarize content request from menu context`);
+  logger.background.info(`process content request from menu context`);
 
-  // Use centralized summarization process
-  const result = await summarizeContent({
+  // Use centralized content processing
+  const result = await processContent({
     tabId: tab.id,
     url: tab.url,
     hasSelection
