@@ -4,7 +4,7 @@ import SidebarApp from './SidebarApp';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { SidebarPlatformProvider } from './contexts/SidebarPlatformContext';
 import { SidebarChatProvider } from './contexts/SidebarChatContext';
-import { SidebarContentProvider } from './contexts/SidebarContentContext';
+import { ContentProvider } from '../components';
 import '../styles/index.css';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,13 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
   
   root.render(
     <ThemeProvider>
-      <SidebarContentProvider>
+      <ContentProvider>
         <SidebarPlatformProvider>
           <SidebarChatProvider>
             <SidebarApp />
           </SidebarChatProvider>
         </SidebarPlatformProvider>
-      </SidebarContentProvider>
+      </ContentProvider>
     </ThemeProvider>
   );
 });

@@ -1,8 +1,8 @@
-// src/sidebar/contexts/SidebarChatContext.jsx
+// In src/sidebar/contexts/SidebarChatContext.jsx
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useSidebarPlatform } from './SidebarPlatformContext';
-import { useSidebarContent } from './SidebarContentContext';
+import { useContent } from '../../components';
 import ChatHistoryService from '../services/ChatHistoryService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
@@ -12,7 +12,7 @@ const SidebarChatContext = createContext(null);
 
 export function SidebarChatProvider({ children }) {
   const { selectedPlatformId, selectedModel, hasCredentials } = useSidebarPlatform();
-  const { currentTab, contentType } = useSidebarContent();
+  const { currentTab, contentType } = useContent();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
