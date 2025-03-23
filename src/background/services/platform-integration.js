@@ -2,7 +2,6 @@
 
 import { AI_PLATFORMS, INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
 import { getPlatformConfig } from '../core/config-loader.js';
-import { savePlatformTabInfo } from '../core/state-manager.js';
 import logger from '../../utils/logger.js';
 
 /**

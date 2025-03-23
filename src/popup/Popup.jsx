@@ -196,7 +196,7 @@ export function Popup() {
       await chrome.storage.local.set({
         [STORAGE_KEYS.CONTENT_READY]: false,
         [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
-        [STORAGE_KEYS.AI_PLATFORM_TAB_ID]: null,
+        [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: null,
         [STORAGE_KEYS.SCRIPT_INJECTED]: false,
         [STORAGE_KEYS.PRE_PROMPT]: promptContent
       });

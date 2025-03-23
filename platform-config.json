@@ -363,7 +363,7 @@
       "icon": "images/gemini_logo.png",
       "docLink": "https://ai.google.dev/docs",
       "modelApiLink": "https://ai.google.dev/gemini-api/docs/models/",
-      "consoleApiLink": "https://ai.google.dev/",
+      "consoleApiLink": "https://aistudio.google.com/",
       "api": {
         "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
         "models": [
