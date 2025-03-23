@@ -48,7 +48,8 @@ export const STORAGE_KEYS = {
   CUSTOM_PROMPTS: 'custom_prompts_by_type',
   DEFAULT_PROMPT_PREFERENCES: 'default_prompt_preferences',
   
-  AI_PLATFORM_TAB_ID: 'aiPlatformTabId',
+  INJECTION_PLATFORM: 'injectionPlatform',
+  INJECTION_PLATFORM_TAB_ID: 'injectionPlatformTabId',
   
   POPUP_PLATFORM: 'popup_platform',
   SIDEBAR_PLATFORM: 'sidebar_platform_preference',
@@ -58,8 +59,20 @@ export const STORAGE_KEYS = {
   LAST_ACTIVE_TAB: 'last_active_tab',
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
   
-
   CHAT_HISTORY: 'sidebar_chat_history',
+  
+  // API processing state keys
+  API_PROCESSING_STATUS: 'apiProcessingStatus',
+  API_RESPONSE: 'apiResponse',
+  API_PROCESSING_ERROR: 'apiProcessingError',
+  API_RESPONSE_TIMESTAMP: 'apiResponseTimestamp',
+  CURRENT_CONTENT_PROCESSING_MODE: 'currentContentProcessingMode',
+  API_CONTENT_PROCESSING_PLATFORM: 'apiContentProcessingPlatform',
+  API_CONTENT_PROCESSING_TIMESTAMP: 'apiContentProcessingTimestamp',
+  
+  // Streaming-related keys
+  STREAM_CONTENT: 'streamContent',
+  STREAM_ID: 'streamId'
 };
 
 /**

@@ -46,12 +46,12 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
       }
 
       case 'getApiResponse': {
-        const result = await chrome.storage.local.get(['apiResponse', 'apiProcessingStatus', 'apiResponseTimestamp']);
+        const result = await chrome.storage.local.get([STORAGE_KEYS.API_RESPONSE, STORAGE_KEYS.API_PROCESSING_STATUS, STORAGE_KEYS.API_RESPONSE_TIMESTAMP]);
         sendResponse({
           success: true,
-          response: result.apiResponse || null,
-          status: result.apiProcessingStatus || 'unknown',
-          timestamp: result.apiResponseTimestamp || null
+          response: result[STORAGE_KEYS.API_RESPONSE] || null,
+          status: result[STORAGE_KEYS.API_PROCESSING_STATUS] || 'unknown',
+          timestamp: result[STORAGE_KEYS.API_RESPONSE_TIMESTAMP] || null
         });
         break;
       }

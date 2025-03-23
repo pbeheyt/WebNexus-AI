@@ -11,12 +11,12 @@ export async function resetState() {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.SCRIPT_INJECTED]: false,
-      [STORAGE_KEYS.AI_PLATFORM_TAB_ID]: null,
+      [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: null,
       [STORAGE_KEYS.CONTENT_READY]: false,
       [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
-      apiProcessingStatus: null,
-      apiResponse: null,
-      currentContentProcessingMode: null
+      [STORAGE_KEYS.API_PROCESSING_STATUS]: null,
+      [STORAGE_KEYS.API_RESPONSE]: null,
+      [STORAGE_KEYS.CURRENT_CONTENT_PROCESSING_MODE]: null
     });
   } catch (error) {
     logger.background.error('Error resetting state:', error);
@@ -51,15 +51,15 @@ export async function resetExtractionState() {
 export async function savePlatformTabInfo(tabId, platformId, promptContent) {
   try {
     await chrome.storage.local.set({
-      [STORAGE_KEYS.AI_PLATFORM_TAB_ID]: tabId,
-      aiPlatform: platformId,
+      [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: tabId,
+      [STORAGE_KEYS.INJECTION_PLATFORM]: platformId,
       [STORAGE_KEYS.SCRIPT_INJECTED]: false,
       [STORAGE_KEYS.PRE_PROMPT]: promptContent
     });
     
     // Verify the data was stored correctly
-    const verifyData = await chrome.storage.local.get([STORAGE_KEYS.AI_PLATFORM_TAB_ID, 'aiPlatform', STORAGE_KEYS.SCRIPT_INJECTED]);
-    logger.background.info(`Storage verification: aiPlatformTabId=${verifyData.aiPlatformTabId}, aiPlatform=${verifyData.aiPlatform}, scriptInjected=${verifyData.scriptInjected}`);
+    const verifyData = await chrome.storage.local.get([STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID, STORAGE_KEYS.INJECTION_PLATFORM, STORAGE_KEYS.SCRIPT_INJECTED]);
+    logger.background.info(`Storage verification: aiPlatformTabId=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]}, aiPlatform=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM]}, scriptInjected=${verifyData[STORAGE_KEYS.SCRIPT_INJECTED]}`);
     
     return true;
   } catch (error) {
@@ -108,10 +108,10 @@ export async function saveExtractedContent(content) {
 export async function updateApiProcessingStatus(status, platformId) {
   try {
     await chrome.storage.local.set({
-      apiProcessingStatus: status,
-      currentContentProcessingMode: 'api',
-      apiContentProcessingPlatform: platformId,
-      apiContentProcessingTimestamp: Date.now()
+      [STORAGE_KEYS.API_PROCESSING_STATUS]: status,
+      [STORAGE_KEYS.CURRENT_CONTENT_PROCESSING_MODE]: 'api',
+      [STORAGE_KEYS.API_CONTENT_PROCESSING_PLATFORM]: platformId,
+      [STORAGE_KEYS.API_CONTENT_PROCESSING_TIMESTAMP]: Date.now()
     });
     logger.background.info(`API processing status updated: ${status}`);
   } catch (error) {
@@ -137,10 +137,10 @@ export async function initializeStreamResponse(streamId, platformId) {
     };
 
     await chrome.storage.local.set({
-      apiProcessingStatus: 'streaming',
-      apiResponse: initialResponse,
-      streamContent: '',
-      streamId
+      [STORAGE_KEYS.API_PROCESSING_STATUS]: 'streaming',
+      [STORAGE_KEYS.API_RESPONSE]: initialResponse,
+      [STORAGE_KEYS.STREAM_CONTENT]: '',
+      [STORAGE_KEYS.STREAM_ID]: streamId
     });
     logger.background.info(`Stream response initialized: ${streamId}`);
   } catch (error) {
@@ -156,7 +156,7 @@ export async function initializeStreamResponse(streamId, platformId) {
 export async function updateStreamContent(fullContent) {
   try {
     await chrome.storage.local.set({
-      streamContent: fullContent
+      [STORAGE_KEYS.STREAM_CONTENT]: fullContent
     });
   } catch (error) {
     logger.background.error('Error updating stream content:', error);
@@ -182,9 +182,9 @@ export async function completeStreamResponse(fullContent, model, platformId) {
     };
     
     await chrome.storage.local.set({
-      apiProcessingStatus: 'completed',
-      apiResponse: finalResponse,
-      apiResponseTimestamp: Date.now()
+      [STORAGE_KEYS.API_PROCESSING_STATUS]: 'completed',
+      [STORAGE_KEYS.API_RESPONSE]: finalResponse,
+      [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now()
     });
     logger.background.info('Stream response completed');
     
@@ -211,8 +211,8 @@ export async function completeStreamResponse(fullContent, model, platformId) {
 export async function setApiProcessingError(error) {
   try {
     await chrome.storage.local.set({
-      apiProcessingStatus: 'error',
-      apiProcessingError: error
+      [STORAGE_KEYS.API_PROCESSING_STATUS]: 'error',
+      [STORAGE_KEYS.API_PROCESSING_ERROR]: error
     });
     logger.background.error('API processing error set:', error);
     
@@ -269,11 +269,11 @@ export async function getExtractedContent() {
  */
 export async function getPlatformTabInfo() {
   try {
-    const result = await chrome.storage.local.get([STORAGE_KEYS.AI_PLATFORM_TAB_ID, 'aiPlatform', STORAGE_KEYS.SCRIPT_INJECTED]);
+    const result = await chrome.storage.local.get([STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID, STORAGE_KEYS.INJECTION_PLATFORM, STORAGE_KEYS.SCRIPT_INJECTED]);
     return {
-      tabId: result.aiPlatformTabId,
-      platformId: result.aiPlatform,
-      scriptInjected: result.scriptInjected
+      tabId: result[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID],
+      platformId: result[STORAGE_KEYS.INJECTION_PLATFORM],
+      scriptInjected: result[STORAGE_KEYS.SCRIPT_INJECTED]
     };
   } catch (error) {
     logger.background.error('Error getting platform tab info:', error);
