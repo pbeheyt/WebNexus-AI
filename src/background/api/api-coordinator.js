@@ -87,8 +87,6 @@ export async function processContentViaApi(params) {
     hasSelection = false,
     promptId = null,
     platformId = null,
-    testMode = false,
-    testContent = null,
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null,
     conversationHistory = [] // Add conversation history parameter
