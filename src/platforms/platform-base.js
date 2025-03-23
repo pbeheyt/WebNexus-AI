@@ -1,5 +1,6 @@
 // src/platforms/platform-base.js
 const PlatformInterface = require('./platform-interface');
+const STORAGE_KEYS = require('../shared/constants').STORAGE_KEYS;
 
 /**
  * Base implementation with shared functionality for all AI platforms
@@ -88,7 +89,7 @@ class BasePlatform extends PlatformInterface {
       this.logger.info(`Starting to process extracted content for ${this.platformId}`);
       
       // Get data from storage
-      chrome.storage.local.get(['prePrompt', 'extractedContent'], result => {
+      chrome.storage.local.get([STORAGE_KEYS.PRE_PROMPT, STORAGE_KEYS.EXTRACTED_CONTENT], result => {
         this.logger.info('Retrieved data from storage', {
           hasPrompt: !!result.prePrompt,
           hasContent: !!result.extractedContent
@@ -114,7 +115,7 @@ class BasePlatform extends PlatformInterface {
             this.logger.info(`Content successfully inserted into ${this.platformId}`);
             
             // Clear the data after successful insertion
-            chrome.storage.local.remove(['extractedContent', 'prePrompt', 'contentReady']);
+            chrome.storage.local.remove([STORAGE_KEYS.EXTRACTED_CONTENT, STORAGE_KEYS.PRE_PROMPT, STORAGE_KEYS.CONTENT_READY]);
           } else {
             this.logger.error(`Failed to insert content into ${this.platformId}`);
             chrome.runtime.sendMessage({

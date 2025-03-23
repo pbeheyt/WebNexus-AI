@@ -1,9 +1,7 @@
 // src/extractor/strategies/youtube-strategy.js
 const BaseExtractor = require('../base-extractor');
 const { YoutubeTranscript } = require('youtube-transcript');
-
-// Storage key for accessing settings
-const STORAGE_KEY = 'custom_prompts_by_type';
+const STORAGE_KEYS = require('../../shared/constants').STORAGE_KEYS;
 
 class YoutubeExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -168,7 +166,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     try {
       // Get prompt preferences
       const result = await new Promise((resolve) => {
-        chrome.storage.sync.get('default_prompt_preferences', (data) => resolve(data));
+        chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES, (data) => resolve(data));
       });
       
       // Check if comment analysis is explicitly disabled
@@ -181,7 +179,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       
       // Also check if we're using a custom prompt that might require comments
       const promptTypePrefs = await new Promise((resolve) => {
-        chrome.storage.sync.get('prompt_type_preference', (data) => resolve(data));
+        chrome.storage.sync.get(STORAGE_KEYS.PROMPT_TYPE_PREFERENCE, (data) => resolve(data));
       });
       
       const usingCustomPrompt = promptTypePrefs && 
@@ -349,7 +347,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         
         // Check if comment analysis is enabled in default prompt preferences
         const promptPrefs = await new Promise((resolve) => {
-          chrome.storage.sync.get('default_prompt_preferences', (data) => resolve(data));
+          chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES, (data) => resolve(data));
         });
         
         if (promptPrefs && 

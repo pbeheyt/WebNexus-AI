@@ -1,8 +1,6 @@
 // src/extractor/strategies/reddit-strategy.js
 const BaseExtractor = require('../base-extractor');
-
-// Storage key for accessing settings
-const STORAGE_KEY = 'custom_prompts_by_type';
+const STORAGE_KEYS = require('../../shared/constants').STORAGE_KEYS;
 
 class RedditExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -244,14 +242,14 @@ class RedditExtractorStrategy extends BaseExtractor {
       
       try {
         const result = await new Promise((resolve) => {
-          chrome.storage.sync.get(STORAGE_KEY, (data) => resolve(data));
+          chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS, (data) => resolve(data));
         });
         
-        if (result && result[STORAGE_KEY] && 
-            result[STORAGE_KEY].reddit && 
-            result[STORAGE_KEY].reddit.settings && 
-            result[STORAGE_KEY].reddit.settings.maxComments) {
-          maxComments = result[STORAGE_KEY].reddit.settings.maxComments;
+        if (result && result[STORAGE_KEYS.CUSTOM_PROMPTS] && 
+            result[STORAGE_KEYS.CUSTOM_PROMPTS].reddit && 
+            result[STORAGE_KEYS.CUSTOM_PROMPTS].reddit.settings && 
+            result[STORAGE_KEYS.CUSTOM_PROMPTS].reddit.settings.maxComments) {
+          maxComments = result[STORAGE_KEYS.CUSTOM_PROMPTS].reddit.settings.maxComments;
         }
       } catch (error) {
         this.logger.warn('Error fetching max comments setting, using default:', error);
