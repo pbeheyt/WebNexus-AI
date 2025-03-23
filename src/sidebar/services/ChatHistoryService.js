@@ -1,7 +1,9 @@
+import { STORAGE_KEYS } from "../../shared/constants";
+
 // src/sidebar/services/ChatHistoryService.js
 
 class ChatHistoryService {
-  static STORAGE_KEY = 'sidebar_chat_history';
+  static STORAGE_KEY = STORAGE_KEYS.CHAT_HISTORY;
   static MAX_HISTORIES = 20;
   static MAX_MESSAGES_PER_URL = 100;
   

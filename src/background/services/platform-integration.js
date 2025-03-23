@@ -27,7 +27,7 @@ export async function getPreferredAiPlatform(source = INTERFACE_SOURCES.POPUP) {
     // Use source-specific storage key
     const storageKey = source === INTERFACE_SOURCES.SIDEBAR 
       ? STORAGE_KEYS.SIDEBAR_PLATFORM 
-      : STORAGE_KEYS.PLATFORM_STORAGE_KEY;
+      : STORAGE_KEYS.POPUP_PLATFORM;
     
     const result = await chrome.storage.sync.get(storageKey);
 

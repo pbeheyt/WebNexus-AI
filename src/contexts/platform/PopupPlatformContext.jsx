@@ -7,7 +7,7 @@ const {
   useTabAwarePlatform: usePopupPlatform 
 } = createTabAwarePlatformContext({
   interfaceType: INTERFACE_SOURCES.POPUP,
-  globalStorageKey: STORAGE_KEYS.PREFERRED_PLATFORM
+  globalStorageKey: STORAGE_KEYS.POPUP_PLATFORM
 });
 
 export { PopupPlatformProvider, usePopupPlatform };

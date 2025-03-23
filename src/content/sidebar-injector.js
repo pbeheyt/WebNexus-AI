@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from '../sidebar/constants';
+import { STORAGE_KEYS } from '../shared/constants';
 
 /**
  * Manages sidebar iframe injection and communication with singleton pattern enforcement

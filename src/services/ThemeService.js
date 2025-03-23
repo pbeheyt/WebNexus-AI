@@ -1,8 +1,10 @@
+import { STORAGE_KEYS } from "../shared/constants";
+
 // src/services/ThemeService.js
 class ThemeService {
   #theme = 'light';
   #observers = new Set();
-  #storageKey = 'ui_preferences.theme';
+  #storageKey = STORAGE_KEYS.THEME_PREFERENCE;
 
   async initialize() {
     try {

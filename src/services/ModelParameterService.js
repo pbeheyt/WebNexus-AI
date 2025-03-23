@@ -1,5 +1,6 @@
 // src/services/ModelParameterService.js
 const TokenCalculationService = require('./TokenCalculationService');
+const { STORAGE_KEYS } = require('../shared/constants');
 
 /**
  * Service for managing model-specific parameters
@@ -7,8 +8,7 @@ const TokenCalculationService = require('./TokenCalculationService');
 class ModelParameterService {
   constructor() {
     this.cachedConfig = null;
-    this.STORAGE_KEY = 'api_advanced_settings';
-    this.SIDEBAR_MODEL_KEY = 'sidebar_model_preference';
+    // Remove hardcoded keys, use constants instead
   }
 
   /**
@@ -58,8 +58,8 @@ class ModelParameterService {
    */
   async getUserModelSettings(platformId, modelId) {
     try {
-      const result = await chrome.storage.sync.get(this.STORAGE_KEY);
-      const advancedSettings = result[this.STORAGE_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
 
       // Get platform settings
       const platformSettings = advancedSettings[platformId] || {};
@@ -86,8 +86,8 @@ class ModelParameterService {
    */
   async getSidebarModelSelection(platformId) {
     try {
-      const result = await chrome.storage.sync.get(this.SIDEBAR_MODEL_KEY);
-      const modelPreferences = result[this.SIDEBAR_MODEL_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
+      const modelPreferences = result[STORAGE_KEYS.SIDEBAR_MODEL] || {};
 
       // Check if a model is selected for this platform
       if (modelPreferences[platformId]) {
@@ -179,8 +179,8 @@ class ModelParameterService {
   async saveUserModelSettings(platformId, modelId, settings) {
     try {
       // Get existing settings
-      const result = await chrome.storage.sync.get(this.STORAGE_KEY);
-      const advancedSettings = result[this.STORAGE_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
 
       // Ensure platform settings exist
       if (!advancedSettings[platformId]) {
@@ -199,7 +199,7 @@ class ModelParameterService {
       advancedSettings[platformId].models[modelId] = settings;
 
       // Save back to storage
-      await chrome.storage.sync.set({ [this.STORAGE_KEY]: advancedSettings });
+      await chrome.storage.sync.set({ [STORAGE_KEYS.API_ADVANCED_SETTINGS]: advancedSettings });
 
       return true;
     } catch (error) {
@@ -217,8 +217,8 @@ class ModelParameterService {
   async saveDefaultSettings(platformId, settings) {
     try {
       // Get existing settings
-      const result = await chrome.storage.sync.get(this.STORAGE_KEY);
-      const advancedSettings = result[this.STORAGE_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
 
       // Ensure platform settings exist
       if (!advancedSettings[platformId]) {
@@ -232,7 +232,7 @@ class ModelParameterService {
       advancedSettings[platformId].default = settings;
 
       // Save back to storage
-      await chrome.storage.sync.set({ [this.STORAGE_KEY]: advancedSettings });
+      await chrome.storage.sync.set({ [STORAGE_KEYS.API_ADVANCED_SETTINGS]: advancedSettings });
 
       return true;
     } catch (error) {
@@ -321,8 +321,8 @@ class ModelParameterService {
   async clearModelSettings(platformId, modelId) {
     try {
       // Get existing settings
-      const result = await chrome.storage.sync.get(this.STORAGE_KEY);
-      const advancedSettings = result[this.STORAGE_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
 
       // Check if platform and model settings exist
       if (
@@ -334,7 +334,7 @@ class ModelParameterService {
         delete advancedSettings[platformId].models[modelId];
 
         // Save back to storage
-        await chrome.storage.sync.set({ [this.STORAGE_KEY]: advancedSettings });
+        await chrome.storage.sync.set({ [STORAGE_KEYS.API_ADVANCED_SETTINGS]: advancedSettings });
       }
 
       return true;

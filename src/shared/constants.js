@@ -32,27 +32,33 @@ export const AI_PLATFORMS = {
  * Storage keys used throughout the extension
  */
 export const STORAGE_KEYS = {
-  CUSTOM_PROMPTS: 'custom_prompts_by_type',
-  DEFAULT_PROMPT_PREFERENCES: 'default_prompt_preferences',
-  PREFERRED_PLATFORM: 'preferred_ai_platform',
   CONTENT_READY: 'contentReady',
   EXTRACTED_CONTENT: 'extractedContent',
-  AI_PLATFORM_TAB_ID: 'aiPlatformTabId',
   SCRIPT_INJECTED: 'scriptInjected',
-  PRE_PROMPT: 'prePrompt',
+
   THEME_PREFERENCE: 'theme_preference',
+  SHORTCUT_SETTINGS: 'shortcut_settings',
+  
+  PRE_PROMPT: 'prePrompt',
   PROMPT_TYPE_PREFERENCE: 'prompt_type_preference',
   SELECTED_PROMPT_IDS: 'selected_prompt_ids',
   QUICK_PROMPTS: 'quick_prompts',
-  PLATFORM_STORAGE_KEY: 'preferred_ai_platform',
-  SHORTCUT_SETTINGS: 'shortcut_settings',
+  CUSTOM_PROMPTS: 'custom_prompts_by_type',
+  DEFAULT_PROMPT_PREFERENCES: 'default_prompt_preferences',
+  
+  AI_PLATFORM_TAB_ID: 'aiPlatformTabId',
+  
+  POPUP_PLATFORM: 'popup_platform',
+  SIDEBAR_PLATFORM: 'sidebar_platform_preference',
+  SIDEBAR_MODEL: 'sidebar_model_preferences',
+  TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
+  TAB_MODEL_PREFERENCES: 'tab_model_preferences',
+  LAST_ACTIVE_TAB: 'last_active_tab',
+  TAB_SIDEBAR_STATES: 'tab_sidebar_states',
+  
+  API_ADVANCED_SETTINGS: 'api_advanced_settings',
 
-  // New keys for tab-specific preferences
-  TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',  // Maps tabId -> platformId
-  TAB_MODEL_PREFERENCES: 'tab_model_preferences',        // Maps tabId -> {platformId -> modelId}
-  LAST_ACTIVE_TAB: 'last_active_tab',                    // Tracks last active tab
-  SIDEBAR_PLATFORM: 'sidebar_platform',                  // Global sidebar platform preference
-  SIDEBAR_MODEL: 'sidebar_model_preferences',            // Global model preferences by platform
+  CHAT_HISTORY: 'sidebar_chat_history',
 };
 
 /**

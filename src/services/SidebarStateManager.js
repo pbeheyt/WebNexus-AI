@@ -1,15 +1,12 @@
 const logger = require('../utils/logger').service;
+const { STORAGE_KEYS } = require('../shared/constants');
 
 /**
  * Service for managing tab-specific sidebar state
  */
 class SidebarStateManager {
   constructor() {
-    this.STORAGE_KEYS = {
-      TAB_SIDEBAR_STATES: 'tab_sidebar_states',
-      SIDEBAR_PLATFORM: 'sidebar_platform_preference',
-      SIDEBAR_MODEL: 'sidebar_model_preference'
-    };
+    // No local STORAGE_KEYS definition, using imported constants
   }
   
   /**
@@ -115,8 +112,8 @@ class SidebarStateManager {
    */
   async _toggleForTab(tabId, visible) {
     // Get current tab states
-    const { [this.STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
-      await chrome.storage.local.get(this.STORAGE_KEYS.TAB_SIDEBAR_STATES);
+    const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
+      await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
     
     // Convert tabId to string for use as object key
     const tabIdStr = tabId.toString();
@@ -135,7 +132,7 @@ class SidebarStateManager {
     
     // Save updated states
     await chrome.storage.local.set({ 
-      [this.STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates 
+      [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates 
     });
     
     logger.info(`Tab ${tabId} sidebar visibility set to ${visible}`);
@@ -192,17 +189,17 @@ class SidebarStateManager {
    */
   async _getStateForTab(tabId) {
     const result = await chrome.storage.local.get([
-      this.STORAGE_KEYS.TAB_SIDEBAR_STATES,
-      this.STORAGE_KEYS.SIDEBAR_PLATFORM,
-      this.STORAGE_KEYS.SIDEBAR_MODEL
+      STORAGE_KEYS.TAB_SIDEBAR_STATES,
+      STORAGE_KEYS.SIDEBAR_PLATFORM,
+      STORAGE_KEYS.SIDEBAR_MODEL
     ]);
     
-    const tabStates = result[this.STORAGE_KEYS.TAB_SIDEBAR_STATES] || {};
+    const tabStates = result[STORAGE_KEYS.TAB_SIDEBAR_STATES] || {};
     
     return {
       visible: tabStates[tabId.toString()] === true,
-      platform: result[this.STORAGE_KEYS.SIDEBAR_PLATFORM] || null,
-      model: result[this.STORAGE_KEYS.SIDEBAR_MODEL] || null
+      platform: result[STORAGE_KEYS.SIDEBAR_PLATFORM] || null,
+      model: result[STORAGE_KEYS.SIDEBAR_MODEL] || null
     };
   }
   
@@ -248,8 +245,8 @@ class SidebarStateManager {
    */
   async getSidebarVisibilityForTab(tabId) {
     try {
-      const { [this.STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
-        await chrome.storage.local.get(this.STORAGE_KEYS.TAB_SIDEBAR_STATES);
+      const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
+        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
       
       return tabStates[tabId.toString()] === true;
     } catch (error) {
@@ -286,8 +283,8 @@ class SidebarStateManager {
       const activeTabIds = new Set(tabs.map(tab => tab.id.toString()));
       
       // Get current tab states
-      const { [this.STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
-        await chrome.storage.local.get(this.STORAGE_KEYS.TAB_SIDEBAR_STATES);
+      const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
+        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
       
       // Filter out closed tabs
       const updatedStates = {};
@@ -305,7 +302,7 @@ class SidebarStateManager {
       // Save updated states if changed
       if (stateChanged) {
         await chrome.storage.local.set({ 
-          [this.STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates 
+          [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates 
         });
         logger.info('Tab sidebar states cleaned up');
       }

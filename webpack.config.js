@@ -14,7 +14,6 @@ module.exports = {
     popup: './src/popup/index.jsx',
     settings: './src/settings/index.jsx',
     // 'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
-    'api-model-tester': './src/api/api-model-tester.js',
     sidebar: './src/sidebar/index.jsx',
     'sidebar-injector': './src/content/sidebar-injector.js'
   },
