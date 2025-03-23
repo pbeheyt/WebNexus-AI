@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from "../shared/constants";
+const { STORAGE_KEYS } = require('../shared/constants');
 
 // src/services/ThemeService.js
 class ThemeService {

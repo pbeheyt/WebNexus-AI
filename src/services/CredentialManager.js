@@ -1,11 +1,12 @@
 // src/services/CredentialManager.js
+const { STORAGE_KEYS } = require('../shared/constants');
 
 /**
  * Service for secure API credential management
  */
 class CredentialManager {
   constructor() {
-    this.STORAGE_KEY = 'api_credentials';
+    this.STORAGE_KEY = STORAGE_KEYS.API_CREDENTIALS;
     this.logger = this._createLogger();
   }
   

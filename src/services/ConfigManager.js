@@ -1,10 +1,12 @@
+const { STORAGE_KEYS } = require('../shared/constants');
+
 /**
  * ConfigManager.js - Central configuration management
  * Single source of truth for all extension configuration
  */
 class ConfigManager {
   constructor() {
-    this.STORAGE_KEY = 'extension_configuration';
+    this.STORAGE_KEY = STORAGE_KEYS.TEMPLATE_CONFIG;
     this.config = null;
     this.subscribers = [];
     this.isInitialized = false;

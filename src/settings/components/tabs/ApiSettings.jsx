@@ -12,13 +12,12 @@ const ApiSettings = () => {
   const [credentials, setCredentials] = useState({});
   const [advancedSettings, setAdvancedSettings] = useState({});
   
-  // Load initial data only once or when explicitly needed
   useEffect(() => {
     const initialize = async () => {
-      if (!isLoading) return; // Prevent unnecessary re-initialization
+      if (!isLoading) return;
       
       try {
-        // Load platform config
+        // Load platform configuration
         const response = await fetch(chrome.runtime.getURL('platform-config.json'));
         const config = await response.json();
         
@@ -40,43 +39,18 @@ const ApiSettings = () => {
         
         setPlatforms(platformList);
         
-        // Load all credentials from a single key
-        let allCredentials = {};
+        // Load credentials using the unified credential storage key
+        const credentialResult = await chrome.storage.local.get(STORAGE_KEYS.API_CREDENTIALS);
+        setCredentials(credentialResult[STORAGE_KEYS.API_CREDENTIALS] || {});
         
-        // First try to get all credentials from the unified key
-        const mainResult = await chrome.storage.local.get(STORAGE_KEYS.API_CREDENTIALS);
-        if (mainResult[STORAGE_KEYS.API_CREDENTIALS]) {
-          allCredentials = mainResult[STORAGE_KEYS.API_CREDENTIALS];
-        } else {
-          // Migration: If not found, try to get from individual platform keys for backward compatibility
-          for (const platform of platformList) {
-            const result = await chrome.storage.local.get(`api_credentials_${platform.id}`);
-            if (result[`api_credentials_${platform.id}`]) {
-              allCredentials[platform.id] = result[`api_credentials_${platform.id}`];
-            }
-          }
-          
-          // Save migrated credentials to the new format if any were found
-          if (Object.keys(allCredentials).length > 0) {
-            await chrome.storage.local.set({ [STORAGE_KEYS.API_CREDENTIALS]: allCredentials });
-            
-            // Clean up old keys
-            for (const platform of platformList) {
-              await chrome.storage.local.remove(`api_credentials_${platform.id}`);
-            }
-          }
-        }
-        
-        setCredentials(allCredentials);
-        
-        // Set first platform as selected ONLY if no platform is currently selected
+        // Set first platform as selected if none is currently selected
         if (selectedPlatformId === null && platformList.length > 0) {
           setSelectedPlatformId(platformList[0].id);
         }
         
         // Load advanced settings
-        const result = await chrome.storage.sync.get(STORAGE_KEYS.API_SETTINGS_KEY);
-        setAdvancedSettings(result[STORAGE_KEYS.API_SETTINGS_KEY] || {});
+        const advancedResult = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+        setAdvancedSettings(advancedResult[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {});
       } catch (err) {
         console.error('Error loading API settings:', err);
         error('Failed to load API settings');
@@ -88,34 +62,28 @@ const ApiSettings = () => {
     initialize();
   }, [isLoading, error, selectedPlatformId]);
   
+  // Handler implementations remain largely unchanged
   const handleSelectPlatform = (platformId) => {
     setSelectedPlatformId(platformId);
   };
   
   const handleCredentialsUpdated = (platformId, newCredentials) => {
-    // Update local state AND storage with the unified format
     const updatedCredentials = {
       ...credentials,
       [platformId]: newCredentials
     };
     
     setCredentials(updatedCredentials);
-    
-    // Update storage (handled by PlatformDetails)
   };
   
   const handleCredentialsRemoved = (platformId) => {
-    // Update local state
     const updatedCredentials = { ...credentials };
     delete updatedCredentials[platformId];
     
     setCredentials(updatedCredentials);
-    
-    // Update storage (handled by PlatformDetails)
   };
   
   const handleAdvancedSettingsUpdated = (platformId, modelId, settings) => {
-    // Update local state
     setAdvancedSettings(prev => {
       const updated = { ...prev };
       
@@ -127,7 +95,6 @@ const ApiSettings = () => {
       }
       
       if (!modelId || modelId === 'default') {
-        // Update default settings
         updated[platformId].default = {
           ...updated[platformId].default,
           ...settings
@@ -137,7 +104,6 @@ const ApiSettings = () => {
           updated[platformId].models = {};
         }
         
-        // Update model-specific settings
         updated[platformId].models[modelId] = {
           ...updated[platformId].models?.[modelId] || {},
           ...settings
@@ -148,12 +114,11 @@ const ApiSettings = () => {
     });
   };
   
-  // Force refresh method to explicitly reload data when needed
   const refreshData = () => {
     setIsLoading(true);
   };
   
-  // Show loading state
+  // Loading state and render logic remains unchanged
   if (isLoading) {
     return (
       <div className="p-8 text-center">
@@ -163,7 +128,6 @@ const ApiSettings = () => {
     );
   }
   
-  // Get selected platform
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId);
   
   return (
@@ -184,7 +148,7 @@ const ApiSettings = () => {
         
         {selectedPlatform ? (
           <PlatformDetails
-            key={selectedPlatform.id} // Add key to force re-mount when platform changes
+            key={selectedPlatform.id}
             platform={selectedPlatform}
             credentials={credentials[selectedPlatformId]}
             advancedSettings={advancedSettings[selectedPlatformId] || {}}
@@ -193,6 +157,7 @@ const ApiSettings = () => {
             onAdvancedSettingsUpdated={handleAdvancedSettingsUpdated}
             refreshData={refreshData}
             credentialsKey={STORAGE_KEYS.API_CREDENTIALS}
+            advancedSettingsKey={STORAGE_KEYS.API_ADVANCED_SETTINGS}
           />
         ) : (
           <div className="platform-details-panel flex-1 bg-theme-surface p-8 text-center text-theme-secondary rounded-lg border border-theme">

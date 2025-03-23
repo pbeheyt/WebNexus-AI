@@ -32,25 +32,30 @@ export const AI_PLATFORMS = {
  * Storage keys used throughout the extension
  */
 export const STORAGE_KEYS = {
+  // Content
   CONTENT_READY: 'contentReady',
   EXTRACTED_CONTENT: 'extractedContent',
   SCRIPT_INJECTED: 'scriptInjected',
 
+  // Service
   THEME_PREFERENCE: 'theme_preference',
   SHORTCUT_SETTINGS: 'shortcut_settings',
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
   API_CREDENTIALS: 'api_credentials',
+  API_MODE_PREFERENCE: 'api_mode_preference',
+  TEMPLATE_CONFIG: 'template_configuration',
 
+  // Prompt
   PRE_PROMPT: 'prePrompt',
   PROMPT_TYPE_PREFERENCE: 'prompt_type_preference',
   SELECTED_PROMPT_IDS: 'selected_prompt_ids',
   QUICK_PROMPTS: 'quick_prompts',
   CUSTOM_PROMPTS: 'custom_prompts_by_type',
   DEFAULT_PROMPT_PREFERENCES: 'default_prompt_preferences',
-  
+
+  // Platform
   INJECTION_PLATFORM: 'injectionPlatform',
   INJECTION_PLATFORM_TAB_ID: 'injectionPlatformTabId',
-  
   POPUP_PLATFORM: 'popup_platform',
   SIDEBAR_PLATFORM: 'sidebar_platform_preference',
   SIDEBAR_MODEL: 'sidebar_model_preferences',
@@ -59,9 +64,7 @@ export const STORAGE_KEYS = {
   LAST_ACTIVE_TAB: 'last_active_tab',
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
   
-  CHAT_HISTORY: 'sidebar_chat_history',
-  
-  // API processing state keys
+  // API
   API_PROCESSING_STATUS: 'apiProcessingStatus',
   API_RESPONSE: 'apiResponse',
   API_PROCESSING_ERROR: 'apiProcessingError',
@@ -70,9 +73,10 @@ export const STORAGE_KEYS = {
   API_CONTENT_PROCESSING_PLATFORM: 'apiContentProcessingPlatform',
   API_CONTENT_PROCESSING_TIMESTAMP: 'apiContentProcessingTimestamp',
   
-  // Streaming-related keys
+  // Sidebar
+  CHAT_HISTORY: 'sidebar_chat_history',
   STREAM_CONTENT: 'streamContent',
-  STREAM_ID: 'streamId'
+  STREAM_ID: 'streamId',
 };
 
 /**

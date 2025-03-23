@@ -1,5 +1,5 @@
 // src/services/ApiModePreferenceManager.js
-
+const { STORAGE_KEYS } = require('../shared/constants');
 const logger = require('../utils/logger').service;
 
 /**
@@ -7,7 +7,7 @@ const logger = require('../utils/logger').service;
  */
 class ApiModePreferenceManager {
   constructor() {
-    this.STORAGE_KEY = 'api_mode_preferences';
+    this.STORAGE_KEY = STORAGE_KEYS.API_MODE_PREFERENCE;
   }
   
   /**
