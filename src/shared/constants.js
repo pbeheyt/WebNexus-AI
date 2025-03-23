@@ -46,6 +46,13 @@ export const STORAGE_KEYS = {
   QUICK_PROMPTS: 'quick_prompts',
   PLATFORM_STORAGE_KEY: 'preferred_ai_platform',
   SHORTCUT_SETTINGS: 'shortcut_settings',
+
+  // New keys for tab-specific preferences
+  TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',  // Maps tabId -> platformId
+  TAB_MODEL_PREFERENCES: 'tab_model_preferences',        // Maps tabId -> {platformId -> modelId}
+  LAST_ACTIVE_TAB: 'last_active_tab',                    // Tracks last active tab
+  SIDEBAR_PLATFORM: 'sidebar_platform',                  // Global sidebar platform preference
+  SIDEBAR_MODEL: 'sidebar_model_preferences',            // Global model preferences by platform
 };
 
 /**

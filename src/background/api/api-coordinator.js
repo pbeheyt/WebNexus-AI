@@ -6,7 +6,7 @@ import { getPreferredPromptId, getPromptContentById } from '../services/prompt-r
 import { getPreferredAiPlatform } from '../services/platform-integration.js';
 import { verifyApiCredentials } from '../services/credential-manager.js';
 import { determineContentType } from '../../shared/content-utils.js';
-import { INTERFACE_SOURCES } from '../../shared/constants.js';
+import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
 import { resetExtractionState, updateApiProcessingStatus, initializeStreamResponse,
          getExtractedContent, setApiProcessingError } from '../core/state-manager.js';
 import { setupStreamHandler } from './streaming-handler.js';
@@ -56,36 +56,6 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
         break;
       }
 
-      // case 'sidebarApiProcess': {
-      //   // Extract all required parameters for API processing
-      //   const {
-      //     platformId,
-      //     prompt,
-      //     extractedContent,
-      //     url,
-      //     tabId,
-      //     conversationHistory = [] // Add conversation history parameter
-      //   } = message;
-
-      //   logger.background.info(`Processing sidebar API request: platform=${platformId}`);
-
-      //   // Call API function with sidebar source
-      //   const result = await processContentViaApi({
-      //     tabId,
-      //     url,
-      //     platformId,
-      //     testMode: !!extractedContent,
-      //     testContent: extractedContent,
-      //     useApi: true,
-      //     source: INTERFACE_SOURCES.SIDEBAR,
-      //     customPrompt: prompt,
-      //     conversationHistory // Pass conversation history
-      //   });
-
-      //   sendResponse(result);
-      //   break;
-      // }
-
       case 'cancelStream': {
         const { streamId } = message;
         // Cancel stream in background state
@@ -133,50 +103,22 @@ export async function processContentViaApi(params) {
 
     let extractedContent;
 
-    // // If in test mode, use the provided test content or get mock data
-    // if (testMode) {
-    //   logger.background.info('Using test mode with mock data');
+    // Normal extraction for real tabs
+    const contentType = determineContentType(url, hasSelection);
+    logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
 
-    //   // Use provided test content or generate from mockDataFactory
-    //   if (testContent) {
-    //     extractedContent = testContent;
-    //     logger.background.info('extractedContent type for API testing', { extractedContent });
-    //   } else {
-    //     // Import your test harness or access it from a global
-    //     const apiTestHarness = require('../../api/api-test-utils');
-    //     const contentType = determineContentType(url, hasSelection);
-    //     logger.background.info('content type for API testing', { contentType });
-    //     extractedContent = apiTestHarness.mockDataFactory[contentType] ||
-    //                       apiTestHarness.mockDataFactory.general;
-    //   }
+    const extractionResult = await extractContent(tabId, url, hasSelection);
 
-    //   // Store mock content in local storage to mimic normal flow
-    //   await chrome.storage.local.set({
-    //     extractedContent,
-    //     contentReady: true
-    //   });
+    if (!extractionResult) {
+      logger.background.warn('Content extraction completed with warnings');
+    }
 
-    //   logger.background.info('Mock content ready for API testing', {
-    //     contentType: extractedContent.contentType
-    //   });
-    // } else {
-      // Normal extraction for real tabs
-      const contentType = determineContentType(url, hasSelection);
-      logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
+    // Get the extracted content
+    extractedContent = await getExtractedContent();
 
-      const extractionResult = await extractContent(tabId, url, hasSelection);
-
-      if (!extractionResult) {
-        logger.background.warn('Content extraction completed with warnings');
-      }
-
-      // Get the extracted content
-      extractedContent = await getExtractedContent();
-
-      if (!extractedContent) {
-        throw new Error('Failed to extract content');
-      }
-    // }
+    if (!extractedContent) {
+      throw new Error('Failed to extract content');
+    }
 
     // YouTube transcript error check
     const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);
@@ -204,11 +146,58 @@ export async function processContentViaApi(params) {
       throw new Error(`Prompt not found for ID: ${effectivePromptId || 'custom'}`);
     }
 
-    // 5. Determine platform to use - source-aware
-    const effectivePlatformId = platformId || await getPreferredAiPlatform(source);
+    // 5. Determine platform to use - tab-aware resolution
+    let effectivePlatformId = platformId;
+
+    if (!effectivePlatformId && tabId) {
+      try {
+        // Try to get tab-specific platform preference first
+        const tabPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES);
+        const tabPlatformPrefs = tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
+
+        if (tabPlatformPrefs[tabId]) {
+          effectivePlatformId = tabPlatformPrefs[tabId];
+          logger.background.info(`Using tab-specific platform for tab ${tabId}: ${effectivePlatformId}`);
+        } else {
+          // Fall back to standard preference resolution
+          effectivePlatformId = await getPreferredAiPlatform(source);
+        }
+      } catch (error) {
+        logger.background.error('Error resolving tab-specific platform:', error);
+        effectivePlatformId = await getPreferredAiPlatform(source);
+      }
+    } else {
+      effectivePlatformId = platformId || await getPreferredAiPlatform(source);
+    }
 
     // 6. Verify credentials
     await verifyApiCredentials(effectivePlatformId);
+
+    // Model resolution
+    let effectiveModelId = null;
+
+    if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+      try {
+        // Try to get tab-specific model preference first
+        const tabModelPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
+        const tabModelPrefs = tabModelPreferences[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
+        const tabPlatformModels = tabModelPrefs[tabId] || {};
+
+        if (tabPlatformModels[effectivePlatformId]) {
+          effectiveModelId = tabPlatformModels[effectivePlatformId];
+          logger.background.info(`Using tab-specific model for tab ${tabId}: ${effectiveModelId}`);
+        } else {
+          // Fall back to global model preference
+          const globalModelPreferences = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
+          const globalModelPrefs = globalModelPreferences[STORAGE_KEYS.SIDEBAR_MODEL] || {};
+
+          effectiveModelId = globalModelPrefs[effectivePlatformId];
+          logger.background.info(`Using global model preference: ${effectiveModelId}`);
+        }
+      } catch (error) {
+        logger.background.error('Error resolving tab-specific model:', error);
+      }
+    }
 
     // 7. Update processing status
     await updateApiProcessingStatus('processing', effectivePlatformId);
@@ -240,12 +229,14 @@ export async function processContentViaApi(params) {
 
     // 9. Process with API using streaming
     try {
+      // Pass the resolved model ID to the API Service Manager
       const apiResponse = await ApiServiceManager.processContent(
         effectivePlatformId,
         extractedContent,
         promptContent,
         streamHandler,
-        conversationHistory // Pass conversation history
+        conversationHistory,
+        effectiveModelId // Pass the tab-specific model ID
       );
 
       // If we get here without an error, streaming completed successfully

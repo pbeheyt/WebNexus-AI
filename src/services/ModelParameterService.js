@@ -17,7 +17,7 @@ class ModelParameterService {
    */
   async loadPlatformConfig() {
     if (this.cachedConfig) return this.cachedConfig;
-    
+
     try {
       const response = await fetch(chrome.runtime.getURL('platform-config.json'));
       this.cachedConfig = await response.json();
@@ -36,16 +36,16 @@ class ModelParameterService {
    */
   async getModelConfig(platformId, modelIdOrObject) {
     const config = await this.loadPlatformConfig();
-    
+
     if (!config?.aiPlatforms?.[platformId]?.api?.models) return null;
-    
+
     // Normalize input - handle both string IDs and model objects
     const modelId = typeof modelIdOrObject === 'object' && modelIdOrObject !== null
       ? modelIdOrObject.id || modelIdOrObject.model || String(modelIdOrObject)
       : modelIdOrObject;
-      
+
     console.log(`[ModelParameterService] Resolving model config for: ${platformId}/${modelId}`);
-    
+
     const platformConfig = config.aiPlatforms[platformId];
     return TokenCalculationService.getModelConfig(platformConfig, modelId);
   }
@@ -60,18 +60,18 @@ class ModelParameterService {
     try {
       const result = await chrome.storage.sync.get(this.STORAGE_KEY);
       const advancedSettings = result[this.STORAGE_KEY] || {};
-      
+
       // Get platform settings
       const platformSettings = advancedSettings[platformId] || {};
-      
+
       // First try model-specific settings, then fall back to default settings
-      const modelSettings = 
-        (platformSettings.models && platformSettings.models[modelId]) || 
-        platformSettings.default || 
+      const modelSettings =
+        (platformSettings.models && platformSettings.models[modelId]) ||
+        platformSettings.default ||
         {};
-      
+
       console.log(`[ModelParameterService] Settings for ${platformId}/${modelId}:`, modelSettings);
-      
+
       return modelSettings;
     } catch (error) {
       console.error('Error getting user model settings:', error);
@@ -88,14 +88,14 @@ class ModelParameterService {
     try {
       const result = await chrome.storage.sync.get(this.SIDEBAR_MODEL_KEY);
       const modelPreferences = result[this.SIDEBAR_MODEL_KEY] || {};
-      
+
       // Check if a model is selected for this platform
       if (modelPreferences[platformId]) {
         const selectedModel = modelPreferences[platformId];
         console.log(`[ModelParameterService] Found sidebar model selection for ${platformId}: ${selectedModel}`);
         return selectedModel;
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error getting sidebar model selection:', error);
@@ -106,37 +106,55 @@ class ModelParameterService {
   /**
    * Determine which model to use based on all available sources
    * @param {string} platformId - Platform ID
+   * @param {number} [tabId] - Optional tab ID for tab-specific preferences
    * @returns {Promise<string>} Model ID to use
    */
-  async determineModelToUse(platformId) {
-    // Priority order:
-    // 1. Sidebar-selected model (if available)
-    // 2. User settings from advanced settings
-    // 3. Default model from platform config
-    
+  async determineModelToUse(platformId, tabId = null) {
+    // Priority order - updated:
+    // 1. Tab-specific model (if tabId provided)
+    // 2. Sidebar-selected model (if available)
+    // 3. User settings from advanced settings
+    // 4. Default model from platform config
+
+    // Check for tab-specific model if tabId provided
+    if (tabId) {
+      try {
+        const tabModelPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
+        const tabModelPrefs = tabModelPreferences[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
+        const tabPlatformModels = tabModelPrefs[tabId] || {};
+
+        if (tabPlatformModels[platformId]) {
+          console.log(`[ModelParameterService] Using tab-specific model for tab ${tabId}: ${tabPlatformModels[platformId]}`);
+          return tabPlatformModels[platformId];
+        }
+      } catch (error) {
+        console.error('Error getting tab-specific model:', error);
+      }
+    }
+
     // Check for sidebar selection
     const sidebarModel = await this.getSidebarModelSelection(platformId);
     if (sidebarModel) {
       console.log(`[ModelParameterService] Using sidebar-selected model: ${sidebarModel}`);
       return sidebarModel;
     }
-    
+
     // Try to get user settings
     const userSettings = await this.getUserModelSettings(platformId, null);
     if (userSettings.model) {
       console.log(`[ModelParameterService] Using model from user settings: ${userSettings.model}`);
       return userSettings.model;
     }
-    
+
     // Fall back to default model from platform config
     const config = await this.loadPlatformConfig();
     const defaultModel = config?.aiPlatforms?.[platformId]?.api?.defaultModel;
-    
+
     if (defaultModel) {
       console.log(`[ModelParameterService] Using default model from config: ${defaultModel}`);
       return defaultModel;
     }
-    
+
     // Fallback to hardcoded defaults
     const defaults = {
       'chatgpt': 'gpt-4o',
@@ -146,7 +164,7 @@ class ModelParameterService {
       'deepseek': 'deepseek-chat',
       'grok': 'grok-2-1212'
     };
-    
+
     console.log(`[ModelParameterService] Using fallback default model: ${defaults[platformId] || 'gpt-4o'}`);
     return defaults[platformId] || 'gpt-4o';
   }
@@ -163,7 +181,7 @@ class ModelParameterService {
       // Get existing settings
       const result = await chrome.storage.sync.get(this.STORAGE_KEY);
       const advancedSettings = result[this.STORAGE_KEY] || {};
-      
+
       // Ensure platform settings exist
       if (!advancedSettings[platformId]) {
         advancedSettings[platformId] = {
@@ -171,18 +189,18 @@ class ModelParameterService {
           models: {}
         };
       }
-      
+
       // Ensure models object exists
       if (!advancedSettings[platformId].models) {
         advancedSettings[platformId].models = {};
       }
-      
+
       // Update model settings
       advancedSettings[platformId].models[modelId] = settings;
-      
+
       // Save back to storage
       await chrome.storage.sync.set({ [this.STORAGE_KEY]: advancedSettings });
-      
+
       return true;
     } catch (error) {
       console.error('Error saving user model settings:', error);
@@ -201,7 +219,7 @@ class ModelParameterService {
       // Get existing settings
       const result = await chrome.storage.sync.get(this.STORAGE_KEY);
       const advancedSettings = result[this.STORAGE_KEY] || {};
-      
+
       // Ensure platform settings exist
       if (!advancedSettings[platformId]) {
         advancedSettings[platformId] = {
@@ -209,13 +227,13 @@ class ModelParameterService {
           models: {}
         };
       }
-      
+
       // Update default settings
       advancedSettings[platformId].default = settings;
-      
+
       // Save back to storage
       await chrome.storage.sync.set({ [this.STORAGE_KEY]: advancedSettings });
-      
+
       return true;
     } catch (error) {
       console.error('Error saving default settings:', error);
@@ -229,20 +247,17 @@ class ModelParameterService {
    * @param {string} prompt - The prompt to send (for token calculations)
    * @returns {Promise<Object>} Resolved parameters
    */
-  async resolveParameters(platformId, prompt) {
+  async resolveParameters(platformId, modelToUse, prompt) {
     try {
-      // Determine which model to actually use (centralized model selection)
-      const modelToUse = await this.determineModelToUse(platformId);
-      
       // Get model config from platform config for the resolved model
       const modelConfig = await this.getModelConfig(platformId, modelToUse);
       if (!modelConfig) {
         throw new Error(`Model configuration not found for ${modelToUse}`);
       }
-      
+
       // Get user settings for this model
       const userSettings = await this.getUserModelSettings(platformId, modelToUse);
-      
+
       // Start with model defaults
       const params = {
         maxTokens: modelConfig.maxTokens || 4000,
@@ -255,33 +270,33 @@ class ModelParameterService {
         supportsTopP: modelConfig.supportsTopP !== false,
         model: modelToUse // Add the resolved model to params
       };
-      
+
       // Override with user settings if provided
       if (userSettings.maxTokens !== undefined) params.maxTokens = userSettings.maxTokens;
       if (userSettings.contextWindow !== undefined) params.contextWindow = userSettings.contextWindow;
       if (userSettings.temperature !== undefined && params.supportsTemperature) params.temperature = userSettings.temperature;
       if (userSettings.topP !== undefined && params.supportsTopP) params.topP = userSettings.topP;
-      
+
       // Add system prompt if provided
       if (userSettings.systemPrompt !== undefined) params.systemPrompt = userSettings.systemPrompt;
-      
+
       // Calculate available completion tokens based on prompt size
       if (prompt) {
         params.effectiveMaxTokens = TokenCalculationService.calculateAvailableCompletionTokens(
-          prompt, 
-          params.contextWindow, 
+          prompt,
+          params.contextWindow,
           params.maxTokens
         );
       } else {
         params.effectiveMaxTokens = params.maxTokens;
       }
-      
+
       console.log(`[ModelParameterService] Resolved parameters for ${platformId}/${modelToUse}:`, params);
-      
+
       return params;
     } catch (error) {
       console.error('Error resolving parameters:', error);
-      
+
       // Return reasonable defaults if resolution fails
       return {
         maxTokens: 4000,
@@ -308,20 +323,20 @@ class ModelParameterService {
       // Get existing settings
       const result = await chrome.storage.sync.get(this.STORAGE_KEY);
       const advancedSettings = result[this.STORAGE_KEY] || {};
-      
+
       // Check if platform and model settings exist
       if (
-        advancedSettings[platformId] && 
-        advancedSettings[platformId].models && 
+        advancedSettings[platformId] &&
+        advancedSettings[platformId].models &&
         advancedSettings[platformId].models[modelId]
       ) {
         // Remove model settings
         delete advancedSettings[platformId].models[modelId];
-        
+
         // Save back to storage
         await chrome.storage.sync.set({ [this.STORAGE_KEY]: advancedSettings });
       }
-      
+
       return true;
     } catch (error) {
       console.error('Error clearing model settings:', error);

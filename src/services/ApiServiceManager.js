@@ -21,9 +21,10 @@ class ApiServiceManager {
    * @param {string} prompt - Formatted prompt
    * @param {Function} [onChunk] - Optional callback for stream chunks
    * @param {Array} [conversationHistory] - Optional conversation history for context
+   * @param {string} [specifiedModel] - Optional specific model to use (overrides automatic selection)
    * @returns {Promise<Object>} API response
    */
-  async processContent(platformId, contentData, prompt, onChunk = null, conversationHistory = []) {
+  async processContent(platformId, contentData, prompt, onChunk = null, conversationHistory = [], specifiedModel = null) {
     try {
       logger.info(`Processing content through ${platformId} API with streaming enabled`);
 
@@ -42,9 +43,15 @@ class ApiServiceManager {
       // Initialize API service
       await apiService.initialize(credentials);
 
-      // Use ModelParameterService to determine the model
-      const modelToUse = await this.modelParameterService.determineModelToUse(platformId);
-      logger.info(`Using model from ModelParameterService: ${modelToUse}`);
+      // Use explicitly specified model or determine model using service
+      let modelToUse;
+      if (specifiedModel) {
+        modelToUse = specifiedModel;
+        logger.info(`Using specified model from tab preferences: ${modelToUse}`);
+      } else {
+        modelToUse = await this.modelParameterService.determineModelToUse(platformId);
+        logger.info(`Using model from ModelParameterService: ${modelToUse}`);
+      }
 
       // Process with streaming or fallback to non-streaming
       if (onChunk) {
@@ -56,7 +63,7 @@ class ApiServiceManager {
           conversationHistory
         );
 
-        return await apiService._processWithApiStreaming(structuredPrompt, onChunk, conversationHistory);
+        return await apiService._processWithApiStreaming(structuredPrompt, onChunk, conversationHistory, modelToUse);
       } else {
         // Use regular process method with conversation history for backward compatibility
         return await apiService.process(contentData, prompt, modelToUse, conversationHistory);

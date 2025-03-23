@@ -40,7 +40,7 @@ class BaseApiService extends ApiInterface {
     const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent, conversationHistory);
 
     // Process via API with conversation history
-    return this._processWithApi(structuredPrompt, conversationHistory);
+    return this._processWithApi(structuredPrompt, conversationHistory, model);
   }
 
   /**
@@ -300,9 +300,10 @@ ${formattedContent}`;
    * Process text with the API using centralized model selection
    * @param {string} text - Prompt text to process
    * @param {Array} conversationHistory - Conversation history
+   * @param {string} [modelOverride] - Optional model override
    * @returns {Promise<Object>} API response
    */
-  async _processWithApi(text, conversationHistory) {
+  async _processWithApi(text, conversationHistory, modelOverride = null) {
     const { apiKey } = this.credentials;
 
     try {
@@ -312,8 +313,16 @@ ${formattedContent}`;
         text
       );
 
-      // Extract model from the resolved parameters
-      const modelToUse = params.model;
+      // Use model override if provided, otherwise use resolved model
+      const modelToUse = modelOverride || params.model;
+      
+      if (modelOverride) {
+        this.logger.info(`Using tab-specific model override: ${modelOverride} (instead of ${params.model})`);
+        // Update the model in params to ensure consistent usage
+        params.model = modelToUse;
+      } else {
+        this.logger.info(`Using model from ModelParameterService: ${modelToUse}`);
+      }
 
       // Log parameters being used
       this.logger.info(`Using model ${modelToUse} with parameters:`, {
@@ -335,20 +344,30 @@ ${formattedContent}`;
    * @param {string} text - Prompt text to process
    * @param {function} onChunk - Callback function for receiving text chunks
    * @param {Array} conversationHistory - Conversation history
+   * @param {string} [modelOverride] - Optional model override
    * @returns {Promise<Object>} API response metadata
    */
-  async _processWithApiStreaming(text, onChunk, conversationHistory) {
+  async _processWithApiStreaming(text, onChunk, conversationHistory = [], modelOverride = null) {
     const { apiKey } = this.credentials;
 
     try {
       // Get model and parameters from centralized ModelParameterService
       const params = await ModelParameterService.resolveParameters(
         this.platformId,
+        modelOverride,
         text
       );
 
-      // Extract model from the resolved parameters
-      const modelToUse = params.model;
+      // Use model override if provided, otherwise use resolved model
+      const modelToUse = modelOverride || params.model;
+      
+      if (modelOverride) {
+        this.logger.info(`Using tab-specific model override for streaming: ${modelOverride} (instead of ${params.model})`);
+        // Update the model in params to ensure consistent usage
+        params.model = modelToUse;
+      } else {
+        this.logger.info(`Using model from ModelParameterService for streaming: ${modelToUse}`);
+      }
 
       // Log parameters being used
       this.logger.info(`Using model ${modelToUse} for streaming with parameters:`, {

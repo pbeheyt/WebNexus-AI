@@ -1,3 +1,4 @@
+// src/popup/Popup.jsx
 import { useEffect, useState } from 'react';
 import { usePrompts } from './contexts/PromptContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -20,7 +21,7 @@ export function Popup() {
   const { theme, toggleTheme } = useTheme();
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
   const { promptType, selectedPromptId, quickPromptText } = usePrompts();
-  const { platforms, selectedPlatformId, selectPlatform } = usePopupPlatform();
+  const { platforms, selectedPlatformId, selectPlatform, tabId } = usePopupPlatform();
   const {
     statusMessage,
     updateStatus,

@@ -1,6 +1,7 @@
 // src/sidebar/SidebarApp.jsx
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSidebarPlatform } from '../contexts/platform';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
@@ -9,6 +10,7 @@ import { MESSAGE_TYPES } from './constants';
 
 export default function SidebarApp() {
   const { theme } = useTheme();
+  const { tabId } = useSidebarPlatform();
   const [isReady, setIsReady] = useState(false);
   const { contentType, isLoading, isTextSelected } = useContent();
   
@@ -54,18 +56,25 @@ export default function SidebarApp() {
     
     // Signal to parent that sidebar is ready
     setTimeout(() => {
-      window.parent.postMessage({ type: MESSAGE_TYPES.SIDEBAR_READY }, '*');
+      window.parent.postMessage({ 
+        type: MESSAGE_TYPES.SIDEBAR_READY,
+        tabId // Include tabId in the ready message
+      }, '*');
       setIsReady(true);
     }, 200);
     
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [theme]);
+  }, [theme, tabId]);
   
   // Handle sidebar close button
   const handleClose = () => {
-    window.parent.postMessage({ type: MESSAGE_TYPES.TOGGLE_SIDEBAR, visible: false }, '*');
+    window.parent.postMessage({ 
+      type: MESSAGE_TYPES.TOGGLE_SIDEBAR, 
+      visible: false,
+      tabId // Include tabId in close message
+    }, '*');
   };
   
   if (!isReady) {
