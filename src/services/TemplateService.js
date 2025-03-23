@@ -2,7 +2,7 @@
  * TemplateService.js - Template operations service
  * Manages all template-related functionality
  */
-import configManager from './ConfigManager.js';
+const configManager = require('./ConfigManager');
 
 class TemplateService {
   constructor(configManager) {

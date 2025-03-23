@@ -2,7 +2,7 @@
  * PromptBuilder.js - Builds prompts from templates and preferences
  * Responsible for dynamically constructing prompt templates with parameter substitution and instruction formatting
  */
-import configManager from './ConfigManager.js';
+const configManager = require('./ConfigManager');
 const logger = require('../utils/logger');
 
 class PromptBuilder {

@@ -363,4 +363,4 @@ class ConfigManager {
 
 // Create and export singleton instance
 const configManager = new ConfigManager();
-export default configManager;
+module.exports = configManager;
