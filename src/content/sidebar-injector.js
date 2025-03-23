@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from '../shared/constants';
+const STORAGE_KEYS = require('../shared/constants').STORAGE_KEYS;
 
 /**
  * Manages sidebar iframe injection and communication with singleton pattern enforcement
