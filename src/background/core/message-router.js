@@ -119,17 +119,17 @@ function registerApiHandlers() {
     return true; // Keep channel open for async response
   });
   
-  // Get API response
-  messageHandlers.set('getApiResponse', (message, sender, sendResponse) => {
-    handleApiModelRequest('getApiResponse', message, sendResponse);
-    return true; // Keep channel open for async response
-  });
+  // // Get API response
+  // messageHandlers.set('getApiResponse', (message, sender, sendResponse) => {
+  //   handleApiModelRequest('getApiResponse', message, sendResponse);
+  //   return true; // Keep channel open for async response
+  // });
   
-  // Sidebar API process
-  messageHandlers.set('sidebarApiProcess', (message, sender, sendResponse) => {
-    handleApiModelRequest('sidebarApiProcess', message, sendResponse);
-    return true; // Keep channel open for async response
-  });
+  // // Sidebar API process
+  // messageHandlers.set('sidebarApiProcess', (message, sender, sendResponse) => {
+  //   handleApiModelRequest('sidebarApiProcess', message, sendResponse);
+  //   return true; // Keep channel open for async response
+  // });
 
   messageHandlers.set('cancelStream', (message, sender, sendResponse) => {
     handleApiModelRequest('cancelStream', message, sendResponse);

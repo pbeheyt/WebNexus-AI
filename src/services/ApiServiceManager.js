@@ -20,41 +20,46 @@ class ApiServiceManager {
    * @param {Object} contentData - Extracted content data
    * @param {string} prompt - Formatted prompt
    * @param {Function} [onChunk] - Optional callback for stream chunks
+   * @param {Array} [conversationHistory] - Optional conversation history for context
    * @returns {Promise<Object>} API response
    */
-  async processContent(platformId, contentData, prompt, onChunk = null) {
+  async processContent(platformId, contentData, prompt, onChunk = null, conversationHistory = []) {
     try {
       logger.info(`Processing content through ${platformId} API with streaming enabled`);
-      
+
       // Get credentials
       const credentials = await this.credentialManager.getCredentials(platformId);
       if (!credentials) {
         throw new Error(`No API credentials found for ${platformId}`);
       }
-      
+
       // Create API service
       const apiService = ApiFactory.createApiService(platformId);
       if (!apiService) {
         throw new Error(`API service not available for ${platformId}`);
       }
-      
+
       // Initialize API service
       await apiService.initialize(credentials);
-      
+
       // Use ModelParameterService to determine the model
       const modelToUse = await this.modelParameterService.determineModelToUse(platformId);
       logger.info(`Using model from ModelParameterService: ${modelToUse}`);
-      
+
       // Process with streaming or fallback to non-streaming
       if (onChunk) {
         // Format content for structured prompt
         const formattedContent = apiService._formatContent(contentData);
-        const structuredPrompt = apiService._createStructuredPrompt(prompt, formattedContent);
-        
-        return await apiService._processWithApiStreaming(structuredPrompt, onChunk);
+        const structuredPrompt = apiService._createStructuredPrompt(
+          prompt,
+          formattedContent,
+          conversationHistory
+        );
+
+        return await apiService._processWithApiStreaming(structuredPrompt, onChunk, conversationHistory);
       } else {
-        // Use regular process method for backward compatibility
-        return await apiService.process(contentData, prompt, modelToUse);
+        // Use regular process method with conversation history for backward compatibility
+        return await apiService.process(contentData, prompt, modelToUse, conversationHistory);
       }
     } catch (error) {
       logger.error(`Error processing content through ${platformId} API:`, error);
@@ -77,7 +82,7 @@ class ApiServiceManager {
       // Load platform config
       const response = await fetch(chrome.runtime.getURL('platform-config.json'));
       const config = await response.json();
-      
+
       // Get API settings
       return config.aiPlatforms[platformId]?.api || null;
     } catch (error) {
@@ -95,7 +100,7 @@ class ApiServiceManager {
     try {
       const settings = await this.getApiSettings(platformId);
       const hasCredentials = await this.credentialManager.hasCredentials(platformId);
-      
+
       return !!(settings && hasCredentials);
     } catch (error) {
       logger.error(`Error checking API mode availability for ${platformId}:`, error);

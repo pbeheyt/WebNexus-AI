@@ -70,7 +70,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       useApi = false,
       streaming = false,
       onStreamChunk = null,
-      modelId = null
+      modelId = null,
+      conversationHistory = [] // Add conversation history parameter
     } = options;
 
     if (!currentTab?.id) {
@@ -112,11 +113,16 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       }
 
       if (promptContent) {
-        request.promptContent = promptContent;
+        request.customPrompt = promptContent;
       }
 
       if (streaming && useApi) {
         request.streaming = true;
+      }
+
+      // Add conversation history to request if present
+      if (conversationHistory && conversationHistory.length > 0) {
+        request.conversationHistory = conversationHistory;
       }
 
       const response = await chrome.runtime.sendMessage(request);
@@ -141,11 +147,11 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         };
 
         chrome.runtime.onMessage.addListener(messageListener);
-        
+
         // Return consistent object format instead of just streamId
-        return { 
-          success: true, 
-          streamId: response.streamId 
+        return {
+          success: true,
+          streamId: response.streamId
         };
       } else if (useApi) {
         setProcessedContent(response.response);
@@ -172,7 +178,9 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     const streamingOptions = {
       ...options,
       useApi: true,
-      streaming: true
+      streaming: true,
+      // Ensure conversation history is passed if provided
+      conversationHistory: options.conversationHistory || []
     };
     return processContent(streamingOptions);
   }, [processContent]);

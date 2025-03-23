@@ -1,4 +1,4 @@
-// In src/sidebar/contexts/SidebarChatContext.jsx
+// src/sidebar/contexts/SidebarChatContext.jsx
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
@@ -79,7 +79,7 @@ export function SidebarChatProvider({ children }) {
           const finalContent = chunkData.fullContent || streamingContent;
 
           // Update final message content
-          setMessages(prev => prev.map(msg =>
+          const updatedMessages = messages.map(msg =>
             msg.id === streamingMessageId
               ? {
                   ...msg,
@@ -88,17 +88,13 @@ export function SidebarChatProvider({ children }) {
                   model: chunkData.model || selectedModel
                 }
               : msg
-          ));
+          );
+          
+          setMessages(updatedMessages);
 
           // Save to history
           try {
-            ChatHistoryService.saveHistory(currentPageUrl,
-              messages.map(msg =>
-                msg.id === streamingMessageId
-                  ? { ...msg, content: finalContent, isStreaming: false }
-                  : msg
-              )
-            );
+            ChatHistoryService.saveHistory(currentPageUrl, updatedMessages);
           } catch (err) {
             console.error('Error saving chat history:', err);
           }
@@ -175,25 +171,28 @@ export function SidebarChatProvider({ children }) {
     setStreamingContent('');
 
     try {
-      // Create a stream handler function that will be called by the hook
-      const handleStreamChunk = (chunkData) => {
-        // The chunk handling is now done by the useEffect above
-        // This function is just a pass-through for the hook
-      };
+      // Format conversation history for the API - only include user and assistant messages
+      // Filter out system messages and streaming messages
+      const conversationHistory = messages
+        .filter(msg => (msg.role === MESSAGE_ROLES.USER || msg.role === MESSAGE_ROLES.ASSISTANT) && !msg.isStreaming)
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp
+        }));
 
       // Process with streaming API using the hook - background will handle extraction
       const result = await processContentStreaming({
         platformId: selectedPlatformId,
         modelId: selectedModel,
         promptContent: text.trim(),
-        onStreamChunk: handleStreamChunk
+        conversationHistory, // Include conversation history
+        onStreamChunk: () => {} // Stream handling is done via the effect
       });
 
       if (!result || !result.success) {
         throw new Error('Failed to initialize streaming');
       }
-
-      // The streaming process will update the message content via the effect handler
 
     } catch (error) {
       console.error('Error processing streaming message:', error);

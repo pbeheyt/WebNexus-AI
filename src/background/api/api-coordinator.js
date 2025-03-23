@@ -1,4 +1,4 @@
-// src/background/api/api-coordinator.js - API-mode operations
+// src/background/api/api-coordinator.js
 
 import ApiServiceManager from '../../services/ApiServiceManager.js';
 import { extractContent, checkYouTubeTranscriptAvailability } from '../services/content-extraction.js';
@@ -7,7 +7,7 @@ import { getPreferredAiPlatform } from '../services/platform-integration.js';
 import { verifyApiCredentials } from '../services/credential-manager.js';
 import { determineContentType } from '../../shared/content-utils.js';
 import { INTERFACE_SOURCES } from '../../shared/constants.js';
-import { resetExtractionState, updateApiProcessingStatus, initializeStreamResponse, 
+import { resetExtractionState, updateApiProcessingStatus, initializeStreamResponse,
          getExtractedContent, setApiProcessingError } from '../core/state-manager.js';
 import { setupStreamHandler } from './streaming-handler.js';
 import logger from '../../utils/logger.js';
@@ -24,7 +24,7 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
       case 'checkApiModeAvailable': {
         const platformId = message.platformId || await getPreferredAiPlatform();
         const isAvailable = await ApiServiceManager.isApiModeAvailable(platformId);
-        
+
         sendResponse({
           success: true,
           isAvailable,
@@ -32,11 +32,11 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
         });
         break;
       }
-      
+
       case 'getApiModels': {
         const platformId = message.platformId || await getPreferredAiPlatform();
         const models = await ApiServiceManager.getAvailableModels(platformId);
-        
+
         sendResponse({
           success: true,
           models,
@@ -44,7 +44,7 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
         });
         break;
       }
-      
+
       case 'getApiResponse': {
         const result = await chrome.storage.local.get(['apiResponse', 'apiProcessingStatus', 'apiResponseTimestamp']);
         sendResponse({
@@ -55,35 +55,37 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
         });
         break;
       }
-      
-      case 'sidebarApiProcess': {
-        // Extract all required parameters for API processing
-        const {
-          platformId,
-          prompt,
-          extractedContent,
-          url,
-          tabId
-        } = message;
-        
-        logger.background.info(`Processing sidebar API request: platform=${platformId}`);
-        
-        // Call API function with sidebar source
-        const result = await ProcessContentViaApi({
-          tabId,
-          url,
-          platformId,
-          testMode: !!extractedContent,
-          testContent: extractedContent,
-          useApi: true,
-          source: INTERFACE_SOURCES.SIDEBAR,
-          customPrompt: prompt
-        });
-        
-        sendResponse(result);
-        break;
-      }
-      
+
+      // case 'sidebarApiProcess': {
+      //   // Extract all required parameters for API processing
+      //   const {
+      //     platformId,
+      //     prompt,
+      //     extractedContent,
+      //     url,
+      //     tabId,
+      //     conversationHistory = [] // Add conversation history parameter
+      //   } = message;
+
+      //   logger.background.info(`Processing sidebar API request: platform=${platformId}`);
+
+      //   // Call API function with sidebar source
+      //   const result = await processContentViaApi({
+      //     tabId,
+      //     url,
+      //     platformId,
+      //     testMode: !!extractedContent,
+      //     testContent: extractedContent,
+      //     useApi: true,
+      //     source: INTERFACE_SOURCES.SIDEBAR,
+      //     customPrompt: prompt,
+      //     conversationHistory // Pass conversation history
+      //   });
+
+      //   sendResponse(result);
+      //   break;
+      // }
+
       case 'cancelStream': {
         const { streamId } = message;
         // Cancel stream in background state
@@ -118,7 +120,8 @@ export async function processContentViaApi(params) {
     testMode = false,
     testContent = null,
     source = INTERFACE_SOURCES.POPUP,
-    customPrompt = null
+    customPrompt = null,
+    conversationHistory = [] // Add conversation history parameter
   } = params;
 
   try {
@@ -130,33 +133,33 @@ export async function processContentViaApi(params) {
 
     let extractedContent;
 
-    // If in test mode, use the provided test content or get mock data
-    if (testMode) {
-      logger.background.info('Using test mode with mock data');
+    // // If in test mode, use the provided test content or get mock data
+    // if (testMode) {
+    //   logger.background.info('Using test mode with mock data');
 
-      // Use provided test content or generate from mockDataFactory
-      if (testContent) {
-        extractedContent = testContent;
-        logger.background.info('extractedContent type for API testing', { extractedContent });
-      } else {
-        // Import your test harness or access it from a global
-        const apiTestHarness = require('../../api/api-test-utils');
-        const contentType = determineContentType(url, hasSelection);
-        logger.background.info('content type for API testing', { contentType });
-        extractedContent = apiTestHarness.mockDataFactory[contentType] ||
-                          apiTestHarness.mockDataFactory.general;
-      }
+    //   // Use provided test content or generate from mockDataFactory
+    //   if (testContent) {
+    //     extractedContent = testContent;
+    //     logger.background.info('extractedContent type for API testing', { extractedContent });
+    //   } else {
+    //     // Import your test harness or access it from a global
+    //     const apiTestHarness = require('../../api/api-test-utils');
+    //     const contentType = determineContentType(url, hasSelection);
+    //     logger.background.info('content type for API testing', { contentType });
+    //     extractedContent = apiTestHarness.mockDataFactory[contentType] ||
+    //                       apiTestHarness.mockDataFactory.general;
+    //   }
 
-      // Store mock content in local storage to mimic normal flow
-      await chrome.storage.local.set({
-        extractedContent,
-        contentReady: true
-      });
+    //   // Store mock content in local storage to mimic normal flow
+    //   await chrome.storage.local.set({
+    //     extractedContent,
+    //     contentReady: true
+    //   });
 
-      logger.background.info('Mock content ready for API testing', {
-        contentType: extractedContent.contentType
-      });
-    } else {
+    //   logger.background.info('Mock content ready for API testing', {
+    //     contentType: extractedContent.contentType
+    //   });
+    // } else {
       // Normal extraction for real tabs
       const contentType = determineContentType(url, hasSelection);
       logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
@@ -173,7 +176,7 @@ export async function processContentViaApi(params) {
       if (!extractedContent) {
         throw new Error('Failed to extract content');
       }
-    }
+    // }
 
     // YouTube transcript error check
     const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);
@@ -187,7 +190,9 @@ export async function processContentViaApi(params) {
     // 4. Get the prompt
     let promptContent;
     let effectivePromptId;
-    
+
+    logger.background.info('Prompt content', { customPrompt, promptId, contentType: extractedContent.contentType });
+
     if (customPrompt) {
       promptContent = customPrompt;
     } else {
@@ -239,7 +244,8 @@ export async function processContentViaApi(params) {
         effectivePlatformId,
         extractedContent,
         promptContent,
-        streamHandler
+        streamHandler,
+        conversationHistory // Pass conversation history
       );
 
       // If we get here without an error, streaming completed successfully

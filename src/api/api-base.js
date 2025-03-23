@@ -28,30 +28,60 @@ class BaseApiService extends ApiInterface {
    * Process content through the API service
    * @param {Object} contentData - Extracted content data
    * @param {string} prompt - Formatted prompt
+   * @param {string} model - Model to use
+   * @param {Array} conversationHistory - Conversation history
    * @returns {Promise<Object>} Standardized response object
    */
-  async process(contentData, prompt) {
+  async process(contentData, prompt, model, conversationHistory = []) {
     // Format content using same logic as platform-base.js
     const formattedContent = this._formatContent(contentData);
 
-    // Create structured prompt using same logic as platform-base.js
-    const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent);
+    // Create structured prompt with conversation history
+    const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent, conversationHistory);
 
-    // Process via API
-    return this._processWithApi(structuredPrompt);
+    // Process via API with conversation history
+    return this._processWithApi(structuredPrompt, conversationHistory);
   }
 
   /**
-   * Create a structured prompt combining instructions and formatted content
+   * Create a structured prompt combining instructions, conversation history, and formatted content
    * @param {string} prePrompt - The pre-prompt instructions
    * @param {string} formattedContent - The formatted content
+   * @param {Array} conversationHistory - Optional conversation history
    * @returns {string} The full structured prompt
    */
-  _createStructuredPrompt(prePrompt, formattedContent) {
-    return `# INSTRUCTIONS
+  _createStructuredPrompt(prePrompt, formattedContent, conversationHistory = []) {
+    // If no conversation history, use simple format
+    if (!conversationHistory || conversationHistory.length === 0) {
+      return `# INSTRUCTIONS
 ${prePrompt}
 # CONTENT
 ${formattedContent}`;
+    }
+
+    // Format conversation history as text
+    const formattedHistory = this._formatConversationHistory(conversationHistory);
+
+    // Include history in the prompt
+    return `# INSTRUCTIONS
+${prePrompt}
+# CONVERSATION HISTORY
+${formattedHistory}
+# CONTENT
+${formattedContent}`;
+  }
+
+  /**
+   * Format conversation history as text
+   * @param {Array} history - Conversation history
+   * @returns {string} Formatted history text
+   */
+  _formatConversationHistory(history) {
+    // Default format - should be overridden in platform-specific classes if needed
+    return history.map(msg => {
+      const roleLabel = msg.role.toUpperCase();
+      return `${roleLabel}: ${msg.content}`;
+    }).join('\n\n');
   }
 
   /**
@@ -269,9 +299,10 @@ ${formattedContent}`;
   /**
    * Process text with the API using centralized model selection
    * @param {string} text - Prompt text to process
+   * @param {Array} conversationHistory - Conversation history
    * @returns {Promise<Object>} API response
    */
-  async _processWithApi(text) {
+  async _processWithApi(text, conversationHistory) {
     const { apiKey } = this.credentials;
 
     try {
@@ -292,7 +323,7 @@ ${formattedContent}`;
       });
 
       // Each implementation must handle the resolved parameters appropriately
-      return this._processWithModel(text, modelToUse, apiKey, params);
+      return this._processWithModel(text, modelToUse, apiKey, params, conversationHistory);
     } catch (error) {
       this.logger.error('Error in _processWithApi:', error);
       throw error;
@@ -303,9 +334,10 @@ ${formattedContent}`;
    * Process text with the API using centralized model selection with streaming support
    * @param {string} text - Prompt text to process
    * @param {function} onChunk - Callback function for receiving text chunks
+   * @param {Array} conversationHistory - Conversation history
    * @returns {Promise<Object>} API response metadata
    */
-  async _processWithApiStreaming(text, onChunk) {
+  async _processWithApiStreaming(text, onChunk, conversationHistory) {
     const { apiKey } = this.credentials;
 
     try {
@@ -326,7 +358,7 @@ ${formattedContent}`;
       });
 
       // Each implementation must handle the streaming appropriately
-      return this._processWithModelStreaming(text, modelToUse, apiKey, params, onChunk);
+      return this._processWithModelStreaming(text, modelToUse, apiKey, params, onChunk, conversationHistory);
     } catch (error) {
       this.logger.error('Error in _processWithApiStreaming:', error);
       throw error;
@@ -339,9 +371,10 @@ ${formattedContent}`;
    * @param {string} model - Model ID to use
    * @param {string} apiKey - API key
    * @param {Object} params - Resolved parameters
+   * @param {Array} conversationHistory - Conversation history
    * @returns {Promise<Object>} API response
    */
-  async _processWithModel(text, model, apiKey, params) {
+  async _processWithModel(text, model, apiKey, params, conversationHistory) {
     throw new Error('_processWithModel must be implemented by subclasses');
   }
 
@@ -352,12 +385,12 @@ ${formattedContent}`;
    * @param {string} apiKey - API key
    * @param {Object} params - Resolved parameters
    * @param {function} onChunk - Callback function for receiving text chunks
+   * @param {Array} conversationHistory - Conversation history
    * @returns {Promise<Object>} API response metadata
    */
-  async _processWithModelStreaming(text, model, apiKey, params, onChunk) {
+  async _processWithModelStreaming(text, model, apiKey, params, onChunk, conversationHistory) {
     throw new Error('_processWithModelStreaming must be implemented by subclasses');
   }
-
 
   /**
    * Create a logger instance
