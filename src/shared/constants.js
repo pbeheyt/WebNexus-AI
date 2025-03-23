@@ -38,7 +38,9 @@ export const STORAGE_KEYS = {
 
   THEME_PREFERENCE: 'theme_preference',
   SHORTCUT_SETTINGS: 'shortcut_settings',
-  
+  API_ADVANCED_SETTINGS: 'api_advanced_settings',
+  API_CREDENTIALS: 'api_credentials',
+
   PRE_PROMPT: 'prePrompt',
   PROMPT_TYPE_PREFERENCE: 'prompt_type_preference',
   SELECTED_PROMPT_IDS: 'selected_prompt_ids',
@@ -56,7 +58,6 @@ export const STORAGE_KEYS = {
   LAST_ACTIVE_TAB: 'last_active_tab',
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
   
-  API_ADVANCED_SETTINGS: 'api_advanced_settings',
 
   CHAT_HISTORY: 'sidebar_chat_history',
 };

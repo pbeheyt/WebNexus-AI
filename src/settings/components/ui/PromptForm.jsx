@@ -1,7 +1,7 @@
 // src/settings/components/ui/PromptForm.jsx
 import React, { useState } from 'react';
 import { Button, useNotification } from '../../../components';
-import { SHARED_TYPE } from '../../../shared/constants';
+import { SHARED_TYPE, STORAGE_KEYS } from '../../../shared/constants';
 
 // Content types from original constants
 const CONTENT_TYPES = {
@@ -21,8 +21,6 @@ const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.SELECTED_TEXT]: 'Selected Text',
   [SHARED_TYPE]: 'Shared Prompts'
 };
-
-const CUSTOM_PROMPTS_KEY = 'custom_prompts_by_type';
 
 const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
   const { success, error } = useNotification();
@@ -56,8 +54,8 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
       }
       
       // Get current prompts
-      const result = await chrome.storage.sync.get(CUSTOM_PROMPTS_KEY);
-      const customPromptsByType = result[CUSTOM_PROMPTS_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+      const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
       
       // Initialize content type if needed
       if (!customPromptsByType[contentType]) {
@@ -100,7 +98,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
       }
       
       // Save to storage
-      await chrome.storage.sync.set({ [CUSTOM_PROMPTS_KEY]: customPromptsByType });
+      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
       
       // Notify parent
       onSuccess();

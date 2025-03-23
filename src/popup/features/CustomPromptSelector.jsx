@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useContent } from '../../components';
 import { usePrompts } from '../contexts/PromptContext';
 import { useStatus } from '../contexts/StatusContext';
-import { SHARED_TYPE } from '../../shared/constants';
+import { SHARED_TYPE, STORAGE_KEYS } from '../../shared/constants';
 
 export function CustomPromptSelector() {
   const { contentType } = useContent();
@@ -19,7 +19,7 @@ export function CustomPromptSelector() {
       try {
         // Load custom prompts from storage
         const { custom_prompts_by_type: customPromptsByType = {} } =
-          await chrome.storage.sync.get('custom_prompts_by_type');
+          await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
 
         // Get content-specific prompts
         const contentPrompts = customPromptsByType[contentType]?.prompts || {};

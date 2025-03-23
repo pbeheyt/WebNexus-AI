@@ -1,6 +1,7 @@
 // src/background/services/content-extraction.js - Content extraction coordination
 
 import { determineContentType } from '../../shared/content-utils.js';
+import { STORAGE_KEYS } from '../../shared/constants.js';
 import logger from '../../utils/logger.js';
 
 /**
@@ -52,7 +53,7 @@ export async function extractContent(tabId, url, hasSelection = false) {
   // Return promise that resolves when content extraction completes
   return new Promise((resolve) => {
     const storageListener = (changes, area) => {
-      if (area === 'local' && changes.contentReady?.newValue === true) {
+      if (area === 'local' && changes[STORAGE_KEYS.CONTENT_READY]?.newValue === true) {
         chrome.storage.onChanged.removeListener(storageListener);
         resolve(true);
       }

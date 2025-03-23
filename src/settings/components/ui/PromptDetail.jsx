@@ -1,8 +1,7 @@
 // src/settings/components/ui/PromptDetail.jsx
 import React from 'react';
 import { Button, useNotification } from '../../../components';
-
-const CUSTOM_PROMPTS_KEY = 'custom_prompts_by_type';
+import { STORAGE_KEYS } from '../../../shared/constants';
 
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();
@@ -14,8 +13,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     
     try {
       // Get current prompts
-      const result = await chrome.storage.sync.get(CUSTOM_PROMPTS_KEY);
-      const customPromptsByType = result[CUSTOM_PROMPTS_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+      const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
       
       // Check if prompt exists
       if (!customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
@@ -31,7 +30,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       }
       
       // Save to storage
-      await chrome.storage.sync.set({ [CUSTOM_PROMPTS_KEY]: customPromptsByType });
+      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
       
       success('Prompt deleted successfully');
       onDelete();

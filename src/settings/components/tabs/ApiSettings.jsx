@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNotification } from '../../../components';
 import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
-
-const API_SETTINGS_KEY = 'api_advanced_settings';
-const API_CREDENTIALS_KEY = 'api_credentials'; // Single key for all credentials
+import { STORAGE_KEYS } from '../../../shared/constants';
 
 const ApiSettings = () => {
   const { error } = useNotification();
@@ -46,9 +44,9 @@ const ApiSettings = () => {
         let allCredentials = {};
         
         // First try to get all credentials from the unified key
-        const mainResult = await chrome.storage.local.get(API_CREDENTIALS_KEY);
-        if (mainResult[API_CREDENTIALS_KEY]) {
-          allCredentials = mainResult[API_CREDENTIALS_KEY];
+        const mainResult = await chrome.storage.local.get(STORAGE_KEYS.API_CREDENTIALS);
+        if (mainResult[STORAGE_KEYS.API_CREDENTIALS]) {
+          allCredentials = mainResult[STORAGE_KEYS.API_CREDENTIALS];
         } else {
           // Migration: If not found, try to get from individual platform keys for backward compatibility
           for (const platform of platformList) {
@@ -60,7 +58,7 @@ const ApiSettings = () => {
           
           // Save migrated credentials to the new format if any were found
           if (Object.keys(allCredentials).length > 0) {
-            await chrome.storage.local.set({ [API_CREDENTIALS_KEY]: allCredentials });
+            await chrome.storage.local.set({ [STORAGE_KEYS.API_CREDENTIALS]: allCredentials });
             
             // Clean up old keys
             for (const platform of platformList) {
@@ -77,8 +75,8 @@ const ApiSettings = () => {
         }
         
         // Load advanced settings
-        const result = await chrome.storage.sync.get(API_SETTINGS_KEY);
-        setAdvancedSettings(result[API_SETTINGS_KEY] || {});
+        const result = await chrome.storage.sync.get(STORAGE_KEYS.API_SETTINGS_KEY);
+        setAdvancedSettings(result[STORAGE_KEYS.API_SETTINGS_KEY] || {});
       } catch (err) {
         console.error('Error loading API settings:', err);
         error('Failed to load API settings');
@@ -194,7 +192,7 @@ const ApiSettings = () => {
             onCredentialsRemoved={handleCredentialsRemoved}
             onAdvancedSettingsUpdated={handleAdvancedSettingsUpdated}
             refreshData={refreshData}
-            credentialsKey={API_CREDENTIALS_KEY}
+            credentialsKey={STORAGE_KEYS.API_CREDENTIALS}
           />
         ) : (
           <div className="platform-details-panel flex-1 bg-theme-surface p-8 text-center text-theme-secondary rounded-lg border border-theme">

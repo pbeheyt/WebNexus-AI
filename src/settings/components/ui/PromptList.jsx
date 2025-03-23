@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../../../components';
-import { SHARED_TYPE } from '../../../shared/constants';
-
-const CUSTOM_PROMPTS_KEY = 'custom_prompts_by_type';
+import { STORAGE_KEYS } from '../../../shared/constants';
 
 const PromptList = ({ 
   filterValue, 
@@ -22,8 +20,8 @@ const PromptList = ({
       setLocalLoading(true);
       
       try {
-        const result = await chrome.storage.sync.get(CUSTOM_PROMPTS_KEY);
-        const customPromptsByType = result[CUSTOM_PROMPTS_KEY] || {};
+        const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+        const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
         
         // Collect all prompts
         const allPrompts = [];

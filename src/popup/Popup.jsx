@@ -119,7 +119,7 @@ export function Popup() {
   const getPromptContent = async (promptId, contentType) => {
     // Handle quick prompt
     if (promptId === "quick") {
-      const result = await chrome.storage.sync.get('quick_prompts');
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.QUICK_PROMPTS);
       return result.quick_prompts?.[contentType] || null;
     }
 
@@ -127,7 +127,7 @@ export function Popup() {
     if (promptId === contentType) {
       try {
         // Get user preferences
-        const userPreferences = await chrome.storage.sync.get('default_prompt_preferences');
+        const userPreferences = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES);
         const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
 
         // Get promptBuilder
@@ -187,18 +187,18 @@ export function Popup() {
       // Check for YouTube-specific requirements
       let commentAnalysisRequired = false;
       if (contentType === 'youtube' && promptType === PROMPT_TYPES.DEFAULT) {
-        const preferences = await chrome.storage.sync.get('default_prompt_preferences');
+        const preferences = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES);
         const youtubePrefs = preferences.default_prompt_preferences?.youtube || {};
         commentAnalysisRequired = youtubePrefs.commentAnalysis === true;
       }
 
       // Clear any existing content in storage
       await chrome.storage.local.set({
-        contentReady: false,
-        extractedContent: null,
-        aiPlatformTabId: null,
-        scriptInjected: false,
-        prePrompt: promptContent
+        [STORAGE_KEYS.CONTENT_READY]: false,
+        [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
+        [STORAGE_KEYS.AI_PLATFORM_TAB_ID]: null,
+        [STORAGE_KEYS.SCRIPT_INJECTED]: false,
+        [STORAGE_KEYS.PRE_PROMPT]: promptContent
       });
 
       // Process content using the hook (extraction is now handled internally)

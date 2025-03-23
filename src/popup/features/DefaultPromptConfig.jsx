@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Toggle, useContent } from '../../components';
 import { useStatus } from '../contexts/StatusContext';
 import configManager from '../../services/ConfigManager';
+import { STORAGE_KEYS } from '../../shared/constants';
 
 export function DefaultPromptConfig() {
   const { contentType } = useContent();
@@ -28,7 +29,7 @@ export function DefaultPromptConfig() {
         const defaultPrefs = await promptBuilder.getDefaultPreferences(contentType);
         
         // Get user preferences
-        const storageResult = await chrome.storage.sync.get('default_prompt_preferences');
+        const storageResult = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES);
         const userPrefs = storageResult.default_prompt_preferences?.[contentType] || {};
         
         // Combine defaults with user preferences
@@ -55,7 +56,7 @@ export function DefaultPromptConfig() {
       }));
       
       // Get existing preferences
-      const result = await chrome.storage.sync.get('default_prompt_preferences');
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES);
       const preferences = result.default_prompt_preferences || {};
       
       // Update preferences for content type

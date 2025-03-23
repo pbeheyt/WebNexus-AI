@@ -4,6 +4,7 @@ import { isPlatformTab, getPlatformContentScript } from '../services/platform-in
 import { injectContentScript } from '../services/content-extraction.js';
 import { getPlatformTabInfo, updateScriptInjectionStatus } from '../core/state-manager.js';
 import logger from '../../utils/logger.js';
+import { STORAGE_KEYS } from '../../shared/constants.js';
 
 /**
  * Set up tab update listener
@@ -57,7 +58,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     await updateScriptInjectionStatus(true);
 
     // Verify extracted content is available
-    const { extractedContent } = await chrome.storage.local.get('extractedContent');
+    const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
     logger.background.info('Content available for AI platform:', {
       hasContent: !!extractedContent,
       contentType: extractedContent?.contentType

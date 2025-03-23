@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNotification } from '../../../components';
 import { Accordion } from '../../../components';
 import SettingsForm from '../ui/SettingsForm';
+import { STORAGE_KEYS } from '../../../shared/constants';
 
 const ContentConfiguration = () => {
   const { error } = useNotification();
@@ -17,7 +18,7 @@ const ContentConfiguration = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const result = await chrome.storage.sync.get('custom_prompts_by_type');
+        const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
         const customPromptsByType = result.custom_prompts_by_type || {};
         
         // Extract settings
@@ -46,7 +47,7 @@ const ContentConfiguration = () => {
   
   const updateRedditSettings = async (newSettings) => {
     try {
-      const result = await chrome.storage.sync.get('custom_prompts_by_type');
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
       const customPromptsByType = result.custom_prompts_by_type || {};
       
       // Update reddit settings
@@ -70,7 +71,7 @@ const ContentConfiguration = () => {
   
   const updateYoutubeSettings = async (newSettings) => {
     try {
-      const result = await chrome.storage.sync.get('custom_prompts_by_type');
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
       const customPromptsByType = result.custom_prompts_by_type || {};
       
       // Update youtube settings

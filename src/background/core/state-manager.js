@@ -1,6 +1,6 @@
 // src/background/core/state-manager.js - Background state management
 
-import { AI_PLATFORMS } from '../../shared/constants.js';
+import { STORAGE_KEYS } from '../../shared/constants.js';
 import logger from '../../utils/logger.js';
 
 /**
@@ -10,10 +10,10 @@ import logger from '../../utils/logger.js';
 export async function resetState() {
   try {
     await chrome.storage.local.set({
-      scriptInjected: false,
-      aiPlatformTabId: null,
-      contentReady: false,
-      extractedContent: null,
+      [STORAGE_KEYS.SCRIPT_INJECTED]: false,
+      [STORAGE_KEYS.AI_PLATFORM_TAB_ID]: null,
+      [STORAGE_KEYS.CONTENT_READY]: false,
+      [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
       apiProcessingStatus: null,
       apiResponse: null,
       currentContentProcessingMode: null
@@ -31,8 +31,8 @@ export async function resetState() {
 export async function resetExtractionState() {
   try {
     await chrome.storage.local.set({
-      contentReady: false,
-      extractedContent: null
+      [STORAGE_KEYS.CONTENT_READY]: false,
+      [STORAGE_KEYS.EXTRACTED_CONTENT]: null
     });
     logger.background.info('Extraction state reset');
   } catch (error) {
@@ -51,14 +51,14 @@ export async function resetExtractionState() {
 export async function savePlatformTabInfo(tabId, platformId, promptContent) {
   try {
     await chrome.storage.local.set({
-      aiPlatformTabId: tabId,
+      [STORAGE_KEYS.AI_PLATFORM_TAB_ID]: tabId,
       aiPlatform: platformId,
-      scriptInjected: false,
-      prePrompt: promptContent
+      [STORAGE_KEYS.SCRIPT_INJECTED]: false,
+      [STORAGE_KEYS.PRE_PROMPT]: promptContent
     });
     
     // Verify the data was stored correctly
-    const verifyData = await chrome.storage.local.get(['aiPlatformTabId', 'aiPlatform', 'scriptInjected']);
+    const verifyData = await chrome.storage.local.get([STORAGE_KEYS.AI_PLATFORM_TAB_ID, 'aiPlatform', STORAGE_KEYS.SCRIPT_INJECTED]);
     logger.background.info(`Storage verification: aiPlatformTabId=${verifyData.aiPlatformTabId}, aiPlatform=${verifyData.aiPlatform}, scriptInjected=${verifyData.scriptInjected}`);
     
     return true;
@@ -75,7 +75,7 @@ export async function savePlatformTabInfo(tabId, platformId, promptContent) {
  */
 export async function updateScriptInjectionStatus(injected) {
   try {
-    await chrome.storage.local.set({ scriptInjected: injected });
+    await chrome.storage.local.set({ [STORAGE_KEYS.SCRIPT_INJECTED]: injected });
     logger.background.info(`Updated script injection status: ${injected}`);
   } catch (error) {
     logger.background.error('Error updating script injection status:', error);
@@ -90,8 +90,8 @@ export async function updateScriptInjectionStatus(injected) {
 export async function saveExtractedContent(content) {
   try {
     await chrome.storage.local.set({ 
-      extractedContent: content,
-      contentReady: true
+      [STORAGE_KEYS.EXTRACTED_CONTENT]: content,
+      [STORAGE_KEYS.CONTENT_READY]: true
     });
     logger.background.info('Extracted content saved');
   } catch (error) {
@@ -238,7 +238,7 @@ export async function setApiProcessingError(error) {
 export async function trackQuickPromptUsage(contentType) {
   try {
     await chrome.storage.local.set({
-      'quick_prompt_consumed': {
+      [STORAGE_KEYS.QUICK_PROMPTS]: {
         contentType,
         timestamp: Date.now()
       }
@@ -255,7 +255,7 @@ export async function trackQuickPromptUsage(contentType) {
  */
 export async function getExtractedContent() {
   try {
-    const { extractedContent } = await chrome.storage.local.get('extractedContent');
+    const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
     return extractedContent;
   } catch (error) {
     logger.background.error('Error getting extracted content:', error);
@@ -269,7 +269,7 @@ export async function getExtractedContent() {
  */
 export async function getPlatformTabInfo() {
   try {
-    const result = await chrome.storage.local.get(['aiPlatformTabId', 'aiPlatform', 'scriptInjected']);
+    const result = await chrome.storage.local.get([STORAGE_KEYS.AI_PLATFORM_TAB_ID, 'aiPlatform', STORAGE_KEYS.SCRIPT_INJECTED]);
     return {
       tabId: result.aiPlatformTabId,
       platformId: result.aiPlatform,

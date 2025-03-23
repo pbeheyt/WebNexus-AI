@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, useNotification } from '../../../components';
-
-const SHORTCUT_SETTINGS_KEY = 'shortcut_settings';
+import { STORAGE_KEYS } from '../../../shared/constants';
 
 const Shortcuts = () => {
   const { success, error } = useNotification();
@@ -18,9 +17,9 @@ const Shortcuts = () => {
       
       try {
         // Load settings
-        const result = await chrome.storage.sync.get(SHORTCUT_SETTINGS_KEY);
-        if (result[SHORTCUT_SETTINGS_KEY]) {
-          setSettings(result[SHORTCUT_SETTINGS_KEY]);
+        const result = await chrome.storage.sync.get(STORAGE_KEYS.SHORTCUT_SETTINGS);
+        if (result[STORAGE_KEYS.SHORTCUT_SETTINGS]) {
+          setSettings(result[STORAGE_KEYS.SHORTCUT_SETTINGS]);
         }
         
         // Load commands (keyboard shortcuts)
@@ -54,7 +53,7 @@ const Shortcuts = () => {
         ...newSettings
       };
       
-      await chrome.storage.sync.set({ [SHORTCUT_SETTINGS_KEY]: updatedSettings });
+      await chrome.storage.sync.set({ [STORAGE_KEYS.SHORTCUT_SETTINGS]: updatedSettings });
       setSettings(updatedSettings);
       success('Setting saved');
     } catch (err) {

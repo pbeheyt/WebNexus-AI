@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, useNotification } from '../../../../components';
 import AdvancedSettings from './AdvancedSettings';
-
-const API_SETTINGS_KEY = 'api_advanced_settings';
+import { STORAGE_KEYS } from '../../../../shared/constants';
 
 const PlatformDetails = ({
   platform,
@@ -142,8 +141,8 @@ const PlatformDetails = ({
   const handleAdvancedSettingsUpdate = async (modelId, settings) => {
     try {
       // Load current settings
-      const result = await chrome.storage.sync.get(API_SETTINGS_KEY);
-      const currentSettings = result[API_SETTINGS_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_SETTINGS_KEY);
+      const currentSettings = result[STORAGE_KEYS.API_SETTINGS_KEY] || {};
       
       // Initialize platform settings if needed
       if (!currentSettings[platform.id]) {
@@ -175,7 +174,7 @@ const PlatformDetails = ({
       
       // Save to storage
       await chrome.storage.sync.set({
-        [API_SETTINGS_KEY]: currentSettings
+        [STORAGE_KEYS.API_SETTINGS_KEY]: currentSettings
       });
       
       // Update parent component

@@ -7,6 +7,7 @@ import { getPreferredAiPlatform, openAiPlatformWithContent } from './platform-in
 import { resetExtractionState, savePlatformTabInfo, trackQuickPromptUsage } from '../core/state-manager.js';
 import { processContentViaApi } from '../api/api-coordinator.js';
 import logger from '../../utils/logger.js';
+import { STORAGE_KEYS } from '../../shared/constants.js';
 
 /**
  * Centralized function to handle content processing
@@ -46,7 +47,7 @@ export async function processContent(params) {
     }
 
     // 3. Get extracted content and check for specific errors
-    const { extractedContent } = await chrome.storage.local.get('extractedContent');
+    const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
     
     // YouTube transcript error check
     const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);

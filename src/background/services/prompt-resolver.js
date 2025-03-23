@@ -15,7 +15,7 @@ export async function getPreferredPromptId(contentType) {
     logger.background.info(`Getting preferred prompt ID for content type: ${contentType}`);
 
     // Determine preferred prompt type
-    const typeResult = await chrome.storage.sync.get('prompt_type_preference');
+    const typeResult = await chrome.storage.sync.get(STORAGE_KEYS.PROMPT_TYPE_PREFERENCE);
     const promptTypePreferences = typeResult.prompt_type_preference || {};
     const preferredType = promptTypePreferences[contentType] || 'default';
 
@@ -57,7 +57,7 @@ export async function getPromptIdForType(promptType, contentType) {
   try {
     if (promptType === 'quick') {
       // Check if quick prompt exists and has content
-      const quickResult = await chrome.storage.sync.get('quick_prompts');
+      const quickResult = await chrome.storage.sync.get(STORAGE_KEYS.QUICK_PROMPTS);
       const quickPrompts = quickResult.quick_prompts || {};
 
       if (quickPrompts[contentType] && quickPrompts[contentType].trim()) {
@@ -68,7 +68,7 @@ export async function getPromptIdForType(promptType, contentType) {
     }
     else if (promptType === 'custom') {
       // First check selected custom prompt ID
-      const selectionsResult = await chrome.storage.sync.get('selected_prompt_ids');
+      const selectionsResult = await chrome.storage.sync.get(STORAGE_KEYS.SELECTED_PROMPT_IDS);
       const selections = selectionsResult.selected_prompt_ids || {};
       const key = `${contentType}-custom`;
 
@@ -124,7 +124,7 @@ export async function getPromptContentById(promptId, contentType) {
   // Handle quick prompts
   if (promptId === "quick") {
     try {
-      const result = await chrome.storage.sync.get('quick_prompts');
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.QUICK_PROMPTS);
       // Mark the quick prompt as used for tracking
       trackQuickPromptUsage(contentType);
       return result.quick_prompts?.[contentType] || null;
@@ -138,7 +138,7 @@ export async function getPromptContentById(promptId, contentType) {
   if (promptId === contentType) {
     try {
       // Get user preferences
-      const userPreferences = await chrome.storage.sync.get('default_prompt_preferences');
+      const userPreferences = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES);
       const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
       
       // Build prompt using the preferences
@@ -177,7 +177,7 @@ export async function getPromptContentById(promptId, contentType) {
 export async function clearQuickPrompt(contentType, sendResponse) {
   try {
     logger.background.info(`Clearing quick prompt for content type: ${contentType}`);
-    const quickPrompts = await chrome.storage.sync.get('quick_prompts');
+    const quickPrompts = await chrome.storage.sync.get(STORAGE_KEYS.QUICK_PROMPTS);
 
     if (quickPrompts.quick_prompts && quickPrompts.quick_prompts[contentType]) {
       logger.background.info(`Found quick prompt to clear for ${contentType}`);

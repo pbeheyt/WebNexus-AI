@@ -24,9 +24,6 @@ const CONTENT_TYPE_LABELS = {
   [SHARED_TYPE]: 'Shared Prompts'
 };
 
-// Storage key
-const CUSTOM_PROMPTS_KEY = 'custom_prompts_by_type';
-
 const PromptManagement = () => {
   const { error } = useNotification();
   const [contentTypes, setContentTypes] = useState([]);
