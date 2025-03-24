@@ -6,7 +6,7 @@ import ChatHistoryService from '../services/ChatHistoryService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
 import { INTERFACE_SOURCES } from '../../shared/constants';
-import tokenAccountingService from '../../services/TokenCalculationService';
+import TokenCalculationService from '../../services/TokenCalculationService';
 
 const SidebarChatContext = createContext(null);
 
@@ -45,37 +45,14 @@ export function SidebarChatProvider({ children }) {
     return platformConfig.api.models.find(m => m.id === selectedModel);
   }, [selectedPlatformId, selectedModel, platforms]);
 
-  // Subscribe to token metrics updates for this tab
+  // Calculate token stats when messages or model config changes
   useEffect(() => {
-    if (!tabId || !modelConfig) return;
+    if (!modelConfig) return;
 
-    // Register conversation metrics with the token service
-    const registerConversation = () => {
-      tokenAccountingService.registerConversationTokens(tabId, messages, modelConfig);
-    };
-
-    // Run registration once when dependencies change
-    registerConversation();
-
-    // Subscribe to token updates
-    const unsubscribe = tokenAccountingService.subscribeToTokenUpdates(tabId, (metrics) => {
-      console.log('Token metrics updated:', metrics);
-      
-      // Calculate cost using token service
-      const totalCost = tokenAccountingService.calculateTabCost(tabId, modelConfig);
-      
-      // Update token stats state for UI components
-      setTokenStats({
-        inputTokens: metrics.extractionTokens + metrics.conversationInputTokens,
-        outputTokens: metrics.conversationOutputTokens,
-        totalCost
-      });
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [tabId, messages, modelConfig]);
+    const stats = TokenCalculationService.calculateConversationStats(messages, modelConfig);
+    console.log('Token Stats Calculated:', stats); // Debug log for token stats
+    setTokenStats(stats);
+  }, [messages, modelConfig]);
 
   // Load chat history for current tab
   useEffect(() => {
@@ -85,50 +62,15 @@ export function SidebarChatProvider({ children }) {
       try {
         // Load chat history for this tab
         const history = await ChatHistoryService.getHistory(tabId);
-        console.log('Chat History Loaded:', history);
+        console.log('Chat History Loaded:', history); // Debug log for chat history
         setMessages(history);
-        
-        // Register history with token accounting service when loaded
-        if (history.length > 0 && modelConfig) {
-          tokenAccountingService.registerConversationTokens(tabId, history, modelConfig);
-        }
       } catch (error) {
         console.error('Error loading tab chat history:', error);
       }
     };
 
     loadChatHistory();
-  }, [tabId, modelConfig]);
-
-  // Register extraction tokens when content type changes
-  useEffect(() => {
-    if (!tabId || !contentType) return;
-    
-    // This would ideally come from the content extraction process
-    // For now, we'll register a placeholder value when content type changes
-    const registerExtractionTokens = async () => {
-      try {
-        // Get extracted content from storage
-        const { extractedContent } = await chrome.storage.local.get('extractedContent');
-        
-        if (extractedContent) {
-          // Estimate tokens for the extracted content
-          const contentText = typeof extractedContent === 'object' ? 
-            JSON.stringify(extractedContent) : extractedContent;
-          
-          const extractionTokens = tokenAccountingService.estimateTokens(contentText);
-          console.log('Registering extraction tokens:', extractionTokens);
-          
-          // Register extraction tokens
-          tokenAccountingService.registerExtractionTokens(tabId, extractionTokens);
-        }
-      } catch (error) {
-        console.error('Error registering extraction tokens:', error);
-      }
-    };
-    
-    registerExtractionTokens();
-  }, [tabId, contentType]);
+  }, [tabId]);
 
   // Reset processing when the tab changes
   useEffect(() => {
@@ -161,9 +103,9 @@ export function SidebarChatProvider({ children }) {
           // Get final content - either from fullContent or accumulated content
           const finalContent = chunkData.fullContent || streamingContent;
 
-          // Calculate tokens for the response using token service
-          const outputTokens = tokenAccountingService.estimateTokens(finalContent);
-          console.log('Output Tokens Calculated:', outputTokens);
+          // Calculate tokens for the response
+          const outputTokens = TokenCalculationService.estimateTokens(finalContent);
+          console.log('Output Tokens Calculated:', outputTokens); // Debug log for output tokens
 
           // Update final message content
           const updatedMessages = messages.map(msg =>
@@ -180,17 +122,6 @@ export function SidebarChatProvider({ children }) {
           );
 
           setMessages(updatedMessages);
-
-          // Register completed message tokens with token service
-          if (tabId) {
-            tokenAccountingService.registerMessageTokens(
-              tabId,
-              streamingMessageId,
-              'assistant',
-              finalContent,
-              false // Not input tokens
-            );
-          }
 
           // Save to history for current tab
           if (tabId) {
@@ -246,26 +177,18 @@ export function SidebarChatProvider({ children }) {
       return;
     }
 
-    // Create user message with unique ID
-    const userMessageId = `msg_${Date.now()}`;
+    // Estimate tokens for the user message
+    const inputTokens = TokenCalculationService.estimateTokens(text.trim());
+    console.log('Input Tokens Estimated:', inputTokens); // Debug log for input tokens
+
     const userMessage = {
-      id: userMessageId,
+      id: `msg_${Date.now()}`,
       role: MESSAGE_ROLES.USER,
       content: text.trim(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      inputTokens, // Add token count
+      outputTokens: 0
     };
-
-    // Register tokens for user message
-    const inputTokens = tokenAccountingService.registerMessageTokens(
-      tabId,
-      userMessageId,
-      MESSAGE_ROLES.USER,
-      text.trim(),
-      true // Is input tokens
-    );
-    
-    // Add token count to user message
-    userMessage.inputTokens = inputTokens;
 
     // Create placeholder for assistant response with explicit streaming flag
     const assistantMessageId = `msg_${Date.now() + 1}`;
@@ -352,9 +275,6 @@ export function SidebarChatProvider({ children }) {
 
     setMessages([]);
     await ChatHistoryService.clearHistory(tabId);
-    
-    // Clear token metrics for this tab
-    tokenAccountingService.clearTabMetrics(tabId);
   };
 
   return (

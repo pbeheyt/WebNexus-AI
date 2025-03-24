@@ -55,6 +55,11 @@ const AdvancedSettings = ({
       defaults.topP = modelConfig.topP || 1.0;
     }
     
+    // This ensures complete parameter reset during configuration reversion
+    if (platform.apiConfig?.hasSystemPrompt !== false) {
+      defaults.systemPrompt = '';
+    }
+
     return defaults;
   };
   

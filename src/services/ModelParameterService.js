@@ -271,16 +271,16 @@ class ModelParameterService {
       // Add system prompt if provided
       if (userSettings.systemPrompt !== undefined) params.systemPrompt = userSettings.systemPrompt;
 
-      // // Calculate available completion tokens based on prompt size
-      // if (prompt) {
-      //   params.effectiveMaxTokens = TokenCalculationService.calculateAvailableCompletionTokens(
-      //     prompt,
-      //     params.contextWindow,
-      //     params.maxTokens
-      //   );
-      // } else {
+      // Calculate available completion tokens based on prompt size
+      if (prompt) {
+        params.effectiveMaxTokens = TokenCalculationService.calculateAvailableCompletionTokens(
+          prompt,
+          params.contextWindow,
+          params.maxTokens
+        );
+      } else {
         params.effectiveMaxTokens = params.maxTokens;
-      // }
+      }
 
       logger.info(`Resolved parameters for ${platformId}/${modelToUse}:`, params);
       return params;
