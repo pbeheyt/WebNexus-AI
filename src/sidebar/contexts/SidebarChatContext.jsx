@@ -27,11 +27,15 @@ export function SidebarChatProvider({ children }) {
     reset: resetContentProcessing
   } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
 
+  // Get platform info
+  const { platforms } = useSidebarPlatform();
+  const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
+
   // Load chat history for current tab
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!tabId) return;
-      
+
       try {
         // Load chat history for this tab
         const history = await ChatHistoryService.getHistory(tabId);
@@ -82,11 +86,12 @@ export function SidebarChatProvider({ children }) {
                   ...msg,
                   content: finalContent,
                   isStreaming: false, // Explicitly mark as not streaming
-                  model: chunkData.model || selectedModel
+                  model: chunkData.model || selectedModel,
+                  platformIconUrl: msg.platformIconUrl // Preserve the platform icon
                 }
               : msg
           );
-          
+
           setMessages(updatedMessages);
 
           // Save to history for current tab
@@ -157,6 +162,7 @@ export function SidebarChatProvider({ children }) {
       role: MESSAGE_ROLES.ASSISTANT,
       content: '', // Empty initially, will be streamed
       model: selectedModel,
+      platformIconUrl: selectedPlatform.iconUrl, // Add platform icon URL
       timestamp: new Date().toISOString(),
       isStreaming: true // Explicit boolean flag
     };
@@ -213,9 +219,9 @@ export function SidebarChatProvider({ children }) {
             }
           : msg
       );
-      
+
       setMessages(errorMessages);
-      
+
       // Save error state to history
       if (tabId) {
         await ChatHistoryService.saveHistory(tabId, errorMessages);
@@ -229,7 +235,7 @@ export function SidebarChatProvider({ children }) {
   // Clear chat history
   const clearChat = async () => {
     if (!tabId) return;
-    
+
     setMessages([]);
     await ChatHistoryService.clearHistory(tabId);
   };

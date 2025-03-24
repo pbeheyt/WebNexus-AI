@@ -4,7 +4,7 @@ import { useSidebarPlatform } from '../contexts/platform';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
-import { ContentTypeDisplay, useContent } from '../components';
+import { useContent } from '../components';
 import { MESSAGE_TYPES } from './constants';
 import { setupMessageHandlers } from './services/IframeMessaging';
 
@@ -64,9 +64,6 @@ export default function SidebarApp() {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Header onClose={handleClose} />
-      <div className="p-2">
-        <ContentTypeDisplay className="w-full" />
-      </div>
       <ChatArea />
       <UserInput />
     </div>

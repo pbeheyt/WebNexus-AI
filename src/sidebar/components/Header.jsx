@@ -3,6 +3,7 @@ import { useSidebarPlatform } from '../../contexts/platform';
 import { useTheme } from '../../contexts/ThemeContext';
 import ModelSelector from './ModelSelector';
 import PlatformCard from '../../components/layout/PlatformCard';
+import { ContentTypeDisplay, useContent } from '../../components';
 
 function Header({ onClose }) {
   const { platforms, selectedPlatformId, selectPlatform } = useSidebarPlatform();
@@ -40,9 +41,10 @@ function Header({ onClose }) {
     <div className="border-b border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-2">
       <div className="flex justify-between items-center">
         <div className="text-lg font-semibold flex items-center gap-2">
-          <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" fill="currentColor"/>
-            <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
+          {/* Keep the original AI Summarizer logo - don't replace with platform logo */}
+          <svg className="w-5 h-5 text-green-400" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" />
+            <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" fillOpacity="0.5" />
           </svg>
           AI Summarizer
         </div>
@@ -83,6 +85,11 @@ function Header({ onClose }) {
             </svg>
           </button>
         </div>
+      </div>
+
+      {/* Content Type Display now placed above platform selection */}
+      <div className="mb-3">
+        <ContentTypeDisplay className="w-full" />
       </div>
 
       <div className="flex flex-row justify-between w-full relative z-30 px-2">
