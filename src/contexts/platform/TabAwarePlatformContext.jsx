@@ -1,6 +1,8 @@
-// src/contexts/platform/TabAwarePlatformContext.jsx
+// src/contexts/platform/TabAwarePlatformContext.jsx (partial update, focusing on the model handling part)
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
+import ModelParameterService from '../../services/ModelParameterService';
 
 /**
  * Creates a tab-aware platform context with shared functionality.
@@ -118,33 +120,11 @@ export function createTabAwarePlatformContext(options = {}) {
         if (response && response.success && response.models) {
           setModels(response.models);
           
-          // Get tab-specific model preference
-          const tabModelPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
-          const tabModelPrefs = tabModelPreferences[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
-          const tabPlatformModels = tabModelPrefs[tabId] || {};
-          
-          // Get global model preference for this platform
-          const globalModelPreferences = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
-          const globalModelPrefs = globalModelPreferences[STORAGE_KEYS.SIDEBAR_MODEL] || {};
-          
-          // Use tab-specific model if available, otherwise use global
-          let modelToUse = null;
-          
-          if (tabPlatformModels[platformId]) {
-            modelToUse = tabPlatformModels[platformId];
-          } else if (globalModelPrefs[platformId]) {
-            modelToUse = globalModelPrefs[platformId];
-          } else {
-            // Get platform default from config
-            const platformConfig = await getPlatformConfig(platformId);
-            if (platformConfig && platformConfig.api && platformConfig.api.defaultModel) {
-              modelToUse = platformConfig.api.defaultModel;
-            } else if (response.models.length > 0) {
-              modelToUse = typeof response.models[0] === 'object'
-                ? response.models[0].id
-                : response.models[0];
-            }
-          }
+          // Use centralized ModelParameterService for model resolution
+          const modelToUse = await ModelParameterService.resolveModel(
+            platformId,
+            { tabId, source: interfaceType }
+          );
           
           setSelectedModelId(modelToUse);
           
@@ -194,7 +174,7 @@ export function createTabAwarePlatformContext(options = {}) {
       }
     };
     
-    // Select model and save preference (sidebar only)
+    // Select model and save preference
     const selectModel = async (modelId) => {
       if (!tabId || interfaceType !== INTERFACE_SOURCES.SIDEBAR || 
           !selectedPlatformId || modelId === selectedModelId) {
@@ -205,31 +185,9 @@ export function createTabAwarePlatformContext(options = {}) {
         // Update state immediately
         setSelectedModelId(modelId);
         
-        // Update tab-specific preference
-        const tabModelPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
-        const tabModelPrefs = tabModelPreferences[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
-        
-        // Initialize nested structure if needed
-        if (!tabModelPrefs[tabId]) {
-          tabModelPrefs[tabId] = {};
-        }
-        
-        tabModelPrefs[tabId][selectedPlatformId] = modelId;
-        
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: tabModelPrefs,
-          [STORAGE_KEYS.LAST_ACTIVE_TAB]: tabId
-        });
-        
-        // Update global preference for new tabs
-        const globalModelPreferences = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
-        const globalModelPrefs = globalModelPreferences[STORAGE_KEYS.SIDEBAR_MODEL] || {};
-        
-        globalModelPrefs[selectedPlatformId] = modelId;
-        
-        await chrome.storage.sync.set({
-          [STORAGE_KEYS.SIDEBAR_MODEL]: globalModelPrefs 
-        });
+        // Use centralized ModelParameterService to save preferences
+        await ModelParameterService.saveTabModelPreference(tabId, selectedPlatformId, modelId);
+        await ModelParameterService.saveSourceModelPreference(interfaceType, selectedPlatformId, modelId);
         
         return true;
       } catch (error) {

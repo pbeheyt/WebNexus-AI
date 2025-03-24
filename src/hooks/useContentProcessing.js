@@ -120,7 +120,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       promptId,
       promptContent,
       hasSelection = false,
-      modelId = null,
+      modelId = null, // This is now just passed as a model override
       streaming = false,
       onStreamChunk = null,
       conversationHistory = []
@@ -159,7 +159,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       };
 
       // Add optional parameters if provided
-      if (modelId) request.modelId = modelId;
+      if (modelId) request.modelId = modelId; // Just pass as model override
       if (promptContent) request.customPrompt = promptContent;
       if (conversationHistory?.length > 0) request.conversationHistory = conversationHistory;
       if (streaming && onStreamChunk) request.streaming = true;

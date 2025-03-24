@@ -380,58 +380,10 @@ ${formattedContent}`;
     return data.text || 'No text selected';
   }
 
-  // /**
-  //  * Process text with the API using centralized model selection
-  //  * @private
-  //  * @param {string} text - Prompt text to process
-  //  * @param {Array} conversationHistory - Conversation history
-  //  * @param {string} [modelOverride] - Optional model override
-  //  * @returns {Promise<Object>} API response
-  //  */
-  // async _processWithApi(text, conversationHistory, modelOverride = null) {
-  //   const { apiKey } = this.credentials;
-
-  //   try {
-  //     // Get model and parameters from centralized ModelParameterService
-  //     const params = await ModelParameterService.resolveParameters(
-  //       this.platformId,
-  //       modelOverride,
-  //       text
-  //     );
-
-  //     // Use model override if provided, otherwise use resolved model
-  //     const modelToUse = modelOverride || params.model;
-      
-  //     if (modelOverride) {
-  //       this.logger.info(`Using tab-specific model override: ${modelOverride} (instead of ${params.model})`);
-  //       // Update the model in params to ensure consistent usage
-  //       params.model = modelToUse;
-  //     } else {
-  //       this.logger.info(`Using model from ModelParameterService: ${modelToUse}`);
-  //     }
-
-  //     // Log parameters being used
-  //     this.logger.info(`Using model ${modelToUse} with parameters:`, {
-  //       effectiveMaxTokens: params.effectiveMaxTokens,
-  //       temperature: params.temperature,
-  //       parameterStyle: params.parameterStyle
-  //     });
-
-  //     // Add conversation history to parameters
-  //     params.conversationHistory = conversationHistory;
-
-  //     // Each implementation must handle the resolved parameters appropriately
-  //     return this._processWithModel(text, modelToUse, apiKey, params);
-  //   } catch (error) {
-  //     this.logger.error('Error in _processWithApi:', error);
-  //     throw error;
-  //   }
-  // }
-
   /**
-   * Process text with the API using centralized model selection with streaming support
+   * Process text with the API using streaming
    * @private
-   * @param {string} text - Prompt text to process
+   * @param {string} text - Prompt text
    * @param {function} onChunk - Callback function for receiving text chunks
    * @param {Array} conversationHistory - Conversation history
    * @param {string} [modelOverride] - Optional model override
@@ -448,19 +400,8 @@ ${formattedContent}`;
         text
       );
 
-      // Use model override if provided, otherwise use resolved model
-      const modelToUse = modelOverride || params.model;
-      
-      if (modelOverride) {
-        this.logger.info(`Using tab-specific model override for streaming: ${modelOverride} (instead of ${params.model})`);
-        // Update the model in params to ensure consistent usage
-        params.model = modelToUse;
-      } else {
-        this.logger.info(`Using model from ModelParameterService for streaming: ${modelToUse}`);
-      }
-
       // Log parameters being used
-      this.logger.info(`Using model ${modelToUse} for streaming with parameters:`, {
+      this.logger.info(`Using model ${params.model} for streaming with parameters:`, {
         effectiveMaxTokens: params.effectiveMaxTokens,
         temperature: params.temperature,
         parameterStyle: params.parameterStyle
@@ -470,7 +411,7 @@ ${formattedContent}`;
       params.conversationHistory = conversationHistory;
 
       // Each implementation must handle the streaming appropriately
-      return this._processWithModelStreaming(text, modelToUse, apiKey, params, onChunk);
+      return this._processWithModelStreaming(text, params.model, apiKey, params, onChunk);
     } catch (error) {
       this.logger.error('Error in _processWithApiStreaming:', error);
       throw error;

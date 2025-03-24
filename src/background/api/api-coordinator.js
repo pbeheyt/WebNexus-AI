@@ -1,6 +1,7 @@
 // src/background/api/api-coordinator.js
 
 import ApiServiceManager from '../../services/ApiServiceManager.js';
+import ModelParameterService from '../../services/ModelParameterService.js';
 import { extractContent, checkYouTubeTranscriptAvailability } from '../services/content-extraction.js';
 import { getPreferredPromptId, getPromptContentById } from '../services/prompt-resolver.js';
 import { getPreferredAiPlatform } from '../services/platform-integration.js';
@@ -174,31 +175,14 @@ export async function processContentViaApi(params) {
     // 6. Verify credentials
     await verifyApiCredentials(effectivePlatformId);
 
-    // 7. Model resolution
-    let effectiveModelId = null;
-
-    if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
-      try {
-        // Try to get tab-specific model preference first
-        const tabModelPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
-        const tabModelPrefs = tabModelPreferences[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
-        const tabPlatformModels = tabModelPrefs[tabId] || {};
-
-        if (tabPlatformModels[effectivePlatformId]) {
-          effectiveModelId = tabPlatformModels[effectivePlatformId];
-          logger.background.info(`Using tab-specific model for tab ${tabId}: ${effectiveModelId}`);
-        } else {
-          // Fall back to global model preference
-          const globalModelPreferences = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
-          const globalModelPrefs = globalModelPreferences[STORAGE_KEYS.SIDEBAR_MODEL] || {};
-
-          effectiveModelId = globalModelPrefs[effectivePlatformId];
-          logger.background.info(`Using global model preference: ${effectiveModelId}`);
-        }
-      } catch (error) {
-        logger.background.error('Error resolving tab-specific model:', error);
+    // 7. Model resolution - Now uses centralized ModelParameterService
+    const effectiveModelId = await ModelParameterService.resolveModel(
+      effectivePlatformId, 
+      { 
+        tabId, 
+        source 
       }
-    }
+    );
 
     // 8. Update processing status
     await updateApiProcessingStatus('processing', effectivePlatformId);
