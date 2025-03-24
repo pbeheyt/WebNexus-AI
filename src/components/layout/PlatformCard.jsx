@@ -58,8 +58,8 @@ export function PlatformCard({
       
       {showName && <div className="text-xs text-center mt-1">{name}</div>}
 
-      {/* Tooltip component with navigation instruction */}
-      <Tooltip show={showTooltip} message="API credentials required. Go to Settings to configure." />
+      {/* Tooltip component */}
+      <Tooltip show={showTooltip} message="API credentials required" />
     </div>
   );
 }
