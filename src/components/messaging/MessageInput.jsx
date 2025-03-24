@@ -1,4 +1,3 @@
-// src/components/messaging/MessageInput.jsx
 import React, { useEffect, useRef } from 'react';
 import { TextArea } from '../form/TextArea';
 
@@ -70,33 +69,34 @@ export function MessageInput({
           className="py-3 px-4 pr-20 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
         />
         
-        <div className="absolute right-2 bottom-2 flex items-center gap-2">
-          {/* Attachment button - now on the right */}
+        <div className="absolute right-2 top-2 flex items-center gap-2">
+          {/* Attachment button - now on the right and at the top */}
           <button
             className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1"
             aria-label="Attach file"
             title="Attach file"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path>
             </svg>
           </button>
           
-          {/* Send button with square shape */}
+          {/* Send button with square shape and upward arrow like in the photo */}
           <button
             className={`flex items-center justify-center cursor-pointer border-none outline-none ${
               !value.trim() || disabled
                 ? 'bg-gray-400 cursor-not-allowed text-white'
-                : 'bg-primary hover:bg-primary-hover text-white'
-            } w-9 h-9 rounded`}
+                : 'bg-orange-600 hover:bg-orange-700 text-white'
+            } w-7 h-7 rounded`}
             onClick={handleSubmit}
             disabled={!value.trim() || disabled}
             aria-label={buttonLabel}
             title={buttonLabel}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Upward arrow icon similar to the one in the photo */}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 20V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         </div>
