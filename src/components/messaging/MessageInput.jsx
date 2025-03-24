@@ -45,7 +45,7 @@ export function MessageInput({
       <div className="flex-1 relative">
         <input
           type="text"
-          className="w-full py-2 px-4 pl-3 pr-10 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm outline-none transition-colors duration-200 focus:border-blue-500"
+          className="w-full py-2 px-4 pl-3 pr-10 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm outline-none transition-colors duration-200 focus:border-primary focus-primary"
           placeholder={placeholder}
           value={value}
           onChange={handleInputChange}
@@ -57,7 +57,7 @@ export function MessageInput({
           className={`absolute right-2 bottom-2 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer border-none outline-none ${
             !value.trim() || disabled
               ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
+              : 'bg-primary hover:bg-primary-hover text-white'
           }`}
           onClick={handleSubmit}
           disabled={!value.trim() || disabled}

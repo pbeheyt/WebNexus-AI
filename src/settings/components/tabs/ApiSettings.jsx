@@ -122,7 +122,7 @@ const ApiSettings = () => {
   if (isLoading) {
     return (
       <div className="p-8 text-center">
-        <div className="inline-block animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <div className="inline-block animate-spin h-8 w-8 border-4 border-theme border-t-primary rounded-full"></div>
         <p className="mt-4">Loading API settings...</p>
       </div>
     );

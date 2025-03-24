@@ -253,7 +253,7 @@ const PlatformDetails = ({
             <input
               type={showApiKey ? 'text' : 'password'}
               id={`${platform.id}-api-key`}
-              className="api-key-input w-full p-2 pr-16 bg-theme-surface text-theme-primary border border-theme rounded-md font-mono"
+              className="api-key-input w-full p-2 pr-16 bg-theme-surface text-theme-primary border border-theme rounded-md font-mono focus:ring-primary focus:border-primary"
               placeholder={credentials?.apiKey ? "••••••••••••••••••••••••••" : "Enter your API key"}
               value={apiKey}
               onChange={handleApiKeyChange}

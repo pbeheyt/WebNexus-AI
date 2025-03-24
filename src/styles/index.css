@@ -113,3 +113,20 @@
     @apply bg-primary;
   }
 }
+
+/* Utility classes */
+@layer utilities {
+  .focus-primary {
+    @apply focus:ring-2 focus:ring-primary focus:ring-opacity-50 focus:border-primary focus:outline-none;
+  }
+  
+  /* Apply to all inputs, selects, and textareas */
+  input:focus, select:focus, textarea:focus {
+    @apply ring-2 ring-primary ring-opacity-50 border-primary outline-none;
+  }
+  
+  /* For link styling */
+  .link {
+    @apply text-primary hover:text-primary-hover hover:underline transition-colors;
+  }
+}

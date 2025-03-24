@@ -1,4 +1,3 @@
-// src/sidebar/SidebarApp.jsx
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSidebarPlatform } from '../contexts/platform';
@@ -56,7 +55,7 @@ export default function SidebarApp() {
   if (!isReady || !tabId) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-        <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-700 border-t-blue-500 rounded-full animate-spin mr-2"></div>
+        <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-700 border-t-primary rounded-full animate-spin mr-2"></div>
         Initializing sidebar...
       </div>
     );

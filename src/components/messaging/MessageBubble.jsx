@@ -53,7 +53,7 @@ export function MessageBubble({
   return (
     <div className={`p-3 rounded-lg max-w-[85%] relative ${
       isUser 
-        ? 'bg-blue-500 text-white rounded-tl-xl rounded-tr-xl rounded-br-xl rounded-bl-none ml-auto' 
+        ? 'bg-primary text-white rounded-tl-xl rounded-tr-xl rounded-br-xl rounded-bl-none ml-auto' 
         : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl'
     } ${className}`}>
       <div className="whitespace-pre-wrap">{formatContent(content)}</div>
@@ -61,9 +61,9 @@ export function MessageBubble({
       {/* Streaming indicator */}
       {isStreaming && (
         <div className="flex gap-1 mt-1">
-          <div className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-600 animate-bounce"></div>
-          <div className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-600 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-600 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          <div className="w-1 h-1 rounded-full bg-primary/70 dark:bg-primary/70 animate-bounce"></div>
+          <div className="w-1 h-1 rounded-full bg-primary/70 dark:bg-primary/70 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-1 h-1 rounded-full bg-primary/70 dark:bg-primary/70 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
         </div>
       )}
       
