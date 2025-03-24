@@ -11,12 +11,11 @@ import { INTERFACE_SOURCES } from '../../shared/constants';
 const SidebarChatContext = createContext(null);
 
 export function SidebarChatProvider({ children }) {
-  const { selectedPlatformId, selectedModel, hasCredentials } = useSidebarPlatform();
-  const { currentTab, contentType } = useContent();
+  const { selectedPlatformId, selectedModel, hasCredentials, tabId } = useSidebarPlatform();
+  const { contentType } = useContent();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentPageUrl, setCurrentPageUrl] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState(null);
   const [streamingContent, setStreamingContent] = useState('');
 
@@ -28,31 +27,29 @@ export function SidebarChatProvider({ children }) {
     reset: resetContentProcessing
   } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
 
-  // Get current page URL and initialize chat history
+  // Load chat history for current tab
   useEffect(() => {
-    const initialize = async () => {
+    const loadChatHistory = async () => {
+      if (!tabId) return;
+      
       try {
-        if (currentTab && currentTab.url) {
-          setCurrentPageUrl(currentTab.url);
-
-          // Load chat history for this URL
-          const history = await ChatHistoryService.getHistory(currentTab.url);
-          setMessages(history);
-        }
+        // Load chat history for this tab
+        const history = await ChatHistoryService.getHistory(tabId);
+        setMessages(history);
       } catch (error) {
-        console.error('Error initializing chat context:', error);
+        console.error('Error loading tab chat history:', error);
       }
     };
 
-    initialize();
-  }, [currentTab]);
+    loadChatHistory();
+  }, [tabId]);
 
-  // Reset extraction when the tab changes
+  // Reset processing when the tab changes
   useEffect(() => {
-    if (currentTab?.url) {
+    if (tabId) {
       resetContentProcessing();
     }
-  }, [currentTab?.url, resetContentProcessing]);
+  }, [tabId, resetContentProcessing]);
 
   useEffect(() => {
     const handleStreamChunk = (message) => {
@@ -92,11 +89,13 @@ export function SidebarChatProvider({ children }) {
           
           setMessages(updatedMessages);
 
-          // Save to history
-          try {
-            ChatHistoryService.saveHistory(currentPageUrl, updatedMessages);
-          } catch (err) {
-            console.error('Error saving chat history:', err);
+          // Save to history for current tab
+          if (tabId) {
+            try {
+              ChatHistoryService.saveHistory(tabId, updatedMessages);
+            } catch (err) {
+              console.error('Error saving tab chat history:', err);
+            }
           }
         } else if (chunkContent) {
           // Append chunk to streaming content
@@ -118,11 +117,11 @@ export function SidebarChatProvider({ children }) {
     return () => {
       chrome.runtime.onMessage.removeListener(handleStreamChunk);
     };
-  }, [streamingMessageId, streamingContent, messages, currentPageUrl, selectedModel]);
+  }, [streamingMessageId, streamingContent, messages, tabId, selectedModel]);
 
   // Send a message and get a response
   const sendMessage = async (text = inputValue) => {
-    if (!text.trim() || isProcessing) return;
+    if (!text.trim() || isProcessing || !tabId) return;
 
     if (!selectedPlatformId || !selectedModel) {
       setMessages(prev => [...prev, {
@@ -170,6 +169,11 @@ export function SidebarChatProvider({ children }) {
     setStreamingMessageId(assistantMessageId);
     setStreamingContent('');
 
+    // Save interim state to chat history
+    if (tabId) {
+      await ChatHistoryService.saveHistory(tabId, updatedMessages);
+    }
+
     try {
       // Format conversation history for the API - only include user and assistant messages
       // Filter out system messages and streaming messages
@@ -199,7 +203,7 @@ export function SidebarChatProvider({ children }) {
       console.error('Error processing streaming message:', error);
 
       // Update streaming message to show error
-      setMessages(prev => prev.map(msg =>
+      const errorMessages = messages.map(msg =>
         msg.id === assistantMessageId
           ? {
               ...msg,
@@ -208,7 +212,14 @@ export function SidebarChatProvider({ children }) {
               isStreaming: false // Turn off streaming state
             }
           : msg
-      ));
+      );
+      
+      setMessages(errorMessages);
+      
+      // Save error state to history
+      if (tabId) {
+        await ChatHistoryService.saveHistory(tabId, errorMessages);
+      }
 
       setStreamingMessageId(null);
       setIsProcessing(false);
@@ -217,8 +228,10 @@ export function SidebarChatProvider({ children }) {
 
   // Clear chat history
   const clearChat = async () => {
+    if (!tabId) return;
+    
     setMessages([]);
-    await ChatHistoryService.clearHistory(currentPageUrl);
+    await ChatHistoryService.clearHistory(tabId);
   };
 
   return (

@@ -1,129 +1,136 @@
 import { STORAGE_KEYS } from "../../shared/constants";
 
-// src/sidebar/services/ChatHistoryService.js
-
+/**
+ * Service for managing tab-specific chat histories
+ */
 class ChatHistoryService {
-  static STORAGE_KEY = STORAGE_KEYS.CHAT_HISTORY;
-  static MAX_HISTORIES = 20;
-  static MAX_MESSAGES_PER_URL = 100;
+  static STORAGE_KEY = STORAGE_KEYS.TAB_CHAT_HISTORIES;
+  static MAX_MESSAGES_PER_TAB = 100;
   
   /**
-   * Get chat history for a specific URL
-   * @param {string} url - The page URL
+   * Get chat history for a specific tab
+   * @param {number} tabId - The tab ID
    * @returns {Promise<Array>} Chat history messages
    */
-  static async getHistory(url) {
+  static async getHistory(tabId) {
     try {
-      if (!url) return [];
+      if (!tabId) {
+        console.error('TabChatHistory: No tabId provided for getHistory');
+        return [];
+      }
       
-      // Normalize URL to handle variations
-      const normalizedUrl = this._normalizeUrl(url);
-      
-      // Get all chat histories
+      // Get all tab chat histories
       const result = await chrome.storage.local.get([this.STORAGE_KEY]);
-      const allHistories = result[this.STORAGE_KEY] || {};
+      const allTabHistories = result[this.STORAGE_KEY] || {};
       
-      // Return history for this URL or empty array
-      return allHistories[normalizedUrl] || [];
+      // Return history for this tab or empty array
+      return allTabHistories[tabId] || [];
     } catch (error) {
-      console.error('Error getting chat history:', error);
+      console.error('TabChatHistory: Error getting chat history:', error);
       return [];
     }
   }
   
   /**
-   * Save chat history for a specific URL
-   * @param {string} url - The page URL
+   * Save chat history for a specific tab
+   * @param {number} tabId - The tab ID
    * @param {Array} messages - Chat history messages
    * @returns {Promise<boolean>} Success status
    */
-  static async saveHistory(url, messages) {
+  static async saveHistory(tabId, messages) {
     try {
-      if (!url) return false;
-      
-      // Normalize URL to handle variations
-      const normalizedUrl = this._normalizeUrl(url);
-      
-      // Get all chat histories
-      const result = await chrome.storage.local.get([this.STORAGE_KEY]);
-      const allHistories = result[this.STORAGE_KEY] || {};
-      
-      // Limit number of messages to prevent storage problems
-      const limitedMessages = messages.slice(-this.MAX_MESSAGES_PER_URL);
-      
-      // Update history for this URL
-      allHistories[normalizedUrl] = limitedMessages;
-      
-      // If we have too many histories, remove oldest
-      const urlKeys = Object.keys(allHistories);
-      if (urlKeys.length > this.MAX_HISTORIES) {
-        // Sort by last update timestamp
-        const sortedUrls = urlKeys.sort((a, b) => {
-          const aLastMsg = allHistories[a][allHistories[a].length - 1];
-          const bLastMsg = allHistories[b][allHistories[b].length - 1];
-          
-          const aTimestamp = aLastMsg ? new Date(aLastMsg.timestamp) : new Date(0);
-          const bTimestamp = bLastMsg ? new Date(bLastMsg.timestamp) : new Date(0);
-          
-          return aTimestamp - bTimestamp;
-        });
-        
-        // Remove oldest histories
-        const toRemove = sortedUrls.slice(0, urlKeys.length - this.MAX_HISTORIES);
-        toRemove.forEach(oldUrl => {
-          delete allHistories[oldUrl];
-        });
+      if (!tabId) {
+        console.error('TabChatHistory: No tabId provided for saveHistory');
+        return false;
       }
       
+      // Get all tab chat histories
+      const result = await chrome.storage.local.get([this.STORAGE_KEY]);
+      const allTabHistories = result[this.STORAGE_KEY] || {};
+      
+      // Limit number of messages to prevent storage problems
+      const limitedMessages = messages.slice(-this.MAX_MESSAGES_PER_TAB);
+      
+      // Update history for this tab
+      allTabHistories[tabId] = limitedMessages;
+      
       // Save updated histories
-      await chrome.storage.local.set({ [this.STORAGE_KEY]: allHistories });
+      await chrome.storage.local.set({ [this.STORAGE_KEY]: allTabHistories });
       return true;
     } catch (error) {
-      console.error('Error saving chat history:', error);
+      console.error('TabChatHistory: Error saving chat history:', error);
       return false;
     }
   }
   
   /**
-   * Clear chat history for a specific URL
-   * @param {string} url - The page URL
+   * Clear chat history for a specific tab
+   * @param {number} tabId - The tab ID
    * @returns {Promise<boolean>} Success status
    */
-  static async clearHistory(url) {
+  static async clearHistory(tabId) {
     try {
-      if (!url) return false;
+      if (!tabId) {
+        console.error('TabChatHistory: No tabId provided for clearHistory');
+        return false;
+      }
       
-      // Normalize URL to handle variations
-      const normalizedUrl = this._normalizeUrl(url);
-      
-      // Get all chat histories
+      // Get all tab chat histories
       const result = await chrome.storage.local.get([this.STORAGE_KEY]);
-      const allHistories = result[this.STORAGE_KEY] || {};
+      const allTabHistories = result[this.STORAGE_KEY] || {};
       
-      // Remove history for this URL
-      delete allHistories[normalizedUrl];
+      // Remove history for this tab
+      delete allTabHistories[tabId];
       
       // Save updated histories
-      await chrome.storage.local.set({ [this.STORAGE_KEY]: allHistories });
+      await chrome.storage.local.set({ [this.STORAGE_KEY]: allTabHistories });
       return true;
     } catch (error) {
-      console.error('Error clearing chat history:', error);
+      console.error('TabChatHistory: Error clearing chat history:', error);
       return false;
     }
   }
   
   /**
-   * Normalize URL by removing query parameters, hash, etc.
-   * @param {string} url - The URL to normalize
-   * @returns {string} Normalized URL
+   * Clean up histories for closed tabs
+   * @param {Array<number>} activeTabIds - List of currently active tab IDs
+   * @returns {Promise<boolean>} Success status
    */
-  static _normalizeUrl(url) {
+  static async cleanupClosedTabs(activeTabIds) {
     try {
-      const urlObj = new URL(url);
-      return urlObj.origin + urlObj.pathname;
+      if (!activeTabIds || !Array.isArray(activeTabIds)) {
+        console.error('TabChatHistory: Invalid activeTabIds for cleanup');
+        return false;
+      }
+      
+      // Create a Set for faster lookups
+      const activeTabsSet = new Set(activeTabIds.map(id => id.toString()));
+      
+      // Get all tab chat histories
+      const result = await chrome.storage.local.get([this.STORAGE_KEY]);
+      const allTabHistories = result[this.STORAGE_KEY] || {};
+      
+      // Check if any cleanup is needed
+      let needsCleanup = false;
+      const tabIds = Object.keys(allTabHistories);
+      
+      for (const tabId of tabIds) {
+        if (!activeTabsSet.has(tabId)) {
+          delete allTabHistories[tabId];
+          needsCleanup = true;
+        }
+      }
+      
+      // Only update storage if something was removed
+      if (needsCleanup) {
+        await chrome.storage.local.set({ [this.STORAGE_KEY]: allTabHistories });
+        console.log('TabChatHistory: Cleaned up histories for closed tabs');
+      }
+      
+      return true;
     } catch (error) {
-      // If URL parsing fails, return original
-      return url;
+      console.error('TabChatHistory: Error cleaning up closed tabs:', error);
+      return false;
     }
   }
 }

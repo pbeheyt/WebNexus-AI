@@ -7,48 +7,29 @@ import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
 import { ContentTypeDisplay, useContent } from '../components';
 import { MESSAGE_TYPES } from './constants';
+import { setupMessageHandlers } from './services/IframeMessaging';
 
 export default function SidebarApp() {
   const { theme } = useTheme();
   const { tabId } = useSidebarPlatform();
   const [isReady, setIsReady] = useState(false);
-  const { contentType, isLoading, isTextSelected } = useContent();
+  const { contentType } = useContent();
+  const [messaging, setMessaging] = useState(null);
+  
+  // Initialize messaging with tabId
+  useEffect(() => {
+    if (tabId) {
+      const messagingService = setupMessageHandlers(tabId);
+      setMessaging(messagingService);
+    }
+  }, [tabId]);
   
   useEffect(() => {
-    // Set up message listener for parent frame communication
-    const handleMessage = (event) => {
-      // Process messages from parent frame
-      if (!event.data || typeof event.data !== 'object') {
-        return;
-      }
-      
-      switch (event.data.type) {
-        case MESSAGE_TYPES.EXTRACTION_COMPLETE:
-          console.log('Content extraction complete:', event.data.content);
-          break;
-          
-        case MESSAGE_TYPES.PAGE_INFO_UPDATED:
-          console.log('Page info updated:', event.data.pageInfo);
-          break;
-          
-        case MESSAGE_TYPES.THEME_CHANGED:
-          // No need to use direct service, theme context will handle it
-          console.log('Theme changed from parent:', event.data.theme);
-          break;
-          
-        default:
-          break;
-      }
-    };
-    
-    window.addEventListener('message', handleMessage);
+    if (!messaging) return;
     
     // Update parent frame about theme changes
     const notifyParentAboutTheme = () => {
-      window.parent.postMessage({ 
-        type: MESSAGE_TYPES.THEME_CHANGED, 
-        theme 
-      }, '*');
+      messaging.sendMessage(MESSAGE_TYPES.THEME_CHANGED, { theme });
     };
     
     // Run once on mount and whenever theme changes
@@ -56,28 +37,23 @@ export default function SidebarApp() {
     
     // Signal to parent that sidebar is ready
     setTimeout(() => {
-      window.parent.postMessage({ 
-        type: MESSAGE_TYPES.SIDEBAR_READY,
-        tabId // Include tabId in the ready message
-      }, '*');
+      messaging.sendMessage(MESSAGE_TYPES.SIDEBAR_READY, { tabId });
       setIsReady(true);
     }, 200);
     
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [theme, tabId]);
+  }, [theme, tabId, messaging]);
   
   // Handle sidebar close button
   const handleClose = () => {
-    window.parent.postMessage({ 
-      type: MESSAGE_TYPES.TOGGLE_SIDEBAR, 
-      visible: false,
-      tabId // Include tabId in close message
-    }, '*');
+    if (messaging) {
+      messaging.sendMessage(MESSAGE_TYPES.TOGGLE_SIDEBAR, { 
+        visible: false,
+        tabId
+      });
+    }
   };
   
-  if (!isReady) {
+  if (!isReady || !tabId) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
         <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-700 border-t-blue-500 rounded-full animate-spin mr-2"></div>

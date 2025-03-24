@@ -37,6 +37,19 @@ export function setupTabStateListener() {
         
         logger.background.info(`Removed model preferences for tab ${tabId}`);
       }
+      
+      // Clean up tab-specific chat history
+      const tabChatHistories = await chrome.storage.local.get(STORAGE_KEYS.TAB_CHAT_HISTORIES);
+      if (tabChatHistories[STORAGE_KEYS.TAB_CHAT_HISTORIES]) {
+        const updatedHistories = { ...tabChatHistories[STORAGE_KEYS.TAB_CHAT_HISTORIES] };
+        delete updatedHistories[tabId];
+        
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.TAB_CHAT_HISTORIES]: updatedHistories
+        });
+        
+        logger.background.info(`Removed chat history for tab ${tabId}`);
+      }
     } catch (error) {
       logger.background.error('Error cleaning up tab-specific preferences:', error);
     }
@@ -93,6 +106,28 @@ export function setupTabStateListener() {
             [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: updatedPrefs
           });
           logger.background.info('Cleaned up stale tab model preferences');
+        }
+      }
+      
+      // Clean chat histories for invalid tabs
+      const tabChatHistories = await chrome.storage.local.get(STORAGE_KEYS.TAB_CHAT_HISTORIES);
+      if (tabChatHistories[STORAGE_KEYS.TAB_CHAT_HISTORIES]) {
+        const updatedHistories = { ...tabChatHistories[STORAGE_KEYS.TAB_CHAT_HISTORIES] };
+        let hasChanges = false;
+        
+        for (const tabIdStr of Object.keys(updatedHistories)) {
+          const tabId = parseInt(tabIdStr, 10);
+          if (!validTabIds.has(tabId)) {
+            delete updatedHistories[tabIdStr];
+            hasChanges = true;
+          }
+        }
+        
+        if (hasChanges) {
+          await chrome.storage.local.set({
+            [STORAGE_KEYS.TAB_CHAT_HISTORIES]: updatedHistories
+          });
+          logger.background.info('Cleaned up stale tab chat histories');
         }
       }
       
