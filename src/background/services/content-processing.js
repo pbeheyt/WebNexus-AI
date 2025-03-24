@@ -1,4 +1,4 @@
-// src/background/services/content-processing.js - Core content processing logic
+// src/background/services/content-processing.js
 
 import { determineContentType } from '../../shared/content-utils.js';
 import { extractContent, checkYouTubeCommentsStatus, checkYouTubeTranscriptAvailability } from './content-extraction.js';
@@ -10,9 +10,10 @@ import logger from '../../utils/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 
 /**
- * Centralized function to handle content processing
- * @param {Object} params - Parameters object containing all necessary info for content processing
- * @returns {Promise<Object>} Result object with success/error information
+ * Process content using web AI interface (non-API path)
+ * Used by popup to extract content and send to web UI
+ * @param {Object} params - Processing parameters
+ * @returns {Promise<Object>} Result information
  */
 export async function processContent(params) {
   const { 
@@ -26,16 +27,17 @@ export async function processContent(params) {
   } = params;
   
   try {
-    logger.background.info('Starting centralized content processing', { ...params, useApi });
+    logger.background.info('Starting web UI content processing', {
+      tabId, url, hasSelection, promptId, platformId
+    });
     
-    // Check if we should use API mode
+    // If API mode requested, use API path
     if (useApi) {
       return await processContentViaApi(params);
     }
     
     // 1. Reset previous state
     await resetExtractionState();
-    logger.background.info('Cleared previous extracted content and tab state');
     
     // 2. Extract content
     const contentType = determineContentType(url, hasSelection);
@@ -48,6 +50,10 @@ export async function processContent(params) {
 
     // 3. Get extracted content and check for specific errors
     const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
+    
+    if (!extractedContent) {
+      throw new Error('Failed to extract content');
+    }
     
     // YouTube transcript error check
     const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);
@@ -68,10 +74,7 @@ export async function processContent(params) {
     }
     
     // 4. Handle prompt resolution
-    // If no promptId provided, use the preferred prompt for this content type
     const effectivePromptId = promptId || await getPreferredPromptId(contentType);
-    
-    // Get prompt content
     const promptContent = await getPromptContentById(effectivePromptId, contentType);
     
     if (!promptContent) {
@@ -84,7 +87,6 @@ export async function processContent(params) {
     }
     
     // 5. Open AI platform with the content
-    // If no platformId provided, use the preferred platform
     const effectivePlatformId = platformId || await getPreferredAiPlatform();
     
     const aiPlatformTabId = await openAiPlatformWithContent(contentType, effectivePromptId, effectivePlatformId);
@@ -121,18 +123,14 @@ export async function processContent(params) {
 export async function handleProcessContentRequest(message, sendResponse) {
   try {
     const { tabId, contentType, promptId, platformId, url, hasSelection, commentAnalysisRequired, useApi } = message;
-    logger.background.info(`Process content request from popup for tab ${tabId}, type: ${contentType}, promptId: ${promptId}, platform: ${platformId}, hasSelection: ${hasSelection}, useApi: ${useApi}`);
-
-    // Call centralized content processing function with API mode parameter
-    const result = await processContent({
-      tabId,
-      url,
-      hasSelection,
-      promptId,
-      platformId,
-      commentAnalysisRequired,
-      useApi // Pass through API mode flag
+    logger.background.info(`Process content request for tab ${tabId}`, {
+      contentType, promptId, platformId, hasSelection, useApi
     });
+
+    // Call appropriate processing function based on API flag
+    const result = useApi 
+      ? await processContentViaApi(message)
+      : await processContent(message);
 
     sendResponse(result);
   } catch (error) {
@@ -154,7 +152,7 @@ export async function handleProcessContentViaApiRequest(message, sendResponse) {
     const result = await processContentViaApi(message);
     sendResponse(result);
   } catch (error) {
-    logger.background.error('Error in API content porcessing:', error);
+    logger.background.error('Error in API content processing:', error);
     sendResponse({
       success: false,
       error: error.message

@@ -21,9 +21,9 @@ class ApiServiceManager {
    * @param {Object} requestConfig.contentData - Extracted content data
    * @param {string} requestConfig.prompt - Formatted prompt
    * @param {string} [requestConfig.model] - Optional model override
-   * @param {Array} [requestConfig.conversationHistory=[]] - Optional conversation history
-   * @param {boolean} [requestConfig.streaming=false] - Whether to use streaming
-   * @param {Function} [requestConfig.onChunk=null] - Callback for streaming chunks
+   * @param {Array} [requestConfig.conversationHistory] - Optional conversation history
+   * @param {boolean} [requestConfig.streaming] - Whether to use streaming
+   * @param {Function} [requestConfig.onChunk] - Callback for streaming chunks
    * @returns {Promise<Object>} API response
    */
   async processWithUnifiedConfig(platformId, requestConfig) {
@@ -61,32 +61,6 @@ class ApiServiceManager {
       };
     }
   }
-
-  // /**
-  //  * Process content through API with streaming as the core functionality
-  //  * Legacy method for backward compatibility
-  //  * @deprecated Use processWithUnifiedConfig instead
-  //  * 
-  //  * @param {string} platformId - Platform identifier
-  //  * @param {Object} contentData - Extracted content data
-  //  * @param {string} prompt - Formatted prompt
-  //  * @param {Function} [onChunk] - Optional callback for stream chunks
-  //  * @param {Array} [conversationHistory] - Optional conversation history for context
-  //  * @param {string} [specifiedModel] - Optional specific model to use (overrides automatic selection)
-  //  * @returns {Promise<Object>} API response
-  //  */
-  // async processContent(platformId, contentData, prompt, onChunk = null, conversationHistory = [], specifiedModel = null) {
-  //   logger.warn('Using deprecated processContent() method - please migrate to processWithUnifiedConfig()');
-    
-  //   return this.processWithUnifiedConfig(platformId, {
-  //     contentData,
-  //     prompt,
-  //     model: specifiedModel,
-  //     conversationHistory,
-  //     streaming: !!onChunk,
-  //     onChunk
-  //   });
-  // }
 
   /**
    * Verify API credentials with lightweight validation
@@ -160,7 +134,7 @@ class ApiServiceManager {
   /**
    * Get available models for a platform
    * @param {string} platformId - Platform identifier
-   * @returns {Promise<Array<string>|null>} Available models
+   * @returns {Promise<Array<Object>|null>} Available models
    */
   async getAvailableModels(platformId) {
     try {

@@ -20,10 +20,10 @@ export function SidebarChatProvider({ children }) {
   const [streamingMessageId, setStreamingMessageId] = useState(null);
   const [streamingContent, setStreamingContent] = useState('');
 
-  // Use the centralized content processing hook
+  // Use the updated content processing hook
   const {
-    processContentStreaming,
-    extractionStatus,
+    processContentViaApi,
+    processingStatus,
     error: processingError,
     reset: resetContentProcessing
   } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
@@ -181,12 +181,13 @@ export function SidebarChatProvider({ children }) {
           timestamp: msg.timestamp
         }));
 
-      // Process with streaming API using the hook - background will handle extraction
-      const result = await processContentStreaming({
+      // Process with API using the updated method - now with streaming flag
+      const result = await processContentViaApi({
         platformId: selectedPlatformId,
         modelId: selectedModel,
         promptContent: text.trim(),
-        conversationHistory, // Include conversation history
+        conversationHistory,
+        streaming: true, // Enable streaming mode
         onStreamChunk: () => {} // Stream handling is done via the effect
       });
 
@@ -228,7 +229,7 @@ export function SidebarChatProvider({ children }) {
       sendMessage,
       clearChat,
       isProcessing,
-      extractionStatus,
+      processingStatus,
       apiError: processingError,
       contentType
     }}>

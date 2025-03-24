@@ -5,8 +5,8 @@ import { INTERFACE_SOURCES, CONTENT_TYPES } from '../shared/constants';
 import { determineContentType } from '../shared/content-utils';
 
 /**
- * Hook for unified content extraction and processing
- * Works for both popup and sidebar interfaces
+ * Hook for content extraction and processing
+ * Supports both popup (web interface) and sidebar (API) paths
  * @param {string} source - Source interface (popup or sidebar)
  * @returns {Object} - Methods and state for content extraction and processing
  */
@@ -24,7 +24,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   // Cleanup function when component unmounts
   useEffect(() => {
     return () => {
-      console.log('Cleaning up listeners');
       if (streamId) {
         chrome.runtime.sendMessage({
           action: 'cancelStream',
@@ -38,12 +37,10 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   useEffect(() => {
     const getCurrentTab = async () => {
       try {
-        console.log('Fetching current tab information');
         const queryOptions = { active: true, currentWindow: true };
         const [tab] = await chrome.tabs.query(queryOptions);
         if (tab) {
           setCurrentTab(tab);
-          // Use the imported determineContentType function
           const type = tab.url ? determineContentType(tab.url) : CONTENT_TYPES.GENERAL;
           setContentType(type);
         }
@@ -56,22 +53,15 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   }, []);
 
   /**
-   * Process content with extraction handled by background
-   * @param {Object} options - Processing options
-   * @returns {Promise<Object>} - Processing result
+   * Process content with web AI platform (non-API path)
+   * Used by popup to extract content and send to web UI
    */
   const processContent = useCallback(async (options = {}) => {
     const {
       platformId,
       promptId,
-      promptContent,
       hasSelection = false,
-      commentAnalysisRequired = false,
-      useApi = false,
-      streaming = false,
-      onStreamChunk = null,
-      modelId = null,
-      conversationHistory = [] // Add conversation history parameter
+      commentAnalysisRequired = false
     } = options;
 
     if (!currentTab?.id) {
@@ -88,15 +78,12 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       throw error;
     }
 
-    console.log('Starting content processing with internal extraction');
     setProcessingStatus('loading');
     setError(null);
-    setProcessedContent(null);
 
     try {
-      // This now uses the consolidated background flow that handles extraction internally
-      const request = {
-        action: useApi ? 'processContentViaApi' : 'processContent',
+      const response = await chrome.runtime.sendMessage({
+        action: 'processContent',
         tabId: currentTab.id,
         url: currentTab.url,
         platformId,
@@ -105,34 +92,87 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         hasSelection,
         commentAnalysisRequired,
         source,
-        useApi
-      };
-
-      if (modelId) {
-        request.modelId = modelId;
-      }
-
-      if (promptContent) {
-        request.customPrompt = promptContent;
-      }
-
-      if (streaming && useApi) {
-        request.streaming = true;
-      }
-
-      // Add conversation history to request if present
-      if (conversationHistory && conversationHistory.length > 0) {
-        request.conversationHistory = conversationHistory;
-      }
-
-      const response = await chrome.runtime.sendMessage(request);
+        useApi: false
+      });
 
       if (!response || !response.success) {
         const errorMsg = response?.error || 'Processing failed';
         throw new Error(errorMsg);
       }
 
-      if (streaming && useApi && response.streamId && onStreamChunk) {
+      setProcessingStatus('success');
+      return response;
+    } catch (error) {
+      console.error('Processing error:', error);
+      setError(error);
+      setProcessingStatus('error');
+      throw error;
+    }
+  }, [currentTab, contentType, source]);
+
+  /**
+   * Process content directly with API (API path)
+   * Used by sidebar for in-extension chat
+   */
+  const processContentViaApi = useCallback(async (options = {}) => {
+    const {
+      platformId,
+      promptId,
+      promptContent,
+      hasSelection = false,
+      modelId = null,
+      streaming = false,
+      onStreamChunk = null,
+      conversationHistory = []
+    } = options;
+
+    if (!currentTab?.id) {
+      const error = new Error('No active tab available');
+      setError(error);
+      setProcessingStatus('error');
+      throw error;
+    }
+
+    if (!platformId) {
+      const error = new Error('No AI platform selected');
+      setError(error);
+      setProcessingStatus('error');
+      throw error;
+    }
+
+    setProcessingStatus('loading');
+    setError(null);
+    setProcessedContent(null);
+
+    try {
+      // Prepare unified request configuration
+      const request = {
+        action: 'processContentViaApi',
+        tabId: currentTab.id,
+        url: currentTab.url,
+        platformId,
+        promptId,
+        contentType,
+        hasSelection,
+        source,
+        streaming
+      };
+
+      // Add optional parameters if provided
+      if (modelId) request.modelId = modelId;
+      if (promptContent) request.customPrompt = promptContent;
+      if (conversationHistory?.length > 0) request.conversationHistory = conversationHistory;
+      if (streaming && onStreamChunk) request.streaming = true;
+
+      const response = await chrome.runtime.sendMessage(request);
+
+      if (!response || !response.success) {
+        const errorMsg = response?.error || 'API processing failed';
+        throw new Error(errorMsg);
+      }
+
+      // Handle streaming response
+      if (streaming && response.streamId && onStreamChunk) {
         setStreamId(response.streamId);
 
         const messageListener = (message) => {
@@ -147,22 +187,15 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         };
 
         chrome.runtime.onMessage.addListener(messageListener);
-
-        // Return consistent object format instead of just streamId
-        return {
-          success: true,
-          streamId: response.streamId
-        };
-      } else if (useApi) {
-        setProcessedContent(response.response);
-        setProcessingStatus('success');
         return response;
-      } else {
-        setProcessingStatus('success');
-        return response;
-      }
+      } 
+      
+      // Handle non-streaming response
+      setProcessedContent(response.response);
+      setProcessingStatus('success');
+      return response;
     } catch (error) {
-      console.error('Processing error:', error);
+      console.error('API processing error:', error);
       setError(error);
       setProcessingStatus('error');
       throw error;
@@ -170,26 +203,9 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   }, [currentTab, contentType, source]);
 
   /**
-   * Process content with streaming (optimized for sidebar chat)
-   * @param {Object} options - Processing options
-   * @returns {Promise<Object>} - Processing result with stream ID
-   */
-  const processContentStreaming = useCallback(async (options = {}) => {
-    const streamingOptions = {
-      ...options,
-      useApi: true,
-      streaming: true,
-      // Ensure conversation history is passed if provided
-      conversationHistory: options.conversationHistory || []
-    };
-    return processContent(streamingOptions);
-  }, [processContent]);
-
-  /**
    * Reset all state
    */
   const reset = useCallback(() => {
-    console.log('Resetting state');
     setProcessingStatus('idle');
     setProcessedContent(null);
     setStreamId(null);
@@ -197,8 +213,11 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   }, []);
 
   return {
-    processContent,
-    processContentStreaming,
+    // Core processing methods
+    processContent,  // For popup/web interface path
+    processContentViaApi,  // For sidebar/API path
+
+    // State management
     reset,
     processingStatus,
     processedContent,
@@ -206,6 +225,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     currentTab,
     contentType,
     streamId,
+    
+    // Helper states
     isProcessing: processingStatus === 'loading',
     isStreaming: !!streamId,
     hasError: !!error,
