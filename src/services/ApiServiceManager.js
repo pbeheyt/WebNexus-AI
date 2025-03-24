@@ -15,18 +15,24 @@ class ApiServiceManager {
   }
 
   /**
-   * Process content through API with streaming as the core functionality
+   * Process content through API with unified request configuration
    * @param {string} platformId - Platform identifier
-   * @param {Object} contentData - Extracted content data
-   * @param {string} prompt - Formatted prompt
-   * @param {Function} [onChunk] - Optional callback for stream chunks
-   * @param {Array} [conversationHistory] - Optional conversation history for context
-   * @param {string} [specifiedModel] - Optional specific model to use (overrides automatic selection)
+   * @param {Object} requestConfig - Unified request configuration object
+   * @param {Object} requestConfig.contentData - Extracted content data
+   * @param {string} requestConfig.prompt - Formatted prompt
+   * @param {string} [requestConfig.model] - Optional model override
+   * @param {Array} [requestConfig.conversationHistory=[]] - Optional conversation history
+   * @param {boolean} [requestConfig.streaming=false] - Whether to use streaming
+   * @param {Function} [requestConfig.onChunk=null] - Callback for streaming chunks
    * @returns {Promise<Object>} API response
    */
-  async processContent(platformId, contentData, prompt, onChunk = null, conversationHistory = [], specifiedModel = null) {
+  async processWithUnifiedConfig(platformId, requestConfig) {
     try {
-      logger.info(`Processing content through ${platformId} API with streaming enabled`);
+      logger.info(`Processing content through ${platformId} API with unified config:`, {
+        hasStreaming: !!requestConfig.streaming,
+        hasHistory: Array.isArray(requestConfig.conversationHistory) && requestConfig.conversationHistory.length > 0,
+        hasModel: !!requestConfig.model
+      });
 
       // Get credentials
       const credentials = await this.credentialManager.getCredentials(platformId);
@@ -43,31 +49,8 @@ class ApiServiceManager {
       // Initialize API service
       await apiService.initialize(credentials);
 
-      // Use explicitly specified model or determine model using service
-      let modelToUse;
-      if (specifiedModel) {
-        modelToUse = specifiedModel;
-        logger.info(`Using specified model from tab preferences: ${modelToUse}`);
-      } else {
-        modelToUse = await this.modelParameterService.determineModelToUse(platformId);
-        logger.info(`Using model from ModelParameterService: ${modelToUse}`);
-      }
-
-      // Process with streaming or fallback to non-streaming
-      if (onChunk) {
-        // Format content for structured prompt
-        const formattedContent = apiService._formatContent(contentData);
-        const structuredPrompt = apiService._createStructuredPrompt(
-          prompt,
-          formattedContent,
-          conversationHistory
-        );
-
-        return await apiService._processWithApiStreaming(structuredPrompt, onChunk, conversationHistory, modelToUse);
-      } else {
-        // Use regular process method with conversation history for backward compatibility
-        return await apiService.process(contentData, prompt, modelToUse, conversationHistory);
-      }
+      // Process the request using the unified interface
+      return await apiService.processRequest(requestConfig);
     } catch (error) {
       logger.error(`Error processing content through ${platformId} API:`, error);
       return {
@@ -76,6 +59,65 @@ class ApiServiceManager {
         platformId,
         timestamp: new Date().toISOString()
       };
+    }
+  }
+
+  // /**
+  //  * Process content through API with streaming as the core functionality
+  //  * Legacy method for backward compatibility
+  //  * @deprecated Use processWithUnifiedConfig instead
+  //  * 
+  //  * @param {string} platformId - Platform identifier
+  //  * @param {Object} contentData - Extracted content data
+  //  * @param {string} prompt - Formatted prompt
+  //  * @param {Function} [onChunk] - Optional callback for stream chunks
+  //  * @param {Array} [conversationHistory] - Optional conversation history for context
+  //  * @param {string} [specifiedModel] - Optional specific model to use (overrides automatic selection)
+  //  * @returns {Promise<Object>} API response
+  //  */
+  // async processContent(platformId, contentData, prompt, onChunk = null, conversationHistory = [], specifiedModel = null) {
+  //   logger.warn('Using deprecated processContent() method - please migrate to processWithUnifiedConfig()');
+    
+  //   return this.processWithUnifiedConfig(platformId, {
+  //     contentData,
+  //     prompt,
+  //     model: specifiedModel,
+  //     conversationHistory,
+  //     streaming: !!onChunk,
+  //     onChunk
+  //   });
+  // }
+
+  /**
+   * Verify API credentials with lightweight validation
+   * @param {string} platformId - Platform identifier
+   * @param {Object} [credentials] - Optional credentials (if not provided, stored credentials will be used)
+   * @returns {Promise<boolean>} Validation result
+   */
+  async validateCredentials(platformId, credentials = null) {
+    try {
+      // Get credentials if not provided
+      const credentialsToUse = credentials || await this.credentialManager.getCredentials(platformId);
+      
+      if (!credentialsToUse) {
+        logger.warn(`No credentials available for ${platformId}`);
+        return false;
+      }
+      
+      // Create API service
+      const apiService = ApiFactory.createApiService(platformId);
+      if (!apiService) {
+        throw new Error(`API service not available for ${platformId}`);
+      }
+      
+      // Initialize with credentials
+      await apiService.initialize(credentialsToUse);
+      
+      // Use lightweight validation method
+      return await apiService.validateCredentials();
+    } catch (error) {
+      logger.error(`Error validating credentials for ${platformId}:`, error);
+      return false;
     }
   }
 

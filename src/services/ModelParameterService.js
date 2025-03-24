@@ -1,6 +1,7 @@
 // src/services/ModelParameterService.js
 const TokenCalculationService = require('./TokenCalculationService');
 const { STORAGE_KEYS } = require('../shared/constants');
+const logger = require('../utils/logger').service;
 
 /**
  * Service for managing model-specific parameters
@@ -79,29 +80,29 @@ class ModelParameterService {
     }
   }
 
-  /**
-   * Get sidebar-selected model if available
-   * @param {string} platformId - Platform ID
-   * @returns {Promise<string|null>} Selected model or null
-   */
-  async getSidebarModelSelection(platformId) {
-    try {
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
-      const modelPreferences = result[STORAGE_KEYS.SIDEBAR_MODEL] || {};
+  // /**
+  //  * Get sidebar-selected model if available
+  //  * @param {string} platformId - Platform ID
+  //  * @returns {Promise<string|null>} Selected model or null
+  //  */
+  // async getSidebarModelSelection(platformId) {
+  //   try {
+  //     const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_MODEL);
+  //     const modelPreferences = result[STORAGE_KEYS.SIDEBAR_MODEL] || {};
 
-      // Check if a model is selected for this platform
-      if (modelPreferences[platformId]) {
-        const selectedModel = modelPreferences[platformId];
-        console.log(`[ModelParameterService] Found sidebar model selection for ${platformId}: ${selectedModel}`);
-        return selectedModel;
-      }
+  //     // Check if a model is selected for this platform
+  //     if (modelPreferences[platformId]) {
+  //       const selectedModel = modelPreferences[platformId];
+  //       console.log(`[ModelParameterService] Found sidebar model selection for ${platformId}: ${selectedModel}`);
+  //       return selectedModel;
+  //     }
 
-      return null;
-    } catch (error) {
-      console.error('Error getting sidebar model selection:', error);
-      return null;
-    }
-  }
+  //     return null;
+  //   } catch (error) {
+  //     console.error('Error getting sidebar model selection:', error);
+  //     return null;
+  //   }
+  // }
 
   /**
    * Determine which model to use based on all available sources
@@ -133,18 +134,18 @@ class ModelParameterService {
     }
 
     // Check for sidebar selection
-    const sidebarModel = await this.getSidebarModelSelection(platformId);
-    if (sidebarModel) {
-      console.log(`[ModelParameterService] Using sidebar-selected model: ${sidebarModel}`);
-      return sidebarModel;
-    }
+    // const sidebarModel = await this.getSidebarModelSelection(platformId);
+    // if (sidebarModel) {
+    //   console.log(`[ModelParameterService] Using sidebar-selected model: ${sidebarModel}`);
+    //   return sidebarModel;
+    // }
 
     // Try to get user settings
-    const userSettings = await this.getUserModelSettings(platformId, null);
-    if (userSettings.model) {
-      console.log(`[ModelParameterService] Using model from user settings: ${userSettings.model}`);
-      return userSettings.model;
-    }
+    // const userSettings = await this.getUserModelSettings(platformId, null);
+    // if (userSettings.model) {
+    //   console.log(`[ModelParameterService] Using model from user settings: ${userSettings.model}`);
+    //   return userSettings.model;
+    // }
 
     // Fall back to default model from platform config
     const config = await this.loadPlatformConfig();
@@ -155,58 +156,58 @@ class ModelParameterService {
       return defaultModel;
     }
 
-    // Fallback to hardcoded defaults
-    const defaults = {
-      'chatgpt': 'gpt-4o',
-      'claude': 'claude-3-7-sonnet-latest',
-      'gemini': 'gemini-1.5-flash',
-      'mistral': 'mistral-large-latest',
-      'deepseek': 'deepseek-chat',
-      'grok': 'grok-2-1212'
-    };
+    // // Fallback to hardcoded defaults
+    // const defaults = {
+    //   'chatgpt': 'gpt-4o',
+    //   'claude': 'claude-3-7-sonnet-latest',
+    //   'gemini': 'gemini-1.5-flash',
+    //   'mistral': 'mistral-large-latest',
+    //   'deepseek': 'deepseek-chat',
+    //   'grok': 'grok-2-1212'
+    // };
 
     console.log(`[ModelParameterService] Using fallback default model: ${defaults[platformId] || 'gpt-4o'}`);
     return defaults[platformId] || 'gpt-4o';
   }
 
-  /**
-   * Save user-defined model settings
-   * @param {string} platformId - Platform ID
-   * @param {string} modelId - Model ID
-   * @param {Object} settings - Settings to save
-   * @returns {Promise<boolean>} Success indicator
-   */
-  async saveUserModelSettings(platformId, modelId, settings) {
-    try {
-      // Get existing settings
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
-      const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
+  // /**
+  //  * Save user-defined model settings
+  //  * @param {string} platformId - Platform ID
+  //  * @param {string} modelId - Model ID
+  //  * @param {Object} settings - Settings to save
+  //  * @returns {Promise<boolean>} Success indicator
+  //  */
+  // async saveUserModelSettings(platformId, modelId, settings) {
+  //   try {
+  //     // Get existing settings
+  //     const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+  //     const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
 
-      // Ensure platform settings exist
-      if (!advancedSettings[platformId]) {
-        advancedSettings[platformId] = {
-          default: {},
-          models: {}
-        };
-      }
+  //     // Ensure platform settings exist
+  //     if (!advancedSettings[platformId]) {
+  //       advancedSettings[platformId] = {
+  //         default: {},
+  //         models: {}
+  //       };
+  //     }
 
-      // Ensure models object exists
-      if (!advancedSettings[platformId].models) {
-        advancedSettings[platformId].models = {};
-      }
+  //     // Ensure models object exists
+  //     if (!advancedSettings[platformId].models) {
+  //       advancedSettings[platformId].models = {};
+  //     }
 
-      // Update model settings
-      advancedSettings[platformId].models[modelId] = settings;
+  //     // Update model settings
+  //     advancedSettings[platformId].models[modelId] = settings;
 
-      // Save back to storage
-      await chrome.storage.sync.set({ [STORAGE_KEYS.API_ADVANCED_SETTINGS]: advancedSettings });
+  //     // Save back to storage
+  //     await chrome.storage.sync.set({ [STORAGE_KEYS.API_ADVANCED_SETTINGS]: advancedSettings });
 
-      return true;
-    } catch (error) {
-      console.error('Error saving user model settings:', error);
-      return false;
-    }
-  }
+  //     return true;
+  //   } catch (error) {
+  //     console.error('Error saving user model settings:', error);
+  //     return false;
+  //   }
+  // }
 
   /**
    * Save default settings for a platform
@@ -247,16 +248,24 @@ class ModelParameterService {
    * @param {string} prompt - The prompt to send (for token calculations)
    * @returns {Promise<Object>} Resolved parameters
    */
-  async resolveParameters(platformId, modelToUse, prompt) {
+  async resolveParameters(platformId, modelToUse = null, prompt) {
     try {
+
+      logger.info(`Resolving parameters for ${platformId}/${modelToUse}`);
+      // Determine model to use if not provided
+      if (!modelToUse) {
+        modelToUse = await this.determineModelToUse(platformId);
+      }
+
+      logger.error(`Model to use: ${modelToUse}`);
       // Get model config from platform config for the resolved model
       const modelConfig = await this.getModelConfig(platformId, modelToUse);
       if (!modelConfig) {
         throw new Error(`Model configuration not found for ${modelToUse}`);
       }
 
-      // Get user settings for this model
-      const userSettings = await this.getUserModelSettings(platformId, modelToUse);
+      // // Get user settings for this model
+      // const userSettings = await this.getUserModelSettings(platformId, modelToUse);
 
       // Start with model defaults
       const params = {

@@ -10,106 +10,112 @@ class ClaudeApiService extends BaseApiService {
     super('claude');
   }
   
-  /**
-   * Process with model-specific parameters
-   * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
-   * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
-   * @returns {Promise<Object>} API response
-   */
-  async _processWithModel(text, model, apiKey, params) {
-    const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
+  // /**
+  //  * Process with model-specific parameters
+  //  * @param {string} text - Prompt text
+  //  * @param {string} model - Model ID to use
+  //  * @param {string} apiKey - API key
+  //  * @param {Object} params - Resolved parameters including conversation history
+  //  * @returns {Promise<Object>} API response
+  //  */
+  // async _processWithModel(text, model, apiKey, params) {
+  //   const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
     
-    try {
-      // Use params.model if available (from sidebar selection), otherwise fall back to passed model
-      const modelToUse = params.model || model;
+  //   try {
+  //     // Use params.model if available (from sidebar selection), otherwise fall back to passed model
+  //     const modelToUse = params.model || model;
       
-      this.logger.info(`Making Claude API request with model: ${modelToUse}`);
+  //     this.logger.info(`Making Claude API request with model: ${modelToUse}`);
       
-      // Create the request payload with model-specific parameters
-      const requestPayload = {
-        model: modelToUse, // Use the determined model
-        max_tokens: params.effectiveMaxTokens,
-        messages: [
-          { 
-            role: 'user', 
-            content: [
-              {
-                type: "text",
-                text: text
-              }
-            ]
-          }
-        ]
-      };
+  //     // Create the request payload with model-specific parameters
+  //     const requestPayload = {
+  //       model: modelToUse, // Use the determined model
+  //       max_tokens: params.effectiveMaxTokens,
+  //       messages: [
+  //         { 
+  //           role: 'user', 
+  //           content: [
+  //             {
+  //               type: "text",
+  //               text: text
+  //             }
+  //           ]
+  //         }
+  //       ]
+  //     };
       
-      // Add temperature if supported
-      if (params.supportsTemperature) {
-        requestPayload.temperature = params.temperature;
-      }
+  //     // Add temperature if supported
+  //     if (params.supportsTemperature) {
+  //       requestPayload.temperature = params.temperature;
+  //     }
       
-      // Add system prompt if specified in advanced settings
-      if (params.systemPrompt) {
-        requestPayload.system = params.systemPrompt;
-      }
+  //     // Add system prompt if specified in advanced settings
+  //     if (params.systemPrompt) {
+  //       requestPayload.system = params.systemPrompt;
+  //     }
       
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': true
-        },
-        body: JSON.stringify(requestPayload)
-      });
+  //     // Add conversation history if available (format for Claude API)
+  //     if (params.conversationHistory && params.conversationHistory.length > 0) {
+  //       // Replace the default message with formatted history
+  //       requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, text);
+  //     }
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          `API error (${response.status}): ${errorData.error?.message || response.statusText}`
-        );
-      }
+  //     const response = await fetch(endpoint, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'x-api-key': apiKey,
+  //         'anthropic-version': '2023-06-01',
+  //         'anthropic-dangerous-direct-browser-access': true
+  //       },
+  //       body: JSON.stringify(requestPayload)
+  //     });
       
-      const responseData = await response.json();
+  //     if (!response.ok) {
+  //       const errorData = await response.json().catch(() => ({}));
+  //       throw new Error(
+  //         `API error (${response.status}): ${errorData.error?.message || response.statusText}`
+  //       );
+  //     }
       
-      return {
-        success: true,
-        content: responseData.content[0].text,
-        model: responseData.model,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString(),
-        usage: responseData.usage,
-        metadata: {
-          responseId: responseData.id,
-          parameters: {
-            modelUsed: modelToUse,
-            maxTokens: params.effectiveMaxTokens,
-            temperature: params.temperature
-          }
-        }
-      };
-    } catch (error) {
-      this.logger.error('API processing error:', error);
+  //     const responseData = await response.json();
       
-      return {
-        success: false,
-        error: error.message,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
+  //     return {
+  //       success: true,
+  //       content: responseData.content[0].text,
+  //       model: responseData.model,
+  //       platformId: this.platformId,
+  //       timestamp: new Date().toISOString(),
+  //       usage: responseData.usage,
+  //       metadata: {
+  //         responseId: responseData.id,
+  //         parameters: {
+  //           modelUsed: modelToUse,
+  //           maxTokens: params.effectiveMaxTokens,
+  //           temperature: params.temperature
+  //         }
+  //       }
+  //     };
+  //   } catch (error) {
+  //     this.logger.error('API processing error:', error);
+      
+  //     return {
+  //       success: false,
+  //       error: error.message,
+  //       platformId: this.platformId,
+  //       timestamp: new Date().toISOString()
+  //     };
+  //   }
+  // }
 
   /**
    * Process with model-specific parameters using streaming
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
    * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
+   * @param {Object} params - Resolved parameters including conversation history
    * @param {Function} onChunk - Callback function for each chunk
-   * @returns {Promise<Object>} API
+   * @returns {Promise<Object>} API response
    */
   async _processWithModelStreaming(text, model, apiKey, params, onChunk) {
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
@@ -145,6 +151,12 @@ class ClaudeApiService extends BaseApiService {
       // Add system prompt if specified in advanced settings
       if (params.systemPrompt) {
         requestPayload.system = params.systemPrompt;
+      }
+      
+      // Add conversation history if available (format for Claude API)
+      if (params.conversationHistory && params.conversationHistory.length > 0) {
+        // Replace the default message with formatted history
+        requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, text);
       }
       
       const response = await fetch(endpoint, {
@@ -237,17 +249,85 @@ class ClaudeApiService extends BaseApiService {
   }
 
   /**
-   * Verify API credentials are valid
-   * @returns {Promise<boolean>} Validation result
+   * Format conversation history for Claude API
+   * @param {Array} history - Conversation history array
+   * @param {string} currentPrompt - Current user prompt
+   * @returns {Array} Formatted messages for Claude API
    */
-  async validateCredentials() {
+  _formatClaudeMessages(history, currentPrompt) {
+    const formattedMessages = [];
+    
+    // Process conversation history
+    for (const message of history) {
+      // Map internal role to Claude role
+      const role = message.role === 'assistant' ? 'assistant' : 'user';
+      
+      formattedMessages.push({
+        role: role,
+        content: [
+          {
+            type: "text",
+            text: message.content
+          }
+        ]
+      });
+    }
+    
+    // Add current prompt as the final user message
+    formattedMessages.push({
+      role: 'user',
+      content: [
+        {
+          type: "text",
+          text: currentPrompt
+        }
+      ]
+    });
+    
+    return formattedMessages;
+  }
+  
+  /**
+   * Platform-specific validation implementation for Claude
+   * @protected
+   * @param {string} apiKey - The API key to validate
+   * @param {string} model - The model to use for validation
+   * @returns {Promise<boolean>} Whether the API key is valid
+   */
+  async _validateWithModel(apiKey, model) {
+    const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
+    
     try {
-      // Make a minimal request to validate credentials
-      const testPrompt = "Hello, this is a test request to validate API credentials.";
-      const response = await this._processWithApi(testPrompt);
-      return response.success === true;
+      // Make a minimal validation request
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': true
+        },
+        body: JSON.stringify({
+          model: model, // Use the default model from config
+          max_tokens: 1, // Minimum tokens needed
+          messages: [
+            { 
+              role: 'user', 
+              content: [
+                {
+                  type: "text",
+                  text: "API validation check"
+                }
+              ]
+            }
+          ]
+        })
+      });
+      
+      // Just check if we get a valid response (not error)
+      return response.ok;
     } catch (error) {
-      this.logger.error('Credential validation failed:', error);
+      this.logger.error('API key validation error:', error);
       return false;
     }
   }

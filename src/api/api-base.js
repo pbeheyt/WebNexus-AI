@@ -25,22 +25,102 @@ class BaseApiService extends ApiInterface {
   }
 
   /**
-   * Process content through the API service
-   * @param {Object} contentData - Extracted content data
-   * @param {string} prompt - Formatted prompt
-   * @param {string} model - Model to use
-   * @param {Array} conversationHistory - Conversation history
+   * Process unified API request with complete configuration
+   * This is the main entry point for all API interactions
+   * 
+   * @param {Object} requestConfig - Unified request configuration
+   * @param {Object} requestConfig.contentData - Extracted content data
+   * @param {string} requestConfig.prompt - Formatted prompt
+   * @param {string} [requestConfig.model] - Optional model override
+   * @param {Array} [requestConfig.conversationHistory=[]] - Optional conversation history
+   * @param {boolean} [requestConfig.streaming=false] - Whether to use streaming mode
+   * @param {Function} [requestConfig.onChunk=null] - Callback for streaming chunks
    * @returns {Promise<Object>} Standardized response object
    */
+  async processRequest(requestConfig) {
+    // Normalize and validate the request configuration
+    const normalizedConfig = this._normalizeRequestConfig(requestConfig);
+    
+    // Format content and create structured prompt with conversation history
+    const formattedContent = this._formatContent(normalizedConfig.contentData);
+    const structuredPrompt = this._createStructuredPrompt(
+      normalizedConfig.prompt,
+      formattedContent,
+      normalizedConfig.conversationHistory
+    );
+    
+    // Process the request with appropriate mode (streaming or non-streaming)
+    if (normalizedConfig.streaming && normalizedConfig.onChunk) {
+      return this._processWithApiStreaming(
+        structuredPrompt,
+        normalizedConfig.onChunk,
+        normalizedConfig.conversationHistory,
+        normalizedConfig.model
+      );
+    } else {
+      this.logger.error('Non-streaming mode is not supported in this platform');
+      return {
+        success: false,
+        error: 'Non-streaming mode is not supported',
+        platformId: this.platformId,
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  /**
+   * Normalize and validate request configuration
+   * @private
+   * @param {Object} requestConfig - Raw request configuration
+   * @returns {Object} Normalized request configuration
+   */
+  _normalizeRequestConfig(requestConfig) {
+    // Create a normalized configuration with defaults
+    const normalizedConfig = {
+      contentData: requestConfig.contentData,
+      prompt: requestConfig.prompt,
+      model: requestConfig.model || null,
+      conversationHistory: Array.isArray(requestConfig.conversationHistory) 
+        ? requestConfig.conversationHistory 
+        : [],
+      streaming: !!requestConfig.streaming,
+      onChunk: typeof requestConfig.onChunk === 'function' 
+        ? requestConfig.onChunk 
+        : null
+    };
+    
+    // Validate required fields
+    if (!normalizedConfig.contentData) {
+      this.logger.warn('No content data provided, using empty object');
+      normalizedConfig.contentData = {};
+    }
+    
+    if (!normalizedConfig.prompt) {
+      this.logger.warn('No prompt provided, using empty prompt');
+      normalizedConfig.prompt = '';
+    }
+    
+    // Streaming requires an onChunk callback
+    if (normalizedConfig.streaming && !normalizedConfig.onChunk) {
+      this.logger.warn('Streaming requested but no onChunk callback provided, disabling streaming');
+      normalizedConfig.streaming = false;
+    }
+    
+    return normalizedConfig;
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use processRequest instead
+   */
   async process(contentData, prompt, model, conversationHistory = []) {
-    // Format content using same logic as platform-base.js
-    const formattedContent = this._formatContent(contentData);
-
-    // Create structured prompt with conversation history
-    const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent, conversationHistory);
-
-    // Process via API with conversation history
-    return this._processWithApi(structuredPrompt, conversationHistory, model);
+    this.logger.warn('Using deprecated process() method - please migrate to processRequest()');
+    return this.processRequest({
+      contentData,
+      prompt,
+      model,
+      conversationHistory
+    });
   }
 
   /**
@@ -127,6 +207,7 @@ ${formattedContent}`;
    * @returns {string} Formatted YouTube data
    */
   _formatYouTubeData(data) {
+    // ... [implementation unchanged] ...
     const title = data.videoTitle || 'No title available';
     const channel = data.channelName || 'Unknown channel';
     const description = data.videoDescription || 'No description available';
@@ -161,6 +242,7 @@ ${commentsText}`;
    * @returns {string} Formatted Reddit data
    */
   _formatRedditData(data) {
+    // ... [implementation unchanged] ...
     const title = data.postTitle || 'No title available';
     const content = data.postContent || 'No content available';
     const author = data.postAuthor || 'Unknown author';
@@ -197,6 +279,7 @@ ${content}
    * @returns {string} Formatted web page data
    */
   _formatGeneralData(data) {
+    // ... [implementation unchanged] ...
     const title = data.pageTitle || 'No title available';
     const url = data.pageUrl || 'Unknown URL';
     const content = data.content || 'No content available';
@@ -233,6 +316,7 @@ ${content}`;
    * @returns {string} Formatted PDF data
    */
   _formatPdfData(data) {
+    // ... [implementation unchanged] ...
     const title = data.pdfTitle || 'Untitled PDF';
     const url = data.pdfUrl || 'Unknown URL';
     const content = data.content || 'No content available';
@@ -296,51 +380,57 @@ ${formattedContent}`;
     return data.text || 'No text selected';
   }
 
-  /**
-   * Process text with the API using centralized model selection
-   * @param {string} text - Prompt text to process
-   * @param {Array} conversationHistory - Conversation history
-   * @param {string} [modelOverride] - Optional model override
-   * @returns {Promise<Object>} API response
-   */
-  async _processWithApi(text, conversationHistory, modelOverride = null) {
-    const { apiKey } = this.credentials;
+  // /**
+  //  * Process text with the API using centralized model selection
+  //  * @private
+  //  * @param {string} text - Prompt text to process
+  //  * @param {Array} conversationHistory - Conversation history
+  //  * @param {string} [modelOverride] - Optional model override
+  //  * @returns {Promise<Object>} API response
+  //  */
+  // async _processWithApi(text, conversationHistory, modelOverride = null) {
+  //   const { apiKey } = this.credentials;
 
-    try {
-      // Get model and parameters from centralized ModelParameterService
-      const params = await ModelParameterService.resolveParameters(
-        this.platformId,
-        text
-      );
+  //   try {
+  //     // Get model and parameters from centralized ModelParameterService
+  //     const params = await ModelParameterService.resolveParameters(
+  //       this.platformId,
+  //       modelOverride,
+  //       text
+  //     );
 
-      // Use model override if provided, otherwise use resolved model
-      const modelToUse = modelOverride || params.model;
+  //     // Use model override if provided, otherwise use resolved model
+  //     const modelToUse = modelOverride || params.model;
       
-      if (modelOverride) {
-        this.logger.info(`Using tab-specific model override: ${modelOverride} (instead of ${params.model})`);
-        // Update the model in params to ensure consistent usage
-        params.model = modelToUse;
-      } else {
-        this.logger.info(`Using model from ModelParameterService: ${modelToUse}`);
-      }
+  //     if (modelOverride) {
+  //       this.logger.info(`Using tab-specific model override: ${modelOverride} (instead of ${params.model})`);
+  //       // Update the model in params to ensure consistent usage
+  //       params.model = modelToUse;
+  //     } else {
+  //       this.logger.info(`Using model from ModelParameterService: ${modelToUse}`);
+  //     }
 
-      // Log parameters being used
-      this.logger.info(`Using model ${modelToUse} with parameters:`, {
-        effectiveMaxTokens: params.effectiveMaxTokens,
-        temperature: params.temperature,
-        parameterStyle: params.parameterStyle
-      });
+  //     // Log parameters being used
+  //     this.logger.info(`Using model ${modelToUse} with parameters:`, {
+  //       effectiveMaxTokens: params.effectiveMaxTokens,
+  //       temperature: params.temperature,
+  //       parameterStyle: params.parameterStyle
+  //     });
 
-      // Each implementation must handle the resolved parameters appropriately
-      return this._processWithModel(text, modelToUse, apiKey, params, conversationHistory);
-    } catch (error) {
-      this.logger.error('Error in _processWithApi:', error);
-      throw error;
-    }
-  }
+  //     // Add conversation history to parameters
+  //     params.conversationHistory = conversationHistory;
+
+  //     // Each implementation must handle the resolved parameters appropriately
+  //     return this._processWithModel(text, modelToUse, apiKey, params);
+  //   } catch (error) {
+  //     this.logger.error('Error in _processWithApi:', error);
+  //     throw error;
+  //   }
+  // }
 
   /**
    * Process text with the API using centralized model selection with streaming support
+   * @private
    * @param {string} text - Prompt text to process
    * @param {function} onChunk - Callback function for receiving text chunks
    * @param {Array} conversationHistory - Conversation history
@@ -376,8 +466,11 @@ ${formattedContent}`;
         parameterStyle: params.parameterStyle
       });
 
+      // Add conversation history to parameters
+      params.conversationHistory = conversationHistory;
+
       // Each implementation must handle the streaming appropriately
-      return this._processWithModelStreaming(text, modelToUse, apiKey, params, onChunk, conversationHistory);
+      return this._processWithModelStreaming(text, modelToUse, apiKey, params, onChunk);
     } catch (error) {
       this.logger.error('Error in _processWithApiStreaming:', error);
       throw error;
@@ -385,29 +478,89 @@ ${formattedContent}`;
   }
 
   /**
-   * Process with model-specific parameters
-   * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
-   * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
-   * @param {Array} conversationHistory - Conversation history
-   * @returns {Promise<Object>} API response
+   * Lightweight validation method that doesn't use the full conversation processing pipeline
+   * @returns {Promise<boolean>} Whether credentials are valid
    */
-  async _processWithModel(text, model, apiKey, params, conversationHistory) {
-    throw new Error('_processWithModel must be implemented by subclasses');
+  async validateCredentials() {
+    try {
+      const { apiKey } = this.credentials;
+      if (!apiKey) {
+        this.logger.warn('No API key provided for validation');
+        return false;
+      }
+      
+      // Platform-specific validation should be implemented in subclasses
+      // This lightweight validation doesn't use the full content processing pipeline
+      const isValid = await this._validateApiKey(apiKey);
+      return isValid;
+    } catch (error) {
+      this.logger.error('Error validating credentials:', error);
+      return false;
+    }
   }
+  
+  /**
+   * Validate an API key with a minimal request
+   * This method should be implemented by subclasses
+   * @protected
+   * @param {string} apiKey - The API key to validate
+   * @returns {Promise<boolean>} Whether the API key is valid
+   */
+  async _validateApiKey(apiKey) {
+    try {
+      // Get the default model from config
+      if (!this.config) {
+        this.config = await this._loadPlatformConfig();
+      }
+      
+      // Get default model from platform config
+      const defaultModel = this.config?.defaultModel;
+      if (!defaultModel) {
+        this.logger.warn('No default model found in configuration');
+        return false;
+      }
+      
+      // Each platform must implement its own validation logic
+      return await this._validateWithModel(apiKey, defaultModel);
+    } catch (error) {
+      this.logger.error('Error validating API key:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Platform-specific validation implementation
+   * @protected
+   * @param {string} apiKey - The API key to validate
+   * @param {string} model - The model to use for validation
+   * @returns {Promise<boolean>} Whether the API key is valid
+   */
+  async _validateWithModel(apiKey, model) {
+    throw new Error('_validateWithModel must be implemented by subclasses');
+  }
+
+  // /**
+  //  * Process with model-specific parameters
+  //  * @param {string} text - Prompt text
+  //  * @param {string} model - Model ID to use
+  //  * @param {string} apiKey - API key
+  //  * @param {Object} params - Resolved parameters with conversation history
+  //  * @returns {Promise<Object>} API response
+  //  */
+  // async _processWithModel(text, model, apiKey, params) {
+  //   throw new Error('_processWithModel must be implemented by subclasses');
+  // }
 
   /**
    * Process with model-specific parameters with streaming support
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
    * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
+   * @param {Object} params - Resolved parameters with conversation history
    * @param {function} onChunk - Callback function for receiving text chunks
-   * @param {Array} conversationHistory - Conversation history
    * @returns {Promise<Object>} API response metadata
    */
-  async _processWithModelStreaming(text, model, apiKey, params, onChunk, conversationHistory) {
+  async _processWithModelStreaming(text, model, apiKey, params, onChunk) {
     throw new Error('_processWithModelStreaming must be implemented by subclasses');
   }
 

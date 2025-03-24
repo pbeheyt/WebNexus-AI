@@ -10,126 +10,138 @@ class GeminiApiService extends BaseApiService {
     super('gemini');
   }
 
-  /**
-   * Process with model-specific parameters
-   * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
-   * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
-   * @returns {Promise<Object>} API response
-   */
-  async _processWithModel(text, model, apiKey, params) {
-    // Get endpoint from config or use default
-    let endpoint = this.config?.endpoint || 
-                   `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
+  // /**
+  //  * Process with model-specific parameters
+  //  * @param {string} text - Prompt text
+  //  * @param {string} model - Model ID to use
+  //  * @param {string} apiKey - API key
+  //  * @param {Object} params - Resolved parameters including conversation history
+  //  * @returns {Promise<Object>} API response
+  //  */
+  // async _processWithModel(text, model, apiKey, params) {
+  //   // Get endpoint from config or use default
+  //   let endpoint = this.config?.endpoint || 
+  //                  `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
 
-    // Replace {model} placeholder if present
-    if (endpoint.includes('{model}')) {
-      endpoint = endpoint.replace('{model}', model);
-    }
+  //   // Replace {model} placeholder if present
+  //   if (endpoint.includes('{model}')) {
+  //     endpoint = endpoint.replace('{model}', model);
+  //   }
 
-    try {
-      this.logger.info(`Making Gemini API request with model: ${model}`);
+  //   try {
+  //     this.logger.info(`Making Gemini API request with model: ${model}`);
 
-      // Gemini API uses API key as a query parameter
-      const url = new URL(endpoint);
-      url.searchParams.append('key', apiKey);
+  //     // Gemini API uses API key as a query parameter
+  //     const url = new URL(endpoint);
+  //     url.searchParams.append('key', apiKey);
 
-      // Create the request payload
-      let fullContent = text;
+  //     // Format content according to Gemini requirements
+  //     let formattedContent = text;
+  //     let formattedRequest;
       
-      // Note: Gemini doesn't support system prompts natively
-      // This is kept for backward compatibility but will be
-      // hidden in the UI via the hasSystemPrompt flag
-      if (params.systemPrompt) {
-        this.logger.warn('Gemini does not officially support system prompts, but appending as regular text');
-        fullContent = `${params.systemPrompt}\n\n${text}`;
-      }
+  //     // Handle conversation history if provided
+  //     if (params.conversationHistory && params.conversationHistory.length > 0) {
+  //       formattedRequest = this._formatGeminiRequestWithHistory(
+  //         params.conversationHistory, 
+  //         text,
+  //         params.systemPrompt
+  //       );
+  //     } else {
+  //       // Note: Gemini doesn't support system prompts natively
+  //       // This is kept for backward compatibility but will be
+  //       // hidden in the UI via the hasSystemPrompt flag
+  //       if (params.systemPrompt) {
+  //         this.logger.warn('Gemini does not officially support system prompts, but appending as regular text');
+  //         formattedContent = `${params.systemPrompt}\n\n${text}`;
+  //       }
+        
+  //       formattedRequest = {
+  //         contents: [
+  //           {
+  //             parts: [
+  //               { text: formattedContent }
+  //             ]
+  //           }
+  //         ]
+  //       };
+  //     }
       
-      const requestPayload = {
-        contents: [
-          {
-            parts: [
-              { text: fullContent }
-            ]
-          }
-        ],
-        generationConfig: {}
-      };
+  //     // Add generation configuration
+  //     formattedRequest.generationConfig = {};
 
-      // Add model-specific parameters
-      if (params.tokenParameter) {
-        requestPayload.generationConfig[params.tokenParameter] = params.effectiveMaxTokens;
-      } else {
-        requestPayload.generationConfig.maxOutputTokens = params.effectiveMaxTokens;
-      }
+  //     // Add model-specific parameters
+  //     if (params.tokenParameter) {
+  //       formattedRequest.generationConfig[params.tokenParameter] = params.effectiveMaxTokens;
+  //     } else {
+  //       formattedRequest.generationConfig.maxOutputTokens = params.effectiveMaxTokens;
+  //     }
 
-      // Add temperature if supported
-      if (params.supportsTemperature) {
-        requestPayload.generationConfig.temperature = params.temperature;
-      }
+  //     // Add temperature if supported
+  //     if (params.supportsTemperature) {
+  //       formattedRequest.generationConfig.temperature = params.temperature;
+  //     }
 
-      // Add top_p if supported
-      if (params.supportsTopP) {
-        requestPayload.generationConfig.topP = params.topP;
-      }
+  //     // Add top_p if supported
+  //     if (params.supportsTopP) {
+  //       formattedRequest.generationConfig.topP = params.topP;
+  //     }
 
-      const response = await fetch(url.toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestPayload)
-      });
+  //     const response = await fetch(url.toString(), {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       },
+  //       body: JSON.stringify(formattedRequest)
+  //     });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          `API error (${response.status}): ${errorData.error?.message || response.statusText}`
-        );
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json().catch(() => ({}));
+  //       throw new Error(
+  //         `API error (${response.status}): ${errorData.error?.message || response.statusText}`
+  //       );
+  //     }
 
-      const responseData = await response.json();
+  //     const responseData = await response.json();
 
-      // Extract content from Gemini's response format
-      const content = responseData.candidates[0].content.parts[0].text;
+  //     // Extract content from Gemini's response format
+  //     const content = responseData.candidates[0].content.parts[0].text;
 
-      return {
-        success: true,
-        content: content,
-        model: model,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString(),
-        usage: responseData.usageMetadata,
-        metadata: {
-          responseId: responseData.candidates[0].finishReason,
-          safetyRatings: responseData.candidates[0].safetyRatings,
-          parameters: {
-            modelUsed: model,
-            maxTokens: params.effectiveMaxTokens,
-            temperature: params.supportsTemperature ? params.temperature : null,
-            topP: params.supportsTopP ? params.topP : null
-          }
-        }
-      };
-    } catch (error) {
-      this.logger.error('API processing error:', error);
+  //     return {
+  //       success: true,
+  //       content: content,
+  //       model: model,
+  //       platformId: this.platformId,
+  //       timestamp: new Date().toISOString(),
+  //       usage: responseData.usageMetadata,
+  //       metadata: {
+  //         responseId: responseData.candidates[0].finishReason,
+  //         safetyRatings: responseData.candidates[0].safetyRatings,
+  //         parameters: {
+  //           modelUsed: model,
+  //           maxTokens: params.effectiveMaxTokens,
+  //           temperature: params.supportsTemperature ? params.temperature : null,
+  //           topP: params.supportsTopP ? params.topP : null
+  //         }
+  //       }
+  //     };
+  //   } catch (error) {
+  //     this.logger.error('API processing error:', error);
 
-      return {
-        success: false,
-        error: error.message,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
+  //     return {
+  //       success: false,
+  //       error: error.message,
+  //       platformId: this.platformId,
+  //       timestamp: new Date().toISOString()
+  //     };
+  //   }
+  // }
   
   /**
    * Process with model-specific parameters and streaming support
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
    * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
+   * @param {Object} params - Resolved parameters including conversation history
    * @param {function} onChunk - Callback function for receiving text chunks
    * @returns {Promise<Object>} API response metadata
    */
@@ -150,41 +162,53 @@ class GeminiApiService extends BaseApiService {
       const url = new URL(endpoint);
       url.searchParams.append('key', apiKey);
       
-      // Create the request payload
-      let fullContent = text;
+      // Format content according to Gemini requirements
+      let formattedContent = text;
+      let formattedRequest;
       
-      // Note: Gemini doesn't support system prompts natively
-      if (params.systemPrompt) {
-        this.logger.warn('Gemini does not officially support system prompts, but appending as regular text');
-        fullContent = `${params.systemPrompt}\n\n${text}`;
+      // Handle conversation history if provided
+      if (params.conversationHistory && params.conversationHistory.length > 0) {
+        formattedRequest = this._formatGeminiRequestWithHistory(
+          params.conversationHistory, 
+          text,
+          params.systemPrompt
+        );
+      } else {
+        // Note: Gemini doesn't support system prompts natively
+        if (params.systemPrompt) {
+          this.logger.warn('Gemini does not officially support system prompts, but appending as regular text');
+          formattedContent = `${params.systemPrompt}\n\n${text}`;
+        }
+        
+        formattedRequest = {
+          contents: [
+            {
+              parts: [
+                { text: formattedContent }
+              ]
+            }
+          ]
+        };
       }
       
-      const requestPayload = {
-        contents: [
-          {
-            parts: [
-              { text: fullContent }
-            ]
-          }
-        ],
-        generationConfig: {}
-      };
+      // Add generation configuration
+      formattedRequest.generationConfig = {};
       
       // Add model-specific parameters
       if (params.tokenParameter) {
-        requestPayload.generationConfig[params.tokenParameter] = params.effectiveMaxTokens;
+        formattedRequest.generationConfig[params.tokenParameter] = params.effectiveMaxTokens;
       } else {
-        requestPayload.generationConfig.maxOutputTokens = params.effectiveMaxTokens;
+        formattedRequest.generationConfig.maxOutputTokens = params.effectiveMaxTokens;
       }
       
       // Add temperature if supported
       if (params.supportsTemperature) {
-        requestPayload.generationConfig.temperature = params.temperature;
+        formattedRequest.generationConfig.temperature = params.temperature;
       }
       
       // Add top_p if supported
       if (params.supportsTopP) {
-        requestPayload.generationConfig.topP = params.topP;
+        formattedRequest.generationConfig.topP = params.topP;
       }
       
       const response = await fetch(url.toString(), {
@@ -192,7 +216,7 @@ class GeminiApiService extends BaseApiService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestPayload)
+        body: JSON.stringify(formattedRequest)
       });
       
       if (!response.ok) {
@@ -207,7 +231,6 @@ class GeminiApiService extends BaseApiService {
       const decoder = new TextDecoder("utf-8");
       let buffer = "";
       let accumulatedContent = "";
-      let jsonBuffer = "";
       
       try {
         while (true) {
@@ -360,17 +383,96 @@ class GeminiApiService extends BaseApiService {
   }
 
   /**
-   * Verify API credentials are valid
-   * @returns {Promise<boolean>} Validation result
+   * Format conversation history for Gemini API
+   * @param {Array} history - Conversation history array
+   * @param {string} currentPrompt - Current user prompt
+   * @param {string} systemPrompt - Optional system prompt
+   * @returns {Object} Formatted request for Gemini API
    */
-  async validateCredentials() {
+  _formatGeminiRequestWithHistory(history, currentPrompt, systemPrompt = null) {
+    const contents = [];
+    
+    // If system prompt is provided, add it as a synthetic first message
+    // NOTE: Gemini doesn't have native system prompts, so we simulate it
+    if (systemPrompt) {
+      this.logger.info('Adding system prompt as a first synthetic user message');
+      contents.push({
+        role: 'user',
+        parts: [{ text: systemPrompt }]
+      });
+      
+      // Add a synthetic model response that acknowledges the instructions
+      contents.push({
+        role: 'model',
+        parts: [{ text: 'I understand the instructions and will follow them.' }]
+      });
+    }
+    
+    // Add conversation history
+    for (const message of history) {
+      // Map internal role to Gemini role
+      const role = message.role === 'assistant' ? 'model' : 'user';
+      
+      contents.push({
+        role: role,
+        parts: [{ text: message.content }]
+      });
+    }
+    
+    // Add current prompt as final user message
+    contents.push({
+      role: 'user',
+      parts: [{ text: currentPrompt }]
+    });
+    
+    return { contents };
+  }
+
+  /**
+   * Platform-specific validation implementation for Gemini
+   * @protected
+   * @param {string} apiKey - The API key to validate
+   * @param {string} model - The model to use for validation
+   * @returns {Promise<boolean>} Whether the API key is valid
+   */
+  async _validateWithModel(apiKey, model) {
+    // Replace {model} in endpoint if present
+    let endpoint = this.config?.endpoint || 
+                   `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
+    
+    if (endpoint.includes('{model}')) {
+      endpoint = endpoint.replace('{model}', model);
+    }
+    
     try {
-      // Make a minimal request to validate credentials
-      const testPrompt = "Hello, this is a test request to validate API credentials.";
-      const response = await this._processWithApi(testPrompt);
-      return response.success === true;
+      // Prepare URL with API key
+      const url = new URL(endpoint);
+      url.searchParams.append('key', apiKey);
+      
+      // Make a minimal validation request
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: "API validation check" }
+              ]
+            }
+          ],
+          generationConfig: {
+            maxOutputTokens: 1
+          }
+        })
+      });
+      
+      // Check if the response is valid
+      return response.ok;
     } catch (error) {
-      this.logger.error('Credential validation failed:', error);
+      this.logger.error('API key validation error:', error);
       return false;
     }
   }

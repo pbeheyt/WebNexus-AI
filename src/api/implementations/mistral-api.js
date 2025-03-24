@@ -10,105 +10,111 @@ class MistralApiService extends BaseApiService {
     super('mistral');
   }
   
-  /**
-   * Process with model-specific parameters
-   * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
-   * @param {string} apiKey - API keyf
-   * @param {Object} params - Resolved parameters
-   * @returns {Promise<Object>} API response
-   */
-  async _processWithModel(text, model, apiKey, params) {
-    const endpoint = this.config?.endpoint || 'https://api.mistral.ai/v1/chat/completions';
+  // /**
+  //  * Process with model-specific parameters
+  //  * @param {string} text - Prompt text
+  //  * @param {string} model - Model ID to use
+  //  * @param {string} apiKey - API key
+  //  * @param {Object} params - Resolved parameters including conversation history
+  //  * @returns {Promise<Object>} API response
+  //  */
+  // async _processWithModel(text, model, apiKey, params) {
+  //   const endpoint = this.config?.endpoint || 'https://api.mistral.ai/v1/chat/completions';
     
-    try {
-      this.logger.info(`Making Mistral API request with model: ${model}`);
+  //   try {
+  //     this.logger.info(`Making Mistral API request with model: ${model}`);
       
-      // Create the request payload
-      const requestPayload = {
-        model: model
-      };
+  //     // Create the request payload
+  //     const requestPayload = {
+  //       model: model
+  //     };
       
-      // Add messages array with system prompt if available
-      const messages = [];
+  //     // Add messages array with system prompt if available
+  //     const messages = [];
       
-      // Add system message if system prompt is specified in advanced settings
-      if (params.systemPrompt) {
-        messages.push({ role: 'system', content: params.systemPrompt });
-      }
+  //     // Add system message if system prompt is specified in advanced settings
+  //     if (params.systemPrompt) {
+  //       messages.push({ role: 'system', content: params.systemPrompt });
+  //     }
       
-      // Add user message
-      messages.push({ role: 'user', content: text });
+  //     // Add conversation history if provided
+  //     if (params.conversationHistory && params.conversationHistory.length > 0) {
+  //       // Format conversation history for Mistral API (same format as OpenAI)
+  //       messages.push(...this._formatMistralMessages(params.conversationHistory));
+  //     }
       
-      requestPayload.messages = messages;
+  //     // Add user message
+  //     messages.push({ role: 'user', content: text });
       
-      // Add token parameter
-      requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;
+  //     requestPayload.messages = messages;
       
-      // Add temperature if supported
-      if (params.supportsTemperature) {
-        requestPayload.temperature = params.temperature;
-      }
+  //     // Add token parameter
+  //     requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;
       
-      // Add top_p if supported
-      if (params.supportsTopP) {
-        requestPayload.top_p = params.topP;
-      }
+  //     // Add temperature if supported
+  //     if (params.supportsTemperature) {
+  //       requestPayload.temperature = params.temperature;
+  //     }
       
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(requestPayload)
-      });
+  //     // Add top_p if supported
+  //     if (params.supportsTopP) {
+  //       requestPayload.top_p = params.topP;
+  //     }
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          `API error (${response.status}): ${errorData.error?.message || response.statusText}`
-        );
-      }
+  //     const response = await fetch(endpoint, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${apiKey}`
+  //       },
+  //       body: JSON.stringify(requestPayload)
+  //     });
       
-      const responseData = await response.json();
+  //     if (!response.ok) {
+  //       const errorData = await response.json().catch(() => ({}));
+  //       throw new Error(
+  //         `API error (${response.status}): ${errorData.error?.message || response.statusText}`
+  //       );
+  //     }
       
-      return {
-        success: true,
-        content: responseData.choices[0].message.content,
-        model: responseData.model,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString(),
-        usage: responseData.usage,
-        metadata: {
-          responseId: responseData.id,
-          finishReason: responseData.choices[0].finish_reason,
-          parameters: {
-            modelUsed: model,
-            maxTokens: params.effectiveMaxTokens,
-            temperature: params.supportsTemperature ? params.temperature : null,
-            topP: params.supportsTopP ? params.topP : null
-          }
-        }
-      };
-    } catch (error) {
-      this.logger.error('API processing error:', error);
+  //     const responseData = await response.json();
       
-      return {
-        success: false,
-        error: error.message,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
+  //     return {
+  //       success: true,
+  //       content: responseData.choices[0].message.content,
+  //       model: responseData.model,
+  //       platformId: this.platformId,
+  //       timestamp: new Date().toISOString(),
+  //       usage: responseData.usage,
+  //       metadata: {
+  //         responseId: responseData.id,
+  //         finishReason: responseData.choices[0].finish_reason,
+  //         parameters: {
+  //           modelUsed: model,
+  //           maxTokens: params.effectiveMaxTokens,
+  //           temperature: params.supportsTemperature ? params.temperature : null,
+  //           topP: params.supportsTopP ? params.topP : null
+  //         }
+  //       }
+  //     };
+  //   } catch (error) {
+  //     this.logger.error('API processing error:', error);
+      
+  //     return {
+  //       success: false,
+  //       error: error.message,
+  //       platformId: this.platformId,
+  //       timestamp: new Date().toISOString()
+  //     };
+  //   }
+  // }
   
   /**
    * Process with model-specific parameters and streaming support
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
    * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
+   * @param {Object} params - Resolved parameters including conversation history
    * @param {function} onChunk - Callback function for receiving text chunks
    * @returns {Promise<Object>} API response metadata
    */
@@ -130,6 +136,12 @@ class MistralApiService extends BaseApiService {
       // Add system message if system prompt is specified in advanced settings
       if (params.systemPrompt) {
         messages.push({ role: 'system', content: params.systemPrompt });
+      }
+      
+      // Add conversation history if provided
+      if (params.conversationHistory && params.conversationHistory.length > 0) {
+        // Format conversation history for Mistral API (same format as OpenAI)
+        messages.push(...this._formatMistralMessages(params.conversationHistory));
       }
       
       // Add user message
@@ -235,19 +247,57 @@ class MistralApiService extends BaseApiService {
       throw error;
     }
   }
+
+  /**
+   * Format conversation history for Mistral API
+   * @param {Array} history - Conversation history array
+   * @returns {Array} Formatted messages for Mistral API
+   */
+  _formatMistralMessages(history) {
+    return history.map(msg => {
+      // Map internal role names to Mistral roles (same as OpenAI format)
+      let role = 'user';
+      if (msg.role === 'assistant') role = 'assistant';
+      else if (msg.role === 'system') role = 'system';
+      
+      return {
+        role,
+        content: msg.content
+      };
+    });
+  }
   
   /**
-   * Verify API credentials are valid
-   * @returns {Promise<boolean>} Validation result
+   * Platform-specific validation implementation for Mistral
+   * @protected
+   * @param {string} apiKey - The API key to validate
+   * @param {string} model - The model to use for validation
+   * @returns {Promise<boolean>} Whether the API key is valid
    */
-  async validateCredentials() {
+  async _validateWithModel(apiKey, model) {
+    const endpoint = this.config?.endpoint || 'https://api.mistral.ai/v1/chat/completions';
+    
     try {
-      // Make a minimal request to validate credentials
-      const testPrompt = "Hello, this is a test request to validate API credentials.";
-      const response = await this._processWithApi(testPrompt);
-      return response.success === true;
+      // Make a minimal validation request
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            { role: 'user', content: 'API validation check' }
+          ],
+          max_tokens: 1 // Minimum tokens needed
+        })
+      });
+      
+      // Check if the response is valid
+      return response.ok;
     } catch (error) {
-      this.logger.error('Credential validation failed:', error);
+      this.logger.error('API key validation error:', error);
       return false;
     }
   }

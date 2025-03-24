@@ -10,118 +10,117 @@ class ChatGptApiService extends BaseApiService {
     super('chatgpt');
   }
 
-  /**
-   * Process with model-specific parameters
-   * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
-   * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
-   * @returns {Promise<Object>} API response
-   */
-  async _processWithModel(text, model, apiKey, params) {
-    const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
+  // /**
+  //  * Process with model-specific parameters
+  //  * @param {string} text - Prompt text
+  //  * @param {string} model - Model ID to use
+  //  * @param {string} apiKey - API key
+  //  * @param {Object} params - Resolved parameters including conversation history
+  //  * @returns {Promise<Object>} API response
+  //  */
+  // async _processWithModel(text, model, apiKey, params) {
+  //   const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
 
-    try {
-      // Use params.model if available (from sidebar selection), otherwise fall back to passed model
-      const modelToUse = params.model || model;
+  //   try {
+  //     // Use params.model if available (from sidebar selection), otherwise fall back to passed model
+  //     const modelToUse = params.model || model;
 
-      this.logger.info(`Making ChatGPT API request with model: ${modelToUse}`);
+  //     this.logger.info(`Making ChatGPT API request with model: ${modelToUse}`);
 
-      // Create the request payload based on parameter style
-      const requestPayload = {
-        model: modelToUse // Use the determined model
-      };
+  //     // Create the request payload based on parameter style
+  //     const requestPayload = {
+  //       model: modelToUse // Use the determined model
+  //     };
 
-      // Add messages array with system prompt if available
-      const messages = [];
+  //     // Add messages array with system prompt if available
+  //     const messages = [];
 
-      // Add system message if system prompt is specified in advanced settings
-      if (params.systemPrompt) {
-        messages.push({ role: 'system', content: params.systemPrompt });
-      }
+  //     // Add system message if system prompt is specified in advanced settings
+  //     if (params.systemPrompt) {
+  //       messages.push({ role: 'system', content: params.systemPrompt });
+  //     }
 
-      // Add conversation history if provided
-      if (params.conversationHistory && params.conversationHistory.length > 0) {
-        // Format conversation history for OpenAI API
-        const formattedHistory = this.messageFormatter.formatForOpenAI(params.conversationHistory);
-        messages.push(...formattedHistory);
-      }
+  //     // Add conversation history if provided
+  //     if (params.conversationHistory && params.conversationHistory.length > 0) {
+  //       // Format conversation history for OpenAI API
+  //       messages.push(...this._formatOpenAIMessages(params.conversationHistory));
+  //     }
 
-      // Add user message
-      messages.push({ role: 'user', content: text });
+  //     // Add user message
+  //     messages.push({ role: 'user', content: text });
 
-      requestPayload.messages = messages;
+  //     requestPayload.messages = messages;
 
-      // Use the correct token parameter based on model style
-      if (params.parameterStyle === 'reasoning') {
-        requestPayload[params.tokenParameter || 'max_completion_tokens'] = params.effectiveMaxTokens;
-      } else {
-        requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;
+  //     // Use the correct token parameter based on model style
+  //     if (params.parameterStyle === 'reasoning') {
+  //       requestPayload[params.tokenParameter || 'max_completion_tokens'] = params.effectiveMaxTokens;
+  //     } else {
+  //       requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;
 
-        // Only add temperature and top_p for standard models that support them
-        if (params.supportsTemperature) {
-          requestPayload.temperature = params.temperature;
-        }
+  //       // Only add temperature and top_p for standard models that support them
+  //       if (params.supportsTemperature) {
+  //         requestPayload.temperature = params.temperature;
+  //       }
 
-        if (params.supportsTopP) {
-          requestPayload.top_p = params.topP;
-        }
-      }
+  //       if (params.supportsTopP) {
+  //         requestPayload.top_p = params.topP;
+  //       }
+  //     }
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(requestPayload)
-      });
+  //     const response = await fetch(endpoint, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${apiKey}`
+  //       },
+  //       body: JSON.stringify(requestPayload)
+  //     });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          `API error (${response.status}): ${errorData.error?.message || response.statusText}`
-        );
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json().catch(() => ({}));
+  //       throw new Error(
+  //         `API error (${response.status}): ${errorData.error?.message || response.statusText}`
+  //       );
+  //     }
 
-      const responseData = await response.json();
+  //     const responseData = await response.json();
 
-      return {
-        success: true,
-        content: responseData.choices[0].message.content,
-        model: responseData.model,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString(),
-        usage: responseData.usage,
-        metadata: {
-          responseId: responseData.id,
-          finishReason: responseData.choices[0].finish_reason,
-          parameters: {
-            modelUsed: modelToUse,
-            maxTokens: params.effectiveMaxTokens,
-            temperature: params.supportsTemperature ? params.temperature : null,
-            topP: params.supportsTopP ? params.topP : null
-          }
-        }
-      };
-    } catch (error) {
-      this.logger.error('API processing error:', error);
+  //     return {
+  //       success: true,
+  //       content: responseData.choices[0].message.content,
+  //       model: responseData.model,
+  //       platformId: this.platformId,
+  //       timestamp: new Date().toISOString(),
+  //       usage: responseData.usage,
+  //       metadata: {
+  //         responseId: responseData.id,
+  //         finishReason: responseData.choices[0].finish_reason,
+  //         parameters: {
+  //           modelUsed: modelToUse,
+  //           maxTokens: params.effectiveMaxTokens,
+  //           temperature: params.supportsTemperature ? params.temperature : null,
+  //           topP: params.supportsTopP ? params.topP : null
+  //         }
+  //       }
+  //     };
+  //   } catch (error) {
+  //     this.logger.error('API processing error:', error);
 
-      return {
-        success: false,
-        error: error.message,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
+  //     return {
+  //       success: false,
+  //       error: error.message,
+  //       platformId: this.platformId,
+  //       timestamp: new Date().toISOString()
+  //     };
+  //   }
+  // }
 
   /**
    * Process with model-specific parameters and streaming support
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
    * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters
+   * @param {Object} params - Resolved parameters including conversation history
    * @param {function} onChunk - Callback function for receiving text chunks
    * @returns {Promise<Object>} API response metadata
    */
@@ -151,8 +150,7 @@ class ChatGptApiService extends BaseApiService {
       // Add conversation history if provided
       if (params.conversationHistory && params.conversationHistory.length > 0) {
         // Format conversation history for OpenAI API
-        const formattedHistory = this.messageFormatter.formatForOpenAI(params.conversationHistory);
-        messages.push(...formattedHistory);
+        messages.push(...this._formatOpenAIMessages(params.conversationHistory));
       }
 
       // Add user message
@@ -264,17 +262,55 @@ class ChatGptApiService extends BaseApiService {
   }
 
   /**
-   * Verify API credentials are valid
-   * @returns {Promise<boolean>} Validation result
+   * Format conversation history for OpenAI API
+   * @param {Array} history - Conversation history array
+   * @returns {Array} Formatted messages for OpenAI API
    */
-  async validateCredentials() {
+  _formatOpenAIMessages(history) {
+    return history.map(msg => {
+      // Map internal role names to OpenAI roles
+      let role = 'user';
+      if (msg.role === 'assistant') role = 'assistant';
+      else if (msg.role === 'system') role = 'system';
+      
+      return {
+        role,
+        content: msg.content
+      };
+    });
+  }
+
+  /**
+   * Platform-specific validation implementation for ChatGPT
+   * @protected
+   * @param {string} apiKey - The API key to validate
+   * @param {string} model - The model to use for validation
+   * @returns {Promise<boolean>} Whether the API key is valid
+   */
+  async _validateWithModel(apiKey, model) {
+    const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
+    
     try {
-      // Make a minimal request to validate credentials
-      const testPrompt = "Hello, this is a test request to validate API credentials.";
-      const response = await this._processWithApi(testPrompt);
-      return response.success === true;
+      // Make a minimal validation request
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            { role: 'user', content: 'API validation check' }
+          ],
+          max_tokens: 1 // Minimum tokens
+        })
+      });
+      
+      // Check if the response is valid
+      return response.ok;
     } catch (error) {
-      this.logger.error('Credential validation failed:', error);
+      this.logger.error('API key validation error:', error);
       return false;
     }
   }
