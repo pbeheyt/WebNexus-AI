@@ -107,7 +107,7 @@ class ModelParameterService {
   /**
    * Get model configuration for a specific model
    * @param {string} platformId - Platform ID
-   * @param {string} modelId - Model ID
+   * @param {string} modelIdOrObject - Model ID or object containing model ID
    * @returns {Promise<Object|null>} Model configuration or null if not found
    */
   async getModelConfig(platformId, modelIdOrObject) {
@@ -123,7 +123,9 @@ class ModelParameterService {
     logger.info(`Resolving model config for: ${platformId}/${modelId}`);
 
     const platformConfig = config.aiPlatforms[platformId];
-    return TokenCalculationService.getModelConfig(platformConfig, modelId);
+    
+    // Find model in array of objects (directly implemented, no longer calling TokenCalculationService)
+    return platformConfig.api.models.find(model => model.id === modelId) || null;
   }
 
   /**
@@ -269,16 +271,16 @@ class ModelParameterService {
       // Add system prompt if provided
       if (userSettings.systemPrompt !== undefined) params.systemPrompt = userSettings.systemPrompt;
 
-      // Calculate available completion tokens based on prompt size
-      if (prompt) {
-        params.effectiveMaxTokens = TokenCalculationService.calculateAvailableCompletionTokens(
-          prompt,
-          params.contextWindow,
-          params.maxTokens
-        );
-      } else {
+      // // Calculate available completion tokens based on prompt size
+      // if (prompt) {
+      //   params.effectiveMaxTokens = TokenCalculationService.calculateAvailableCompletionTokens(
+      //     prompt,
+      //     params.contextWindow,
+      //     params.maxTokens
+      //   );
+      // } else {
         params.effectiveMaxTokens = params.maxTokens;
-      }
+      // }
 
       logger.info(`Resolved parameters for ${platformId}/${modelToUse}:`, params);
       return params;

@@ -141,8 +141,8 @@ const PlatformDetails = ({
   const handleAdvancedSettingsUpdate = async (modelId, settings) => {
     try {
       // Load current settings
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_SETTINGS_KEY);
-      const currentSettings = result[STORAGE_KEYS.API_SETTINGS_KEY] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
       
       // Initialize platform settings if needed
       if (!currentSettings[platform.id]) {
@@ -174,7 +174,7 @@ const PlatformDetails = ({
       
       // Save to storage
       await chrome.storage.sync.set({
-        [STORAGE_KEYS.API_SETTINGS_KEY]: currentSettings
+        [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings
       });
       
       // Update parent component

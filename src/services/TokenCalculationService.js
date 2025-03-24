@@ -25,31 +25,13 @@ class TokenCalculationService {
    * @param {number} safetyBuffer - Buffer tokens to account for estimation errors (default: 50)
    * @returns {number} - Available completion tokens
    */
-  calculateAvailableCompletionTokens(prompt, contextWindow, maxTokens, safetyBuffer = 50) {
-    const estimatedPromptTokens = this.estimateTokens(prompt);
-    const availableTokens = Math.max(0, contextWindow - estimatedPromptTokens - safetyBuffer);
+  // calculateAvailableCompletionTokens(prompt, contextWindow, maxTokens, safetyBuffer = 50) {
+  //   const estimatedPromptTokens = this.estimateTokens(prompt);
+  //   const availableTokens = Math.max(0, contextWindow - estimatedPromptTokens - safetyBuffer);
     
-    // Use the smaller of user-defined max or available tokens
-    return Math.min(maxTokens, availableTokens);
-  }
-
-  /**
-   * Get model configuration from platform config
-   * @param {Object} platformConfig - Platform configuration object
-   * @param {string} modelId - Model ID to lookup
-   * @returns {Object|null} - Model configuration or null if not found
-   */
-  getModelConfig(platformConfig, modelIdOrObject) {
-    if (!platformConfig?.api?.models) return null;
-    
-    // Extract ID if an object was passed
-    const modelId = typeof modelIdOrObject === 'object' && modelIdOrObject !== null
-      ? modelIdOrObject.id || modelIdOrObject.model || String(modelIdOrObject)
-      : modelIdOrObject;
-    
-    // Find model in array of objects
-    return platformConfig.api.models.find(model => model.id === modelId) || null;
-  }
+  //   // Use the smaller of user-defined max or available tokens
+  //   return Math.min(maxTokens, availableTokens);
+  // }
 
   /**
    * Calculate cost for specific token counts based on model pricing
