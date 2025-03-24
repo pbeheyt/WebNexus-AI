@@ -1,10 +1,10 @@
 // src/popup/features/PlatformSelector.jsx
-import { PlatformCard } from '../../components';
 import { usePopupPlatform } from '../../contexts/platform';
 import { useStatus } from '../contexts/StatusContext';
+import { PlatformCard } from '../../components/layout/PlatformCard';
 
 export function PlatformSelector() {
-  const { platforms, selectedPlatformId, selectPlatform, isLoading } = usePopupPlatform(); // Using the popup-specific hook
+  const { platforms, selectedPlatformId, selectPlatform, isLoading } = usePopupPlatform();
   const { notifyPlatformChanged } = useStatus();
   
   const handlePlatformSelect = async (platformId) => {
@@ -40,6 +40,8 @@ export function PlatformSelector() {
           iconUrl={platform.iconUrl}
           selected={platform.id === selectedPlatformId}
           onClick={handlePlatformSelect}
+          // Not enabling credential checks for popup
+          checkCredentials={false}
         />
       ))}
     </div>

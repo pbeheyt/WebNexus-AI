@@ -1,18 +1,17 @@
-// src/sidebar/components/ModelSelector.jsx
 import React, { useEffect, useState } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { SelectList } from '../../components/form/SelectList';
 
-function ModelSelector() {
-  const { 
-    models, 
-    selectedModel, 
-    selectModel, 
-    isLoading, 
+function ModelSelector({ className = '' }) {
+  const {
+    models,
+    selectedModel,
+    selectModel,
+    isLoading,
     selectedPlatformId,
-    hasCredentials 
+    hasCredentials
   } = useSidebarPlatform();
-  
+
   const [isDisabled, setIsDisabled] = useState(false);
   const [formattedModels, setFormattedModels] = useState([]);
 
@@ -39,7 +38,7 @@ function ModelSelector() {
         };
       }
     });
-    
+
     setFormattedModels(formatted);
   }, [models]);
 
@@ -54,20 +53,20 @@ function ModelSelector() {
     }
   };
 
-  // If no platform is selected or credentials are missing, don't render
-  if (!selectedPlatformId || isDisabled) {
+  // If no platform is selected, don't render
+  if (!selectedPlatformId) {
     return null;
   }
 
   return (
-    <div className="w-full px-2 mb-2">
+    <div className={`w-full px-2 mb-2 ${className}`}>
       <SelectList
         options={formattedModels}
         selectedValue={selectedModel}
         onChange={handleModelChange}
         loading={isLoading}
         disabled={isDisabled}
-        placeholder="Select a model"
+        placeholder={hasCredentials ? "Select a model" : "API credentials required"}
         emptyMessage={hasCredentials ? "No models available" : "API credentials required"}
         className="w-full"
       />

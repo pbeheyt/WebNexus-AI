@@ -1,11 +1,40 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useTheme } from '../../contexts/ThemeContext';
 import ModelSelector from './ModelSelector';
+import PlatformCard from '../../components/layout/PlatformCard';
 
 function Header({ onClose }) {
   const { platforms, selectedPlatformId, selectPlatform } = useSidebarPlatform();
-  const { theme, toggleTheme } = useTheme(); // Use global theme context
+  const { theme, toggleTheme } = useTheme();
+  const [platformCredentials, setPlatformCredentials] = useState({});
+
+  useEffect(() => {
+    const checkAllCredentials = async () => {
+      if (!platforms || platforms.length === 0) return;
+
+      const credentialStatus = {};
+
+      for (const platform of platforms) {
+        try {
+          const response = await chrome.runtime.sendMessage({
+            action: 'credentialOperation',
+            operation: 'get',
+            platformId: platform.id
+          });
+
+          credentialStatus[platform.id] = response?.success && !!response?.credentials;
+        } catch (error) {
+          console.error(`Error checking credentials for ${platform.id}:`, error);
+          credentialStatus[platform.id] = false;
+        }
+      }
+
+      setPlatformCredentials(credentialStatus);
+    };
+
+    checkAllCredentials();
+  }, [platforms]);
 
   return (
     <div className="border-b border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-2">
@@ -17,7 +46,7 @@ function Header({ onClose }) {
           </svg>
           AI Summarizer
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={toggleTheme}
@@ -42,7 +71,7 @@ function Header({ onClose }) {
               </svg>
             )}
           </button>
-          
+
           <button
             onClick={onClose}
             className="p-1 bg-transparent border-none text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer rounded"
@@ -55,29 +84,26 @@ function Header({ onClose }) {
           </button>
         </div>
       </div>
-      
-      <div className="flex gap-2">
-        <div className="grid grid-cols-3 gap-1">
-          {platforms.map((platform) => (
-            <div
-              key={platform.id}
-              className={`flex flex-col items-center justify-center p-1 rounded border border-gray-200 dark:border-gray-700 transition-all duration-200 cursor-pointer ${
-                platform.id === selectedPlatformId ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-              onClick={() => selectPlatform(platform.id)}
-            >
-              <img 
-                src={platform.iconUrl} 
-                alt={platform.name} 
-                className="w-5 h-5 object-contain"
-              />
-              <div className="text-xs text-center mt-1">{platform.name}</div>
-            </div>
-          ))}
-        </div>
+
+      <div className="flex flex-row justify-between w-full relative z-30 px-2">
+        {platforms.map((platform) => (
+          <PlatformCard
+            key={platform.id}
+            id={platform.id}
+            name={platform.name}
+            iconUrl={platform.iconUrl}
+            selected={platform.id === selectedPlatformId}
+            onClick={selectPlatform}
+            hasCredentials={platformCredentials[platform.id] || false}
+            checkCredentials={true}
+            showName={false}
+          />
+        ))}
       </div>
-      
-      <ModelSelector />
+
+      <div className="relative z-20">
+        <ModelSelector />
+      </div>
     </div>
   );
 }
