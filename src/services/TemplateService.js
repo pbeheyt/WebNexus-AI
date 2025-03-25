@@ -531,4 +531,4 @@ class TemplateService {
 
 // Create singleton instance
 const templateService = new TemplateService(configManager);
-export default templateService;
+module.exports = templateService;

@@ -282,4 +282,4 @@ class PromptBuilder {
 
 // Create singleton instance
 const promptBuilder = new PromptBuilder(configManager);
-export default promptBuilder;
+module.exports = promptBuilder;

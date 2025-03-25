@@ -107,4 +107,4 @@ class ThemeService {
 
 // Export singleton instance
 const themeService = new ThemeService();
-export default themeService;
+module.exports = themeService;
