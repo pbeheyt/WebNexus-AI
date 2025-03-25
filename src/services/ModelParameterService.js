@@ -231,7 +231,7 @@ class ModelParameterService {
    * @param {Object} options - Additional options
    * @returns {Promise<Object>} Resolved parameters
    */
-  async resolveParameters(platformId, modelOverride, prompt, options = {}) {
+  async resolveParameters(platformId, modelOverride, options = {}) {
     try {
       const { tabId, source } = options;
       logger.info(`Resolving parameters for ${platformId}`);
@@ -245,10 +245,10 @@ class ModelParameterService {
       if (!modelConfig) {
         throw new Error(`Model configuration not found for ${modelToUse}`);
       }
-
+  
       // Get user settings for this model
       const userSettings = await this.getUserModelSettings(platformId, modelToUse);
-
+  
       // Start with model defaults
       const params = {
         maxTokens: modelConfig.maxTokens || 4000,
@@ -261,36 +261,24 @@ class ModelParameterService {
         supportsTopP: modelConfig.supportsTopP !== false,
         model: modelToUse // Add the resolved model to params
       };
-
+  
       // Override with user settings if provided
       if (userSettings.maxTokens !== undefined) params.maxTokens = userSettings.maxTokens;
       if (userSettings.contextWindow !== undefined) params.contextWindow = userSettings.contextWindow;
       if (userSettings.temperature !== undefined && params.supportsTemperature) params.temperature = userSettings.temperature;
       if (userSettings.topP !== undefined && params.supportsTopP) params.topP = userSettings.topP;
-
+  
       // Add system prompt if provided
       if (userSettings.systemPrompt !== undefined) params.systemPrompt = userSettings.systemPrompt;
-
-      // Calculate available completion tokens based on prompt size
-      if (prompt) {
-        params.effectiveMaxTokens = TokenCalculationService.calculateAvailableCompletionTokens(
-          prompt,
-          params.contextWindow,
-          params.maxTokens
-        );
-      } else {
-        params.effectiveMaxTokens = params.maxTokens;
-      }
-
+  
       logger.info(`Resolved parameters for ${platformId}/${modelToUse}:`, params);
       return params;
     } catch (error) {
       logger.error('Error resolving parameters:', error);
-
+  
       // Return reasonable defaults if resolution fails
       return {
         maxTokens: 4000,
-        effectiveMaxTokens: 4000,
         temperature: 0.7,
         topP: 1.0,
         parameterStyle: 'standard',

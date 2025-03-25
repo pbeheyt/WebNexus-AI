@@ -54,7 +54,7 @@ class DeepSeekApiService extends BaseApiService {
       requestPayload.messages = messages;
       
       // Add token parameter
-      requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;
+      requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
       
       // Add temperature if supported
       if (params.supportsTemperature) {

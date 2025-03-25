@@ -70,9 +70,9 @@ class GeminiApiService extends BaseApiService {
       
       // Add model-specific parameters
       if (params.tokenParameter) {
-        formattedRequest.generationConfig[params.tokenParameter] = params.effectiveMaxTokens;
+        formattedRequest.generationConfig[params.tokenParameter] = params.maxTokens;
       } else {
-        formattedRequest.generationConfig.maxOutputTokens = params.effectiveMaxTokens;
+        formattedRequest.generationConfig.maxOutputTokens = params.maxTokens;
       }
       
       // Add temperature if supported

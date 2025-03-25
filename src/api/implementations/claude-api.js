@@ -30,7 +30,7 @@ class ClaudeApiService extends BaseApiService {
       // Create the request payload with model-specific parameters
       const requestPayload = {
         model: modelToUse,
-        max_tokens: params.effectiveMaxTokens,
+        max_tokens: params.maxTokens,
         messages: [
           { 
             role: 'user', 
@@ -74,6 +74,14 @@ class ClaudeApiService extends BaseApiService {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Enhance error handling for context window errors
+        if (errorData.error && 
+            (errorData.error.message?.includes('context window') || 
+             errorData.error.message?.includes('token limit'))) {
+          throw new Error('Context window exceeded. The conversation is too long for the model.');
+        }
+        
         throw new Error(
           `API error (${response.status}): ${errorData.error?.message || response.statusText}`
         );

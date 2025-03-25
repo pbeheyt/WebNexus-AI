@@ -3,6 +3,7 @@ import React from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { MessageInput } from '../../components/messaging/MessageInput';
 import TokenCounter from './TokenCounter';
+import ContextWindowIndicator from './ContextWindowIndicator';
 
 function UserInput() {
   const { 
@@ -10,7 +11,8 @@ function UserInput() {
     setInputValue, 
     sendMessage, 
     isProcessing,
-    tokenStats 
+    tokenStats,
+    contextStatus
   } = useSidebarChat();
   
   const handleInputChange = (value) => {
@@ -23,7 +25,12 @@ function UserInput() {
   
   return (
     <div className="flex flex-col">
-      {/* Show token stats above the input */}
+      {/* Context window indicator */}
+      <div className="px-4 pt-2">
+        <ContextWindowIndicator contextStatus={contextStatus} />
+      </div>
+      
+      {/* Token stats */}
       <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
         <TokenCounter tokenStats={tokenStats} />
       </div>

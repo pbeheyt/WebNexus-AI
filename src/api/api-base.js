@@ -396,13 +396,12 @@ ${formattedContent}`;
       // Get model and parameters from centralized ModelParameterService
       const params = await ModelParameterService.resolveParameters(
         this.platformId,
-        modelOverride,
-        text
+        modelOverride
       );
 
       // Log parameters being used
       this.logger.info(`Using model ${params.model} for streaming with parameters:`, {
-        effectiveMaxTokens: params.effectiveMaxTokens,
+        maxTokens: params.maxTokens,
         temperature: params.temperature,
         parameterStyle: params.parameterStyle
       });

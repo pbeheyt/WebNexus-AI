@@ -55,9 +55,9 @@ class ChatGptApiService extends BaseApiService {
 
       // Use the correct token parameter based on model style
       if (params.parameterStyle === 'reasoning') {
-        requestPayload[params.tokenParameter || 'max_completion_tokens'] = params.effectiveMaxTokens;
+        requestPayload[params.tokenParameter || 'max_completion_tokens'] = params.maxTokens;
       } else {
-        requestPayload[params.tokenParameter || 'max_tokens'] = params.effectiveMaxTokens;
+        requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
 
         // Only add temperature and top_p for standard models that support them
         if (params.supportsTemperature) {
