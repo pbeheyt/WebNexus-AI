@@ -48,12 +48,14 @@ class StructuredPromptService {
         metadata: params.metadata || {}
       });
 
-
       // Store updated data
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_STRUCTURED_PROMPTS]: allPrompts });
 
-      // Update token metadata summary
-      await this.updateTokenMetadata(tabId, params);
+      // Initialize token metadata without adding tokens yet
+      await this.updateTokenMetadata(tabId, {
+        platformId: params.platformId,
+        modelId: params.modelId
+      });
 
       logger.service.info('Structured prompt stored successfully', { tabId });
       return true;
@@ -94,7 +96,7 @@ class StructuredPromptService {
         };
       }
 
-      // Update with new token information
+      // Update with new token information if provided
       if (params.tokensUsed) {
         const inputTokens = params.tokensUsed.input || 0;
         const outputTokens = params.tokensUsed.output || 0;
@@ -102,27 +104,108 @@ class StructuredPromptService {
         // Add to running totals
         allMetadata[tabId].totalInputTokens += inputTokens;
         allMetadata[tabId].totalOutputTokens += outputTokens;
-
+        
         // Calculate cost if pricing info available
         if (params.pricing) {
           const inputCost = (inputTokens / 1000000) * (params.pricing.inputTokenPrice || 0);
           const outputCost = (outputTokens / 1000000) * (params.pricing.outputTokenPrice || 0);
           allMetadata[tabId].totalCost += (inputCost + outputCost);
         }
-
-        // Update metadata
-        allMetadata[tabId].lastUpdated = Date.now();
-        allMetadata[tabId].platformId = params.platformId || allMetadata[tabId].platformId;
-        allMetadata[tabId].modelId = params.modelId || allMetadata[tabId].modelId;
       }
+
+      // Update metadata fields
+      allMetadata[tabId].lastUpdated = Date.now();
+      if (params.platformId) allMetadata[tabId].platformId = params.platformId;
+      if (params.modelId) allMetadata[tabId].modelId = params.modelId;
 
       // Store updated metadata
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_METADATA]: allMetadata });
 
-      logger.service.info('Token metadata updated successfully', { tabId });
+      logger.service.info('Token metadata updated successfully', allMetadata);
       return true;
     } catch (error) {
       logger.service.error('StructuredPromptService: Error updating token metadata', { error });
+      return false;
+    }
+  }
+
+  /**
+   * Update token information for a specific message
+   * @param {number} tabId - Tab ID
+   * @param {string} messageId - Message ID to update
+   * @param {Object} tokenInfo - Token information
+   * @returns {Promise<boolean>} - Success indicator
+   */
+  static async updateMessageTokens(tabId, messageId, tokenInfo) {
+    if (!tabId || !messageId || !tokenInfo) {
+      logger.service.error('StructuredPromptService: Missing parameters for updateMessageTokens');
+      return false;
+    }
+
+    try {
+      logger.service.info('Updating message tokens', { tabId, messageId });
+
+      // Get current prompts
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_STRUCTURED_PROMPTS]);
+      const allPrompts = result[STORAGE_KEYS.TAB_STRUCTURED_PROMPTS] || {};
+
+      // Find and update the specific message
+      if (allPrompts[tabId]) {
+        const promptIndex = allPrompts[tabId].findIndex(p => p.messageId === messageId);
+
+        if (promptIndex >= 0) {
+          // Update token information
+          allPrompts[tabId][promptIndex].tokensUsed = {
+            ...allPrompts[tabId][promptIndex].tokensUsed,
+            ...tokenInfo
+          };
+
+          // Store updated data
+          await chrome.storage.local.set({ [STORAGE_KEYS.TAB_STRUCTURED_PROMPTS]: allPrompts });
+
+          logger.service.info('Message tokens updated successfully', { tabId, messageId });
+          return true;
+        }
+      }
+
+      logger.service.warn('Message not found for token update', { tabId, messageId });
+      return false;
+    } catch (error) {
+      logger.service.error('StructuredPromptService: Error updating message tokens', { error });
+      return false;
+    }
+  }
+
+  /**
+   * Update both message tokens and token metadata in a single transaction
+   * @param {number} tabId - Tab ID
+   * @param {string} messageId - Message ID to update
+   * @param {Object} tokenInfo - Token information
+   * @param {Object} metadata - Additional metadata including pricing
+   * @returns {Promise<boolean>} - Success indicator
+   */
+  static async updateTokenTransaction(tabId, messageId, tokenInfo, metadata = {}) {
+    if (!tabId || !messageId || !tokenInfo) {
+      logger.service.error('StructuredPromptService: Missing required parameters for token transaction');
+      return false;
+    }
+
+    try {
+      // First update the message tokens
+      const messageUpdated = await this.updateMessageTokens(tabId, messageId, tokenInfo);
+      if (!messageUpdated) {
+        return false;
+      }
+
+      // Then update the metadata with the same token information
+      await this.updateTokenMetadata(tabId, {
+        tokensUsed: tokenInfo,
+        ...metadata
+      });
+
+      return true;
+    } catch (error) {
+      logger.service.error('StructuredPromptService: Error in token transaction', { error });
       return false;
     }
   }
@@ -320,60 +403,6 @@ class StructuredPromptService {
       });
     } catch (error) {
       logger.service.error('StructuredPromptService: Error adding token counts', { error });
-      return false;
-    }
-  }
-
-  /**
-   * Update token information for a specific message
-   * @param {number} tabId - Tab ID
-   * @param {string} messageId - Message ID to update
-   * @param {Object} tokenInfo - Token information
-   * @returns {Promise<boolean>} - Success indicator
-   */
-  static async updateMessageTokens(tabId, messageId, tokenInfo) {
-    if (!tabId || !messageId || !tokenInfo) {
-      logger.service.error('StructuredPromptService: Missing parameters for updateMessageTokens');
-      return false;
-    }
-
-    try {
-      logger.service.info('Updating message tokens', { tabId, messageId });
-
-      // Get current prompts
-      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_STRUCTURED_PROMPTS]);
-      const allPrompts = result[STORAGE_KEYS.TAB_STRUCTURED_PROMPTS] || {};
-
-      // Find and update the specific message
-      if (allPrompts[tabId]) {
-        const promptIndex = allPrompts[tabId].findIndex(p => p.messageId === messageId);
-
-        if (promptIndex >= 0) {
-          // Update token information
-          allPrompts[tabId][promptIndex].tokensUsed = {
-            ...allPrompts[tabId][promptIndex].tokensUsed,
-            ...tokenInfo
-          };
-
-          // Store updated data
-          await chrome.storage.local.set({ [STORAGE_KEYS.TAB_STRUCTURED_PROMPTS]: allPrompts });
-
-          // Also update token metadata
-          await this.updateTokenMetadata(tabId, {
-            tokensUsed: tokenInfo,
-            platformId: allPrompts[tabId][promptIndex].platformId,
-            modelId: allPrompts[tabId][promptIndex].modelId
-          });
-
-          logger.service.info('Message tokens updated successfully', { tabId, messageId });
-          return true;
-        }
-      }
-
-      logger.service.warn('Message not found for token update', { tabId, messageId });
-      return false;
-    } catch (error) {
-      logger.service.error('StructuredPromptService: Error updating message tokens', { error });
       return false;
     }
   }

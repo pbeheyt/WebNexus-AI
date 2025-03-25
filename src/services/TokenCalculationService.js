@@ -12,7 +12,7 @@ class TokenCalculationService {
    */
   static estimateTokens(text) {
     if (!text) return 0;
-    
+
     // Simple estimation based on characters
     // Most tokenizers average ~4 characters per token
     return Math.ceil(text.length / 4);
@@ -29,15 +29,15 @@ class TokenCalculationService {
     if (!modelConfig) {
       return { totalCost: 0 };
     }
-    
+
     const inputPrice = modelConfig.inputTokenPrice || 0;
     const outputPrice = modelConfig.outputTokenPrice || 0;
-    
+
     // Convert from price per 1000 tokens
     const inputCost = (inputTokens / 1000000) * inputPrice;
     const outputCost = (outputTokens / 1000000) * outputPrice;
     const totalCost = inputCost + outputCost;
-    
+
     return {
       inputCost,
       outputCost,
@@ -46,7 +46,7 @@ class TokenCalculationService {
       outputTokenPrice: outputPrice
     };
   }
-  
+
   /**
    * Generate pricing information object for model config
    * @param {Object} modelConfig - Model configuration with pricing
@@ -56,7 +56,7 @@ class TokenCalculationService {
     if (!modelConfig) {
       return null;
     }
-    
+
     return {
       inputTokenPrice: modelConfig.inputTokenPrice || 0,
       outputTokenPrice: modelConfig.outputTokenPrice || 0

@@ -1,3 +1,5 @@
+// src/api/implementations/chatgpt-api.js
+
 const BaseApiService = require('../api-base');
 const StructuredPromptService = require('../../services/StructuredPromptService');
 
@@ -75,12 +77,24 @@ class ChatGptApiService extends BaseApiService {
       const inputText = JSON.stringify(requestPayload);
       inputTokenEstimate = Math.ceil(inputText.length / 4); // Approximate estimate
       
-      // Update token metadata if tabId and messageId are provided
+      // Get pricing information from model config
+      const modelConfig = this.config?.models?.find(m => m.id === modelToUse);
+      const pricing = modelConfig ? {
+        inputTokenPrice: modelConfig.inputTokenPrice || 0,
+        outputTokenPrice: modelConfig.outputTokenPrice || 0
+      } : null;
+      
+      // Update token tracking for input tokens using transaction approach
       if (params.tabId && params.messageId) {
-        await StructuredPromptService.updateMessageTokens(
+        await StructuredPromptService.updateTokenTransaction(
           params.tabId,
           params.messageId,
-          { input: inputTokenEstimate }
+          { input: inputTokenEstimate },
+          {
+            platformId: this.platformId,
+            modelId: modelToUse,
+            pricing: pricing
+          }
         );
       }
 
@@ -161,30 +175,18 @@ class ChatGptApiService extends BaseApiService {
         // Estimate output tokens for token accounting
         const outputTokenEstimate = Math.ceil(responseMetadata.content.length / 4);
         
-        // Update token counts with API results
+        // Update token tracking for output tokens
         if (params.tabId && params.messageId) {
-          await StructuredPromptService.updateMessageTokens(
+          await StructuredPromptService.updateTokenTransaction(
             params.tabId,
             params.messageId,
-            { output: outputTokenEstimate }
-          );
-          
-          // Also update with pricing information
-          const modelConfig = this.config?.models?.find(m => m.id === modelToUse);
-          if (modelConfig) {
-            await StructuredPromptService.updateTokenMetadata(params.tabId, {
-              tokensUsed: { 
-                input: inputTokenEstimate,
-                output: outputTokenEstimate
-              },
+            { output: outputTokenEstimate },
+            {
               platformId: this.platformId,
               modelId: modelToUse,
-              pricing: {
-                inputTokenPrice: modelConfig.inputTokenPrice,
-                outputTokenPrice: modelConfig.outputTokenPrice
-              }
-            });
-          }
+              pricing: pricing
+            }
+          );
         }
 
         // Add token usage to response metadata
