@@ -220,7 +220,8 @@ export async function processContentViaApi(params) {
     try {
       const apiResponse = await ApiServiceManager.processWithUnifiedConfig(
         effectivePlatformId,
-        requestConfig
+        requestConfig,
+        tabId
       );
 
       // If we get here without an error, streaming completed successfully

@@ -74,7 +74,9 @@ export const STORAGE_KEYS = {
   API_CONTENT_PROCESSING_TIMESTAMP: 'apiContentProcessingTimestamp',
   
   // Sidebar
-  TAB_CHAT_HISTORIES: 'tab_chat_histories',
+  TAB_CHAT_HISTORIES: 'tab_chat_histories', // New key for tab-specific chat
+  TAB_STRUCTURED_PROMPTS: 'tab_structured_prompts',
+  TAB_TOKEN_METADATA: 'tab_token_metadata',
   STREAM_CONTENT: 'streamContent',
   STREAM_ID: 'streamId',
 };
@@ -100,5 +102,5 @@ export const PROMPT_TYPES = {
  * Default shortcut settings
  */
 export const DEFAULT_SHORTCUT_SETTINGS = {
-  content_processing_behavior: 'selection'
+  content_processing_behavior: 'selection' // Default to respecting selection
 };

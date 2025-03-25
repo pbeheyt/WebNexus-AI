@@ -1,6 +1,5 @@
-// src/api/implementations/gemini-api.js
-
 const BaseApiService = require('../api-base');
+const StructuredPromptService = require('../../services/StructuredPromptService');
 
 /**
  * Gemini API implementation
@@ -83,6 +82,22 @@ class GeminiApiService extends BaseApiService {
       // Add top_p if supported
       if (params.supportsTopP) {
         formattedRequest.generationConfig.topP = params.topP;
+      }
+      
+      // Estimate input tokens before API call for token accounting
+      let inputTokenEstimate = 0;
+      
+      // Simple token estimation based on characters
+      const inputText = JSON.stringify(formattedRequest);
+      inputTokenEstimate = Math.ceil(inputText.length / 4); // Approximate estimate
+      
+      // Update token metadata if tabId and messageId are provided
+      if (params.tabId && params.messageId) {
+        await StructuredPromptService.updateMessageTokens(
+          params.tabId,
+          params.messageId,
+          { input: inputTokenEstimate }
+        );
       }
       
       const response = await fetch(url.toString(), {
@@ -237,12 +252,45 @@ class GeminiApiService extends BaseApiService {
           fullContent: accumulatedContent
         });
         
+        // Estimate output tokens for token accounting
+        const outputTokenEstimate = Math.ceil(accumulatedContent.length / 4);
+        
+        // Update token counts with API results
+        if (params.tabId && params.messageId) {
+          await StructuredPromptService.updateMessageTokens(
+            params.tabId,
+            params.messageId,
+            { output: outputTokenEstimate }
+          );
+          
+          // Also update with pricing information
+          const modelConfig = this.config?.models?.find(m => m.id === model);
+          if (modelConfig) {
+            await StructuredPromptService.updateTokenMetadata(params.tabId, {
+              tokensUsed: { 
+                input: inputTokenEstimate,
+                output: outputTokenEstimate
+              },
+              platformId: this.platformId,
+              modelId: model,
+              pricing: {
+                inputTokenPrice: modelConfig.inputTokenPrice,
+                outputTokenPrice: modelConfig.outputTokenPrice
+              }
+            });
+          }
+        }
+        
         return {
           success: true,
           content: accumulatedContent,
           model: model,
           platformId: this.platformId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          tokensUsed: {
+            input: inputTokenEstimate,
+            output: outputTokenEstimate
+          }
         };
       } catch (error) {
         this.logger.error('Stream processing error:', error);

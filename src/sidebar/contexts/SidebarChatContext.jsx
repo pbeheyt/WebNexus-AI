@@ -2,11 +2,13 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../components';
+import { useStructuredPrompt } from '../../hooks/useStructuredPrompt';
 import ChatHistoryService from '../services/ChatHistoryService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
 import { INTERFACE_SOURCES } from '../../shared/constants';
 import TokenCalculationService from '../../services/TokenCalculationService';
+import StructuredPromptService from '../../services/StructuredPromptService';
 
 const SidebarChatContext = createContext(null);
 
@@ -18,13 +20,17 @@ export function SidebarChatProvider({ children }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState(null);
   const [streamingContent, setStreamingContent] = useState('');
-  const [tokenStats, setTokenStats] = useState({
-    inputTokens: 0,
-    outputTokens: 0,
-    totalCost: 0
-  });
+  const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
+  const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
 
-  // Use the updated content processing hook
+  // Use the structured prompt hook to get token stats from storage
+  const {
+    tokenStats,
+    calculateContextStatus,
+    addTokenCounts
+  } = useStructuredPrompt(tabId);
+
+  // Use the content processing hook
   const {
     processContentViaApi,
     processingStatus,
@@ -45,14 +51,28 @@ export function SidebarChatProvider({ children }) {
     return platformConfig.api.models.find(m => m.id === selectedModel);
   }, [selectedPlatformId, selectedModel, platforms]);
 
-  // Calculate token stats when messages or model config changes
+  // Update context status when model config or token stats change
   useEffect(() => {
-    if (!modelConfig) return;
-
-    const stats = TokenCalculationService.calculateConversationStats(messages, modelConfig);
-    console.log('Token Stats Calculated:', stats); // Debug log for token stats
-    setTokenStats(stats);
-  }, [messages, modelConfig]);
+    const updateContextStatus = async () => {
+      if (!tabId || !modelConfig) {
+        setContextStatus({ warningLevel: 'none' });
+        return;
+      }
+      
+      setIsContextStatusLoading(true);
+      try {
+        const status = await calculateContextStatus(modelConfig);
+        setContextStatus(status);
+      } catch (error) {
+        console.error('Error calculating context status:', error);
+        setContextStatus({ warningLevel: 'none' });
+      } finally {
+        setIsContextStatusLoading(false);
+      }
+    };
+    
+    updateContextStatus();
+  }, [tabId, modelConfig, tokenStats, calculateContextStatus]);
 
   // Load chat history for current tab
   useEffect(() => {
@@ -62,7 +82,6 @@ export function SidebarChatProvider({ children }) {
       try {
         // Load chat history for this tab
         const history = await ChatHistoryService.getHistory(tabId);
-        console.log('Chat History Loaded:', history); // Debug log for chat history
         setMessages(history);
       } catch (error) {
         console.error('Error loading tab chat history:', error);
@@ -79,8 +98,9 @@ export function SidebarChatProvider({ children }) {
     }
   }, [tabId, resetContentProcessing]);
 
+  // Handle streaming response chunks
   useEffect(() => {
-    const handleStreamChunk = (message) => {
+    const handleStreamChunk = async (message) => {
       if (message.action === 'streamChunk' && streamingMessageId) {
         const { chunkData } = message;
 
@@ -96,16 +116,23 @@ export function SidebarChatProvider({ children }) {
           : (chunkData.chunk ? JSON.stringify(chunkData.chunk) : '');
 
         if (chunkData.done) {
-          // Streaming complete - CRITICAL: Update state to remove streaming indicator
+          // Streaming complete
           setStreamingMessageId(null);
           setIsProcessing(false);
 
-          // Get final content - either from fullContent or accumulated content
+          // Get final content
           const finalContent = chunkData.fullContent || streamingContent;
 
-          // Calculate tokens for the response
+          // Calculate output tokens for the response
           const outputTokens = TokenCalculationService.estimateTokens(finalContent);
-          console.log('Output Tokens Calculated:', outputTokens); // Debug log for output tokens
+          
+          // Update token metadata in storage for assistant response
+          await addTokenCounts({
+            input: 0,
+            output: outputTokens,
+            platformId: selectedPlatformId,
+            modelId: selectedModel
+          }, modelConfig);
 
           // Update final message content
           const updatedMessages = messages.map(msg =>
@@ -126,7 +153,7 @@ export function SidebarChatProvider({ children }) {
           // Save to history for current tab
           if (tabId) {
             try {
-              ChatHistoryService.saveHistory(tabId, updatedMessages);
+              await ChatHistoryService.saveHistory(tabId, updatedMessages);
             } catch (err) {
               console.error('Error saving tab chat history:', err);
             }
@@ -151,7 +178,8 @@ export function SidebarChatProvider({ children }) {
     return () => {
       chrome.runtime.onMessage.removeListener(handleStreamChunk);
     };
-  }, [streamingMessageId, streamingContent, messages, tabId, selectedModel]);
+  }, [streamingMessageId, streamingContent, messages, tabId, selectedModel, 
+      selectedPlatformId, modelConfig, addTokenCounts]);
 
   // Send a message and get a response
   const sendMessage = async (text = inputValue) => {
@@ -179,14 +207,13 @@ export function SidebarChatProvider({ children }) {
 
     // Estimate tokens for the user message
     const inputTokens = TokenCalculationService.estimateTokens(text.trim());
-    console.log('Input Tokens Estimated:', inputTokens); // Debug log for input tokens
 
     const userMessage = {
       id: `msg_${Date.now()}`,
       role: MESSAGE_ROLES.USER,
       content: text.trim(),
       timestamp: new Date().toISOString(),
-      inputTokens, // Add token count
+      inputTokens,
       outputTokens: 0
     };
 
@@ -217,9 +244,16 @@ export function SidebarChatProvider({ children }) {
       await ChatHistoryService.saveHistory(tabId, updatedMessages);
     }
 
+    // Update token metadata in storage for user message
+    await addTokenCounts({
+      input: inputTokens,
+      output: 0,
+      platformId: selectedPlatformId,
+      modelId: selectedModel
+    }, modelConfig);
+
     try {
-      // Format conversation history for the API - only include user and assistant messages
-      // Filter out system messages and streaming messages
+      // Format conversation history for the API
       const conversationHistory = messages
         .filter(msg => (msg.role === MESSAGE_ROLES.USER || msg.role === MESSAGE_ROLES.ASSISTANT) && !msg.isStreaming)
         .map(msg => ({
@@ -228,14 +262,13 @@ export function SidebarChatProvider({ children }) {
           timestamp: msg.timestamp
         }));
 
-      // Process with API using the updated method - now with streaming flag
+      // Process with API in streaming mode
       const result = await processContentViaApi({
         platformId: selectedPlatformId,
         modelId: selectedModel,
         promptContent: text.trim(),
         conversationHistory,
-        streaming: true, // Enable streaming mode
-        onStreamChunk: () => {} // Stream handling is done via the effect
+        streaming: true
       });
 
       if (!result || !result.success) {
@@ -269,12 +302,15 @@ export function SidebarChatProvider({ children }) {
     }
   };
 
-  // Clear chat history
+  // Clear chat history and token metadata
   const clearChat = async () => {
     if (!tabId) return;
 
     setMessages([]);
     await ChatHistoryService.clearHistory(tabId);
+    
+    // Clear token metadata as well when clearing chat
+    await StructuredPromptService.clearTabData(tabId);
   };
 
   return (
@@ -288,7 +324,8 @@ export function SidebarChatProvider({ children }) {
       processingStatus,
       apiError: processingError,
       contentType,
-      tokenStats // Expose token stats to components
+      tokenStats, // Directly from storage
+      contextStatus // Calculated from storage
     }}>
       {children}
     </SidebarChatContext.Provider>

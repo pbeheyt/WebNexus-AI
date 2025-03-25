@@ -1,4 +1,5 @@
 // src/api/api-interface.js
+// Only showing the updated method definition
 
 /**
  * Interface defining contract for all API implementations
@@ -22,6 +23,7 @@ class ApiInterface {
    * @param {Array} [requestConfig.conversationHistory] - Optional conversation history
    * @param {boolean} [requestConfig.streaming] - Whether to use streaming mode
    * @param {Function} [requestConfig.onChunk] - Callback for streaming chunks
+   * @param {number} [requestConfig.tabId] - Tab ID for token accounting
    * @returns {Promise<Object>} Standardized response object
    */
   async processRequest(requestConfig) {

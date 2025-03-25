@@ -1,5 +1,6 @@
 const ApiInterface = require('./api-interface');
 const ModelParameterService = require('../services/ModelParameterService');
+const StructuredPromptService = require('../services/StructuredPromptService');
 
 /**
  * Base class with shared API functionality
@@ -26,8 +27,6 @@ class BaseApiService extends ApiInterface {
 
   /**
    * Process unified API request with complete configuration
-   * This is the main entry point for all API interactions
-   * 
    * @param {Object} requestConfig - Unified request configuration
    * @param {Object} requestConfig.contentData - Extracted content data
    * @param {string} requestConfig.prompt - Formatted prompt
@@ -35,18 +34,19 @@ class BaseApiService extends ApiInterface {
    * @param {Array} [requestConfig.conversationHistory=[]] - Optional conversation history
    * @param {boolean} [requestConfig.streaming=false] - Whether to use streaming mode
    * @param {Function} [requestConfig.onChunk=null] - Callback for streaming chunks
+   * @param {number} [requestConfig.tabId] - Tab ID for token accounting
    * @returns {Promise<Object>} Standardized response object
    */
   async processRequest(requestConfig) {
     // Normalize and validate the request configuration
     const normalizedConfig = this._normalizeRequestConfig(requestConfig);
     
-    // Format content and create structured prompt with conversation history
+    // Format content and create structured prompt WITHOUT conversation history
+    // Platform-specific implementations will handle conversation history
     const formattedContent = this._formatContent(normalizedConfig.contentData);
     const structuredPrompt = this._createStructuredPrompt(
       normalizedConfig.prompt,
-      formattedContent,
-      normalizedConfig.conversationHistory
+      formattedContent
     );
     
     // Process the request with appropriate mode (streaming or non-streaming)
@@ -55,7 +55,8 @@ class BaseApiService extends ApiInterface {
         structuredPrompt,
         normalizedConfig.onChunk,
         normalizedConfig.conversationHistory,
-        normalizedConfig.model
+        normalizedConfig.model,
+        normalizedConfig.tabId
       );
     } else {
       this.logger.error('Non-streaming mode is not supported in this platform');
@@ -86,7 +87,8 @@ class BaseApiService extends ApiInterface {
       streaming: !!requestConfig.streaming,
       onChunk: typeof requestConfig.onChunk === 'function' 
         ? requestConfig.onChunk 
-        : null
+        : null,
+      tabId: requestConfig.tabId || null
     };
     
     // Validate required fields
@@ -113,40 +115,27 @@ class BaseApiService extends ApiInterface {
    * Legacy method for backward compatibility
    * @deprecated Use processRequest instead
    */
-  async process(contentData, prompt, model, conversationHistory = []) {
-    this.logger.warn('Using deprecated process() method - please migrate to processRequest()');
-    return this.processRequest({
-      contentData,
-      prompt,
-      model,
-      conversationHistory
-    });
-  }
+  // async process(contentData, prompt, model, conversationHistory = []) {
+  //   this.logger.warn('Using deprecated process() method - please migrate to processRequest()');
+  //   return this.processRequest({
+  //     contentData,
+  //     prompt,
+  //     model,
+  //     conversationHistory
+  //   });
+  // }
 
   /**
-   * Create a structured prompt combining instructions, conversation history, and formatted content
+   * Create a structured prompt combining instructions and formatted content
    * @param {string} prePrompt - The pre-prompt instructions
    * @param {string} formattedContent - The formatted content
-   * @param {Array} conversationHistory - Optional conversation history
    * @returns {string} The full structured prompt
    */
-  _createStructuredPrompt(prePrompt, formattedContent, conversationHistory = []) {
-    // If no conversation history, use simple format
-    if (!conversationHistory || conversationHistory.length === 0) {
-      return `# INSTRUCTIONS
-${prePrompt}
-# CONTENT
-${formattedContent}`;
-    }
-
-    // Format conversation history as text
-    const formattedHistory = this._formatConversationHistory(conversationHistory);
-
-    // Include history in the prompt
+  _createStructuredPrompt(prePrompt, formattedContent) {
+    // Create simple format without conversation history
+    // Conversation history will be handled by platform-specific formatters
     return `# INSTRUCTIONS
 ${prePrompt}
-# CONVERSATION HISTORY
-${formattedHistory}
 # CONTENT
 ${formattedContent}`;
   }
@@ -207,7 +196,6 @@ ${formattedContent}`;
    * @returns {string} Formatted YouTube data
    */
   _formatYouTubeData(data) {
-    // ... [implementation unchanged] ...
     const title = data.videoTitle || 'No title available';
     const channel = data.channelName || 'Unknown channel';
     const description = data.videoDescription || 'No description available';
@@ -242,7 +230,6 @@ ${commentsText}`;
    * @returns {string} Formatted Reddit data
    */
   _formatRedditData(data) {
-    // ... [implementation unchanged] ...
     const title = data.postTitle || 'No title available';
     const content = data.postContent || 'No content available';
     const author = data.postAuthor || 'Unknown author';
@@ -279,7 +266,6 @@ ${content}
    * @returns {string} Formatted web page data
    */
   _formatGeneralData(data) {
-    // ... [implementation unchanged] ...
     const title = data.pageTitle || 'No title available';
     const url = data.pageUrl || 'Unknown URL';
     const content = data.content || 'No content available';
@@ -316,7 +302,6 @@ ${content}`;
    * @returns {string} Formatted PDF data
    */
   _formatPdfData(data) {
-    // ... [implementation unchanged] ...
     const title = data.pdfTitle || 'Untitled PDF';
     const url = data.pdfUrl || 'Unknown URL';
     const content = data.content || 'No content available';
@@ -387,9 +372,10 @@ ${formattedContent}`;
    * @param {function} onChunk - Callback function for receiving text chunks
    * @param {Array} conversationHistory - Conversation history
    * @param {string} [modelOverride] - Optional model override
+   * @param {number} [tabId] - Optional tab ID for token accounting
    * @returns {Promise<Object>} API response metadata
    */
-  async _processWithApiStreaming(text, onChunk, conversationHistory = [], modelOverride = null) {
+  async _processWithApiStreaming(text, onChunk, conversationHistory = [], modelOverride = null, tabId = null) {
     const { apiKey } = this.credentials;
 
     try {
@@ -408,6 +394,26 @@ ${formattedContent}`;
 
       // Add conversation history to parameters
       params.conversationHistory = conversationHistory;
+      
+      // Generate unique message ID for token tracking
+      const messageId = `msg_${Date.now()}`;
+      
+      // Store structured prompt if tabId is available
+      if (tabId) {
+        await StructuredPromptService.storeStructuredPrompt(tabId, text, {
+          platformId: this.platformId,
+          modelId: params.model,
+          messageId,
+          metadata: {
+            conversationLength: conversationHistory?.length || 0,
+            promptType: 'api-streaming'
+          }
+        });
+        
+        // Add message ID to params for callbacks to update tokens later
+        params.messageId = messageId;
+        params.tabId = tabId;
+      }
 
       // Each implementation must handle the streaming appropriately
       return this._processWithModelStreaming(text, params.model, apiKey, params, onChunk);

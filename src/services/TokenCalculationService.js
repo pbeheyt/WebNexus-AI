@@ -1,124 +1,67 @@
+// src/services/TokenCalculationService.js
+
 /**
- * Service for managing token calculations, limits, and cost estimation
+ * Service for token calculation logic
  */
 class TokenCalculationService {
   /**
-   * Estimate token count for a given text string
-   * @param {string} text - The text to estimate tokens for
+   * Estimate tokens for a string
+   * Uses a simple character-based approximation
+   * @param {string} text - Input text
    * @returns {number} - Estimated token count
    */
-  estimateTokens(text) {
+  static estimateTokens(text) {
     if (!text) return 0;
     
-    // Simple approximation: 1 token ≈ 4 characters for English text
-    const characterCount = text.length;
-    return Math.ceil(characterCount / 4);
+    // Simple estimation based on characters
+    // Most tokenizers average ~4 characters per token
+    return Math.ceil(text.length / 4);
   }
 
   /**
-   * Calculate cost for specific token counts based on model pricing
+   * Calculate pricing information for token counts
    * @param {number} inputTokens - Number of input tokens
    * @param {number} outputTokens - Number of output tokens
-   * @param {Object} modelConfig - Model configuration with pricing info
-   * @returns {number} - Calculated cost in USD
+   * @param {Object} modelConfig - Model configuration with pricing
+   * @returns {Object} - Pricing information
    */
-  calculateCost(inputTokens, outputTokens, modelConfig) {
-    if (!modelConfig) return 0;
+  static calculatePricing(inputTokens, outputTokens, modelConfig) {
+    if (!modelConfig) {
+      return { totalCost: 0 };
+    }
     
-    // Extract pricing from model config
     const inputPrice = modelConfig.inputTokenPrice || 0;
     const outputPrice = modelConfig.outputTokenPrice || 0;
     
-    // Calculate cost - prices are per million tokens
-    const inputCost = (inputTokens * inputPrice) / 1_000_000;
-    const outputCost = (outputTokens * outputPrice) / 1_000_000;
+    // Convert from price per 1000 tokens
+    const inputCost = (inputTokens / 1000000) * inputPrice;
+    const outputCost = (outputTokens / 1000000) * outputPrice;
+    const totalCost = inputCost + outputCost;
     
-    return inputCost + outputCost;
+    return {
+      inputCost,
+      outputCost,
+      totalCost,
+      inputTokenPrice: inputPrice,
+      outputTokenPrice: outputPrice
+    };
   }
-
+  
   /**
-   * Calculate total tokens and cost for a conversation
-   * @param {Array} messages - Array of messages with inputTokens and outputTokens properties
-   * @param {Object} modelConfig - Model configuration with pricing info
-   * @param {number} extractedContentTokens - Additional tokens from extracted content
-   * @returns {Object} - Object with inputTokens, outputTokens, totalTokens, and totalCost
+   * Generate pricing information object for model config
+   * @param {Object} modelConfig - Model configuration with pricing
+   * @returns {Object} - Pricing information for token metadata
    */
-  calculateConversationStats(messages, modelConfig, extractedContentTokens = 0) {
-    if (!messages || !modelConfig) {
-      return { 
-        inputTokens: extractedContentTokens, 
-        outputTokens: 0, 
-        totalTokens: extractedContentTokens,
-        totalCost: 0 
-      };
-    }
-    
-    // Sum up tokens from all messages
-    const stats = messages.reduce(
-      (acc, msg) => {
-        acc.inputTokens += msg.inputTokens || 0;
-        acc.outputTokens += msg.outputTokens || 0;
-        return acc;
-      },
-      { inputTokens: extractedContentTokens, outputTokens: 0 }
-    );
-    
-    // Calculate total tokens
-    stats.totalTokens = stats.inputTokens + stats.outputTokens;
-    
-    // Calculate total cost
-    stats.totalCost = this.calculateCost(
-      stats.inputTokens, 
-      stats.outputTokens, 
-      modelConfig
-    );
-    
-    return stats;
-  }
-
-  /**
-   * Evaluate context window usage and determine warning level
-   * @param {number} totalTokens - Total tokens in conversation
-   * @param {number} contextWindow - Model's context window size
-   * @returns {Object} - Context status with usage information and warning level
-   */
-  evaluateContextUsage(totalTokens, contextWindow) {
-    if (!contextWindow || contextWindow <= 0) {
-      return {
-        percentage: 0,
-        exceeds: false,
-        warningLevel: 'none',
-        tokensRemaining: 0,
-        totalTokens,
-        contextWindow
-      };
-    }
-
-    const percentage = (totalTokens / contextWindow) * 100;
-    const tokensRemaining = Math.max(0, contextWindow - totalTokens);
-    
-    // Strict boundary check
-    const exceeds = totalTokens >= contextWindow;
-    
-    // Progressive warning levels for UI feedback
-    let warningLevel = 'none';
-    if (exceeds) {
-      warningLevel = 'critical';
-    } else if (percentage >= 90) {
-      warningLevel = 'warning';
-    } else if (percentage >= 75) {
-      warningLevel = 'notice';
+  static getPricingFromModelConfig(modelConfig) {
+    if (!modelConfig) {
+      return null;
     }
     
     return {
-      percentage,
-      exceeds,
-      warningLevel,
-      tokensRemaining,
-      totalTokens,
-      contextWindow
+      inputTokenPrice: modelConfig.inputTokenPrice || 0,
+      outputTokenPrice: modelConfig.outputTokenPrice || 0
     };
   }
 }
 
-module.exports = new TokenCalculationService();
+module.exports = TokenCalculationService;

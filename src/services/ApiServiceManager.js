@@ -26,13 +26,22 @@ class ApiServiceManager {
    * @param {Function} [requestConfig.onChunk] - Callback for streaming chunks
    * @returns {Promise<Object>} API response
    */
-  async processWithUnifiedConfig(platformId, requestConfig) {
+  async processWithUnifiedConfig(platformId, requestConfig, tabId) {
     try {
       logger.info(`Processing content through ${platformId} API with unified config:`, {
         hasStreaming: !!requestConfig.streaming,
         hasHistory: Array.isArray(requestConfig.conversationHistory) && requestConfig.conversationHistory.length > 0,
-        hasModel: !!requestConfig.model
+        hasModel: !!requestConfig.model,
+        tabId: tabId
       });
+
+      // Ensure we have the necessary configuration
+      if (!requestConfig) {
+        throw new Error('Request configuration is required');
+      }
+
+      // Add tab ID to request config
+      requestConfig.tabId = tabId;
 
       // Get credentials
       const credentials = await this.credentialManager.getCredentials(platformId);
@@ -72,21 +81,21 @@ class ApiServiceManager {
     try {
       // Get credentials if not provided
       const credentialsToUse = credentials || await this.credentialManager.getCredentials(platformId);
-      
+
       if (!credentialsToUse) {
         logger.warn(`No credentials available for ${platformId}`);
         return false;
       }
-      
+
       // Create API service
       const apiService = ApiFactory.createApiService(platformId);
       if (!apiService) {
         throw new Error(`API service not available for ${platformId}`);
       }
-      
+
       // Initialize with credentials
       await apiService.initialize(credentialsToUse);
-      
+
       // Use lightweight validation method
       return await apiService.validateCredentials();
     } catch (error) {

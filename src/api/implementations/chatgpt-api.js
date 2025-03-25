@@ -1,6 +1,5 @@
-// src/api/implementations/chatgpt-api.js
-
 const BaseApiService = require('../api-base');
+const StructuredPromptService = require('../../services/StructuredPromptService');
 
 /**
  * ChatGPT API implementation
@@ -67,6 +66,22 @@ class ChatGptApiService extends BaseApiService {
         if (params.supportsTopP) {
           requestPayload.top_p = params.topP;
         }
+      }
+
+      // Estimate input tokens before API call for token accounting
+      let inputTokenEstimate = 0;
+      
+      // Simple token estimation based on characters
+      const inputText = JSON.stringify(requestPayload);
+      inputTokenEstimate = Math.ceil(inputText.length / 4); // Approximate estimate
+      
+      // Update token metadata if tabId and messageId are provided
+      if (params.tabId && params.messageId) {
+        await StructuredPromptService.updateMessageTokens(
+          params.tabId,
+          params.messageId,
+          { input: inputTokenEstimate }
+        );
       }
 
       // Make the streaming request
@@ -142,6 +157,41 @@ class ChatGptApiService extends BaseApiService {
           model: modelToUse,
           fullContent: responseMetadata.content
         });
+
+        // Estimate output tokens for token accounting
+        const outputTokenEstimate = Math.ceil(responseMetadata.content.length / 4);
+        
+        // Update token counts with API results
+        if (params.tabId && params.messageId) {
+          await StructuredPromptService.updateMessageTokens(
+            params.tabId,
+            params.messageId,
+            { output: outputTokenEstimate }
+          );
+          
+          // Also update with pricing information
+          const modelConfig = this.config?.models?.find(m => m.id === modelToUse);
+          if (modelConfig) {
+            await StructuredPromptService.updateTokenMetadata(params.tabId, {
+              tokensUsed: { 
+                input: inputTokenEstimate,
+                output: outputTokenEstimate
+              },
+              platformId: this.platformId,
+              modelId: modelToUse,
+              pricing: {
+                inputTokenPrice: modelConfig.inputTokenPrice,
+                outputTokenPrice: modelConfig.outputTokenPrice
+              }
+            });
+          }
+        }
+
+        // Add token usage to response metadata
+        responseMetadata.tokensUsed = {
+          input: inputTokenEstimate,
+          output: outputTokenEstimate
+        };
 
         return responseMetadata;
       } catch (error) {
