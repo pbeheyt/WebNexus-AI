@@ -480,18 +480,6 @@ ${formattedContent}`;
     throw new Error('_validateWithModel must be implemented by subclasses');
   }
 
-  // /**
-  //  * Process with model-specific parameters
-  //  * @param {string} text - Prompt text
-  //  * @param {string} model - Model ID to use
-  //  * @param {string} apiKey - API key
-  //  * @param {Object} params - Resolved parameters with conversation history
-  //  * @returns {Promise<Object>} API response
-  //  */
-  // async _processWithModel(text, model, apiKey, params) {
-  //   throw new Error('_processWithModel must be implemented by subclasses');
-  // }
-
   /**
    * Process with model-specific parameters with streaming support
    * @param {string} text - Prompt text
