@@ -1,6 +1,6 @@
 const ApiInterface = require('./api-interface');
 const ModelParameterService = require('../services/ModelParameterService');
-const StructuredPromptService = require('../services/StructuredPromptService');
+const ApiTokenTracker = require('../services/ApiTokenTracker');
 
 /**
  * Base class with shared API functionality
@@ -110,20 +110,6 @@ class BaseApiService extends ApiInterface {
     
     return normalizedConfig;
   }
-
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use processRequest instead
-   */
-  // async process(contentData, prompt, model, conversationHistory = []) {
-  //   this.logger.warn('Using deprecated process() method - please migrate to processRequest()');
-  //   return this.processRequest({
-  //     contentData,
-  //     prompt,
-  //     model,
-  //     conversationHistory
-  //   });
-  // }
 
   /**
    * Create a structured prompt combining instructions and formatted content
@@ -400,7 +386,7 @@ ${formattedContent}`;
       
       // Store structured prompt if tabId is available
       if (tabId) {
-        await StructuredPromptService.storeStructuredPrompt(tabId, text, {
+        await ApiTokenTracker.storePrompt(tabId, text, {
           platformId: this.platformId,
           modelId: params.model,
           messageId,

@@ -1,14 +1,15 @@
-// src/hooks/useStructuredPrompt.js
+// src/sidebar/hooks/useTokenTracking.js
 
 import { useState, useEffect, useCallback } from 'react';
-import StructuredPromptService from '../services/StructuredPromptService';
+import ApiTokenTracker from '../../services/ApiTokenTracker';
 
 /**
- * Hook for accessing structured prompts and token accounting data
+ * Hook for tracking token usage and providing token statistics in React components
+ * 
  * @param {number} tabId - Tab ID
- * @returns {Object} - Structured prompt data and token statistics
+ * @returns {Object} - Token tracking capabilities and statistics
  */
-export function useStructuredPrompt(tabId) {
+export function useTokenTracking(tabId) {
   const [prompts, setPrompts] = useState([]);
   const [tokenStats, setTokenStats] = useState({
     inputTokens: 0,
@@ -18,7 +19,7 @@ export function useStructuredPrompt(tabId) {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load structured prompts and token stats for the tab
+  // Load token data for the tab
   useEffect(() => {
     const loadData = async () => {
       if (!tabId) {
@@ -29,14 +30,14 @@ export function useStructuredPrompt(tabId) {
       setIsLoading(true);
       try {
         // Load prompts
-        const structuredPrompts = await StructuredPromptService.getStructuredPrompts(tabId);
-        setPrompts(structuredPrompts);
+        const storedPrompts = await ApiTokenTracker.getPrompts(tabId);
+        setPrompts(storedPrompts);
         
         // Load token stats
-        const stats = await StructuredPromptService.getTokenStatistics(tabId);
+        const stats = await ApiTokenTracker.getTokenStatistics(tabId);
         setTokenStats(stats);
       } catch (error) {
-        console.error('Error loading structured prompts and token data:', error);
+        console.error('Error loading token data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -44,7 +45,7 @@ export function useStructuredPrompt(tabId) {
     
     loadData();
     
-    // Set up a listener for storage changes to keep the data fresh
+    // Set up a listener for storage changes to keep data fresh
     const handleStorageChange = (changes, area) => {
       if (area !== 'local' || !tabId) return;
       
@@ -53,7 +54,7 @@ export function useStructuredPrompt(tabId) {
         const newMetadata = changes.tab_token_metadata.newValue[tabId];
         if (newMetadata) {
           // Update token stats from changed storage
-          StructuredPromptService.getTokenStatistics(tabId)
+          ApiTokenTracker.getTokenStatistics(tabId)
             .then(stats => setTokenStats(stats))
             .catch(err => console.error('Error updating token stats from storage change:', err));
         }
@@ -78,12 +79,6 @@ export function useStructuredPrompt(tabId) {
   }, [tabId]);
 
   /**
-   * Get token statistics (synchronous - returns cached value)
-   * @returns {Object} - Token stats object
-   */
-  const getTokenStats = useCallback(() => tokenStats, [tokenStats]);
-
-  /**
    * Calculate context window status based on current token stats
    * @param {Object} modelConfig - Model configuration with context window size
    * @returns {Promise<Object>} - Context window status object
@@ -98,28 +93,64 @@ export function useStructuredPrompt(tabId) {
       };
     }
     
-    return StructuredPromptService.calculateContextStatus(tabId, modelConfig);
+    return ApiTokenTracker.calculateContextStatus(tabId, modelConfig);
   }, [tabId]);
 
   /**
-   * Add new token counts to the tab's token metadata - 
-   * This is now just a compatibility layer, actual counting is done in the API
-   * @param {Object} newTokens - Token counts to add
+   * Track token consumption
+   * @param {Object} tokenData - Token data to track
    * @param {Object} modelConfig - Model configuration with pricing
    * @returns {Promise<boolean>} - Success indicator
    */
-  const addTokenCounts = useCallback(async (newTokens, modelConfig = null) => {
-    // This function is kept for compatibility but doesn't add tokens directly
-    // All token counting is now centralized in the API layer
-    return true;
+  const trackTokens = useCallback(async (tokenData, modelConfig = null) => {
+    if (!tabId) return false;
+    
+    const pricing = modelConfig ? ApiTokenTracker.getPricingInfo(modelConfig) : null;
+    
+    return ApiTokenTracker.trackMessageTokens(
+      tabId,
+      tokenData.messageId || `msg_${Date.now()}`,
+      { 
+        input: tokenData.input || 0, 
+        output: tokenData.output || 0 
+      },
+      {
+        platformId: tokenData.platformId,
+        modelId: tokenData.modelId,
+        pricing
+      }
+    );
+  }, [tabId]);
+
+  /**
+   * Store a prompt with associated token data
+   * @param {string} promptText - The prompt text
+   * @param {Object} metadata - Additional metadata 
+   * @returns {Promise<boolean>} - Success indicator
+   */
+  const storePrompt = useCallback(async (promptText, metadata = {}) => {
+    if (!tabId || !promptText) return false;
+    
+    return ApiTokenTracker.storePrompt(tabId, promptText, metadata);
+  }, [tabId]);
+
+  /**
+   * Clear all token data for the current tab
+   * @returns {Promise<boolean>} - Success indicator
+   */
+  const clearTokenData = useCallback(async () => {
+    if (!tabId) return false;
+    
+    return ApiTokenTracker.clearTabData(tabId);
   }, [tabId]);
 
   return {
     prompts,
     tokenStats,
     isLoading,
-    getTokenStats,
     calculateContextStatus,
-    addTokenCounts
+    trackTokens,
+    storePrompt,
+    clearTokenData
   };
 }

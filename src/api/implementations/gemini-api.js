@@ -1,5 +1,5 @@
 const BaseApiService = require('../api-base');
-const StructuredPromptService = require('../../services/StructuredPromptService');
+const ApiTokenTracker = require('../../services/ApiTokenTracker');
 
 /**
  * Gemini API implementation
@@ -84,19 +84,24 @@ class GeminiApiService extends BaseApiService {
         formattedRequest.generationConfig.topP = params.topP;
       }
       
-      // Estimate input tokens before API call for token accounting
-      let inputTokenEstimate = 0;
+      // Estimate input tokens
+      const inputTokenEstimate = ApiTokenTracker.estimateObjectTokens(formattedRequest);
       
-      // Simple token estimation based on characters
-      const inputText = JSON.stringify(formattedRequest);
-      inputTokenEstimate = Math.ceil(inputText.length / 4); // Approximate estimate
+      // Get model config for pricing
+      const modelConfig = this.config?.models?.find(m => m.id === model);
+      const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
       
-      // Update token metadata if tabId and messageId are provided
+      // Track input tokens
       if (params.tabId && params.messageId) {
-        await StructuredPromptService.updateMessageTokens(
+        await ApiTokenTracker.trackMessageTokens(
           params.tabId,
           params.messageId,
-          { input: inputTokenEstimate }
+          { input: inputTokenEstimate },
+          {
+            platformId: this.platformId,
+            modelId: model,
+            pricing: pricing
+          }
         );
       }
       
@@ -252,33 +257,21 @@ class GeminiApiService extends BaseApiService {
           fullContent: accumulatedContent
         });
         
-        // Estimate output tokens for token accounting
-        const outputTokenEstimate = Math.ceil(accumulatedContent.length / 4);
+        // Estimate output tokens
+        const outputTokenEstimate = ApiTokenTracker.estimateTokens(accumulatedContent);
         
-        // Update token counts with API results
+        // Track output tokens
         if (params.tabId && params.messageId) {
-          await StructuredPromptService.updateMessageTokens(
+          await ApiTokenTracker.trackMessageTokens(
             params.tabId,
             params.messageId,
-            { output: outputTokenEstimate }
-          );
-          
-          // Also update with pricing information
-          const modelConfig = this.config?.models?.find(m => m.id === model);
-          if (modelConfig) {
-            await StructuredPromptService.updateTokenMetadata(params.tabId, {
-              tokensUsed: { 
-                input: inputTokenEstimate,
-                output: outputTokenEstimate
-              },
+            { output: outputTokenEstimate },
+            {
               platformId: this.platformId,
               modelId: model,
-              pricing: {
-                inputTokenPrice: modelConfig.inputTokenPrice,
-                outputTokenPrice: modelConfig.outputTokenPrice
-              }
-            });
-          }
+              pricing: pricing
+            }
+          );
         }
         
         return {

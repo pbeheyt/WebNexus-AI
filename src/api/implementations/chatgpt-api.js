@@ -1,7 +1,5 @@
-// src/api/implementations/chatgpt-api.js
-
 const BaseApiService = require('../api-base');
-const StructuredPromptService = require('../../services/StructuredPromptService');
+const ApiTokenTracker = require('../../services/ApiTokenTracker');
 
 /**
  * ChatGPT API implementation
@@ -71,22 +69,15 @@ class ChatGptApiService extends BaseApiService {
       }
 
       // Estimate input tokens before API call for token accounting
-      let inputTokenEstimate = 0;
+      const inputTokenEstimate = ApiTokenTracker.estimateObjectTokens(requestPayload);
       
-      // Simple token estimation based on characters
-      const inputText = JSON.stringify(requestPayload);
-      inputTokenEstimate = Math.ceil(inputText.length / 4); // Approximate estimate
-      
-      // Get pricing information from model config
+      // Get model config for pricing
       const modelConfig = this.config?.models?.find(m => m.id === modelToUse);
-      const pricing = modelConfig ? {
-        inputTokenPrice: modelConfig.inputTokenPrice || 0,
-        outputTokenPrice: modelConfig.outputTokenPrice || 0
-      } : null;
+      const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
       
-      // Update token tracking for input tokens using transaction approach
+      // Update token tracking for input tokens
       if (params.tabId && params.messageId) {
-        await StructuredPromptService.updateTokenTransaction(
+        await ApiTokenTracker.trackMessageTokens(
           params.tabId,
           params.messageId,
           { input: inputTokenEstimate },
@@ -173,11 +164,11 @@ class ChatGptApiService extends BaseApiService {
         });
 
         // Estimate output tokens for token accounting
-        const outputTokenEstimate = Math.ceil(responseMetadata.content.length / 4);
+        const outputTokenEstimate = ApiTokenTracker.estimateTokens(responseMetadata.content);
         
         // Update token tracking for output tokens
         if (params.tabId && params.messageId) {
-          await StructuredPromptService.updateTokenTransaction(
+          await ApiTokenTracker.trackMessageTokens(
             params.tabId,
             params.messageId,
             { output: outputTokenEstimate },
