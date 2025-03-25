@@ -10,6 +10,23 @@ class GeminiApiService extends BaseApiService {
   }
   
   /**
+   * Estimate tokens for Gemini-formatted conversation history
+   * @param {Array} history - Conversation history array
+   * @returns {number} - Estimated token count
+   */
+  estimateConversationHistoryTokens(history) {
+    if (!history || !Array.isArray(history) || history.length === 0) {
+      return 0;
+    }
+    
+    // Format conversation history for Gemini format
+    const formattedRequest = this._formatGeminiRequestWithHistory(history, "", null);
+    
+    // Estimate tokens for the formatted request structure
+    return ApiTokenTracker.estimateObjectTokens(formattedRequest);
+  }
+  
+  /**
    * Process with model-specific parameters and streaming support
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
@@ -84,19 +101,32 @@ class GeminiApiService extends BaseApiService {
         formattedRequest.generationConfig.topP = params.topP;
       }
       
-      // Estimate input tokens
-      const inputTokenEstimate = ApiTokenTracker.estimateObjectTokens(formattedRequest);
+      // Calculate token counts for different components
+      const promptTokens = ApiTokenTracker.estimateTokens(text);
+      const historyTokens = params.conversationHistory && params.conversationHistory.length > 0
+        ? this.estimateConversationHistoryTokens(params.conversationHistory)
+        : 0;
+      const systemTokens = params.systemPrompt
+        ? ApiTokenTracker.estimateTokens(params.systemPrompt)
+        : 0;
+      const totalInputTokens = promptTokens + historyTokens + systemTokens;
       
       // Get model config for pricing
       const modelConfig = this.config?.models?.find(m => m.id === model);
       const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
       
-      // Track input tokens
+      // Track input tokens with detailed breakdown
       if (params.tabId && params.messageId) {
         await ApiTokenTracker.trackMessageTokens(
           params.tabId,
           params.messageId,
-          { input: inputTokenEstimate },
+          { 
+            input: totalInputTokens,
+            promptTokens,
+            historyTokens,
+            systemTokens,
+            output: 0 // Will be updated when streaming completes
+          },
           {
             platformId: this.platformId,
             modelId: model,
@@ -281,7 +311,10 @@ class GeminiApiService extends BaseApiService {
           platformId: this.platformId,
           timestamp: new Date().toISOString(),
           tokensUsed: {
-            input: inputTokenEstimate,
+            input: totalInputTokens,
+            promptTokens,
+            historyTokens,
+            systemTokens,
             output: outputTokenEstimate
           }
         };

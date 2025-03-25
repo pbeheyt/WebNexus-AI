@@ -1,7 +1,7 @@
 // src/background/listeners/tab-state-listener.js
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import SidebarStateManager from '../../services/SidebarStateManager.js';
-import StructuredPromptService from '../../services/StructuredPromptService.js';
+import ApiTokenTracker from '../../services/ApiTokenTracker.js';
 import logger from '../../utils/logger.js';
 
 /**
@@ -52,8 +52,8 @@ export function setupTabStateListener() {
         logger.background.info(`Removed chat history for tab ${tabId}`);
       }
 
-      // Clean up structured prompts and token data
-      await StructuredPromptService.clearTabData(tabId);
+      // Clean up structured prompts and token data using ApiTokenTracker
+      await ApiTokenTracker.clearTabData(tabId);
       logger.background.info(`Removed token accounting data for tab ${tabId}`);
 
     } catch (error) {
@@ -137,8 +137,8 @@ export function setupTabStateListener() {
         }
       }
 
-      // Clean up structured prompts and token data for invalid tabs
-      await StructuredPromptService.cleanupClosedTabs(Array.from(validTabIds));
+      // Clean up structured prompts and token data for invalid tabs using ApiTokenTracker
+      await ApiTokenTracker.cleanupInactiveTabs(Array.from(validTabIds));
 
       // Run existing cleanup routine
       SidebarStateManager.cleanupTabStates();

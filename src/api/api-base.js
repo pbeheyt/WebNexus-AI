@@ -140,10 +140,25 @@ ${formattedContent}`;
   }
 
   /**
-   * Format content based on content type
-   * @param {Object} data - The extracted content data
-   * @returns {string} Formatted content
+   * Estimate tokens for conversation history
+   * @param {Array} history - Conversation history array
+   * @returns {number} - Estimated token count
    */
+  estimateConversationHistoryTokens(history) {
+    if (!history || !Array.isArray(history) || history.length === 0) {
+      return 0;
+    }
+    
+    // Format and estimate tokens for this platform's format
+    const formattedHistory = this._formatConversationHistory(history);
+    return ApiTokenTracker.estimateTokens(formattedHistory);
+  }
+
+  /**
+     * Format content based on content type
+     * @param {Object} data - The extracted content data
+     * @returns {string} Formatted content
+     */
   _formatContent(data) {
     if (!data) {
       this.logger.error('No content data available for formatting');
@@ -191,23 +206,23 @@ ${formattedContent}`;
     let commentsText = '';
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
       commentsText = `## COMMENTS
-`;
+  `;
       data.comments.forEach((comment, index) => {
         commentsText += `${index + 1}. User: ${comment.author || 'Anonymous'} (${comment.likes || '0'} likes)
-   "${comment.text || ''}"
-`;
+  "${comment.text || ''}"
+  `;
       });
     }
 
     return `## VIDEO METADATA
-- Title: ${title}
-- Channel: ${channel}
-- URL: https://www.youtube.com/watch?v=${data.videoId || ''}
-## DESCRIPTION
-${description}
-## TRANSCRIPT
-${transcript}
-${commentsText}`;
+  - Title: ${title}
+  - Channel: ${channel}
+  - URL: https://www.youtube.com/watch?v=${data.videoId || ''}
+  ## DESCRIPTION
+  ${description}
+  ## TRANSCRIPT
+  ${transcript}
+  ${commentsText}`;
   }
 
   /**
@@ -223,23 +238,23 @@ ${commentsText}`;
     const subreddit = data.subreddit || 'Unknown subreddit';
 
     let formattedText = `## POST METADATA
-- Title: ${title}
-- Author: ${author}
-- Subreddit: ${subreddit}
-- URL: ${postUrl}
-## POST CONTENT
-${content}
-`;
+  - Title: ${title}
+  - Author: ${author}
+  - Subreddit: ${subreddit}
+  - URL: ${postUrl}
+  ## POST CONTENT
+  ${content}
+  `;
 
     // Format comments with links
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
       formattedText += `## COMMENTS
-`;
+  `;
 
       data.comments.forEach((comment, index) => {
         formattedText += `${index + 1}. u/${comment.author || 'Anonymous'} (${comment.popularity || '0'} points) [(link)](${comment.permalink || postUrl})
-   "${comment.content || ''}"
-`;
+  "${comment.content || ''}"
+  `;
       });
     }
 
@@ -259,27 +274,27 @@ ${content}
     const description = data.pageDescription || null;
 
     let metadataText = `## PAGE METADATA
-- Title: ${title}
-- URL: ${url}`;
+  - Title: ${title}
+  - URL: ${url}`;
 
     if (author) {
       metadataText += `
-- Author: ${author}`;
+  - Author: ${author}`;
     }
 
     if (description) {
       metadataText += `
-- Description: ${description}`;
+  - Description: ${description}`;
     }
 
     if (data.isSelection) {
       metadataText += `
-- Note: This is a user-selected portion of the page content.`;
+  - Note: This is a user-selected portion of the page content.`;
     }
 
     return `${metadataText}
-## PAGE CONTENT
-${content}`;
+  ## PAGE CONTENT
+  ${content}`;
   }
 
   /**
@@ -296,23 +311,23 @@ ${content}`;
 
     // Format metadata section
     let metadataText = `## PDF METADATA
-- Title: ${title}
-- Pages: ${pageCount}
-- URL: ${url}`;
+  - Title: ${title}
+  - Pages: ${pageCount}
+  - URL: ${url}`;
 
     if (metadata.author) {
       metadataText += `
-- Author: ${metadata.author}`;
+  - Author: ${metadata.author}`;
     }
 
     if (metadata.creationDate) {
       metadataText += `
-- Created: ${metadata.creationDate}`;
+  - Created: ${metadata.creationDate}`;
     }
 
     if (data.ocrRequired) {
       metadataText += `
-- Note: This PDF may require OCR as text extraction was limited.`;
+  - Note: This PDF may require OCR as text extraction was limited.`;
     }
 
     // Format and clean up the content
@@ -337,8 +352,8 @@ ${content}`;
 
     return `${metadataText}
 
-## PDF CONTENT
-${formattedContent}`;
+  ## PDF CONTENT
+  ${formattedContent}`;
   }
 
   /**
@@ -384,6 +399,16 @@ ${formattedContent}`;
       // Generate unique message ID for token tracking
       const messageId = `msg_${Date.now()}`;
       
+      // Calculate token counts for different components
+      const promptTokens = ApiTokenTracker.estimateTokens(text);
+      const historyTokens = this.estimateConversationHistoryTokens(conversationHistory);
+      const systemTokens = params.systemPrompt ? ApiTokenTracker.estimateTokens(params.systemPrompt) : 0;
+      const totalInputTokens = promptTokens + historyTokens + systemTokens;
+      
+      // Get model config for pricing
+      const modelConfig = this.config?.models?.find(m => m.id === params.model);
+      const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
+      
       // Store structured prompt if tabId is available
       if (tabId) {
         await ApiTokenTracker.storePrompt(tabId, text, {
@@ -399,6 +424,24 @@ ${formattedContent}`;
         // Add message ID to params for callbacks to update tokens later
         params.messageId = messageId;
         params.tabId = tabId;
+        
+        // Track tokens with detailed breakdown
+        await ApiTokenTracker.trackMessageTokens(
+          tabId,
+          messageId,
+          { 
+            input: totalInputTokens,
+            promptTokens,
+            historyTokens,
+            systemTokens,
+            output: 0 // Will be updated when streaming completes
+          },
+          {
+            platformId: this.platformId,
+            modelId: params.model,
+            pricing: pricing
+          }
+        );
       }
 
       // Each implementation must handle the streaming appropriately

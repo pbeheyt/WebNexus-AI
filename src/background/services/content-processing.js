@@ -6,7 +6,6 @@ import { getPreferredPromptId, getPromptContentById } from './prompt-resolver.js
 import { getPreferredAiPlatform, openAiPlatformWithContent } from './platform-integration.js';
 import { resetExtractionState, savePlatformTabInfo, trackQuickPromptUsage } from '../core/state-manager.js';
 import { processContentViaApi } from '../api/api-coordinator.js';
-import StructuredPromptService from '../../services/StructuredPromptService.js';
 import logger from '../../utils/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 
@@ -17,33 +16,33 @@ import { STORAGE_KEYS } from '../../shared/constants.js';
  * @returns {Promise<Object>} Result information
  */
 export async function processContent(params) {
-  const {
-    tabId,
-    url,
-    hasSelection = false,
-    promptId = null,
-    platformId = null,
+  const { 
+    tabId, 
+    url, 
+    hasSelection = false, 
+    promptId = null, 
+    platformId = null, 
     commentAnalysisRequired = false,
     useApi = false
   } = params;
-
+  
   try {
     logger.background.info('Starting web UI content processing', {
       tabId, url, hasSelection, promptId, platformId
     });
-
+    
     // If API mode requested, use API path
     if (useApi) {
       return await processContentViaApi(params);
     }
-
+    
     // 1. Reset previous state
     await resetExtractionState();
-
+    
     // 2. Extract content
     const contentType = determineContentType(url, hasSelection);
     logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
-
+    
     const extractionResult = await extractContent(tabId, url, hasSelection);
     if (!extractionResult) {
       logger.background.warn('Content extraction completed with issues');
@@ -51,11 +50,11 @@ export async function processContent(params) {
 
     // 3. Get extracted content and check for specific errors
     const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
-
+    
     if (!extractedContent) {
       throw new Error('Failed to extract content');
     }
-
+    
     // YouTube transcript error check
     const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);
     if (transcriptError) {
@@ -64,7 +63,7 @@ export async function processContent(params) {
         ...transcriptError
       };
     }
-
+      
     // YouTube comments check (only if required by the prompt)
     const commentsError = checkYouTubeCommentsStatus(extractedContent, commentAnalysisRequired);
     if (commentsError) {
@@ -73,38 +72,35 @@ export async function processContent(params) {
         ...commentsError
       };
     }
-
+    
     // 4. Handle prompt resolution
     const effectivePromptId = promptId || await getPreferredPromptId(contentType);
     const promptContent = await getPromptContentById(effectivePromptId, contentType);
-
+    
     if (!promptContent) {
       throw new Error(`Could not load prompt content for ID: ${effectivePromptId}`);
     }
-
+    
     // Track quick prompt usage if needed
     if (effectivePromptId === 'quick') {
       await trackQuickPromptUsage(contentType);
     }
-
-    // Use StructuredPromptService for structured prompts
-    const structuredPrompt = await StructuredPromptService.generateStructuredPrompt(promptContent, extractedContent);
-
+    
     // 5. Open AI platform with the content
     const effectivePlatformId = platformId || await getPreferredAiPlatform();
-
-    const aiPlatformTabId = await openAiPlatformWithContent(contentType, effectivePromptId, effectivePlatformId, structuredPrompt);
-
+    
+    const aiPlatformTabId = await openAiPlatformWithContent(contentType, effectivePromptId, effectivePlatformId);
+    
     if (!aiPlatformTabId) {
       return {
         success: false,
         error: 'Failed to open AI platform tab'
       };
     }
-
+    
     // Save tab information for later
-    await savePlatformTabInfo(aiPlatformTabId, effectivePlatformId, structuredPrompt);
-
+    await savePlatformTabInfo(aiPlatformTabId, effectivePlatformId, promptContent);
+    
     return {
       success: true,
       aiPlatformTabId,
@@ -118,6 +114,7 @@ export async function processContent(params) {
     };
   }
 }
+
 
 /**
  * Handle process content request from message

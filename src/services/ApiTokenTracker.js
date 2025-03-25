@@ -175,6 +175,9 @@ class ApiTokenTracker {
           totalInputTokens: 0,
           totalOutputTokens: 0,
           totalCost: 0,
+          promptTokens: 0,
+          historyTokens: 0,
+          systemTokens: 0,
           lastUpdated: Date.now(),
           platformId: params.platformId || 'unknown',
           modelId: params.modelId || 'unknown'
@@ -209,9 +212,20 @@ class ApiTokenTracker {
       const messageUpdated = await this._updateMessageTokens(tabId, messageId, tokenInfo);
       if (!messageUpdated) return false;
       
-      // Update tab-level token accounting with the same token info
+      // Create token info with detailed breakdown
+      const tokensUsed = {
+        input: tokenInfo.input || 0,
+        output: tokenInfo.output || 0,
+        details: {
+          promptTokens: tokenInfo.promptTokens || 0,
+          historyTokens: tokenInfo.historyTokens || 0,
+          systemTokens: tokenInfo.systemTokens || 0
+        }
+      };
+      
+      // Update tab-level token accounting with the enhanced token info
       await this._updateTokenMetadata(tabId, {
-        tokensUsed: tokenInfo,
+        tokensUsed,
         ...metadata
       });
       
@@ -233,6 +247,9 @@ class ApiTokenTracker {
         inputTokens: 0,
         outputTokens: 0,
         totalCost: 0,
+        promptTokens: 0,
+        historyTokens: 0,
+        systemTokens: 0,
         isCalculated: false
       };
     }
@@ -245,6 +262,9 @@ class ApiTokenTracker {
           inputTokens: 0,
           outputTokens: 0, 
           totalCost: 0,
+          promptTokens: 0,
+          historyTokens: 0,
+          systemTokens: 0,
           isCalculated: false
         };
       }
@@ -253,6 +273,9 @@ class ApiTokenTracker {
         inputTokens: metadata.totalInputTokens || 0,
         outputTokens: metadata.totalOutputTokens || 0,
         totalCost: metadata.totalCost || 0,
+        promptTokens: metadata.promptTokens || 0,
+        historyTokens: metadata.historyTokens || 0,
+        systemTokens: metadata.systemTokens || 0,
         platformId: metadata.platformId,
         modelId: metadata.modelId,
         lastUpdated: metadata.lastUpdated,
@@ -264,6 +287,9 @@ class ApiTokenTracker {
         inputTokens: 0,
         outputTokens: 0,
         totalCost: 0,
+        promptTokens: 0,
+        historyTokens: 0,
+        systemTokens: 0,
         isCalculated: false
       };
     }
@@ -457,6 +483,9 @@ class ApiTokenTracker {
           totalInputTokens: 0,
           totalOutputTokens: 0,
           totalCost: 0,
+          promptTokens: 0,
+          historyTokens: 0,
+          systemTokens: 0,
           lastUpdated: Date.now(),
           platformId: params.platformId || 'unknown',
           modelId: params.modelId || 'unknown'
@@ -471,6 +500,13 @@ class ApiTokenTracker {
         // Add to running totals
         allMetadata[tabId].totalInputTokens += inputTokens;
         allMetadata[tabId].totalOutputTokens += outputTokens;
+        
+        // Update detailed token breakdown if available
+        if (params.tokensUsed.details) {
+          allMetadata[tabId].promptTokens += params.tokensUsed.details.promptTokens || 0;
+          allMetadata[tabId].historyTokens += params.tokensUsed.details.historyTokens || 0;
+          allMetadata[tabId].systemTokens += params.tokensUsed.details.systemTokens || 0;
+        }
         
         // Calculate cost if pricing info available
         if (params.pricing) {
@@ -516,10 +552,15 @@ class ApiTokenTracker {
         const promptIndex = allPrompts[tabId].findIndex(p => p.messageId === messageId);
         
         if (promptIndex >= 0) {
-          // Update token information
+          // Update token information with detailed breakdown
           allPrompts[tabId][promptIndex].tokensUsed = {
             ...allPrompts[tabId][promptIndex].tokensUsed,
-            ...tokenInfo
+            ...tokenInfo,
+            details: {
+              promptTokens: tokenInfo.promptTokens || 0,
+              historyTokens: tokenInfo.historyTokens || 0,
+              systemTokens: tokenInfo.systemTokens || 0
+            }
           };
           
           // Store updated data

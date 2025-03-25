@@ -10,6 +10,23 @@ class ChatGptApiService extends BaseApiService {
   }
 
   /**
+   * Estimate tokens for OpenAI-formatted conversation history
+   * @param {Array} history - Conversation history array
+   * @returns {number} - Estimated token count
+   */
+  estimateConversationHistoryTokens(history) {
+    if (!history || !Array.isArray(history) || history.length === 0) {
+      return 0;
+    }
+    
+    // Format conversation history for OpenAI format
+    const formattedMessages = this._formatOpenAIMessages(history);
+    
+    // Estimate tokens for the formatted messages
+    return ApiTokenTracker.estimateObjectTokens(formattedMessages);
+  }
+
+  /**
    * Process with model-specific parameters and streaming support
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
@@ -68,19 +85,32 @@ class ChatGptApiService extends BaseApiService {
         }
       }
 
-      // Estimate input tokens before API call for token accounting
-      const inputTokenEstimate = ApiTokenTracker.estimateObjectTokens(requestPayload);
+      // Calculate token counts for different components
+      const promptTokens = ApiTokenTracker.estimateTokens(text);
+      const historyTokens = params.conversationHistory && params.conversationHistory.length > 0
+        ? this.estimateConversationHistoryTokens(params.conversationHistory)
+        : 0;
+      const systemTokens = params.systemPrompt
+        ? ApiTokenTracker.estimateTokens(params.systemPrompt)
+        : 0;
+      const totalInputTokens = promptTokens + historyTokens + systemTokens;
       
       // Get model config for pricing
       const modelConfig = this.config?.models?.find(m => m.id === modelToUse);
       const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
       
-      // Update token tracking for input tokens
+      // Update token tracking for input tokens with detailed breakdown
       if (params.tabId && params.messageId) {
         await ApiTokenTracker.trackMessageTokens(
           params.tabId,
           params.messageId,
-          { input: inputTokenEstimate },
+          { 
+            input: totalInputTokens,
+            promptTokens,
+            historyTokens,
+            systemTokens,
+            output: 0 // Will be updated when streaming completes
+          },
           {
             platformId: this.platformId,
             modelId: modelToUse,
@@ -182,7 +212,10 @@ class ChatGptApiService extends BaseApiService {
 
         // Add token usage to response metadata
         responseMetadata.tokensUsed = {
-          input: inputTokenEstimate,
+          input: totalInputTokens,
+          promptTokens,
+          historyTokens,
+          systemTokens,
           output: outputTokenEstimate
         };
 

@@ -1,6 +1,3 @@
-// src/api/api-interface.js
-// Only showing the updated method definition
-
 /**
  * Interface defining contract for all API implementations
  */
@@ -36,6 +33,15 @@ class ApiInterface {
    */
   async validateCredentials() {
     throw new Error('validateCredentials must be implemented by subclasses');
+  }
+
+  /**
+   * Estimate tokens for conversation history
+   * @param {Array} history - Conversation history array
+   * @returns {number} - Estimated token count
+   */
+  estimateConversationHistoryTokens(history) {
+    throw new Error('estimateConversationHistoryTokens must be implemented by subclasses');
   }
 }
 

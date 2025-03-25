@@ -10,6 +10,23 @@ class ClaudeApiService extends BaseApiService {
   }
   
   /**
+   * Estimate tokens for Claude-formatted conversation history
+   * @param {Array} history - Conversation history array
+   * @returns {number} - Estimated token count
+   */
+  estimateConversationHistoryTokens(history) {
+    if (!history || !Array.isArray(history) || history.length === 0) {
+      return 0;
+    }
+    
+    // Format conversation history for Claude format
+    const formattedMessages = this._formatClaudeMessages(history, "");
+    
+    // Estimate tokens for the formatted messages
+    return ApiTokenTracker.estimateObjectTokens(formattedMessages);
+  }
+  
+  /**
    * Process with model-specific parameters using streaming
    * @param {string} text - Prompt text
    * @param {string} model - Model ID to use
@@ -60,19 +77,32 @@ class ClaudeApiService extends BaseApiService {
         requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, text);
       }
       
-      // Estimate input tokens 
-      const inputTokenEstimate = ApiTokenTracker.estimateObjectTokens(requestPayload);
+      // Calculate token counts for different components
+      const promptTokens = ApiTokenTracker.estimateTokens(text);
+      const historyTokens = params.conversationHistory && params.conversationHistory.length > 0
+        ? this.estimateConversationHistoryTokens(params.conversationHistory)
+        : 0;
+      const systemTokens = params.systemPrompt
+        ? ApiTokenTracker.estimateTokens(params.systemPrompt)
+        : 0;
+      const totalInputTokens = promptTokens + historyTokens + systemTokens;
       
       // Get model config for pricing
       const modelConfig = this.config?.models?.find(m => m.id === modelToUse);
       const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
       
-      // Track input tokens
+      // Track input tokens with detailed breakdown
       if (params.tabId && params.messageId) {
         await ApiTokenTracker.trackMessageTokens(
           params.tabId,
           params.messageId,
-          { input: inputTokenEstimate },
+          { 
+            input: totalInputTokens,
+            promptTokens,
+            historyTokens,
+            systemTokens,
+            output: 0 // Will be updated when streaming completes
+          },
           {
             platformId: this.platformId,
             modelId: modelToUse,
@@ -183,7 +213,10 @@ class ClaudeApiService extends BaseApiService {
           platformId: this.platformId,
           timestamp: new Date().toISOString(),
           tokensUsed: {
-            input: inputTokenEstimate,
+            input: totalInputTokens,
+            promptTokens,
+            historyTokens,
+            systemTokens,
             output: outputTokenEstimate
           }
         };
