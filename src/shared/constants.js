@@ -100,5 +100,5 @@ export const PROMPT_TYPES = {
  * Default shortcut settings
  */
 export const DEFAULT_SHORTCUT_SETTINGS = {
-  content_processing_behavior: 'selection' // Default to respecting selection
+  content_processing_behavior: 'selection'
 };
