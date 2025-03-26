@@ -1,5 +1,5 @@
 // src/sidebar/contexts/SidebarChatContext.jsx
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../components';
 import { useTokenTracking } from '../hooks/useTokenTracking';
@@ -7,7 +7,7 @@ import ChatHistoryService from '../services/ChatHistoryService';
 import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
-import { INTERFACE_SOURCES } from '../../shared/constants';
+import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 
 const SidebarChatContext = createContext(null);
 
@@ -21,6 +21,7 @@ export function SidebarChatProvider({ children }) {
   const [streamingContent, setStreamingContent] = useState('');
   const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
   const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
+  const [extractedContentAdded, setExtractedContentAdded] = useState(false);
 
   // Use the token tracking hook
   const {
@@ -84,6 +85,9 @@ export function SidebarChatProvider({ children }) {
         // Load chat history for this tab
         const history = await ChatHistoryService.getHistory(tabId);
         setMessages(history);
+        
+        // Reset extracted content flag when tab changes
+        setExtractedContentAdded(history.length > 0);
       } catch (error) {
         console.error('Error loading tab chat history:', error);
       }
@@ -91,6 +95,11 @@ export function SidebarChatProvider({ children }) {
 
     loadChatHistory();
   }, [tabId]);
+
+  // Get visible messages (filtering out extracted content)
+  const visibleMessages = useMemo(() => {
+    return messages.filter(msg => !msg.isExtractedContent);
+  }, [messages]);
 
   // Reset processing when the tab changes
   useEffect(() => {
@@ -101,6 +110,97 @@ export function SidebarChatProvider({ children }) {
 
   // Handle streaming response chunks
   useEffect(() => {
+    // Utility function to handle all post-streaming operations in one place
+    const handleStreamComplete = async (messageId, finalContent, model) => {
+      try {
+        // Calculate output tokens
+        const outputTokens = TokenManagementService.estimateTokens(finalContent);
+        
+        // Update message with final content
+        let updatedMessages = messages.map(msg =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                content: finalContent,
+                isStreaming: false, // Explicitly mark as not streaming
+                model: model || selectedModel,
+                platformIconUrl: msg.platformIconUrl,
+                outputTokens
+              }
+            : msg
+        );
+        
+        // Check if this is the first assistant message
+        const visibleAssistantMessages = visibleMessages.filter(
+          msg => msg.role === MESSAGE_ROLES.ASSISTANT
+        );
+        const isFirstMessage = visibleAssistantMessages.length === 1;
+        
+        // If first message and content not added, add extracted content
+        if (isFirstMessage && !extractedContentAdded) {
+          try {
+            // Get formatted content from storage
+            const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_FORMATTED_CONTENT]);
+            const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
+            
+            if (allTabContents) {
+              const tabIdKey = tabId.toString();
+              const extractedContent = allTabContents[tabIdKey];
+              
+              if (extractedContent && typeof extractedContent === 'string' && extractedContent.trim()) {
+                const contentMessage = {
+                  id: `extracted_${Date.now()}`,
+                  role: MESSAGE_ROLES.USER,
+                  content: `Content extract:\n${extractedContent}`,
+                  timestamp: new Date().toISOString(),
+                  inputTokens: TokenManagementService.estimateTokens(extractedContent),
+                  outputTokens: 0,
+                  isExtractedContent: true
+                };
+                
+                // Add extracted content at beginning
+                updatedMessages = [contentMessage, ...updatedMessages];
+                
+                // Mark as added to prevent duplicate additions
+                setExtractedContentAdded(true);
+                
+                // Track tokens for extracted content
+                await trackTokens({
+                  messageId: contentMessage.id,
+                  input: contentMessage.inputTokens,
+                  output: 0,
+                  platformId: selectedPlatformId,
+                  modelId: selectedModel
+                }, modelConfig);
+              }
+            }
+          } catch (extractError) {
+            console.error('Error adding extracted content:', extractError);
+          }
+        }
+        
+        // Set messages with all updates at once
+        setMessages(updatedMessages);
+        setStreamingContent(''); // Reset streaming content
+        
+        // Track tokens for assistant message
+        await trackTokens({
+          messageId: messageId,
+          input: 0,
+          output: outputTokens,
+          platformId: selectedPlatformId,
+          modelId: selectedModel
+        }, modelConfig);
+        
+        // Save history in one operation
+        if (tabId) {
+          await ChatHistoryService.saveHistory(tabId, updatedMessages);
+        }
+      } catch (error) {
+        console.error('Error handling stream completion:', error);
+      }
+    };
+
     const handleStreamChunk = async (message) => {
       if (message.action === 'streamChunk' && streamingMessageId) {
         const { chunkData } = message;
@@ -123,43 +223,9 @@ export function SidebarChatProvider({ children }) {
 
           // Get final content
           const finalContent = chunkData.fullContent || streamingContent;
-
-          // Calculate output tokens for the response
-          const outputTokens = TokenManagementService.estimateTokens(finalContent);
           
-          // Track tokens for assistant response
-          await trackTokens({
-            messageId: streamingMessageId,
-            input: 0,
-            output: outputTokens,
-            platformId: selectedPlatformId,
-            modelId: selectedModel
-          }, modelConfig);
-
-          // Update final message content
-          const updatedMessages = messages.map(msg =>
-            msg.id === streamingMessageId
-              ? {
-                  ...msg,
-                  content: finalContent,
-                  isStreaming: false, // Explicitly mark as not streaming
-                  model: chunkData.model || selectedModel,
-                  platformIconUrl: msg.platformIconUrl, // Preserve the platform icon
-                  outputTokens // Add token count
-                }
-              : msg
-          );
-
-          setMessages(updatedMessages);
-
-          // Save to history for current tab
-          if (tabId) {
-            try {
-              await ChatHistoryService.saveHistory(tabId, updatedMessages);
-            } catch (err) {
-              console.error('Error saving tab chat history:', err);
-            }
-          }
+          // Handle all post-streaming operations in one function
+          await handleStreamComplete(streamingMessageId, finalContent, chunkData.model);
         } else if (chunkContent) {
           // Append chunk to streaming content
           setStreamingContent(prev => prev + chunkContent);
@@ -180,8 +246,8 @@ export function SidebarChatProvider({ children }) {
     return () => {
       chrome.runtime.onMessage.removeListener(handleStreamChunk);
     };
-  }, [streamingMessageId, streamingContent, messages, tabId, selectedModel, 
-      selectedPlatformId, modelConfig, trackTokens]);
+  }, [streamingMessageId, streamingContent, messages, visibleMessages, tabId, selectedModel, 
+      selectedPlatformId, modelConfig, trackTokens, extractedContentAdded]);
 
   // Send a message and get a response
   const sendMessage = async (text = inputValue) => {
@@ -248,7 +314,7 @@ export function SidebarChatProvider({ children }) {
     }
 
     try {
-      // Format conversation history for the API
+      // Format conversation history for the API - Include extracted content for API but not UI
       const conversationHistory = messages
         .filter(msg => (msg.role === MESSAGE_ROLES.USER || msg.role === MESSAGE_ROLES.ASSISTANT) && !msg.isStreaming)
         .map(msg => ({
@@ -302,6 +368,7 @@ export function SidebarChatProvider({ children }) {
     if (!tabId) return;
 
     setMessages([]);
+    setExtractedContentAdded(false); // Reset the flag so content can be added again
     await ChatHistoryService.clearHistory(tabId);
     
     // Clear token metadata
@@ -310,7 +377,8 @@ export function SidebarChatProvider({ children }) {
 
   return (
     <SidebarChatContext.Provider value={{
-      messages,
+      messages: visibleMessages, // Only expose visible messages (without extracted content)
+      allMessages: messages, // Provide access to all messages including extracted content
       inputValue,
       setInputValue,
       sendMessage,
