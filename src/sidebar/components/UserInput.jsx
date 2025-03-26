@@ -25,14 +25,9 @@ function UserInput() {
   
   return (
     <div className="flex flex-col">
-      {/* Context window indicator */}
-      <div className="px-4 pt-2">
-        <ContextWindowIndicator contextStatus={contextStatus} />
-      </div>
-      
       {/* Token stats */}
       <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-        <TokenCounter tokenStats={tokenStats} />
+        <TokenCounter tokenStats={tokenStats} contextStatus={contextStatus} />
       </div>
       
       <MessageInput
