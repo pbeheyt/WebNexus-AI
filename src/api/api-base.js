@@ -1,5 +1,6 @@
 const ApiInterface = require('./api-interface');
 const ModelParameterService = require('../services/ModelParameterService');
+const { STORAGE_KEYS } = require('../shared/constants');
 
 /**
  * Base class with shared API functionality
@@ -40,25 +41,43 @@ class BaseApiService extends ApiInterface {
     // Normalize and validate the request configuration
     const normalizedConfig = this._normalizeRequestConfig(requestConfig);
     
-    // Format content and create structured prompt WITHOUT conversation history
-    // Platform-specific implementations will handle conversation history
-    const formattedContent = this._formatContent(normalizedConfig.contentData);
+    let formattedContent = null;
+    let includeContent = true;
     
-    // Store the formatted content in local storage indexed by tab ID if tabId is provided
+    // Check if we have stored content for this tab
     if (normalizedConfig.tabId) {
-      try {
-        await this._storeFormattedContent(normalizedConfig.tabId, formattedContent);
-        this.logger.info(`Stored formatted content for tab ID: ${normalizedConfig.tabId}`);
-      } catch (error) {
-        // Log error but continue with the process (non-blocking)
-        this.logger.error('Failed to store formatted content:', error);
+      const hasStoredContent = await this._hasStoredFormattedContent(normalizedConfig.tabId);
+      if (hasStoredContent) {
+        // Content exists but we don't need to retrieve it now
+        includeContent = false;
+        this.logger.info(`Content already exists for tab ID: ${normalizedConfig.tabId}, excluding from prompt`);
       }
     }
     
+    // If no stored content, format the content and store it
+    if (!formattedContent) {
+      formattedContent = this._formatContent(normalizedConfig.contentData);
+      
+      // Store the formatted content in local storage if tabId is provided
+      if (normalizedConfig.tabId) {
+        try {
+          await this._storeFormattedContent(normalizedConfig.tabId, formattedContent);
+          this.logger.info(`Stored formatted content for tab ID: ${normalizedConfig.tabId}`);
+        } catch (error) {
+          // Log error but continue with the process (non-blocking)
+          this.logger.error('Failed to store formatted content:', error);
+        }
+      }
+    }
+    
+    // Create structured prompt (including content only if it's the first message)
     const structuredPrompt = this._createStructuredPrompt(
       normalizedConfig.prompt,
-      formattedContent
+      formattedContent,
+      includeContent
     );
+
+    this.logger.info(`Processing request with${includeContent ? ' including' : 'out'} content in prompt`);
     
     // Process the request with appropriate mode (streaming or non-streaming)
     if (normalizedConfig.streaming && normalizedConfig.onChunk) {
@@ -81,6 +100,31 @@ class BaseApiService extends ApiInterface {
   }
 
   /**
+   * Check if formatted content exists for a tab
+   * @private
+   * @param {number} tabId - Tab ID to check
+   * @returns {Promise<boolean>} Whether formatted content exists for the tab
+   */
+  async _hasStoredFormattedContent(tabId) {
+    if (!tabId) {
+      return false;
+    }
+
+    try {
+      const data = await new Promise((resolve) => {
+        chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT, (result) => {
+          resolve(result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {});
+        });
+      });
+      
+      return !!data[tabId]; // Convert to boolean
+    } catch (error) {
+      this.logger.error('Error checking for stored formatted content:', error);
+      return false;
+    }
+  }
+
+  /**
    * Store formatted content in local storage by tab ID
    * @private
    * @param {number} tabId - Tab ID to use as key
@@ -95,10 +139,9 @@ class BaseApiService extends ApiInterface {
 
     try {
       // Get existing data or initialize empty object
-      const key = 'tab_formatted_content';
       const existingData = await new Promise((resolve) => {
-        chrome.storage.local.get(key, (result) => {
-          resolve(result[key] || {});
+        chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT, (result) => {
+          resolve(result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {});
         });
       });
 
@@ -107,7 +150,7 @@ class BaseApiService extends ApiInterface {
 
       // Store the updated data
       await new Promise((resolve, reject) => {
-        chrome.storage.local.set({ [key]: existingData }, () => {
+        chrome.storage.local.set({ [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: existingData }, () => {
           if (chrome.runtime.lastError) {
             reject(chrome.runtime.lastError);
           } else {
@@ -167,45 +210,19 @@ class BaseApiService extends ApiInterface {
    * Create a structured prompt combining instructions and formatted content
    * @param {string} prePrompt - The pre-prompt instructions
    * @param {string} formattedContent - The formatted content
+   * @param {boolean} [includeContent=true] - Whether to include content in the prompt
    * @returns {string} The full structured prompt
    */
-  _createStructuredPrompt(prePrompt, formattedContent) {
-    // Create simple format without conversation history
-    // Conversation history will be handled by platform-specific formatters
-    return `# INSTRUCTIONS
-${prePrompt}
-# CONTENT
-${formattedContent}`;
+  _createStructuredPrompt(prePrompt, formattedContent, includeContent = true) {
+    if (includeContent) {
+      // Full prompt with instructions and content for first message
+      return `${prePrompt}\n${formattedContent}`;
+    } else {
+      // Just the raw prompt for subsequent messages
+      return prePrompt;
+    }
   }
 
-  // /**
-  //  * Format conversation history as text
-  //  * @param {Array} history - Conversation history
-  //  * @returns {string} Formatted history text
-  //  */
-  // _formatConversationHistory(history) {
-  //   // Default format - should be overridden in platform-specific classes if needed
-  //   return history.map(msg => {
-  //     const roleLabel = msg.role.toUpperCase();
-  //     return `${roleLabel}: ${msg.content}`;
-  //   }).join('\n\n');
-  // }
-
-  // /**
-  //  * Estimate tokens for conversation history
-  //  * @param {Array} history - Conversation history array
-  //  * @returns {number} - Estimated token count
-  //  */
-  // estimateConversationHistoryTokens(history) {
-  //   if (!history || !Array.isArray(history) || history.length === 0) {
-  //     return 0;
-  //   }
-    
-  //   // Simple character-based estimation
-  //   // Note: This is a simplified approach - token tracking is now handled by the sidebar component
-  //   const formattedHistory = this._formatConversationHistory(history);
-  //   return Math.ceil(formattedHistory.length / 4);
-  // }
 
   /**
      * Format content based on content type
