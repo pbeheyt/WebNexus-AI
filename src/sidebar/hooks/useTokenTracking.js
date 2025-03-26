@@ -1,7 +1,8 @@
 // src/sidebar/hooks/useTokenTracking.js
 
 import { useState, useEffect, useCallback } from 'react';
-import ApiTokenTracker from '../../services/ApiTokenTracker';
+import ChatHistoryService from '../services/ChatHistoryService';
+import TokenManagementService from '../services/TokenManagementService';
 
 /**
  * Hook for tracking token usage and providing token statistics in React components
@@ -10,11 +11,13 @@ import ApiTokenTracker from '../../services/ApiTokenTracker';
  * @returns {Object} - Token tracking capabilities and statistics
  */
 export function useTokenTracking(tabId) {
-  const [prompts, setPrompts] = useState([]);
   const [tokenStats, setTokenStats] = useState({
     inputTokens: 0,
     outputTokens: 0,
     totalCost: 0,
+    promptTokens: 0,
+    historyTokens: 0,
+    systemTokens: 0,
     isCalculated: false
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -29,12 +32,8 @@ export function useTokenTracking(tabId) {
       
       setIsLoading(true);
       try {
-        // Load prompts
-        const storedPrompts = await ApiTokenTracker.getPrompts(tabId);
-        setPrompts(storedPrompts);
-        
-        // Load token stats
-        const stats = await ApiTokenTracker.getTokenStatistics(tabId);
+        // Load token stats from chat history
+        const stats = await ChatHistoryService.calculateTokenStatistics(tabId);
         setTokenStats(stats);
       } catch (error) {
         console.error('Error loading token data:', error);
@@ -49,22 +48,27 @@ export function useTokenTracking(tabId) {
     const handleStorageChange = (changes, area) => {
       if (area !== 'local' || !tabId) return;
       
-      // Check if token metadata was updated
-      if (changes.tab_token_metadata && changes.tab_token_metadata.newValue) {
-        const newMetadata = changes.tab_token_metadata.newValue[tabId];
-        if (newMetadata) {
-          // Update token stats from changed storage
-          ApiTokenTracker.getTokenStatistics(tabId)
+      // Check if chat histories were updated
+      if (changes[ChatHistoryService.STORAGE_KEY] && 
+          changes[ChatHistoryService.STORAGE_KEY].newValue) {
+        const tabHistory = changes[ChatHistoryService.STORAGE_KEY].newValue[tabId];
+        if (tabHistory) {
+          // Recalculate token stats when chat history changes
+          ChatHistoryService.calculateTokenStatistics(tabId)
             .then(stats => setTokenStats(stats))
-            .catch(err => console.error('Error updating token stats from storage change:', err));
+            .catch(err => console.error('Error updating token stats from history change:', err));
         }
       }
       
-      // Check if structured prompts were updated
-      if (changes.tab_structured_prompts && changes.tab_structured_prompts.newValue) {
-        const newPrompts = changes.tab_structured_prompts.newValue[tabId];
-        if (newPrompts) {
-          setPrompts(newPrompts);
+      // Check if token statistics were updated directly
+      if (changes[ChatHistoryService.TOKEN_STATS_KEY] && 
+          changes[ChatHistoryService.TOKEN_STATS_KEY].newValue) {
+        const tabStats = changes[ChatHistoryService.TOKEN_STATS_KEY].newValue[tabId];
+        if (tabStats) {
+          setTokenStats({
+            ...tabStats,
+            isCalculated: true
+          });
         }
       }
     };
@@ -93,11 +97,11 @@ export function useTokenTracking(tabId) {
       };
     }
     
-    return ApiTokenTracker.calculateContextStatus(tabId, modelConfig);
+    return ChatHistoryService.calculateContextStatus(tabId, modelConfig);
   }, [tabId]);
 
   /**
-   * Track token consumption
+   * Track token consumption for a message
    * @param {Object} tokenData - Token data to track
    * @param {Object} modelConfig - Model configuration with pricing
    * @returns {Promise<boolean>} - Success indicator
@@ -105,33 +109,21 @@ export function useTokenTracking(tabId) {
   const trackTokens = useCallback(async (tokenData, modelConfig = null) => {
     if (!tabId) return false;
     
-    const pricing = modelConfig ? ApiTokenTracker.getPricingInfo(modelConfig) : null;
+    const messageId = tokenData.messageId || `msg_${Date.now()}`;
     
-    return ApiTokenTracker.trackMessageTokens(
+    // Update the message with token information
+    return ChatHistoryService.updateMessageTokens(
       tabId,
-      tokenData.messageId || `msg_${Date.now()}`,
+      messageId,
       { 
         input: tokenData.input || 0, 
         output: tokenData.output || 0 
       },
       {
         platformId: tokenData.platformId,
-        modelId: tokenData.modelId,
-        pricing
+        modelId: tokenData.modelId
       }
     );
-  }, [tabId]);
-
-  /**
-   * Store a prompt with associated token data
-   * @param {string} promptText - The prompt text
-   * @param {Object} metadata - Additional metadata 
-   * @returns {Promise<boolean>} - Success indicator
-   */
-  const storePrompt = useCallback(async (promptText, metadata = {}) => {
-    if (!tabId || !promptText) return false;
-    
-    return ApiTokenTracker.storePrompt(tabId, promptText, metadata);
   }, [tabId]);
 
   /**
@@ -141,16 +133,46 @@ export function useTokenTracking(tabId) {
   const clearTokenData = useCallback(async () => {
     if (!tabId) return false;
     
-    return ApiTokenTracker.clearTabData(tabId);
+    return ChatHistoryService.clearTokenStatistics(tabId);
   }, [tabId]);
 
+  /**
+   * Estimate tokens for text
+   * @param {string} text - Text to estimate
+   * @returns {number} - Estimated token count
+   */
+  const estimateTokens = useCallback((text) => {
+    return TokenManagementService.estimateTokens(text);
+  }, []);
+
+  /**
+   * Get pricing information for a model
+   * @param {Object} modelConfig - Model configuration
+   * @returns {Object|null} - Pricing information or null
+   */
+  const getPricingInfo = useCallback((modelConfig) => {
+    return TokenManagementService.getPricingInfo(modelConfig);
+  }, []);
+
+  /**
+   * Calculate cost for token usage
+   * @param {number} inputTokens - Input token count
+   * @param {number} outputTokens - Output token count
+   * @param {Object} modelConfig - Model configuration
+   * @returns {Object} - Cost information
+   */
+  const calculateCost = useCallback((inputTokens, outputTokens, modelConfig) => {
+    return TokenManagementService.calculateCost(inputTokens, outputTokens, modelConfig);
+  }, []);
+
   return {
-    prompts,
     tokenStats,
     isLoading,
     calculateContextStatus,
     trackTokens,
-    storePrompt,
-    clearTokenData
+    clearTokenData,
+    estimateTokens,
+    getPricingInfo,
+    calculateCost
   };
 }

@@ -1,6 +1,5 @@
 const ApiInterface = require('./api-interface');
 const ModelParameterService = require('../services/ModelParameterService');
-const ApiTokenTracker = require('../services/ApiTokenTracker');
 
 /**
  * Base class with shared API functionality
@@ -126,33 +125,34 @@ ${prePrompt}
 ${formattedContent}`;
   }
 
-  /**
-   * Format conversation history as text
-   * @param {Array} history - Conversation history
-   * @returns {string} Formatted history text
-   */
-  _formatConversationHistory(history) {
-    // Default format - should be overridden in platform-specific classes if needed
-    return history.map(msg => {
-      const roleLabel = msg.role.toUpperCase();
-      return `${roleLabel}: ${msg.content}`;
-    }).join('\n\n');
-  }
+  // /**
+  //  * Format conversation history as text
+  //  * @param {Array} history - Conversation history
+  //  * @returns {string} Formatted history text
+  //  */
+  // _formatConversationHistory(history) {
+  //   // Default format - should be overridden in platform-specific classes if needed
+  //   return history.map(msg => {
+  //     const roleLabel = msg.role.toUpperCase();
+  //     return `${roleLabel}: ${msg.content}`;
+  //   }).join('\n\n');
+  // }
 
-  /**
-   * Estimate tokens for conversation history
-   * @param {Array} history - Conversation history array
-   * @returns {number} - Estimated token count
-   */
-  estimateConversationHistoryTokens(history) {
-    if (!history || !Array.isArray(history) || history.length === 0) {
-      return 0;
-    }
+  // /**
+  //  * Estimate tokens for conversation history
+  //  * @param {Array} history - Conversation history array
+  //  * @returns {number} - Estimated token count
+  //  */
+  // estimateConversationHistoryTokens(history) {
+  //   if (!history || !Array.isArray(history) || history.length === 0) {
+  //     return 0;
+  //   }
     
-    // Format and estimate tokens for this platform's format
-    const formattedHistory = this._formatConversationHistory(history);
-    return ApiTokenTracker.estimateTokens(formattedHistory);
-  }
+  //   // Simple character-based estimation
+  //   // Note: This is a simplified approach - token tracking is now handled by the sidebar component
+  //   const formattedHistory = this._formatConversationHistory(history);
+  //   return Math.ceil(formattedHistory.length / 4);
+  // }
 
   /**
      * Format content based on content type
@@ -396,53 +396,12 @@ ${formattedContent}`;
       // Add conversation history to parameters
       params.conversationHistory = conversationHistory;
       
-      // Generate unique message ID for token tracking
+      // Generate unique message ID for reference
       const messageId = `msg_${Date.now()}`;
       
-      // Calculate token counts for different components
-      const promptTokens = ApiTokenTracker.estimateTokens(text);
-      const historyTokens = this.estimateConversationHistoryTokens(conversationHistory);
-      const systemTokens = params.systemPrompt ? ApiTokenTracker.estimateTokens(params.systemPrompt) : 0;
-      const totalInputTokens = promptTokens + historyTokens + systemTokens;
-      
-      // Get model config for pricing
-      const modelConfig = this.config?.models?.find(m => m.id === params.model);
-      const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
-      
-      // Store structured prompt if tabId is available
-      if (tabId) {
-        await ApiTokenTracker.storePrompt(tabId, text, {
-          platformId: this.platformId,
-          modelId: params.model,
-          messageId,
-          metadata: {
-            conversationLength: conversationHistory?.length || 0,
-            promptType: 'api-streaming'
-          }
-        });
-        
-        // Add message ID to params for callbacks to update tokens later
-        params.messageId = messageId;
-        params.tabId = tabId;
-        
-        // Track tokens with detailed breakdown
-        await ApiTokenTracker.trackMessageTokens(
-          tabId,
-          messageId,
-          { 
-            input: totalInputTokens,
-            promptTokens,
-            historyTokens,
-            systemTokens,
-            output: 0 // Will be updated when streaming completes
-          },
-          {
-            platformId: this.platformId,
-            modelId: params.model,
-            pricing: pricing
-          }
-        );
-      }
+      // Add message ID to params for callbacks
+      params.messageId = messageId;
+      params.tabId = tabId;
 
       // Each implementation must handle the streaming appropriately
       return this._processWithModelStreaming(text, params.model, apiKey, params, onChunk);

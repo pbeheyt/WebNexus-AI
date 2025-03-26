@@ -35,14 +35,14 @@ class ApiInterface {
     throw new Error('validateCredentials must be implemented by subclasses');
   }
 
-  /**
-   * Estimate tokens for conversation history
-   * @param {Array} history - Conversation history array
-   * @returns {number} - Estimated token count
-   */
-  estimateConversationHistoryTokens(history) {
-    throw new Error('estimateConversationHistoryTokens must be implemented by subclasses');
-  }
+  // /**
+  //  * Estimate tokens for conversation history
+  //  * @param {Array} history - Conversation history array
+  //  * @returns {number} - Estimated token count
+  //  */
+  // estimateConversationHistoryTokens(history) {
+  //   throw new Error('estimateConversationHistoryTokens must be implemented by subclasses');
+  // }
 }
 
 module.exports = ApiInterface;

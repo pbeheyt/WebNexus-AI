@@ -1,5 +1,4 @@
 const BaseApiService = require('../api-base');
-const ApiTokenTracker = require('../../services/ApiTokenTracker');
 
 /**
  * ChatGPT API implementation
@@ -9,22 +8,23 @@ class ChatGptApiService extends BaseApiService {
     super('chatgpt');
   }
 
-  /**
-   * Estimate tokens for OpenAI-formatted conversation history
-   * @param {Array} history - Conversation history array
-   * @returns {number} - Estimated token count
-   */
-  estimateConversationHistoryTokens(history) {
-    if (!history || !Array.isArray(history) || history.length === 0) {
-      return 0;
-    }
+  // /**
+  //  * Estimate tokens for OpenAI-formatted conversation history
+  //  * @param {Array} history - Conversation history array
+  //  * @returns {number} - Estimated token count
+  //  */
+  // estimateConversationHistoryTokens(history) {
+  //   if (!history || !Array.isArray(history) || history.length === 0) {
+  //     return 0;
+  //   }
     
-    // Format conversation history for OpenAI format
-    const formattedMessages = this._formatOpenAIMessages(history);
+  //   // Format conversation history for OpenAI format
+  //   const formattedMessages = this._formatOpenAIMessages(history);
     
-    // Estimate tokens for the formatted messages
-    return ApiTokenTracker.estimateObjectTokens(formattedMessages);
-  }
+  //   // Simple character-based estimation
+  //   const serialized = JSON.stringify(formattedMessages);
+  //   return Math.ceil(serialized.length / 4);
+  // }
 
   /**
    * Process with model-specific parameters and streaming support
@@ -83,40 +83,6 @@ class ChatGptApiService extends BaseApiService {
         if (params.supportsTopP) {
           requestPayload.top_p = params.topP;
         }
-      }
-
-      // Calculate token counts for different components
-      const promptTokens = ApiTokenTracker.estimateTokens(text);
-      const historyTokens = params.conversationHistory && params.conversationHistory.length > 0
-        ? this.estimateConversationHistoryTokens(params.conversationHistory)
-        : 0;
-      const systemTokens = params.systemPrompt
-        ? ApiTokenTracker.estimateTokens(params.systemPrompt)
-        : 0;
-      const totalInputTokens = promptTokens + historyTokens + systemTokens;
-      
-      // Get model config for pricing
-      const modelConfig = this.config?.models?.find(m => m.id === modelToUse);
-      const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
-      
-      // Update token tracking for input tokens with detailed breakdown
-      if (params.tabId && params.messageId) {
-        await ApiTokenTracker.trackMessageTokens(
-          params.tabId,
-          params.messageId,
-          { 
-            input: totalInputTokens,
-            promptTokens,
-            historyTokens,
-            systemTokens,
-            output: 0 // Will be updated when streaming completes
-          },
-          {
-            platformId: this.platformId,
-            modelId: modelToUse,
-            pricing: pricing
-          }
-        );
       }
 
       // Make the streaming request
@@ -192,32 +158,6 @@ class ChatGptApiService extends BaseApiService {
           model: modelToUse,
           fullContent: responseMetadata.content
         });
-
-        // Estimate output tokens for token accounting
-        const outputTokenEstimate = ApiTokenTracker.estimateTokens(responseMetadata.content);
-        
-        // Update token tracking for output tokens
-        if (params.tabId && params.messageId) {
-          await ApiTokenTracker.trackMessageTokens(
-            params.tabId,
-            params.messageId,
-            { output: outputTokenEstimate },
-            {
-              platformId: this.platformId,
-              modelId: modelToUse,
-              pricing: pricing
-            }
-          );
-        }
-
-        // Add token usage to response metadata
-        responseMetadata.tokensUsed = {
-          input: totalInputTokens,
-          promptTokens,
-          historyTokens,
-          systemTokens,
-          output: outputTokenEstimate
-        };
 
         return responseMetadata;
       } catch (error) {

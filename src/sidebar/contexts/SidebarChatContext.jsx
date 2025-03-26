@@ -4,10 +4,10 @@ import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../components';
 import { useTokenTracking } from '../hooks/useTokenTracking';
 import ChatHistoryService from '../services/ChatHistoryService';
+import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
 import { INTERFACE_SOURCES } from '../../shared/constants';
-import ApiTokenTracker from '../../services/ApiTokenTracker';
 
 const SidebarChatContext = createContext(null);
 
@@ -27,8 +27,8 @@ export function SidebarChatProvider({ children }) {
     tokenStats,
     calculateContextStatus,
     trackTokens,
-    storePrompt,
-    clearTokenData
+    clearTokenData,
+    estimateTokens
   } = useTokenTracking(tabId);
 
   // Use the content processing hook
@@ -125,7 +125,7 @@ export function SidebarChatProvider({ children }) {
           const finalContent = chunkData.fullContent || streamingContent;
 
           // Calculate output tokens for the response
-          const outputTokens = ApiTokenTracker.estimateTokens(finalContent);
+          const outputTokens = TokenManagementService.estimateTokens(finalContent);
           
           // Track tokens for assistant response
           await trackTokens({
@@ -208,7 +208,7 @@ export function SidebarChatProvider({ children }) {
     }
 
     // Estimate tokens for the user message
-    const inputTokens = ApiTokenTracker.estimateTokens(text.trim());
+    const inputTokens = TokenManagementService.estimateTokens(text.trim());
     const userMessageId = `msg_${Date.now()}`;
 
     const userMessage = {
@@ -246,15 +246,6 @@ export function SidebarChatProvider({ children }) {
     if (tabId) {
       await ChatHistoryService.saveHistory(tabId, updatedMessages);
     }
-
-    // Store prompt and track tokens for user message
-    await storePrompt(text.trim(), {
-      platformId: selectedPlatformId,
-      modelId: selectedModel,
-      messageId: userMessageId,
-      tokensUsed: { input: inputTokens, output: 0 },
-      metadata: { type: 'userMessage' }
-    });
 
     try {
       // Format conversation history for the API
