@@ -1,5 +1,4 @@
 const BaseApiService = require('../api-base');
-const ApiTokenTracker = require('../../services/ApiTokenTracker');
 
 /**
  * DeepSeek API implementation
@@ -7,23 +6,6 @@ const ApiTokenTracker = require('../../services/ApiTokenTracker');
 class DeepSeekApiService extends BaseApiService {
   constructor() {
     super('deepseek');
-  }
-  
-  /**
-   * Estimate tokens for DeepSeek-formatted conversation history
-   * @param {Array} history - Conversation history array
-   * @returns {number} - Estimated token count
-   */
-  estimateConversationHistoryTokens(history) {
-    if (!history || !Array.isArray(history) || history.length === 0) {
-      return 0;
-    }
-    
-    // Format conversation history for DeepSeek format (similar to OpenAI)
-    const formattedMessages = this._formatDeepSeekMessages(history);
-    
-    // Estimate tokens for the formatted messages
-    return ApiTokenTracker.estimateObjectTokens(formattedMessages);
   }
   
   /**
@@ -80,40 +62,6 @@ class DeepSeekApiService extends BaseApiService {
       // Add top_p if supported
       if (params.supportsTopP) {
         requestPayload.top_p = params.topP;
-      }
-      
-      // Calculate token counts for different components
-      const promptTokens = ApiTokenTracker.estimateTokens(text);
-      const historyTokens = params.conversationHistory && params.conversationHistory.length > 0
-        ? this.estimateConversationHistoryTokens(params.conversationHistory)
-        : 0;
-      const systemTokens = params.systemPrompt
-        ? ApiTokenTracker.estimateTokens(params.systemPrompt)
-        : 0;
-      const totalInputTokens = promptTokens + historyTokens + systemTokens;
-      
-      // Get model config for pricing
-      const modelConfig = this.config?.models?.find(m => m.id === modelToUse);
-      const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
-      
-      // Track input tokens with detailed breakdown
-      if (params.tabId && params.messageId) {
-        await ApiTokenTracker.trackMessageTokens(
-          params.tabId,
-          params.messageId,
-          { 
-            input: totalInputTokens,
-            promptTokens,
-            historyTokens,
-            systemTokens,
-            output: 0 // Will be updated when streaming completes
-          },
-          {
-            platformId: this.platformId,
-            modelId: modelToUse,
-            pricing: pricing
-          }
-        );
       }
       
       const response = await fetch(endpoint, {
@@ -183,36 +131,12 @@ class DeepSeekApiService extends BaseApiService {
           fullContent
         });
         
-        // Estimate output tokens
-        const outputTokenEstimate = ApiTokenTracker.estimateTokens(fullContent);
-        
-        // Track output tokens
-        if (params.tabId && params.messageId) {
-          await ApiTokenTracker.trackMessageTokens(
-            params.tabId,
-            params.messageId,
-            { output: outputTokenEstimate },
-            {
-              platformId: this.platformId,
-              modelId: modelToUse,
-              pricing: pricing
-            }
-          );
-        }
-        
         return {
           success: true,
           content: fullContent,
           model: modelToUse,
           platformId: this.platformId,
-          timestamp: new Date().toISOString(),
-          tokensUsed: {
-            input: totalInputTokens,
-            promptTokens,
-            historyTokens,
-            systemTokens,
-            output: outputTokenEstimate
-          }
+          timestamp: new Date().toISOString()
         };
       } catch (error) {
         this.logger.error('Stream processing error:', error);

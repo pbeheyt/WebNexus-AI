@@ -8,24 +8,6 @@ class ChatGptApiService extends BaseApiService {
     super('chatgpt');
   }
 
-  // /**
-  //  * Estimate tokens for OpenAI-formatted conversation history
-  //  * @param {Array} history - Conversation history array
-  //  * @returns {number} - Estimated token count
-  //  */
-  // estimateConversationHistoryTokens(history) {
-  //   if (!history || !Array.isArray(history) || history.length === 0) {
-  //     return 0;
-  //   }
-    
-  //   // Format conversation history for OpenAI format
-  //   const formattedMessages = this._formatOpenAIMessages(history);
-    
-  //   // Simple character-based estimation
-  //   const serialized = JSON.stringify(formattedMessages);
-  //   return Math.ceil(serialized.length / 4);
-  // }
-
   /**
    * Process with model-specific parameters and streaming support
    * @param {string} text - Prompt text

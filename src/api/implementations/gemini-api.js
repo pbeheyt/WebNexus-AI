@@ -1,5 +1,4 @@
 const BaseApiService = require('../api-base');
-const ApiTokenTracker = require('../../services/ApiTokenTracker');
 
 /**
  * Gemini API implementation
@@ -7,23 +6,6 @@ const ApiTokenTracker = require('../../services/ApiTokenTracker');
 class GeminiApiService extends BaseApiService {
   constructor() {
     super('gemini');
-  }
-  
-  /**
-   * Estimate tokens for Gemini-formatted conversation history
-   * @param {Array} history - Conversation history array
-   * @returns {number} - Estimated token count
-   */
-  estimateConversationHistoryTokens(history) {
-    if (!history || !Array.isArray(history) || history.length === 0) {
-      return 0;
-    }
-    
-    // Format conversation history for Gemini format
-    const formattedRequest = this._formatGeminiRequestWithHistory(history, "", null);
-    
-    // Estimate tokens for the formatted request structure
-    return ApiTokenTracker.estimateObjectTokens(formattedRequest);
   }
   
   /**
@@ -99,40 +81,6 @@ class GeminiApiService extends BaseApiService {
       // Add top_p if supported
       if (params.supportsTopP) {
         formattedRequest.generationConfig.topP = params.topP;
-      }
-      
-      // Calculate token counts for different components
-      const promptTokens = ApiTokenTracker.estimateTokens(text);
-      const historyTokens = params.conversationHistory && params.conversationHistory.length > 0
-        ? this.estimateConversationHistoryTokens(params.conversationHistory)
-        : 0;
-      const systemTokens = params.systemPrompt
-        ? ApiTokenTracker.estimateTokens(params.systemPrompt)
-        : 0;
-      const totalInputTokens = promptTokens + historyTokens + systemTokens;
-      
-      // Get model config for pricing
-      const modelConfig = this.config?.models?.find(m => m.id === model);
-      const pricing = ApiTokenTracker.getPricingInfo(modelConfig);
-      
-      // Track input tokens with detailed breakdown
-      if (params.tabId && params.messageId) {
-        await ApiTokenTracker.trackMessageTokens(
-          params.tabId,
-          params.messageId,
-          { 
-            input: totalInputTokens,
-            promptTokens,
-            historyTokens,
-            systemTokens,
-            output: 0 // Will be updated when streaming completes
-          },
-          {
-            platformId: this.platformId,
-            modelId: model,
-            pricing: pricing
-          }
-        );
       }
       
       const response = await fetch(url.toString(), {
@@ -287,36 +235,12 @@ class GeminiApiService extends BaseApiService {
           fullContent: accumulatedContent
         });
         
-        // Estimate output tokens
-        const outputTokenEstimate = ApiTokenTracker.estimateTokens(accumulatedContent);
-        
-        // Track output tokens
-        if (params.tabId && params.messageId) {
-          await ApiTokenTracker.trackMessageTokens(
-            params.tabId,
-            params.messageId,
-            { output: outputTokenEstimate },
-            {
-              platformId: this.platformId,
-              modelId: model,
-              pricing: pricing
-            }
-          );
-        }
-        
         return {
           success: true,
           content: accumulatedContent,
           model: model,
           platformId: this.platformId,
-          timestamp: new Date().toISOString(),
-          tokensUsed: {
-            input: totalInputTokens,
-            promptTokens,
-            historyTokens,
-            systemTokens,
-            output: outputTokenEstimate
-          }
+          timestamp: new Date().toISOString()
         };
       } catch (error) {
         this.logger.error('Stream processing error:', error);
