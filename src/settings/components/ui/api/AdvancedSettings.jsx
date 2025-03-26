@@ -83,7 +83,6 @@ const AdvancedSettings = ({
     
     // Check each property that should be compared
     if (formVals.maxTokens !== modelDefaults.maxTokens) return false;
-    if (formVals.contextWindow !== modelDefaults.contextWindow) return false;
     
     // Only check temperature if it exists in both objects
     if ('temperature' in formVals && 'temperature' in modelDefaults) {
@@ -131,6 +130,11 @@ const AdvancedSettings = ({
         continue;
       }
       
+      // Skip contextWindow as it's no longer editable
+      if (key === 'contextWindow') {
+        continue;
+      }
+      
       // For strings (like system prompt), check if they differ
       if (typeof currentValues[key] === 'string' && currentValues[key] !== originalVals[key]) {
         return true;
@@ -153,7 +157,7 @@ const AdvancedSettings = ({
     let updatedValues = {...formValues};
     
     // Convert numeric values
-    if (['maxTokens', 'contextWindow'].includes(name)) {
+    if (['maxTokens'].includes(name)) {
       updatedValues = {
         ...updatedValues,
         [name]: parseInt(value, 10) || 0
@@ -195,11 +199,6 @@ const AdvancedSettings = ({
         throw new Error(`Max tokens must be between 0 and ${maxTokensMax}`);
       }
       
-      const contextWindowMax = modelConfig?.contextWindow || 16000;
-      if (formValues.contextWindow < 0 || formValues.contextWindow > contextWindowMax) {
-        throw new Error(`Context window must be between 0 and ${contextWindowMax}`);
-      }
-      
       // Only validate temperature and topP if they exist in the form values
       if (formValues.temperature !== undefined) {
         const minTemp = modelConfig?.minTemperature !== undefined ? modelConfig.minTemperature : 0;
@@ -219,7 +218,6 @@ const AdvancedSettings = ({
       const updateSettings = {};
       
       if ('maxTokens' in formValues) updateSettings.maxTokens = formValues.maxTokens;
-      if ('contextWindow' in formValues) updateSettings.contextWindow = formValues.contextWindow;
       if ('temperature' in formValues && modelConfig?.supportsTemperature !== false) {
         updateSettings.temperature = formValues.temperature;
       }
@@ -324,33 +322,39 @@ const AdvancedSettings = ({
       </div>
       
       <form onSubmit={handleSubmit} className="model-advanced-settings">
-        {/* Pricing information if available */}
-        {modelConfig && (modelConfig.inputTokenPrice !== undefined || modelConfig.outputTokenPrice !== undefined) && (
-          <div className="pricing-section p-3 bg-theme-hover rounded-md border border-theme mb-6">
-            <h5 className="pricing-title text-sm font-medium mb-2">Model Pricing</h5>
-            <div className="pricing-info space-y-1.5">
-              {modelConfig.inputTokenPrice !== undefined && (
-                <div className="price-item flex justify-between text-sm">
-                  <span className="price-label font-medium text-theme-secondary">Input tokens:</span>
-                  <span className="price-value font-mono">
-                    {Math.abs(modelConfig.inputTokenPrice) < 0.0001 ? "Free" : `$${formatPrice(modelConfig.inputTokenPrice)} per 1M tokens`}
-                  </span>
-                </div>
-              )}
-              
-              {modelConfig.outputTokenPrice !== undefined && (
-                <div className="price-item flex justify-between text-sm">
-                  <span className="price-label font-medium text-theme-secondary">Output tokens:</span>
-                  <span className="price-value font-mono">
-                    {Math.abs(modelConfig.outputTokenPrice) < 0.0001 ? "Free" : `$${formatPrice(modelConfig.outputTokenPrice)} per 1M tokens`}
-                  </span>
-                </div>
-              )}
+        {/* Model specifications - pricing and context window */}
+        <div className="model-specs-section p-3 bg-theme-hover rounded-md border border-theme mb-6">
+          <h5 className="specs-title text-sm font-medium mb-2">Model Specifications</h5>
+          <div className="specs-info space-y-1.5">
+            {/* Context window info (now display-only) */}
+            <div className="spec-item flex justify-between text-sm">
+              <span className="spec-label font-medium text-theme-secondary">Context window:</span>
+              <span className="spec-value font-mono">
+                {formValues.contextWindow?.toLocaleString() || modelConfig?.contextWindow?.toLocaleString() || "16,000"} tokens
+              </span>
             </div>
+            
+            {/* Token pricing info */}
+            {modelConfig && modelConfig.inputTokenPrice !== undefined && (
+              <div className="spec-item flex justify-between text-sm">
+                <span className="spec-label font-medium text-theme-secondary">Input tokens:</span>
+                <span className="spec-value font-mono">
+                  {Math.abs(modelConfig.inputTokenPrice) < 0.0001 ? "Free" : `$${formatPrice(modelConfig.inputTokenPrice)} per 1M tokens`}
+                </span>
+              </div>
+            )}
+            
+            {modelConfig && modelConfig.outputTokenPrice !== undefined && (
+              <div className="spec-item flex justify-between text-sm">
+                <span className="spec-label font-medium text-theme-secondary">Output tokens:</span>
+                <span className="spec-value font-mono">
+                  {Math.abs(modelConfig.outputTokenPrice) < 0.0001 ? "Free" : `$${formatPrice(modelConfig.outputTokenPrice)} per 1M tokens`}
+                </span>
+              </div>
+            )}
           </div>
-        )}
+        </div>
         
-        {/* Rest of the form fields... */}
         {/* Max tokens setting */}
         <div className="form-group mb-4">
           <label 
@@ -371,29 +375,6 @@ const AdvancedSettings = ({
           />
           <p className="help-text text-xs text-theme-secondary mt-1">
             Maximum number of tokens to generate in the response.
-          </p>
-        </div>
-        
-        {/* Context window setting */}
-        <div className="form-group mb-4">
-          <label 
-            htmlFor={`${platform.id}-${selectedModelId}-context-window`}
-            className="block mb-2 text-sm font-medium text-theme-secondary"
-          >
-            Context Window:
-          </label>
-          <input
-            type="number"
-            id={`${platform.id}-${selectedModelId}-context-window`}
-            name="contextWindow"
-            className="settings-input w-32 px-3 py-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
-            value={formValues.contextWindow}
-            onChange={handleChange}
-            min={0}
-            max={modelConfig?.contextWindow || 16000}
-          />
-          <p className="help-text text-xs text-theme-secondary mt-1">
-            Maximum number of tokens the model can process as context.
           </p>
         </div>
         
