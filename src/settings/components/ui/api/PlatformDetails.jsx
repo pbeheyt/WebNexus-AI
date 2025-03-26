@@ -140,6 +140,59 @@ const PlatformDetails = ({
   
   const handleAdvancedSettingsUpdate = async (modelId, settings) => {
     try {
+      // Check if this is a reset operation
+      if (settings.__RESET__) {
+        // Load current settings from storage
+        const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+        const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
+        
+        if (!currentSettings[platform.id]) {
+          // Nothing to remove, already at defaults
+          onAdvancedSettingsUpdated(platform.id, modelId, {});
+          success('Settings reset to defaults');
+          return true;
+        }
+        
+        // Handle model-specific or default settings removal
+        if (!modelId || modelId === 'default') {
+          // Remove default settings
+          if (currentSettings[platform.id].default) {
+            delete currentSettings[platform.id].default;
+          }
+        } else {
+          // Remove model-specific settings
+          if (currentSettings[platform.id].models && 
+              currentSettings[platform.id].models[modelId]) {
+            delete currentSettings[platform.id].models[modelId];
+          }
+          
+          // Clean up empty models object if needed
+          if (currentSettings[platform.id].models && 
+              Object.keys(currentSettings[platform.id].models).length === 0) {
+            delete currentSettings[platform.id].models;
+          }
+        }
+        
+        // Remove entire platform entry if it's now empty
+        if (Object.keys(currentSettings[platform.id]).length === 0) {
+          delete currentSettings[platform.id];
+        }
+        
+        // Save updated settings to storage
+        await chrome.storage.sync.set({
+          [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings
+        });
+        
+        // Notify parent component of reset
+        onAdvancedSettingsUpdated(platform.id, modelId, {});
+        
+        // Show success message
+        success('Advanced settings reset to defaults');
+        
+        return true;
+      }
+      
+      // Normal update (non-reset) continues with existing logic...
       // Load current settings
       const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
       const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};

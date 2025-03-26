@@ -285,8 +285,9 @@ const AdvancedSettings = ({
               setHasChanges(false);
               setIsAtDefaults(true);
               
-              // Then save to storage
-              onSettingsUpdate(selectedModelId, defaults);
+              // Signal complete removal of custom settings for this model
+              // by passing a special '__RESET__' action parameter
+              onSettingsUpdate(selectedModelId, { __RESET__: true });
             }
           }}
         >
