@@ -60,7 +60,7 @@ export function SidebarChatProvider({ children }) {
         setContextStatus({ warningLevel: 'none' });
         return;
       }
-      
+
       setIsContextStatusLoading(true);
       try {
         const status = await calculateContextStatus(modelConfig);
@@ -72,7 +72,7 @@ export function SidebarChatProvider({ children }) {
         setIsContextStatusLoading(false);
       }
     };
-    
+
     updateContextStatus();
   }, [tabId, modelConfig, tokenStats, calculateContextStatus]);
 
@@ -85,7 +85,7 @@ export function SidebarChatProvider({ children }) {
         // Load chat history for this tab
         const history = await ChatHistoryService.getHistory(tabId);
         setMessages(history);
-        
+
         // Reset extracted content flag when tab changes
         setExtractedContentAdded(history.length > 0);
       } catch (error) {
@@ -115,7 +115,7 @@ export function SidebarChatProvider({ children }) {
       try {
         // Calculate output tokens
         const outputTokens = TokenManagementService.estimateTokens(finalContent);
-        
+
         // Update message with final content
         let updatedMessages = messages.map(msg =>
           msg.id === messageId
@@ -129,24 +129,24 @@ export function SidebarChatProvider({ children }) {
               }
             : msg
         );
-        
+
         // Check if this is the first assistant message
         const visibleAssistantMessages = visibleMessages.filter(
           msg => msg.role === MESSAGE_ROLES.ASSISTANT
         );
         const isFirstMessage = visibleAssistantMessages.length === 1;
-        
+
         // If first message and content not added, add extracted content
         if (isFirstMessage && !extractedContentAdded) {
           try {
             // Get formatted content from storage
             const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_FORMATTED_CONTENT]);
             const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
-            
+
             if (allTabContents) {
               const tabIdKey = tabId.toString();
               const extractedContent = allTabContents[tabIdKey];
-              
+
               if (extractedContent && typeof extractedContent === 'string' && extractedContent.trim()) {
                 const contentMessage = {
                   id: `extracted_${Date.now()}`,
@@ -157,13 +157,13 @@ export function SidebarChatProvider({ children }) {
                   outputTokens: 0,
                   isExtractedContent: true
                 };
-                
+
                 // Add extracted content at beginning
                 updatedMessages = [contentMessage, ...updatedMessages];
-                
+
                 // Mark as added to prevent duplicate additions
                 setExtractedContentAdded(true);
-                
+
                 // Track tokens for extracted content
                 await trackTokens({
                   messageId: contentMessage.id,
@@ -178,11 +178,11 @@ export function SidebarChatProvider({ children }) {
             console.error('Error adding extracted content:', extractError);
           }
         }
-        
+
         // Set messages with all updates at once
         setMessages(updatedMessages);
         setStreamingContent(''); // Reset streaming content
-        
+
         // Track tokens for assistant message
         await trackTokens({
           messageId: messageId,
@@ -191,10 +191,14 @@ export function SidebarChatProvider({ children }) {
           platformId: selectedPlatformId,
           modelId: selectedModel
         }, modelConfig);
-        
+
         // Save history in one operation
         if (tabId) {
           await ChatHistoryService.saveHistory(tabId, updatedMessages);
+
+          // Force a fresh token statistics calculation that includes current system prompts
+          // This ensures system prompts are counted after every API response
+          await ChatHistoryService.updateTokenStatistics(tabId, updatedMessages);
         }
       } catch (error) {
         console.error('Error handling stream completion:', error);
@@ -223,7 +227,7 @@ export function SidebarChatProvider({ children }) {
 
           // Get final content
           const finalContent = chunkData.fullContent || streamingContent;
-          
+
           // Handle all post-streaming operations in one function
           await handleStreamComplete(streamingMessageId, finalContent, chunkData.model);
         } else if (chunkContent) {
@@ -246,7 +250,7 @@ export function SidebarChatProvider({ children }) {
     return () => {
       chrome.runtime.onMessage.removeListener(handleStreamChunk);
     };
-  }, [streamingMessageId, streamingContent, messages, visibleMessages, tabId, selectedModel, 
+  }, [streamingMessageId, streamingContent, messages, visibleMessages, tabId, selectedModel,
       selectedPlatformId, modelConfig, trackTokens, extractedContentAdded]);
 
   // Send a message and get a response
@@ -370,7 +374,7 @@ export function SidebarChatProvider({ children }) {
     setMessages([]);
     setExtractedContentAdded(false); // Reset the flag so content can be added again
     await ChatHistoryService.clearHistory(tabId);
-    
+
     // Clear token metadata
     await clearTokenData();
   };

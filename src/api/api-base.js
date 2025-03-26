@@ -165,6 +165,86 @@ class BaseApiService extends ApiInterface {
   }
 
   /**
+   * Store system prompt in local storage by tab ID
+   * @private
+   * @param {number} tabId - Tab ID to use as key
+   * @param {string} systemPrompt - The system prompt to store, or null/empty to remove
+   * @returns {Promise<void>}
+   */
+  async _storeSystemPrompt(tabId, systemPrompt) {
+    if (!tabId) {
+      this.logger.warn('No tab ID provided for storing system prompt');
+      return;
+    }
+
+    try {
+      // Get existing data or initialize empty object
+      const existingData = await new Promise((resolve) => {
+        chrome.storage.local.get(STORAGE_KEYS.TAB_SYSTEM_PROMPTS, (result) => {
+          resolve(result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] || {});
+        });
+      });
+
+      if (!systemPrompt) {
+        // If systemPrompt is empty/null, remove the entry for this tab
+        if (existingData[tabId]) {
+          delete existingData[tabId];
+          this.logger.info(`Removed system prompt for tab ID: ${tabId}`);
+        }
+      } else {
+        // Update or add the system prompt for this tab with the specified format
+        existingData[tabId] = {
+          platformId: this.platformId,
+          systemPrompt: systemPrompt,
+          timestamp: new Date().toISOString()
+        };
+        
+        this.logger.info(`Stored system prompt for tab ID: ${tabId}`);
+      }
+
+      // Store the updated data
+      await new Promise((resolve, reject) => {
+        chrome.storage.local.set({ [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: existingData }, () => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve();
+          }
+        });
+      });
+    } catch (error) {
+      this.logger.error('Error managing system prompt storage:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get stored system prompt data for a tab
+   * @private
+   * @param {number} tabId - Tab ID to retrieve system prompt for
+   * @returns {Promise<Object|null>} The stored system prompt data or null if not found
+   */
+  async _getStoredSystemPrompt(tabId) {
+    if (!tabId) {
+      return null;
+    }
+
+    try {
+      const data = await new Promise((resolve) => {
+        chrome.storage.local.get(STORAGE_KEYS.TAB_SYSTEM_PROMPTS, (result) => {
+          resolve(result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] || {});
+        });
+      });
+      
+      // Return the entire object with platformId, systemPrompt, and timestamp
+      return data[tabId] || null;
+    } catch (error) {
+      this.logger.error('Error retrieving stored system prompt:', error);
+      return null;
+    }
+  }
+
+  /**
    * Normalize and validate request configuration
    * @private
    * @param {Object} requestConfig - Raw request configuration
@@ -462,6 +542,17 @@ class BaseApiService extends ApiInterface {
         temperature: params.temperature,
         parameterStyle: params.parameterStyle
       });
+      
+      // Always store system prompt status for tabId (even if it's empty/null)
+      if (tabId) {
+        try {
+          // This will store the system prompt if present, or remove the entry if not present
+          await this._storeSystemPrompt(tabId, params.systemPrompt || null);
+        } catch (error) {
+          // Log error but continue with the process (non-blocking)
+          this.logger.error('Failed to update system prompt status:', error);
+        }
+      }
 
       // Add conversation history to parameters
       params.conversationHistory = conversationHistory;

@@ -1,3 +1,5 @@
+// src/sidebar/services/ChatHistoryService.js
+
 import { STORAGE_KEYS } from "../../shared/constants";
 import TokenManagementService from "./TokenManagementService";
 
@@ -30,6 +32,30 @@ class ChatHistoryService {
     } catch (error) {
       console.error('TabChatHistory: Error getting chat history:', error);
       return [];
+    }
+  }
+  
+  /**
+   * Get system prompts for a specific tab
+   * @param {number} tabId - The tab ID
+   * @returns {Promise<Object>} System prompt for the tab
+   */
+  static async getSystemPrompt(tabId) {
+    try {
+      if (!tabId) {
+        console.error('TabChatHistory: No tabId provided for getSystemPrompt');
+        return null;
+      }
+      
+      // Get all tab system prompts
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_SYSTEM_PROMPTS]);
+      const allTabSystemPrompts = result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] || {};
+      
+      // Return system prompts for this tab or null
+      return allTabSystemPrompts[tabId] || null;
+    } catch (error) {
+      console.error('TabChatHistory: Error getting system prompt:', error);
+      return null;
     }
   }
   
@@ -184,7 +210,11 @@ class ChatHistoryService {
       
       // If no cached stats, calculate from history
       const history = await this.getHistory(tabId);
-      return this._computeTokenStatistics(history);
+      
+      // Get system prompt for this tab
+      const systemPrompt = await this.getSystemPrompt(tabId);
+      
+      return this._computeTokenStatistics(history, systemPrompt);
     } catch (error) {
       console.error('TabChatHistory: Error calculating token statistics:', error);
       return {
@@ -288,8 +318,11 @@ class ChatHistoryService {
     try {
       if (!tabId) return false;
       
+      // Get system prompt for this tab
+      const systemPrompt = await this.getSystemPrompt(tabId);
+      
       // Calculate token statistics
-      const stats = this._computeTokenStatistics(messages);
+      const stats = this._computeTokenStatistics(messages, systemPrompt);
       
       // Save to storage
       const result = await chrome.storage.local.get([this.TOKEN_STATS_KEY]);
@@ -336,9 +369,10 @@ class ChatHistoryService {
    * Calculate token statistics from messages
    * @private
    * @param {Array} messages - Chat messages
+   * @param {Object} systemPrompt - System prompt data
    * @returns {Object} - Token statistics
    */
-  static _computeTokenStatistics(messages) {
+  static _computeTokenStatistics(messages, systemPrompt = null) {
     let inputTokens = 0;
     let outputTokens = 0;
     let promptTokens = 0;
@@ -369,9 +403,17 @@ class ChatHistoryService {
       }
     });
     
+    // Add system prompt tokens if present
+    if (systemPrompt && systemPrompt.systemPrompt) {
+      const systemPromptTokens = TokenManagementService.estimateTokens(systemPrompt.systemPrompt);
+      inputTokens += systemPromptTokens;
+      systemTokens += systemPromptTokens;
+    }
+    
     return {
       inputTokens,
       outputTokens,
+      totalCost: 0, // Cost calculation requires model info, done separately
       promptTokens,
       historyTokens,
       systemTokens

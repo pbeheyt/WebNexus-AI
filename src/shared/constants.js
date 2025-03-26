@@ -73,6 +73,7 @@ export const STORAGE_KEYS = {
   CURRENT_CONTENT_PROCESSING_MODE: 'currentContentProcessingMode',
   API_CONTENT_PROCESSING_PLATFORM: 'apiContentProcessingPlatform',
   API_CONTENT_PROCESSING_TIMESTAMP: 'apiContentProcessingTimestamp',
+  TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
   
   // Sidebar
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
