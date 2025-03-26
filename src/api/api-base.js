@@ -43,6 +43,18 @@ class BaseApiService extends ApiInterface {
     // Format content and create structured prompt WITHOUT conversation history
     // Platform-specific implementations will handle conversation history
     const formattedContent = this._formatContent(normalizedConfig.contentData);
+    
+    // Store the formatted content in local storage indexed by tab ID if tabId is provided
+    if (normalizedConfig.tabId) {
+      try {
+        await this._storeFormattedContent(normalizedConfig.tabId, formattedContent);
+        this.logger.info(`Stored formatted content for tab ID: ${normalizedConfig.tabId}`);
+      } catch (error) {
+        // Log error but continue with the process (non-blocking)
+        this.logger.error('Failed to store formatted content:', error);
+      }
+    }
+    
     const structuredPrompt = this._createStructuredPrompt(
       normalizedConfig.prompt,
       formattedContent
@@ -65,6 +77,47 @@ class BaseApiService extends ApiInterface {
         platformId: this.platformId,
         timestamp: new Date().toISOString()
       };
+    }
+  }
+
+  /**
+   * Store formatted content in local storage by tab ID
+   * @private
+   * @param {number} tabId - Tab ID to use as key
+   * @param {string} formattedContent - The formatted content to store
+   * @returns {Promise<void>}
+   */
+  async _storeFormattedContent(tabId, formattedContent) {
+    if (!tabId) {
+      this.logger.warn('No tab ID provided for storing formatted content');
+      return;
+    }
+
+    try {
+      // Get existing data or initialize empty object
+      const key = 'tab_formatted_content';
+      const existingData = await new Promise((resolve) => {
+        chrome.storage.local.get(key, (result) => {
+          resolve(result[key] || {});
+        });
+      });
+
+      // Update or add the formatted content for this tab
+      existingData[tabId] = formattedContent;
+
+      // Store the updated data
+      await new Promise((resolve, reject) => {
+        chrome.storage.local.set({ [key]: existingData }, () => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve();
+          }
+        });
+      });
+    } catch (error) {
+      this.logger.error('Error storing formatted content:', error);
+      throw error;
     }
   }
 
