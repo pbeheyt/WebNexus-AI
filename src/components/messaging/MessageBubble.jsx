@@ -78,7 +78,7 @@ export function MessageBubble({
   if (isSystem) {
     return (
       <div className={`p-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-4 py-3 ${className}`}>
-        <div>{formatContent(content)}</div>
+        <div className="break-words overflow-hidden">{formatContent(content)}</div>
       </div>
     );
   }
@@ -87,8 +87,8 @@ export function MessageBubble({
   if (isUser) {
     return (
       <div className={`p-4 w-full flex justify-end ${className}`}>
-        <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-4 max-w-[85%]">
-          <div className="whitespace-pre-wrap">{formatContent(content)}</div>
+        <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-4 max-w-[85%] overflow-hidden">
+          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{formatContent(content)}</div>
         </div>
       </div>
     );
@@ -98,7 +98,7 @@ export function MessageBubble({
   return (
     <div className={`p-4 w-full group relative ${className}`}>
       {/* Main content */}
-      <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100">
+      <div className="whitespace-pre-wrap break-words overflow-hidden text-gray-900 dark:text-gray-100">
         {formatContent(content)}
       </div>
       
@@ -161,9 +161,9 @@ export function MessageBubble({
       
       {/* Additional metadata display */}
       {Object.keys(metadata).length > 0 && (
-        <div className="text-xs mt-1 opacity-70">
+        <div className="text-xs mt-1 opacity-70 overflow-hidden text-ellipsis">
           {Object.entries(metadata).map(([key, value]) => (
-            <span key={key} className="mr-2">
+            <span key={key} className="mr-2 break-words">
               {key}: {typeof value === 'object' ? JSON.stringify(value) : value}
             </span>
           ))}
