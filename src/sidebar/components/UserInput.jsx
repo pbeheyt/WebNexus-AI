@@ -3,7 +3,6 @@ import React from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { MessageInput } from '../../components/messaging/MessageInput';
 import TokenCounter from './TokenCounter';
-import ContextWindowIndicator from './ContextWindowIndicator';
 
 function UserInput() {
   const { 

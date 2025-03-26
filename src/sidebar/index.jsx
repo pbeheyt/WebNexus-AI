@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   root.render(
     <ThemeProvider>
       <ContentProvider>
-        <SidebarPlatformProvider> {/* Updated provider */}
+        <SidebarPlatformProvider>
           <SidebarChatProvider>
             <SidebarApp />
           </SidebarChatProvider>

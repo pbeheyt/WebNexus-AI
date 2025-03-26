@@ -12,7 +12,15 @@ import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 const SidebarChatContext = createContext(null);
 
 export function SidebarChatProvider({ children }) {
-  const { selectedPlatformId, selectedModel, hasCredentials, tabId, platforms } = useSidebarPlatform();
+  const { 
+    selectedPlatformId, 
+    selectedModel, 
+    hasCredentials, 
+    tabId, 
+    platforms, 
+    getPlatformConfig 
+  } = useSidebarPlatform();
+  
   const { contentType } = useContent();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -22,6 +30,10 @@ export function SidebarChatProvider({ children }) {
   const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
   const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
+  
+  // Add these state variables for proper platform configuration handling
+  const [fullPlatformConfig, setFullPlatformConfig] = useState(null);
+  const [modelConfigData, setModelConfigData] = useState(null);
 
   // Use the token tracking hook
   const {
@@ -43,27 +55,52 @@ export function SidebarChatProvider({ children }) {
   // Get platform info
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
 
-  // Get selected model config for pricing information
-  const modelConfig = useMemo(() => {
-    if (!selectedPlatformId || !selectedModel) return null;
-
-    const platformConfig = platforms.find(p => p.id === selectedPlatformId);
-    if (!platformConfig || !platformConfig.api || !platformConfig.api.models) return null;
-
-    return platformConfig.api.models.find(m => m.id === selectedModel);
-  }, [selectedPlatformId, selectedModel, platforms]);
+  // Replace the modelConfig useMemo with this effect for fetching complete platform configuration
+  useEffect(() => {
+    const loadFullConfig = async () => {
+      if (!selectedPlatformId || !selectedModel || !tabId) return;
+      
+      try {
+        // Get full configuration either from context or directly
+        const config = await getPlatformConfig(selectedPlatformId);
+        setFullPlatformConfig(config);
+        
+        if (!config || !config.api || !config.api.models) {
+          console.warn('Platform configuration missing required structure:', {
+            platformId: selectedPlatformId,
+            hasApi: !!config?.api,
+            hasModels: !!config?.api?.models
+          });
+          return;
+        }
+        
+        const modelData = config.api.models.find(m => m.id === selectedModel);
+        console.log('Model configuration found:', {
+          modelFound: !!modelData,
+          selectedModel,
+          availableModels: config.api.models.map(m => m.id)
+        });
+        
+        setModelConfigData(modelData);
+      } catch (error) {
+        console.error('Failed to load full platform configuration:', error);
+      }
+    };
+    
+    loadFullConfig();
+  }, [selectedPlatformId, selectedModel, tabId, getPlatformConfig]);
 
   // Update context status when model config or token stats change
   useEffect(() => {
     const updateContextStatus = async () => {
-      if (!tabId || !modelConfig) {
+      if (!tabId || !modelConfigData) {
         setContextStatus({ warningLevel: 'none' });
         return;
       }
 
       setIsContextStatusLoading(true);
       try {
-        const status = await calculateContextStatus(modelConfig);
+        const status = await calculateContextStatus(modelConfigData);
         setContextStatus(status);
       } catch (error) {
         console.error('Error calculating context status:', error);
@@ -74,7 +111,7 @@ export function SidebarChatProvider({ children }) {
     };
 
     updateContextStatus();
-  }, [tabId, modelConfig, tokenStats, calculateContextStatus]);
+  }, [tabId, modelConfigData, tokenStats, calculateContextStatus]);
 
   // Load chat history for current tab
   useEffect(() => {
@@ -171,7 +208,7 @@ export function SidebarChatProvider({ children }) {
                   output: 0,
                   platformId: selectedPlatformId,
                   modelId: selectedModel
-                }, modelConfig);
+                }, modelConfigData);  // Use modelConfigData instead of modelConfig
               }
             }
           } catch (extractError) {
@@ -190,7 +227,7 @@ export function SidebarChatProvider({ children }) {
           output: outputTokens,
           platformId: selectedPlatformId,
           modelId: selectedModel
-        }, modelConfig);
+        }, modelConfigData);  // Use modelConfigData instead of modelConfig
 
         // Save history in one operation
         if (tabId) {
@@ -251,7 +288,7 @@ export function SidebarChatProvider({ children }) {
       chrome.runtime.onMessage.removeListener(handleStreamChunk);
     };
   }, [streamingMessageId, streamingContent, messages, visibleMessages, tabId, selectedModel,
-      selectedPlatformId, modelConfig, trackTokens, extractedContentAdded]);
+      selectedPlatformId, modelConfigData, trackTokens, extractedContentAdded]);
 
   // Send a message and get a response
   const sendMessage = async (text = inputValue) => {
