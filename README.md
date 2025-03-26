@@ -1,170 +1,97 @@
-# AI Content Summarizer
+# AI Content Summarizer: The All-in-One AI Assistant for Your Browser
 
-A Chrome extension that extracts and summarizes web content, Reddit posts, YouTube videos, PDFs, and selected text using multiple AI platforms (Claude, ChatGPT, DeepSeek, and Mistral).
+This Chrome extension provides a comprehensive suite of AI-powered tools to enhance your browsing experience. Summarize web content, analyze discussions, and streamline information gathering across various online platforms.
 
-## Key Features
+## Features
 
-- **Multi-platform AI support**: Claude, ChatGPT, DeepSeek, and Mistral AI
-- **Smart content extraction** for various content types:
-  - General web pages and articles
-  - Reddit posts with comments
-  - YouTube videos with transcript and comments
-  - PDF documents with text extraction (NEW!)
-  - Selected text from any webpage (NEW!)
-- **Flexible prompt system**:
-  - Template prompts with customizable parameters
-  - Custom prompts for specific content types
-  - Quick prompts for one-time use (NEW!)
-  - Template customization for advanced users (NEW!)
-- **One-click summarization** with context menu integration
-- **Dark/light theme support** that adapts to your browser preferences
-- **User-friendly interface** with status notifications and error handling
+*   **Multi-Platform Support:** Works seamlessly with a wide range of content types, including:
+    *   General web content
+    *   Reddit posts and discussions
+    *   YouTube videos (including transcript and comment analysis)
+    *   PDF documents
+    *   Selected text fragments
+*   **AI Platform Flexibility:** Choose from a variety of AI platforms to power your summaries and analyses:
+    *   ChatGPT
+    *   Claude
+    *   DeepSeek
+    *   Mistral
+    *   Gemini
+    *   Grok
+*   **Summarization and Analysis:** Quickly generate concise or detailed summaries of web content, extract key themes from discussions, and analyze comment sections.
+*   **Customizable Prompts:** Tailor the AI's behavior with customizable prompts. Adjust the length, style, and language of summaries to fit your needs.
+*   **Contextual Sidebar Integration:** Access AI features directly within a convenient sidebar for in-depth analysis and conversation.
+*   **Keyboard Shortcuts:** Enhance productivity with keyboard shortcuts for common actions.
+*   **Theme Management:** Easily switch between light and dark themes for comfortable reading in any environment.
+*   **Secure Credential Storage:** API keys for AI platforms are stored securely using Chrome's storage API.
+*   **Tab-Specific Preferences:** Customize AI platform and model selections for individual tabs.
+*   **Token Tracking and Cost Accounting:** Monitor API token usage with detailed breakdowns and cost estimations (where available).
+*   **Content Extraction and Analysis:** Uses smart extraction algorithms for optimal results.
+*   **Clear User Interface:** A straightforward and easy-to-navigate interface ensures a smooth user experience.
+*   **Continuous Updates:** Regularly updated to support new platforms, models, and features.
 
-## How It Works
+## Installation
 
-1. The extension extracts relevant content from the current page or selection
-2. The content is formatted based on its type (web, Reddit, YouTube, PDF, or selection)
-3. Your chosen AI platform (Claude, ChatGPT, DeepSeek, or Mistral) receives the content with your prompt
-4. The AI generates a summary tailored to the content type and your preferences
+1.  Download the extension package from [link to be added].
+2.  Open Chrome and navigate to `chrome://extensions`.
+3.  Enable "Developer mode" in the top right corner.
+4.  Click "Load unpacked" and select the directory containing the extension files.
+5.  The extension icon will appear in your Chrome toolbar.
 
-## Usage Guide
+## Usage
 
-### Basic Usage
+### Summarizing Content
 
-1. Navigate to any webpage, Reddit post, YouTube video, or PDF document
-2. Click the extension icon in your Chrome toolbar
-3. Select your preferred AI platform 
-4. Choose between template, custom, or quick prompt types
-5. Customize prompt parameters if needed
-6. Click "Summarize Content"
+1.  **Click the Extension Icon:** Activate the extension by clicking its icon in the Chrome toolbar.
+2.  **Select an AI Platform:** Choose your preferred AI platform (e.g., ChatGPT, Claude, Gemini) from the dropdown menu.
+3.  **Configure Prompt Settings:** Customize the summary's length, style, and language using the available options.
+4.  **Process Content:** Click the "Process Content" button.
+5.  **View Summary:** The summarized content will be displayed in the popup window.
 
-### Selected Text Summarization
+You can also trigger content processing by right-clicking on a webpage and selecting “Process with AI" or “Process selection with AI” in the context menu.  If selection mode is enabled under the keyboard shortcut options, content processing can also be triggered using the keyboard shortcut: `Ctrl+Shift+Z`
 
-1. Select any text on a webpage
-2. Click the extension icon or use the context menu
-3. The extension automatically detects your selection
-4. Configure your prompt preferences
-5. Click "Summarize Content"
+### Using the Sidebar
 
-### Context Menu Integration
+1.  **Toggle Sidebar:**  Press `Ctrl+Shift+Q` to open or close the sidebar, or select “Toggle Sidebar” from the context menu.
+2.  **Chat Interface:** Engage in a conversation with the AI about the current page content.
+3.  **Model Selection:** Choose your preferred AI model for the sidebar chat.
+4.  **Token Tracking:** View real-time token usage and cost estimates in the sidebar.
 
-Right-click on any webpage and choose:
-- "Summarize with AI" to summarize the whole page
-- "Summarize Selection with AI" when text is selected
+### Customizing Prompts
 
-### Prompt Types
+1.  **Open Settings:** Click the extension icon and then the "Settings" button.
+2.  **Manage Prompts:**  Navigate to the "Custom Prompt Management" tab.
+3.  **Create, Edit, or Delete Prompts:** Add new custom prompts, modify existing ones, or remove unwanted prompts.
+4.  **Customize Default Templates:** Modify base template instructions under "Template Customization."
+    *  Adjust length, style, and language parameters to refine summary output.
+    *  Click the gear icon to create a new prompt with content-specific settings.
 
-- **Template**: Pre-configured prompts with customizable parameters (length, style, language, etc.)
-- **Custom**: Your own saved prompts that you can create and manage in settings
-- **Quick**: One-time prompts that don't need to be saved (NEW!)
+### Managing API Credentials
 
-## Customization Options
+1.  **Open Settings:** Click the extension icon and then the "Settings" button.
+2.  **Navigate to API Settings:**  Select the "API Settings" tab.
+3.  **Enter API Keys:** Provide your API keys for the AI platforms you want to use.
 
-### Template Prompt Parameters
+## Configuration
 
-- **Length**: Concise, Normal, Detailed, or Exhaustive
-- **Style**: Adaptive, Narrative, Bullet Points, Analytical, Executive, Simplified, Technical, or Academic
-- **Language**: English, French, Spanish, or German
-- **Content-specific options**:
-  - YouTube: Comment analysis
-  - PDF: Table of contents, visuals analysis
-  - Reddit: Fact checking
-  - Selected Text: Context awareness
+The extension can be configured via the settings page (accessible via the extension popup):
 
-### Settings Page
+*   **Content Extraction Settings:**
+    *   Maximum number of comments to extract from Reddit and YouTube.
 
-- **Custom Prompt Management**: Create, edit, and delete custom prompts
-- **Content Configuration**: Set extraction parameters for different content types
-- **Template Customization**: Advanced editing of template parameters and values (NEW!)
+*   **Keyboard Shortcuts:**
+    *   "Process Content":  Customize content processing with and without text selection.
+    *   "Toggle Sidebar":  Configure sidebar opening behavior.
 
-## Architecture Overview
+*   **API Settings:**
+    *   Set default parameters like length, style, language, and API keys for each platform.
 
-The extension is built on Chrome's Extension Manifest V3 architecture with a modular design:
+## Security and Privacy
 
-- **Core Framework**: Chrome Extension API (Manifest V3)
-- **Build System**: Webpack + Babel
-- **Storage**: Chrome Storage API
-- **External Libraries**: 
-  - youtube-transcript for transcript extraction
-  - pdfjs-dist for PDF document parsing (NEW!)
+*   The extension requests necessary permissions to access web content and inject scripts.
+*   Your API keys are stored locally and securely using Chrome's storage API.
+*   No user data is collected or transmitted by the extension.
+*   Review the extension's code on GitHub to verify its security and privacy practices [link to be added].
 
-## Key Components
+## Support and Contributing
 
-### Content Extractors
-
-- **General Web Pages**: Extracts main content and metadata
-- **Reddit Posts**: Extracts post content, metadata, and comments
-- **YouTube Videos**: Extracts transcript, metadata, and comments
-- **PDF Documents**: Extracts text content and metadata from PDF files (NEW!)
-- **Selected Text**: Extracts user-selected text with contextual information (NEW!)
-
-### AI Platform Integration
-
-The extension integrates with six AI platforms:
-- **Claude**: Anthropic's Claude AI assistant
-- **ChatGPT**: OpenAI's ChatGPT interface
-- **DeepSeek**: DeepSeek AI's interface
-- **Mistral**: Mistral AI's chat interface
-- **Gemini**: Gamini AI's chat interface
-- **Grok**: Grok AI's chat interface
-
-### User Interface
-
-- **Popup Interface**: Content type detection, AI platform selection, prompt customization
-- **Settings Interface**: Custom prompt management, extraction configuration, template customization
-- **Theme Support**: Light and dark mode with system preference detection
-
-## Installation from Source
-
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Build the extension: `npm run build`
-4. Open Chrome and navigate to `chrome://extensions/`
-5. Enable "Developer mode"
-6. Click "Load unpacked" and select the extension directory
-
-## Development
-
-### Build Commands
-```
-npm install        # Install dependencies
-npm run build      # Production build
-npm run watch      # Development build with hot reload
-```
-
-### Directory Structure
-```
-/
-├── dist/                  # Compiled JavaScript bundles
-├── images/                # Extension icons and logos
-├── css/                   # Stylesheets for UI components
-├── src/
-│   ├── background.js      # Background service worker
-│   ├── popup/             # Popup UI components
-│   ├── settings/          # Settings UI components
-│   ├── content/           # Content scripts
-│   ├── extractor/         # Content extraction strategies
-│   ├── platforms/         # AI platform implementations
-│   ├── services/          # Shared services (config, templates)
-│   ├── shared/            # Shared constants and utilities
-│   └── utils/             # Utility functions
-├── prompt-config.json     # Default prompt configurations
-├── platform-config.json   # AI platform configurations
-├── manifest.json          # Extension manifest
-├── popup.html             # Popup UI template
-└── settings.html          # Settings page template
-```
-
-## Privacy & Security
-
-- All content extraction occurs locally within your browser
-- No data is transmitted to third-party servers (except to the AI platform)
-- The extension requires an account with your selected AI platform
-- No sensitive user data is stored outside the browser's local storage
-
-## Troubleshooting
-
-- **Content Not Extracting**: Complex websites may require selecting specific content manually
-- **PDF Text Extraction Issues**: Some PDFs may have limited text extraction if they contain primarily images or are scanned documents
-- **AI Platform Integration Issues**: Ensure you're logged into the AI platform before use
-- **Comment Loading for YouTube**: You may need to scroll down to load comments before summarizing if comment analysis is enabled
+For bug reports, feature requests, and contributions, please visit the extension's GitHub repository [link to be added].
