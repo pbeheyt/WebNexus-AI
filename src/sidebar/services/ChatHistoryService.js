@@ -6,8 +6,8 @@ import TokenManagementService from "./TokenManagementService";
  */
 class ChatHistoryService {
   static STORAGE_KEY = STORAGE_KEYS.TAB_CHAT_HISTORIES;
-  static TOKEN_STATS_KEY = "tab_token_statistics"; // New storage key for token statistics
-  static MAX_MESSAGES_PER_TAB = 100;
+  static TOKEN_STATS_KEY = STORAGE_KEYS.TAB_TOKEN_STATISTICS;
+  static MAX_MESSAGES_PER_TAB = 200;
   
   /**
    * Get chat history for a specific tab

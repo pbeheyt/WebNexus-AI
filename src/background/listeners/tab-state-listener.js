@@ -1,8 +1,73 @@
 // src/background/listeners/tab-state-listener.js
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import SidebarStateManager from '../../services/SidebarStateManager.js';
-import ApiTokenTracker from '../../services/ApiTokenTracker.js';
 import logger from '../../utils/logger.js';
+
+// List of all storage keys that are tab-specific and need cleanup
+const TAB_SPECIFIC_KEYS = [
+  STORAGE_KEYS.TAB_FORMATTED_CONTENT,
+  STORAGE_KEYS.TAB_PLATFORM_PREFERENCES, 
+  STORAGE_KEYS.TAB_MODEL_PREFERENCES,
+  STORAGE_KEYS.TAB_SIDEBAR_STATES,
+  STORAGE_KEYS.TAB_CHAT_HISTORIES,
+  STORAGE_KEYS.TAB_TOKEN_STATISTICS
+];
+
+/**
+ * Clean up a specific tab-based storage item
+ * @param {string} storageKey - The storage key to clean up
+ * @param {number} tabId - Tab ID to remove (for single tab cleanup)
+ * @param {Set<number>} [validTabIds] - Set of valid tab IDs (for periodic cleanup)
+ * @returns {Promise<boolean>} - True if changes were made, false otherwise
+ */
+async function cleanupTabStorage(storageKey, tabId, validTabIds = null) {
+  try {
+    // Get the current storage data
+    const storageData = await chrome.storage.local.get(storageKey);
+    if (!storageData[storageKey]) {
+      return false;
+    }
+
+    const updatedData = { ...storageData[storageKey] };
+    let hasChanges = false;
+
+    if (validTabIds) {
+      // Periodic cleanup mode: Remove all invalid tabs
+      for (const tabIdStr of Object.keys(updatedData)) {
+        const currTabId = parseInt(tabIdStr, 10);
+        if (!validTabIds.has(currTabId)) {
+          delete updatedData[tabIdStr];
+          hasChanges = true;
+        }
+      }
+    } else {
+      // Single tab cleanup mode: Remove specific tab
+      if (updatedData[tabId]) {
+        delete updatedData[tabId];
+        hasChanges = true;
+      }
+    }
+
+    // Save changes if needed
+    if (hasChanges) {
+      await chrome.storage.local.set({
+        [storageKey]: updatedData
+      });
+      
+      // Log what happened
+      if (validTabIds) {
+        logger.background.info(`Cleaned up stale data for ${storageKey}`);
+      } else {
+        logger.background.info(`Removed ${storageKey} data for tab ${tabId}`);
+      }
+    }
+
+    return hasChanges;
+  } catch (error) {
+    logger.background.error(`Error cleaning up ${storageKey}:`, error);
+    return false;
+  }
+}
 
 /**
  * Set up tab state cleanup listeners
@@ -13,51 +78,12 @@ export function setupTabStateListener() {
     logger.background.info(`Tab ${tabId} closed, cleaning up tab-specific state`);
 
     try {
-      // Clean up tab-specific platform preferences
-      const tabPlatformPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES);
-      if (tabPlatformPrefs[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]) {
-        const updatedPrefs = { ...tabPlatformPrefs[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] };
-        delete updatedPrefs[tabId];
-
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]: updatedPrefs
-        });
-
-        logger.background.info(`Removed platform preference for tab ${tabId}`);
+      // Clean up all tab-specific storage keys
+      for (const storageKey of TAB_SPECIFIC_KEYS) {
+        await cleanupTabStorage(storageKey, tabId);
       }
-
-      // Clean up tab-specific model preferences
-      const tabModelPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
-      if (tabModelPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES]) {
-        const updatedPrefs = { ...tabModelPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES] };
-        delete updatedPrefs[tabId];
-
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: updatedPrefs
-        });
-
-        logger.background.info(`Removed model preferences for tab ${tabId}`);
-      }
-
-      // Clean up tab-specific chat history
-      const tabChatHistories = await chrome.storage.local.get(STORAGE_KEYS.TAB_CHAT_HISTORIES);
-      if (tabChatHistories[STORAGE_KEYS.TAB_CHAT_HISTORIES]) {
-        const updatedHistories = { ...tabChatHistories[STORAGE_KEYS.TAB_CHAT_HISTORIES] };
-        delete updatedHistories[tabId];
-
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.TAB_CHAT_HISTORIES]: updatedHistories
-        });
-
-        logger.background.info(`Removed chat history for tab ${tabId}`);
-      }
-
-      // Clean up structured prompts and token data using ApiTokenTracker
-      await ApiTokenTracker.clearTabData(tabId);
-      logger.background.info(`Removed token accounting data for tab ${tabId}`);
-
     } catch (error) {
-      logger.background.error('Error cleaning up tab-specific preferences:', error);
+      logger.background.error('Error cleaning up tab-specific data:', error);
     }
 
     // Run existing sidebar state cleanup
@@ -71,74 +97,10 @@ export function setupTabStateListener() {
       const tabs = await chrome.tabs.query({});
       const validTabIds = new Set(tabs.map(tab => tab.id));
 
-      // Clean platform preferences for invalid tabs
-      const tabPlatformPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES);
-      if (tabPlatformPrefs[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]) {
-        const updatedPrefs = { ...tabPlatformPrefs[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] };
-        let hasChanges = false;
-
-        for (const tabIdStr of Object.keys(updatedPrefs)) {
-          const tabId = parseInt(tabIdStr, 10);
-          if (!validTabIds.has(tabId)) {
-            delete updatedPrefs[tabIdStr];
-            hasChanges = true;
-          }
-        }
-
-        if (hasChanges) {
-          await chrome.storage.local.set({
-            [STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]: updatedPrefs
-          });
-          logger.background.info('Cleaned up stale tab platform preferences');
-        }
+      // Clean up all tab-specific storage keys
+      for (const storageKey of TAB_SPECIFIC_KEYS) {
+        await cleanupTabStorage(storageKey, null, validTabIds);
       }
-
-      // Clean model preferences for invalid tabs
-      const tabModelPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
-      if (tabModelPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES]) {
-        const updatedPrefs = { ...tabModelPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES] };
-        let hasChanges = false;
-
-        for (const tabIdStr of Object.keys(updatedPrefs)) {
-          const tabId = parseInt(tabIdStr, 10);
-          if (!validTabIds.has(tabId)) {
-            delete updatedPrefs[tabIdStr];
-            hasChanges = true;
-          }
-        }
-
-        if (hasChanges) {
-          await chrome.storage.local.set({
-            [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: updatedPrefs
-          });
-          logger.background.info('Cleaned up stale tab model preferences');
-        }
-      }
-
-      // Clean chat histories for invalid tabs
-      const tabChatHistories = await chrome.storage.local.get(STORAGE_KEYS.TAB_CHAT_HISTORIES);
-      if (tabChatHistories[STORAGE_KEYS.TAB_CHAT_HISTORIES]) {
-        const updatedHistories = { ...tabChatHistories[STORAGE_KEYS.TAB_CHAT_HISTORIES] };
-        let hasChanges = false;
-
-        for (const tabIdStr of Object.keys(updatedHistories)) {
-          const tabId = parseInt(tabIdStr, 10);
-          if (!validTabIds.has(tabId)) {
-            delete updatedHistories[tabIdStr];
-            hasChanges = true;
-          }
-        }
-
-        if (hasChanges) {
-          await chrome.storage.local.set({
-            [STORAGE_KEYS.TAB_CHAT_HISTORIES]: updatedHistories
-          });
-          logger.background.info('Cleaned up stale tab chat histories');
-        }
-      }
-
-      // Clean up structured prompts and token data for invalid tabs using ApiTokenTracker
-      await ApiTokenTracker.cleanupInactiveTabs(Array.from(validTabIds));
 
       // Run existing cleanup routine
       SidebarStateManager.cleanupTabStates();
@@ -147,5 +109,5 @@ export function setupTabStateListener() {
     }
   }, 3600000); // Every hour
 
-  logger.background.info('Tab state listener initialized with tab-specific cleanup');
+  logger.background.info('Tab state listener initialized with comprehensive tab-specific cleanup');
 }

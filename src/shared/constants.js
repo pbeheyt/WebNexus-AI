@@ -75,9 +75,8 @@ export const STORAGE_KEYS = {
   API_CONTENT_PROCESSING_TIMESTAMP: 'apiContentProcessingTimestamp',
   
   // Sidebar
-  TAB_CHAT_HISTORIES: 'tab_chat_histories', // New key for tab-specific chat
-  TAB_STRUCTURED_PROMPTS: 'tab_structured_prompts',
-  TAB_TOKEN_METADATA: 'tab_token_metadata',
+  TAB_CHAT_HISTORIES: 'tab_chat_histories',
+  TAB_TOKEN_STATISTICS: 'tab_token_statistics',
   STREAM_CONTENT: 'streamContent',
   STREAM_ID: 'streamId',
 };
