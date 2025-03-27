@@ -1,4 +1,5 @@
 // src/sidebar/contexts/SidebarChatContext.jsx
+
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../components';
@@ -31,7 +32,7 @@ export function SidebarChatProvider({ children }) {
   const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   
-  // Add these state variables for proper platform configuration handling
+  // Platform and model configuration
   const [fullPlatformConfig, setFullPlatformConfig] = useState(null);
   const [modelConfigData, setModelConfigData] = useState(null);
 
@@ -41,7 +42,7 @@ export function SidebarChatProvider({ children }) {
     calculateContextStatus,
     trackTokens,
     clearTokenData,
-    estimateTokens
+    calculateStats
   } = useTokenTracking(tabId);
 
   // Use the content processing hook
@@ -55,7 +56,7 @@ export function SidebarChatProvider({ children }) {
   // Get platform info
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
 
-  // Replace the modelConfig useMemo with this effect for fetching complete platform configuration
+  // Load full platform configuration when platform or model changes
   useEffect(() => {
     const loadFullConfig = async () => {
       if (!selectedPlatformId || !selectedModel || !tabId) return;
@@ -122,6 +123,11 @@ export function SidebarChatProvider({ children }) {
         // Load chat history for this tab
         const history = await ChatHistoryService.getHistory(tabId);
         setMessages(history);
+
+        // Calculate token statistics based on the history
+        if (history.length > 0 && modelConfigData) {
+          await calculateStats(history, modelConfigData);
+        }
 
         // Reset extracted content flag when tab changes
         setExtractedContentAdded(history.length > 0);
@@ -201,14 +207,14 @@ export function SidebarChatProvider({ children }) {
                 // Mark as added to prevent duplicate additions
                 setExtractedContentAdded(true);
 
-                // Track tokens for extracted content
+                // Track tokens for extracted content using the service
                 await trackTokens({
                   messageId: contentMessage.id,
+                  role: contentMessage.role,
+                  content: contentMessage.content,
                   input: contentMessage.inputTokens,
-                  output: 0,
-                  platformId: selectedPlatformId,
-                  modelId: selectedModel
-                }, modelConfigData);  // Use modelConfigData instead of modelConfig
+                  output: 0
+                }, modelConfigData);
               }
             }
           } catch (extractError) {
@@ -223,19 +229,15 @@ export function SidebarChatProvider({ children }) {
         // Track tokens for assistant message
         await trackTokens({
           messageId: messageId,
+          role: MESSAGE_ROLES.ASSISTANT,
+          content: finalContent,
           input: 0,
-          output: outputTokens,
-          platformId: selectedPlatformId,
-          modelId: selectedModel
-        }, modelConfigData);  // Use modelConfigData instead of modelConfig
+          output: outputTokens
+        }, modelConfigData);
 
         // Save history in one operation
         if (tabId) {
-          await ChatHistoryService.saveHistory(tabId, updatedMessages);
-
-          // Force a fresh token statistics calculation that includes current system prompts
-          // This ensures system prompts are counted after every API response
-          await ChatHistoryService.updateTokenStatistics(tabId, updatedMessages);
+          await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
         }
       } catch (error) {
         console.error('Error handling stream completion:', error);
@@ -349,9 +351,18 @@ export function SidebarChatProvider({ children }) {
     setStreamingMessageId(assistantMessageId);
     setStreamingContent('');
 
+    // Track tokens for user message
+    await trackTokens({
+      messageId: userMessageId,
+      role: MESSAGE_ROLES.USER,
+      content: userMessage.content,
+      input: inputTokens,
+      output: 0
+    }, modelConfigData);
+
     // Save interim state to chat history
     if (tabId) {
-      await ChatHistoryService.saveHistory(tabId, updatedMessages);
+      await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
     }
 
     try {
@@ -396,7 +407,7 @@ export function SidebarChatProvider({ children }) {
 
       // Save error state to history
       if (tabId) {
-        await ChatHistoryService.saveHistory(tabId, errorMessages);
+        await ChatHistoryService.saveHistory(tabId, errorMessages, modelConfigData);
       }
 
       setStreamingMessageId(null);

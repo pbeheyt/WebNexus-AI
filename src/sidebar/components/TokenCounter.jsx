@@ -1,3 +1,5 @@
+// src/sidebar/components/TokenCounter.jsx
+
 import React, { useState } from 'react';
 
 function TokenCounter({ tokenStats, contextStatus, className = '' }) {
