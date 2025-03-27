@@ -49,12 +49,15 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
 
   const formattedCost = formatCost(accumulatedCost);
 
-  // Ensure we have context status data
+  // Ensure we have context status data with safe defaults
   const contextData = contextStatus || {
     warningLevel: 'none',
     percentage: 0,
     tokensRemaining: 0
   };
+
+  // Ensure tokensRemaining is always defined with a safe default
+  const tokensRemaining = contextData.tokensRemaining || 0;
 
   // Tooltip content definitions
   const tooltipContent = {
@@ -64,7 +67,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
     prompt: "Tokens in your most recent message",
     history: "Tokens from previous conversation messages",
     system: "Tokens from system instructions and settings",
-    contextWindow: `${contextData.tokensRemaining.toLocaleString()} tokens remaining in the context window`
+    contextWindow: `${tokensRemaining.toLocaleString()} tokens remaining in the context window`
   };
 
   return (

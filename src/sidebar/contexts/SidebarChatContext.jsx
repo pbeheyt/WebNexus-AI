@@ -31,6 +31,7 @@ export function SidebarChatProvider({ children }) {
   const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
   const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   
   // Platform and model configuration
   const [fullPlatformConfig, setFullPlatformConfig] = useState(null);
@@ -154,7 +155,7 @@ export function SidebarChatProvider({ children }) {
   // Handle streaming response chunks
   useEffect(() => {
     // Utility function to handle all post-streaming operations in one place
-    const handleStreamComplete = async (messageId, finalContent, model) => {
+    const handleStreamComplete = async (messageId, finalContent, model, isError = false) => {
       try {
         // Calculate output tokens
         const outputTokens = TokenManagementService.estimateTokens(finalContent);
@@ -168,7 +169,9 @@ export function SidebarChatProvider({ children }) {
                 isStreaming: false, // Explicitly mark as not streaming
                 model: model || selectedModel,
                 platformIconUrl: msg.platformIconUrl,
-                outputTokens
+                outputTokens,
+                // If this is an error, change the role to system
+                role: isError ? MESSAGE_ROLES.SYSTEM : msg.role
               }
             : msg
         );
@@ -180,7 +183,7 @@ export function SidebarChatProvider({ children }) {
         const isFirstMessage = visibleAssistantMessages.length === 1;
     
         // If first message and content not added, add extracted content
-        if (isFirstMessage && !extractedContentAdded) {
+        if (isFirstMessage && !extractedContentAdded && !isError) {
           try {
             // Get formatted content from storage
             const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_FORMATTED_CONTENT]);
@@ -229,7 +232,7 @@ export function SidebarChatProvider({ children }) {
         // Track tokens for assistant message
         await trackTokens({
           messageId: messageId,
-          role: MESSAGE_ROLES.ASSISTANT,
+          role: isError ? MESSAGE_ROLES.SYSTEM : MESSAGE_ROLES.ASSISTANT,
           content: finalContent,
           input: 0,
           output: outputTokens
@@ -255,6 +258,23 @@ export function SidebarChatProvider({ children }) {
           return;
         }
 
+        // Handle stream error
+        if (chunkData.error) {
+          console.error('Stream error:', chunkData.error);
+          setStreamingMessageId(null);
+          setIsProcessing(false);
+          setIsCanceling(false);
+          
+          // Format the error message
+          const errorMessage = typeof chunkData.error === 'string' 
+            ? chunkData.error 
+            : (chunkData.error.message || 'An error occurred during streaming');
+          
+          // Complete the stream with the error message
+          await handleStreamComplete(streamingMessageId, errorMessage, null, true);
+          return;
+        }
+
         // Process chunk content - ensure it's a string
         const chunkContent = typeof chunkData.chunk === 'string'
           ? chunkData.chunk
@@ -264,6 +284,7 @@ export function SidebarChatProvider({ children }) {
           // Streaming complete
           setStreamingMessageId(null);
           setIsProcessing(false);
+          setIsCanceling(false);
 
           // Get final content
           const finalContent = chunkData.fullContent || streamingContent;
@@ -416,6 +437,67 @@ export function SidebarChatProvider({ children }) {
     }
   };
 
+  // Cancel the current stream
+  const cancelStream = async () => {
+    if (!streamingMessageId || !isProcessing || isCanceling) return;
+    
+    setIsCanceling(true);
+    
+    try {
+      // Send cancellation message to background script
+      const result = await chrome.runtime.sendMessage({
+        action: 'cancelStream',
+        platformId: selectedPlatformId,
+        tabId
+      });
+      
+      // Update the streaming message to indicate cancellation
+      const cancelledContent = streamingContent + '\n\n_Stream cancelled by user._';
+      
+      // Update message in UI immediately
+      setMessages(prev => prev.map(msg =>
+        msg.id === streamingMessageId
+          ? { 
+              ...msg, 
+              content: cancelledContent,
+              isStreaming: false
+            }
+          : msg
+      ));
+      
+      // Save the cancelled state
+      if (tabId) {
+        const updatedMessages = messages.map(msg =>
+          msg.id === streamingMessageId
+            ? { 
+                ...msg, 
+                content: cancelledContent,
+                isStreaming: false
+              }
+            : msg
+        );
+        
+        // Save to history
+        await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
+      }
+      
+      // Reset streaming state
+      setStreamingMessageId(null);
+      setStreamingContent('');
+      setIsProcessing(false);
+      
+      console.log('Stream cancelled successfully:', result);
+    } catch (error) {
+      console.error('Error cancelling stream:', error);
+      
+      // Still reset the streaming state on error
+      setStreamingMessageId(null);
+      setIsProcessing(false);
+    } finally {
+      setIsCanceling(false);
+    }
+  };
+
   // Clear chat history and token metadata
   const clearChat = async () => {
     if (!tabId) return;
@@ -435,8 +517,10 @@ export function SidebarChatProvider({ children }) {
       inputValue,
       setInputValue,
       sendMessage,
-      clearChat,
+      cancelStream,
       isProcessing,
+      isCanceling,
+      clearChat,
       processingStatus,
       apiError: processingError,
       contentType,

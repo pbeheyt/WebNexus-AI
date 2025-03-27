@@ -8,7 +8,10 @@ import { TextArea } from '../form/TextArea';
  * @param {string} props.value - Input value
  * @param {Function} props.onChange - Value change handler
  * @param {Function} props.onSubmit - Submit handler
+ * @param {Function} props.onCancel - Cancel handler for streaming
  * @param {boolean} props.disabled - Whether input is disabled
+ * @param {boolean} props.isProcessing - Whether message is being processed
+ * @param {boolean} props.isCanceling - Whether cancellation is in progress
  * @param {string} props.placeholder - Input placeholder text
  * @param {string} props.buttonLabel - Send button label (for accessibility)
  * @param {string} props.className - Additional CSS classes
@@ -17,7 +20,10 @@ export function MessageInput({
   value,
   onChange,
   onSubmit,
+  onCancel,
   disabled = false,
+  isProcessing = false,
+  isCanceling = false,
   placeholder = 'Type a message...',
   buttonLabel = 'Send',
   className = ''
@@ -44,7 +50,9 @@ export function MessageInput({
   };
   
   const handleSubmit = () => {
-    if (value.trim() && !disabled) {
+    if (isProcessing && onCancel) {
+      onCancel();
+    } else if (value.trim() && !disabled) {
       onSubmit(value);
       // Focus back on the textarea after sending
       if (textareaRef.current) {
@@ -52,6 +60,14 @@ export function MessageInput({
       }
     }
   };
+  
+  // Determine which button to show based on processing state
+  const isStreamingActive = isProcessing;
+  const buttonStyle = isStreamingActive
+    ? 'bg-red-500 hover:bg-red-600 text-white'
+    : (!value.trim() || disabled)
+      ? 'bg-gray-400 cursor-not-allowed text-white'
+      : 'bg-orange-600 hover:bg-orange-700 text-white';
   
   return (
     <div className={`border-t border-gray-200 dark:border-gray-700 p-3 ${className}`}>
@@ -81,29 +97,35 @@ export function MessageInput({
             </svg>
           </button>
           
-          {/* Send button with square shape and upward arrow like in the photo */}
+          {/* Send/Cancel button with dynamic styling based on state */}
           <button
-            className={`flex items-center justify-center cursor-pointer border-none outline-none ${
-              !value.trim() || disabled
-                ? 'bg-gray-400 cursor-not-allowed text-white'
-                : 'bg-orange-600 hover:bg-orange-700 text-white'
-            } w-7 h-7 rounded`}
+            className={`flex items-center justify-center cursor-pointer border-none outline-none ${buttonStyle} w-7 h-7 rounded ${isCanceling ? 'opacity-70' : ''}`}
             onClick={handleSubmit}
-            disabled={!value.trim() || disabled}
-            aria-label={buttonLabel}
-            title={buttonLabel}
+            disabled={(!value.trim() && !isStreamingActive) || disabled || isCanceling}
+            aria-label={isStreamingActive ? "Cancel" : buttonLabel}
+            title={isStreamingActive ? "Cancel generation" : buttonLabel}
           >
-            {/* Upward arrow icon similar to the one in the photo */}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 20V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            {isStreamingActive ? (
+              // X icon for cancel
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              // Upward arrow icon for send
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 20V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
           </button>
         </div>
       </div>
       
       <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 px-2">
-        Press Enter to send, Shift+Enter for new line
+        {isStreamingActive 
+          ? "Press Enter to cancel generation" 
+          : "Press Enter to send, Shift+Enter for new line"}
       </div>
     </div>
   );

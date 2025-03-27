@@ -9,7 +9,9 @@ function UserInput({ className = '' }) {
     inputValue,
     setInputValue,
     sendMessage,
+    cancelStream,
     isProcessing,
+    isCanceling,
     tokenStats,
     contextStatus
   } = useSidebarChat();
@@ -20,6 +22,10 @@ function UserInput({ className = '' }) {
 
   const handleSend = (value) => {
     sendMessage(value);
+  };
+
+  const handleCancel = () => {
+    cancelStream();
   };
 
   return (
@@ -33,7 +39,10 @@ function UserInput({ className = '' }) {
         value={inputValue}
         onChange={handleInputChange}
         onSubmit={handleSend}
-        disabled={isProcessing}
+        onCancel={handleCancel}
+        disabled={isProcessing && isCanceling}
+        isProcessing={isProcessing}
+        isCanceling={isCanceling}
         placeholder="Type a message..."
         buttonLabel="Send message"
       />
