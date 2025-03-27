@@ -22,8 +22,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
-        minimumFractionDigits: 6,
-        maximumFractionDigits: 6
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
       }).format(cost);
     }
 
@@ -31,7 +31,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 4
+      maximumFractionDigits: 3
     }).format(cost);
   };
 
