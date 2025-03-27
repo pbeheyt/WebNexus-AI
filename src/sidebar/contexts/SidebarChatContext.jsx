@@ -158,7 +158,7 @@ export function SidebarChatProvider({ children }) {
       try {
         // Calculate output tokens
         const outputTokens = TokenManagementService.estimateTokens(finalContent);
-
+    
         // Update message with final content
         let updatedMessages = messages.map(msg =>
           msg.id === messageId
@@ -172,24 +172,24 @@ export function SidebarChatProvider({ children }) {
               }
             : msg
         );
-
+    
         // Check if this is the first assistant message
         const visibleAssistantMessages = visibleMessages.filter(
           msg => msg.role === MESSAGE_ROLES.ASSISTANT
         );
         const isFirstMessage = visibleAssistantMessages.length === 1;
-
+    
         // If first message and content not added, add extracted content
         if (isFirstMessage && !extractedContentAdded) {
           try {
             // Get formatted content from storage
             const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_FORMATTED_CONTENT]);
             const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
-
+    
             if (allTabContents) {
               const tabIdKey = tabId.toString();
               const extractedContent = allTabContents[tabIdKey];
-
+    
               if (extractedContent && typeof extractedContent === 'string' && extractedContent.trim()) {
                 const contentMessage = {
                   id: `extracted_${Date.now()}`,
@@ -200,13 +200,13 @@ export function SidebarChatProvider({ children }) {
                   outputTokens: 0,
                   isExtractedContent: true
                 };
-
+    
                 // Add extracted content at beginning
                 updatedMessages = [contentMessage, ...updatedMessages];
-
+    
                 // Mark as added to prevent duplicate additions
                 setExtractedContentAdded(true);
-
+    
                 // Track tokens for extracted content using the service
                 await trackTokens({
                   messageId: contentMessage.id,
@@ -221,11 +221,11 @@ export function SidebarChatProvider({ children }) {
             console.error('Error adding extracted content:', extractError);
           }
         }
-
+    
         // Set messages with all updates at once
         setMessages(updatedMessages);
         setStreamingContent(''); // Reset streaming content
-
+    
         // Track tokens for assistant message
         await trackTokens({
           messageId: messageId,
@@ -234,10 +234,11 @@ export function SidebarChatProvider({ children }) {
           input: 0,
           output: outputTokens
         }, modelConfigData);
-
-        // Save history in one operation
+    
+        // Save history and update accumulated cost
         if (tabId) {
           await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
+          await TokenManagementService.updateAccumulatedCost(tabId);
         }
       } catch (error) {
         console.error('Error handling stream completion:', error);

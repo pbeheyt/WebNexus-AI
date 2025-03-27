@@ -112,7 +112,8 @@ class TokenManagementService {
       promptTokens,
       historyTokens,
       systemTokens,
-      totalCost: 0  // Calculated separately with model info
+      totalCost: 0,  // Calculated separately with model info
+      accumulatedCost: 0  // Will be set from stored value
     };
   }
   
@@ -185,6 +186,28 @@ class TokenManagementService {
   }
   
   /**
+   * Update accumulated cost by adding a new cost value
+   * @param {number} tabId - Tab identifier
+   * @param {number} additionalCost - Cost to add to accumulated total
+   * @returns {Promise<boolean>} - Success status
+   */
+  static async updateAccumulatedCost(tabId) {
+    if (!tabId) return false;
+    
+    try {
+      // Get current token statistics
+      const stats = await this.getTokenStatistics(tabId);
+      const totalCost = stats.totalCost || 0;
+      stats.accumulatedCost = (stats.accumulatedCost || 0) + totalCost;
+      // Save updated stats
+      return this.updateTokenStatistics(tabId, stats);
+    } catch (error) {
+      console.error('TokenManagementService: Error updating accumulated cost:', error);
+      return false;
+    }
+  }
+  
+  /**
    * Clear token statistics for a tab
    * @param {number} tabId - Tab identifier
    * @returns {Promise<boolean>} - Success status
@@ -235,6 +258,10 @@ class TokenManagementService {
         const costInfo = this.calculateCost(stats.inputTokens, stats.outputTokens, modelConfig);
         stats.totalCost = costInfo.totalCost;
       }
+      
+      // Retrieve existing accumulated cost to preserve it
+      const currentStats = await this.getTokenStatistics(tabId);
+      stats.accumulatedCost = currentStats.accumulatedCost || 0;
       
       // Save updated stats
       await this.updateTokenStatistics(tabId, stats);
@@ -385,6 +412,7 @@ class TokenManagementService {
       inputTokens: 0,
       outputTokens: 0,
       totalCost: 0,
+      accumulatedCost: 0, // New field for accumulated costs
       promptTokens: 0,
       historyTokens: 0,
       systemTokens: 0,

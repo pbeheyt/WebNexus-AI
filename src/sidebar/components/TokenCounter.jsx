@@ -6,7 +6,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   const {
     inputTokens = 0,
     outputTokens = 0,
-    totalCost = 0,
+    accumulatedCost = 0, // Changed from totalCost to accumulatedCost
     promptTokens = 0,
     historyTokens = 0,
     systemTokens = 0
@@ -35,7 +35,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
     }).format(cost);
   };
 
-  const formattedCost = formatCost(totalCost);
+  const formattedCost = formatCost(accumulatedCost); // Changed from totalCost to accumulatedCost
 
   // Ensure we have context status data
   const contextData = contextStatus || {
