@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Tooltip } from './Tooltip'; // Adjust the import path as needed
+import React, { useState, useRef } from 'react';
+import { Tooltip } from './Tooltip';
 
 export function PlatformCard({
   id,
@@ -12,6 +12,7 @@ export function PlatformCard({
   showName = true
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const cardRef = useRef(null);
 
   // Determine if card should be disabled
   const isDisabled = checkCredentials && !hasCredentials;
@@ -33,6 +34,7 @@ export function PlatformCard({
 
   return (
     <div
+      ref={cardRef}
       className={cardClasses}
       onMouseEnter={() => isDisabled && setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
@@ -44,7 +46,7 @@ export function PlatformCard({
           alt={name}
           className={showName ? "w-5 h-5 object-contain" : "w-9 h-9 object-contain"}
         />
-        
+
         {/* Disabled visual indicator */}
         {isDisabled && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -55,11 +57,11 @@ export function PlatformCard({
           </div>
         )}
       </div>
-      
+
       {showName && <div className="text-xs text-center mt-1">{name}</div>}
 
       {/* Tooltip component */}
-      <Tooltip show={showTooltip} message="API credentials required" />
+      <Tooltip show={showTooltip} message="API credentials required" targetRef={cardRef} />
     </div>
   );
 }

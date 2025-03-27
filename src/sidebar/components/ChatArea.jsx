@@ -4,7 +4,7 @@ import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
 
-function ChatArea() {
+function ChatArea({ className = '' }) {
   const { messages, isProcessing } = useSidebarChat();
   const messagesEndRef = useRef(null);
   const { platforms, selectedPlatformId, selectedModel } = useSidebarPlatform();
@@ -19,13 +19,13 @@ function ChatArea() {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 text-center px-5">
+      <div className={`${className} flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 text-center px-5`}>
         {selectedPlatformId && selectedPlatform.iconUrl ? (
           <>
-            <img 
-              src={selectedPlatform.iconUrl} 
-              alt={selectedPlatform.name} 
-              className="w-12 h-12 mb-2" 
+            <img
+              src={selectedPlatform.iconUrl}
+              alt={selectedPlatform.name}
+              className="w-12 h-12 mb-2"
             />
             {/* Display just the model name below the platform logo */}
             {selectedModel && (
@@ -57,7 +57,7 @@ function ChatArea() {
           platformIconUrl={message.platformIconUrl}
         />
       ))}
-      
+
       {/* Only show this typing indicator if there's no streaming message */}
       {isProcessing && !messages.some(m => m.isStreaming) && (
         <div className="flex gap-1 p-3">
@@ -66,7 +66,7 @@ function ChatArea() {
           <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
         </div>
       )}
-      
+
       <div ref={messagesEndRef} />
     </div>
   );
