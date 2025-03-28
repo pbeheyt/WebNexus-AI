@@ -2,16 +2,24 @@
 import React from 'react';
 import { CONTENT_TYPES } from '../../shared/constants';
 import { useContent } from './ContentContext';
+import { Toggle } from '../core/Toggle'; // Import Toggle
 
 /**
- * Component to display the detected content type with icon and styling
- * 
+ * Component to display the detected content type with icon, styling,
+ * and a toggle for enabling/disabling content extraction.
+ *
  * @param {Object} props - Component props
  * @param {string} [props.className=''] - Additional CSS classes
  */
 export function ContentTypeDisplay({ className = '' }) {
-  const { contentType, isLoading, isTextSelected } = useContent();
-  
+  const {
+    contentType,
+    isLoading,
+    isTextSelected, // Kept for potential future use, but ignored for now
+    isExtractionEnabled,
+    updateExtractionPreference
+  } = useContent();
+
   // Content type configuration with icons and colors
   const contentTypeConfig = {
     [CONTENT_TYPES.YOUTUBE]: {
@@ -19,9 +27,9 @@ export function ContentTypeDisplay({ className = '' }) {
       color: '#FF0000',
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22.54 6.42C22.4212 5.94541 22.1793 5.51057 21.8387 5.15941C21.498 4.80824 21.0708 4.55318 20.6 4.42C18.88 4 12 4 12 4C12 4 5.12 4 3.4 4.46C2.92925 4.59318 2.50198 4.84824 2.16135 5.19941C1.82072 5.55057 1.57879 5.98541 1.46 6.46C1.14521 8.20556 0.991235 9.97631 1 11.75C0.988687 13.537 1.14266 15.3213 1.46 17.08C1.57879 17.5546 1.82072 17.9894 2.16135 18.3406C2.50198 18.6918 2.92925 18.9468 3.4 19.08C5.12 19.54 12 19.54 12 19.54C12 19.54 18.88 19.54 20.6 19.08C21.0708 18.9468 21.498 18.6918 21.8387 18.3406C22.1793 17.9894 22.4212 17.5546 22.54 17.08C22.8524 15.3398 23.0063 13.5747 23 11.8C23.0113 10.0129 22.8573 8.22856 22.54 6.47" 
+          <path d="M22.54 6.42C22.4212 5.94541 22.1793 5.51057 21.8387 5.15941C21.498 4.80824 21.0708 4.55318 20.6 4.42C18.88 4 12 4 12 4C12 4 5.12 4 3.4 4.46C2.92925 4.59318 2.50198 4.84824 2.16135 5.19941C1.82072 5.55057 1.57879 5.98541 1.46 6.46C1.14521 8.20556 0.991235 9.97631 1 11.75C0.988687 13.537 1.14266 15.3213 1.46 17.08C1.57879 17.5546 1.82072 17.9894 2.16135 18.3406C2.50198 18.6918 2.92925 18.9468 3.4 19.08C5.12 19.54 12 19.54 12 19.54C12 19.54 18.88 19.54 20.6 19.08C21.0708 18.9468 21.498 18.6918 21.8387 18.3406C22.1793 17.9894 22.4212 17.5546 22.54 17.08C22.8524 15.3398 23.0063 13.5747 23 11.8C23.0113 10.0129 22.8573 8.22856 22.54 6.47"
             stroke="#FF0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M9.75 15.02L15.5 11.75L9.75 8.48001V15.02Z" fill="#FF0000" stroke="#FF0000" 
+          <path d="M9.75 15.02L15.5 11.75L9.75 8.48001V15.02Z" fill="#FF0000" stroke="#FF0000"
             strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       )
@@ -32,13 +40,7 @@ export function ContentTypeDisplay({ className = '' }) {
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="10" fill="#FF4500"/>
-          <path fill="#FFFFFF" d="M18.6,12c0-0.8-0.7-1.4-1.5-1.4c-0.4,0-0.7,0.2-0.9,0.4c-1.1-0.8-2.4-1.2-3.8-1.2l0.6-3.1l2.1,0.4
-            c0.1,0.5,0.5,0.9,1.1,0.9c0.5,0,0.9-0.5,0.9-1.1c0-0.6-0.5-1-1.1-0.9c-0.3,0-0.6,0.2-0.7,0.5l-2.4-0.5c-0.2,0-0.3,0.1-0.4,0.2L12,9.1
-            c-1.4,0-2.7,0.4-3.8,1.2c-0.6-0.5-1.5-0.5-2,0.1c-0.5,0.6-0.5,1.5,0.1,2c0.1,0.1,0.2,0.2,0.4,0.3c0,0.1,0,0.3,0,0.4
-            c0,2.2,2.6,4,5.8,4c3.2,0,5.8-1.8,5.8-4c0-0.1,0-0.3,0-0.4C18.3,13.1,18.6,12.5,18.6,12z M8.7,13.1c0-0.5,0.4-1,1-1s1,0.4,1,1
-            c0,0.5-0.4,1-1,1C9.2,14.1,8.7,13.7,8.7,13.1z M14.3,15.8c-0.7,0.5-1.6,0.8-2.4,0.8c-0.9,0-1.7-0.2-2.4-0.8c-0.1-0.1-0.1-0.3,0-0.4
-            c0.1-0.1,0.2-0.1,0.3,0c0.6,0.4,1.3,0.7,2.1,0.6c0.7,0,1.5-0.2,2.1-0.6c0.1-0.1,0.3-0.1,0.4,0C14.4,15.5,14.4,15.7,14.3,15.8z
-            M14.3,14.1c-0.5,0-1-0.4-1-1c0-0.5,0.4-1,1-1c0.5,0,1,0.4,1,1C15.3,13.6,14.9,14.1,14.3,14.1z"/>
+          <path fill="#FFFFFF" d="M18.6,12c0-0.8-0.7-1.4-1.5-1.4c-0.4,0-0.7,0.2-0.9,0.4c-1.1-0.8-2.4-1.2-3.8-1.2l0.6-3.1l2.1,0.4 c0.1,0.5,0.5,0.9,1.1,0.9c0.5,0,0.9-0.5,0.9-1.1c0-0.6-0.5-1-1.1-0.9c-0.3,0-0.6,0.2-0.7,0.5l-2.4-0.5c-0.2,0-0.3,0.1-0.4,0.2L12,9.1 c-1.4,0-2.7,0.4-3.8,1.2c-0.6-0.5-1.5-0.5-2,0.1c-0.5,0.6-0.5,1.5,0.1,2c0.1,0.1,0.2,0.2,0.4,0.3c0,0.1,0,0.3,0,0.4 c0,2.2,2.6,4,5.8,4c3.2,0,5.8-1.8,5.8-4c0-0.1,0-0.3,0-0.4C18.3,13.1,18.6,12.5,18.6,12z M8.7,13.1c0-0.5,0.4-1,1-1s1,0.4,1,1 c0,0.5-0.4,1-1,1C9.2,14.1,8.7,13.7,8.7,13.1z M14.3,15.8c-0.7,0.5-1.6,0.8-2.4,0.8c-0.9,0-1.7-0.2-2.4-0.8c-0.1-0.1-0.1-0.3,0-0.4 c0.1-0.1,0.2-0.1,0.3,0c0.6,0.4,1.3,0.7,2.1,0.6c0.7,0,1.5-0.2,2.1-0.6c0.1-0.1,0.3-0.1,0.4,0C14.4,15.5,14.4,15.7,14.3,15.8z M14.3,14.1c-0.5,0-1-0.4-1-1c0-0.5,0.4-1,1-1c0.5,0,1,0.4,1,1C15.3,13.6,14.9,14.1,14.3,14.1z"/>
         </svg>
       )
     },
@@ -47,7 +49,7 @@ export function ContentTypeDisplay({ className = '' }) {
       color: '#F40F02',
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" 
+          <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z"
             stroke="#F40F02" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M14 2V8H20" stroke="#F40F02" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M9 13H15" stroke="#F40F02" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -70,41 +72,53 @@ export function ContentTypeDisplay({ className = '' }) {
           <path d="M5 18H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       )
-    },
-    [CONTENT_TYPES.SELECTED_TEXT]: {
-      label: 'Selected Text',
-      color: '#3498db',
-      icon: (
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 2v16l4-4 3 7 4-2-3-6h6L4 2z" 
-                fill="#3498db" 
-                stroke="#ffffff" 
-                strokeWidth="0.75" 
-                strokeLinejoin="round"/>
-        </svg>
-      )
     }
+    // SELECTED_TEXT config removed
   };
-  
+
   // Loading state
   if (isLoading) {
     return (
-      <div className={`flex items-center gap-2 p-2 bg-theme-surface border border-theme rounded-md text-sm ${className}`}>
-        <div className="animate-spin h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full"></div>
-        <span>Detecting page type...</span>
+      <div className={`flex items-center justify-between gap-2 p-2 bg-theme-surface border border-theme rounded-md text-sm ${className}`}>
+        <div className="flex items-center gap-2">
+          <div className="animate-spin h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full"></div>
+          <span>Detecting page type...</span>
+        </div>
+        {/* Placeholder for toggle */}
+        <div className="w-10 h-5 bg-gray-300 rounded-full"></div>
       </div>
     );
   }
-  
+
   const typeConfig = contentTypeConfig[contentType] || contentTypeConfig[CONTENT_TYPES.GENERAL];
-  
+
+  const handleToggleChange = (e) => {
+    updateExtractionPreference(e.target.checked);
+  };
+
   return (
-    <div 
-      className={`flex items-center gap-2 p-2 bg-theme-surface border border-theme rounded-md text-sm ${className}`}
+    <div
+      className={`flex items-center justify-between gap-2 p-2 bg-theme-surface border border-theme rounded-md text-sm ${className}`}
       style={{ borderLeftColor: typeConfig.color, borderLeftWidth: '3px' }}
     >
-      {typeConfig.icon}
-      <span>{isTextSelected ? 'Selected Text' : typeConfig.label}</span>
+      {/* Left side: Icon and Label */}
+      <div className="flex items-center gap-2">
+        {typeConfig.icon}
+        <span>{typeConfig.label}</span>
+      </div>
+
+      {/* Right side: Toggle and Label */}
+      <div className="flex items-center gap-1">
+        <label htmlFor="content-extraction-toggle" className="text-xs text-theme-secondary cursor-pointer select-none">
+          Include Content
+        </label>
+        <Toggle
+          id="content-extraction-toggle"
+          checked={isExtractionEnabled}
+          onChange={handleToggleChange}
+          // Add disabled state if needed based on content type, e.g., disabled={contentType === 'pdf'}
+        />
+      </div>
     </div>
   );
 }

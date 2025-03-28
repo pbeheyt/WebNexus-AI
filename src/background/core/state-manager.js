@@ -16,8 +16,13 @@ export async function resetState() {
       [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
       [STORAGE_KEYS.API_PROCESSING_STATUS]: null,
       [STORAGE_KEYS.API_RESPONSE]: null,
-      [STORAGE_KEYS.CURRENT_CONTENT_PROCESSING_MODE]: null
+      [STORAGE_KEYS.CURRENT_CONTENT_PROCESSING_MODE]: null,
+      // Explicitly clear tab-specific items on major reset if desired
+      [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: {},
+      [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: {},
+      [STORAGE_KEYS.TAB_CONTENT_EXTRACTION_PREFERENCE]: {},
     });
+    logger.background.info('Initial state reset');
   } catch (error) {
     logger.background.error('Error resetting state:', error);
     throw error;
@@ -25,14 +30,15 @@ export async function resetState() {
 }
 
 /**
- * Reset extraction state
+ * Reset extraction state specifically
  * @returns {Promise<void>}
  */
 export async function resetExtractionState() {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.CONTENT_READY]: false,
-      [STORAGE_KEYS.EXTRACTED_CONTENT]: null
+      [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
+      // Don't clear formatted content here, only on preference change or tab close
     });
     logger.background.info('Extraction state reset');
   } catch (error) {
@@ -42,7 +48,7 @@ export async function resetExtractionState() {
 }
 
 /**
- * Save platform tab information
+ * Save platform tab information (for Web UI injection)
  * @param {number} tabId - Tab ID of the AI platform tab
  * @param {string} platformId - Platform identifier
  * @param {string} promptContent - Prompt content to use
@@ -53,14 +59,18 @@ export async function savePlatformTabInfo(tabId, platformId, promptContent) {
     await chrome.storage.local.set({
       [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: tabId,
       [STORAGE_KEYS.INJECTION_PLATFORM]: platformId,
-      [STORAGE_KEYS.SCRIPT_INJECTED]: false,
+      [STORAGE_KEYS.SCRIPT_INJECTED]: false, // Reset injection status for the new tab
       [STORAGE_KEYS.PRE_PROMPT]: promptContent
     });
-    
-    // Verify the data was stored correctly
-    const verifyData = await chrome.storage.local.get([STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID, STORAGE_KEYS.INJECTION_PLATFORM, STORAGE_KEYS.SCRIPT_INJECTED]);
+
+    // Verify the data was stored correctly (optional, for debugging)
+    const verifyData = await chrome.storage.local.get([
+        STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID,
+        STORAGE_KEYS.INJECTION_PLATFORM,
+        STORAGE_KEYS.SCRIPT_INJECTED
+    ]);
     logger.background.info(`Storage verification: aiPlatformTabId=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]}, aiPlatform=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM]}, scriptInjected=${verifyData[STORAGE_KEYS.SCRIPT_INJECTED]}`);
-    
+
     return true;
   } catch (error) {
     logger.background.error('Error saving platform tab info:', error);
@@ -69,7 +79,7 @@ export async function savePlatformTabInfo(tabId, platformId, promptContent) {
 }
 
 /**
- * Update script injection status
+ * Update script injection status (for Web UI injection)
  * @param {boolean} injected - Whether script was injected
  * @returns {Promise<void>}
  */
@@ -83,13 +93,13 @@ export async function updateScriptInjectionStatus(injected) {
 }
 
 /**
- * Save extracted content
+ * Save extracted content to local storage
  * @param {Object} content - Extracted content object
  * @returns {Promise<void>}
  */
 export async function saveExtractedContent(content) {
   try {
-    await chrome.storage.local.set({ 
+    await chrome.storage.local.set({
       [STORAGE_KEYS.EXTRACTED_CONTENT]: content,
       [STORAGE_KEYS.CONTENT_READY]: true
     });
@@ -100,16 +110,16 @@ export async function saveExtractedContent(content) {
 }
 
 /**
- * Update API processing status
- * @param {string} status - Processing status
- * @param {string} platformId - Platform identifier
+ * Update API processing status and related info
+ * @param {string} status - Processing status ('extracting', 'processing', 'streaming', 'completed', 'error')
+ * @param {string} platformId - Platform identifier being used
  * @returns {Promise<void>}
  */
 export async function updateApiProcessingStatus(status, platformId) {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: status,
-      [STORAGE_KEYS.CURRENT_CONTENT_PROCESSING_MODE]: 'api',
+      [STORAGE_KEYS.CURRENT_CONTENT_PROCESSING_MODE]: 'api', // Mark as API mode
       [STORAGE_KEYS.API_CONTENT_PROCESSING_PLATFORM]: platformId,
       [STORAGE_KEYS.API_CONTENT_PROCESSING_TIMESTAMP]: Date.now()
     });
@@ -120,8 +130,8 @@ export async function updateApiProcessingStatus(status, platformId) {
 }
 
 /**
- * Save API streaming response
- * @param {string} streamId - Stream identifier
+ * Initialize API streaming response state in storage
+ * @param {string} streamId - Unique stream identifier
  * @param {string} platformId - Platform identifier
  * @returns {Promise<void>}
  */
@@ -139,7 +149,7 @@ export async function initializeStreamResponse(streamId, platformId) {
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: 'streaming',
       [STORAGE_KEYS.API_RESPONSE]: initialResponse,
-      [STORAGE_KEYS.STREAM_CONTENT]: '',
+      [STORAGE_KEYS.STREAM_CONTENT]: '', // Store accumulating stream content separately
       [STORAGE_KEYS.STREAM_ID]: streamId
     });
     logger.background.info(`Stream response initialized: ${streamId}`);
@@ -149,12 +159,13 @@ export async function initializeStreamResponse(streamId, platformId) {
 }
 
 /**
- * Update stream content
+ * Update stream content during streaming (optional, consider performance)
  * @param {string} fullContent - Complete content so far
  * @returns {Promise<void>}
  */
 export async function updateStreamContent(fullContent) {
   try {
+    // Note: Frequent updates might impact performance. Consider updating less often or only on done.
     await chrome.storage.local.set({
       [STORAGE_KEYS.STREAM_CONTENT]: fullContent
     });
@@ -164,7 +175,7 @@ export async function updateStreamContent(fullContent) {
 }
 
 /**
- * Complete stream response
+ * Complete stream response state in storage
  * @param {string} fullContent - Complete final content
  * @param {string} model - Model used
  * @param {string} platformId - Platform identifier
@@ -180,14 +191,16 @@ export async function completeStreamResponse(fullContent, model, platformId) {
       platformId,
       timestamp: Date.now()
     };
-    
+
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: 'completed',
       [STORAGE_KEYS.API_RESPONSE]: finalResponse,
-      [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now()
+      [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now(),
+      [STORAGE_KEYS.STREAM_CONTENT]: null, // Clear stream content
+      [STORAGE_KEYS.STREAM_ID]: null // Clear stream ID
     });
     logger.background.info('Stream response completed');
-    
+
     // Notify the popup if open
     try {
       chrome.runtime.sendMessage({
@@ -196,7 +209,7 @@ export async function completeStreamResponse(fullContent, model, platformId) {
       });
     } catch (error) {
       // Ignore if popup isn't open
-      logger.background.info('Could not notify popup of API response completion');
+      logger.background.debug('Could not notify popup of API response completion (popup likely closed)');
     }
   } catch (error) {
     logger.background.error('Error completing stream response:', error);
@@ -204,41 +217,42 @@ export async function completeStreamResponse(fullContent, model, platformId) {
 }
 
 /**
- * Set API processing error
- * @param {string} error - Error message
+ * Set API processing error state in storage
+ * @param {string} errorMsg - Error message
  * @returns {Promise<void>}
  */
-export async function setApiProcessingError(error) {
+export async function setApiProcessingError(errorMsg) {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: 'error',
-      [STORAGE_KEYS.API_PROCESSING_ERROR]: error
+      [STORAGE_KEYS.API_PROCESSING_ERROR]: errorMsg,
+      [STORAGE_KEYS.STREAM_ID]: null // Clear stream ID on error
     });
-    logger.background.error('API processing error set:', error);
-    
+    logger.background.error('API processing error set:', errorMsg);
+
     // Notify popup if open
     try {
       chrome.runtime.sendMessage({
         action: 'apiProcessingError',
-        error
+        error: errorMsg
       });
     } catch (msgError) {
       // Ignore if popup isn't open
     }
   } catch (err) {
-    logger.background.error('Error setting API processing error:', err);
+    logger.background.error('Error setting API processing error state:', err);
   }
 }
 
 /**
- * Track quick prompt usage
+ * Track quick prompt usage (legacy, might be removable if not used)
  * @param {string} contentType - Content type
  * @returns {Promise<void>}
  */
 export async function trackQuickPromptUsage(contentType) {
   try {
     await chrome.storage.local.set({
-      [STORAGE_KEYS.QUICK_PROMPTS]: {
+      [STORAGE_KEYS.QUICK_PROMPTS]: { // Note: This seems incorrect, should likely use a different key for tracking vs content
         contentType,
         timestamp: Date.now()
       }
@@ -250,13 +264,14 @@ export async function trackQuickPromptUsage(contentType) {
 }
 
 /**
- * Get stored content extraction
- * @returns {Promise<Object>} Extracted content
+ * Get stored extracted content from local storage
+ * @returns {Promise<Object|null>} Extracted content or null
  */
 export async function getExtractedContent() {
   try {
-    const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
-    return extractedContent;
+    // Use specific key for extracted content
+    const result = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
+    return result[STORAGE_KEYS.EXTRACTED_CONTENT] || null;
   } catch (error) {
     logger.background.error('Error getting extracted content:', error);
     return null;
@@ -264,16 +279,20 @@ export async function getExtractedContent() {
 }
 
 /**
- * Get current AI platform tab information
- * @returns {Promise<Object>} Platform tab info
+ * Get current AI platform tab information (for Web UI injection)
+ * @returns {Promise<Object>} Platform tab info {tabId, platformId, scriptInjected}
  */
 export async function getPlatformTabInfo() {
   try {
-    const result = await chrome.storage.local.get([STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID, STORAGE_KEYS.INJECTION_PLATFORM, STORAGE_KEYS.SCRIPT_INJECTED]);
+    const result = await chrome.storage.local.get([
+        STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID,
+        STORAGE_KEYS.INJECTION_PLATFORM,
+        STORAGE_KEYS.SCRIPT_INJECTED
+    ]);
     return {
-      tabId: result[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID],
-      platformId: result[STORAGE_KEYS.INJECTION_PLATFORM],
-      scriptInjected: result[STORAGE_KEYS.SCRIPT_INJECTED]
+      tabId: result[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID] || null,
+      platformId: result[STORAGE_KEYS.INJECTION_PLATFORM] || null,
+      scriptInjected: result[STORAGE_KEYS.SCRIPT_INJECTED] || false
     };
   } catch (error) {
     logger.background.error('Error getting platform tab info:', error);
@@ -283,4 +302,33 @@ export async function getPlatformTabInfo() {
       scriptInjected: false
     };
   }
+}
+
+/**
+ * Clear stored formatted content for a specific tab.
+ * Called when the user toggles the extraction preference.
+ * @param {number} tabId - The ID of the tab to clear content for.
+ * @returns {Promise<void>}
+ */
+export async function clearStoredFormattedContentForTab(tabId) {
+    if (!tabId) {
+        logger.background.warn('clearStoredFormattedContentForTab called without tabId.');
+        return;
+    }
+    try {
+        const key = STORAGE_KEYS.TAB_FORMATTED_CONTENT;
+        const result = await chrome.storage.local.get(key);
+        const allFormattedContent = result[key] || {};
+
+        if (allFormattedContent[tabId]) {
+            delete allFormattedContent[tabId];
+            await chrome.storage.local.set({ [key]: allFormattedContent });
+            logger.background.info(`Cleared stored formatted content for tab ${tabId} due to preference change.`);
+        } else {
+            logger.background.info(`No stored formatted content to clear for tab ${tabId}.`);
+        }
+    } catch (error) {
+        logger.background.error(`Error clearing stored formatted content for tab ${tabId}:`, error);
+        // Don't throw, just log.
+    }
 }

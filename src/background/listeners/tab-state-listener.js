@@ -6,12 +6,13 @@ import logger from '../../utils/logger.js';
 // List of all storage keys that are tab-specific and need cleanup
 const TAB_SPECIFIC_KEYS = [
   STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-  STORAGE_KEYS.TAB_PLATFORM_PREFERENCES, 
+  STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
   STORAGE_KEYS.TAB_SIDEBAR_STATES,
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
-  STORAGE_KEYS.TAB_SYSTEM_PROMPTS
+  STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
+  STORAGE_KEYS.TAB_CONTENT_EXTRACTION_PREFERENCE
 ];
 
 /**
@@ -54,7 +55,7 @@ async function cleanupTabStorage(storageKey, tabId, validTabIds = null) {
       await chrome.storage.local.set({
         [storageKey]: updatedData
       });
-      
+
       // Log what happened
       if (validTabIds) {
         logger.background.info(`Cleaned up stale data for ${storageKey}`);
@@ -87,8 +88,10 @@ export function setupTabStateListener() {
       logger.background.error('Error cleaning up tab-specific data:', error);
     }
 
-    // Run existing sidebar state cleanup
-    SidebarStateManager.cleanupTabStates();
+    // Run existing sidebar state cleanup (if applicable)
+    // Note: SidebarStateManager might have its own internal cleanup.
+    // Ensure it's compatible or update it if necessary.
+    // SidebarStateManager.cleanupTabStates(); // Consider if this is still needed or redundant
   });
 
   // Periodically clean up tab states to prevent storage bloat
@@ -103,8 +106,8 @@ export function setupTabStateListener() {
         await cleanupTabStorage(storageKey, null, validTabIds);
       }
 
-      // Run existing cleanup routine
-      SidebarStateManager.cleanupTabStates();
+      // Run existing cleanup routine (if applicable)
+      // SidebarStateManager.cleanupTabStates(); // Consider if redundant
     } catch (error) {
       logger.background.error('Error in periodic tab state cleanup:', error);
     }

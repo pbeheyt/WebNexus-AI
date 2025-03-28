@@ -28,7 +28,7 @@ class BaseApiService extends ApiInterface {
   /**
    * Process unified API request with complete configuration
    * @param {Object} requestConfig - Unified request configuration
-   * @param {Object} requestConfig.contentData - Extracted content data
+   * @param {Object|null} requestConfig.contentData - Extracted content data (null if skipped)
    * @param {string} requestConfig.prompt - Formatted prompt
    * @param {string} [requestConfig.model] - Optional model override
    * @param {Array} [requestConfig.conversationHistory=[]] - Optional conversation history
@@ -40,56 +40,71 @@ class BaseApiService extends ApiInterface {
   async processRequest(requestConfig) {
     // Normalize and validate the request configuration
     const normalizedConfig = this._normalizeRequestConfig(requestConfig);
-    
+
     let formattedContent = null;
-    let includeContent = true;
-    
-    // Check if we have stored content for this tab
-    if (normalizedConfig.tabId) {
-      const hasStoredContent = await this._hasStoredFormattedContent(normalizedConfig.tabId);
-      if (hasStoredContent) {
-        // Content exists but we don't need to retrieve it now
-        includeContent = false;
-        this.logger.info(`Content already exists for tab ID: ${normalizedConfig.tabId}, excluding from prompt`);
-      }
-    }
-    
-    // If no stored content, format the content and store it
-    if (!formattedContent) {
-      formattedContent = this._formatContent(normalizedConfig.contentData);
-      
-      // Store the formatted content in local storage if tabId is provided
-      if (normalizedConfig.tabId) {
-        try {
-          await this._storeFormattedContent(normalizedConfig.tabId, formattedContent);
-          this.logger.info(`Stored formatted content for tab ID: ${normalizedConfig.tabId}`);
-        } catch (error) {
-          // Log error but continue with the process (non-blocking)
-          this.logger.error('Failed to store formatted content:', error);
+    let includeContent = true; // Assume content should be included initially
+    let contentWasSkippedByUser = !normalizedConfig.contentData; // Check if content is missing from the start
+
+    // If content was provided (extraction not skipped by user)
+    if (normalizedConfig.contentData) {
+        // Check if we have stored content for this tab
+        if (normalizedConfig.tabId) {
+            const hasStoredContent = await this._hasStoredFormattedContent(normalizedConfig.tabId);
+            if (hasStoredContent) {
+                // Content exists for follow-up, don't include in this specific prompt
+                includeContent = false;
+                this.logger.info(`Formatted content already exists for tab ID: ${normalizedConfig.tabId}, excluding from this prompt.`);
+                // Attempt to retrieve stored content if needed later (e.g., for context limits)
+                // formattedContent = await this._getStoredFormattedContent(normalizedConfig.tabId); // Optional: retrieve if needed
+            } else {
+                 // First time seeing content for this tab, format and store it
+                formattedContent = this._formatContent(normalizedConfig.contentData);
+                try {
+                    await this._storeFormattedContent(normalizedConfig.tabId, formattedContent);
+                    this.logger.info(`Stored formatted content for tab ID: ${normalizedConfig.tabId}`);
+                } catch (error) {
+                    this.logger.error('Failed to store formatted content:', error);
+                }
+            }
+        } else {
+             // No tabId provided, format content but don't store
+            formattedContent = this._formatContent(normalizedConfig.contentData);
+            this.logger.warn('No tab ID provided, content will not be stored for follow-up messages.');
         }
-      }
+    } else {
+        // Content extraction was explicitly skipped by the user
+        includeContent = false;
+        formattedContent = null; // Ensure formattedContent is null
+        this.logger.info('Content extraction was skipped by user preference.');
+        // Remove any potentially stored content for this tab if the user now wants to exclude it
+        if (normalizedConfig.tabId) {
+            await this._clearStoredFormattedContent(normalizedConfig.tabId);
+        }
     }
-    
-    // Create structured prompt (including content only if it's the first message)
+
+    // Create structured prompt
+    // `includeContent` now controls whether the *formatted* content (if any) is added
+    // to *this specific* API call's prompt text.
     const structuredPrompt = this._createStructuredPrompt(
       normalizedConfig.prompt,
-      formattedContent,
-      includeContent
+      formattedContent, // Pass the potentially null formatted content
+      includeContent // Pass the flag indicating if it should be included *in this call*
     );
 
-    this.logger.info(`Processing request with${includeContent ? ' including' : 'out'} content in prompt`);
-    
+    this.logger.info(`Processing request. Include formatted content in prompt: ${includeContent}`);
+
     // Process the request with appropriate mode (streaming or non-streaming)
     if (normalizedConfig.streaming && normalizedConfig.onChunk) {
       return this._processWithApiStreaming(
-        structuredPrompt,
+        structuredPrompt, // Send the potentially content-less prompt
         normalizedConfig.onChunk,
         normalizedConfig.conversationHistory,
         normalizedConfig.model,
         normalizedConfig.tabId
       );
     } else {
-      this.logger.error('Non-streaming mode is not supported in this platform');
+      // Non-streaming is generally not supported/used in this setup
+      this.logger.error('Non-streaming mode is not supported');
       return {
         success: false,
         error: 'Non-streaming mode is not supported',
@@ -116,7 +131,7 @@ class BaseApiService extends ApiInterface {
           resolve(result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {});
         });
       });
-      
+
       return !!data[tabId]; // Convert to boolean
     } catch (error) {
       this.logger.error('Error checking for stored formatted content:', error);
@@ -165,6 +180,44 @@ class BaseApiService extends ApiInterface {
   }
 
   /**
+   * Clear stored formatted content for a specific tab.
+   * @private
+   * @param {number} tabId - Tab ID to clear content for.
+   * @returns {Promise<void>}
+   */
+  async _clearStoredFormattedContent(tabId) {
+      if (!tabId) {
+          this.logger.warn('No tab ID provided for clearing formatted content');
+          return;
+      }
+      try {
+          const existingData = await new Promise((resolve) => {
+              chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT, (result) => {
+                  resolve(result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {});
+              });
+          });
+
+          if (existingData[tabId]) {
+              delete existingData[tabId];
+              await new Promise((resolve, reject) => {
+                  chrome.storage.local.set({ [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: existingData }, () => {
+                      if (chrome.runtime.lastError) {
+                          reject(chrome.runtime.lastError);
+                      } else {
+                          this.logger.info(`Cleared stored formatted content for tab ID: ${tabId}`);
+                          resolve();
+                      }
+                  });
+              });
+          }
+      } catch (error) {
+          this.logger.error(`Error clearing stored formatted content for tab ${tabId}:`, error);
+          // Don't throw, just log the error
+      }
+  }
+
+
+  /**
    * Store system prompt in local storage by tab ID
    * @private
    * @param {number} tabId - Tab ID to use as key
@@ -198,7 +251,7 @@ class BaseApiService extends ApiInterface {
           systemPrompt: systemPrompt,
           timestamp: new Date().toISOString()
         };
-        
+
         this.logger.info(`Stored system prompt for tab ID: ${tabId}`);
       }
 
@@ -235,7 +288,7 @@ class BaseApiService extends ApiInterface {
           resolve(result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] || {});
         });
       });
-      
+
       // Return the entire object with platformId, systemPrompt, and timestamp
       return data[tabId] || null;
     } catch (error) {
@@ -253,52 +306,49 @@ class BaseApiService extends ApiInterface {
   _normalizeRequestConfig(requestConfig) {
     // Create a normalized configuration with defaults
     const normalizedConfig = {
-      contentData: requestConfig.contentData,
+      contentData: requestConfig.contentData, // Can be null if skipped
       prompt: requestConfig.prompt,
       model: requestConfig.model || null,
-      conversationHistory: Array.isArray(requestConfig.conversationHistory) 
-        ? requestConfig.conversationHistory 
+      conversationHistory: Array.isArray(requestConfig.conversationHistory)
+        ? requestConfig.conversationHistory
         : [],
       streaming: !!requestConfig.streaming,
-      onChunk: typeof requestConfig.onChunk === 'function' 
-        ? requestConfig.onChunk 
+      onChunk: typeof requestConfig.onChunk === 'function'
+        ? requestConfig.onChunk
         : null,
       tabId: requestConfig.tabId || null
     };
-    
-    // Validate required fields
-    if (!normalizedConfig.contentData) {
-      this.logger.warn('No content data provided, using empty object');
-      normalizedConfig.contentData = {};
-    }
-    
+
+    // Validate required fields (prompt is always required)
     if (!normalizedConfig.prompt) {
       this.logger.warn('No prompt provided, using empty prompt');
       normalizedConfig.prompt = '';
     }
-    
+
     // Streaming requires an onChunk callback
     if (normalizedConfig.streaming && !normalizedConfig.onChunk) {
       this.logger.warn('Streaming requested but no onChunk callback provided, disabling streaming');
       normalizedConfig.streaming = false;
     }
-    
+
     return normalizedConfig;
   }
 
   /**
-   * Create a structured prompt combining instructions and formatted content
-   * @param {string} prePrompt - The pre-prompt instructions
-   * @param {string} formattedContent - The formatted content
-   * @param {boolean} [includeContent=true] - Whether to include content in the prompt
-   * @returns {string} The full structured prompt
+   * Create a structured prompt combining instructions and potentially formatted content.
+   * @param {string} prePrompt - The user's prompt or instructions.
+   * @param {string|null} formattedContent - The formatted content (null if skipped or excluded).
+   * @param {boolean} includeContent - Whether to include the formattedContent in this specific call.
+   * @returns {string} The full structured prompt.
    */
-  _createStructuredPrompt(prePrompt, formattedContent, includeContent = true) {
-    if (includeContent) {
-      // Full prompt with instructions and content for first message
-      return `${prePrompt}\n${formattedContent}`;
+  _createStructuredPrompt(prePrompt, formattedContent, includeContent) {
+    // If includeContent is true AND formattedContent is actually available
+    if (includeContent && formattedContent) {
+      // Full prompt with instructions and content
+      return `${prePrompt}\n\n## CONTENT TO ANALYZE\n${formattedContent}`;
     } else {
-      // Just the raw prompt for subsequent messages
+      // Just the raw user prompt (either because content was skipped,
+      // or because it's a follow-up message where content isn't repeated)
       return prePrompt;
     }
   }
@@ -306,13 +356,13 @@ class BaseApiService extends ApiInterface {
 
   /**
      * Format content based on content type
-     * @param {Object} data - The extracted content data
-     * @returns {string} Formatted content
+     * @param {Object|null} data - The extracted content data (can be null)
+     * @returns {string|null} Formatted content or null if no data
      */
   _formatContent(data) {
-    if (!data) {
-      this.logger.error('No content data available for formatting');
-      return 'No content data available';
+    if (!data || Object.keys(data).length === 0 || data.error) { // Check if data is null, empty, or contains an error flag
+        this.logger.info('No valid content data available for formatting.');
+        return null; // Return null if no valid content
     }
 
     const contentType = data.contentType;
@@ -331,9 +381,7 @@ class BaseApiService extends ApiInterface {
       case 'pdf':
         formatted = this._formatPdfData(data);
         break;
-      case 'selected_text':
-        formatted = this._formatSelectedTextData(data);
-        break;
+      // Selected text case removed
       default:
         formatted = `Content: ${JSON.stringify(data)}`;
     }
@@ -355,24 +403,13 @@ class BaseApiService extends ApiInterface {
     // Format comments with likes
     let commentsText = '';
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      commentsText = `## COMMENTS
-  `;
+      commentsText = `## COMMENTS\n`; // Use markdown heading
       data.comments.forEach((comment, index) => {
-        commentsText += `${index + 1}. User: ${comment.author || 'Anonymous'} (${comment.likes || '0'} likes)
-  "${comment.text || ''}"
-  `;
+        commentsText += `${index + 1}. User: ${comment.author || 'Anonymous'} (${comment.likes || '0'} likes)\n  "${comment.text || ''}"\n`; // Indent comment
       });
     }
 
-    return `## VIDEO METADATA
-  - Title: ${title}
-  - Channel: ${channel}
-  - URL: https://www.youtube.com/watch?v=${data.videoId || ''}
-  ## DESCRIPTION
-  ${description}
-  ## TRANSCRIPT
-  ${transcript}
-  ${commentsText}`;
+    return `## VIDEO METADATA\n- Title: ${title}\n- Channel: ${channel}\n- URL: https://www.youtube.com/watch?v=${data.videoId || ''}\n## DESCRIPTION\n${description}\n## TRANSCRIPT\n${transcript}\n${commentsText}`; // Combine sections
   }
 
   /**
@@ -387,24 +424,14 @@ class BaseApiService extends ApiInterface {
     const postUrl = data.postUrl || '';
     const subreddit = data.subreddit || 'Unknown subreddit';
 
-    let formattedText = `## POST METADATA
-  - Title: ${title}
-  - Author: ${author}
-  - Subreddit: ${subreddit}
-  - URL: ${postUrl}
-  ## POST CONTENT
-  ${content}
-  `;
+    let formattedText = `## POST METADATA\n- Title: ${title}\n- Author: ${author}\n- Subreddit: ${subreddit}\n- URL: ${postUrl}\n## POST CONTENT\n${content}\n`; // Combine sections
 
     // Format comments with links
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      formattedText += `## COMMENTS
-  `;
+      formattedText += `## COMMENTS\n`; // Use markdown heading
 
       data.comments.forEach((comment, index) => {
-        formattedText += `${index + 1}. u/${comment.author || 'Anonymous'} (${comment.popularity || '0'} points) [(link)](${comment.permalink || postUrl})
-  "${comment.content || ''}"
-  `;
+        formattedText += `${index + 1}. u/${comment.author || 'Anonymous'} (${comment.popularity || '0'} points) [(link)](${comment.permalink || postUrl})\n  "${comment.content || ''}"\n`; // Indent comment
       });
     }
 
@@ -423,28 +450,19 @@ class BaseApiService extends ApiInterface {
     const author = data.pageAuthor || null;
     const description = data.pageDescription || null;
 
-    let metadataText = `## PAGE METADATA
-  - Title: ${title}
-  - URL: ${url}`;
+    let metadataText = `## PAGE METADATA\n- Title: ${title}\n- URL: ${url}`;
 
     if (author) {
-      metadataText += `
-  - Author: ${author}`;
+      metadataText += `\n- Author: ${author}`;
     }
 
     if (description) {
-      metadataText += `
-  - Description: ${description}`;
+      metadataText += `\n- Description: ${description}`;
     }
 
-    if (data.isSelection) {
-      metadataText += `
-  - Note: This is a user-selected portion of the page content.`;
-    }
+    // Removed isSelection check as selected_text type is removed
 
-    return `${metadataText}
-  ## PAGE CONTENT
-  ${content}`;
+    return `${metadataText}\n## PAGE CONTENT\n${content}`; // Combine sections
   }
 
   /**
@@ -460,31 +478,25 @@ class BaseApiService extends ApiInterface {
     const metadata = data.metadata || {};
 
     // Format metadata section
-    let metadataText = `## PDF METADATA
-  - Title: ${title}
-  - Pages: ${pageCount}
-  - URL: ${url}`;
+    let metadataText = `## PDF METADATA\n- Title: ${title}\n- Pages: ${pageCount}\n- URL: ${url}`;
 
     if (metadata.author) {
-      metadataText += `
-  - Author: ${metadata.author}`;
+      metadataText += `\n- Author: ${metadata.author}`;
     }
 
     if (metadata.creationDate) {
-      metadataText += `
-  - Created: ${metadata.creationDate}`;
+      metadataText += `\n- Created: ${metadata.creationDate}`;
     }
 
     if (data.ocrRequired) {
-      metadataText += `
-  - Note: This PDF may require OCR as text extraction was limited.`;
+      metadataText += `\n- Note: This PDF may require OCR as text extraction was limited.`;
     }
 
     // Format and clean up the content
     let formattedContent = content;
 
     // Remove JSON artifacts if present
-    if (formattedContent.includes('{"content":"')) {
+    if (typeof formattedContent === 'string' && formattedContent.includes('{"content":"')) {
       try {
         const contentObj = JSON.parse(formattedContent);
         formattedContent = contentObj.content || formattedContent;
@@ -495,31 +507,27 @@ class BaseApiService extends ApiInterface {
     }
 
     // Clean up page markers to make them more readable
-    formattedContent = formattedContent
-      .replace(/--- Page \d+ ---\n\n/g, '\n\n## PAGE $&\n')
-      .replace(/\n{3,}/g, '\n\n')  // Reduce multiple line breaks
-      .trim();
+    if (typeof formattedContent === 'string') {
+        formattedContent = formattedContent
+          .replace(/--- Page \d+ ---\n\n/g, '\n\n## PAGE $&\n') // Format page markers
+          .replace(/\n{3,}/g, '\n\n')  // Reduce multiple line breaks
+          .trim();
+    } else {
+        formattedContent = 'Error: Invalid PDF content format.';
+        this.logger.error('PDF content was not a string after initial processing.');
+    }
 
-    return `${metadataText}
 
-  ## PDF CONTENT
-  ${formattedContent}`;
+    return `${metadataText}\n\n## PDF CONTENT\n${formattedContent}`; // Combine sections
   }
 
-  /**
-   * Format selected text data with emphasis on content
-   * @param {Object} data - Selected text data
-   * @returns {string} Formatted selected text data
-   */
-  _formatSelectedTextData(data) {
-    // Just return the raw selected text with no headings or extra formatting
-    return data.text || 'No text selected';
-  }
+  // _formatSelectedTextData removed as requested
+
 
   /**
    * Process text with the API using streaming
    * @private
-   * @param {string} text - Prompt text
+   * @param {string} text - Prompt text (potentially without formatted content)
    * @param {function} onChunk - Callback function for receiving text chunks
    * @param {Array} conversationHistory - Conversation history
    * @param {string} [modelOverride] - Optional model override
@@ -533,7 +541,8 @@ class BaseApiService extends ApiInterface {
       // Get model and parameters from centralized ModelParameterService
       const params = await ModelParameterService.resolveParameters(
         this.platformId,
-        modelOverride
+        modelOverride,
+        { tabId } // Pass tabId to resolver
       );
 
       // Log parameters being used
@@ -542,7 +551,7 @@ class BaseApiService extends ApiInterface {
         temperature: params.temperature,
         parameterStyle: params.parameterStyle
       });
-      
+
       // Always store system prompt status for tabId (even if it's empty/null)
       if (tabId) {
         try {
@@ -556,19 +565,21 @@ class BaseApiService extends ApiInterface {
 
       // Add conversation history to parameters
       params.conversationHistory = conversationHistory;
-      
+
       // Generate unique message ID for reference
       const messageId = `msg_${Date.now()}`;
-      
-      // Add message ID to params for callbacks
+
+      // Add message ID and tab ID to params for callbacks
       params.messageId = messageId;
-      params.tabId = tabId;
+      params.tabId = tabId; // Ensure tabId is passed down
 
       // Each implementation must handle the streaming appropriately
       return this._processWithModelStreaming(text, params.model, apiKey, params, onChunk);
     } catch (error) {
       this.logger.error('Error in _processWithApiStreaming:', error);
-      throw error;
+       // Propagate error to the caller and potentially the stream handler
+       onChunk({ error: error, done: true }); // Send error via chunk handler
+       throw error; // Re-throw to ensure promise rejects
     }
   }
 
@@ -583,7 +594,7 @@ class BaseApiService extends ApiInterface {
         this.logger.warn('No API key provided for validation');
         return false;
       }
-      
+
       // Platform-specific validation should be implemented in subclasses
       // This lightweight validation doesn't use the full content processing pipeline
       const isValid = await this._validateApiKey(apiKey);
@@ -593,7 +604,7 @@ class BaseApiService extends ApiInterface {
       return false;
     }
   }
-  
+
   /**
    * Validate an API key with a minimal request
    * This method should be implemented by subclasses
@@ -607,14 +618,14 @@ class BaseApiService extends ApiInterface {
       if (!this.config) {
         this.config = await this._loadPlatformConfig();
       }
-      
+
       // Get default model from platform config
       const defaultModel = this.config?.defaultModel;
       if (!defaultModel) {
         this.logger.warn('No default model found in configuration');
         return false;
       }
-      
+
       // Each platform must implement its own validation logic
       return await this._validateWithModel(apiKey, defaultModel);
     } catch (error) {
@@ -622,7 +633,7 @@ class BaseApiService extends ApiInterface {
       return false;
     }
   }
-  
+
   /**
    * Platform-specific validation implementation
    * @protected

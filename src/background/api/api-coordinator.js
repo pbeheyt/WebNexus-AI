@@ -8,15 +8,17 @@ import { getPreferredAiPlatform } from '../services/platform-integration.js';
 import { verifyApiCredentials } from '../services/credential-manager.js';
 import { determineContentType } from '../../shared/content-utils.js';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
-import { 
-  resetExtractionState, 
-  updateApiProcessingStatus, 
+import {
+  resetExtractionState,
+  updateApiProcessingStatus,
   initializeStreamResponse,
-  getExtractedContent, 
-  setApiProcessingError, 
+  getExtractedContent,
+  setApiProcessingError,
   completeStreamResponse
 } from '../core/state-manager.js';
 import logger from '../../utils/logger.js';
+// Updated import: Use the specific function from the renamed file
+import { getExtractionPreference } from '../services/tab-extraction-preference.js';
 
 /**
  * Handle API model requests
@@ -52,12 +54,13 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
       }
 
       case 'getApiResponse': {
+        // This might need adjustment depending on how streaming state is managed
         const result = await chrome.storage.local.get([
-          STORAGE_KEYS.API_RESPONSE, 
-          STORAGE_KEYS.API_PROCESSING_STATUS, 
+          STORAGE_KEYS.API_RESPONSE,
+          STORAGE_KEYS.API_PROCESSING_STATUS,
           STORAGE_KEYS.API_RESPONSE_TIMESTAMP
         ]);
-        
+
         sendResponse({
           success: true,
           response: result[STORAGE_KEYS.API_RESPONSE] || null,
@@ -68,9 +71,11 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
       }
 
       case 'cancelStream': {
-        const { streamId } = message;
-        // Simply acknowledge the cancellation; cleanup is handled by the component
-        sendResponse({ success: true });
+        const { streamId, platformId, tabId } = message; // Get platformId and tabId
+        logger.background.info(`Cancel stream request received for ${streamId}`);
+        // TODO: Implement actual cancellation logic if possible for the specific API
+        // For now, just acknowledge and let the frontend handle UI state
+        sendResponse({ success: true, message: 'Cancellation acknowledged' });
         break;
       }
 
@@ -95,7 +100,7 @@ export async function processContentViaApi(params) {
   const {
     tabId,
     url,
-    hasSelection = false,
+    hasSelection = false, // Keep for consistency, but ignore for extraction toggle
     promptId = null,
     platformId = null,
     source = INTERFACE_SOURCES.POPUP,
@@ -113,42 +118,53 @@ export async function processContentViaApi(params) {
     await resetExtractionState();
     await updateApiProcessingStatus('extracting', platformId || await getPreferredAiPlatform());
 
-    // 2. Extract content
-    const contentType = determineContentType(url, hasSelection);
-    logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
+    // 2. Check extraction preference using the imported function
+    const isExtractionEnabled = await getExtractionPreference(tabId);
+    const contentType = determineContentType(url, false); // Ignore selection for extraction toggle
+    logger.background.info(`Extraction enabled for tab ${tabId}: ${isExtractionEnabled}`);
 
-    await extractContent(tabId, url, hasSelection);
-    const extractedContent = await getExtractedContent();
+    let extractedContent = null;
+    if (isExtractionEnabled) {
+        logger.background.info(`Content type determined: ${contentType}`);
+        await extractContent(tabId, url, false); // Pass false for hasSelection
+        extractedContent = await getExtractedContent();
 
-    if (!extractedContent) {
-      throw new Error('Failed to extract content');
+        if (!extractedContent) {
+            // Don't throw error here, allow processing with just the prompt
+            logger.background.warn('Content extraction was enabled but failed or returned no content.');
+        } else {
+             // YouTube transcript error check only if content was extracted
+            const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);
+            if (transcriptError) {
+                return {
+                    success: false,
+                    ...transcriptError
+                };
+            }
+        }
+    } else {
+        logger.background.info('Content extraction skipped by user preference.');
+        // Ensure extractedContent is null if extraction disabled
+        await chrome.storage.local.set({ [STORAGE_KEYS.EXTRACTED_CONTENT]: null });
+        extractedContent = null;
     }
 
-    // 3. YouTube transcript error check
-    const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);
-    if (transcriptError) {
-      return {
-        success: false,
-        ...transcriptError
-      };
-    }
-
-    // 4. Get the prompt
+    // 3. Get the prompt
     let promptContent;
     let effectivePromptId;
 
     if (customPrompt) {
       promptContent = customPrompt;
     } else {
-      effectivePromptId = promptId || await getPreferredPromptId(extractedContent.contentType);
-      promptContent = await getPromptContentById(effectivePromptId, extractedContent.contentType);
+      effectivePromptId = promptId || await getPreferredPromptId(contentType);
+      promptContent = await getPromptContentById(effectivePromptId, contentType);
     }
 
     if (!promptContent) {
       throw new Error(`Prompt not found for ID: ${effectivePromptId || 'custom'}`);
     }
 
-    // 5. Determine platform to use - tab-aware resolution
+    // 4. Determine platform to use - tab-aware resolution
     let effectivePlatformId = platformId;
 
     if (!effectivePlatformId && tabId) {
@@ -172,28 +188,28 @@ export async function processContentViaApi(params) {
       effectivePlatformId = platformId || await getPreferredAiPlatform(source);
     }
 
-    // 6. Verify credentials
+    // 5. Verify credentials
     await verifyApiCredentials(effectivePlatformId);
 
-    // 7. Model resolution - Now uses centralized ModelParameterService
+    // 6. Model resolution - Now uses centralized ModelParameterService
     const effectiveModelId = await ModelParameterService.resolveModel(
-      effectivePlatformId, 
-      { 
-        tabId, 
-        source 
+      effectivePlatformId,
+      {
+        tabId,
+        source
       }
     );
 
-    // 8. Update processing status
+    // 7. Update processing status
     await updateApiProcessingStatus('processing', effectivePlatformId);
 
-    // 9. Generate a unique stream ID for this request
+    // 8. Generate a unique stream ID for this request
     const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    // 10. Initialize streaming response
+    // 9. Initialize streaming response state in storage
     await initializeStreamResponse(streamId, effectivePlatformId);
 
-    // 11. Notify the content script about streaming start if this is from sidebar
+    // 10. Notify the content script about streaming start if this is from sidebar
     if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
       try {
         chrome.tabs.sendMessage(tabId, {
@@ -206,35 +222,44 @@ export async function processContentViaApi(params) {
       }
     }
 
-    // 12. Create unified request configuration
+    // 11. Create unified request configuration
     const requestConfig = {
-      contentData: extractedContent,
+      contentData: extractedContent, // This will be null if extraction was disabled
       prompt: promptContent,
       model: effectiveModelId,
       conversationHistory,
-      streaming: true,
-      onChunk: createStreamHandler(streamId, source, tabId, effectivePlatformId)
+      streaming: true, // Always use streaming for API path now
+      onChunk: createStreamHandler(streamId, source, tabId, effectivePlatformId),
+      tabId: tabId // Pass tabId for API base
     };
 
-    // 13. Process with API
+    // 12. Process with API
     try {
-      const apiResponse = await ApiServiceManager.processWithUnifiedConfig(
+      const apiResponseMetadata = await ApiServiceManager.processWithUnifiedConfig(
         effectivePlatformId,
         requestConfig,
-        tabId
+        tabId // Pass tabId explicitly
       );
 
-      // If we get here without an error, streaming completed successfully
+      // If we get here without an error, streaming completed successfully via callbacks
+      // The response here might just be metadata, full content handled by stream handler
       return {
         success: true,
         streamId,
-        response: apiResponse,
-        contentType: extractedContent.contentType
+        response: apiResponseMetadata, // This might just contain metadata like model used
+        contentType: contentType // Return original content type
       };
     } catch (processingError) {
-      // Handle API processing errors
+      // Handle API processing errors specifically during the processing call
+      logger.background.error('Error during API processing call:', processingError);
       await setApiProcessingError(processingError.message);
-      throw processingError;
+       // Send error chunk via handler
+      const handler = requestConfig.onChunk;
+      if (handler) {
+          handler({ error: processingError, done: true });
+      }
+      // Rethrow or return error structure
+      throw processingError; // Rethrow to be caught by the outer catch block
     }
   } catch (error) {
     logger.background.error('API content processing error:', error);
@@ -257,26 +282,51 @@ export async function processContentViaApi(params) {
 function createStreamHandler(streamId, source, tabId, platformId) {
   let fullContent = '';
   let modelToUse = null;
-  
+
   return async function handleChunk(chunkData) {
     if (!chunkData) return;
-    
+
+    // Handle potential errors propagated through the chunk handler
+    if (chunkData.error) {
+        logger.background.error(`Stream error for ${streamId}:`, chunkData.error);
+        await setApiProcessingError(chunkData.error.message || 'Unknown streaming error');
+        // Send error to content script if applicable
+        if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+            try {
+                chrome.tabs.sendMessage(tabId, {
+                    action: 'streamChunk',
+                    streamId,
+                    chunkData: {
+                        error: chunkData.error.message || 'Unknown streaming error',
+                        done: true,
+                        model: modelToUse
+                    }
+                });
+            } catch (err) {
+                logger.background.warn('Error sending stream error chunk:', err);
+            }
+        }
+        return; // Stop processing further chunks on error
+    }
+
+
     const chunk = typeof chunkData.chunk === 'string' ? chunkData.chunk : '';
     const done = !!chunkData.done;
-    
+
     // Capture or update model information
     if (chunkData.model) {
       modelToUse = chunkData.model;
     }
-    
+
     if (chunk) {
       fullContent += chunk;
-      
-      // Update storage with latest content
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.STREAM_CONTENT]: fullContent
-      });
-      
+
+      // Update storage with latest content (optional, maybe only on done?)
+      // Consider performance impact if updating too frequently
+      // await chrome.storage.local.set({
+      //   [STORAGE_KEYS.STREAM_CONTENT]: fullContent
+      // });
+
       // Send to content script for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
@@ -294,11 +344,11 @@ function createStreamHandler(streamId, source, tabId, platformId) {
         }
       }
     }
-    
+
     // Always send a final message when done
     if (done) {
       await completeStreamResponse(fullContent, modelToUse, platformId);
-      
+
       // Ensure the completion message is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
@@ -309,7 +359,7 @@ function createStreamHandler(streamId, source, tabId, platformId) {
               chunk: '',
               done: true,
               model: chunkData.model || modelToUse,
-              fullContent
+              fullContent // Include full content in final message
             }
           });
         } catch (err) {

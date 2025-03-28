@@ -8,7 +8,7 @@ export const CONTENT_TYPES = {
   REDDIT: 'reddit',
   YOUTUBE: 'youtube',
   PDF: 'pdf',
-  SELECTED_TEXT: 'selected_text'
+  // SELECTED_TEXT: 'selected_text' // Removed as requested
 };
 
 /**
@@ -37,7 +37,8 @@ export const STORAGE_KEYS = {
   EXTRACTED_CONTENT: 'extractedContent',
   SCRIPT_INJECTED: 'scriptInjected',
   TAB_FORMATTED_CONTENT: 'tab_formatted_content',
-
+  TAB_CONTENT_JUST_INCLUDED_FLAG: 'tab_content_just_included_flag',
+  
   // Service
   THEME_PREFERENCE: 'theme_preference',
   SHORTCUT_SETTINGS: 'shortcut_settings',
@@ -64,7 +65,8 @@ export const STORAGE_KEYS = {
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
   LAST_ACTIVE_TAB: 'last_active_tab',
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
-  
+  TAB_CONTENT_EXTRACTION_PREFERENCE: 'tab_content_extraction_preference', // New Key
+
   // API
   API_PROCESSING_STATUS: 'apiProcessingStatus',
   API_RESPONSE: 'apiResponse',
@@ -74,7 +76,7 @@ export const STORAGE_KEYS = {
   API_CONTENT_PROCESSING_PLATFORM: 'apiContentProcessingPlatform',
   API_CONTENT_PROCESSING_TIMESTAMP: 'apiContentProcessingTimestamp',
   TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
-  
+
   // Sidebar
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
   TAB_TOKEN_STATISTICS: 'tab_token_statistics',
