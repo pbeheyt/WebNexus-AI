@@ -199,29 +199,43 @@ async function ensureSidebarScriptInjected(tabId) {
   let isScriptLoaded = false;
   try {
     const response = await Promise.race([
-      chrome.tabs.sendMessage(tabId, { action: 'ping' }),
+      chrome.tabs.sendMessage(tabId, { action: 'pingSidebarInjector' }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 300))
     ]);
-    isScriptLoaded = !!(response && response.ready);
-    logger.background.info(`Content script check result: ${isScriptLoaded ? 'Loaded' : 'Not loaded'}`);
+    isScriptLoaded = !!(response && response.ready && response.type === 'sidebarInjector');
+    logger.background.info(`Sidebar injector check result: ${isScriptLoaded ? 'Loaded' : 'Not loaded'}`);
   } catch (error) {
-    logger.background.info('Content script not loaded, will inject');
+    logger.background.info('Sidebar injector not loaded, will inject');
   }
-  
+
   // Inject if needed
   if (!isScriptLoaded) {
-    // First inject main content script
-    const contentScriptResult = await injectContentScript(tabId, 'dist/content-script.bundle.js');
-    if (!contentScriptResult) {
-      logger.background.error(`Failed to inject main content script into tab ${tabId}`);
+    // Check if main content script is loaded first, and inject if not
+    let isMainContentScriptLoaded = false;
+    try {
+      const mainContentResponse = await Promise.race([
+        chrome.tabs.sendMessage(tabId, { action: 'ping' }), // Generic ping for main content script
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 300))
+      ]);
+      isMainContentScriptLoaded = !!(mainContentResponse && mainContentResponse.ready);
+      logger.background.info(`Main content script check result: ${isMainContentScriptLoaded ? 'Loaded' : 'Not loaded'}`);
+    } catch (error) {
+      logger.background.info('Main content script not loaded, will inject');
     }
-    
-    // Then inject sidebar script
+
+    if (!isMainContentScriptLoaded) {
+      const contentScriptResult = await injectContentScript(tabId, 'dist/content-script.bundle.js');
+      if (!contentScriptResult) {
+        logger.background.error(`Failed to inject main content script into tab ${tabId}`);
+      }
+    }
+
+    // Inject sidebar script
     const sidebarScriptResult = await injectContentScript(tabId, 'dist/sidebar-injector.bundle.js');
     if (!sidebarScriptResult) {
       logger.background.error(`Failed to inject sidebar script into tab ${tabId}`);
     }
-    
+
     // Give time for script to initialize
     await new Promise(resolve => setTimeout(resolve, 300));
   }

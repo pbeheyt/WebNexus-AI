@@ -66,8 +66,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
   
-  sendResponse({ status: 'unhandled_message' });
-  return true;
+  return false; // Indicate message was not handled here
 });
 
 // Export for webpack

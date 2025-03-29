@@ -342,7 +342,13 @@ class SidebarInjector {
       case 'ping':
         // Simple ping to check if content script is loaded
         console.log('SidebarInjector: Ping received, responding with ready status');
-        sendResponse({ ready: true, tabId: this.tabId });
+        sendResponse({ ready: true }); // Generic ping response
+        return false;
+
+      case 'pingSidebarInjector':
+        // Specific ping for sidebar injector
+        console.log('SidebarInjector: Specific ping received, responding with sidebar injector ready status');
+        sendResponse({ ready: true, type: 'sidebarInjector', tabId: this.tabId });
         return false;
         
       case 'toggleSidebar':
