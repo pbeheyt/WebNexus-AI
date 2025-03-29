@@ -1,6 +1,6 @@
 // src/popup/Popup.jsx
 import { useEffect, useState } from 'react';
-import { usePrompts } from './contexts/PromptContext';
+// Removed usePrompts import
 import { useTheme } from '../contexts/ThemeContext';
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform';
@@ -9,8 +9,8 @@ import { StatusMessage } from '../components';
 import { Toast } from '../components';
 import { useContent, ContentTypeDisplay } from '../components';
 import { PlatformSelector } from './features/PlatformSelector';
-import { QuickPromptEditor } from './features/QuickPromptEditor';
-import { CustomPromptSelector } from './features/CustomPromptSelector';
+// Removed QuickPromptEditor and CustomPromptSelector imports
+import UnifiedInput from '../components/input/UnifiedInput'; // Added UnifiedInput import
 import { STORAGE_KEYS } from '../shared/constants';
 import { INTERFACE_SOURCES } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
@@ -18,7 +18,7 @@ import { useContentProcessing } from '../hooks/useContentProcessing';
 export function Popup() {
   const { theme, toggleTheme } = useTheme();
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
-  const { selectedPromptId, quickPromptText } = usePrompts();
+  // Removed usePrompts hook call
   const { selectedPlatformId } = usePopupPlatform();
   const {
     statusMessage,
@@ -35,6 +35,7 @@ export function Popup() {
   } = useContentProcessing(INTERFACE_SOURCES.POPUP);
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [inputText, setInputText] = useState(''); // Added state for UnifiedInput
 
   // Listen for messages from background script (YouTube errors, etc.)
   useEffect(() => {
@@ -102,77 +103,36 @@ export function Popup() {
     }
   };
 
-  /**
-   * Get actual prompt content to use
-   * @returns {Promise<string|null>} The prompt content
-   */
-  const getActualPromptContent = async () => {
-    // First check if we have a quick prompt
-    if (quickPromptText && quickPromptText.trim()) {
-      return quickPromptText.trim();
-    }
-    
-    // If no quick prompt, check for selected custom prompt
-    if (selectedPromptId) {
-      try {
-        const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-        
-        // First try to find the prompt in the content-specific storage
-        let promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS]?.[contentType]?.prompts?.[selectedPromptId]?.content;
+  // New handler for UnifiedInput submission
+  const handleProcessWithText = async (text) => {
+    if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id || !text.trim()) return;
 
-        // If not found, check in the shared storage
-        if (!promptContent && result[STORAGE_KEYS.CUSTOM_PROMPTS]?.shared?.prompts?.[selectedPromptId]) {
-          promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS].shared.prompts[selectedPromptId].content;
-        }
-
-        return promptContent;
-      } catch (error) {
-        console.error('Error loading custom prompt:', error);
-        return null;
-      }
-    }
-    
-    // No valid prompt found
-    return null;
-  };
-
-  const handleProcess = async () => {
-    if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id) return;
-
+    const promptContent = text.trim();
     setIsProcessing(true);
     updateStatus('Checking page content...', true);
 
     try {
-      // Get actual prompt content to use
-      const promptContent = await getActualPromptContent();
-
-      if (!promptContent) {
-        updateStatus('Error: No prompt content available', false);
-        setIsProcessing(false);
-        showToastMessage('Please enter a Quick Prompt or select a Custom Prompt', 'error');
-        return;
-      }
-
       // Clear any existing content in storage
       await chrome.storage.local.set({
         [STORAGE_KEYS.CONTENT_READY]: false,
         [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
         [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: null,
         [STORAGE_KEYS.SCRIPT_INJECTED]: false,
-        [STORAGE_KEYS.PRE_PROMPT]: promptContent
+        [STORAGE_KEYS.PRE_PROMPT]: promptContent // Store the final prompt
       });
 
-      // Process content using the hook (extraction is now handled internally)
+      // Process content using the hook
       updateStatus(`Processing content with ${selectedPlatformId}...`, true);
 
       const result = await processContent({
         platformId: selectedPlatformId,
         promptContent: promptContent,
-        useApi: false
+        useApi: false // Popup always uses web UI interaction
       });
 
       if (result.success) {
         updateStatus('Opening AI platform...', true);
+        // Popup might close automatically if platform opens in new tab
       } else {
         updateStatus(`Error: ${result.error || 'Unknown error'}`, false);
         showToastMessage(`Error: ${result.error || 'Unknown error'}`, 'error');
@@ -186,19 +146,7 @@ export function Popup() {
     }
   };
 
-  // Determine if processing should be enabled
-  const shouldEnableProcessing = () => {
-    // Either quick prompt text or selected custom prompt must be available
-    const hasPrompt = (quickPromptText && quickPromptText.trim()) || selectedPromptId;
-    
-    return !isProcessingContent && 
-           !isProcessing && 
-           isSupported && 
-           !contentLoading && 
-           currentTab?.id && 
-           hasPrompt;
-  };
-
+  // Removed getActualPromptContent, handleProcess, shouldEnableProcessing
   return (
     <div className="min-w-[320px] p-2 bg-theme-primary text-theme-primary">
       <header className="flex items-center justify-between pb-1 mb-1 border-b border-theme">
@@ -274,13 +222,7 @@ export function Popup() {
         </div>
       </header>
 
-      <Button
-        onClick={handleProcess}
-        disabled={!shouldEnableProcessing()}
-        className="w-full mb-2"
-      >
-        {isProcessingContent || isProcessing ? 'Processing...' : 'Process Content'}
-      </Button>
+      {/* Removed main Process Content Button */}
 
       <ContentTypeDisplay />
 
@@ -288,17 +230,23 @@ export function Popup() {
         <PlatformSelector />
       </div>
 
-      <div className="mt-2 grid grid-cols-1 gap-2">
-        <QuickPromptEditor />
-        <div className="flex items-center justify-center">
-          <div className="h-px bg-gray-300 flex-grow"></div>
-          <span className="px-2 text-gray-500 text-xs">OR</span>
-          <div className="h-px bg-gray-300 flex-grow"></div>
-        </div>
-        <CustomPromptSelector />
+      {/* Replaced QuickPromptEditor and CustomPromptSelector with UnifiedInput */}
+      <div className="mt-2">
+        <UnifiedInput
+          value={inputText}
+          onChange={setInputText}
+          onSubmit={handleProcessWithText}
+          placeholder="Type a prompt or select one..."
+          disabled={!isSupported || contentLoading || isProcessingContent || isProcessing}
+          isProcessing={isProcessingContent || isProcessing}
+          contentType={contentType}
+          showTokenInfo={false}
+          layoutVariant='popup'
+          onCancel={null} // No cancel button in popup variant
+        />
       </div>
 
-      <StatusMessage message={statusMessage} className="mt-2" />
+      <StatusMessage message={statusMessage} className="mt-3" />
 
       <Toast
         message={toastState.message}

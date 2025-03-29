@@ -1,10 +1,12 @@
 // src/sidebar/components/UserInput.jsx
 import React from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
-import { MessageInput } from '../../components/messaging/MessageInput';
+import UnifiedInput from '../../components/input/UnifiedInput'; // Changed import
 import TokenCounter from './TokenCounter';
+import { useContent } from '../../components/content/ContentContext'; // Added import
 
 function UserInput({ className = '' }) {
+  const { contentType } = useContent(); // Added hook call
   const {
     inputValue,
     setInputValue,
@@ -28,25 +30,28 @@ function UserInput({ className = '' }) {
     cancelStream();
   };
 
-  return (
-    <div className={`flex flex-col ${className}`}>
-      {/* Token stats */}
-      <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-        <TokenCounter tokenStats={tokenStats} contextStatus={contextStatus} />
-      </div>
+  // Note: TokenCounter is now rendered *inside* UnifiedInput when layoutVariant='sidebar'
+  // The outer div structure here might need adjustment if UnifiedInput doesn't provide it.
+  // Based on UnifiedInput implementation, it *does* include the outer flex-col and renders TokenCounter first.
+  // So we just replace MessageInput with UnifiedInput here.
 
-      <MessageInput
-        value={inputValue}
-        onChange={handleInputChange}
-        onSubmit={handleSend}
-        onCancel={handleCancel}
-        disabled={isProcessing && isCanceling}
-        isProcessing={isProcessing}
-        isCanceling={isCanceling}
-        placeholder="Type a message..."
-        buttonLabel="Send message"
-      />
-    </div>
+  return (
+    <UnifiedInput
+      value={inputValue}
+      onChange={handleInputChange}
+      onSubmit={handleSend}
+      onCancel={handleCancel}
+      disabled={isProcessing && isCanceling} // Pass the combined disabled state
+      isProcessing={isProcessing}
+      isCanceling={isCanceling}
+      placeholder="Type a message or select a prompt..."
+      contentType={contentType} // Pass contentType
+      showTokenInfo={true}      // Enable token info
+      tokenStats={tokenStats}     // Pass token stats
+      contextStatus={contextStatus} // Pass context status
+      layoutVariant='sidebar'   // Specify sidebar layout
+      className={className}       // Pass className through
+    />
   );
 }
 

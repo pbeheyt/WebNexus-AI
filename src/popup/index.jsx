@@ -5,7 +5,7 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import { StatusProvider } from './contexts/StatusContext';
 import { ContentProvider } from '../components';
 import { PopupPlatformProvider } from '../contexts/platform';
-import { PromptProvider } from './contexts/PromptContext';
+// Removed PromptProvider import
 import '../styles/index.css';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,9 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <StatusProvider>
         <ContentProvider>
           <PopupPlatformProvider> {/* Updated provider */}
-            <PromptProvider>
-              <Popup />
-            </PromptProvider>
+            {/* Removed PromptProvider wrapper */}
+            <Popup />
           </PopupPlatformProvider>
         </ContentProvider>
       </StatusProvider>
