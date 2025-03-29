@@ -8,15 +8,14 @@ import logger from '../../utils/logger.js';
  * Extract content from a tab
  * @param {number} tabId - Tab ID to extract content from
  * @param {string} url - URL of the page
- * @param {boolean} hasSelection - Whether text is selected
  * @returns {Promise<boolean>} Success indicator
  */
-export async function extractContent(tabId, url, hasSelection = false) {
-  const contentType = determineContentType(url, hasSelection);
+export async function extractContent(tabId, url) {
+  const contentType = determineContentType(url);
   // Use a single content script for all types
   const scriptFile = 'dist/content-script.bundle.js';
 
-  logger.background.info(`Extracting content from tab ${tabId}, type: ${contentType}, hasSelection: ${hasSelection}`);
+  logger.background.info(`Extracting content from tab ${tabId}, type: ${contentType}`);
   
   // Check if content script is loaded
   let isScriptLoaded = false;
@@ -42,8 +41,7 @@ export async function extractContent(tabId, url, hasSelection = false) {
   // Always reset previous extraction state
   try {
     await chrome.tabs.sendMessage(tabId, { 
-      action: 'resetExtractor',
-      hasSelection: hasSelection
+      action: 'resetExtractor'
     });
     logger.background.info('Reset command sent to extractor');
   } catch (error) {
@@ -64,7 +62,6 @@ export async function extractContent(tabId, url, hasSelection = false) {
     // Send extraction command
     chrome.tabs.sendMessage(tabId, {
       action: 'extractContent',
-      hasSelection: hasSelection,
       contentType: contentType
     });
 
@@ -94,30 +91,6 @@ export async function injectContentScript(tabId, scriptFile) {
     return true;
   } catch (error) {
     logger.background.error(`Script injection error for tab ${tabId}:`, error);
-    return false;
-  }
-}
-
-/**
- * Detect text selection in a tab
- * @param {number} tabId - Tab ID to check
- * @returns {Promise<boolean>} Whether text is selected
- */
-export async function detectTextSelection(tabId) {
-  try {
-    const injectionResult = await chrome.scripting.executeScript({
-      target: { tabId },
-      function: () => window.getSelection().toString().trim().length > 0
-    });
-    
-    if (injectionResult && injectionResult[0]) {
-      const hasSelection = injectionResult[0].result;
-      logger.background.info(`Selection detection result: ${hasSelection}`);
-      return hasSelection;
-    }
-    return false;
-  } catch (error) {
-    logger.background.error('Error detecting selection:', error);
     return false;
   }
 }

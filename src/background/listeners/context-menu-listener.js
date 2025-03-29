@@ -23,16 +23,10 @@ export async function createContextMenus() {
   chrome.contextMenus.create({
     id: 'processContent',
     title: 'process with AI',
-    contexts: ['page']
-  });
-
-  chrome.contextMenus.create({
-    id: 'processSelection',
-    title: 'process Selection with AI',
-    contexts: ['selection']
+    contexts: ['page', 'selection'] // Allow on page and selection
   });
   
-  logger.background.info('Context menus created');
+  logger.background.info('Context menu created');
 }
 
 /**
@@ -43,16 +37,13 @@ export async function createContextMenus() {
 async function handleContextMenuClick(info, tab) {
   logger.background.info('Context menu clicked', { info, tabId: tab.id });
 
-  // Determine if there's a text selection
-  const hasSelection = info.menuItemId === 'processSelection' || !!info.selectionText;
-  
-  logger.background.info(`process content request from menu context`);
+  // Always process the full page, regardless of selection context
+  logger.background.info(`Processing full page content request from context menu`);
 
-  // Use centralized content processing
+  // Use centralized content processing for the full page
   const result = await processContent({
     tabId: tab.id,
-    url: tab.url,
-    hasSelection
+    url: tab.url
     // No promptId/platformId to use user's preferred defaults
   });
   

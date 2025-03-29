@@ -46,8 +46,6 @@ export function QuickPromptEditor() {
         return 'Enter your prompt for analyzing this Reddit post...';
       case 'pdf':
         return 'Enter your prompt for analyzing this PDF document...';
-      case 'selected_text':
-        return 'Enter your prompt for analyzing this selected text...';
       default:
         return 'Enter your custom prompt for analyzing this page...';
     }

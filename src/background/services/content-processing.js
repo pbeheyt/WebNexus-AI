@@ -19,7 +19,6 @@ export async function processContent(params) {
   const { 
     tabId, 
     url, 
-    hasSelection = false, 
     promptId = null, 
     platformId = null, 
     commentAnalysisRequired = false,
@@ -28,7 +27,7 @@ export async function processContent(params) {
   
   try {
     logger.background.info('Starting web UI content processing', {
-      tabId, url, hasSelection, promptId, platformId
+      tabId, url, promptId, platformId
     });
     
     // If API mode requested, use API path
@@ -40,10 +39,10 @@ export async function processContent(params) {
     await resetExtractionState();
     
     // 2. Extract content
-    const contentType = determineContentType(url, hasSelection);
-    logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
+    const contentType = determineContentType(url);
+    logger.background.info(`Content type determined: ${contentType}`);
     
-    const extractionResult = await extractContent(tabId, url, hasSelection);
+    const extractionResult = await extractContent(tabId, url);
     if (!extractionResult) {
       logger.background.warn('Content extraction completed with issues');
     }
@@ -123,9 +122,9 @@ export async function processContent(params) {
  */
 export async function handleProcessContentRequest(message, sendResponse) {
   try {
-    const { tabId, contentType, promptId, platformId, url, hasSelection, commentAnalysisRequired, useApi } = message;
+    const { tabId, contentType, promptId, platformId, url, commentAnalysisRequired, useApi } = message;
     logger.background.info(`Process content request for tab ${tabId}`, {
-      contentType, promptId, platformId, hasSelection, useApi
+      contentType, promptId, platformId, useApi
     });
 
     // Call appropriate processing function based on API flag

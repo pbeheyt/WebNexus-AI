@@ -10,7 +10,7 @@ import { useContent } from './ContentContext';
  * @param {string} [props.className=''] - Additional CSS classes
  */
 export function ContentTypeDisplay({ className = '' }) {
-  const { contentType, isLoading, isTextSelected } = useContent();
+  const { contentType, isLoading } = useContent();
   
   // Content type configuration with icons and colors
   const contentTypeConfig = {
@@ -70,19 +70,6 @@ export function ContentTypeDisplay({ className = '' }) {
           <path d="M5 18H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       )
-    },
-    [CONTENT_TYPES.SELECTED_TEXT]: {
-      label: 'Selected Text',
-      color: '#3498db',
-      icon: (
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 2v16l4-4 3 7 4-2-3-6h6L4 2z" 
-                fill="#3498db" 
-                stroke="#ffffff" 
-                strokeWidth="0.75" 
-                strokeLinejoin="round"/>
-        </svg>
-      )
     }
   };
   
@@ -104,7 +91,7 @@ export function ContentTypeDisplay({ className = '' }) {
       style={{ borderLeftColor: typeConfig.color, borderLeftWidth: '3px' }}
     >
       {typeConfig.icon}
-      <span>{isTextSelected ? 'Selected Text' : typeConfig.label}</span>
+      <span>{typeConfig.label}</span>
     </div>
   );
 }

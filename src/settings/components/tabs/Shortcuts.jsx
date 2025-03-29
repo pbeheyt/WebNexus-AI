@@ -129,45 +129,7 @@ const Shortcuts = () => {
       </div>
       
       {/* Behavior Settings Section */}
-      <div className="settings-section bg-theme-surface p-5 rounded-lg border border-theme">
-        <h3 className="section-subtitle text-lg font-medium mb-4">Shortcut Behavior</h3>
-        
-        <div className="shortcut-option-group mb-5">
-          <h4 className="option-title text-base font-medium mb-3">Content Processing Shortcut Behavior</h4>
-          
-          <div className="radio-group-setting ml-4 space-y-3">
-            <div className="radio-option flex items-center">
-              <input
-                type="radio"
-                id="page-process"
-                name="process-behavior"
-                checked={settings.content_processing_behavior === 'page'}
-                onChange={() => updateSettings({ content_processing_behavior: 'page' })}
-                className="mr-2"
-                disabled={isSaving}
-              />
-              <label htmlFor="page-process" className="cursor-pointer">
-                Process entire page
-              </label>
-            </div>
-            
-            <div className="radio-option flex items-center">
-              <input
-                type="radio"
-                id="selection-process"
-                name="process-behavior"
-                checked={settings.content_processing_behavior === 'selection'}
-                onChange={() => updateSettings({ content_processing_behavior: 'selection' })}
-                className="mr-2"
-                disabled={isSaving}
-              />
-              <label htmlFor="selection-process" className="cursor-pointer">
-                Process selected text (if no selection, falls back to page)
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Behavior Settings Section - Removed as selection is no longer a separate processing path */}
     </div>
   );
 };

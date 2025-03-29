@@ -95,7 +95,6 @@ export async function processContentViaApi(params) {
   const {
     tabId,
     url,
-    hasSelection = false,
     promptId = null,
     platformId = null,
     source = INTERFACE_SOURCES.POPUP,
@@ -106,7 +105,7 @@ export async function processContentViaApi(params) {
 
   try {
     logger.background.info(`Starting API-based content processing from ${source}`, {
-      tabId, url, hasSelection, promptId, platformId, streaming
+      tabId, url, promptId, platformId, streaming
     });
 
     // 1. Reset previous state
@@ -114,10 +113,10 @@ export async function processContentViaApi(params) {
     await updateApiProcessingStatus('extracting', platformId || await getPreferredAiPlatform());
 
     // 2. Extract content
-    const contentType = determineContentType(url, hasSelection);
-    logger.background.info(`Content type determined: ${contentType}, hasSelection: ${hasSelection}`);
+    const contentType = determineContentType(url);
+    logger.background.info(`Content type determined: ${contentType}`);
 
-    await extractContent(tabId, url, hasSelection);
+    await extractContent(tabId, url);
     const extractedContent = await getExtractedContent();
 
     if (!extractedContent) {

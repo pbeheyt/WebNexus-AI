@@ -14,14 +14,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle reset extractor command
   if (message.action === 'resetExtractor') {
-    logger.info('Resetting extractor, hasSelection:', message.hasSelection);
+    logger.info('Resetting extractor');
     currentExtractionId = Date.now().toString();
     
     // Force cleanup of all extractors
     ExtractorFactory.cleanup();
     
     // Initialize fresh extractor
-    ExtractorFactory.initialize(message.hasSelection);
+    ExtractorFactory.initialize();
     ExtractorFactory.activeExtractor.extractionId = currentExtractionId;
     
     sendResponse({ status: 'reset', extractionId: currentExtractionId });
@@ -40,7 +40,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'extractContent') {
     if (!ExtractorFactory.activeExtractor) {
       // Initialize extractor if not present
-      ExtractorFactory.initialize(message.hasSelection);
+      ExtractorFactory.initialize();
     }
     
     if (ExtractorFactory.activeExtractor) {

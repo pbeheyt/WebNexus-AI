@@ -10,8 +10,7 @@ const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
   YOUTUBE: 'youtube',
-  PDF: 'pdf',
-  SELECTED_TEXT: 'selected_text'
+  PDF: 'pdf'
 };
 
 // Content type labels
@@ -20,7 +19,6 @@ const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.REDDIT]: 'Reddit Posts',
   [CONTENT_TYPES.YOUTUBE]: 'YouTube Videos',
   [CONTENT_TYPES.PDF]: 'PDF Documents',
-  [CONTENT_TYPES.SELECTED_TEXT]: 'Selected Text',
   [SHARED_TYPE]: 'Shared Prompts'
 };
 

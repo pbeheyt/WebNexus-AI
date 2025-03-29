@@ -6,15 +6,9 @@ import { CONTENT_TYPES } from './constants.js';
  * This is the single source of truth for content type detection
  * 
  * @param {string} url - The URL to check
- * @param {boolean} hasSelection - Whether text is selected
  * @returns {string} - The detected content type
  */
-export function determineContentType(url, hasSelection = false) {
-  // If there's selection, prioritize it over URL-based detection
-  if (hasSelection) {
-    return CONTENT_TYPES.SELECTED_TEXT;
-  }
-
+export function determineContentType(url) {
   // PDF detection criteria evaluation
   const isPdf = url.endsWith('.pdf');
   const containsPdfPath = url.includes('/pdf/');
@@ -36,14 +30,11 @@ export function determineContentType(url, hasSelection = false) {
 /**
  * Get the appropriate content script file for a content type
  * @param {string} contentType - The content type
- * @param {boolean} hasSelection - Whether text is selected
  * @returns {string} - Path to the content script file
  */
-export function getContentScriptFile(contentType, hasSelection = false) {
-  // Select appropriate content script based on content type and selection
-  if (hasSelection) {
-    return 'dist/selected-text-content.bundle.js';
-  } else if (contentType === CONTENT_TYPES.PDF) {
+export function getContentScriptFile(contentType) {
+  // Select appropriate content script based on content type
+  if (contentType === CONTENT_TYPES.PDF) {
     return 'dist/pdf-content.bundle.js';
   } else if (contentType === CONTENT_TYPES.YOUTUBE) {
     return 'dist/youtube-content.bundle.js';

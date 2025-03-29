@@ -10,7 +10,6 @@ module.exports = {
     'general-content': './src/content/general-content.js',
     // 'pdf-content': './src/content/pdf-content.js',
     'platform-content': './src/content/platform-content.js',
-    'selected-text-content': './src/content/selected-text-content.js',
     popup: './src/popup/index.jsx',
     settings: './src/settings/index.jsx',
     // 'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',

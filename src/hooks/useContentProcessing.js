@@ -60,7 +60,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     const {
       platformId,
       promptId,
-      hasSelection = false,
       commentAnalysisRequired = false
     } = options;
 
@@ -89,7 +88,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         platformId,
         promptId,
         contentType,
-        hasSelection,
         commentAnalysisRequired,
         source,
         useApi: false
@@ -119,7 +117,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       platformId,
       promptId,
       promptContent,
-      hasSelection = false,
       modelId = null, // This is now just passed as a model override
       streaming = false,
       onStreamChunk = null,
@@ -153,7 +150,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         platformId,
         promptId,
         contentType,
-        hasSelection,
         source,
         streaming
       };

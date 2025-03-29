@@ -7,8 +7,7 @@ export const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
   YOUTUBE: 'youtube',
-  PDF: 'pdf',
-  SELECTED_TEXT: 'selected_text'
+  PDF: 'pdf'
 };
 
 /**

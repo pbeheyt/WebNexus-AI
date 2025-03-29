@@ -331,9 +331,6 @@ class BaseApiService extends ApiInterface {
       case 'pdf':
         formatted = this._formatPdfData(data);
         break;
-      case 'selected_text':
-        formatted = this._formatSelectedTextData(data);
-        break;
       default:
         formatted = `Content: ${JSON.stringify(data)}`;
     }
@@ -438,8 +435,6 @@ class BaseApiService extends ApiInterface {
     }
 
     if (data.isSelection) {
-      metadataText += `
-  - Note: This is a user-selected portion of the page content.`;
     }
 
     return `${metadataText}
@@ -504,16 +499,6 @@ class BaseApiService extends ApiInterface {
 
   ## PDF CONTENT
   ${formattedContent}`;
-  }
-
-  /**
-   * Format selected text data with emphasis on content
-   * @param {Object} data - Selected text data
-   * @returns {string} Formatted selected text data
-   */
-  _formatSelectedTextData(data) {
-    // Just return the raw selected text with no headings or extra formatting
-    return data.text || 'No text selected';
   }
 
   /**

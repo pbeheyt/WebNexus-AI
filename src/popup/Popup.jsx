@@ -204,13 +204,10 @@ export function Popup() {
       // Process content using the hook (extraction is now handled internally)
       updateStatus(`Processing content with ${selectedPlatformId}...`, true);
 
-      const hasSelection = contentType === 'selected_text';
-
       const result = await processContent({
         platformId: selectedPlatformId,
         promptId: selectedPromptId,
         promptContent,
-        hasSelection,
         commentAnalysisRequired,
         useApi: false
       });

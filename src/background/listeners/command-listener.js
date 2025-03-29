@@ -1,7 +1,6 @@
 // src/background/listeners/command-listener.js - Keyboard shortcuts
 
 import { processContent } from '../services/content-processing.js';
-import { detectTextSelection } from '../services/content-extraction.js';
 import { toggleSidebar } from '../services/sidebar-manager.js'; // Import the function directly
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import logger from '../../utils/logger.js';
@@ -32,37 +31,13 @@ async function handleCommand(command) {
       
       const activeTab = tabs[0];
       logger.background.info(`Active tab: ${activeTab.id}, URL: ${activeTab.url}`);
-      
-      // First, determine behavior based on user settings
-      let useSelection = true; // Default to respecting selection
-      
-      try {
-        const result = await chrome.storage.sync.get(STORAGE_KEYS.SHORTCUT_SETTINGS);
-        if (result[STORAGE_KEYS.SHORTCUT_SETTINGS] && 
-            result[STORAGE_KEYS.SHORTCUT_SETTINGS].content_processing_behavior) {
-          useSelection = result[STORAGE_KEYS.SHORTCUT_SETTINGS].content_processing_behavior === 'selection';
-          logger.background.info(`Using shortcut behavior from settings: ${useSelection ? 'Respect selection' : 'Always full page'}`);
-        }
-      } catch (error) {
-        logger.background.error('Error getting shortcut settings:', error);
-        // Continue with default behavior
-      }
-      
-      // If we're set to respect selection, we need to check if there's a selection
-      let hasSelection = false;
-      
-      if (useSelection) {
-        // Detect if there's a text selection
-        hasSelection = await detectTextSelection(activeTab.id);
-      }
 
-      logger.background.info(`process content request from keyboard`);
+      logger.background.info(`Processing full page content request from keyboard shortcut`);
       
-      // Use centralized content processing
+      // Use centralized content processing for the full page
       const result = await processContent({
         tabId: activeTab.id,
-        url: activeTab.url,
-        hasSelection
+        url: activeTab.url
         // No promptId/platformId to use user's preferred defaults
       });
       
