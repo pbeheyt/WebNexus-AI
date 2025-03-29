@@ -37,5 +37,5 @@ export async function handleInstallation(details) {
   await initializeExtension();
 }
 
-// Setup installation handler - ONLY place where context menus are created
+// Setup installation handler
 chrome.runtime.onInstalled.addListener(handleInstallation);

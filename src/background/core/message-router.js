@@ -6,7 +6,6 @@ import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
 import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
 import { toggleSidebar, getSidebarState } from '../services/sidebar-manager.js';
-import { clearQuickPrompt } from '../services/prompt-resolver.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 
 // Store for message handlers
@@ -133,21 +132,6 @@ function registerServiceHandlers() {
   messageHandlers.set('processContent', (message, sender, sendResponse) => {
     handleProcessContentRequest(message, sendResponse);
     return true; // Keep channel open for async response
-  });
-  
-  // Clear quick prompt
-  messageHandlers.set('clearQuickPrompt', (message, sender, sendResponse) => {
-    clearQuickPrompt(message.contentType, sendResponse);
-    return true; // Keep channel open for async response
-  });
-  
-  // YouTube notifications
-  messageHandlers.set('youtubeCommentsNotLoaded', (message, sender, sendResponse) => {
-    // Relay to popup if open
-    chrome.runtime.sendMessage({
-      action: 'youtubeCommentsNotLoaded'
-    });
-    return false;
   });
   
   // Toggle sidebar

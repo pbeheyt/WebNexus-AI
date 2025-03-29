@@ -1,10 +1,9 @@
 // src/background/services/content-processing.js
 
 import { determineContentType } from '../../shared/content-utils.js';
-import { extractContent, checkYouTubeCommentsStatus, checkYouTubeTranscriptAvailability } from './content-extraction.js';
-import { getPreferredPromptId, getPromptContentById } from './prompt-resolver.js';
+import { extractContent, checkYouTubeTranscriptAvailability } from './content-extraction.js';
 import { getPreferredAiPlatform, openAiPlatformWithContent } from './platform-integration.js';
-import { resetExtractionState, savePlatformTabInfo, trackQuickPromptUsage } from '../core/state-manager.js';
+import { resetExtractionState, savePlatformTabInfo } from '../core/state-manager.js';
 import { processContentViaApi } from '../api/api-coordinator.js';
 import logger from '../../utils/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
@@ -19,20 +18,27 @@ export async function processContent(params) {
   const { 
     tabId, 
     url, 
-    promptId = null, 
-    platformId = null, 
-    commentAnalysisRequired = false,
+    platformId = null,
+    promptContent = null,
     useApi = false
   } = params;
   
   try {
     logger.background.info('Starting web UI content processing', {
-      tabId, url, promptId, platformId
+      tabId, url, platformId
     });
     
     // If API mode requested, use API path
     if (useApi) {
       return await processContentViaApi(params);
+    }
+    
+    // Check for prompt content
+    if (!promptContent) {
+      return {
+        success: false,
+        error: 'No prompt content provided'
+      };
     }
     
     // 1. Reset previous state
@@ -62,33 +68,11 @@ export async function processContent(params) {
         ...transcriptError
       };
     }
-      
-    // YouTube comments check (only if required by the prompt)
-    const commentsError = checkYouTubeCommentsStatus(extractedContent, commentAnalysisRequired);
-    if (commentsError) {
-      return {
-        success: false,
-        ...commentsError
-      };
-    }
     
-    // 4. Handle prompt resolution
-    const effectivePromptId = promptId || await getPreferredPromptId(contentType);
-    const promptContent = await getPromptContentById(effectivePromptId, contentType);
-    
-    if (!promptContent) {
-      throw new Error(`Could not load prompt content for ID: ${effectivePromptId}`);
-    }
-    
-    // Track quick prompt usage if needed
-    if (effectivePromptId === 'quick') {
-      await trackQuickPromptUsage(contentType);
-    }
-    
-    // 5. Open AI platform with the content
+    // 4. Get platform and open it with content
     const effectivePlatformId = platformId || await getPreferredAiPlatform();
     
-    const aiPlatformTabId = await openAiPlatformWithContent(contentType, effectivePromptId, effectivePlatformId);
+    const aiPlatformTabId = await openAiPlatformWithContent(contentType, null, effectivePlatformId);
     
     if (!aiPlatformTabId) {
       return {
@@ -122,9 +106,9 @@ export async function processContent(params) {
  */
 export async function handleProcessContentRequest(message, sendResponse) {
   try {
-    const { tabId, contentType, promptId, platformId, url, commentAnalysisRequired, useApi } = message;
+    const { tabId, platformId, url, promptContent, useApi } = message;
     logger.background.info(`Process content request for tab ${tabId}`, {
-      contentType, promptId, platformId, useApi
+      platformId, useApi
     });
 
     // Call appropriate processing function based on API flag

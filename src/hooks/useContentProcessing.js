@@ -59,8 +59,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   const processContent = useCallback(async (options = {}) => {
     const {
       platformId,
-      promptId,
-      commentAnalysisRequired = false
+      promptContent
     } = options;
 
     if (!currentTab?.id) {
@@ -77,6 +76,13 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       throw error;
     }
 
+    if (!promptContent) {
+      const error = new Error('No prompt content provided');
+      setError(error);
+      setProcessingStatus('error');
+      throw error;
+    }
+
     setProcessingStatus('loading');
     setError(null);
 
@@ -86,9 +92,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         tabId: currentTab.id,
         url: currentTab.url,
         platformId,
-        promptId,
+        promptContent,
         contentType,
-        commentAnalysisRequired,
         source,
         useApi: false
       });

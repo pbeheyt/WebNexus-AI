@@ -1,6 +1,5 @@
 // src/background/core/config-loader.js - Configuration loading and management
 
-import configManager from '../../services/ConfigManager.js';
 import sidebarStateManager from '../../services/SidebarStateManager.js';
 import logger from '../../utils/logger.js';
 
@@ -10,10 +9,6 @@ import logger from '../../utils/logger.js';
  */
 export async function initializeConfigManager() {
   try {
-    // Initialize main configuration
-    await configManager.initialize();
-    logger.background.info('ConfigManager initialized');
-    
     // Initialize sidebar state
     sidebarStateManager.initialize();
     logger.background.info('SidebarStateManager initialized');
@@ -45,18 +40,3 @@ export async function getPlatformConfig(platformId) {
     return null;
   }
 }
-
-/**
- * Subscribe to configuration changes
- * This sets up listeners for any configuration changes in storage
- */
-export function setupConfigChangeListeners() {
-  chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'sync' && changes.template_configuration) {
-      logger.background.info('Template configuration changed in storage');
-    }
-  });
-}
-
-// Set up config change listeners when this module is loaded
-setupConfigChangeListeners();

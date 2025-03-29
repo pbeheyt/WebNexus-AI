@@ -43,15 +43,12 @@ export const STORAGE_KEYS = {
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
   API_CREDENTIALS: 'api_credentials',
   API_MODE_PREFERENCE: 'api_mode_preference',
-  TEMPLATE_CONFIG: 'template_configuration',
 
   // Prompt
   PRE_PROMPT: 'prePrompt',
-  PROMPT_TYPE_PREFERENCE: 'prompt_type_preference',
   SELECTED_PROMPT_IDS: 'selected_prompt_ids',
   QUICK_PROMPTS: 'quick_prompts',
   CUSTOM_PROMPTS: 'custom_prompts_by_type',
-  DEFAULT_PROMPT_PREFERENCES: 'default_prompt_preferences',
 
   // Platform
   INJECTION_PLATFORM: 'injectionPlatform',
@@ -93,7 +90,6 @@ export const INTERFACE_SOURCES = {
  * Prompt types
  */
 export const PROMPT_TYPES = {
-  DEFAULT: 'default',
   CUSTOM: 'custom',
   QUICK: 'quick'
 };

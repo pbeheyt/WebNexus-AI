@@ -6,8 +6,6 @@ const TabNavigation = () => {
   
   const tabsConfig = [
     { id: TABS.PROMPT_MANAGEMENT, label: 'Custom Prompt Management' },
-    { id: TABS.CONTENT_CONFIGURATION, label: 'Content Configuration' },
-    { id: TABS.TEMPLATE_CUSTOMIZATION, label: 'Template Customization' },
     { id: TABS.SHORTCUTS, label: 'Keyboard Shortcuts' },
     { id: TABS.API_SETTINGS, label: 'API Settings' }
   ];

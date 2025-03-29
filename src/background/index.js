@@ -5,8 +5,6 @@ import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
 import { setupTabStateListener } from './listeners/tab-state-listener.js';
 import { setupCommandListener } from './listeners/command-listener.js';
-import { setupContextMenuListener } from './listeners/context-menu-listener.js';
-import { createContextMenus } from './listeners/context-menu-listener.js';
 
 /**
  * Main entry point for the background service worker
@@ -19,14 +17,10 @@ async function startBackgroundService() {
     // 2. Set up message router to handle communication
     setupMessageRouter();
     
-    // 3. Create context menus explicitly
-    await createContextMenus();
-    
-    // 4. Set up event listeners
+    // 3. Set up event listeners
     setupTabListener();
     setupTabStateListener();
     setupCommandListener();
-    setupContextMenuListener();
 
     console.log('[Background] Service worker started successfully');
   } catch (error) {

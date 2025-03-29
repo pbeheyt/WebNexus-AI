@@ -4,7 +4,6 @@
   "description": "Summarize web content, Reddit posts, YouTube videos, and PDFs with Claude, ChatGPT, or DeepSeek AI",
   "version": "1.2",
   "permissions": [
-    "contextMenus",
     "activeTab",
     "scripting",
     "storage",
@@ -53,12 +52,6 @@
       },
       "description": "Activate the extension"
     },
-    "summarize-page": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+Z"
-      },
-      "description": "Proccess content"
-    },
     "toggle-sidebar": {
       "suggested_key": {
         "default": "Ctrl+Shift+Q"
@@ -70,7 +63,6 @@
     {
       "resources": [
         "platform-config.json",
-        "prompt-config.json", 
         "dist/*.bundle.js",
         "dist/pdf.worker.bundle.js",
         "images/*.png",

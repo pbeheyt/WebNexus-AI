@@ -2,9 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Tab IDs from the original constants.js
 const TABS = {
-  CONTENT_CONFIGURATION: 'content-configuration',
   PROMPT_MANAGEMENT: 'prompt-management',
-  TEMPLATE_CUSTOMIZATION: 'template-customization',
   SHORTCUTS: 'shortcuts',
   API_SETTINGS: 'api-settings'
 };

@@ -3,8 +3,6 @@ import { useTabs } from '../../contexts/TabContext';
 
 // Lazy load tab components to improve initial load performance
 const PromptManagement = lazy(() => import('../tabs/PromptManagement'));
-const ContentConfiguration = lazy(() => import('../tabs/ContentConfiguration'));
-const TemplateCustomization = lazy(() => import('../tabs/TemplateCustomization'));
 const Shortcuts = lazy(() => import('../tabs/Shortcuts'));
 const ApiSettings = lazy(() => import('../tabs/ApiSettings'));
 
@@ -23,14 +21,6 @@ const TabContent = () => {
       <div className="tabs-container relative min-h-[400px]">
         <div className={`tab-content ${activeTab === TABS.PROMPT_MANAGEMENT ? 'active' : ''}`} id={TABS.PROMPT_MANAGEMENT}>
           {activeTab === TABS.PROMPT_MANAGEMENT && <PromptManagement />}
-        </div>
-        
-        <div className={`tab-content ${activeTab === TABS.CONTENT_CONFIGURATION ? 'active' : ''}`} id={TABS.CONTENT_CONFIGURATION}>
-          {activeTab === TABS.CONTENT_CONFIGURATION && <ContentConfiguration />}
-        </div>
-        
-        <div className={`tab-content ${activeTab === TABS.TEMPLATE_CUSTOMIZATION ? 'active' : ''}`} id={TABS.TEMPLATE_CUSTOMIZATION}>
-          {activeTab === TABS.TEMPLATE_CUSTOMIZATION && <TemplateCustomization />}
         </div>
         
         <div className={`tab-content ${activeTab === TABS.SHORTCUTS ? 'active' : ''}`} id={TABS.SHORTCUTS}>

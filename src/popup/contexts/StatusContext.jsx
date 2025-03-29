@@ -38,22 +38,6 @@ export function StatusProvider({ children }) {
     setToastTimeout(timeout);
   }, [clearToastTimeout]);
   
-  // Specific notification types
-  const notifyPromptTypeToggled = useCallback((promptType) => {
-    let typeName = 'Template';
-    if (promptType === 'custom') typeName = 'Custom';
-    else if (promptType === 'quick') typeName = 'Quick';
-    
-    updateStatus(`Switched to ${typeName} prompt`);
-  }, [updateStatus]);
-  
-  const notifyParameterChanged = useCallback((paramName, newValue) => {
-    const readableParamName = paramName.replace(/([A-Z])/g, ' $1')
-      .toLowerCase().replace(/^./, str => str.toUpperCase());
-    
-    updateStatus(`Parameter "${readableParamName}" updated to ${newValue}`);
-  }, [updateStatus]);
-  
   const notifyCustomPromptChanged = useCallback((promptName) => {
     updateStatus(`Custom prompt changed to "${promptName}"`);
   }, [updateStatus]);
@@ -72,24 +56,15 @@ export function StatusProvider({ children }) {
     showToastMessage(errorMessage || 'YouTube transcript could not be loaded', 'error');
   }, [updateStatus, showToastMessage]);
   
-  const notifyCommentsNotLoaded = useCallback(() => {
-    const message = 'Comments exist but are not loaded. Scroll down on YouTube to load comments before summarizing.';
-    updateStatus(message, false, true);
-    showToastMessage(message, 'warning');
-  }, [updateStatus, showToastMessage]);
-  
   return (
     <StatusContext.Provider value={{
       statusMessage,
       updateStatus,
       showToastMessage,
-      notifyPromptTypeToggled,
-      notifyParameterChanged,
       notifyCustomPromptChanged,
       notifyPlatformChanged,
       notifyQuickPromptUpdated,
       notifyYouTubeError,
-      notifyCommentsNotLoaded,
       toastState: {
         message: toastMessage,
         type: toastType,

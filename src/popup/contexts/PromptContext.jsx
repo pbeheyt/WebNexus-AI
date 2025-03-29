@@ -1,6 +1,6 @@
 // src/components/context/PromptContext.jsx
 import { createContext, useContext, useEffect, useState } from 'react';
-import { PROMPT_TYPES, STORAGE_KEYS } from '../../shared/constants';
+import { STORAGE_KEYS } from '../../shared/constants';
 import { useContent } from '../../components';
 import { useStatus } from './StatusContext';
 
@@ -9,7 +9,6 @@ const PromptContext = createContext(null);
 export function PromptProvider({ children }) {
   const { contentType } = useContent();
   const { updateStatus } = useStatus();
-  const [promptType, setPromptType] = useState(PROMPT_TYPES.DEFAULT);
   const [selectedPromptId, setSelectedPromptId] = useState(null);
   const [quickPromptText, setQuickPromptText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -21,38 +20,20 @@ export function PromptProvider({ children }) {
     const loadPromptPreferences = async () => {
       setIsLoading(true);
       try {
-        // Load prompt type preference
-        const { [STORAGE_KEYS.PROMPT_TYPE_PREFERENCE]: typePreferences } = 
-          await chrome.storage.sync.get(STORAGE_KEYS.PROMPT_TYPE_PREFERENCE);
-        
-        const typePreference = typePreferences?.[contentType] || PROMPT_TYPES.DEFAULT;
-        setPromptType(typePreference);
-        
-        // Load selected prompt ID
+        // Load selected prompt ID for custom prompts
         const { [STORAGE_KEYS.SELECTED_PROMPT_IDS]: selectedPrompts } = 
           await chrome.storage.sync.get(STORAGE_KEYS.SELECTED_PROMPT_IDS);
         
-        const key = `${contentType}-${typePreference}`;
+        const key = `${contentType}-custom`;
         let promptId = selectedPrompts?.[key];
-        
-        // Fallbacks for different prompt types
-        if (!promptId) {
-          if (typePreference === PROMPT_TYPES.DEFAULT) {
-            promptId = contentType;
-          } else if (typePreference === PROMPT_TYPES.QUICK) {
-            promptId = 'quick';
-          }
-        }
         
         setSelectedPromptId(promptId);
         
-        // Load quick prompt text if using quick prompt
-        if (typePreference === PROMPT_TYPES.QUICK) {
-          const { [STORAGE_KEYS.QUICK_PROMPTS]: quickPrompts } = 
-            await chrome.storage.sync.get(STORAGE_KEYS.QUICK_PROMPTS);
-          
-          setQuickPromptText(quickPrompts?.[contentType] || '');
-        }
+        // Load quick prompt text
+        const { [STORAGE_KEYS.QUICK_PROMPTS]: quickPrompts } = 
+          await chrome.storage.sync.get(STORAGE_KEYS.QUICK_PROMPTS);
+        
+        setQuickPromptText(quickPrompts?.[contentType] || '');
         
         updateStatus('Prompt settings loaded');
       } catch (error) {
@@ -66,45 +47,15 @@ export function PromptProvider({ children }) {
     loadPromptPreferences();
   }, [contentType, updateStatus]);
   
-  const changePromptType = async (newType) => {
-    if (newType === promptType || !contentType) return false;
-    
-    try {
-      // Save prompt type preference
-      const { [STORAGE_KEYS.PROMPT_TYPE_PREFERENCE]: typePreferences = {} } = 
-        await chrome.storage.sync.get(STORAGE_KEYS.PROMPT_TYPE_PREFERENCE);
-      
-      typePreferences[contentType] = newType;
-      await chrome.storage.sync.set({ 
-        [STORAGE_KEYS.PROMPT_TYPE_PREFERENCE]: typePreferences 
-      });
-      
-      // Update state
-      setPromptType(newType);
-      
-      // Set default prompt ID based on type
-      if (newType === PROMPT_TYPES.DEFAULT) {
-        setSelectedPromptId(contentType);
-      } else if (newType === PROMPT_TYPES.QUICK) {
-        setSelectedPromptId('quick');
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error changing prompt type:', error);
-      return false;
-    }
-  };
-  
   const selectPrompt = async (promptId) => {
-    if (!contentType || !promptType || promptId === selectedPromptId) return false;
+    if (!contentType || promptId === selectedPromptId) return false;
     
     try {
       // Save selected prompt ID
       const { [STORAGE_KEYS.SELECTED_PROMPT_IDS]: selectedPrompts = {} } = 
         await chrome.storage.sync.get(STORAGE_KEYS.SELECTED_PROMPT_IDS);
       
-      const key = `${contentType}-${promptType}`;
+      const key = `${contentType}-custom`;
       selectedPrompts[key] = promptId;
       
       await chrome.storage.sync.set({ [STORAGE_KEYS.SELECTED_PROMPT_IDS]: selectedPrompts });
@@ -137,11 +88,9 @@ export function PromptProvider({ children }) {
   return (
     <PromptContext.Provider
       value={{
-        promptType,
         selectedPromptId,
         quickPromptText,
         isLoading,
-        changePromptType,
         selectPrompt,
         updateQuickPrompt
       }}

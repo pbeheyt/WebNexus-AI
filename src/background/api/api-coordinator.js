@@ -3,7 +3,6 @@
 import ApiServiceManager from '../../services/ApiServiceManager.js';
 import ModelParameterService from '../../services/ModelParameterService.js';
 import { extractContent, checkYouTubeTranscriptAvailability } from '../services/content-extraction.js';
-import { getPreferredPromptId, getPromptContentById } from '../services/prompt-resolver.js';
 import { getPreferredAiPlatform } from '../services/platform-integration.js';
 import { verifyApiCredentials } from '../services/credential-manager.js';
 import { determineContentType } from '../../shared/content-utils.js';
@@ -134,17 +133,15 @@ export async function processContentViaApi(params) {
 
     // 4. Get the prompt
     let promptContent;
-    let effectivePromptId;
 
     if (customPrompt) {
       promptContent = customPrompt;
     } else {
-      effectivePromptId = promptId || await getPreferredPromptId(extractedContent.contentType);
-      promptContent = await getPromptContentById(effectivePromptId, extractedContent.contentType);
+      throw new Error('No prompt content provided');
     }
 
     if (!promptContent) {
-      throw new Error(`Prompt not found for ID: ${effectivePromptId || 'custom'}`);
+      throw new Error('No prompt content provided');
     }
 
     // 5. Determine platform to use - tab-aware resolution

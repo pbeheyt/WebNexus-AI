@@ -9,34 +9,29 @@ import { StatusMessage } from '../components';
 import { Toast } from '../components';
 import { useContent, ContentTypeDisplay } from '../components';
 import { PlatformSelector } from './features/PlatformSelector';
-import { PromptTypeToggle } from './features/PromptTypeToggle';
 import { QuickPromptEditor } from './features/QuickPromptEditor';
-import { DefaultPromptConfig } from './features/DefaultPromptConfig';
 import { CustomPromptSelector } from './features/CustomPromptSelector';
-import { PROMPT_TYPES, STORAGE_KEYS } from '../shared/constants';
+import { STORAGE_KEYS } from '../shared/constants';
 import { INTERFACE_SOURCES } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
 
 export function Popup() {
   const { theme, toggleTheme } = useTheme();
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
-  const { promptType, selectedPromptId, quickPromptText } = usePrompts();
-  const { platforms, selectedPlatformId, selectPlatform, tabId } = usePopupPlatform();
+  const { selectedPromptId, quickPromptText } = usePrompts();
+  const { selectedPlatformId } = usePopupPlatform();
   const {
     statusMessage,
     updateStatus,
     toastState,
     showToastMessage,
-    notifyYouTubeError,
-    notifyCommentsNotLoaded
+    notifyYouTubeError
   } = useStatus();
 
   // Use the hook and extract all needed functions and states
   const {
     processContent,
-    isProcessing: isProcessingContent,
-    hasError,
-    error
+    isProcessing: isProcessingContent
   } = useContentProcessing(INTERFACE_SOURCES.POPUP);
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -46,9 +41,6 @@ export function Popup() {
     const messageListener = (message) => {
       if (message.action === 'youtubeTranscriptError') {
         notifyYouTubeError(message.message || 'Failed to retrieve YouTube transcript.');
-        setIsProcessing(false);
-      } else if (message.action === 'youtubeCommentsNotLoaded') {
-        notifyCommentsNotLoaded();
         setIsProcessing(false);
       } else if (message.action === 'apiResponseReady') {
         updateStatus('API response ready');
@@ -64,7 +56,7 @@ export function Popup() {
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
     };
-  }, [notifyYouTubeError, notifyCommentsNotLoaded, updateStatus, showToastMessage]);
+  }, [notifyYouTubeError, updateStatus, showToastMessage]);
 
   const openSettings = () => {
     try {
@@ -111,85 +103,54 @@ export function Popup() {
   };
 
   /**
-   * Get prompt content by ID
-   * @param {string} promptId - The prompt ID
-   * @param {string} contentType - The content type
+   * Get actual prompt content to use
    * @returns {Promise<string|null>} The prompt content
    */
-  const getPromptContent = async (promptId, contentType) => {
-    // Handle quick prompt
-    if (promptId === "quick") {
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.QUICK_PROMPTS);
-      return result.quick_prompts?.[contentType] || null;
+  const getActualPromptContent = async () => {
+    // First check if we have a quick prompt
+    if (quickPromptText && quickPromptText.trim()) {
+      return quickPromptText.trim();
     }
-
-    // If ID matches content type, it's a default prompt
-    if (promptId === contentType) {
+    
+    // If no quick prompt, check for selected custom prompt
+    if (selectedPromptId) {
       try {
-        // Get user preferences
-        const userPreferences = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES);
-        const typePreferences = userPreferences.default_prompt_preferences?.[contentType] || {};
+        const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+        
+        // First try to find the prompt in the content-specific storage
+        let promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS]?.[contentType]?.prompts?.[selectedPromptId]?.content;
 
-        // Get promptBuilder
-        const promptBuilder = await import('../services/PromptBuilder').then(m => m.default);
+        // If not found, check in the shared storage
+        if (!promptContent && result[STORAGE_KEYS.CUSTOM_PROMPTS]?.shared?.prompts?.[selectedPromptId]) {
+          promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS].shared.prompts[selectedPromptId].content;
+        }
 
-        // Build prompt using the preferences
-        return await promptBuilder.buildPrompt(contentType, typePreferences);
+        return promptContent;
       } catch (error) {
-        console.error('Error building default prompt:', error);
+        console.error('Error loading custom prompt:', error);
         return null;
       }
     }
-
-    // For custom prompts
-    try {
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-
-      // First try to find the prompt in the content-specific storage
-      let promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS]?.[contentType]?.prompts?.[promptId]?.content;
-
-      // If not found, check in the shared storage
-      if (!promptContent && result[STORAGE_KEYS.CUSTOM_PROMPTS]?.shared?.prompts?.[promptId]) {
-        promptContent = result[STORAGE_KEYS.CUSTOM_PROMPTS].shared.prompts[promptId].content;
-      }
-
-      return promptContent || null;
-    } catch (error) {
-      console.error('Error loading custom prompt:', error);
-      return null;
-    }
+    
+    // No valid prompt found
+    return null;
   };
 
   const handleProcess = async () => {
     if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id) return;
 
-    // Check if quick prompt is empty when using quick prompt type
-    if (promptType === PROMPT_TYPES.QUICK && !quickPromptText.trim()) {
-      updateStatus('Please enter a prompt in the Quick Prompt editor');
-      showToastMessage('Quick Prompt cannot be empty', 'error');
-      return;
-    }
-
     setIsProcessing(true);
     updateStatus('Checking page content...', true);
 
     try {
-      // Get prompt content
-      const promptContent = await getPromptContent(selectedPromptId, contentType);
+      // Get actual prompt content to use
+      const promptContent = await getActualPromptContent();
 
       if (!promptContent) {
-        updateStatus('Error: Could not load prompt content', false);
+        updateStatus('Error: No prompt content available', false);
         setIsProcessing(false);
-        showToastMessage('Could not load prompt content', 'error');
+        showToastMessage('Please enter a Quick Prompt or select a Custom Prompt', 'error');
         return;
-      }
-
-      // Check for YouTube-specific requirements
-      let commentAnalysisRequired = false;
-      if (contentType === 'youtube' && promptType === PROMPT_TYPES.DEFAULT) {
-        const preferences = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES);
-        const youtubePrefs = preferences.default_prompt_preferences?.youtube || {};
-        commentAnalysisRequired = youtubePrefs.commentAnalysis === true;
       }
 
       // Clear any existing content in storage
@@ -206,9 +167,7 @@ export function Popup() {
 
       const result = await processContent({
         platformId: selectedPlatformId,
-        promptId: selectedPromptId,
-        promptContent,
-        commentAnalysisRequired,
+        promptContent: promptContent,
         useApi: false
       });
 
@@ -225,6 +184,19 @@ export function Popup() {
       showToastMessage(`Error: ${error.message}`, 'error');
       setIsProcessing(false);
     }
+  };
+
+  // Determine if processing should be enabled
+  const shouldEnableProcessing = () => {
+    // Either quick prompt text or selected custom prompt must be available
+    const hasPrompt = (quickPromptText && quickPromptText.trim()) || selectedPromptId;
+    
+    return !isProcessingContent && 
+           !isProcessing && 
+           isSupported && 
+           !contentLoading && 
+           currentTab?.id && 
+           hasPrompt;
   };
 
   return (
@@ -304,7 +276,7 @@ export function Popup() {
 
       <Button
         onClick={handleProcess}
-        disabled={isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id}
+        disabled={!shouldEnableProcessing()}
         className="w-full mb-2"
       >
         {isProcessingContent || isProcessing ? 'Processing...' : 'Process Content'}
@@ -316,14 +288,14 @@ export function Popup() {
         <PlatformSelector />
       </div>
 
-      <div className="mt-2">
-        <PromptTypeToggle />
-      </div>
-
-      <div className="mt-2">
-        {promptType === PROMPT_TYPES.DEFAULT && <DefaultPromptConfig />}
-        {promptType === PROMPT_TYPES.CUSTOM && <CustomPromptSelector />}
-        {promptType === PROMPT_TYPES.QUICK && <QuickPromptEditor />}
+      <div className="mt-2 grid grid-cols-1 gap-2">
+        <QuickPromptEditor />
+        <div className="flex items-center justify-center">
+          <div className="h-px bg-gray-300 flex-grow"></div>
+          <span className="px-2 text-gray-500 text-xs">OR</span>
+          <div className="h-px bg-gray-300 flex-grow"></div>
+        </div>
+        <CustomPromptSelector />
       </div>
 
       <StatusMessage message={statusMessage} className="mt-2" />

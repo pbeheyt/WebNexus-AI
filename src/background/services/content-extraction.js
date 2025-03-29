@@ -118,36 +118,3 @@ export function checkYouTubeTranscriptAvailability(extractedContent) {
   
   return null;
 }
-
-/**
- * Check if YouTube comments are loaded
- * @param {Object} extractedContent - Extracted content object
- * @param {boolean} commentAnalysisRequired - Whether comment analysis is required
- * @returns {Object|null} Error object if comments not loaded, null otherwise
- */
-export function checkYouTubeCommentsStatus(extractedContent, commentAnalysisRequired) {
-  if (extractedContent?.contentType === 'youtube' && 
-      commentAnalysisRequired &&
-      extractedContent?.commentStatus?.state === 'not_loaded' &&
-      extractedContent?.commentStatus?.commentsExist) {
-      
-    logger.background.warn('YouTube comments required but not loaded');
-    
-    // Notify popup if it's open
-    try {
-      chrome.runtime.sendMessage({
-        action: 'youtubeCommentsNotLoaded'
-      });
-    } catch (error) {
-      // Ignore message sending error if popup isn't open
-    }
-    
-    return {
-      youtubeCommentsError: true,
-      errorMessage: extractedContent.commentStatus.message ||
-                  'Comments exist but are not loaded. Scroll down on YouTube to load comments.'
-    };
-  }
-  
-  return null;
-}
