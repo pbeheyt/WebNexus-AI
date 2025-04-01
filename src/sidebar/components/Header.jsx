@@ -79,13 +79,13 @@ function Header() {
   };
 
   return (
-    <div className="p-2 border-b border-theme"> {/* Minimal padding, bottom border */}
-      <div className="flex items-center gap-2 relative"> {/* Main horizontal layout */}
+    <div className="border-b border-theme"> {/* Minimal padding, bottom border */}
+      <div className="flex items-center gap-2 relative px-4 py-2"> {/* Main horizontal layout */}
         {selectedPlatform ? (
           <div ref={triggerRef} className="relative flex items-center">
             <button
               onClick={() => setIsPlatformDropdownOpen(!isPlatformDropdownOpen)}
-              className="flex items-center gap-1 p-1 rounded hover:bg-theme-hover focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex items-center gap-1 p-1.5 rounded hover:bg-theme-hover focus:outline-none focus:ring-1 focus:ring-primary"
               aria-label="Change Platform"
               aria-haspopup="true"
               aria-expanded={isPlatformDropdownOpen}
@@ -93,7 +93,7 @@ function Header() {
               <img
                 src={selectedPlatform.iconUrl}
                 alt={`${selectedPlatform.name} logo`}
-                className="w-5 h-5 object-contain"
+                className="w-6 h-6 object-contain"
               />
               <ChevronDownIcon />
             </button>

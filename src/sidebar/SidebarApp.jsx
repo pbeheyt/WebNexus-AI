@@ -4,7 +4,7 @@ import { useSidebarPlatform } from '../contexts/platform';
 import Header from './components/Header'; // This is the modified header (platform/model selection)
 import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
-import { useContent, AppHeader } from '../components'; // Import AppHeader
+import { useContent, AppHeader, ContentTypeDisplay } from '../components'; // Import AppHeader & ContentTypeDisplay
 import { MESSAGE_TYPES } from './constants';
 import { setupMessageHandlers } from './services/IframeMessaging';
 
@@ -79,6 +79,7 @@ export default function SidebarApp() {
         </AppHeader>
       </div>
       {/* Modified Header (Platform/Model Selection) - No longer needs onClose */}
+      <ContentTypeDisplay className="mx-4 my-2" />
       <Header />
       <ChatArea/>
       <UserInput/>
