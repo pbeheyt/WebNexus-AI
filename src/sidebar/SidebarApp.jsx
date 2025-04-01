@@ -64,8 +64,8 @@ export default function SidebarApp() {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Header onClose={handleClose} />
-      <ChatArea className= "relative z-30"/>
-      <UserInput className= "relative z-20"/>
+      <ChatArea/>
+      <UserInput/>
     </div>
   );
 }

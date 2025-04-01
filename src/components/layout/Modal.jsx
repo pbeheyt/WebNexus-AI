@@ -60,7 +60,7 @@ export function Modal({
       aria-modal="true"
       role="dialog"
     >
-      <div 
+      <div
         ref={modalRef}
         className={`bg-theme-primary rounded-lg shadow-theme-medium ${sizeClasses[size]} w-full max-h-[90vh] overflow-auto ${className}`}
         onClick={(e) => e.stopPropagation()}
