@@ -12,12 +12,14 @@ const Header = () => {
   
   return (
     <header className="flex items-center justify-between mb-6 pb-4 border-b border-theme">
-      <h1 className="text-xl font-semibold flex items-center gap-3">
-        <svg className="text-primary w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" fill="currentColor"/>
-          <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
-        </svg>
-        AI Content Summarizer Settings
+      {/* Updated h1: text size, logo, text content */}
+      <h1 className="text-lg font-semibold flex items-center"> {/* Changed text-xl to text-lg, removed gap */}
+        <img 
+          src={chrome.runtime.getURL('images/icon128.png')} 
+          alt="AI Content Assistant logo" 
+          className="w-5 h-5 mr-2" // Added img tag with specified classes
+        />
+        AI Content Assistant {/* Changed text content */}
       </h1>
       
       <div className="flex items-center gap-2">
@@ -45,13 +47,17 @@ const Header = () => {
           )}
         </button>
         
-        <Button 
-          onClick={handleBackClick}
-          variant="secondary"
-          className="back-btn py-2 px-3"
+        {/* Replaced Button component with a simple button and X icon */}
+        <button
+          onClick={() => window.close()} // Changed handler
+          className="p-1 ml-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors" // Applied new classes
+          title="Close Settings" // Added title
         >
-          ← Back to Summarizer
-        </Button>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" stroke="currentColor">
+            <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
     </header>
   );
