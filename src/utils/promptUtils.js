@@ -12,28 +12,44 @@ export async function loadRelevantPrompts(contentType) {
     const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
     const promptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
 
-    // Get prompts for the specific content type
-    const typeSpecificPrompts = promptsByType[contentType] || [];
-    
-    // Get shared prompts, ensuring they are not duplicated if contentType is SHARED_TYPE
-    const sharedPrompts = (contentType !== SHARED_TYPE && promptsByType[SHARED_TYPE]) 
-      ? promptsByType[SHARED_TYPE] 
-      : [];
+    // Step 1: Correctly access the .prompts object for the given contentType
+    const typePromptsObj = promptsByType[contentType]?.prompts || {};
 
-    // Combine and remove potential duplicates (e.g., if a shared prompt somehow ended up in a specific type)
-    const combinedPrompts = [...typeSpecificPrompts, ...sharedPrompts];
+    // Step 2: Correctly access the .prompts object for SHARED_TYPE, avoid duplication
+    const sharedPromptsObj = contentType !== SHARED_TYPE 
+      ? (promptsByType[SHARED_TYPE]?.prompts || {}) 
+      : {};
+
+    // Step 3: Convert type-specific prompts object to array and add contentType
+    const typeSpecificPromptsArray = Object.values(typePromptsObj).map(prompt => ({
+      ...prompt,
+      contentType: contentType 
+    }));
+
+    // Step 4: Convert shared prompts object to array and add contentType
+    const sharedPromptsArray = Object.values(sharedPromptsObj).map(prompt => ({
+      ...prompt,
+      contentType: SHARED_TYPE
+    }));
+
+    // Step 5: Combine the arrays
+    const combinedPrompts = [...typeSpecificPromptsArray, ...sharedPromptsArray];
+
+    // Step 6: Ensure uniqueness using a Map based on prompt.id
     const uniquePromptsMap = new Map();
     combinedPrompts.forEach(prompt => {
-      if (prompt && prompt.id) { // Basic validation
+      if (prompt && prompt.id) { // Ensure prompt and id exist
         uniquePromptsMap.set(prompt.id, prompt);
       }
     });
 
-    const relevantPrompts = Array.from(uniquePromptsMap.values());
+    // Step 7: Convert Map values back to an array
+    let relevantPrompts = Array.from(uniquePromptsMap.values());
 
-    // Sort prompts alphabetically by name
+    // Step 8: Sort prompts alphabetically by name
     relevantPrompts.sort((a, b) => a.name.localeCompare(b.name));
 
+    // Step 9: Return the sorted array
     return relevantPrompts;
   } catch (error) {
     console.error("Error loading relevant prompts:", error);
