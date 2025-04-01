@@ -107,7 +107,7 @@ export function Popup() {
   const handleProcessWithText = async (text) => {
     if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id || !text.trim()) return;
 
-    const promptContent = text.trim();
+    const promptContent = text.trim(); // Use the passed text directly
     setIsProcessing(true);
     updateStatus('Checking page content...', true);
 
@@ -118,7 +118,7 @@ export function Popup() {
         [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
         [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: null,
         [STORAGE_KEYS.SCRIPT_INJECTED]: false,
-        [STORAGE_KEYS.PRE_PROMPT]: promptContent // Store the final prompt
+        [STORAGE_KEYS.PRE_PROMPT]: promptContent // Store the final prompt (using the text argument)
       });
 
       // Process content using the hook
@@ -241,7 +241,7 @@ export function Popup() {
           isProcessing={isProcessingContent || isProcessing}
           contentType={contentType}
           showTokenInfo={false}
-          layoutVariant='popup'
+          layoutVariant="popup" // Ensure string literal
           onCancel={null} // No cancel button in popup variant
         />
       </div>

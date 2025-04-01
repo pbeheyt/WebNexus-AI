@@ -189,41 +189,62 @@ function UnifiedInput({
   
   // --- Popup Variant ---
   else if (layoutVariant === 'popup') {
-    return (
-      <div className={`bg-theme-surface border border-theme rounded-md p-3 ${className}`}>
-        <TextArea
-          ref={textareaRef}
-          value={value}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled || isProcessing}
-          autoResize={true}
-          minHeight={60} // Slightly taller default for popup?
-          maxHeight={150}
-          className="w-full bg-transparent focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none resize-none mb-2"
-        />
-        <div className="flex justify-between items-center">
-           {/* Prompt Selection Button ('P') */}
-           <button
-              onClick={openModal}
-              disabled={disabled || isProcessing}
-              className={`flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 rounded w-7 h-7 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              aria-label="Select prompt"
-              title="Select a custom prompt"
-            >
-              <span className="font-semibold text-sm">P</span> 
-            </button>
+    // Determine Send button style for popup
+    const popupSendButtonDisabled = !value.trim() || disabled || isProcessing;
+    const popupSendButtonStyle = popupSendButtonDisabled
+      ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-white dark:text-gray-400' // Disabled style
+      : 'bg-primary hover:bg-primary-dark text-white'; // Active style (adjust classes based on your theme/design system)
 
-          {/* Submit Button */}
-          <Button
-            onClick={handleSubmit}
-            disabled={!value.trim() || disabled || isProcessing}
-            variant={isProcessing ? 'inactive' : 'primary'}
-            size="md"
-          >
-            {isProcessing ? 'Processing...' : 'Submit'}
-          </Button>
+    return (
+      <div className={`flex flex-col ${className}`}>
+        {/* Input Area (Mimicking sidebar structure) */}
+        <div className="border border-theme rounded-lg p-2 bg-theme-surface">
+          <div className="relative">
+            <TextArea
+              ref={textareaRef}
+              value={value}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={disabled || isProcessing}
+              autoResize={true}
+              minHeight={60} // Adjust as needed
+              maxHeight={150} // Adjust as needed
+              className="w-full py-2 px-3 pr-20 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary" // Added text/placeholder colors
+            />
+            
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              {/* Prompt Selection Button ('P') */}
+              <button
+                onClick={openModal}
+                disabled={disabled || isProcessing}
+                className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-7 h-7 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                aria-label="Select prompt"
+                title="Select a custom prompt"
+              >
+                <span className="font-semibold text-sm">P</span> 
+              </button>
+              
+              {/* Send Button (Popup) */}
+              <button
+                className={`flex items-center justify-center cursor-pointer border-none outline-none ${popupSendButtonStyle} w-7 h-7 rounded`}
+                onClick={handleSubmit}
+                disabled={popupSendButtonDisabled}
+                aria-label="Send"
+                title="Send"
+              >
+                {/* Upward arrow icon for send */}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 20V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          {/* Optional: Hint text like sidebar */}
+          {/* <div className="mt-1 text-xs text-theme-secondary px-1">
+            Press Enter to send
+          </div> */}
         </div>
 
         <PromptSelectionModal
