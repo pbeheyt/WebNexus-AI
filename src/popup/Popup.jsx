@@ -79,12 +79,12 @@ export function Popup() {
       // If we have a current tab, send the toggle message
       if (currentTab?.id) {
         updateStatus('Toggling sidebar...', true);
-        
+
         const response = await chrome.runtime.sendMessage({
           action: 'toggleSidebar',
           tabId: currentTab.id
         });
-        
+
         if (response && response.success) {
           updateStatus(`Sidebar ${response.visible ? 'opened' : 'closed'}`);
           // Auto-close the popup after successful toggle
@@ -156,7 +156,7 @@ export function Popup() {
         </h1>
 
         <div className="flex items-center">
-          
+
           {/* Theme toggle button */}
           <button
             onClick={toggleTheme}
@@ -223,14 +223,14 @@ export function Popup() {
 
       {/* Removed main Process Content Button */}
 
-      <ContentTypeDisplay />
+      <ContentTypeDisplay className="mb-3" /> {/* Added mb-3 */}
 
-      <div className="mt-2">
+      <div className="mb-3"> {/* Changed mt-2 to mb-3 */}
         <PlatformSelector />
       </div>
 
       {/* Replaced QuickPromptEditor and CustomPromptSelector with UnifiedInput */}
-      <div className="mt-2">
+      <div> {/* Removed mt-2 */}
         <UnifiedInput
           value={inputText}
           onChange={setInputText}

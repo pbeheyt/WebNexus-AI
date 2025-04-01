@@ -202,7 +202,7 @@ function UnifiedInput({
     return (
       <div className={`flex flex-col ${className}`}>
         {/* Input Area (Mimicking sidebar structure) */}
-        <div className="border border-theme rounded-lg p-2 bg-theme-surface">
+        <div className="border border-theme rounded-lg p-3 bg-theme-surface"> {/* Changed p-2 to p-3 */}
           <div className="relative">
             <TextArea
               ref={textareaRef}

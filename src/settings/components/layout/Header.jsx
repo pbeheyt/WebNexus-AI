@@ -29,7 +29,7 @@ const Header = () => {
           title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
         >
           {theme === 'dark' ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"> {/* Changed w-5 h-5 to w-4 h-4 */}
               <circle cx="12" cy="12" r="5"></circle>
               <line x1="12" y1="1" x2="12" y2="3"></line>
               <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -41,7 +41,7 @@ const Header = () => {
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"> {/* Changed w-5 h-5 to w-4 h-4 */}
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21.21 12.79z"></path>
             </svg>
           )}
@@ -50,7 +50,7 @@ const Header = () => {
         {/* Replaced Button component with a simple button and X icon */}
         <button
           onClick={() => window.close()} // Changed handler
-          className="p-1 ml-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors" // Applied new classes
+          className="p-2 ml-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors" // Changed p-1 to p-2
           title="Close Settings" // Added title
         >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" stroke="currentColor">

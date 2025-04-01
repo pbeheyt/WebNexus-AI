@@ -77,7 +77,7 @@ export function MessageBubble({
   // System messages (typically errors) with special styling
   if (isSystem) {
     return (
-      <div className={`p-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-4 py-3 ${className}`}>
+      <div className={`p-3 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-4 py-3 ${className}`}> {/* Changed p-4 to p-3 */}
         <div className="break-words overflow-hidden">{formatContent(content)}</div>
       </div>
     );
@@ -86,8 +86,8 @@ export function MessageBubble({
   // User messages with cleaner grey color scheme
   if (isUser) {
     return (
-      <div className={`p-4 w-full flex justify-end ${className}`}>
-        <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-4 max-w-[85%] overflow-hidden">
+      <div className={`p-4 w-full flex justify-end ${className}`}> {/* Outer div padding remains p-4 */}
+        <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden"> {/* Changed p-4 to p-3 */}
           <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{formatContent(content)}</div>
         </div>
       </div>
@@ -96,7 +96,7 @@ export function MessageBubble({
 
   // Assistant messages with no bubble, taking full width
   return (
-    <div className={`p-4 w-full group relative ${className}`}>
+    <div className={`p-3 w-full group relative ${className}`}> {/* Changed p-4 to p-3 */}
       {/* Main content */}
       <div className="whitespace-pre-wrap break-words overflow-hidden text-gray-900 dark:text-gray-100">
         {formatContent(content)}

@@ -100,7 +100,7 @@ function Header({ onClose }) {
         <ContentTypeDisplay className="w-full" />
       </div>
 
-      <div className="flex flex-row justify-between w-full relative z-30 px-2">
+      <div className="flex flex-row justify-between w-full relative z-30">
         {platforms.map((platform) => (
           <PlatformCard
             key={platform.id}
