@@ -80,12 +80,16 @@ function UnifiedInput({
   };
 
   const handlePromptSelected = (prompt) => {
-    onChange(prompt.content); // Update text area with selected prompt content
+    // onChange(prompt.content); // Removed: Don't update textarea directly
     setIsModalOpen(false);
-    // Focus textarea after selecting a prompt
-    if (textareaRef.current) {
-      textareaRef.current.focus();
+    // Added: Submit directly if possible
+    if (!disabled && !isProcessing) {
+      onSubmit(prompt.content);
     }
+    // Removed: Focus logic is handled elsewhere or not needed after auto-submit
+    // if (textareaRef.current) {
+    //   textareaRef.current.focus();
+    // }
   };
 
   const openModal = () => {
@@ -213,7 +217,7 @@ function UnifiedInput({
               className="w-full py-2 px-3 pr-20 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary" // Added text/placeholder colors
             />
             
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+            <div className="absolute right-2 top-2 flex items-center gap-2"> {/* Changed alignment */}
               {/* Prompt Selection Button ('P') */}
               <button
                 onClick={openModal}
