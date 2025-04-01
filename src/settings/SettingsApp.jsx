@@ -9,7 +9,7 @@ const SettingsApp = () => {
   return (
     <div className="container max-w-7xl mx-auto bg-theme-primary p-7 rounded-lg shadow-theme-medium text-theme-primary"> {/* Added text-theme-primary */}
       <div className="mb-6"> {/* Wrapper for AppHeader with bottom margin */}
-        <AppHeader>
+        <AppHeader showSettingsButton={false}>
           {/* Close button */}
           <button
             onClick={() => window.close()}
