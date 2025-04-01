@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSidebarPlatform } from '../contexts/platform';
-import Header from './components/Header';
+import Header from './components/Header'; // This is the modified header (platform/model selection)
 import ChatArea from './components/ChatArea';
 import UserInput from './components/UserInput';
-import { useContent } from '../components';
+import { useContent, AppHeader } from '../components'; // Import AppHeader
 import { MESSAGE_TYPES } from './constants';
 import { setupMessageHandlers } from './services/IframeMessaging';
 
@@ -62,8 +62,24 @@ export default function SidebarApp() {
   }
   
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden">
-      <Header onClose={handleClose} />
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary"> {/* Added theme classes */}
+      <div className="p-4 pb-0"> {/* Added padding wrapper for AppHeader */}
+        <AppHeader>
+          {/* Close button */}
+          <button
+            onClick={handleClose}
+            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
+            title="Close Sidebar"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
+              <path d="M18 6L6 18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 6L18 18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </AppHeader>
+      </div>
+      {/* Modified Header (Platform/Model Selection) - No longer needs onClose */}
+      <Header />
       <ChatArea/>
       <UserInput/>
     </div>
