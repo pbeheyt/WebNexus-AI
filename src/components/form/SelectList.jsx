@@ -82,13 +82,21 @@ export function SelectList({
   }
 
   // Normal state with options
+  // Custom arrow SVG (URL encoded) using currentColor
+  const customArrowStyle = {
+    backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'currentColor\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+    backgroundPosition: 'right 0.5rem center', // Position arrow
+    backgroundSize: '1.5em 1.5em', // Size arrow
+  };
+
   return (
     <div className={`relative w-full ${className}`}>
       <select
-        className="w-full p-2 border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-pointer text-sm focus:border-primary"
+        className={`appearance-none bg-theme-surface text-theme-primary border border-theme p-2 text-sm rounded-md focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none w-full bg-no-repeat pr-8 ${disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
         value={selectedValue || ''}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
+        style={customArrowStyle} // Apply custom arrow style
       >
         {!selectedValue && <option value="">{placeholder}</option>}
         
