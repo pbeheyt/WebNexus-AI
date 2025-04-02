@@ -92,7 +92,7 @@ export default function SidebarApp() {
         
         {/* Fully collapsible section containing both ContentTypeDisplay and Header */}
         <div 
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          className={`transition-all duration-300 ease-in-out ${
             headerExpanded ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
