@@ -10,7 +10,7 @@ import { Toast } from '../components';
 import { useContent, ContentTypeDisplay } from '../components';
 import { PlatformSelector } from './features/PlatformSelector';
 // Removed QuickPromptEditor and CustomPromptSelector imports
-import UnifiedInput from '../components/input/UnifiedInput'; // Added UnifiedInput import
+import { UnifiedInput } from '../components/input/UnifiedInput'; // Changed to named import
 import { STORAGE_KEYS } from '../shared/constants';
 import { INTERFACE_SOURCES } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';

@@ -25,6 +25,10 @@ export { Tooltip } from './layout/Tooltip';
 export { MessageBubble } from './messaging/MessageBubble';
 export { MessageInput } from './messaging/MessageInput';
 
+// Input components (Added section for clarity)
+export { PromptDropdown } from './input/PromptDropdown';
+export { UnifiedInput } from './input/UnifiedInput'; // Added named export
+
 // Display components
 export { ContentProvider, useContent } from './content/ContentContext';
 export { ContentTypeDisplay } from './content/ContentTypeDisplay';

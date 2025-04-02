@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TextArea } from '../form/TextArea';
 import Button from '../core/Button'; // Assuming Button handles variants/disabled states
-import PromptSelectionModal from '../modals/PromptSelectionModal';
+import { PromptDropdown } from './PromptDropdown'; // Changed to named import
 import TokenCounter from '../../sidebar/components/TokenCounter'; // Only used in sidebar
 
 /**
@@ -25,7 +25,7 @@ import TokenCounter from '../../sidebar/components/TokenCounter'; // Only used i
  * @param {'popup' | 'sidebar'} props.layoutVariant - Controls the layout style
  * @param {string} [props.className=''] - Additional CSS classes for the outer container
  */
-function UnifiedInput({
+export function UnifiedInput({ // Added export keyword
   value,
   onChange,
   onSubmit,
@@ -41,16 +41,17 @@ function UnifiedInput({
   layoutVariant,
   className = ''
 }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Renamed state
   const textareaRef = useRef(null);
+  const promptButtonRef = useRef(null); // Added ref for the trigger button
 
   useEffect(() => {
-    // Focus textarea when not processing, useful after modal closes or initial load
-    if (!isProcessing && !isModalOpen && textareaRef.current) {
-       // Small delay might be needed if focus is lost immediately after modal close
+    // Focus textarea when not processing, useful after dropdown closes or initial load
+    if (!isProcessing && !isDropdownOpen && textareaRef.current) { // Use isDropdownOpen
+       // Small delay might be needed if focus is lost immediately after dropdown close
        setTimeout(() => textareaRef.current?.focus(), 50);
     }
-  }, [isProcessing, isModalOpen]);
+  }, [isProcessing, isDropdownOpen]); // Use isDropdownOpen
 
   const handleInputChange = (e) => {
     onChange(e.target.value);
@@ -80,23 +81,14 @@ function UnifiedInput({
   };
 
   const handlePromptSelected = (prompt) => {
-    // onChange(prompt.content); // Removed: Don't update textarea directly
-    setIsModalOpen(false);
-    // Added: Submit directly if possible
+    setIsDropdownOpen(false); // Close dropdown on selection
     if (!disabled && !isProcessing) {
-      onSubmit(prompt.content);
+      onSubmit(prompt.content); // Submit the selected prompt's content
     }
-    // Removed: Focus logic is handled elsewhere or not needed after auto-submit
-    // if (textareaRef.current) {
-    //   textareaRef.current.focus();
-    // }
+    // Focus logic is handled by the useEffect hook now
   };
 
-  const openModal = () => {
-    if (!disabled) {
-      setIsModalOpen(true);
-    }
-  };
+  // Removed openModal function as it's replaced by inline toggle
 
   // --- Sidebar Specific Button Logic ---
   const isStreamingActive = layoutVariant === 'sidebar' && isProcessing;
@@ -140,7 +132,8 @@ function UnifiedInput({
             <div className="absolute right-2 top-2 flex items-center gap-2">
               {/* Prompt Selection Button ('P') */}
               <button
-                onClick={openModal}
+                ref={promptButtonRef} // Added ref
+                onClick={() => setIsDropdownOpen(prev => !prev)} // Toggle dropdown
                 disabled={disabled || isProcessing}
                 className={`flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 rounded w-7 h-7 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 aria-label="Select prompt"
@@ -181,15 +174,17 @@ function UnifiedInput({
           </div>
         </div>
 
-        <PromptSelectionModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+        {/* Replaced Modal with Dropdown */}
+        <PromptDropdown
+          isOpen={isDropdownOpen}
+          onClose={() => setIsDropdownOpen(false)}
           onSelectPrompt={handlePromptSelected}
           contentType={contentType}
+          anchorRef={promptButtonRef}
         />
       </div>
     );
-  } 
+  }
   
   // --- Popup Variant ---
   else if (layoutVariant === 'popup') {
@@ -220,7 +215,8 @@ function UnifiedInput({
             <div className="absolute right-2 top-2 flex items-center gap-2"> {/* Changed alignment */}
               {/* Prompt Selection Button ('P') */}
               <button
-                onClick={openModal}
+                ref={promptButtonRef} // Added ref (Ensure only one element uses this ref if logic differs significantly)
+                onClick={() => setIsDropdownOpen(prev => !prev)} // Toggle dropdown
                 disabled={disabled || isProcessing}
                 className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-7 h-7 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 aria-label="Select prompt"
@@ -251,11 +247,13 @@ function UnifiedInput({
           </div> */}
         </div>
 
-        <PromptSelectionModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+        {/* Replaced Modal with Dropdown */}
+        <PromptDropdown
+          isOpen={isDropdownOpen}
+          onClose={() => setIsDropdownOpen(false)}
           onSelectPrompt={handlePromptSelected}
           contentType={contentType}
+          anchorRef={promptButtonRef} // Use the same ref
         />
       </div>
     );
@@ -265,4 +263,4 @@ function UnifiedInput({
   return <div className="text-red-500">Error: Invalid layoutVariant specified.</div>;
 }
 
-export default UnifiedInput;
+// Removed default export

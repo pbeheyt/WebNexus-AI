@@ -1,11 +1,11 @@
 // src/sidebar/components/UserInput.jsx
 import React from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
-import UnifiedInput from '../../components/input/UnifiedInput'; // Changed import
+import { UnifiedInput } from '../../components/input/UnifiedInput'; // Changed to named import
 import TokenCounter from './TokenCounter';
 import { useContent } from '../../components/content/ContentContext'; // Added import
 
-function UserInput({ className = '' }) {
+export function UserInput({ className = '' }) { // Added export keyword
   const { contentType } = useContent(); // Added hook call
   const {
     inputValue,
@@ -55,4 +55,4 @@ function UserInput({ className = '' }) {
   );
 }
 
-export default UserInput;
+// Removed default export

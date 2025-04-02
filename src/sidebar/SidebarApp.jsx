@@ -4,7 +4,7 @@ import { useSidebarPlatform } from '../contexts/platform';
 import { useSidebarChat } from './contexts/SidebarChatContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
-import UserInput from './components/UserInput';
+import { UserInput } from './components/UserInput'; // Changed to named import
 import { useContent, AppHeader, ContentTypeDisplay } from '../components';
 import { MESSAGE_TYPES } from './constants';
 import { setupMessageHandlers } from './services/IframeMessaging';
