@@ -149,8 +149,9 @@ export function Popup() {
   // Removed getActualPromptContent, handleProcess, shouldEnableProcessing
   return (
     <div className="min-w-[320px] p-2 bg-theme-primary text-theme-primary">
-      <AppHeader>
-        {/* Sidebar toggle button */}
+      {/* Pass closePopup function to the new onClose prop */}
+      <AppHeader onClose={closePopup}>
+        {/* Sidebar toggle button - remains as a child for now, or could be refactored similarly */}
         <button
           onClick={toggleSidebar}
           className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
@@ -161,18 +162,7 @@ export function Popup() {
             <line x1="15" y1="3" x2="15" y2="21" stroke="currentColor" strokeWidth="2"/>
           </svg>
         </button>
-
-        {/* Close button */}
-        <button
-          onClick={closePopup}
-          className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
-          title="Close Popup"
-        >
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" stroke="currentColor">
-            <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        {/* Removed the explicit Close button from here */}
       </AppHeader>
 
       <ContentTypeDisplay className="mb-3" />

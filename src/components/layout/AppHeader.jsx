@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-export function AppHeader({ children, showSettingsButton = true }) {
+// Re-added children prop, added showRefreshButton prop
+export function AppHeader({ children, showSettingsButton = true, showRefreshButton = false, onClose }) {
   const { theme, toggleTheme } = useTheme();
 
   const openSettings = () => {
@@ -60,8 +61,38 @@ export function AppHeader({ children, showSettingsButton = true }) {
           </button>
         )}
 
-        {/* Placeholder for context-specific buttons */}
+        {/* Render any custom buttons passed as children */}
         {children}
+
+        {/* Conditionally render Refresh button */}
+        {showRefreshButton && (
+          <button
+            // onClick={} // No handler for now
+            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
+            title="Refresh"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+              <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+            </svg>
+          </button>
+        )}
+
+        {/* Conditionally render Close button if onClose prop is provided */}
+        {typeof onClose === 'function' && (
+          <button
+            onClick={onClose}
+            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
+            title="Close"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        )}
       </div>
     </header>
   );

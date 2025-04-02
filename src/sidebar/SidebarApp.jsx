@@ -64,19 +64,9 @@ export default function SidebarApp() {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary"> {/* Added theme classes */}
       <div className="p-4 pb-0"> {/* Added padding wrapper for AppHeader */}
-        <AppHeader>
-          {/* Close button */}
-          <button
-            onClick={handleClose}
-            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
-            title="Close Sidebar"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
-              <path d="M18 6L6 18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M6 6L18 18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </AppHeader>
+        {/* Pass handleClose function to the new onClose prop and enable the refresh button */}
+        <AppHeader onClose={handleClose} showRefreshButton={true} />
+        {/* Removed the explicit Close button from here */}
       </div>
       {/* Modified Header (Platform/Model Selection) - No longer needs onClose */}
       <ContentTypeDisplay className="mx-4 my-2" />
