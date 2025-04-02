@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useRef, createContext } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import ModelSelector from './ModelSelector';
-import { Tooltip } from '../../components/layout/Tooltip';
-
 // Create a context for dropdown state coordination
 export const DropdownContext = createContext({
   openDropdown: null,
@@ -30,37 +28,17 @@ const ApiSettingsIcon = () => (
 );
 
 function Header() {
-  const { platforms, selectedPlatformId, selectPlatform } = useSidebarPlatform();
-  const [platformCredentials, setPlatformCredentials] = useState({});
+  const { 
+    platforms, 
+    selectedPlatformId, 
+    selectPlatform, 
+    hasAnyPlatformCredentials // Use the new state from context
+  } = useSidebarPlatform();
   const [openDropdown, setOpenDropdown] = useState(null);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
-  const apiIconRef = useRef(null);
   
   const isPlatformDropdownOpen = openDropdown === 'platform';
-
-  // Fetch credential status
-  useEffect(() => {
-    const checkAllCredentials = async () => {
-      if (!platforms || platforms.length === 0) return;
-      const credentialStatus = {};
-      for (const platform of platforms) {
-        try {
-          const response = await chrome.runtime.sendMessage({
-            action: 'credentialOperation',
-            operation: 'get',
-            platformId: platform.id
-          });
-          credentialStatus[platform.id] = response?.success && !!response?.credentials;
-        } catch (error) {
-          console.error(`Error checking credentials for ${platform.id}:`, error);
-          credentialStatus[platform.id] = false;
-        }
-      }
-      setPlatformCredentials(credentialStatus);
-    };
-    checkAllCredentials();
-  }, [platforms]);
 
   // Handle clicks outside the dropdown
   useEffect(() => {
@@ -84,23 +62,17 @@ function Header() {
     };
   }, [openDropdown]);
 
-  // Filter platforms to only show those with valid credentials
-  const availablePlatforms = platforms.filter(p => platformCredentials[p.id]);
+  // Filter platforms for the dropdown (can still filter based on individual check if needed, but display depends on hasAnyPlatformCredentials)
+  // For simplicity, let's assume the dropdown shows all platforms for now, 
+  // or we could re-introduce a check here if needed. Let's show all for now.
+  const availablePlatforms = platforms; // Show all in dropdown, selection logic handles availability
   
-  // Check if there are any platforms with credentials
-  const hasPlatformsWithCredentials = availablePlatforms.length > 0;
+  // Find selected platform details (needed for icon)
+  const selectedPlatform = platforms.find(p => p.id === selectedPlatformId);
   
-  // Find selected platform only from available platforms
-  const selectedPlatform = hasPlatformsWithCredentials 
-    ? availablePlatforms.find(p => p.id === selectedPlatformId) || availablePlatforms[0]
-    : null;
-  
-  // Auto-select first available platform if current selection is invalid
-  useEffect(() => {
-    if (hasPlatformsWithCredentials && (!selectedPlatformId || !availablePlatforms.some(p => p.id === selectedPlatformId))) {
-      selectPlatform(availablePlatforms[0].id);
-    }
-  }, [selectedPlatformId, hasPlatformsWithCredentials, availablePlatforms, selectPlatform]);
+  // Auto-select logic might need adjustment if the default platform doesn't have credentials.
+  // This might be handled better by ensuring the initial selectedPlatformId respects credentials.
+  // For now, let's remove the auto-select effect here as the context handles initial selection.
 
   const handleSelectPlatform = (platformId) => {
     selectPlatform(platformId);
@@ -111,83 +83,77 @@ function Header() {
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div className="border-b border-theme">
         <div className="flex items-end gap-2 px-4 py-2">
-          {/* Platform Selector with conditional rendering */}
-          <div className="relative flex items-center self-end">
-            {hasPlatformsWithCredentials ? (
-              // Standard platform selector when credentials exist
-              <div ref={triggerRef}>
-                <button
-                  onClick={() => setOpenDropdown(openDropdown === 'platform' ? null : 'platform')}
-                  className="flex items-center h-9 px-2 py-1.5 rounded focus:outline-none transition-colors"
-                  aria-label="Change Platform"
-                  aria-haspopup="true"
-                  aria-expanded={isPlatformDropdownOpen}
-                >
-                  <span className="mr-1 text-theme-secondary">
-                    <ChevronIcon />
-                  </span>
-                  <img
-                    src={selectedPlatform.iconUrl}
-                    alt={`${selectedPlatform.name} logo`}
-                    className="w-6 h-6 object-contain"
-                  />
-                </button>
+          {hasAnyPlatformCredentials ? (
+            <>
+              {/* Platform Selector div (relative) */}
+              <div className="relative flex items-center self-end">
+                {selectedPlatform && ( // Ensure selectedPlatform exists before rendering button
+                  <div ref={triggerRef}>
+                    <button
+                      onClick={() => setOpenDropdown(openDropdown === 'platform' ? null : 'platform')}
+                      className="flex items-center h-9 px-2 py-1.5 rounded focus:outline-none transition-colors"
+                      aria-label="Change Platform"
+                      aria-haspopup="true"
+                      aria-expanded={isPlatformDropdownOpen}
+                    >
+                      <span className="mr-1 text-theme-secondary">
+                        <ChevronIcon />
+                      </span>
+                      <img
+                        src={selectedPlatform.iconUrl}
+                        alt={`${selectedPlatform.name} logo`}
+                        className="w-6 h-6 object-contain"
+                      />
+                    </button>
+                  </div>
+                )}
+
+                {/* Platform Dropdown */}
+                {isPlatformDropdownOpen && (
+                  <div
+                    ref={dropdownRef}
+                    className="absolute top-full left-0 mt-1 w-48 bg-theme-surface border border-theme rounded-md shadow-lg z-40 py-1"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="platform-menu-button"
+                  >
+                    {availablePlatforms.map((platform) => {
+                      const isSelected = platform.id === selectedPlatformId;
+                      return (
+                        <button
+                          key={platform.id}
+                          role="menuitem"
+                          className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-theme-hover ${
+                            isSelected ? 'font-medium' : ''
+                          }`}
+                          onClick={() => handleSelectPlatform(platform.id)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                              <img src={platform.iconUrl} alt="" className="w-4 h-4 object-contain" />
+                              <span className="text-sm">{platform.name}</span>
+                            </div>
+                            {isSelected && <CheckIcon />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ) : (
-              // API settings icon with tooltip when no credentials available
-              <div ref={apiIconRef} className="flex items-center h-9 px-2 py-1.5 rounded">
-                <ApiSettingsIcon />
-                <Tooltip 
-                  show={true} 
-                  message="Go to settings to manage API credentials" 
-                  position="right" 
-                  targetRef={apiIconRef}
+
+              {/* Model Selector div (flex-grow) */}
+              <div className="flex-grow self-end">
+                <ModelSelector 
+                  // Pass necessary props - hasPlatformsWithCredentials is no longer needed here
+                  selectedPlatformId={selectedPlatformId} 
                 />
               </div>
-            )}
-
-            {/* Platform Dropdown - Only show with valid credentials */}
-            {isPlatformDropdownOpen && hasPlatformsWithCredentials && (
-              <div
-                ref={dropdownRef}
-                className="absolute top-full left-0 mt-1 w-48 bg-theme-surface border border-theme rounded-md shadow-lg z-40 py-1"
-                role="menu"
-                aria-orientation="vertical"
-                aria-labelledby="platform-menu-button"
-              >
-                {availablePlatforms.map((platform) => {
-                  const isSelected = platform.id === selectedPlatformId;
-
-                  return (
-                    <button
-                      key={platform.id}
-                      role="menuitem"
-                      className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-theme-hover ${
-                        isSelected ? 'font-medium' : ''
-                      }`}
-                      onClick={() => handleSelectPlatform(platform.id)}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-2">
-                          <img src={platform.iconUrl} alt="" className="w-4 h-4 object-contain" />
-                          <span className="text-sm">{platform.name}</span>
-                        </div>
-                        {isSelected && <CheckIcon />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Model Selector takes remaining space */}
-          <div className="flex-grow self-end">
-            <ModelSelector 
-              hasPlatformsWithCredentials={hasPlatformsWithCredentials} 
-              selectedPlatformId={selectedPlatformId} 
-            />
-          </div>
+            </>
+          ) : (
+            // Placeholder when no credentials are set
+            <div className="h-9 w-full"></div> 
+          )}
         </div>
       </div>
     </DropdownContext.Provider>

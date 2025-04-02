@@ -30,7 +30,8 @@ export function createTabAwarePlatformContext(options = {}) {
     const [selectedPlatformId, setSelectedPlatformId] = useState(null);
     const [selectedModelId, setSelectedModelId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [hasCredentials, setHasCredentials] = useState(false);
+    const [hasCredentials, setHasCredentials] = useState(false); // For individual platform check
+    const [hasAnyPlatformCredentials, setHasAnyPlatformCredentials] = useState(false); // For overall check
     const [tabId, setTabId] = useState(null);
     
     // Get current tab ID on mount
@@ -72,6 +73,30 @@ export function createTabAwarePlatformContext(options = {}) {
             url: platform.url || null,
             iconUrl: chrome.runtime.getURL(platform.icon)
           }));
+
+          // Check credentials for all platforms (only if sidebar)
+          if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
+            const credentialChecks = platformList.map(platform => 
+              chrome.runtime.sendMessage({ 
+                action: 'credentialOperation', 
+                operation: 'get', 
+                platformId: platform.id 
+              }).catch(err => {
+                console.error(`Credential check failed for ${platform.id}:`, err);
+                return { success: false }; // Treat errors as no credentials
+              })
+            );
+            
+            const results = await Promise.allSettled(credentialChecks);
+            
+            const anyCredentialsFound = results.some(result => 
+              result.status === 'fulfilled' && 
+              result.value && 
+              result.value.success && 
+              result.value.credentials
+            );
+            setHasAnyPlatformCredentials(anyCredentialsFound);
+          }
           
           // Get tab-specific platform preference
           const tabPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES);
@@ -243,8 +268,9 @@ export function createTabAwarePlatformContext(options = {}) {
         models,
         selectedModel: selectedModelId,
         selectModel,
-        hasCredentials,
-        checkCredentials
+        hasCredentials, // Individual platform credential status (used by checkCredentials)
+        checkCredentials,
+        hasAnyPlatformCredentials // Overall credential status
       } : {})
     };
     
