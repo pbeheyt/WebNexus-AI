@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import ModelSelector from './ModelSelector';
-import { Tooltip } from '../../components/layout/Tooltip'; // Import Tooltip as named import
+import { Tooltip } from '../../components/layout/Tooltip';
 
 // SVG Icons (inline for simplicity)
-const ChevronDownIcon = () => (
+const ChevronIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
     <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 01.02-1.06z" clipRule="evenodd" />
   </svg>
@@ -15,7 +15,6 @@ const CheckIcon = () => (
     <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
   </svg>
 );
-
 
 function Header() {
   const { platforms, selectedPlatformId, selectPlatform } = useSidebarPlatform();
@@ -79,23 +78,27 @@ function Header() {
   };
 
   return (
-    <div className="border-b border-theme"> {/* Minimal padding, bottom border */}
-      <div className="flex items-end gap-2 relative px-4 py-2"> {/* Main horizontal layout */}
+    <div className="border-b border-theme">
+      <div className="flex items-end gap-2 px-4 py-2">
+        {/* Platform Selector - With chevron on left side and consistent height */}
         {selectedPlatform ? (
-          <div ref={triggerRef} className="relative flex items-center">
+          <div ref={triggerRef} className="relative flex items-center self-end">
             <button
               onClick={() => setIsPlatformDropdownOpen(!isPlatformDropdownOpen)}
-              className="flex items-center gap-1 p-1.5 rounded hover:bg-theme-hover focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex items-center h-9 px-2 py-1.5 rounded hover:bg-theme-hover focus:outline-none focus:ring-1 focus:ring-primary"
               aria-label="Change Platform"
               aria-haspopup="true"
               aria-expanded={isPlatformDropdownOpen}
             >
+              {/* Chevron moved to left side */}
+              <span className="mr-1 text-theme-secondary">
+                <ChevronIcon />
+              </span>
               <img
                 src={selectedPlatform.iconUrl}
                 alt={`${selectedPlatform.name} logo`}
                 className="w-6 h-6 object-contain"
               />
-              <ChevronDownIcon />
             </button>
 
             {/* Platform Dropdown */}
@@ -136,7 +139,7 @@ function Header() {
                       aria-disabled={isDisabled}
                     >
                       {isDisabled ? (
-                        <Tooltip text="Credentials required. Configure in settings." position="right">
+                        <Tooltip show={isDisabled} message="Credentials required. Configure in settings." position="right" targetRef={dropdownRef}>
                           {itemContent}
                         </Tooltip>
                       ) : (
@@ -149,11 +152,11 @@ function Header() {
             )}
           </div>
         ) : (
-          <div className="text-sm text-theme-secondary">Loading...</div> // Placeholder
+          <div className="h-9 flex items-center text-sm text-theme-secondary">Loading...</div>
         )}
 
         {/* Model Selector takes remaining space */}
-        <div className="flex-grow">
+        <div className="flex-grow self-end">
           <ModelSelector />
         </div>
       </div>
