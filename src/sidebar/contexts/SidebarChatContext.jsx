@@ -16,7 +16,8 @@ export function SidebarChatProvider({ children }) {
   const { 
     selectedPlatformId, 
     selectedModel, 
-    hasCredentials, 
+    hasCredentials, // Assuming this might still be used elsewhere
+    hasAnyPlatformCredentials, // Add this one
     tabId, 
     platforms, 
     getPlatformConfig 
@@ -328,7 +329,7 @@ export function SidebarChatProvider({ children }) {
       return;
     }
 
-    if (!hasCredentials) {
+    if (!hasAnyPlatformCredentials) { // Change this condition
       setMessages(prev => [...prev, {
         id: `msg_${Date.now()}`,
         role: MESSAGE_ROLES.SYSTEM,
