@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, createContext } from 'react';
+import React, { useEffect, useState, useRef, createContext, useContext } from 'react'; // Added useContext
 import { useSidebarPlatform } from '../../contexts/platform';
 import ModelSelector from './ModelSelector';
 // Create a context for dropdown state coordination
@@ -32,12 +32,20 @@ function Header() {
     platforms, 
     selectedPlatformId, 
     selectPlatform, 
-    hasAnyPlatformCredentials // Use the new state from context
+    hasAnyPlatformCredentials,
+    isLoading // Add isLoading from context if needed for initial render handling
   } = useSidebarPlatform();
   const [openDropdown, setOpenDropdown] = useState(null);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
-  
+  const { setOpenDropdown: setGlobalOpenDropdown } = useContext(DropdownContext); // Use context if needed elsewhere
+
+  // Filter platforms based on credentials
+  const availablePlatforms = platforms.filter(p => p.hasCredentials);
+
+  // Find selected platform details (use the original platforms list for details)
+  const selectedPlatformDetails = platforms.find(p => p.id === selectedPlatformId);
+
   const isPlatformDropdownOpen = openDropdown === 'platform';
 
   // Handle clicks outside the dropdown
@@ -62,22 +70,31 @@ function Header() {
     };
   }, [openDropdown]);
 
-  // Filter platforms for the dropdown (can still filter based on individual check if needed, but display depends on hasAnyPlatformCredentials)
-  // For simplicity, let's assume the dropdown shows all platforms for now, 
-  // or we could re-introduce a check here if needed. Let's show all for now.
-  const availablePlatforms = platforms; // Show all in dropdown, selection logic handles availability
-  
-  // Find selected platform details (needed for icon)
-  const selectedPlatform = platforms.find(p => p.id === selectedPlatformId);
-  
-  // Auto-select logic might need adjustment if the default platform doesn't have credentials.
-  // This might be handled better by ensuring the initial selectedPlatformId respects credentials.
-  // For now, let's remove the auto-select effect here as the context handles initial selection.
+  // Effect to handle selection change if current platform loses credentials
+  useEffect(() => {
+    // Don't run this logic while platforms are loading or if no platforms have credentials
+    if (isLoading || !hasAnyPlatformCredentials) return; 
+
+    const isSelectedPlatformAvailable = availablePlatforms.some(p => p.id === selectedPlatformId);
+
+    // If the selected platform is no longer available (lost credentials) 
+    // AND there are other available platforms, select the first available one.
+    if (!isSelectedPlatformAvailable && availablePlatforms.length > 0) {
+      selectPlatform(availablePlatforms[0].id);
+    }
+    // If the selected platform is not available and NO platforms are available,
+    // the hasAnyPlatformCredentials flag should handle hiding the controls.
+    
+  }, [platforms, selectedPlatformId, hasAnyPlatformCredentials, isLoading, selectPlatform, availablePlatforms]); // Add dependencies
+
 
   const handleSelectPlatform = (platformId) => {
     selectPlatform(platformId);
     setOpenDropdown(null);
   };
+
+  // Use selectedPlatformDetails for rendering the button icon/details
+  const selectedPlatformForDisplay = selectedPlatformDetails; 
 
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
@@ -87,7 +104,8 @@ function Header() {
             <>
               {/* Platform Selector div (relative) */}
               <div className="relative flex items-center self-end">
-                {selectedPlatform && ( // Ensure selectedPlatform exists before rendering button
+                {/* Use selectedPlatformForDisplay which might be non-credentialed temporarily */}
+                {selectedPlatformForDisplay && ( 
                   <div ref={triggerRef}>
                     <button
                       onClick={() => setOpenDropdown(openDropdown === 'platform' ? null : 'platform')}
@@ -100,8 +118,8 @@ function Header() {
                         <ChevronIcon />
                       </span>
                       <img
-                        src={selectedPlatform.iconUrl}
-                        alt={`${selectedPlatform.name} logo`}
+                        src={selectedPlatformForDisplay.iconUrl}
+                        alt={`${selectedPlatformForDisplay.name} logo`}
                         className="w-6 h-6 object-contain"
                       />
                     </button>
@@ -117,7 +135,8 @@ function Header() {
                     aria-orientation="vertical"
                     aria-labelledby="platform-menu-button"
                   >
-                    {availablePlatforms.map((platform) => {
+                    {/* Iterate over the filtered list */}
+                    {availablePlatforms.map((platform) => { 
                       const isSelected = platform.id === selectedPlatformId;
                       return (
                         <button
@@ -152,7 +171,9 @@ function Header() {
             </>
           ) : (
             // Placeholder when no credentials are set
-            <div className="h-9 w-full"></div> 
+            <div className="h-9 w-full flex items-center justify-center text-theme-secondary text-sm">
+              No API credentials configured. {/* Optional: Add message */}
+            </div> 
           )}
         </div>
       </div>

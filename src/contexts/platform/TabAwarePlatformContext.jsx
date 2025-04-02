@@ -67,12 +67,15 @@ export function createTabAwarePlatformContext(options = {}) {
           }
           
           // Transform to array with icon URLs
-          const platformList = Object.entries(config.aiPlatforms).map(([id, platform]) => ({
+          let platformList = Object.entries(config.aiPlatforms).map(([id, platform]) => ({
             id,
             name: platform.name,
             url: platform.url || null,
-            iconUrl: chrome.runtime.getURL(platform.icon)
+            iconUrl: chrome.runtime.getURL(platform.icon),
+            hasCredentials: false // Initialize with false
           }));
+
+          let anyCredentialsFound = false;
 
           // Check credentials for all platforms (only if sidebar)
           if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
@@ -89,36 +92,59 @@ export function createTabAwarePlatformContext(options = {}) {
             
             const results = await Promise.allSettled(credentialChecks);
             
-            const anyCredentialsFound = results.some(result => 
-              result.status === 'fulfilled' && 
-              result.value && 
-              result.value.success && 
-              result.value.credentials
-            );
-            setHasAnyPlatformCredentials(anyCredentialsFound);
+            // Update platformList with credential status
+            platformList = platformList.map((platform, index) => {
+              const result = results[index];
+              const hasCreds = result.status === 'fulfilled' && 
+                               result.value && 
+                               result.value.success && 
+                               result.value.credentials;
+              if (hasCreds) {
+                anyCredentialsFound = true; // Update overall flag if any platform has credentials
+              }
+              return { ...platform, hasCredentials: hasCreds };
+            });
+            
+            setHasAnyPlatformCredentials(anyCredentialsFound); // Set the overall flag
           }
           
           // Get tab-specific platform preference
           const tabPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES);
           const tabPlatformPrefs = tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
+          const lastUsedTabPlatform = tabPlatformPrefs[tabId];
           
           // Get global platform preference
           const globalPreferences = await chrome.storage.sync.get(globalStorageKey);
           const globalPlatformPref = globalPreferences[globalStorageKey];
           
-          // Use tab-specific preference if available, otherwise use global
-          const platformToUse = 
-            (tabId && tabPlatformPrefs[tabId]) ||
-            globalPlatformPref || 
-            config.defaultAiPlatform;
-          
-          // Set platforms and selected ID
+          // Determine the platform to use, prioritizing credentials
+          let platformToUse = null;
+          const credentialedPlatforms = platformList.filter(p => p.hasCredentials);
+
+          // Priority: 1. Last used on this tab (if credentialed)
+          if (lastUsedTabPlatform && platformList.find(p => p.id === lastUsedTabPlatform && p.hasCredentials)) {
+            platformToUse = lastUsedTabPlatform;
+          } 
+          // Priority: 2. Global preference (if credentialed)
+          else if (globalPlatformPref && platformList.find(p => p.id === globalPlatformPref && p.hasCredentials)) {
+            platformToUse = globalPlatformPref;
+          } 
+          // Priority: 3. First available credentialed platform
+          else if (credentialedPlatforms.length > 0) {
+            platformToUse = credentialedPlatforms[0].id;
+          } 
+          // Priority: 4. Default platform (even if not credentialed, as fallback)
+          else {
+             platformToUse = config.defaultAiPlatform; 
+          }
+
+          // Set platforms (now with credential status) and selected ID
           setPlatforms(platformList);
-          setSelectedPlatformId(platformToUse);
+          setSelectedPlatformId(platformToUse); // Use the determined platform ID
           
           // If this is sidebar, also load models for the selected platform
           if (interfaceType === INTERFACE_SOURCES.SIDEBAR && platformToUse) {
-            await loadModels(platformToUse);
+            await loadModels(platformToUse); // Ensure models load for the potentially changed platform
           }
         } catch (error) {
           console.error('Error loading platforms:', error);
