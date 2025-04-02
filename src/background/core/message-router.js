@@ -7,6 +7,7 @@ import { handleApiModelRequest } from '../api/api-coordinator.js';
 import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
 import { toggleSidebar, getSidebarState } from '../services/sidebar-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
+import { clearSingleTabData } from '../listeners/tab-state-listener.js';
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -156,5 +157,32 @@ function registerServiceHandlers() {
   messageHandlers.set('setTheme', (message, sender, sendResponse) => {
     handleThemeOperation(message, sendResponse);
     return true; // Keep channel open for async response
+  });
+
+  // Clear specific tab data (for sidebar refresh)
+  messageHandlers.set('clearTabData', (message, sender, sendResponse) => { // Remove async from here
+    if (!message.tabId) {
+      logger.background.error('clearTabData called without tabId');
+      sendResponse({ success: false, error: 'Missing tabId' });
+      return false; // Return false as sendResponse is called synchronously
+    }
+
+    // Call the async function and handle the promise explicitly
+    clearSingleTabData(message.tabId)
+      .then(success => {
+        if (success) {
+          logger.background.info(`clearTabData successful for tab ${message.tabId}, sending success response.`);
+          sendResponse({ success: true });
+        } else {
+          logger.background.warn(`clearTabData failed for tab ${message.tabId}, sending failure response.`);
+          sendResponse({ success: false, error: 'Failed to clear tab data in background' });
+        }
+      })
+      .catch(error => {
+        logger.background.error('Error during clearSingleTabData execution:', error);
+        sendResponse({ success: false, error: 'Internal error during tab data clearing' });
+      });
+
+    return true;
   });
 }

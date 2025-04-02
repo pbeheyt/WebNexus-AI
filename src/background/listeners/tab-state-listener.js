@@ -3,21 +3,71 @@ import { STORAGE_KEYS } from '../../shared/constants.js';
 import SidebarStateManager from '../../services/SidebarStateManager.js';
 import logger from '../../utils/logger.js';
 
-// List of all storage keys that are tab-specific and need cleanup
-const TAB_SPECIFIC_KEYS = [
-  STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-  STORAGE_KEYS.TAB_PLATFORM_PREFERENCES, 
+// List of tab-specific storage keys to clear on refresh (excluding sidebar visibility)
+const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR = [
+  STORAGE_KEYS.TAB_CHAT_HISTORIES,
+  STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+  STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
-  STORAGE_KEYS.TAB_SIDEBAR_STATES,
+  STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
+  STORAGE_KEYS.TAB_FORMATTED_CONTENT,
+  // Note: TAB_SIDEBAR_STATES is intentionally excluded to preserve visibility state.
+];
+
+// List of all storage keys that are tab-specific and need cleanup (used for onRemoved/periodic cleanup)
+// Note: This includes TAB_SIDEBAR_STATES which is handled by SidebarStateManager.cleanupTabStates
+const ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP = [
+  STORAGE_KEYS.TAB_FORMATTED_CONTENT,
+  STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
+  STORAGE_KEYS.TAB_MODEL_PREFERENCES,
+  STORAGE_KEYS.TAB_SIDEBAR_STATES, // Keep this for general cleanup
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
   STORAGE_KEYS.TAB_SYSTEM_PROMPTS
 ];
 
+
 /**
- * Clean up a specific tab-based storage item
+ * Clears specified storage data for a single tab.
+ * Used for the manual refresh action.
+ * @param {number} tabId - The ID of the tab to clear data for.
+ * @returns {Promise<boolean>} - True if successful, false otherwise.
+ */
+export async function clearSingleTabData(tabId) {
+  if (typeof tabId !== 'number') {
+    logger.background.error('clearSingleTabData called with invalid tabId:', tabId);
+    return false;
+  }
+  const tabIdStr = tabId.toString();
+  logger.background.info(`Clearing specific data for tab ${tabIdStr}...`);
+
+  try {
+    for (const storageKey of TAB_SPECIFIC_DATA_KEYS_TO_CLEAR) {
+      const result = await chrome.storage.local.get(storageKey);
+      const data = result[storageKey];
+
+      if (data && typeof data === 'object' && data[tabIdStr] !== undefined) {
+        logger.background.info(`Found data for key ${storageKey} for tab ${tabIdStr}. Deleting...`);
+        delete data[tabIdStr];
+        await chrome.storage.local.set({ [storageKey]: data });
+        logger.background.info(`Cleared ${storageKey} for tab ${tabIdStr}.`);
+      } else {
+         logger.background.info(`No data found for key ${storageKey} for tab ${tabIdStr}. Skipping.`);
+      }
+    }
+    logger.background.info(`Successfully cleared specified data for tab ${tabIdStr}.`);
+    return true;
+  } catch (error) {
+    logger.background.error(`Error clearing data for tab ${tabIdStr}:`, error);
+    return false;
+  }
+}
+
+
+/**
+ * Clean up a specific tab-based storage item (used for automatic cleanup)
  * @param {string} storageKey - The storage key to clean up
- * @param {number} tabId - Tab ID to remove (for single tab cleanup)
+ * @param {number} tabId - Tab ID to remove (for single tab cleanup on close)
  * @param {Set<number>} [validTabIds] - Set of valid tab IDs (for periodic cleanup)
  * @returns {Promise<boolean>} - True if changes were made, false otherwise
  */
@@ -41,10 +91,11 @@ async function cleanupTabStorage(storageKey, tabId, validTabIds = null) {
           hasChanges = true;
         }
       }
-    } else {
-      // Single tab cleanup mode: Remove specific tab
-      if (updatedData[tabId]) {
-        delete updatedData[tabId];
+    } else if (tabId) {
+      // Single tab cleanup mode (on tab close): Remove specific tab
+      const tabIdStr = tabId.toString();
+      if (updatedData[tabIdStr]) {
+        delete updatedData[tabIdStr];
         hasChanges = true;
       }
     }
@@ -54,7 +105,7 @@ async function cleanupTabStorage(storageKey, tabId, validTabIds = null) {
       await chrome.storage.local.set({
         [storageKey]: updatedData
       });
-      
+
       // Log what happened
       if (validTabIds) {
         logger.background.info(`Cleaned up stale data for ${storageKey}`);
@@ -79,32 +130,41 @@ export function setupTabStateListener() {
     logger.background.info(`Tab ${tabId} closed, cleaning up tab-specific state`);
 
     try {
-      // Clean up all tab-specific storage keys
-      for (const storageKey of TAB_SPECIFIC_KEYS) {
-        await cleanupTabStorage(storageKey, tabId);
+      // Clean up all tab-specific storage keys using the broader list
+      for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP) {
+         // Don't let the general cleanup function handle sidebar state directly here,
+         // SidebarStateManager.cleanupTabStates() below handles it more robustly.
+         if (storageKey !== STORAGE_KEYS.TAB_SIDEBAR_STATES) {
+            await cleanupTabStorage(storageKey, tabId);
+         }
       }
     } catch (error) {
-      logger.background.error('Error cleaning up tab-specific data:', error);
+      logger.background.error('Error cleaning up tab-specific data on tab removal:', error);
     }
 
-    // Run existing sidebar state cleanup
-    SidebarStateManager.cleanupTabStates();
+    // Run existing sidebar state cleanup (handles TAB_SIDEBAR_STATES)
+    SidebarStateManager.cleanupTabStates([tabId]); // Pass removed tabId for targeted cleanup
   });
 
   // Periodically clean up tab states to prevent storage bloat
   setInterval(async () => {
+    logger.background.info('Running periodic tab state cleanup...');
     try {
       // Get all valid tabs
       const tabs = await chrome.tabs.query({});
       const validTabIds = new Set(tabs.map(tab => tab.id));
 
-      // Clean up all tab-specific storage keys
-      for (const storageKey of TAB_SPECIFIC_KEYS) {
-        await cleanupTabStorage(storageKey, null, validTabIds);
+      // Clean up all tab-specific storage keys using the broader list
+      for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP) {
+         // Don't let the general cleanup function handle sidebar state directly here,
+         // SidebarStateManager.cleanupTabStates() below handles it more robustly.
+         if (storageKey !== STORAGE_KEYS.TAB_SIDEBAR_STATES) {
+            await cleanupTabStorage(storageKey, null, validTabIds);
+         }
       }
 
-      // Run existing cleanup routine
-      SidebarStateManager.cleanupTabStates();
+      // Run existing cleanup routine (handles TAB_SIDEBAR_STATES)
+      SidebarStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
     } catch (error) {
       logger.background.error('Error in periodic tab state cleanup:', error);
     }

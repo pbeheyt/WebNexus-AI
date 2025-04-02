@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-// Re-added children prop, added showRefreshButton prop
-export function AppHeader({ children, showSettingsButton = true, showRefreshButton = false, onClose }) {
+// Re-added children prop, added showRefreshButton prop, added onRefreshClick prop
+export function AppHeader({ children, showSettingsButton = true, showRefreshButton = false, onClose, onRefreshClick }) {
   const { theme, toggleTheme } = useTheme();
 
   const openSettings = () => {
@@ -67,7 +67,7 @@ export function AppHeader({ children, showSettingsButton = true, showRefreshButt
         {/* Conditionally render Refresh button */}
         {showRefreshButton && (
           <button
-            // onClick={} // No handler for now
+            onClick={typeof onRefreshClick === 'function' ? onRefreshClick : undefined}
             className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
             title="Refresh"
           >

@@ -510,6 +510,61 @@ export function SidebarChatProvider({ children }) {
     await clearTokenData();
   };
 
+  // Reset current tab data (chat history, tokens, etc.)
+  const resetCurrentTabData = useCallback(async () => {
+    if (tabId === null || tabId === undefined) {
+      console.warn('resetCurrentTabData called without a valid tabId.');
+      return;
+    }
+
+    if (window.confirm("Are you sure you want to clear all chat history and data for this tab? This action cannot be undone.")) {
+      console.log(`Attempting to clear data for tab: ${tabId}`);
+      try {
+        const response = await chrome.runtime.sendMessage({
+          action: 'clearTabData',
+          tabId: tabId
+        });
+
+        console.log('Response from background script:', response);
+
+        if (response && response.success) {
+          // Reset local state immediately
+          setMessages([]);
+          setInputValue('');
+          setIsProcessing(false);
+          setStreamingMessageId(null);
+          setStreamingContent('');
+          setExtractedContentAdded(false); // Allow extracted content to be added again
+          setIsCanceling(false); // Ensure canceling state is reset
+
+          // Clear token data (which also recalculates stats)
+          await clearTokenData();
+
+          console.log("Tab data cleared and context reset successfully.");
+          // Optionally: Show a success notification to the user
+          // e.g., using a toast notification system if available
+        } else {
+          throw new Error(response?.error || 'Background script failed to clear data.');
+        }
+      } catch (error) {
+        console.error('Failed to reset tab data:', error);
+        // Optionally: Show an error notification to the user
+        // e.g., alert(`Error: ${error.message}`);
+      }
+    }
+  }, [
+    tabId,
+    clearTokenData,
+    setMessages,
+    setInputValue,
+    setIsProcessing,
+    setStreamingMessageId,
+    setStreamingContent,
+    setExtractedContentAdded,
+    setIsCanceling // Added setIsCanceling as per requirement
+  ]);
+
+
   return (
     <SidebarChatContext.Provider value={{
       messages: visibleMessages, // Only expose visible messages (without extracted content)
@@ -525,7 +580,8 @@ export function SidebarChatProvider({ children }) {
       apiError: processingError,
       contentType,
       tokenStats,
-      contextStatus
+      contextStatus,
+      resetCurrentTabData // Add the new function here
     }}>
       {children}
     </SidebarChatContext.Provider>
