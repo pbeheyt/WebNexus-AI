@@ -39,35 +39,34 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
   useEffect(() => {
     if (isOpen && anchorRef.current && dropdownRef.current) {
       const anchorRect = anchorRef.current.getBoundingClientRect();
+      // Get dimensions after content is potentially loaded
       const dropdownHeight = dropdownRef.current.offsetHeight;
-      const spaceAbove = anchorRect.top;
-      const spaceBelow = window.innerHeight - anchorRect.bottom;
+      const dropdownWidth = dropdownRef.current.offsetWidth;
 
-      let calculatedTop;
-      // Position above if enough space, otherwise below
-      if (spaceAbove >= dropdownHeight + 4) {
-         calculatedTop = anchorRect.top - dropdownHeight - 4; // 4px offset
-      } else if (spaceBelow >= dropdownHeight + 4) {
-         calculatedTop = anchorRect.bottom + 4; // Position below as fallback
-      } else {
-         // Default to above if neither fits perfectly (might overflow viewport)
-         calculatedTop = anchorRect.top - dropdownHeight - 4; 
+      // Calculate Top position
+      let calculatedTop = anchorRect.top - dropdownHeight - 4; // 4px offset above anchor
+      // Fallback: Position below if not enough space above or goes off-screen
+      if (calculatedTop < 0) {
+        calculatedTop = anchorRect.bottom + 4; // 4px offset below anchor
       }
 
-      const calculatedLeft = anchorRect.left;
+      // Calculate Left position
+      let calculatedLeft = anchorRect.right - dropdownWidth; // Align right edges
+      // Fallback: Ensure it doesn't go off-screen left
+      if (calculatedLeft < 0) {
+        calculatedLeft = 0; // Align to the left edge of the viewport
+      }
 
       setStyle({
-        position: 'fixed',
+        position: 'absolute', // Use absolute positioning relative to nearest positioned ancestor or body
         top: `${calculatedTop}px`,
         left: `${calculatedLeft}px`,
-        // Ensure it doesn't exceed viewport height if positioned below
-        maxHeight: spaceBelow < dropdownHeight + 4 ? `${spaceBelow - 10}px` : '12rem', // 12rem = max-h-48
-        zIndex: 50, // Ensure it's above other elements
+        // Max height and z-index are handled by Tailwind classes now
       });
     } else {
       setStyle({}); // Reset style when closed or refs not ready
     }
-  }, [isOpen, anchorRef, prompts, isLoading]); // Re-calculate if prompts/loading change size
+  }, [isOpen, anchorRef, prompts, isLoading]); // Re-calculate if visibility, anchor, or content changes
 
   // Handle clicks outside the dropdown
   useEffect(() => {
@@ -96,7 +95,8 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
     <div
       ref={dropdownRef}
       style={style}
-      className="absolute bg-theme-surface border border-theme rounded-md shadow-lg max-h-48 overflow-y-auto w-60 p-1" // Tailwind classes for styling
+      // Updated Tailwind classes: absolute positioning, z-index, width, max-height, overflow, styling
+      className="absolute z-50 w-64 max-h-56 overflow-y-auto bg-theme-surface border border-theme rounded-md shadow-lg p-1"
       role="listbox"
       aria-label="Select a prompt"
     >
@@ -110,7 +110,8 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
           <button
             key={prompt.id}
             onClick={() => onSelectPrompt(prompt)}
-            className="block w-full text-left px-3 py-1.5 text-sm text-theme-base hover:bg-theme-hover rounded cursor-pointer focus:outline-none focus:bg-theme-hover"
+            // Ensured necessary classes are present, removed redundant focus style covered by hover
+            className="block w-full text-left px-3 py-1.5 text-sm text-theme-base hover:bg-theme-hover rounded cursor-pointer"
             role="option"
             aria-selected="false" // Can be enhanced with selection state if needed
           >
