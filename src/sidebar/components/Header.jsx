@@ -29,35 +29,27 @@ const ApiSettingsIcon = () => (
   </svg>
 );
 
-// Refresh Icon SVG
-const RefreshIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-    <path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201-4.46L4.753 8.317A7 7 0 0016.18 9.62l-1.487-.018a5.5 5.5 0 01-.381 1.822zM4.688 8.576a5.5 5.5 0 019.201 4.46l1.348-1.354a7 7 0 00-11.427-2.78l1.487.018a5.5 5.5 0 01.391-1.822zM10 2.5a.75.75 0 01.75.75v2.016a.75.75 0 01-1.5 0V3.25a.75.75 0 01.75-.75zM10 17.5a.75.75 0 01-.75-.75v-2.016a.75.75 0 011.5 0v2.016a.75.75 0 01-.75.75zM3.28 4.47a.75.75 0 011.06 0l1.454 1.455a.75.75 0 11-1.06 1.06L3.28 5.53a.75.75 0 010-1.06zM16.72 15.53a.75.75 0 01-1.06 0l-1.454-1.455a.75.75 0 111.06-1.06l1.454 1.455a.75.75 0 010 1.06zM4.47 16.72a.75.75 0 010-1.06l1.455-1.454a.75.75 0 111.06 1.06L5.53 16.72a.75.75 0 01-1.06 0zM15.53 3.28a.75.75 0 010 1.06l-1.455 1.454a.75.75 0 11-1.06-1.06L14.47 3.28a.75.75 0 011.06 0z" clipRule="evenodd" />
-  </svg>
-);
-
-
 function Header() {
   const {
     platforms,
     selectedPlatformId,
     selectPlatform,
     hasAnyPlatformCredentials,
-    isLoading, // Add isLoading from context if needed for initial render handling
-    isRefreshing, // Get refresh state
-    refreshPlatformData // Get refresh function
+    isLoading,
+    isRefreshing,
+    refreshPlatformData
   } = useSidebarPlatform();
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [showRefreshTooltip, setShowRefreshTooltip] = useState(false); // Tooltip state
+  const [showRefreshTooltip, setShowRefreshTooltip] = useState(false);
   const dropdownRef = useRef(null);
-  const refreshButtonRef = useRef(null); // Ref for the refresh button
+  const refreshButtonRef = useRef(null);
   const triggerRef = useRef(null);
-  const { setOpenDropdown: setGlobalOpenDropdown } = useContext(DropdownContext); // Use context if needed elsewhere
+  const { setOpenDropdown: setGlobalOpenDropdown } = useContext(DropdownContext);
 
   // Filter platforms based on credentials
   const availablePlatforms = platforms.filter(p => p.hasCredentials);
 
-  // Find selected platform details (use the original platforms list for details)
+  // Find selected platform details
   const selectedPlatformDetails = platforms.find(p => p.id === selectedPlatformId);
 
   const isPlatformDropdownOpen = openDropdown === 'platform';
@@ -86,40 +78,68 @@ function Header() {
 
   // Effect to handle selection change if current platform loses credentials
   useEffect(() => {
-    // Don't run this logic while platforms are loading or if no platforms have credentials
     if (isLoading || !hasAnyPlatformCredentials) return; 
 
     const isSelectedPlatformAvailable = availablePlatforms.some(p => p.id === selectedPlatformId);
 
-    // If the selected platform is no longer available (lost credentials) 
-    // AND there are other available platforms, select the first available one.
     if (!isSelectedPlatformAvailable && availablePlatforms.length > 0) {
       selectPlatform(availablePlatforms[0].id);
     }
-    // If the selected platform is not available and NO platforms are available,
-    // the hasAnyPlatformCredentials flag should handle hiding the controls.
-    
-  }, [platforms, selectedPlatformId, hasAnyPlatformCredentials, isLoading, selectPlatform, availablePlatforms]); // Add dependencies
-
+  }, [platforms, selectedPlatformId, hasAnyPlatformCredentials, isLoading, selectPlatform, availablePlatforms]);
 
   const handleSelectPlatform = (platformId) => {
     selectPlatform(platformId);
     setOpenDropdown(null);
   };
 
-  // Use selectedPlatformDetails for rendering the button icon/details
   const selectedPlatformForDisplay = selectedPlatformDetails; 
 
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div className="border-b border-theme">
-        <div className="flex items-end gap-2 px-4 py-2">
+        <div className="flex items-center gap-2 px-4 py-2">
+          {/* Refresh Button - Positioned leftmost for all cases */}
+          <div className="relative flex items-center h-9">
+            <button
+              ref={refreshButtonRef}
+              onClick={refreshPlatformData}
+              onMouseEnter={() => setShowRefreshTooltip(true)}
+              onMouseLeave={() => setShowRefreshTooltip(false)}
+              disabled={isRefreshing || isLoading}
+              className="p-1 rounded text-theme-secondary hover:bg-theme-hover focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Refresh platforms and credentials"
+            >
+              {isRefreshing ? (
+                <span className="animate-spin">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                  </svg>
+                </span>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 4v6h-6"></path>
+                  <path d="M1 20v-6h6"></path>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                  <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                </svg>
+              )}
+            </button>
+            <Tooltip
+              show={showRefreshTooltip}
+              message="Refresh platforms and credentials"
+              targetRef={refreshButtonRef}
+            />
+          </div>
+
+          {/* Conditional rendering based on credentials */}
           {hasAnyPlatformCredentials ? (
             <>
-              {/* Platform Selector div (relative) */}
-              <div className="relative flex items-center self-end">
-                {/* Use selectedPlatformForDisplay which might be non-credentialed temporarily */}
-                {selectedPlatformForDisplay && ( 
+              {/* Platform Selector */}
+              <div className="relative flex items-center h-9">
+                {selectedPlatformForDisplay && (
                   <div ref={triggerRef}>
                     <button
                       onClick={() => setOpenDropdown(openDropdown === 'platform' ? null : 'platform')}
@@ -149,8 +169,7 @@ function Header() {
                     aria-orientation="vertical"
                     aria-labelledby="platform-menu-button"
                   >
-                    {/* Iterate over the filtered list */}
-                    {availablePlatforms.map((platform) => { 
+                    {availablePlatforms.map((platform) => {
                       const isSelected = platform.id === selectedPlatformId;
                       return (
                         <button
@@ -175,60 +194,19 @@ function Header() {
                 )}
               </div>
 
-              {/* Model Selector div (flex-grow) */}
-              <div className="flex-grow self-end">
+              {/* Model Selector div */}
+              <div className="flex-grow flex items-center h-9">
                 <ModelSelector 
-                  // Pass necessary props - hasPlatformsWithCredentials is no longer needed here
                   selectedPlatformId={selectedPlatformId}
                 />
               </div>
-
-              {/* Refresh button moved outside this block */}
             </>
           ) : (
-            // Placeholder when no credentials are set
-            <div className="h-9 w-full flex items-center justify-center text-theme-secondary text-sm">
-              No API credentials configured.
+            // When no credentials, show message
+            <div className="h-9 flex-grow flex items-center">
+              <span className="text-theme-secondary text-sm">No API credentials configured.</span>
             </div>
           )}
-
-          {/* Refresh Button - Moved outside the conditional, inside the main flex container */}
-          <div className="relative self-end">
-            <button
-              ref={refreshButtonRef}
-              onClick={refreshPlatformData}
-              onMouseEnter={() => setShowRefreshTooltip(true)}
-              onMouseLeave={() => setShowRefreshTooltip(false)}
-              disabled={isRefreshing || isLoading} // Disable during initial load too
-              className="p-1 rounded text-theme-secondary hover:bg-theme-hover focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Refresh platforms and credentials"
-            >
-              {isRefreshing ? (
-                <span className="animate-spin">
-                  {/* New SVG Icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 4v6h-6"></path>
-                    <path d="M1 20v-6h6"></path>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
-                  </svg>
-                </span>
-              ) : (
-                 // New SVG Icon
-                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                   <path d="M23 4v6h-6"></path>
-                   <path d="M1 20v-6h6"></path>
-                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                   <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
-                 </svg>
-              )}
-            </button>
-            <Tooltip
-              show={showRefreshTooltip}
-              message="Refresh platforms and credentials"
-              targetRef={refreshButtonRef}
-            />
-          </div>
         </div>
       </div>
     </DropdownContext.Provider>
