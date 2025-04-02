@@ -3,9 +3,10 @@ import { loadRelevantPrompts } from '../../utils/promptUtils';
 
 /**
  * A dropdown component to display and select relevant custom prompts.
- * Positions itself above the provided anchor element.
+ * Positions itself above and to the left of the provided anchor element.
+ * Uses fixed positioning to prevent affecting parent layout.
  */
-export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, anchorRef }) { // Changed to export function syntax
+export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, anchorRef }) {
   const [prompts, setPrompts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -35,33 +36,43 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
     }
   }, [isOpen, contentType]);
 
-  // Calculate dropdown position
+  // Calculate dropdown position and width
   useEffect(() => {
     if (isOpen && anchorRef.current && dropdownRef.current) {
       const anchorRect = anchorRef.current.getBoundingClientRect();
-      // Get dimensions after content is potentially loaded
       const dropdownHeight = dropdownRef.current.offsetHeight;
-      const dropdownWidth = dropdownRef.current.offsetWidth;
-
-      // Calculate Top position
-      let calculatedTop = anchorRect.top - dropdownHeight - 4; // 4px offset above anchor
-      // Fallback: Position below if not enough space above or goes off-screen
+      const windowWidth = window.innerWidth;
+      
+      // Base width for the dropdown (wider than the button but reasonable)
+      const dropdownWidth = Math.max(160, dropdownRef.current.offsetWidth);
+      
+      // Position above and to the left of the anchor
+      let calculatedTop = anchorRect.top - dropdownHeight - 8; // 8px offset above anchor
+      
+      // If there's not enough space above, position below the anchor
       if (calculatedTop < 0) {
-        calculatedTop = anchorRect.bottom + 4; // 4px offset below anchor
+        calculatedTop = anchorRect.bottom + 8; // 8px offset below anchor
       }
-
-      // Calculate Left position
-      let calculatedLeft = anchorRect.right - dropdownWidth; // Align right edges
-      // Fallback: Ensure it doesn't go off-screen left
+      
+      // Position to the left of the anchor by default (align with right edge of dropdown)
+      let calculatedLeft = anchorRect.left - dropdownWidth + anchorRect.width;
+      
+      // If this would push it off-screen to the left, align with left edge of anchor
       if (calculatedLeft < 0) {
-        calculatedLeft = 0; // Align to the left edge of the viewport
+        calculatedLeft = anchorRect.left;
+      }
+      
+      // If it would extend past the right edge of the screen, adjust leftward
+      if (calculatedLeft + dropdownWidth > windowWidth) {
+        calculatedLeft = windowWidth - dropdownWidth - 8; // 8px from window edge
       }
 
       setStyle({
-        position: 'absolute', // Use absolute positioning relative to nearest positioned ancestor or body
+        position: 'fixed', // Use fixed positioning to avoid affecting parent layout
         top: `${calculatedTop}px`,
         left: `${calculatedLeft}px`,
-        // Max height and z-index are handled by Tailwind classes now
+        width: `${dropdownWidth}px`, // Set explicit width to prevent sizing issues
+        minWidth: '160px', // Ensure minimum reasonable width
       });
     } else {
       setStyle({}); // Reset style when closed or refs not ready
@@ -95,8 +106,7 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
     <div
       ref={dropdownRef}
       style={style}
-      // Updated Tailwind classes: absolute positioning, z-index, width, max-height, overflow, styling
-      className="absolute z-50 w-64 max-h-56 overflow-y-auto bg-theme-surface border border-theme rounded-md shadow-lg p-1"
+      className="fixed z-50 max-h-56 overflow-y-auto bg-theme-surface border border-theme rounded-md shadow-lg p-1"
       role="listbox"
       aria-label="Select a prompt"
     >
@@ -110,10 +120,9 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
           <button
             key={prompt.id}
             onClick={() => onSelectPrompt(prompt)}
-            // Ensured necessary classes are present, removed redundant focus style covered by hover
-            className="block w-full text-left px-3 py-1.5 text-sm text-theme-base hover:bg-theme-hover rounded cursor-pointer"
+            className="block w-full text-left px-3 py-1.5 text-sm text-theme-base hover:bg-theme-hover rounded cursor-pointer whitespace-nowrap"
             role="option"
-            aria-selected="false" // Can be enhanced with selection state if needed
+            aria-selected="false"
           >
             {prompt.name}
           </button>
@@ -122,5 +131,3 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
     </div>
   );
 }
-
-// Removed default export
