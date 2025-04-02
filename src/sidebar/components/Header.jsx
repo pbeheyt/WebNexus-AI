@@ -80,7 +80,7 @@ function Header() {
 
   return (
     <div className="border-b border-theme"> {/* Minimal padding, bottom border */}
-      <div className="flex items-center gap-2 relative px-4 py-2"> {/* Main horizontal layout */}
+      <div className="flex items-end gap-2 relative px-4 py-2"> {/* Main horizontal layout */}
         {selectedPlatform ? (
           <div ref={triggerRef} className="relative flex items-center">
             <button

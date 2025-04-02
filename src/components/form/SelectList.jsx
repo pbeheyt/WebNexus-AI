@@ -60,7 +60,7 @@ export function SelectList({
   if (loading) {
     return (
       <div className={`relative w-full ${className}`}>
-        <select className="w-full p-2 border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-not-allowed text-sm" disabled>
+        <select className="w-full p-2 border-0 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-not-allowed text-sm" disabled>
           <option>{placeholder}</option>
         </select>
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -74,7 +74,7 @@ export function SelectList({
   if (formattedOptions.length === 0) {
     return (
       <div className={`relative w-full ${className}`}>
-        <select className="w-full p-2 border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-not-allowed text-sm" disabled>
+        <select className="w-full p-2 border-0 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-not-allowed text-sm" disabled>
           <option>{emptyMessage}</option>
         </select>
       </div>
@@ -92,7 +92,7 @@ export function SelectList({
   return (
     <div className={`relative w-full ${className}`}>
       <select
-        className={`appearance-none bg-theme-surface text-theme-primary border border-theme p-2 text-sm rounded-md focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none w-full bg-no-repeat pr-8 ${disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+        className={`appearance-none bg-transparent hover:bg-theme-hover text-theme-primary border-0 focus:border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none w-full bg-no-repeat p-1.5 text-sm rounded-md pr-8 ${disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
         value={selectedValue || ''}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
