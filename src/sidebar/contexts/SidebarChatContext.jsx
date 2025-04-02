@@ -332,7 +332,7 @@ export function SidebarChatProvider({ children }) {
       setMessages(prev => [...prev, {
         id: `msg_${Date.now()}`,
         role: MESSAGE_ROLES.SYSTEM,
-        content: `No API credentials found for ${selectedPlatformId}. Please add them in the settings.`,
+            content: `API credentials are needed to enable the chat feature. Please configure them in the settings.`,
         timestamp: new Date().toISOString()
       }]);
       return;

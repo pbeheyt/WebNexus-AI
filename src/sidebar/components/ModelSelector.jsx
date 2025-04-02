@@ -9,7 +9,8 @@ const ChevronIcon = () => (
   </svg>
 );
 
-function ModelSelector({ className = '', hasPlatformsWithCredentials = false, selectedPlatformId = null }) {
+// CHANGE 1 Applied: Removed hasPlatformsWithCredentials from destructuring
+function ModelSelector({ className = '', selectedPlatformId = null }) {
   const {
     models,
     selectedModel,
@@ -48,19 +49,20 @@ function ModelSelector({ className = '', hasPlatformsWithCredentials = false, se
   }, [models]);
 
   const handleModelChange = async (modelId) => {
-    if (modelId && hasPlatformsWithCredentials && selectedPlatformId) {
+    // CHANGE 3 Applied: Removed hasPlatformsWithCredentials check
+    if (modelId && selectedPlatformId) {
       await selectModel(modelId);
       setOpenDropdown(null);
     }
   };
 
-  // Early return with placeholder when no valid platform available
-  if (!hasPlatformsWithCredentials || !selectedPlatformId) {
-    return <div className="w-full h-9"></div>;
-  }
+  // CHANGE 2 Applied: Removed early return block
+  // if (!hasPlatformsWithCredentials || !selectedPlatformId) {
+  //   return <div className="w-full h-9"></div>;
+  // }
 
-  const selectedModelName = selectedModel ? 
-    formattedModels.find(m => m.id === selectedModel)?.name || selectedModel : 
+  const selectedModelName = selectedModel ?
+    formattedModels.find(m => m.id === selectedModel)?.name || selectedModel :
     "Select a model";
 
   return (
@@ -72,7 +74,7 @@ function ModelSelector({ className = '', hasPlatformsWithCredentials = false, se
         <span className="mr-2 text-theme-secondary">
           <ChevronIcon />
         </span>
-        
+
         {isLoading ? (
           <div className="flex items-center">
             <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -85,7 +87,7 @@ function ModelSelector({ className = '', hasPlatformsWithCredentials = false, se
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div 
+        <div
           ref={dropdownRef}
           className="absolute top-full left-0 right-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto"
           onClick={(e) => e.stopPropagation()}
