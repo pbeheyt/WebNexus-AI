@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 /**
  * A versatile message bubble component that supports different roles and states
@@ -16,25 +18,7 @@ export function MessageBubble({
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
-  
-  // Format message content with proper paragraph breaks
-  const formatContent = (content) => {
-    if (!content) return null;
-    
-    // Split content by double line breaks (paragraphs)
-    return content.split('\n\n').map((paragraph, pIndex) => (
-      <p key={`p-${pIndex}`} className={pIndex > 0 ? 'mt-3' : ''}>
-        {/* Split each paragraph by single line breaks */}
-        {paragraph.split('\n').map((line, lIndex) => (
-          <React.Fragment key={`l-${pIndex}-${lIndex}`}>
-            {lIndex > 0 && <br />}
-            {line}
-          </React.Fragment>
-        ))}
-      </p>
-    ));
-  };
-  
+
   // Copy assistant message to clipboard
   const copyToClipboard = () => {
     if (!content || isStreaming) return;
@@ -78,7 +62,8 @@ export function MessageBubble({
   if (isSystem) {
     return (
       <div className={`p-3 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-4 py-3 ${className}`}> {/* Changed p-4 to p-3 */}
-        <div className="break-words overflow-hidden">{formatContent(content)}</div>
+        {/* System messages render raw content, preserving whitespace */}
+        <div className="whitespace-pre-wrap break-words overflow-hidden">{content}</div>
       </div>
     );
   }
@@ -88,7 +73,8 @@ export function MessageBubble({
     return (
       <div className={`p-4 w-full flex justify-end ${className}`}> {/* Outer div padding remains p-4 */}
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden"> {/* Changed p-4 to p-3 */}
-          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{formatContent(content)}</div>
+          {/* User messages render raw content, preserving whitespace */}
+          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{content}</div>
         </div>
       </div>
     );
@@ -97,11 +83,48 @@ export function MessageBubble({
   // Assistant messages with no bubble, taking full width
   return (
     <div className={`p-3 w-full group relative ${className}`}> {/* Changed p-4 to p-3 */}
-      {/* Main content */}
-      <div className="whitespace-pre-wrap break-words overflow-hidden text-gray-900 dark:text-gray-100">
-        {formatContent(content)}
+      {/* Main content - Render Markdown for assistant messages */}
+      <div className="prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-hidden">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-3" {...props} />,
+            h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-2" {...props} />,
+            h3: ({node, ...props}) => <h3 className="text-base font-medium mb-2" {...props} />,
+            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2 ml-4" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2 ml-4" {...props} />,
+            li: ({node, ...props}) => <li className="mb-1" {...props} />,
+            code: ({node, inline, className, children, ...props}) => {
+              // Check if it's a block code (has language class) or inline
+              const match = /language-(\w+)/.exec(className || '');
+              return !inline ? (
+                // Block code: use <pre><code> structure
+                <pre className="bg-theme-hover p-2 rounded overflow-x-auto text-sm font-mono mb-2">
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                </pre>
+              ) : (
+                // Inline code
+                <code className="bg-theme-hover px-1 py-0.5 rounded text-sm font-mono" {...props}>
+                  {children}
+                </code>
+              );
+            },
+            // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
+            pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
+            a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+            blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-theme pl-3 italic text-theme-secondary mb-2" {...props} />,
+            strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
+            em: ({node, ...props}) => <em className="italic" {...props} />,
+            // Add other elements if needed, e.g., table, hr
+          }}
+        >
+          {content}
+        </ReactMarkdown>
       </div>
-      
+
       {/* Streaming indicator */}
       {isStreaming && (
         <div className="flex gap-1 mt-2">
