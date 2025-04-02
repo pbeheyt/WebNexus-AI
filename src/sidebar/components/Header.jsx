@@ -1,7 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, createContext } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import ModelSelector from './ModelSelector';
 import { Tooltip } from '../../components/layout/Tooltip';
+
+// Create a context for dropdown state coordination
+export const DropdownContext = createContext({
+  openDropdown: null,
+  setOpenDropdown: () => {}
+});
 
 // SVG Icons (inline for simplicity)
 const ChevronIcon = () => (
@@ -19,9 +25,11 @@ const CheckIcon = () => (
 function Header() {
   const { platforms, selectedPlatformId, selectPlatform } = useSidebarPlatform();
   const [platformCredentials, setPlatformCredentials] = useState({});
-  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
+  
+  const isPlatformDropdownOpen = openDropdown === 'platform';
 
   // Fetch credential status
   useEffect(() => {
@@ -46,20 +54,18 @@ function Header() {
     checkAllCredentials();
   }, [platforms]);
 
-  // Handle clicks outside the dropdown
+  // Handle clicks outside the dropdown for any opened dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(event.target)
+        (dropdownRef.current && !dropdownRef.current.contains(event.target)) &&
+        (triggerRef.current && !triggerRef.current.contains(event.target))
       ) {
-        setIsPlatformDropdownOpen(false);
+        setOpenDropdown(null);
       }
     };
 
-    if (isPlatformDropdownOpen) {
+    if (openDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -68,38 +74,39 @@ function Header() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isPlatformDropdownOpen]);
+  }, [openDropdown]);
 
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId);
 
   const handleSelectPlatform = (platformId) => {
     selectPlatform(platformId);
-    setIsPlatformDropdownOpen(false);
+    setOpenDropdown(null);
   };
 
   return (
-    <div className="border-b border-theme">
-      <div className="flex items-end gap-2 px-4 py-2">
-        {/* Platform Selector - With chevron on left side and consistent height */}
-        {selectedPlatform ? (
-          <div ref={triggerRef} className="relative flex items-center self-end">
-            <button
-              onClick={() => setIsPlatformDropdownOpen(!isPlatformDropdownOpen)}
-              className="flex items-center h-9 px-2 py-1.5 rounded hover:bg-theme-hover focus:outline-none focus:ring-1 focus:ring-primary"
-              aria-label="Change Platform"
-              aria-haspopup="true"
-              aria-expanded={isPlatformDropdownOpen}
-            >
-              {/* Chevron moved to left side */}
-              <span className="mr-1 text-theme-secondary">
-                <ChevronIcon />
-              </span>
-              <img
-                src={selectedPlatform.iconUrl}
-                alt={`${selectedPlatform.name} logo`}
-                className="w-6 h-6 object-contain"
-              />
-            </button>
+    <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
+      <div className="border-b border-theme">
+        <div className="flex items-end gap-2 px-4 py-2">
+          {/* Platform Selector - With chevron on left side and consistent height */}
+          {selectedPlatform ? (
+            <div ref={triggerRef} className="relative flex items-center self-end">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'platform' ? null : 'platform')}
+                className="flex items-center h-9 px-2 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                aria-label="Change Platform"
+                aria-haspopup="true"
+                aria-expanded={isPlatformDropdownOpen}
+              >
+                {/* Chevron moved to left side */}
+                <span className="mr-1 text-theme-secondary">
+                  <ChevronIcon />
+                </span>
+                <img
+                  src={selectedPlatform.iconUrl}
+                  alt={`${selectedPlatform.name} logo`}
+                  className="w-6 h-6 object-contain"
+                />
+              </button>
 
             {/* Platform Dropdown */}
             {isPlatformDropdownOpen && (
@@ -161,6 +168,7 @@ function Header() {
         </div>
       </div>
     </div>
+    </DropdownContext.Provider>
   );
 }
 

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
+import { DropdownContext } from './Header';
 
 // SVG Icons
 const ChevronIcon = () => (
@@ -20,7 +21,9 @@ function ModelSelector({ className = '' }) {
 
   const [isDisabled, setIsDisabled] = useState(false);
   const [formattedModels, setFormattedModels] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const { openDropdown, setOpenDropdown } = useContext(DropdownContext);
+  const isOpen = openDropdown === 'model';
+  const dropdownRef = useRef(null);
 
   // Format models to work with dropdown menu
   useEffect(() => {
@@ -56,7 +59,7 @@ function ModelSelector({ className = '' }) {
   const handleModelChange = async (modelId) => {
     if (modelId && !isDisabled) {
       await selectModel(modelId);
-      setIsOpen(false);
+      setOpenDropdown(null);
     }
   };
 
@@ -72,9 +75,9 @@ function ModelSelector({ className = '' }) {
   return (
     <div className={`relative w-full ${className}`}>
       <button
-        onClick={() => !isDisabled && setIsOpen(!isOpen)}
+        onClick={() => !isDisabled && setOpenDropdown(isOpen ? null : 'model')}
         disabled={isDisabled}
-        className={`flex items-center w-full px-2 py-1.5 h-9 bg-transparent hover:bg-theme-hover border-0 rounded text-theme-primary text-sm ${
+        className={`flex items-center w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors ${
           isDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
         }`}
       >
@@ -95,7 +98,11 @@ function ModelSelector({ className = '' }) {
 
       {/* Dropdown menu */}
       {isOpen && !isDisabled && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto">
+        <div 
+          ref={dropdownRef}
+          className="absolute top-full left-0 right-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           {formattedModels.length === 0 ? (
             <div className="px-3 py-2 text-sm text-theme-secondary">
               {hasCredentials ? "No models available" : "API credentials required"}
