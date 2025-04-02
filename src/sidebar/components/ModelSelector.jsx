@@ -9,32 +9,28 @@ const ChevronIcon = () => (
   </svg>
 );
 
-function ModelSelector({ className = '' }) {
+function ModelSelector({ className = '', hasPlatformsWithCredentials = false, selectedPlatformId = null }) {
   const {
     models,
     selectedModel,
     selectModel,
-    isLoading,
-    selectedPlatformId,
-    hasCredentials
+    isLoading
   } = useSidebarPlatform();
 
-  const [isDisabled, setIsDisabled] = useState(false);
   const [formattedModels, setFormattedModels] = useState([]);
   const { openDropdown, setOpenDropdown } = useContext(DropdownContext);
   const isOpen = openDropdown === 'model';
   const dropdownRef = useRef(null);
 
-  // Format models to work with dropdown menu
+  // Format models for dropdown display
   useEffect(() => {
     if (!models || models.length === 0) {
       setFormattedModels([]);
       return;
     }
 
-    // Convert models to the format needed for dropdown
+    // Convert models to consistent format
     const formatted = models.map(model => {
-      // Handle both object and string formats
       if (typeof model === 'object' && model !== null) {
         return {
           id: model.id,
@@ -51,21 +47,16 @@ function ModelSelector({ className = '' }) {
     setFormattedModels(formatted);
   }, [models]);
 
-  // Disable selector if no credentials or models available
-  useEffect(() => {
-    setIsDisabled(!hasCredentials || !models || models.length === 0);
-  }, [models, hasCredentials]);
-
   const handleModelChange = async (modelId) => {
-    if (modelId && !isDisabled) {
+    if (modelId && hasPlatformsWithCredentials && selectedPlatformId) {
       await selectModel(modelId);
       setOpenDropdown(null);
     }
   };
 
-  // If no platform is selected, don't render
-  if (!selectedPlatformId) {
-    return null;
+  // Early return with placeholder when no valid platform available
+  if (!hasPlatformsWithCredentials || !selectedPlatformId) {
+    return <div className="w-full h-9"></div>;
   }
 
   const selectedModelName = selectedModel ? 
@@ -75,13 +66,9 @@ function ModelSelector({ className = '' }) {
   return (
     <div className={`relative w-full ${className}`}>
       <button
-        onClick={() => !isDisabled && setOpenDropdown(isOpen ? null : 'model')}
-        disabled={isDisabled}
-        className={`flex items-center w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors ${
-          isDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
-        }`}
+        onClick={() => setOpenDropdown(isOpen ? null : 'model')}
+        className="flex items-center w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
       >
-        {/* Chevron on the left */}
         <span className="mr-2 text-theme-secondary">
           <ChevronIcon />
         </span>
@@ -97,7 +84,7 @@ function ModelSelector({ className = '' }) {
       </button>
 
       {/* Dropdown menu */}
-      {isOpen && !isDisabled && (
+      {isOpen && (
         <div 
           ref={dropdownRef}
           className="absolute top-full left-0 right-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto"
@@ -105,7 +92,7 @@ function ModelSelector({ className = '' }) {
         >
           {formattedModels.length === 0 ? (
             <div className="px-3 py-2 text-sm text-theme-secondary">
-              {hasCredentials ? "No models available" : "API credentials required"}
+              No models available
             </div>
           ) : (
             formattedModels.map((model) => (
