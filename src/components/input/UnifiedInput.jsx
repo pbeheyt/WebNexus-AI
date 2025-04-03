@@ -15,7 +15,6 @@ export function UnifiedInput({
   onChange,
   onSubmit,
   onCancel = null,
-  // placeholder removed here
   disabled = false,
   isProcessing = false,
   isCanceling = false,
@@ -103,6 +102,9 @@ export function UnifiedInput({
   const sidebarButtonLabel = isStreamingActive ? "Cancel generation" : "Send message";
   const sidebarButtonDisabled = (!value.trim() && !isStreamingActive) || disabled || (isStreamingActive && isCanceling);
 
+  // Calculate button area width based on layout variant - reduced to minimal functional space
+  const buttonAreaWidth = layoutVariant === 'sidebar' ? 'w-16' : 'w-14';
+
   // --- Render Logic ---
   if (layoutVariant === 'sidebar') {
     return (
@@ -120,20 +122,31 @@ export function UnifiedInput({
             ref={containerRef}
             onClick={handleContainerClick}
             className="input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all">
-            <TextArea
-              ref={textareaRef}
-              value={value}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={getDynamicPlaceholder(contentType)}
-              disabled={disabled || isProcessing}
-              autoResize={true}
-              minHeight={44}
-              maxHeight={200}
-              className="input-textarea w-full py-3 px-4 pr-18 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
-            />
             
-            <div className="absolute right-2 top-2 flex items-center gap-2">
+            {/* Flex container to ensure proper layout */}
+            <div className="flex w-full">
+              {/* Textarea that takes remaining width */}
+              <div className="flex-grow">
+                <TextArea
+                  ref={textareaRef}
+                  value={value}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={getDynamicPlaceholder(contentType)}
+                  disabled={disabled || isProcessing}
+                  autoResize={true}
+                  minHeight={44}
+                  maxHeight={200}
+                  className="w-full py-3 px-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
+                />
+              </div>
+              
+              {/* Spacer for button area - ensures text doesn't flow under buttons */}
+              <div className={buttonAreaWidth}></div>
+            </div>
+            
+            {/* Button container */}
+            <div className="absolute right-3 top-3 flex items-center gap-2">
               {/* Prompt Selection Button with Dropdown */}
               <div className="relative">
                 <button
@@ -207,20 +220,30 @@ export function UnifiedInput({
             ref={containerRef}
             onClick={handleContainerClick}
             className="input-container relative">
-            <TextArea
-              ref={textareaRef}
-              value={value}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={getDynamicPlaceholder(contentType)}
-              disabled={disabled || isProcessing}
-              autoResize={true}
-              minHeight={60}
-              maxHeight={150}
-              className="input-textarea w-full py-3 px-3 pr-14 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
-            />
             
-            <div className="absolute right-2 top-2 flex items-center gap-2">
+            {/* Flex container to ensure proper layout */}
+            <div className="flex w-full">
+              {/* Textarea that takes remaining width */}
+              <div className="flex-grow">
+                <TextArea
+                  ref={textareaRef}
+                  value={value}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={getDynamicPlaceholder(contentType)}
+                  disabled={disabled || isProcessing}
+                  autoResize={true}
+                  minHeight={60}
+                  maxHeight={150}
+                  className="w-full py-3 px-3 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
+                />
+              </div>
+              
+              {/* Spacer for button area - ensures text doesn't flow under buttons */}
+              <div className={buttonAreaWidth}></div>
+            </div>
+            
+            <div className="absolute right-3 top-3 flex items-center gap-2">
               {/* Prompt Selection Button with Dropdown */}
               <div className="relative">
                 <button
