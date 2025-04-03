@@ -130,7 +130,7 @@ export function UnifiedInput({
               autoResize={true}
               minHeight={44}
               maxHeight={200}
-              className="input-textarea w-full py-3 px-4 pr-20 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
+              className="input-textarea w-full py-3 px-4 pr-18 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
             />
             
             <div className="absolute right-2 top-2 flex items-center gap-2">
@@ -140,7 +140,7 @@ export function UnifiedInput({
                   ref={promptButtonRef}
                   onClick={() => setIsDropdownOpen(prev => !prev)}
                   disabled={disabled || isProcessing}
-                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-7 h-7 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-6 h-6 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label="Select prompt"
                   title="Select a custom prompt"
                 >
@@ -159,7 +159,7 @@ export function UnifiedInput({
               
               {/* Send/Cancel Button */}
               <button
-                className={`flex items-center justify-center cursor-pointer border-none outline-none ${sidebarButtonStyle} w-7 h-7 rounded ${isCanceling ? 'opacity-70' : ''}`}
+                className={`flex items-center justify-center cursor-pointer border-none outline-none ${sidebarButtonStyle} w-6 h-6 rounded ${isCanceling ? 'opacity-70' : ''}`}
                 onClick={handleSubmit}
                 disabled={sidebarButtonDisabled}
                 aria-label={sidebarButtonLabel}
