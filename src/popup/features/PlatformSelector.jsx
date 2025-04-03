@@ -17,19 +17,6 @@ export function PlatformSelector() {
     }
   };
   
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-3 gap-1">
-        {[1, 2, 3].map((i) => (
-          <div 
-            key={i} 
-            className="h-16 bg-background-surface animate-pulse rounded-md border border-border"
-          />
-        ))}
-      </div>
-    );
-  }
-  
   return (
     <div className="grid grid-cols-3 gap-1">
       {platforms.map((platform) => (
