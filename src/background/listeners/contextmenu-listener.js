@@ -1,7 +1,7 @@
 // src/background/listeners/contextmenu-listener.js - Context menu actions
 
 import { toggleSidebar } from '../services/sidebar-manager.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 const CONTEXT_MENU_ID = "open-sidebar-context";
 

@@ -1,7 +1,7 @@
 // src/background/services/credential-manager.js - Credential management
 
 import CredentialManagerService from '../../services/CredentialManager.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 /**
  * Handle credential operation request

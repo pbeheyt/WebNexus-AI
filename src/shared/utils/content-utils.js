@@ -1,5 +1,5 @@
-// src/shared/content-utils.js
-import { CONTENT_TYPES } from './constants.js';
+// src/shared/utils/content-utils.js
+import { CONTENT_TYPES } from '../constants.js';
 
 /**
  * Determine content type based on URL and selection state

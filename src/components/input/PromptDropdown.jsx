@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { loadRelevantPrompts } from '../../utils/promptUtils';
+import { loadRelevantPrompts } from '../../shared/utils/prompt-utils.js';
 
 /**
  * A dropdown component to display and select relevant custom prompts.

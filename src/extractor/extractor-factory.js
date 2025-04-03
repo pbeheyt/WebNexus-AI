@@ -1,6 +1,6 @@
 // src/extractor/extractor-factory.js
 const { CONTENT_TYPES } = require('../shared/constants');
-const { determineContentType } = require('../shared/content-utils');
+const { determineContentType } = require('../shared/utils/content-utils.js');
 
 const GeneralExtractorStrategy = require('./strategies/general-strategy');
 const RedditExtractorStrategy = require('./strategies/reddit-strategy');

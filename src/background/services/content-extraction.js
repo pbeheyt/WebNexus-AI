@@ -1,8 +1,8 @@
 // src/background/services/content-extraction.js - Content extraction coordination
 
-import { determineContentType } from '../../shared/content-utils.js';
+import { determineContentType } from '../../shared/utils/content-utils.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 /**
  * Extract content from a tab

@@ -1,7 +1,7 @@
 // src/background/core/message-router.js - Centralized message handling
 
-import logger from '../../utils/logger.js';
-import { determineContentType } from '../../shared/content-utils.js';
+import logger from '../../shared/logger.js';
+import { determineContentType } from '../../shared/utils/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
 import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';

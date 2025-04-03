@@ -1,4 +1,4 @@
-const logger = require('../utils/logger').service;
+const logger = require('../shared/logger.js').service;
 const { STORAGE_KEYS } = require('../shared/constants');
 
 /**

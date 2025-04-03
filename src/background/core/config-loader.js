@@ -1,7 +1,7 @@
 // src/background/core/config-loader.js - Configuration loading and management
 
 import sidebarStateManager from '../../services/SidebarStateManager.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 /**
  * Initialize configuration manager

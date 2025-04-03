@@ -1,4 +1,4 @@
-// src/utils/logger.js
+// src/shared/logger.js
 
 /**
  * Cross-context logging utility for Chrome extensions

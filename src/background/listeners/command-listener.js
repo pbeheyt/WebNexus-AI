@@ -1,7 +1,7 @@
 // src/background/listeners/command-listener.js - Keyboard shortcuts
 
 import { toggleSidebar } from '../services/sidebar-manager.js'; // Import the function directly
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 /**
  * Set up command listener for keyboard shortcuts

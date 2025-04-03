@@ -1,5 +1,5 @@
-// src/utils/promptUtils.js
-import { STORAGE_KEYS, SHARED_TYPE } from '../shared/constants';
+// src/shared/utils/prompt-utils.js
+import { STORAGE_KEYS, SHARED_TYPE } from '../constants';
 
 /**
  * Loads custom prompts relevant to a specific content type, including shared prompts.

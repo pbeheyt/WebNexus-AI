@@ -1,6 +1,6 @@
 // src/content/index.js - Modify existing or create new
 const ExtractorFactory = require('../extractor/extractor-factory');
-const logger = require('../utils/logger').content;
+const logger = require('../shared/logger.js').content;
 
 // Track active extraction process
 let currentExtractionId = null;

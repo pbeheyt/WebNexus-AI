@@ -3,7 +3,7 @@
 const ApiFactory = require('../api/api-factory');
 const CredentialManager = require('./CredentialManager');
 const ModelParameterService = require('./ModelParameterService');
-const logger = require('../utils/logger').service;
+const logger = require('../shared/logger.js').service;
 
 /**
  * Centralized manager for API service operations

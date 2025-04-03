@@ -3,7 +3,7 @@
 import { isPlatformTab, getPlatformContentScript } from '../services/platform-integration.js';
 import { injectContentScript } from '../services/content-extraction.js';
 import { getPlatformTabInfo, updateScriptInjectionStatus } from '../core/state-manager.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 
 /**

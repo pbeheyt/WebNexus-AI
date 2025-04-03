@@ -1,5 +1,5 @@
 // src/extractor/base-extractor.js
-const logger = require('../utils/logger');
+const logger = require('../shared/logger.js');
 
 class BaseExtractor {
   constructor(contentType) {

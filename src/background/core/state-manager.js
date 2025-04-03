@@ -1,7 +1,7 @@
 // src/background/core/state-manager.js - Background state management
 
 import { STORAGE_KEYS } from '../../shared/constants.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 /**
  * Reset state to initial values

@@ -2,7 +2,7 @@
 
 import { initializeConfigManager } from './core/config-loader.js';
 import { resetState } from './core/state-manager.js';
-import logger from '../utils/logger.js';
+import logger from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 
 /**

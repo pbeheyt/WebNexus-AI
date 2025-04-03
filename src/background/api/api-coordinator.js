@@ -5,7 +5,7 @@ import ModelParameterService from '../../services/ModelParameterService.js';
 import { extractContent, checkYouTubeTranscriptAvailability } from '../services/content-extraction.js';
 import { getPreferredAiPlatform } from '../services/platform-integration.js';
 import { verifyApiCredentials } from '../services/credential-manager.js';
-import { determineContentType } from '../../shared/content-utils.js';
+import { determineContentType } from '../../shared/utils/content-utils.js';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
 import { 
   resetExtractionState, 
@@ -15,7 +15,7 @@ import {
   setApiProcessingError, 
   completeStreamResponse
 } from '../core/state-manager.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 /**
  * Handle API model requests

@@ -2,7 +2,7 @@
 
 import { AI_PLATFORMS, INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
 import { getPlatformConfig } from '../core/config-loader.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 /**
  * Get platform content script path

@@ -2,7 +2,7 @@
 
 import SidebarStateManager from '../../services/SidebarStateManager.js';
 import { injectContentScript } from './content-extraction.js';
-import logger from '../../utils/logger.js';
+import logger from '../../shared/logger.js';
 
 // Operational state management for toggle transactions
 const toggleOperationState = {

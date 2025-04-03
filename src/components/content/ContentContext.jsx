@@ -1,7 +1,7 @@
 // src/components/content/ContentContext.jsx
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { CONTENT_TYPES } from '../../shared/constants';
-import { determineContentType } from '../../shared/content-utils';
+import { determineContentType } from '../../shared/utils/content-utils';
 
 const ContentContext = createContext(null);
 

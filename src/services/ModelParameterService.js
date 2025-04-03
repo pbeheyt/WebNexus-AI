@@ -1,6 +1,6 @@
 // src/services/ModelParameterService.js
 const { STORAGE_KEYS, INTERFACE_SOURCES } = require('../shared/constants');
-const logger = require('../utils/logger').service;
+const logger = require('../shared/logger.js').service;
 
 /**
  * Service for managing model-specific parameters
