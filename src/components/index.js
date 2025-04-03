@@ -16,7 +16,6 @@ export { SelectList } from './form/SelectList';
 // Layout components
 export { Card, CardHeader, CardTitle, CardContent } from './layout/Card';
 export { Accordion } from './layout/Accordion';
-export { Modal } from './layout/Modal';
 export { PlatformCard} from './layout/PlatformCard';
 export { AppHeader } from './layout/AppHeader';
 export { Tooltip } from './layout/Tooltip';

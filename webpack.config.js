@@ -5,10 +5,6 @@ module.exports = {
   entry: {
     background: './src/background/index.js',
     'content-script': './src/content/index.js',
-    'youtube-content': './src/content/youtube-content.js',
-    'reddit-content': './src/content/reddit-content.js',
-    'general-content': './src/content/general-content.js',
-    // 'pdf-content': './src/content/pdf-content.js',
     'platform-content': './src/content/platform-content.js',
     popup: './src/popup/index.jsx',
     settings: './src/settings/index.jsx',

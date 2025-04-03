@@ -102,57 +102,6 @@ class MessageFormatter {
     
     return formattedContents;
   }
-  
-  /**
-   * Format conversation history as text
-   * @param {Array} messages - Conversation messages
-   * @returns {string} Formatted conversation history text
-   */
-  formatAsText(messages) {
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return '';
-    }
-    
-    return messages.map(msg => {
-      const roleLabel = msg.role.toUpperCase();
-      return `${roleLabel}: ${msg.content}`;
-    }).join('\n\n');
-  }
-  
-  /**
-   * Create truncated conversation history to fit within token limits
-   * @param {Array} messages - Conversation messages
-   * @param {number} maxTokens - Maximum token limit 
-   * @returns {Array} Truncated message array
-   */
-  createTruncatedHistory(messages, maxTokens = 2000) {
-    if (!messages || messages.length === 0) {
-      return [];
-    }
-    
-    // Rough token estimation: 1 token = ~4 characters
-    const estimateTokens = (text) => Math.ceil(text.length / 4);
-    
-    // Start with most recent messages and work backwards
-    const reversedMessages = [...messages].reverse();
-    const result = [];
-    let tokenCount = 0;
-    
-    for (const message of reversedMessages) {
-      const messageTokens = estimateTokens(message.content);
-      
-      // If adding this message would exceed token limit, stop
-      if (tokenCount + messageTokens > maxTokens) {
-        break;
-      }
-      
-      // Add message to result and update token count
-      result.unshift(message); // Add to front to maintain order
-      tokenCount += messageTokens;
-    }
-    
-    return result;
-  }
 }
 
 module.exports = MessageFormatter;
