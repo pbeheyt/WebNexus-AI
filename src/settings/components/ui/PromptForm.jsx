@@ -112,7 +112,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
         <select
           id="contentType"
           name="contentType"
-          className="w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
+          className="w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md pr-8"
           value={formData.contentType}
           onChange={handleChange}
         >

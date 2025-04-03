@@ -95,7 +95,7 @@ const PromptManagement = () => {
   return (
     <div className="master-detail flex gap-6">
       {/* Master Panel (Prompt List) */}
-      <div className="master-panel w-[350px] flex-shrink-0 border-r border-theme pr-5">
+      <div className="master-panel w-64 flex-shrink-0 border-r border-theme pr-5">
         <div className="master-header flex justify-between items-center mb-4">
           <h2 className="type-heading text-lg font-medium">Prompts</h2>
           <button 
@@ -105,11 +105,14 @@ const PromptManagement = () => {
             + New
           </button>
         </div>
+        <p className="section-description text-theme-secondary mb-6">
+          Manage your custom prompts for different content types. Create, edit, or delete prompts that can be used for content processing.
+        </p>
         
         <div className="form-group mb-4">
           <select
             id="content-type-filter"
-            className="content-type-filter w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md appearance-none"
+            className="content-type-filter w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md pr-8"
             value={filterValue}
             onChange={handleFilterChange}
           >

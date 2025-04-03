@@ -5,7 +5,7 @@ const TabNavigation = () => {
   const { TABS, activeTab, switchTab } = useTabs();
   
   const tabsConfig = [
-    { id: TABS.PROMPT_MANAGEMENT, label: 'Custom Prompt Management' },
+    { id: TABS.PROMPT_MANAGEMENT, label: 'Prompts' },
     { id: TABS.SHORTCUTS, label: 'Keyboard Shortcuts' },
     { id: TABS.API_SETTINGS, label: 'API Settings' }
   ];

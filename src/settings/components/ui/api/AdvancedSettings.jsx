@@ -304,7 +304,7 @@ const AdvancedSettings = ({
         </label>
         <select
           id={`${platform.id}-settings-model-selector`}
-          className="settings-model-selector w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
+          className="settings-model-selector w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md pr-8"
           value={selectedModelId}
           onChange={handleModelChange}
         >
