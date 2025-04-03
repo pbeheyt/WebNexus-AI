@@ -62,11 +62,11 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     <div className={`relative w-full ${className}`}>
       <button
         onClick={() => setOpenDropdown(isOpen ? null : 'model')}
-        className="flex items-center justify-between w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
+        className="flex items-center w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
       >
         <span className="truncate">{selectedModelName}</span>
         
-        <span className="ml-2 text-theme-secondary">
+        <span className="ml-1 text-theme-secondary flex-shrink-0">
           <ChevronIcon />
         </span>
       </button>

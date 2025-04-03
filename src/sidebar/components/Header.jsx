@@ -96,7 +96,7 @@ function Header() {
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div className=""> {/* Removed border-b border-theme */}
-        <div className="flex items-center justify-between gap-10 px-4 py-2">
+        <div className="flex items-center justify-between px-4 py-2">
           {/* Conditional rendering based on credentials */}
           {hasAnyPlatformCredentials ? (
             <>
@@ -157,11 +157,44 @@ function Header() {
                 )}
               </div>
 
-              {/* Model Selector div */}
-              <div className="flex-grow flex items-center h-9">
-                <ModelSelector 
-                  selectedPlatformId={selectedPlatformId}
-                />
+              {/* Container for Model Selector and Refresh Button */}
+              <div className="flex items-center flex-grow">
+                {/* Model Selector */}
+                <div className="flex-grow flex items-center h-9">
+                  <ModelSelector 
+                    selectedPlatformId={selectedPlatformId}
+                  />
+                </div>
+                
+                {/* Refresh Button - Aligned with Model Selector */}
+                <div className="flex items-center h-9">
+                  <button
+                    ref={refreshButtonRef}
+                    onClick={refreshPlatformData}
+                    disabled={isRefreshing || isLoading}
+                    className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Refresh platforms and credentials"
+                    title="Refresh platforms and credentials"
+                  >
+                    {isRefreshing ? (
+                      <span className="animate-spin">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M23 4v6h-6"></path>
+                          <path d="M1 20v-6h6"></path>
+                          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                          <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                        </svg>
+                      </span>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                        <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
             </>
           ) : (
@@ -170,36 +203,6 @@ function Header() {
               <span className="text-theme-secondary text-sm">No API credentials configured.</span>
             </div>
           )}
-          
-          {/* Refresh Button - Positioned rightmost */}
-          <div className="relative flex items-center h-9 ml-auto">
-            <button
-              ref={refreshButtonRef}
-              onClick={refreshPlatformData}
-              disabled={isRefreshing || isLoading}
-              className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Refresh platforms and credentials"
-              title="Refresh platforms and credentials"
-            >
-              {isRefreshing ? (
-                <span className="animate-spin">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 4v6h-6"></path>
-                    <path d="M1 20v-6h6"></path>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
-                  </svg>
-                </span>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 4v6h-6"></path>
-                  <path d="M1 20v-6h6"></path>
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                  <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
-                </svg>
-              )}
-            </button>
-          </div>
         </div>
       </div>
     </DropdownContext.Provider>
