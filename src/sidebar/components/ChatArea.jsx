@@ -3,17 +3,12 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
-
-// Simple Settings Icon SVG
-const SettingsIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 inline-block ml-1">
-    <path fillRule="evenodd" d="M11.49 3.17a.75.75 0 011.02 0l1.125 1.125a.75.75 0 010 1.02l-1.125 1.125a.75.75 0 01-1.02 0l-1.125-1.125a.75.75 0 010-1.02l1.125-1.125zM10 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM10 16.5a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75zM3.75 4.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5zM3.75 10.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM5.625 15.75a.75.75 0 010 1.5h-1.875a.75.75 0 010-1.5h1.875z" clipRule="evenodd" />
-  </svg>
-);
-
+import { useContent } from '../../components/content/ContentContext'; // Added import
+import { CONTENT_TYPES } from '../../shared/constants'; // Added import
 
 function ChatArea({ className = '' }) {
   const { messages, isProcessing } = useSidebarChat();
+  const { contentType } = useContent(); // Get contentType
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null); // Ref for the scrollable container
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
@@ -59,6 +54,22 @@ function ChatArea({ className = '' }) {
     setUserInteractedWithScroll(false);
   }, [isProcessing]); // Dependency: isProcessing
 
+  // Helper function to get the welcome message based on content type
+  const getWelcomeMessage = (type) => {
+    switch (type) {
+      case CONTENT_TYPES.YOUTUBE:
+        return "Ask a question about this YouTube video or request a summary.";
+      case CONTENT_TYPES.REDDIT:
+        return "Ask a question about this Reddit post or request a summary.";
+      case CONTENT_TYPES.PDF:
+        return "Ask a question about this PDF document or request a summary.";
+      case CONTENT_TYPES.GENERAL:
+        return "Ask a question about this web page or request a summary.";
+      default:
+        return "Ask a question or request a summary to get started.";
+    }
+  };
+
   if (messages.length === 0) {
     return (
       <div className={`${className} flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}>
@@ -95,7 +106,7 @@ function ChatArea({ className = '' }) {
             )}
             <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
             <p className="text-sm mb-4">
-              Ask a question about this page or request a summary to get started.
+              {getWelcomeMessage(contentType)}
             </p>
           </>
         )}
