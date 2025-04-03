@@ -140,7 +140,7 @@ export function UnifiedInput({
                   ref={promptButtonRef}
                   onClick={() => setIsDropdownOpen(prev => !prev)}
                   disabled={disabled || isProcessing}
-                  className={`flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-1 rounded w-7 h-7 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-7 h-7 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label="Select prompt"
                   title="Select a custom prompt"
                 >
