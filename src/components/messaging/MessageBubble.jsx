@@ -3,6 +3,97 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 /**
+ * CodeBlock component with copy functionality
+ * Extracted as a separate component to properly manage state
+ */
+const CodeBlock = ({ className, children }) => {
+  const [copyState, setCopyState] = useState('idle'); // idle, copied, error
+  const codeContent = String(children).replace(/\n$/, '');
+  
+  const copyCodeToClipboard = () => {
+    try {
+      // Modern clipboard API with fallback to older method
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(codeContent)
+          .then(() => {
+            setCopyState('copied');
+            setTimeout(() => setCopyState('idle'), 2000);
+          })
+          .catch(err => {
+            fallbackCopyMethod();
+          });
+      } else {
+        fallbackCopyMethod();
+      }
+    } catch (error) {
+      console.error('Failed to copy code: ', error);
+      setCopyState('error');
+      setTimeout(() => setCopyState('idle'), 2000);
+    }
+  };
+  
+  // Fallback copy method using execCommand
+  const fallbackCopyMethod = () => {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = codeContent;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'absolute';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopyState('copied');
+      setTimeout(() => setCopyState('idle'), 2000);
+    } catch (error) {
+      console.error('Fallback copy method failed: ', error);
+      setCopyState('error');
+      setTimeout(() => setCopyState('idle'), 2000);
+    }
+  };
+  
+  return (
+    <div className="relative group">
+      <pre className="bg-theme-hover p-3 rounded overflow-x-auto text-sm font-mono mb-4">
+        <code className={className}>
+          {children}
+        </code>
+      </pre>
+      <button
+        onClick={copyCodeToClipboard}
+        className={`absolute top-2 right-2 p-1.5 rounded-md transition-opacity duration-200
+                   ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} 
+                   ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                     copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
+                     'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+        aria-label="Copy code to clipboard"
+        title="Copy code to clipboard"
+      >
+        {copyState === 'copied' ? (
+          // Checkmark icon for copied state
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        ) : copyState === 'error' ? (
+          // X icon for error state
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        ) : (
+          // Clipboard icon for idle state
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+};
+
+/**
  * A versatile message bubble component that supports different roles and states
  * with copy-to-clipboard functionality for assistant messages
  */
@@ -99,12 +190,10 @@ export function MessageBubble({
               // Check if it's a block code (has language class) or inline
               const match = /language-(\w+)/.exec(className || '');
               return !inline ? (
-                // Block code: use <pre><code> structure
-                <pre className="bg-theme-hover p-3 rounded overflow-x-auto text-sm font-mono mb-4">
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
-                </pre>
+                // Block code with copy button: use our CodeBlock component
+                <CodeBlock className={className}>
+                  {children}
+                </CodeBlock>
               ) : (
                 // Inline code
                 <code className="bg-theme-hover px-1 py-0.5 rounded text-sm font-mono" {...props}>
@@ -118,7 +207,8 @@ export function MessageBubble({
             blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-theme pl-4 italic text-theme-secondary mb-4 py-1" {...props} />,
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
             em: ({node, ...props}) => <em className="italic" {...props} />,
-            // Add other elements if needed, e.g., table, hr
+            hr: ({node, ...props}) => <hr className="my-6 border-t border-gray-300 dark:border-gray-600" {...props} />,
+            // Add other elements if needed, e.g., table
           }}
         >
           {content}
