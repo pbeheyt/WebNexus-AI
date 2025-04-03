@@ -40,7 +40,6 @@ function Header() {
     refreshPlatformData
   } = useSidebarPlatform();
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [showRefreshTooltip, setShowRefreshTooltip] = useState(false);
   const dropdownRef = useRef(null);
   const refreshButtonRef = useRef(null);
   const triggerRef = useRef(null);
@@ -177,11 +176,10 @@ function Header() {
             <button
               ref={refreshButtonRef}
               onClick={refreshPlatformData}
-              onMouseEnter={() => setShowRefreshTooltip(true)}
-              onMouseLeave={() => setShowRefreshTooltip(false)}
               disabled={isRefreshing || isLoading}
               className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Refresh platforms and credentials"
+              title="Refresh platforms and credentials"
             >
               {isRefreshing ? (
                 <span className="animate-spin">
@@ -201,11 +199,6 @@ function Header() {
                 </svg>
               )}
             </button>
-            <Tooltip
-              show={showRefreshTooltip}
-              message="Refresh platforms and credentials"
-              targetRef={refreshButtonRef}
-            />
           </div>
         </div>
       </div>
