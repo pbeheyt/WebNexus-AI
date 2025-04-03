@@ -64,14 +64,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
         onClick={() => setOpenDropdown(isOpen ? null : 'model')}
         className="flex items-center justify-between w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
       >
-        {isLoading ? (
-          <div className="flex items-center">
-            <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mr-2"></div>
-            <span>Loading models...</span>
-          </div>
-        ) : (
-          <span className="truncate">{selectedModelName}</span>
-        )}
+        <span className="truncate">{selectedModelName}</span>
         
         <span className="ml-2 text-theme-secondary">
           <ChevronIcon />
