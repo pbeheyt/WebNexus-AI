@@ -27,7 +27,7 @@ function ChatArea({ className = '' }) {
 
     // Check if processing (streaming)
     if (isProcessing) {
-      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 10;
+      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 50; // Increased threshold
       if (!isAtBottom) {
         setUserInteractedWithScroll(true); // User scrolled up during streaming
       } else {
