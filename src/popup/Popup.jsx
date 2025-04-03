@@ -7,7 +7,7 @@ import { usePopupPlatform } from '../contexts/platform';
 import { Button, AppHeader } from '../components'; // Import AppHeader
 import { StatusMessage } from '../components';
 import { Toast } from '../components';
-import { useContent, ContentTypeDisplay } from '../components';
+import { useContent } from '../components'; // Removed ContentTypeDisplay
 import { PlatformSelector } from './features/PlatformSelector';
 // Removed QuickPromptEditor and CustomPromptSelector imports
 import { UnifiedInput } from '../components/input/UnifiedInput'; // Changed to named import
@@ -165,7 +165,7 @@ export function Popup() {
         {/* Removed the explicit Close button from here */}
       </AppHeader>
 
-      <ContentTypeDisplay className="mt-3" />
+      {/* ContentTypeDisplay removed from here */}
 
       <div className="mt-3">
         <PlatformSelector />
@@ -177,7 +177,7 @@ export function Popup() {
           value={inputText}
           onChange={setInputText}
           onSubmit={handleProcessWithText}
-          placeholder="Type a prompt or select one..."
+          // placeholder prop removed
           disabled={!isSupported || contentLoading || isProcessingContent || isProcessing}
           isProcessing={isProcessingContent || isProcessing}
           contentType={contentType}

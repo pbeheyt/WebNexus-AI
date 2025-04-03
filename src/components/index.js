@@ -31,4 +31,3 @@ export { UnifiedInput } from './input/UnifiedInput'; // Added named export
 
 // Display components
 export { ContentProvider, useContent } from './content/ContentContext';
-export { ContentTypeDisplay } from './content/ContentTypeDisplay';

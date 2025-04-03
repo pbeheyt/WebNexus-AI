@@ -5,7 +5,7 @@ import { useSidebarChat } from './contexts/SidebarChatContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput'; // Changed to named import
-import { useContent, AppHeader, ContentTypeDisplay } from '../components';
+import { useContent, AppHeader } from '../components'; // Removed ContentTypeDisplay
 import { MESSAGE_TYPES } from './constants';
 import { setupMessageHandlers } from './services/IframeMessaging';
 
@@ -96,13 +96,8 @@ export default function SidebarApp() {
             headerExpanded ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
-          {/* Content type display with appropriate spacing */}
-          <div className="px-4 mt-2">
-            <div className="pr-10">
-              <ContentTypeDisplay />
-            </div>
-          </div>
-          
+          {/* ContentTypeDisplay removed from here */}
+
           {/* Platform/model selection header */}
           <Header />
         </div>

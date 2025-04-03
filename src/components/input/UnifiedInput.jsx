@@ -1,9 +1,10 @@
 // src/components/input/UnifiedInput.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { TextArea } from '../form/TextArea';
-import Button from '../core/Button'; 
+import Button from '../core/Button';
 import { PromptDropdown } from './PromptDropdown';
 import TokenCounter from '../../sidebar/components/TokenCounter';
+import { CONTENT_TYPES } from '../../shared/constants';
 
 /**
  * Unified input component for both popup and sidebar, supporting direct input
@@ -14,7 +15,7 @@ export function UnifiedInput({
   onChange,
   onSubmit,
   onCancel = null,
-  placeholder = 'Type or select a prompt...',
+  // placeholder removed here
   disabled = false,
   isProcessing = false,
   isCanceling = false,
@@ -29,6 +30,22 @@ export function UnifiedInput({
   const textareaRef = useRef(null);
   const promptButtonRef = useRef(null);
   const containerRef = useRef(null);
+
+  // Helper function for dynamic placeholder
+  const getDynamicPlaceholder = (type) => {
+    switch (type) {
+      case CONTENT_TYPES.YOUTUBE:
+        return "Type a prompt for this YouTube video...";
+      case CONTENT_TYPES.REDDIT:
+        return "Type a prompt for this Reddit post...";
+      case CONTENT_TYPES.PDF:
+        return "Type a prompt for this PDF document...";
+      case CONTENT_TYPES.GENERAL:
+        return "Type a prompt for this web page...";
+      default:
+        return "Type a prompt or select one...";
+    }
+  };
 
   useEffect(() => {
     if (!isProcessing && !isDropdownOpen && textareaRef.current) {
@@ -108,7 +125,7 @@ export function UnifiedInput({
               value={value}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder={placeholder}
+              placeholder={getDynamicPlaceholder(contentType)}
               disabled={disabled || isProcessing}
               autoResize={true}
               minHeight={44}
@@ -195,7 +212,7 @@ export function UnifiedInput({
               value={value}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder={placeholder}
+              placeholder={getDynamicPlaceholder(contentType)}
               disabled={disabled || isProcessing}
               autoResize={true}
               minHeight={60}
