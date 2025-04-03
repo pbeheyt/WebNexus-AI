@@ -148,7 +148,7 @@ export function Popup() {
 
   // Removed getActualPromptContent, handleProcess, shouldEnableProcessing
   return (
-    <div className="min-w-[320px] p-2 bg-theme-primary text-theme-primary">
+    <div className="min-w-[320px] p-4 bg-theme-primary text-theme-primary">
       {/* Pass closePopup function to the new onClose prop */}
       <AppHeader onClose={closePopup}>
         {/* Sidebar toggle button - remains as a child for now, or could be refactored similarly */}
@@ -165,14 +165,14 @@ export function Popup() {
         {/* Removed the explicit Close button from here */}
       </AppHeader>
 
-      <ContentTypeDisplay className="mb-3" />
+      <ContentTypeDisplay className="mt-2" />
 
-      <div className="mb-3"> {/* Changed mt-2 to mb-3 */}
+      <div className="mt-2">
         <PlatformSelector />
       </div>
 
       {/* Replaced QuickPromptEditor and CustomPromptSelector with UnifiedInput */}
-      <div> {/* Removed mt-2 */}
+      <div className="mt-2">
         <UnifiedInput
           value={inputText}
           onChange={setInputText}

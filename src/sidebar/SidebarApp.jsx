@@ -97,7 +97,7 @@ export default function SidebarApp() {
           }`}
         >
           {/* Content type display with appropriate spacing */}
-          <div className="px-4 pt-2">
+          <div className="px-4 mt-2">
             <div className="pr-10">
               <ContentTypeDisplay />
             </div>
