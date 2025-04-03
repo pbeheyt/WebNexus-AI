@@ -1,5 +1,5 @@
 // src/sidebar/components/ChatArea.jsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
@@ -15,15 +15,49 @@ const SettingsIcon = () => (
 function ChatArea({ className = '' }) {
   const { messages, isProcessing } = useSidebarChat();
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null); // Ref for the scrollable container
+  const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
   const { platforms, selectedPlatformId, selectedModel, hasAnyPlatformCredentials } = useSidebarPlatform(); // Add hasAnyPlatformCredentials
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
 
-  // Auto-scroll to bottom when messages change
+  // Handle user scroll interaction
+  const handleScroll = useCallback(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    // Check if processing (streaming)
+    if (isProcessing) {
+      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 10;
+      if (!isAtBottom) {
+        setUserInteractedWithScroll(true); // User scrolled up during streaming
+      } else {
+        setUserInteractedWithScroll(false); // User scrolled back to bottom during streaming
+      }
+    }
+  }, [isProcessing]); // Dependency: isProcessing
+
+  // Effect to add/remove scroll listener
   useEffect(() => {
-    if (messagesEndRef.current) {
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      return () => {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, [handleScroll]); // Dependency: handleScroll callback
+
+  // Auto-scroll to bottom when messages change, only if user hasn't scrolled up
+  useEffect(() => {
+    if (!userInteractedWithScroll && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [messages, userInteractedWithScroll]); // Dependencies: messages, userInteractedWithScroll
+
+  // Reset scroll interaction state when processing starts/stops
+  useEffect(() => {
+    setUserInteractedWithScroll(false);
+  }, [isProcessing]); // Dependency: isProcessing
 
   if (messages.length === 0) {
     return (
@@ -70,7 +104,8 @@ function ChatArea({ className = '' }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col">
+    // Attach the ref to the scrollable container
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col">
       {messages.map((message) => (
         <MessageBubble
           key={message.id}

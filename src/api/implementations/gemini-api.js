@@ -306,6 +306,11 @@ class GeminiApiService extends BaseApiService {
   /**
    * Platform-specific validation implementation for Gemini
    * @protected
+  }
+
+  /**
+   * Platform-specific validation implementation for Gemini
+   * @protected
    * @param {string} apiKey - The API key to validate
    * @param {string} model - The model to use for validation
    * @returns {Promise<boolean>} Whether the API key is valid
