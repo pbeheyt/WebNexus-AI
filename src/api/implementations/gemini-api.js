@@ -128,6 +128,9 @@ class GeminiApiService extends BaseApiService {
             
             // Try to find a complete JSON object
             try {
+              // Optionally log a snippet of the buffer if it's long:
+              // this.logger.debug('Buffer snippet:', buffer.substring(startPos, startPos + 100)); 
+
               // Extract potential JSON
               const substr = buffer.substring(startPos);
               
