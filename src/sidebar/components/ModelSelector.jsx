@@ -9,7 +9,6 @@ const ChevronIcon = () => (
   </svg>
 );
 
-// CHANGE 1 Applied: Removed hasPlatformsWithCredentials from destructuring
 function ModelSelector({ className = '', selectedPlatformId = null }) {
   const {
     models,
@@ -49,17 +48,11 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
   }, [models]);
 
   const handleModelChange = async (modelId) => {
-    // CHANGE 3 Applied: Removed hasPlatformsWithCredentials check
     if (modelId && selectedPlatformId) {
       await selectModel(modelId);
       setOpenDropdown(null);
     }
   };
-
-  // CHANGE 2 Applied: Removed early return block
-  // if (!hasPlatformsWithCredentials || !selectedPlatformId) {
-  //   return <div className="w-full h-9"></div>;
-  // }
 
   const selectedModelName = selectedModel ?
     formattedModels.find(m => m.id === selectedModel)?.name || selectedModel :
@@ -69,12 +62,8 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     <div className={`relative w-full ${className}`}>
       <button
         onClick={() => setOpenDropdown(isOpen ? null : 'model')}
-        className="flex items-center w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
+        className="flex items-center justify-between w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
       >
-        <span className="mr-2 text-theme-secondary">
-          <ChevronIcon />
-        </span>
-
         {isLoading ? (
           <div className="flex items-center">
             <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -83,6 +72,10 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
         ) : (
           <span className="truncate">{selectedModelName}</span>
         )}
+        
+        <span className="ml-2 text-theme-secondary">
+          <ChevronIcon />
+        </span>
       </button>
 
       {/* Dropdown menu */}
