@@ -61,9 +61,9 @@ export function MessageBubble({
   // System messages (typically errors) with special styling
   if (isSystem) {
     return (
-      <div className={`p-3 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-4 py-3 ${className}`}> {/* Changed p-4 to p-3 */}
+      <div className={`p-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-5 py-4 ${className}`}>
         {/* System messages render raw content, preserving whitespace */}
-        <div className="whitespace-pre-wrap break-words overflow-hidden">{content}</div>
+        <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed">{content}</div>
       </div>
     );
   }
@@ -71,10 +71,10 @@ export function MessageBubble({
   // User messages with cleaner grey color scheme
   if (isUser) {
     return (
-      <div className={`p-4 w-full flex justify-end ${className}`}> {/* Outer div padding remains p-4 */}
-        <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden"> {/* Changed p-4 to p-3 */}
+      <div className={`p-5 w-full flex justify-end ${className}`}>
+        <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-4 max-w-[85%] overflow-hidden">
           {/* User messages render raw content, preserving whitespace */}
-          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{content}</div>
+          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed">{content}</div>
         </div>
       </div>
     );
@@ -82,25 +82,25 @@ export function MessageBubble({
 
   // Assistant messages with no bubble, taking full width
   return (
-    <div className={`p-3 w-full group relative ${className}`}> {/* Changed p-4 to p-3 */}
+    <div className={`p-4 w-full group relative ${className}`}>
       {/* Main content - Render Markdown for assistant messages */}
       <div className="prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-hidden">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-3" {...props} />,
-            h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-2" {...props} />,
-            h3: ({node, ...props}) => <h3 className="text-base font-medium mb-2" {...props} />,
-            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2 ml-4" {...props} />,
-            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2 ml-4" {...props} />,
-            li: ({node, ...props}) => <li className="mb-1" {...props} />,
+            h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-4" {...props} />,
+            h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-3" {...props} />,
+            h3: ({node, ...props}) => <h3 className="text-base font-medium mb-3" {...props} />,
+            p: ({node, ...props}) => <p className="mb-4 last:mb-0 leading-relaxed" {...props} />,
+            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 ml-6" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4 ml-6" {...props} />,
+            li: ({node, ...props}) => <li className="mb-2 leading-relaxed" {...props} />,
             code: ({node, inline, className, children, ...props}) => {
               // Check if it's a block code (has language class) or inline
               const match = /language-(\w+)/.exec(className || '');
               return !inline ? (
                 // Block code: use <pre><code> structure
-                <pre className="bg-theme-hover p-2 rounded overflow-x-auto text-sm font-mono mb-2">
+                <pre className="bg-theme-hover p-3 rounded overflow-x-auto text-sm font-mono mb-4">
                   <code className={className} {...props}>
                     {children}
                   </code>
@@ -115,7 +115,7 @@ export function MessageBubble({
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
             pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-            blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-theme pl-3 italic text-theme-secondary mb-2" {...props} />,
+            blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-theme pl-4 italic text-theme-secondary mb-4 py-1" {...props} />,
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
             em: ({node, ...props}) => <em className="italic" {...props} />,
             // Add other elements if needed, e.g., table, hr
@@ -127,7 +127,7 @@ export function MessageBubble({
 
       {/* Streaming indicator */}
       {isStreaming && (
-        <div className="flex gap-1 mt-2">
+        <div className="flex gap-1 mt-3">
           <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce"></div>
           <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
           <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
@@ -135,7 +135,7 @@ export function MessageBubble({
       )}
       
       {/* Footer section with model info and copy button aligned horizontally */}
-      <div className="flex justify-between items-center mt-2">
+      <div className="flex justify-between items-center mt-3">
         {/* Model info with platform icon */}
         <div className="text-xs opacity-70 flex items-center">
           {platformIconUrl && !isUser && (
@@ -184,9 +184,9 @@ export function MessageBubble({
       
       {/* Additional metadata display */}
       {Object.keys(metadata).length > 0 && (
-        <div className="text-xs mt-1 opacity-70 overflow-hidden text-ellipsis">
+        <div className="text-xs mt-2 opacity-70 overflow-hidden text-ellipsis">
           {Object.entries(metadata).map(([key, value]) => (
-            <span key={key} className="mr-2 break-words">
+            <span key={key} className="mr-3 break-words">
               {key}: {typeof value === 'object' ? JSON.stringify(value) : value}
             </span>
           ))}
