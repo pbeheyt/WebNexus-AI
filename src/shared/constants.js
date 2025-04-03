@@ -49,6 +49,7 @@ export const STORAGE_KEYS = {
   SELECTED_PROMPT_IDS: 'selected_prompt_ids',
   QUICK_PROMPTS: 'quick_prompts',
   CUSTOM_PROMPTS: 'custom_prompts_by_type',
+  DEFAULT_PROMPTS_INIT_FLAG: 'default_prompts_initialized_v1',
 
   // Platform
   INJECTION_PLATFORM: 'injectionPlatform',

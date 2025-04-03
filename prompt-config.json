@@ -1,129 +1,18 @@
 {
-  "sharedParameters": {
-    "length": {
-      "param_name": "Length",
-      "type": "list",
-      "values": {
-        "concise": "(CRITICAL DIRECTIVE : 150-300 words summary output)\nBrief summary with essential points and minimal supporting details for quick reading.",
-        "normal": "(CRITICAL DIRECTIVE : 400-700 words)\nBalanced summary with appropriate depth, important details, and context while maintaining readability.",
-        "detailed": "(CRITICAL DIRECTIVE : 800-1200 words)\nSubstantial depth covering important concepts, examples, and comprehensive analysis of significant elements.",
-        "exhaustive": "(CRITICAL DIRECTIVE : 1500-3000+ words)\nMaximum thoroughness covering all aspects in detail with concept explanations, multiple supporting details, implications, and context. Use sections and subsections for academic-level comprehensiveness."
-      }
-    },
-    "style": {
-      "param_name": "Style",
-      "type": "list",
-      "values": {
-        "adaptive": "Dynamically structure summary based on content type: narrative flow for stories/experiences, hierarchical organization for informational content, chronological structure for processes/tutorials, and comparative format for discussions. Begin with content type identification followed by optimized summary approach.",
-        "narrative": "Present content as an engaging story with introduction, logical progression of key points, and conclusion that synthesizes main insights. Adapt flow to content type, maintaining narrative cohesion throughout.",
-        "bulletPoints": "Organize in scannable hierarchy with clear sections and concise bullet points. Structure with overview, key points, supporting evidence, and conclusions. Adapt sections based on content type."
-      }
-    },
-    "language": {
-      "param_name": "Language",
-      "type": "list",
-      "values": {
-        "english": "Write in English",
-        "french": "Write in French (en Français)",
-        "spanish": "Write in Spanish (en Español)",
-        "german": "Write in German (auf Deutsch)"
-      }
-    }
+  "general": {
+    "Short Summary": "Create a concise 3-sentence summary of this webpage highlighting the main topic, key points, and intended audience.",
+    "Detailed Summary": "Provide a comprehensive summary of this webpage including: main topic, key sections, important facts, central argument, target audience, and takeaway message. Include any significant data points or statistics mentioned."
   },
-  "defaultPrompts": {
-    "general": {
-      "name": "Web Content Summary",
-      "parameters": {
-        "baseInstruction": {
-          "param_name": "Base Instruction",
-          "type": "single",
-          "order": 0,
-          "value": "Analyze this web content based on the following instructions"
-        },
-        "typeSpecificInstructions": {
-          "param_name": "Type Specific Instructions",
-          "type": "single",
-          "order": 1,
-          "value": ""
-        }
-      }
-    },
-    "reddit": {
-      "name": "Reddit Post Analysis",
-      "parameters": {
-        "baseInstruction": {
-          "param_name": "Base Instruction",
-          "type": "single",
-          "order": 0,
-          "value": "Analyze this Reddit discussion based on the following instructions"
-        },
-        "typeSpecificInstructions": {
-          "param_name": "Type Specific Instructions",
-          "type": "single",
-          "order": 1,
-          "value": "CRITICAL INSTRUCTION\nALWAYS format user mentions as: [u/username](https://www.reddit.com/r/subreddit/comments/postid/comment/commentid"
-        }
-      }
-    },
-    "youtube": {
-      "name": "YouTube Video Summary",
-      "parameters": {
-        "baseInstruction": {
-          "param_name": "Base Instruction",
-          "type": "single",
-          "order": 0,
-          "value": "Summarize this YouTube video based on the following instructions"
-        },
-        "typeSpecificInstructions": {
-          "param_name": "Type Specific Instructions",
-          "type": "single",
-          "order": 1,
-          "value": ""
-        },
-        "commentAnalysis": {
-          "param_name": "Comment Analysis",
-          "type": "checkbox",
-          "order": 2,
-          "values": {
-            "true": "After completing your summary, include an analysis of comment section identifying major themes with example quotes using format: \"[comment]\" - Username (X likes). Scale depth with length parameter.",
-            "false": ""
-          }
-        }
-      }
-    },
-    "pdf": {
-      "name": "PDF Document Summary",
-      "parameters": {
-        "baseInstruction": {
-          "param_name": "Base Instruction",
-          "type": "single",
-          "order": 0,
-          "value": "Analyze this PDF document based on the following instructions"
-        },
-        "typeSpecificInstructions": {
-          "param_name": "Type Specific Instructions",
-          "type": "single",
-          "order": 1,
-          "value": ""
-        }
-      }
-    },
-    "selected_text": {
-      "name": "Selected Text Analysis",
-      "parameters": {
-        "baseInstruction": {
-          "param_name": "Base Instruction",
-          "type": "single",
-          "order": 0,
-          "value": "Analyze this selected text based on the following instructions"
-        },
-        "typeSpecificInstructions": {
-          "param_name": "Type Specific Instructions",
-          "type": "single",
-          "order": 1,
-          "value": ""
-        }
-      }
-    }
+  "youtube": {
+    "Short Summary": "Summarize this YouTube video in 3-5 sentences covering the main topic, key points, and conclusion.",
+    "Detailed Summary": "Create a detailed summary of this YouTube video including: introduction (topic and presenter), timeline of main points with timestamps when available, key insights or demonstrations, important quotes, conclusion, and who would benefit most from watching."
+  },
+  "reddit": {
+    "Short Summary": "Provide a brief 3-sentence summary of this Reddit post including the main question/topic, key community responses, and overall consensus (if any).",
+    "Detailed Summary": "Create a comprehensive summary of this Reddit post including: the original post's question/topic, main arguments in top comments, differing perspectives, notable expertise shared, consensus (if any), controversial points, and useful resources or links shared by the community."
+  },
+  "pdf": {
+    "Short Summary": "Summarize this PDF in 5 sentences or less, covering the document type, main topic, key findings, and intended audience.",
+    "Detailed Summary": "Create a detailed summary of this PDF including: document type, author(s) and organization, executive summary, methodology (if applicable), chapter/section breakdown with key points from each, important data or statistics, main conclusions, recommendations (if any), and who would benefit most from reading this document."
   }
 }
