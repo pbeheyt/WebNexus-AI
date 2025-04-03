@@ -55,11 +55,9 @@ class ModelParameterService {
       }
     }
     
-    // 2. Try source-specific global preference
-    if (source) {
-      const storageKey = source === INTERFACE_SOURCES.SIDEBAR 
-        ? STORAGE_KEYS.SIDEBAR_MODEL 
-        : STORAGE_KEYS.API_MODE_PREFERENCE;
+    // 2. Try source-specific global preference (Sidebar only)
+    if (source === INTERFACE_SOURCES.SIDEBAR) {
+      const storageKey = STORAGE_KEYS.SIDEBAR_MODEL;
         
       try {
         const sourcePrefs = await chrome.storage.sync.get(storageKey);

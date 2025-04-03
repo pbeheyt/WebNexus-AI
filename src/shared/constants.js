@@ -53,7 +53,6 @@ export const STORAGE_KEYS = {
   SHORTCUT_SETTINGS: 'shortcut_settings',
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
   API_CREDENTIALS: 'api_credentials',
-  API_MODE_PREFERENCE: 'api_mode_preference',
 
   // Prompt
   PRE_PROMPT: 'prePrompt',
@@ -104,11 +103,4 @@ export const INTERFACE_SOURCES = {
 export const PROMPT_TYPES = {
   CUSTOM: 'custom',
   QUICK: 'quick'
-};
-
-/**
- * Default shortcut settings
- */
-export const DEFAULT_SHORTCUT_SETTINGS = {
-  content_processing_behavior: 'selection' // Default to respecting selection
 };
