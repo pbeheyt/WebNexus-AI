@@ -55,7 +55,7 @@ const CodeBlock = ({ className, children }) => {
   
   return (
     <div className="relative group">
-      <pre className="bg-theme-hover p-3 rounded overflow-x-auto text-sm font-mono mb-4">
+      <pre className="bg-theme-hover p-2 rounded overflow-x-auto text-sm font-mono mb-3 max-w-full">
         <code className={className}>
           {children}
         </code>
@@ -179,13 +179,14 @@ export function MessageBubble({
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-4" {...props} />,
-            h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-3" {...props} />,
-            h3: ({node, ...props}) => <h3 className="text-base font-medium mb-3" {...props} />,
-            p: ({node, ...props}) => <p className="mb-4 last:mb-0 leading-relaxed" {...props} />,
-            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 ml-6" {...props} />,
-            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4 ml-6" {...props} />,
-            li: ({node, ...props}) => <li className="mb-2 leading-relaxed" {...props} />,
+            h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-3" {...props} />,
+            h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-2" {...props} />,
+            h3: ({node, ...props}) => <h3 className="text-base font-medium mb-2" {...props} />,
+            p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed" {...props} />,
+            // Balanced spacing for list elements
+            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-3 ml-3" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-3 ml-3" {...props} />,
+            li: ({node, ...props}) => <li className="mb-1.5 leading-relaxed pl-0" {...props} />,
             code: ({node, inline, className, children, ...props}) => {
               // Check if it's a block code (has language class) or inline
               const match = /language-(\w+)/.exec(className || '');
@@ -204,10 +205,10 @@ export function MessageBubble({
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
             pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-            blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-theme pl-4 italic text-theme-secondary mb-4 py-1" {...props} />,
+            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary mb-3 py-0.5" {...props} />,
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
             em: ({node, ...props}) => <em className="italic" {...props} />,
-            hr: ({node, ...props}) => <hr className="my-6 border-t border-gray-300 dark:border-gray-600" {...props} />,
+            hr: ({node, ...props}) => <hr className="my-4 border-t border-gray-300 dark:border-gray-600" {...props} />,
             // Add other elements if needed, e.g., table
           }}
         >
