@@ -18,7 +18,7 @@ export function PlatformSelector() {
   };
   
   return (
-    <div className="grid grid-cols-3 gap-1">
+    <div className="grid grid-cols-3 gap-2">
       {platforms.map((platform) => (
         <PlatformCard
           key={platform.id}

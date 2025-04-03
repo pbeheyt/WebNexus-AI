@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Tooltip } from './Tooltip';
+import { Tooltip } from './Tooltip'; // Assuming Tooltip is in the same directory or correctly imported
 
 export function PlatformCard({
   id,
@@ -17,15 +17,7 @@ export function PlatformCard({
   // Determine if card should be disabled
   const isDisabled = checkCredentials && !hasCredentials;
 
-  // Dynamic classes based on state
-  const cardClasses = `
-    flex flex-col items-center justify-center p-1.5 rounded border border-gray-200
-    dark:border-gray-700 transition-all duration-200
-    ${selected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-100/80 dark:hover:bg-gray-800/80'}
-    ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
-    relative
-  `;
-
+  // Handle card click
   const handleClick = () => {
     if (!isDisabled) {
       onClick(id);
@@ -35,35 +27,37 @@ export function PlatformCard({
   return (
     <div
       ref={cardRef}
-      className={cardClasses}
+      className={`
+        flex flex-col items-center justify-center p-2 rounded-md transition-all duration-200
+        ${selected ? 'bg-primary/10 dark:bg-primary/20' : 'hover:bg-theme-hover'}
+        ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+      `}
       onMouseEnter={() => isDisabled && setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
       onClick={handleClick}
+      aria-disabled={isDisabled} // Added for accessibility
     >
-      <div className={`relative ${isDisabled ? 'grayscale' : ''}`}>
+      <div className="relative">
         <img
           src={iconUrl}
           alt={name}
-          className={showName ? "w-5 h-5 object-contain" : "w-9 h-9 object-contain"}
+          className={`${showName ? 'w-6 h-6' : 'w-8 h-8'} object-contain`}
         />
-
-        {/* Disabled visual indicator */}
-        {isDisabled && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-full absolute opacity-20"></div>
-            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-5a1 1 0 100-2 1 1 0 000 2z" />
-            </svg>
-          </div>
-        )}
+        
       </div>
 
-      {showName && <div className="text-xs text-center mt-1">{name}</div>}
+      {showName && (
+        <div className="text-xs text-center mt-1.5 text-theme-secondary">
+          {name}
+        </div>
+      )}
 
       {/* Tooltip component */}
-      <Tooltip show={showTooltip} message="API credentials required" targetRef={cardRef} />
+      <Tooltip 
+        show={showTooltip} 
+        message="API credentials required" 
+        targetRef={cardRef} 
+      />
     </div>
   );
 }
-
-export default PlatformCard;
