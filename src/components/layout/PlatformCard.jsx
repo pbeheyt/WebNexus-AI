@@ -19,9 +19,9 @@ export function PlatformCard({
 
   // Dynamic classes based on state
   const cardClasses = `
-    flex flex-col items-center justify-center p-1 rounded border border-gray-200
+    flex flex-col items-center justify-center p-1.5 rounded border border-gray-200
     dark:border-gray-700 transition-all duration-200
-    ${selected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}
+    ${selected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-100/80 dark:hover:bg-gray-800/80'}
     ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
     relative
   `;

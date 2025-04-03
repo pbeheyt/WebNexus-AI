@@ -7,18 +7,21 @@ import React from 'react';
  * @param {Object} props - Component props
  * @param {string} props.message - The message to display
  * @param {string} [props.type='info'] - Message type (info, success, warning, error)
+ * @param {string} [props.context='default'] - Rendering context ('popup', 'sidebar', 'default')
  * @param {string} [props.className=''] - Additional CSS classes
  */
-export function StatusMessage({ message, type = 'info', className = '' }) {
+export function StatusMessage({ message, type = 'info', context = 'default', className = '' }) {
   const typeClasses = {
     info: 'text-theme-secondary',
     success: 'text-success',
     warning: 'text-warning',
     error: 'text-error',
   };
+
+  const fontSizeClass = context === 'popup' ? 'text-xs' : 'text-sm';
   
   return (
-    <div className={`text-sm py-2 px-3 rounded bg-opacity-5 min-h-[1rem] transition-all ${typeClasses[type]} ${className}`}>
+    <div className={`${fontSizeClass} py-1.5 px-3 rounded bg-opacity-5 min-h-[1rem] transition-all ${typeClasses[type]} ${className}`}>
       {message || '\u00A0'} {/* Use non-breaking space to maintain height when empty */}
     </div>
   );

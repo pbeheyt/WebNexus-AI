@@ -171,7 +171,7 @@ export function UnifiedInput({
     return (
       <div className={`flex flex-col ${className}`}>
         {/* Input Area */}
-        <div className="border border-theme rounded-lg p-3 bg-theme-surface">
+        <div className="border border-theme rounded-lg p-1 bg-theme-surface">
           <div className="relative">
             <TextArea
               ref={textareaRef}
@@ -183,7 +183,7 @@ export function UnifiedInput({
               autoResize={true}
               minHeight={60}
               maxHeight={150}
-              className="w-full py-2 px-3 pr-20 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
+              className="w-full py-3 px-4 pr-20 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
             />
             
             <div className="absolute right-2 top-2 flex items-center gap-2">

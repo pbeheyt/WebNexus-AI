@@ -165,14 +165,14 @@ export function Popup() {
         {/* Removed the explicit Close button from here */}
       </AppHeader>
 
-      <ContentTypeDisplay className="mt-2" />
+      <ContentTypeDisplay className="mt-3" />
 
-      <div className="mt-2">
+      <div className="mt-3">
         <PlatformSelector />
       </div>
 
       {/* Replaced QuickPromptEditor and CustomPromptSelector with UnifiedInput */}
-      <div className="mt-2">
+      <div className="mt-3">
         <UnifiedInput
           value={inputText}
           onChange={setInputText}
@@ -187,7 +187,7 @@ export function Popup() {
         />
       </div>
 
-      <StatusMessage message={statusMessage} className="mt-3" />
+      <StatusMessage message={statusMessage} context="popup" className="mt-3" />
 
       <Toast
         message={toastState.message}
