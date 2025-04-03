@@ -96,7 +96,7 @@ function Header() {
 
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
-      <div className="border-b border-theme">
+      <div className=""> {/* Removed border-b border-theme */}
         <div className="flex items-center justify-between gap-10 px-4 py-2">
           {/* Conditional rendering based on credentials */}
           {hasAnyPlatformCredentials ? (

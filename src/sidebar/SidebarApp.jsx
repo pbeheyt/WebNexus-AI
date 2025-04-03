@@ -71,28 +71,17 @@ export default function SidebarApp() {
           onClose={handleClose} 
           showRefreshButton={true} 
           onRefreshClick={resetCurrentTabData}
+          isExpanded={headerExpanded}
+          onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
+          showExpandToggle={true}
         />
       </div>
       
-      {/* Collapsible header section with fixed toggle button */}
+      {/* Collapsible header section */}
       <div className="relative">
-        {/* Persistent toggle button that remains visible regardless of expansion state */}
-        <div className="absolute right-4 top-3 z-10">
-          <button
-            onClick={() => setHeaderExpanded(!headerExpanded)}
-            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none"
-            title={headerExpanded ? "Collapse header" : "Expand header"}
-            aria-expanded={headerExpanded}
-          >
-            <svg className={`w-3 h-3 transition-transform ${headerExpanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 9l-7 7-7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-        
-        {/* Fully collapsible section containing both ContentTypeDisplay and Header */}
-        <div 
-          className={`transition-all duration-300 ease-in-out ${
+        {/* Fully collapsible section containing Header */}
+        <div
+          className={`transition-all duration-300 ease-in-out border-b border-theme ${ // Added border classes here
             headerExpanded ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
           }`}
         >

@@ -2,7 +2,16 @@ import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 // Re-added children prop, added showRefreshButton prop, added onRefreshClick prop
-export function AppHeader({ children, showSettingsButton = true, showRefreshButton = false, onClose, onRefreshClick }) {
+export function AppHeader({
+  children,
+  showSettingsButton = true,
+  showRefreshButton = false,
+  onClose,
+  onRefreshClick,
+  isExpanded = false,
+  onToggleExpand = () => {},
+  showExpandToggle = false // Add this with default
+}) {
   const { theme, toggleTheme } = useTheme();
 
   const openSettings = () => {
@@ -76,6 +85,20 @@ export function AppHeader({ children, showSettingsButton = true, showRefreshButt
               <path d="M1 20v-6h6"></path>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
               <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+            </svg>
+          </button>
+        )}
+
+        {/* Chevron Expand/Collapse Button - Conditionally Rendered */}
+        {showExpandToggle && (
+          <button
+            onClick={onToggleExpand}
+            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
+            title={isExpanded ? "Collapse header" : "Expand header"}
+            aria-expanded={isExpanded}
+          >
+            <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 9l-7 7-7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         )}
