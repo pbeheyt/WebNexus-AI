@@ -55,15 +55,6 @@ export default function SidebarApp() {
     }
   };
   
-  if (!isReady || !tabId) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-        <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-700 border-t-primary rounded-full animate-spin mr-2"></div>
-        Initializing sidebar...
-      </div>
-    );
-  }
-  
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary">
       <div className="p-4 pb-0">
