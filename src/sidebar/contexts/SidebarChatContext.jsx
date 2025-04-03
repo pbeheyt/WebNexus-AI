@@ -183,8 +183,8 @@ export function SidebarChatProvider({ children }) {
         );
         const isFirstMessage = visibleAssistantMessages.length === 1;
     
-        // If first message and content not added, add extracted content
-        if (isFirstMessage && !extractedContentAdded && !isError) {
+        // If content not added yet, add extracted content message
+        if (!extractedContentAdded && !isError) {
           try {
             // Get formatted content from storage
             const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_FORMATTED_CONTENT]);
@@ -452,37 +452,88 @@ export function SidebarChatProvider({ children }) {
         tabId
       });
       
-      // Update the streaming message to indicate cancellation
+      // Update the streaming message content to indicate cancellation
       const cancelledContent = streamingContent + '\n\n_Stream cancelled by user._';
-      
-      // Update message in UI immediately
-      setMessages(prev => prev.map(msg =>
+      let messagesAfterCancel = messages; // Start with current messages
+
+      // --- Add extracted content if not already added ---
+      if (!extractedContentAdded) {
+        try {
+          const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_FORMATTED_CONTENT]);
+          const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
+          
+          if (allTabContents) {
+            const tabIdKey = tabId.toString();
+            const extractedContent = allTabContents[tabIdKey];
+
+            if (extractedContent && typeof extractedContent === 'string' && extractedContent.trim()) {
+              const contentMessage = {
+                id: `extracted_${Date.now()}`,
+                role: MESSAGE_ROLES.USER,
+                content: `Content extract:\n${extractedContent}`,
+                timestamp: new Date().toISOString(),
+                inputTokens: TokenManagementService.estimateTokens(extractedContent),
+                outputTokens: 0,
+                isExtractedContent: true
+              };
+
+              // Find index of the message being cancelled
+              const cancelledMsgIndex = messages.findIndex(msg => msg.id === streamingMessageId);
+              
+              if (cancelledMsgIndex !== -1) {
+                // Insert content message before the cancelled message
+                const messagesWithContent = [
+                  ...messages.slice(0, cancelledMsgIndex),
+                  contentMessage,
+                  ...messages.slice(cancelledMsgIndex)
+                ];
+                
+                // Update the local variable holding the messages
+                messagesAfterCancel = messagesWithContent; 
+                
+                // Update state immediately to reflect added content
+                setMessages(messagesAfterCancel); 
+                setExtractedContentAdded(true);
+
+                // Track tokens for the added content
+                await trackTokens({
+                  messageId: contentMessage.id,
+                  role: contentMessage.role,
+                  content: contentMessage.content,
+                  input: contentMessage.inputTokens,
+                  output: 0
+                }, modelConfigData);
+              } else {
+                 console.warn('Cancelled message not found, cannot insert extracted content correctly.');
+              }
+            }
+          }
+        } catch (extractError) {
+          console.error('Error adding extracted content during cancellation:', extractError);
+        }
+      }
+      // --- End of adding extracted content ---
+
+      // Update the cancelled message content within the potentially updated array
+      const finalMessages = messagesAfterCancel.map(msg =>
         msg.id === streamingMessageId
           ? { 
               ...msg, 
               content: cancelledContent,
-              isStreaming: false
+              isStreaming: false // Ensure streaming is marked false
             }
           : msg
-      ));
+      );
+
+      // Update state with the final message list (including potential extracted content and cancelled message update)
+      setMessages(finalMessages); 
       
-      // Save the cancelled state
+      // Save the final state to history
       if (tabId) {
-        const updatedMessages = messages.map(msg =>
-          msg.id === streamingMessageId
-            ? { 
-                ...msg, 
-                content: cancelledContent,
-                isStreaming: false
-              }
-            : msg
-        );
-        
-        // Save to history
-        await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
+        await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
       }
       
-      // Reset streaming state
+      // Reset streaming state (after all updates and saves)
       setStreamingMessageId(null);
       setStreamingContent('');
       setIsProcessing(false);
