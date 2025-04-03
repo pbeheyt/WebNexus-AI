@@ -160,6 +160,19 @@ export async function handleInstallation(details) {
   } catch(error) {
      logger.background.error('Failed to complete core extension initialization after install/update event.');
   }
+
+  // --- Context Menu Setup ---
+  try {
+    await chrome.contextMenus.removeAll(); // Clear existing menus first
+    await chrome.contextMenus.create({
+      id: "open-sidebar-context",
+      title: "Open AI Assistant Sidebar",
+      contexts: ["page"]
+    });
+    logger.background.info('Context menu created successfully.');
+  } catch (error) {
+    logger.background.error('Failed to create context menu:', error);
+  }
 }
 
 // Setup installation handler

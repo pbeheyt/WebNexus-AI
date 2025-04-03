@@ -5,6 +5,7 @@ import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
 import { setupTabStateListener } from './listeners/tab-state-listener.js';
 import { setupCommandListener } from './listeners/command-listener.js';
+import { setupContextMenuListener } from './listeners/contextmenu-listener.js';
 
 /**
  * Main entry point for the background service worker
@@ -21,6 +22,7 @@ async function startBackgroundService() {
     setupTabListener();
     setupTabStateListener();
     setupCommandListener();
+    setupContextMenuListener(); // Add this line
 
     console.log('[Background] Service worker started successfully');
   } catch (error) {
