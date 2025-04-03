@@ -16,6 +16,17 @@ export const CONTENT_TYPES = {
 export const SHARED_TYPE = 'shared';
 
 /**
+ * User-friendly labels for content types
+ */
+export const CONTENT_TYPE_LABELS = {
+  [CONTENT_TYPES.GENERAL]: 'Web Content',
+  [CONTENT_TYPES.REDDIT]: 'Reddit Posts',
+  [CONTENT_TYPES.YOUTUBE]: 'YouTube Videos',
+  [CONTENT_TYPES.PDF]: 'PDF Documents',
+  [SHARED_TYPE]: 'Shared Prompts'
+};
+
+/**
  * AI platforms supported by the extension
  */
 export const AI_PLATFORMS = {

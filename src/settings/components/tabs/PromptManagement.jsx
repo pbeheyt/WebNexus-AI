@@ -3,24 +3,11 @@ import { useNotification } from '../../../components';
 import PromptList from '../ui/PromptList';
 import PromptDetail from '../ui/PromptDetail';
 import PromptForm from '../ui/PromptForm';
-import { SHARED_TYPE } from '../../../shared/constants';
-
-// Content types from original constants
-const CONTENT_TYPES = {
-  GENERAL: 'general',
-  REDDIT: 'reddit',
-  YOUTUBE: 'youtube',
-  PDF: 'pdf'
-};
-
-// Content type labels
-const CONTENT_TYPE_LABELS = {
-  [CONTENT_TYPES.GENERAL]: 'Web Content',
-  [CONTENT_TYPES.REDDIT]: 'Reddit Posts',
-  [CONTENT_TYPES.YOUTUBE]: 'YouTube Videos',
-  [CONTENT_TYPES.PDF]: 'PDF Documents',
-  [SHARED_TYPE]: 'Shared Prompts'
-};
+import { 
+  SHARED_TYPE, 
+  CONTENT_TYPES, 
+  CONTENT_TYPE_LABELS 
+} from '../../../shared/constants';
 
 const PromptManagement = () => {
   const { error } = useNotification();
@@ -32,11 +19,8 @@ const PromptManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Initialize content types
-    setContentTypes([
-      ...Object.values(CONTENT_TYPES),
-      SHARED_TYPE
-    ]);
+    // Initialize content types using keys from the imported labels object
+    setContentTypes(Object.keys(CONTENT_TYPE_LABELS));
     
     setIsLoading(false);
   }, []);
@@ -130,9 +114,11 @@ const PromptManagement = () => {
             onChange={handleFilterChange}
           >
             <option value="all">All Content Types</option>
+            {/* Map over contentTypes state (now derived from CONTENT_TYPE_LABELS keys) */}
             {contentTypes.map(type => (
               <option key={type} value={type}>
-                {CONTENT_TYPE_LABELS[type] || type}
+                {/* Use imported CONTENT_TYPE_LABELS for display */}
+                {CONTENT_TYPE_LABELS[type]} 
               </option>
             ))}
           </select>

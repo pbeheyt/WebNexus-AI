@@ -1,26 +1,12 @@
 // src/settings/components/ui/PromptForm.jsx
 import React, { useState } from 'react';
 import { Button, useNotification } from '../../../components';
-import { SHARED_TYPE, STORAGE_KEYS } from '../../../shared/constants';
-
-// Content types from original constants
-const CONTENT_TYPES = {
-  GENERAL: 'general',
-  REDDIT: 'reddit',
-  YOUTUBE: 'youtube',
-  PDF: 'pdf',
-  SELECTED_TEXT: 'selected_text'
-};
-
-// Content type labels
-const CONTENT_TYPE_LABELS = {
-  [CONTENT_TYPES.GENERAL]: 'Web Content',
-  [CONTENT_TYPES.REDDIT]: 'Reddit Posts',
-  [CONTENT_TYPES.YOUTUBE]: 'YouTube Videos',
-  [CONTENT_TYPES.PDF]: 'PDF Documents',
-  [CONTENT_TYPES.SELECTED_TEXT]: 'Selected Text',
-  [SHARED_TYPE]: 'Shared Prompts'
-};
+import { 
+  SHARED_TYPE, 
+  STORAGE_KEYS, 
+  CONTENT_TYPES, 
+  CONTENT_TYPE_LABELS 
+} from '../../../shared/constants';
 
 const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
   const { success, error } = useNotification();
@@ -130,10 +116,8 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
           value={formData.contentType}
           onChange={handleChange}
         >
-          {Object.entries({
-            ...CONTENT_TYPE_LABELS,
-            [SHARED_TYPE]: 'Shared Prompts'
-          }).map(([type, label]) => (
+          {/* Map directly over the imported CONTENT_TYPE_LABELS */}
+          {Object.entries(CONTENT_TYPE_LABELS).map(([type, label]) => (
             <option key={type} value={type}>{label}</option>
           ))}
         </select>
