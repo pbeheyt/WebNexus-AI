@@ -18,10 +18,8 @@ export function StatusMessage({ message, type = 'info', context = 'default', cla
     error: 'text-error',
   };
 
-  const fontSizeClass = context === 'popup' ? 'text-xs' : 'text-sm';
-  
   return (
-    <div className={`${fontSizeClass} py-1.5 px-3 rounded bg-opacity-5 min-h-[1rem] transition-all ${typeClasses[type]} ${className}`}>
+    <div className={`text-xs px-3 rounded bg-opacity-5 min-h-[1rem] transition-all ${typeClasses[type]} ${className}`}>
       {message || '\u00A0'} {/* Use non-breaking space to maintain height when empty */}
     </div>
   );
