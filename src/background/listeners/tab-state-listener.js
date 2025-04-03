@@ -20,7 +20,7 @@ const ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP = [
   STORAGE_KEYS.TAB_FORMATTED_CONTENT,
   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
-  STORAGE_KEYS.TAB_SIDEBAR_STATES, // Keep this for general cleanup
+  STORAGE_KEYS.TAB_SIDEBAR_STATES,
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
   STORAGE_KEYS.TAB_SYSTEM_PROMPTS
@@ -148,27 +148,36 @@ export function setupTabStateListener() {
 
   // Periodically clean up tab states to prevent storage bloat
   setInterval(async () => {
-    logger.background.info('Running periodic tab state cleanup...');
-    try {
-      // Get all valid tabs
-      const tabs = await chrome.tabs.query({});
-      const validTabIds = new Set(tabs.map(tab => tab.id));
-
-      // Clean up all tab-specific storage keys using the broader list
-      for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP) {
-         // Don't let the general cleanup function handle sidebar state directly here,
-         // SidebarStateManager.cleanupTabStates() below handles it more robustly.
-         if (storageKey !== STORAGE_KEYS.TAB_SIDEBAR_STATES) {
-            await cleanupTabStorage(storageKey, null, validTabIds);
-         }
-      }
-
-      // Run existing cleanup routine (handles TAB_SIDEBAR_STATES)
-      SidebarStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
-    } catch (error) {
-      logger.background.error('Error in periodic tab state cleanup:', error);
-    }
+    await performStaleTabCleanup();
   }, 3600000); // Every hour
 
   logger.background.info('Tab state listener initialized with comprehensive tab-specific cleanup');
+}
+
+/**
+ * Performs cleanup of stale tab-specific data from storage.
+ * Iterates through known tab-specific keys and removes entries for tabs that no longer exist.
+ */
+export async function performStaleTabCleanup() {
+  logger.background.info('Running stale tab data cleanup...');
+  try {
+    // Get all valid tabs
+    const tabs = await chrome.tabs.query({});
+    const validTabIds = new Set(tabs.map(tab => tab.id));
+
+    // Clean up all tab-specific storage keys using the broader list
+    for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP) {
+       // Don't let the general cleanup function handle sidebar state directly here,
+       // SidebarStateManager.cleanupTabStates() below handles it more robustly.
+       if (storageKey !== STORAGE_KEYS.TAB_SIDEBAR_STATES) {
+          await cleanupTabStorage(storageKey, null, validTabIds);
+       }
+    }
+
+    // Run existing cleanup routine (handles TAB_SIDEBAR_STATES)
+    SidebarStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
+    logger.background.info('Stale tab data cleanup completed.');
+  } catch (error) {
+    logger.background.error('Error during stale tab data cleanup:', error);
+  }
 }

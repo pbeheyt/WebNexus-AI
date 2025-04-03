@@ -3,7 +3,7 @@
 import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
-import { setupTabStateListener } from './listeners/tab-state-listener.js';
+import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-state-listener.js'; // Import the cleanup function
 import { setupCommandListener } from './listeners/command-listener.js';
 import { setupContextMenuListener } from './listeners/contextmenu-listener.js';
 
@@ -22,7 +22,16 @@ async function startBackgroundService() {
     setupTabListener();
     setupTabStateListener();
     setupCommandListener();
-    setupContextMenuListener(); // Add this line
+    setupContextMenuListener();
+
+    // Perform initial cleanup on startup
+    console.log('[Background] Performing initial stale tab data cleanup...');
+    try {
+      await performStaleTabCleanup();
+      console.log('[Background] Initial stale tab data cleanup completed.');
+    } catch (cleanupError) {
+      console.error('[Background] Error during initial stale tab data cleanup:', cleanupError);
+    }
 
     console.log('[Background] Service worker started successfully');
   } catch (error) {
