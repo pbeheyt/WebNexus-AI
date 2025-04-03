@@ -28,6 +28,7 @@ export function UnifiedInput({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const textareaRef = useRef(null);
   const promptButtonRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (!isProcessing && !isDropdownOpen && textareaRef.current) {
@@ -65,6 +66,16 @@ export function UnifiedInput({
     }
   };
 
+  // Handle container click to focus textarea
+  const handleContainerClick = (e) => {
+    // Only focus if clicked on the container itself, not on buttons or other controls
+    if (e.target === containerRef.current || e.target.classList.contains('input-container')) {
+      if (textareaRef.current && !disabled && !isProcessing) {
+        textareaRef.current.focus();
+      }
+    }
+  };
+
   // --- Sidebar Specific Button Logic ---
   const isStreamingActive = layoutVariant === 'sidebar' && isProcessing;
   const sidebarButtonStyle = isStreamingActive
@@ -87,8 +98,11 @@ export function UnifiedInput({
         )}
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-3">
-          <div className="relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-all">
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <div 
+            ref={containerRef}
+            onClick={handleContainerClick}
+            className="input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all">
             <TextArea
               ref={textareaRef}
               value={value}
@@ -99,7 +113,7 @@ export function UnifiedInput({
               autoResize={true}
               minHeight={44}
               maxHeight={200}
-              className="py-3 px-4 pr-20 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
+              className="input-textarea w-full py-3 px-4 pr-20 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
             />
             
             <div className="absolute right-2 top-2 flex items-center gap-2">
@@ -151,7 +165,7 @@ export function UnifiedInput({
             </div>
           </div>
           
-          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 px-2">
+          <div className="py-2 text-xs text-gray-500 dark:text-gray-400 px-4">
             {isStreamingActive 
               ? "Processing... Click button to cancel" 
               : "Press Enter to send, Shift+Enter for new line"}
@@ -171,8 +185,11 @@ export function UnifiedInput({
     return (
       <div className={`flex flex-col ${className}`}>
         {/* Input Area */}
-        <div className="border border-theme rounded-lg p-1 bg-theme-surface">
-          <div className="relative">
+        <div className="border border-theme rounded-lg bg-theme-surface">
+          <div 
+            ref={containerRef}
+            onClick={handleContainerClick}
+            className="input-container relative">
             <TextArea
               ref={textareaRef}
               value={value}
@@ -183,7 +200,7 @@ export function UnifiedInput({
               autoResize={true}
               minHeight={60}
               maxHeight={150}
-              className="w-full py-3 px-4 pr-20 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
+              className="input-textarea w-full py-3 px-3 pr-14 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
             />
             
             <div className="absolute right-2 top-2 flex items-center gap-2">
@@ -193,7 +210,7 @@ export function UnifiedInput({
                   ref={promptButtonRef}
                   onClick={() => setIsDropdownOpen(prev => !prev)}
                   disabled={disabled || isProcessing}
-                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-7 h-7 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-5 h-5 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label="Select prompt"
                   title="Select a custom prompt"
                 >
@@ -212,7 +229,7 @@ export function UnifiedInput({
               
               {/* Send Button */}
               <button
-                className={`flex items-center justify-center cursor-pointer border-none outline-none ${popupSendButtonStyle} w-7 h-7 rounded`}
+                className={`flex items-center justify-center cursor-pointer border-none outline-none ${popupSendButtonStyle} w-5 h-5 rounded`}
                 onClick={handleSubmit}
                 disabled={popupSendButtonDisabled}
                 aria-label="Send"
