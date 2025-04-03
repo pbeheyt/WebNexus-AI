@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../../../components';
-import { STORAGE_KEYS } from '../../../shared/constants';
+import { STORAGE_KEYS, CONTENT_TYPES, SHARED_TYPE } from '../../../shared/constants';
 
 const PromptList = ({ 
   filterValue, 
@@ -64,6 +64,15 @@ const PromptList = ({
       setFilteredPrompts(prompts.filter(item => item.contentType === filterValue));
     }
   }, [filterValue, prompts]);
+
+  const contentTypeColors = {
+    [CONTENT_TYPES.GENERAL]: 'bg-blue-500',
+    [CONTENT_TYPES.REDDIT]: 'bg-orange-500',
+    [CONTENT_TYPES.YOUTUBE]: 'bg-red-500',
+    [CONTENT_TYPES.PDF]: 'bg-violet-500',
+    [SHARED_TYPE]: 'bg-gray-500',
+    default: 'bg-gray-400'
+  };
   
   if (isLoading || localLoading) {
     return (
@@ -98,7 +107,10 @@ const PromptList = ({
               {item.prompt.name}
             </h3>
           </div>
-          <small className="text-theme-secondary text-xs">{item.contentTypeLabel}</small>
+          <small className="flex items-center text-theme-secondary text-xs">
+            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${contentTypeColors[item.contentType] || contentTypeColors.default}`}></span>
+            {item.contentTypeLabel}
+          </small>
         </div>
       ))}
     </div>
