@@ -73,15 +73,6 @@ const Shortcuts = () => {
     }
   };
   
-  if (isLoading) {
-    return (
-      <div className="p-8 text-center">
-        <div className="inline-block animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        <p className="mt-4">Loading shortcuts settings...</p>
-      </div>
-    );
-  }
-  
   return (
     <div className="shortcuts-tab-content max-w-3xl mx-auto">
       <h2 className="type-heading mb-4 pb-3 border-b border-theme text-lg font-medium">Keyboard Shortcuts</h2>

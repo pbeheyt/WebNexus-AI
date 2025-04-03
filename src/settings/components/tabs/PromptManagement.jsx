@@ -111,7 +111,7 @@ const PromptManagement = () => {
   return (
     <div className="master-detail flex gap-6">
       {/* Master Panel (Prompt List) */}
-      <div className="master-panel flex-1 border-r border-theme pr-5 max-w-[350px]">
+      <div className="master-panel w-[350px] flex-shrink-0 border-r border-theme pr-5">
         <div className="master-header flex justify-between items-center mb-4">
           <h2 className="type-heading text-lg font-medium">Prompts</h2>
           <button 
@@ -148,7 +148,7 @@ const PromptManagement = () => {
       </div>
       
       {/* Detail Panel */}
-      <div className="detail-panel flex-2 flex-grow">
+      <div className="detail-panel flex-grow">
         {detailContent}
       </div>
     </div>
