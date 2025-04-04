@@ -237,25 +237,7 @@ class RedditExtractorStrategy extends BaseExtractor {
    */
   async extractComments() {
     try {
-      // Get configured max comments or use default
-      let maxComments = 100; // Default value
-
-      try {
-        const result = await new Promise((resolve) => {
-          chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS, (data) => resolve(data));
-        });
-
-        if (result && result[STORAGE_KEYS.CUSTOM_PROMPTS] &&
-          result[STORAGE_KEYS.CUSTOM_PROMPTS].reddit &&
-          result[STORAGE_KEYS.CUSTOM_PROMPTS].reddit.settings &&
-          result[STORAGE_KEYS.CUSTOM_PROMPTS].reddit.settings.maxComments) {
-          maxComments = result[STORAGE_KEYS.CUSTOM_PROMPTS].reddit.settings.maxComments;
-        }
-      } catch (error) {
-        this.logger.warn('Error fetching max comments setting, using default:', error);
-      }
-
-      this.logger.info(`Extracting up to ${maxComments} Reddit comments...`);
+      this.logger.info(`Extracting all visible Reddit comments...`);
 
       // Wait for comments to be loaded
       await this.waitForComments();
@@ -286,7 +268,7 @@ class RedditExtractorStrategy extends BaseExtractor {
       // Extract data from each comment
       const comments = [];
 
-      for (let i = 0; i < Math.min(commentElements.length, maxComments); i++) {
+      for (let i = 0; i < commentElements.length; i++) {
         const commentElement = commentElements[i];
 
         // Extract author (handle different selectors)

@@ -68,27 +68,12 @@ class YoutubeExtractorStrategy extends BaseExtractor {
 
       this.logger.info('Transcript data extracted:', transcriptData.length, 'segments');
 
-      // Check if comment analysis is enabled in user preferences
-      const shouldExtractComments = await this.shouldExtractComments();
-
-      // Extract comments only if needed
-      let comments = [];
-      let commentStatus = {
-        state: "skipped",
-        message: "Comment extraction skipped based on user preferences",
-        count: 0,
-        commentsExist: false
-      };
-
-      if (shouldExtractComments) {
-        this.logger.info('Starting comment extraction...');
-        const commentsResult = await this.extractComments();
-        comments = commentsResult.items;
-        commentStatus = commentsResult.status;
-        this.logger.info('Comment extraction complete, status:', commentStatus);
-      } else {
-        this.logger.info('Comment extraction skipped - analysis disabled in user preferences');
-      }
+      // Extract comments
+      this.logger.info('Starting comment extraction...');
+      const commentsResult = await this.extractComments();
+      const comments = commentsResult.items;
+      const commentStatus = commentsResult.status;
+      this.logger.info('Comment extraction complete, status:', commentStatus);
 
       // Return the complete video data object
       return {
@@ -123,21 +108,8 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       // Get comments despite transcript error, using our new method
       let commentsResult = { items: [], status: { state: "unknown", message: "", count: 0 } };
       try {
-        // Only extract comments if needed
-        const shouldExtractComments = await this.shouldExtractComments();
-        if (shouldExtractComments) {
-          commentsResult = await this.extractComments();
-        } else {
-          commentsResult = {
-            items: [],
-            status: {
-              state: "skipped",
-              message: "Comment extraction skipped based on user preferences",
-              count: 0,
-              commentsExist: false
-            }
-          };
-        }
+        // Always attempt to extract comments
+        commentsResult = await this.extractComments();
       } catch (commentError) {
         this.logger.error('Error extracting comments after transcript error:', commentError);
       }
@@ -159,89 +131,14 @@ class YoutubeExtractorStrategy extends BaseExtractor {
   }
 
   /**
-   * Check if comments should be extracted based on user preferences
-   * @returns {Promise<boolean>} Whether comments should be extracted
-   */
-  async shouldExtractComments() {
-    try {
-      // Get prompt preferences
-      const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES, (data) => resolve(data));
-      });
-
-      // Check if comment analysis is explicitly disabled
-      if (result &&
-        result.default_prompt_preferences &&
-        result.default_prompt_preferences.youtube &&
-        result.default_prompt_preferences.youtube.commentAnalysis === false) {
-        return false;
-      }
-
-      // Also check if we're using a custom prompt that might require comments
-      const promptTypePrefs = await new Promise((resolve) => {
-        chrome.storage.sync.get(STORAGE_KEYS.PROMPT_TYPE_PREFERENCE, (data) => resolve(data));
-      });
-
-      const usingCustomPrompt = promptTypePrefs &&
-        promptTypePrefs.prompt_type_preference &&
-        promptTypePrefs.prompt_type_preference.youtube === 'custom';
-
-      if (usingCustomPrompt) {
-        // For custom prompts, we could parse the content to check for comment analysis
-        // requirements, but for now we'll assume they might need comments
-        return true;
-      }
-
-      // Default to extracting comments if preference isn't explicitly set
-      return true;
-    } catch (error) {
-      this.logger.warn('Error checking comment extraction preference:', error);
-      // Default to extracting comments in case of error
-      return true;
-    }
-  }
-
-  /**
    * Extract top comments from the YouTube video
    * @returns {Promise<Array|string>} Promise resolving to array of comments or error message string
    */
   async extractComments() {
     try {
-      // Get configured max comments or use default
-      let maxComments = 20; // Default value
-      let commentAnalysisEnabled = false;
+      this.logger.info(`Extracting all visible YouTube comments...`);
 
-      try {
-        // Get extraction settings
-        const result = await new Promise((resolve) => {
-          chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS, (data) => resolve(data)); // Note: User snippet used STORAGE_KEY, assuming it meant CUSTOM_PROMPTS
-        });
-
-        if (result && result[STORAGE_KEYS.CUSTOM_PROMPTS] &&
-          result[STORAGE_KEYS.CUSTOM_PROMPTS].youtube &&
-          result[STORAGE_KEYS.CUSTOM_PROMPTS].youtube.settings &&
-          result[STORAGE_KEYS.CUSTOM_PROMPTS].youtube.settings.maxComments) {
-          maxComments = result[STORAGE_KEYS.CUSTOM_PROMPTS].youtube.settings.maxComments;
-        }
-
-        // Check if comment analysis is enabled in default prompt preferences
-        const promptPrefs = await new Promise((resolve) => {
-          chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPT_PREFERENCES, (data) => resolve(data));
-        });
-
-        if (promptPrefs &&
-          promptPrefs.default_prompt_preferences &&
-          promptPrefs.default_prompt_preferences.youtube &&
-          promptPrefs.default_prompt_preferences.youtube.commentAnalysis === true) {
-          commentAnalysisEnabled = true;
-        }
-      } catch (error) {
-        this.logger.warn('Error fetching settings:', error);
-      }
-
-      this.logger.info(`Extracting up to ${maxComments} YouTube comments...`);
-
-      // Check if comment section exists but is not loaded
+      // Check if comment section exists
       const commentSection = document.getElementById('comments');
       const commentElements = document.querySelectorAll('ytd-comment-thread-renderer');
       const commentsDisabledMessage = document.querySelector('#comments ytd-message-renderer');
@@ -273,35 +170,6 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         }
       }
 
-      // If comment section exists but no comments are loaded
-      if (commentSection && commentElements.length === 0 && !commentsDisabledMessage) {
-        commentStatus = {
-          state: "not_loaded",
-          message: "Comments exist but are not loaded. Scroll down on the YouTube page to load comments.",
-          count: 0,
-          commentsExist: true
-        };
-
-        this.logger.info('Comments section exists but comments not loaded - user needs to scroll');
-
-        if (commentAnalysisEnabled) {
-          // Save notification flag to local storage
-          await chrome.storage.local.set({
-            youtubeCommentsNotLoaded: true
-          });
-
-          // Send message to background script
-          chrome.runtime.sendMessage({
-            action: 'youtubeCommentsNotLoaded'
-          });
-        }
-
-        return {
-          items: [],
-          status: commentStatus
-        };
-      }
-
       // Get all comment thread elements
       if (!commentElements || commentElements.length === 0) {
         this.logger.info('No comments found or comments not loaded yet');
@@ -324,7 +192,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       // Extract data from each comment
       const comments = [];
 
-      for (let i = 0; i < Math.min(commentElements.length, maxComments); i++) {
+      for (let i = 0; i < commentElements.length; i++) {
         const commentElement = commentElements[i];
 
         // Extract author name
