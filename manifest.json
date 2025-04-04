@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "AI Content Summarizer",
-  "description": "Summarize web content, Reddit posts, YouTube videos, and PDFs with Claude, ChatGPT, or DeepSeek AI",
-  "version": "1.2",
+  "name": "AI Content Assistant",
+  "description": "Interact with web content, YouTube, Reddit, and PDFs using various AI models via a sidebar chat or popup.",
+  "version": "1.0.0",
   "permissions": [
     "activeTab",
     "scripting",

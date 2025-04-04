@@ -1,7 +1,7 @@
 {
-  "name": "ai-content-summarizer",
+  "name": "ai-content-assistant",
   "version": "1.0.0",
-  "description": "Chrome extension to summarize web content with multiple AI platforms",
+  "description": "Chrome extension to interact with web content, YouTube, Reddit, & PDFs using multiple AI models via sidebar or popup.",
   "main": "webpack.config.js",
   "scripts": {
     "build": "webpack",
