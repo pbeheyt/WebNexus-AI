@@ -32,7 +32,20 @@ class DeepSeekApiService extends BaseApiService {
       if (params.conversationHistory && params.conversationHistory.length > 0) {
         messages.push(...this._formatDeepSeekMessages(params.conversationHistory));
       }
-      messages.push({ role: 'user', content: text });
+
+      // Check the last message before adding the current user prompt for DeepSeek compatibility
+      const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+
+      if (lastMessage && lastMessage.role === 'user') {
+        // Merge with the last user message
+        this.logger.info('Merging current user prompt with previous user message for DeepSeek compatibility.');
+        lastMessage.content += `\n\n${text}`; // Append the new text
+      } else {
+        // Add the current user prompt as a new message if no merge is needed
+        messages.push({ role: 'user', content: text });
+      }
+
+      // Assign the potentially modified messages array to the payload
       requestPayload.messages = messages;
       requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
       if (params.supportsTemperature) requestPayload.temperature = params.temperature;
@@ -147,24 +160,53 @@ class DeepSeekApiService extends BaseApiService {
   }
 
   /**
-   * Format conversation history for DeepSeek API
+   * Format conversation history for DeepSeek API, merging consecutive messages of the same role.
+   * Skips system messages or unknown roles found within the history.
    * @param {Array} history - Conversation history array
    * @returns {Array} Formatted messages for DeepSeek API
    */
   _formatDeepSeekMessages(history) {
-    return history.map(msg => {
-      // Map internal role names to DeepSeek roles (same as OpenAI format)
-      let role = 'user';
-      if (msg.role === 'assistant') role = 'assistant';
-      else if (msg.role === 'system') role = 'system';
-      
-      return {
-        role,
-        content: msg.content
-      };
-    });
+    const formattedMessages = [];
+    this.logger.info(`Formatting ${history.length} history messages for DeepSeek, merging consecutive roles.`);
+
+    for (const msg of history) {
+      let apiRole;
+      // Map internal roles to API roles, skipping system/unknown messages within history
+      if (msg.role === 'user') {
+        apiRole = 'user';
+      } else if (msg.role === 'assistant') {
+        apiRole = 'assistant';
+      } else {
+        this.logger.warn(`Skipping message with role '${msg.role || 'unknown'}' found within conversation history for DeepSeek API call.`);
+        continue; // Skip system or unknown roles
+      }
+
+      const lastMessage = formattedMessages.length > 0 ? formattedMessages[formattedMessages.length - 1] : null;
+
+      // Check if the last message exists and has the same role as the current message
+      if (lastMessage && lastMessage.role === apiRole) {
+        // Merge content with the last message
+        this.logger.info(`Merging consecutive '${apiRole}' message content for DeepSeek compatibility.`);
+        lastMessage.content += `\n\n${msg.content}`; // Append content
+      } else {
+        // Add as a new message if roles differ or it's the first message
+        formattedMessages.push({ role: apiRole, content: msg.content });
+      }
+    }
+
+    // Final check for alternation (optional, but good for debugging)
+    for (let i = 0; i < formattedMessages.length - 1; i++) {
+        if (formattedMessages[i].role === formattedMessages[i+1].role) {
+            this.logger.error(`DeepSeek formatting failed: Consecutive roles found after merge at index ${i}. Role: ${formattedMessages[i].role}`);
+            // Handle error case if needed, e.g., return only valid prefix
+        }
+    }
+
+
+    this.logger.info(`Formatted history for DeepSeek contains ${formattedMessages.length} messages after merging.`);
+    return formattedMessages;
   }
-  
+
   /**
    * Platform-specific validation implementation for DeepSeek
    * @protected
