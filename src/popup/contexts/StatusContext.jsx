@@ -50,12 +50,6 @@ export function StatusProvider({ children }) {
     updateStatus('Quick prompt updated');
   }, [updateStatus]);
   
-  // YouTube-specific notifications
-  const notifyYouTubeError = useCallback((errorMessage) => {
-    updateStatus(errorMessage || 'YouTube transcript could not be loaded', false, false);
-    showToastMessage(errorMessage || 'YouTube transcript could not be loaded', 'error');
-  }, [updateStatus, showToastMessage]);
-  
   return (
     <StatusContext.Provider value={{
       statusMessage,
@@ -64,7 +58,6 @@ export function StatusProvider({ children }) {
       notifyCustomPromptChanged,
       notifyPlatformChanged,
       notifyQuickPromptUpdated,
-      notifyYouTubeError,
       toastState: {
         message: toastMessage,
         type: toastType,

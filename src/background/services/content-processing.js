@@ -60,15 +60,6 @@ export async function processContent(params) {
       throw new Error('Failed to extract content');
     }
     
-    // YouTube transcript error check
-    const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);
-    if (transcriptError) {
-      return {
-        success: false,
-        ...transcriptError
-      };
-    }
-    
     // 4. Get platform and open it with content
     const effectivePlatformId = platformId || await getPreferredAiPlatform();
     

@@ -94,27 +94,3 @@ export async function injectContentScript(tabId, scriptFile) {
     return false;
   }
 }
-
-/**
- * Check if YouTube transcript is available
- * @param {Object} extractedContent - Extracted content object
- * @returns {Object|null} Error object if transcript not available, null otherwise
- */
-export function checkYouTubeTranscriptAvailability(extractedContent) {
-  if (extractedContent?.contentType === 'youtube' && 
-      extractedContent?.error &&
-      extractedContent?.transcript &&
-      typeof extractedContent.transcript === 'string' &&
-      (extractedContent.transcript.includes('No transcript') ||
-       extractedContent.transcript.includes('Transcript is not available'))) {
-    
-    logger.background.warn('YouTube transcript error detected');
-    
-    return {
-      youtubeTranscriptError: true,
-      errorMessage: extractedContent.message || 'Failed to retrieve YouTube transcript.'
-    };
-  }
-  
-  return null;
-}

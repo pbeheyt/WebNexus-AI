@@ -122,15 +122,6 @@ export async function processContentViaApi(params) {
       throw new Error('Failed to extract content');
     }
 
-    // 3. YouTube transcript error check
-    const transcriptError = checkYouTubeTranscriptAvailability(extractedContent);
-    if (transcriptError) {
-      return {
-        success: false,
-        ...transcriptError
-      };
-    }
-
     // 4. Get the prompt
     let promptContent;
 

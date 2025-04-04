@@ -40,10 +40,7 @@ export function Popup() {
   // Listen for messages from background script (YouTube errors, etc.)
   useEffect(() => {
     const messageListener = (message) => {
-      if (message.action === 'youtubeTranscriptError') {
-        notifyYouTubeError(message.message || 'Failed to retrieve YouTube transcript.');
-        setIsProcessing(false);
-      } else if (message.action === 'apiResponseReady') {
+      if (message.action === 'apiResponseReady') {
         updateStatus('API response ready');
         setIsProcessing(false);
       } else if (message.action === 'apiProcessingError') {
