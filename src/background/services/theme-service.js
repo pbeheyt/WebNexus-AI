@@ -38,7 +38,7 @@ export async function handleThemeOperation(message, sendResponse) {
             });
           } catch (error) {
             // Ignore errors for tabs without content scripts
-            logger.background.debug(`Could not send theme update to tab ${tab.id}`);
+            logger.background.warn(`Could not send theme update to tab ${tab.id || 'ID_UNKNOWN'}. Error:`, error);
           }
         });
         
