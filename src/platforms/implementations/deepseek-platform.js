@@ -1,110 +1,130 @@
-// src/platforms/implementations/deepseek-platform.js
+// src/platforms/implementations/grok-platform.js
 const BasePlatform = require('../platform-base');
 
 /**
- * DeepSeek AI platform implementation
+ * Grok AI platform implementation
  */
-class DeepSeekPlatform extends BasePlatform {
+class GrokPlatform extends BasePlatform {
   constructor() {
-    super('deepseek');
+    super('grok');
   }
   
-  /**
-   * Check if the current page is DeepSeek
-   * @returns {boolean} True if on DeepSeek
-   */
   isCurrentPlatform() {
-    return window.location.href.includes('chat.deepseek.com');
+    return window.location.hostname === 'grok.com' || 
+           window.location.hostname.includes('grok');
   }
   
   /**
-   * Find DeepSeek's editor element
+   * Find the active Grok editor element using structural and class-based detection strategies
    * @returns {HTMLElement|null} The editor element or null if not found
    */
   findEditorElement() {
-    return document.querySelector('#chat-input') || 
-           document.querySelector('.c92459f0');
+    // Strategy 1: Find by distinctive class combinations and element attributes
+    const potentialTextareas = document.querySelectorAll('textarea.w-full');
+    
+    for (const textarea of potentialTextareas) {
+      // Check if it has distinctive textarea Grok classes 
+      if (textarea.className.includes('bg-transparent') && 
+          textarea.className.includes('focus:outline-none')) {
+        return textarea;
+      }
+    }
+    
+    // Strategy 2: Find by structural position and style characteristics
+    const allTextareas = document.querySelectorAll('textarea');
+    
+    for (const textarea of allTextareas) {
+      const style = window.getComputedStyle(textarea);
+      
+      // Check for Grok's typical textarea styling pattern
+      if (style.resize === 'none' && 
+          textarea.getAttribute('dir') === 'auto') {
+        return textarea;
+      }
+    }
+    
+    return null;
   }
   
   /**
-   * Find DeepSeek's submit button
+   * Find Grok's submit button through structured identification patterns
    * @returns {HTMLElement|null} The submit button or null if not found
    */
   findSubmitButton() {
-    return document.querySelector('div[role="button"].f6d670.bcc55ca1') || 
-           document.querySelector('div[role="button"].f6d670');
+    // Strategy 1: Type + aria-label (with localization support)
+    const submitLabels = ['Submit', 'Soumettre', 'Enviar', '提交'];
+    for (const label of submitLabels) {
+      const button = document.querySelector(`button[type="submit"][aria-label="${label}"]`);
+      if (button) return button;
+    }
+    
+    // Strategy 2: Type + SVG path pattern detection
+    const submitButtons = document.querySelectorAll('button[type="submit"]');
+    for (const button of submitButtons) {
+      // Look for arrow up SVG pattern
+      const svg = button.querySelector('svg');
+      if (svg) {
+        const path = svg.querySelector('path');
+        if (path) {
+          const d = path.getAttribute('d');
+          // Check for characteristic upward arrow path
+          if (d && (d.includes('M12 4V21') || d.includes('M12 4L19 11') || d.includes('M5 11L12 4'))) {
+            return button;
+          }
+        }
+      }
+    }
+    
+    // Strategy 3: Fallback to any submit button
+    return document.querySelector('button[type="submit"]');
   }
   
-  /**
-   * Insert text into DeepSeek's editor and submit
-   * @param {string} text - The text to insert
-   * @returns {Promise<boolean>} Success status
-   */
   async insertAndSubmitText(text) {
     const editorElement = this.findEditorElement();
     
     if (!editorElement) {
-      this.logger.error('DeepSeek textarea element not found');
+      this.logger.error('Grok editor element not found');
       return false;
     }
 
     try {
-      // Focus on the textarea
-      editorElement.focus();
-      
-      // Set the value directly
+      // Simple direct approach to setting the value
       editorElement.value = text;
       
-      // Trigger input event to activate the UI
+      // Trigger standard input event
       const inputEvent = new Event('input', { bubbles: true });
       editorElement.dispatchEvent(inputEvent);
       
-      // Wait a short moment for the UI to update
+      // Add focus after setting value
+      editorElement.focus();
+      
       return new Promise(resolve => {
         setTimeout(() => {
-          // Look for the send button
           const sendButton = this.findSubmitButton();
           
           if (!sendButton) {
-            this.logger.error('DeepSeek send button not found');
+            this.logger.error('Send button not found');
             resolve(false);
             return;
           }
           
-          // Check if button is disabled
-          const isDisabled = sendButton.getAttribute('aria-disabled') === 'true';
-          
-          if (isDisabled) {
-            this.logger.warn('Send button is currently disabled');
-            // Try enabling the button by triggering another input event
-            editorElement.dispatchEvent(inputEvent);
-            
-            // Wait a bit more and try again
-            setTimeout(() => {
-              const updatedButton = this.findSubmitButton();
-                                 
-              if (updatedButton && updatedButton.getAttribute('aria-disabled') !== 'true') {
-                updatedButton.click();
-                this.logger.info('Text submitted to DeepSeek successfully after enabling button');
-                resolve(true);
-              } else {
-                this.logger.error('Send button remained disabled after retry');
-                resolve(false);
-              }
-            }, 300);
-          } else {
-            // Click the send button if it's not disabled
-            sendButton.click();
-            this.logger.info('Text submitted to DeepSeek successfully');
-            resolve(true);
+          // Enable button if disabled
+          if (sendButton.disabled) {
+            sendButton.disabled = false;
           }
+          
+          // Click the button directly
+          sendButton.click();
+          
+          this.logger.info('Text submitted to Grok successfully');
+          resolve(true);
         }, 500);
       });
     } catch (error) {
-      this.logger.error('Error inserting text into DeepSeek:', error);
+      this.logger.error('Error inserting text into Grok:', error);
       return false;
     }
   }
 }
 
-module.exports = DeepSeekPlatform;
+module.exports = GrokPlatform;

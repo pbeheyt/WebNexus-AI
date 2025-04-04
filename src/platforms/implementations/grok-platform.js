@@ -14,25 +14,70 @@ class GrokPlatform extends BasePlatform {
            window.location.hostname.includes('grok');
   }
   
+  /**
+   * Find the active Grok editor element using structural and class-based detection strategies
+   * that accommodate UI changes and render resilient identification
+   * @returns {HTMLElement|null} The editor element or null if not found
+   */
   findEditorElement() {
-    // Find the visible, interactive textarea by combining attribute and style conditions
-    const textareas = document.querySelectorAll('textarea[aria-label="Ask Grok anything"]');
+    // Strategy 1: Find by distinctive class combinations and element attributes
+    const potentialTextareas = document.querySelectorAll('textarea.w-full');
     
-    // Filter to find the visible one (not hidden, not display:none)
-    for (const textarea of textareas) {
-      // Skip hidden textareas
-      if (textarea.getAttribute('aria-hidden') === 'true' || 
-          textarea.style.visibility === 'hidden' ||
-          textarea.style.display === 'none' ||
-          textarea.tabIndex === -1) {
-        continue;
+    for (const textarea of potentialTextareas) {
+      // Check if it has distinctive textarea Grok classes 
+      if (textarea.className.includes('bg-transparent') && 
+          textarea.className.includes('focus:outline-none') &&
+          this.isVisibleElement(textarea)) {
+        return textarea;
       }
-      
-      return textarea;
     }
     
-    // Fallback to standard selector if filtering didn't work
-    return document.querySelector('textarea[aria-label="Ask Grok anything"]');
+    // Strategy 2: Find by structural position and style characteristics
+    const allTextareas = document.querySelectorAll('textarea');
+    
+    for (const textarea of allTextareas) {
+      const style = window.getComputedStyle(textarea);
+      
+      // Check for Grok's typical textarea styling pattern
+      if (style.resize === 'none' && 
+          this.isVisibleElement(textarea) && 
+          textarea.getAttribute('dir') === 'auto') {
+        return textarea;
+      }
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Helper method to determine if an element is visible and interactive
+   * @param {HTMLElement} element - The element to check
+   * @returns {boolean} True if the element is visible and interactive
+   */
+  isVisibleElement(element) {
+    if (!element) return false;
+    
+    // Check for explicit hidden attributes
+    if (element.getAttribute('aria-hidden') === 'true' || 
+        element.style.visibility === 'hidden' ||
+        element.style.display === 'none' ||
+        element.tabIndex === -1) {
+      return false;
+    }
+    
+    // Check computed styles
+    const style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+      return false;
+    }
+    
+    // Check if element has zero dimensions
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      return false;
+    }
+    
+    return true;
   }
   
   findSubmitButton() {
