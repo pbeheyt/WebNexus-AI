@@ -60,10 +60,9 @@ const PlatformDetails = ({
     
     try {
       // Create credentials object
-      const newCredentials = {
-        apiKey,
-        model: selectedModelId
-      };
+    const newCredentials = {
+      apiKey
+    };
       
       // Validate the API key before saving
       const credentialManager = await import('../../../../services/CredentialManager')
