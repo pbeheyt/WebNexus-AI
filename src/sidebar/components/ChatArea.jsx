@@ -22,7 +22,7 @@ function ChatArea({ className = '' }) {
 
     // Check if processing (streaming)
     if (isProcessing) {
-      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 50; // Increased threshold
+      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 25;
       if (!isAtBottom) {
         setUserInteractedWithScroll(true); // User scrolled up during streaming
       } else {
@@ -81,11 +81,8 @@ function ChatArea({ className = '' }) {
             <p className="text-sm mb-4">
               Please configure API keys in the extension settings to enable chat features.
             </p>
-            {/* Optional: Add a button/link to settings */}
-            {/* <button onClick={() => chrome.runtime.sendMessage({ action: 'openSettingsPage' })} className="...">Go to Settings</button> */}
           </>
         ) : (
-          // Original welcome message when credentials exist
           <>
             {selectedPlatformId && selectedPlatform.iconUrl ? (
               <>
