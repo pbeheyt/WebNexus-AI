@@ -64,7 +64,11 @@ class YoutubeExtractorStrategy extends BaseExtractor {
 
       // Extract transcript using the npm package
       const transcriptData = await YoutubeTranscript.fetchTranscript(fullVideoUrl);
-      const formattedTranscript = this.formatTranscript(transcriptData);
+      
+      // Format transcript with timestamps
+      const formattedTranscript = this.formatTranscript(transcriptData, {
+        timestampInterval: 15, // Add timestamp every 15 seconds for more granular reference points
+      });
 
       this.logger.info('Transcript data extracted:', transcriptData.length, 'segments');
 
@@ -319,22 +323,73 @@ class YoutubeExtractorStrategy extends BaseExtractor {
   }
 
   /**
-   * Format transcript data into a continuous text without timestamps
+   * Format transcript data into a single text block with regular timestamps
    * @param {Array} transcriptData - The transcript data from youtube-transcript
-   * @returns {string} The formatted transcript
+   * @param {Object} options - Formatting options
+   * @returns {string} The formatted transcript with timestamps
    */
-  formatTranscript(transcriptData) {
+  formatTranscript(transcriptData, options = {}) {
     if (!Array.isArray(transcriptData) || transcriptData.length === 0) {
       return 'No transcript data available';
     }
     
-    // Concatenate all text segments with spaces, removing timestamps
-    const rawTranscript = transcriptData.map(segment => segment.text.trim())
-      .join(' ')
-      .replace(/\s+/g, ' '); // Replace multiple spaces with a single space
+    // Default options
+    const defaults = {
+      timestampInterval: 60, // Add timestamp every 60 seconds
+      timestampFormat: 'MM:SS', // Format: minutes:seconds
+      timestampPrefix: '[', // Character(s) before timestamp
+      timestampSuffix: '] ', // Character(s) after timestamp
+    };
+    
+    const config = { ...defaults, ...options };
+    
+    let formattedText = '';
+    let lastTimestampTime = -config.timestampInterval; // Ensure first segment gets timestamp
+    
+    // Process each transcript segment
+    transcriptData.forEach((segment, index) => {
+      const currentOffset = segment.offset;
+      const currentText = this.decodeDoubleEncodedEntities(segment.text.trim());
+      const currentTime = Math.floor(currentOffset);
       
-    // Decode HTML entities - specifically handling double-encoded entities
-    return this.decodeDoubleEncodedEntities(rawTranscript);
+      // Add new timestamp if interval has passed
+      if (currentTime >= lastTimestampTime + config.timestampInterval) {
+        // If not the first segment, add space before timestamp
+        if (formattedText.length > 0) {
+          formattedText += ' ';
+        }
+        
+        const timestamp = this.formatTimestamp(currentTime, config.timestampFormat);
+        formattedText += `${config.timestampPrefix}${timestamp}${config.timestampSuffix}`;
+        lastTimestampTime = currentTime;
+      } else if (index > 0 && formattedText.length > 0 && !formattedText.endsWith(' ')) {
+        // Add space between segments (but not after a timestamp)
+        formattedText += ' ';
+      }
+      
+      // Add the text
+      formattedText += currentText;
+    });
+    
+    return formattedText;
+  }
+
+  /**
+   * Format seconds into a timestamp string
+   * @param {number} seconds - Total seconds
+   * @param {string} format - Format string ('MM:SS' or 'HH:MM:SS')
+   * @returns {string} Formatted timestamp
+   */
+  formatTimestamp(seconds, format = 'MM:SS') {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    if (format === 'HH:MM:SS' || hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
   }
 
   /**
