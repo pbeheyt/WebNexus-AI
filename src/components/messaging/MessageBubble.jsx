@@ -60,7 +60,8 @@ const CodeBlock = memo(({ className, children }) => {
       </pre>
       <button
         onClick={copyCodeToClipboard}
-        className={`absolute top-2 right-2 p-1.5 rounded-md transition-opacity duration-200
+        className={`absolute bottom-[-8px] right-2 p-1 rounded-md transition-opacity duration-200 shadow-sm
+                   transform scale-90 z-10
                    ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} 
                    ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
                      copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
