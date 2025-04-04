@@ -1,5 +1,0 @@
-- based on the code tree, if any other files needed to understand the context you MUST ask them to me 
-- if something is unclear is user instructions, you MUST aask him to reformulate before going any further
-- when adding update, you SHOULD NOT have some migrations code nor legacy code now deprecated
-- give first your potential implementation ideas NOT THE CODE, i MUST validate your ideas first
-- when finishing the implementation plan, ask the user to agree with it, then proceed to give a prompt for the user that will be given to an AI that will auto-edit these changes in the current codebase
