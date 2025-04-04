@@ -1,97 +1,83 @@
-# AI Content Summarizer: The All-in-One AI Assistant for Your Browser
+# AI Content Assistant
 
-This Chrome extension provides a comprehensive suite of AI-powered tools to enhance your browsing experience. Summarize web content, analyze discussions, and streamline information gathering across various online platforms.
+AI Content Assistant enhances your browsing by integrating powerful AI capabilities directly into Chrome. Choose how you interact: use the **Sidebar** for direct API-driven chat about page content, or use the **Popup** to quickly send content to an AI platform's standard web interface.
 
-## Features
+## Key Features
 
-*   **Multi-Platform Support:** Works seamlessly with a wide range of content types, including:
-    *   General web content
-    *   Reddit posts and discussions
-    *   YouTube videos (including transcript and comment analysis)
-    *   PDF documents
-    *   Selected text fragments
-*   **AI Platform Flexibility:** Choose from a variety of AI platforms to power your summaries and analyses:
-    *   ChatGPT
-    *   Claude
-    *   DeepSeek
-    *   Mistral
-    *   Gemini
-    *   Grok
-*   **Summarization and Analysis:** Quickly generate concise or detailed summaries of web content, extract key themes from discussions, and analyze comment sections.
-*   **Customizable Prompts:** Tailor the AI's behavior with customizable prompts. Adjust the length, style, and language of summaries to fit your needs.
-*   **Contextual Sidebar Integration:** Access AI features directly within a convenient sidebar for in-depth analysis and conversation.
-*   **Keyboard Shortcuts:** Enhance productivity with keyboard shortcuts for common actions.
-*   **Theme Management:** Easily switch between light and dark themes for comfortable reading in any environment.
-*   **Secure Credential Storage:** API keys for AI platforms are stored securely using Chrome's storage API.
-*   **Tab-Specific Preferences:** Customize AI platform and model selections for individual tabs.
-*   **Token Tracking and Cost Accounting:** Monitor API token usage with detailed breakdowns and cost estimations (where available).
-*   **Content Extraction and Analysis:** Uses smart extraction algorithms for optimal results.
-*   **Clear User Interface:** A straightforward and easy-to-navigate interface ensures a smooth user experience.
-*   **Continuous Updates:** Regularly updated to support new platforms, models, and features.
+*   **Two Ways to Interact:**
+    *   **Sidebar (Direct API Chat):** Open a persistent sidebar on any tab. Chat directly with AI models (like ChatGPT, Claude, Gemini, etc.) about the page's content. Responses are generated via the AI's official API and displayed *within the sidebar*. **Requires configuring API keys in Settings.**
+    *   **Popup (Web Interface Interaction):** Use the quick-action popup to select an AI platform. The extension extracts page content, opens the chosen platform's **website** in a new tab, and attempts to paste the content and your prompt into *that website's* chat interface. **Does not use API keys for the interaction itself.**
+*   **Multi-Platform Support:**
+    *   **Sidebar (API):** Integrates with APIs from Claude, ChatGPT, DeepSeek, Mistral, Gemini, and Grok.
+    *   **Popup (Web UI):** Supports sending content to the web interfaces of the same platforms.
+*   **Versatile Content Extraction:** Automatically extracts key information for AI processing from:
+    *   General Web Pages (main text, metadata)
+    *   YouTube Videos (transcripts, comments, metadata)
+    *   Reddit Posts (post content, comments, metadata)
+    *   PDF Documents (text content, metadata)
+*   **Interactive Sidebar Features (API Mode):**
+    *   Select specific AI platforms and models for API interactions.
+    *   Maintains separate conversation histories for each browser tab.
+    *   Provides estimated token usage and accumulated API cost tracking per tab.
+    *   Supports system prompts for advanced API control.
+*   **Custom Prompt Management:** Create, edit, and manage custom prompts for different content types or shared use across both Popup and Sidebar modes via the Settings page.
+*   **API Configuration (for Sidebar Mode):**
+    *   Manage API keys obtained from AI providers, stored in the browser's local storage. Includes validation checks.
+    *   Fine-tune API request parameters (temperature, max tokens, etc.) for sidebar interactions.
+*   **Theme Support:** Adapts to your system's Light or Dark mode.
+*   **Quick Access:** Use keyboard shortcuts or the right-click context menu to activate the popup or toggle the sidebar.
+
+## Supported Platforms
+
+*   **Sidebar (via API):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
+    *   *Requires API key configuration in Settings for functionality.*
+*   **Popup (via Web Interface):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
+    *   *Opens the platform's website. API keys are not used for this interaction.*
+
+## How to Use
+
+1.  **Installation:** Load the extension into Chrome (see Installation section below).
+2.  **Configure API Keys (Strongly Recommended for Sidebar):**
+    *   To use the **Sidebar chat feature**, you **must** configure API keys. Open the extension's **Settings** page (Right-click extension icon > Options, or via Popup).
+    *   Go to the **API Settings** tab. Select each AI platform you want to use *in the sidebar* and enter its API key. Save and validate the key (✓ indicates success).
+    *   You can skip this step if you only plan to use the Popup mode.
+3.  **Using the Sidebar (Direct API Chat):**
+    *   Toggle the sidebar using `Ctrl+Shift+Q` (or your shortcut) or the right-click context menu.
+    *   Select an AI Platform and Model from the dropdowns. **Only platforms with configured API keys will work here.**
+    *   Type your prompt about the current page content. The AI response appears directly **within the sidebar**, using the configured API key.
+    *   Token usage and cost estimates are tracked for these API calls.
+4.  **Using the Popup (Web Interface Interaction):**
+    *   Click the extension icon in your browser toolbar.
+    *   Select an AI platform.
+    *   Enter your prompt.
+    *   Click the send button.
+    *   The extension opens the chosen AI platform's **website** in a new tab and attempts to paste the page content and your prompt into **that website's input field.** No API keys are used for this process.
+5.  **Managing Prompts:** Configure custom prompts in **Settings > Prompts** for use in either the Sidebar or Popup.
 
 ## Installation
 
-1.  Download the extension package from [link to be added].
-2.  Open Chrome and navigate to `chrome://extensions`.
-3.  Enable "Developer mode" in the top right corner.
-4.  Click "Load unpacked" and select the directory containing the extension files.
-5.  The extension icon will appear in your Chrome toolbar.
+1.  Clone or download this repository.
+2.  Open Chrome and go to `chrome://extensions/`.
+3.  Enable "Developer mode" (top-right).
+4.  Click "Load unpacked".
+5.  Select the directory containing `manifest.json`.
 
-## Usage
+## Development
 
-### Summarizing Content
+1.  Requires Node.js and npm.
+2.  Install dependencies: `npm install`
+3.  Build: `npm run build`
+4.  Watch for changes: `npm run watch`
+5.  Load/reload the extension in Chrome as described above.
 
-1.  **Click the Extension Icon:** Activate the extension by clicking its icon in the Chrome toolbar.
-2.  **Select an AI Platform:** Choose your preferred AI platform (e.g., ChatGPT, Claude, Gemini) from the dropdown menu.
-3.  **Configure Prompt Settings:** Customize the summary's length, style, and language using the available options.
-4.  **Process Content:** Click the "Process Content" button.
-5.  **View Summary:** The summarized content will be displayed in the popup window.
+## Permissions Required
 
-You can also trigger content processing by right-clicking on a webpage and selecting “Process with AI" or “Process selection with AI” in the context menu.  If selection mode is enabled under the keyboard shortcut options, content processing can also be triggered using the keyboard shortcut: `Ctrl+Shift+Z`
-
-### Using the Sidebar
-
-1.  **Toggle Sidebar:**  Press `Ctrl+Shift+Q` to open or close the sidebar, or select “Toggle Sidebar” from the context menu.
-2.  **Chat Interface:** Engage in a conversation with the AI about the current page content.
-3.  **Model Selection:** Choose your preferred AI model for the sidebar chat.
-4.  **Token Tracking:** View real-time token usage and cost estimates in the sidebar.
-
-### Customizing Prompts
-
-1.  **Open Settings:** Click the extension icon and then the "Settings" button.
-2.  **Manage Prompts:**  Navigate to the "Custom Prompt Management" tab.
-3.  **Create, Edit, or Delete Prompts:** Add new custom prompts, modify existing ones, or remove unwanted prompts.
-4.  **Customize Default Templates:** Modify base template instructions under "Template Customization."
-    *  Adjust length, style, and language parameters to refine summary output.
-    *  Click the gear icon to create a new prompt with content-specific settings.
-
-### Managing API Credentials
-
-1.  **Open Settings:** Click the extension icon and then the "Settings" button.
-2.  **Navigate to API Settings:**  Select the "API Settings" tab.
-3.  **Enter API Keys:** Provide your API keys for the AI platforms you want to use.
-
-## Configuration
-
-The extension can be configured via the settings page (accessible via the extension popup):
-
-*   **Content Extraction Settings:**
-    *   Maximum number of comments to extract from Reddit and YouTube.
-
-*   **Keyboard Shortcuts:**
-    *   "Process Content":  Customize content processing with and without text selection.
-    *   "Toggle Sidebar":  Configure sidebar opening behavior.
-
-*   **API Settings:**
-    *   Set default parameters like length, style, language, and API keys for each platform.
-
-## Security and Privacy
-
-*   The extension requests necessary permissions to access web content and inject scripts.
-*   Your API keys are stored locally and securely using Chrome's storage API.
-*   No user data is collected or transmitted by the extension.
-*   Review the extension's code on GitHub to verify its security and privacy practices [link to be added].
-
-## Support and Contributing
-
-For bug reports, feature requests, and contributions, please visit the extension's GitHub repository [link to be added].
+*   **`activeTab` & `scripting`:** To read and interact with the current tab's content.
+*   **`storage`:** To save settings, API keys (in local storage), prompts, chat history, etc.
+*   **`tabs`:** To get tab info (URLs), create tabs (for Popup mode), and manage the sidebar.
+*   **`webRequest`:** (Verify specific usage in `manifest.json`).
+*   **`contextMenus`:** To add the "Open Sidebar" right-click option.
+*   **`host_permissions`:** Needed for:
+    *   Popup Mode: Interacting with AI platform websites (e.g., `chatgpt.com`).
+    *   Sidebar Mode: Calling AI platform API endpoints (e.g., `api.openai.com`).
+    *   Both Modes: Extracting content from various websites (`<all_urls>`).
