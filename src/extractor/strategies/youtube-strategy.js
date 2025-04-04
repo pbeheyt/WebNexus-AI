@@ -88,7 +88,6 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         extractedAt: new Date().toISOString()
       };
     } catch (error) {
-      this.logger.error('Error extracting video data:', error);
 
       // Determine error type and provide appropriate message
       let errorMessage = 'Failed to extract transcript';
