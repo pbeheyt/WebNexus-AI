@@ -1,53 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+/**
+ * Utility function for clipboard operations
+ * Implements the document.execCommand approach for maximum compatibility
+ * @param {string} text - The text content to copy to clipboard
+ * @returns {boolean} - Returns true if successful, throws error otherwise
+ */
+const copyToClipboardUtil = (text) => {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'absolute';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  
+  try {
+    textarea.select();
+    const successful = document.execCommand('copy');
+    
+    if (!successful) {
+      throw new Error('ExecCommand operation failed');
+    }
+    
+    return true;
+  } finally {
+    // Ensure cleanup happens regardless of success/failure
+    document.body.removeChild(textarea);
+  }
+};
 
 /**
  * CodeBlock component with copy functionality
  * Extracted as a separate component to properly manage state
  */
-const CodeBlock = ({ className, children }) => {
+const CodeBlock = memo(({ className, children }) => {
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
   const codeContent = String(children).replace(/\n$/, '');
   
   const copyCodeToClipboard = () => {
     try {
-      // Modern clipboard API with fallback to older method
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(codeContent)
-          .then(() => {
-            setCopyState('copied');
-            setTimeout(() => setCopyState('idle'), 2000);
-          })
-          .catch(err => {
-            fallbackCopyMethod();
-          });
-      } else {
-        fallbackCopyMethod();
-      }
-    } catch (error) {
-      console.error('Failed to copy code: ', error);
-      setCopyState('error');
-      setTimeout(() => setCopyState('idle'), 2000);
-    }
-  };
-  
-  // Fallback copy method using execCommand
-  const fallbackCopyMethod = () => {
-    try {
-      const textarea = document.createElement('textarea');
-      textarea.value = codeContent;
-      textarea.setAttribute('readonly', '');
-      textarea.style.position = 'absolute';
-      textarea.style.left = '-9999px';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      copyToClipboardUtil(codeContent);
       setCopyState('copied');
       setTimeout(() => setCopyState('idle'), 2000);
     } catch (error) {
-      console.error('Fallback copy method failed: ', error);
+      console.error('Copy method failed: ', error);
       setCopyState('error');
       setTimeout(() => setCopyState('idle'), 2000);
     }
@@ -91,13 +89,13 @@ const CodeBlock = ({ className, children }) => {
       </button>
     </div>
   );
-};
+});
 
 /**
  * A versatile message bubble component that supports different roles and states
  * with copy-to-clipboard functionality for assistant messages
  */
-export function MessageBubble({ 
+const MessageBubbleComponent = ({
   content,
   role = 'assistant',
   isStreaming = false,
@@ -105,7 +103,7 @@ export function MessageBubble({
   platformIconUrl = null,
   metadata = {},
   className = ''
-}) {
+}) => {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
@@ -115,37 +113,13 @@ export function MessageBubble({
     if (!content || isStreaming) return;
     
     try {
-      // Create a temporary textarea element to hold the text
-      const textarea = document.createElement('textarea');
-      textarea.value = content;
-      
-      // Make the textarea non-editable and invisible
-      textarea.setAttribute('readonly', '');
-      textarea.style.position = 'absolute';
-      textarea.style.left = '-9999px';
-      
-      // Append to the body, select, and execute copy command
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      
-      // Remove the textarea
-      document.body.removeChild(textarea);
-      
-      // Update state to show success
+      copyToClipboardUtil(content);
       setCopyState('copied');
-      
-      // Reset state after 2 seconds
-      setTimeout(() => {
-        setCopyState('idle');
-      }, 2000);
+      setTimeout(() => setCopyState('idle'), 2000);
     } catch (error) {
       console.error('Failed to copy text: ', error);
       setCopyState('error');
-      
-      setTimeout(() => {
-        setCopyState('idle');
-      }, 2000);
+      setTimeout(() => setCopyState('idle'), 2000);
     }
   };
   
@@ -285,6 +259,6 @@ export function MessageBubble({
       )}
     </div>
   );
-}
+};
 
-export default MessageBubble;
+export const MessageBubble = memo(MessageBubbleComponent);
