@@ -22,14 +22,11 @@ class ChatGptApiService extends BaseApiService {
     let reader; // Declare reader outside try block for finally access
 
     try {
-      // Use params.model if available (from sidebar selection), otherwise fall back to passed model
-      const modelToUse = params.model || model;
-
-      this.logger.info(`Making ChatGPT API streaming request with model: ${modelToUse}`);
+      this.logger.info(`Making ChatGPT API streaming request with model: ${params.model}`);
 
       // Create the request payload (logic remains the same)
       const requestPayload = {
-        model: modelToUse,
+        model: params.model,
         stream: true
       };
       const messages = [];
@@ -71,7 +68,7 @@ class ChatGptApiService extends BaseApiService {
           // Use the basic status text if JSON parsing fails
         }
         this.logger.error(`ChatGPT API Error: ${errorMessage}`, errorData);
-        onChunk({ done: true, error: errorMessage, model: modelToUse });
+        onChunk({ done: true, error: errorMessage, model: params.model });
         return; // Stop processing on error
       }
 
@@ -105,7 +102,7 @@ class ChatGptApiService extends BaseApiService {
                 onChunk({
                   chunk: content, // Send individual chunk
                   done: false,
-                  model: modelToUse
+                  model: params.model
                 });
               }
             } catch (e) {
@@ -120,14 +117,14 @@ class ChatGptApiService extends BaseApiService {
       onChunk({
         chunk: '', // No final chunk content needed here, already sent incrementally
         done: true,
-        model: modelToUse,
+        model: params.model,
         fullContent: accumulatedContent // Include full content for potential use later
       });
 
       // Return metadata only on successful completion
       return {
         success: true,
-        model: modelToUse,
+        model: params.model,
         platformId: this.platformId,
         timestamp: new Date().toISOString(),
         content: accumulatedContent

@@ -394,7 +394,7 @@ export function SidebarChatProvider({ children }) {
     try {
       // Format conversation history for the API - Filter out streaming messages and extracted content messages
       const conversationHistory = messages
-        .filter(msg => (msg.role === MESSAGE_ROLES.USER || msg.role === MESSAGE_ROLES.ASSISTANT) && !msg.isStreaming && !msg.isExtractedContent)
+        .filter(msg => (msg.role === MESSAGE_ROLES.USER || msg.role === MESSAGE_ROLES.ASSISTANT) && !msg.isStreaming)
         .map(msg => ({
           role: msg.role,
           content: msg.content,

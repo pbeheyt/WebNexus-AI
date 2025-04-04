@@ -22,23 +22,20 @@ class ClaudeApiService extends BaseApiService {
     let reader; // Declare reader outside try block for finally access
 
     try {
-      const modelToUse = params.model || model;
-      this.logger.info(`Making Claude API streaming request with model: ${modelToUse}`);
+      this.logger.info(`Making Claude API streaming request with model: ${params.model}`);
 
       // Create the request payload (logic remains the same)
       const requestPayload = {
-        model: modelToUse,
+        model: params.model,
         max_tokens: params.maxTokens,
         messages: [{ role: 'user', content: [{ type: "text", text: text }] }],
         stream: true
       };
       if (params.supportsTemperature) requestPayload.temperature = params.temperature;
       if (params.systemPrompt) requestPayload.system = params.systemPrompt;
-      this.logger.info(`Claude API request params conversation history:`, params.conversationHistory);
       if (params.conversationHistory && params.conversationHistory.length > 0) {
         requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, text);
       }
-      this.logger.info(`Claude API request payload:`, requestPayload);
 
       // Make the streaming request
       const response = await fetch(endpoint, {
@@ -72,7 +69,7 @@ class ClaudeApiService extends BaseApiService {
           // Use the basic status text if JSON parsing fails
         }
         this.logger.error(`Claude API Error: ${errorMessage}`, errorData);
-        onChunk({ done: true, error: errorMessage, model: modelToUse });
+        onChunk({ done: true, error: errorMessage, model: params.model });
         return; // Stop processing on error
       }
 
@@ -115,7 +112,7 @@ class ClaudeApiService extends BaseApiService {
                   onChunk({
                     chunk: content, // Send individual chunk
                     done: false,
-                    model: modelToUse
+                    model: params.model
                   });
                 }
               } else if (data.type === 'message_delta' && data.delta?.stop_reason) {
@@ -126,7 +123,7 @@ class ClaudeApiService extends BaseApiService {
                  const streamErrorMessage = `Stream error: ${data.error?.message || 'Unknown stream error'}`;
                  this.logger.error(streamErrorMessage, data.error);
                  // Send error chunk and stop processing this stream
-                 onChunk({ done: true, error: streamErrorMessage, model: modelToUse });
+                 onChunk({ done: true, error: streamErrorMessage, model: params.model });
                  // Attempt to release lock early if possible
                  if (reader) await reader.releaseLock().catch(e => this.logger.error('Error releasing lock after stream error:', e));
                  reader = null; // Prevent finally block from trying again
@@ -144,14 +141,14 @@ class ClaudeApiService extends BaseApiService {
       onChunk({
         chunk: '', // No final chunk content needed here
         done: true,
-        model: modelToUse,
+        model: params.model,
         fullContent: accumulatedContent // Include full content
       });
 
       // Return metadata only on successful completion
       return {
         success: true,
-        model: modelToUse,
+        model: params.model,
         platformId: this.platformId,
         timestamp: new Date().toISOString(),
         content: accumulatedContent

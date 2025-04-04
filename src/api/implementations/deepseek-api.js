@@ -20,13 +20,12 @@ class DeepSeekApiService extends BaseApiService {
   async _processWithModelStreaming(text, params, apiKey, onChunk) {
     const endpoint = this.config?.endpoint || 'https://api.deepseek.com/v1/chat/completions';
     let reader; // Declare reader outside try block for finally access
-    const modelToUse = params.model || model; // Use params.model if available
 
     try {
-      this.logger.info(`Making DeepSeek API streaming request with model: ${modelToUse}`);
+      this.logger.info(`Making DeepSeek API streaming request with model: ${params.model}`);
 
       // Create the request payload (logic remains the same)
-      const requestPayload = { model: modelToUse, stream: true };
+      const requestPayload = { model: params.model, stream: true };
       const messages = [];
       if (params.systemPrompt) messages.push({ role: 'system', content: params.systemPrompt });
       if (params.conversationHistory && params.conversationHistory.length > 0) {
@@ -72,7 +71,7 @@ class DeepSeekApiService extends BaseApiService {
           this.logger.warn('Could not parse error response body:', parseError);
         }
         this.logger.error(`DeepSeek API Error: ${errorMessage}`, errorData);
-        onChunk({ done: true, error: errorMessage, model: modelToUse });
+        onChunk({ done: true, error: errorMessage, model: params.model });
         return; // Stop processing on error
       }
 
@@ -106,7 +105,7 @@ class DeepSeekApiService extends BaseApiService {
                 onChunk({
                   chunk: content, // Send individual chunk
                   done: false,
-                  model: modelToUse
+                  model: params.model
                 });
               }
               // Check finish reason if needed
@@ -125,7 +124,7 @@ class DeepSeekApiService extends BaseApiService {
       onChunk({
         chunk: '', // No final chunk content needed here
         done: true,
-        model: modelToUse,
+        model: params.model,
         fullContent: accumulatedContent // Include full content
       });
 
@@ -133,7 +132,7 @@ class DeepSeekApiService extends BaseApiService {
       return {
         success: true,
         content: accumulatedContent,
-        model: modelToUse,
+        model: params.model,
         platformId: this.platformId,
         timestamp: new Date().toISOString()
       };
@@ -144,7 +143,7 @@ class DeepSeekApiService extends BaseApiService {
       onChunk({
         done: true,
         error: error.message || 'An unknown streaming error occurred',
-        model: modelToUse
+        model: params.model
       });
       // Do not re-throw; error is handled by sending the chunk
     } finally {

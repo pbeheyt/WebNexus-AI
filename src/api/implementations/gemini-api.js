@@ -47,11 +47,10 @@ class GeminiApiService extends BaseApiService {
    */
   async _processWithModelStreaming(text, params, apiKey, onChunk) {
     let reader; // Declare reader outside try block for finally access
-    const modelToUse = model; // Use the provided model directly
 
     try {
       // Construct the endpoint dynamically based on model version
-      const endpoint = this._getGeminiEndpoint(modelToUse, ':streamGenerateContent');
+      const endpoint = this._getGeminiEndpoint(params.model, ':streamGenerateContent');
       this.logger.info(`Making Gemini API streaming request to: ${endpoint}`);
 
       // Gemini API uses API key as a query parameter
@@ -104,7 +103,7 @@ class GeminiApiService extends BaseApiService {
              this.logger.info("Failed to parse error response as JSON:", errorBody);
         }
         this.logger.error(`Gemini API Error: ${errorMessage}`);
-        onChunk({ done: true, error: errorMessage, model: modelToUse });
+        onChunk({ done: true, error: errorMessage, model: params.model });
         return; // Stop processing on error
       }
 
@@ -177,7 +176,7 @@ class GeminiApiService extends BaseApiService {
                     const streamErrorMessage = `API Error in stream: ${data.error.message || 'Unknown error'}`;
                     this.logger.error(streamErrorMessage, data.error);
                     // Send error chunk and stop processing THIS stream
-                    onChunk({ done: true, error: streamErrorMessage, model: modelToUse });
+                    onChunk({ done: true, error: streamErrorMessage, model: params.model });
                     // Release lock and return immediately from the outer function
                     if (reader) await reader.releaseLock().catch(e => this.logger.error('Error releasing lock after stream error:', e));
                     reader = null;
@@ -189,7 +188,7 @@ class GeminiApiService extends BaseApiService {
                     const content = part.text || '';
                     if (content) {
                       accumulatedContent += content;
-                      onChunk({ chunk: content, done: false, model: modelToUse });
+                      onChunk({ chunk: content, done: false, model: params.model });
                     }
                   }
                 }
@@ -203,7 +202,7 @@ class GeminiApiService extends BaseApiService {
               // Catch errors from JSON.parse or processing the data block
               this.logger.error('Error parsing/processing stream chunk:', parseOrProcessError, 'Chunk:', jsonStr || buffer.substring(0, 200));
               // Send error chunk and stop processing
-              onChunk({ done: true, error: `Stream parsing error: ${parseOrProcessError.message}`, model: modelToUse });
+              onChunk({ done: true, error: `Stream parsing error: ${parseOrProcessError.message}`, model: params.model });
               if (reader) await reader.releaseLock().catch(e => this.logger.error('Error releasing lock after parse error:', e));
               reader = null;
               return; // Exit outer function
@@ -214,7 +213,7 @@ class GeminiApiService extends BaseApiService {
       } catch (streamReadError) {
         // Catch errors from reader.read() itself
         this.logger.error('Stream reading error:', streamReadError);
-        onChunk({ done: true, error: `Stream read error: ${streamReadError.message}`, model: modelToUse });
+        onChunk({ done: true, error: `Stream read error: ${streamReadError.message}`, model: params.model });
         // No return needed here, finally will execute
       }
       // End of inner try/catch for stream processing
@@ -223,7 +222,7 @@ class GeminiApiService extends BaseApiService {
       onChunk({
         chunk: '',
         done: true,
-        model: modelToUse,
+        model: params.model,
         fullContent: accumulatedContent
       });
 
@@ -231,7 +230,7 @@ class GeminiApiService extends BaseApiService {
       return {
         success: true,
         content: accumulatedContent,
-        model: modelToUse,
+        model: params.model,
         platformId: this.platformId,
         timestamp: new Date().toISOString()
       };
@@ -243,7 +242,7 @@ class GeminiApiService extends BaseApiService {
       onChunk({
         done: true,
         error: error.message || 'An unknown streaming error occurred',
-        model: modelToUse
+        model: params.model
       });
       // Do not re-throw; error is handled by sending the chunk
     } finally {
