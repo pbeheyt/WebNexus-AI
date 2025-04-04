@@ -132,10 +132,10 @@
           },
           {
             "id": "o1",
-            "maxTokens": 200000,
+            "maxTokens": 100000,
             "parameterStyle": "reasoning",
             "tokenParameter": "max_completion_tokens",
-            "contextWindow": 100000,
+            "contextWindow": 200000,
             "inputTokenPrice": 15.00,
             "outputTokenPrice": 60.00,
             "supportsTemperature": false,
