@@ -1,4 +1,3 @@
-// src/sidebar/index.jsx - Updated
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SidebarApp from './SidebarApp';

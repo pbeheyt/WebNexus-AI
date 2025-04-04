@@ -172,7 +172,6 @@ export function Popup() {
       {/* Status message displayed below the input */}
       <StatusMessage message={statusMessage} context="popup" className="mt-3" />
 
-      {/* Toast component has been removed */}
     </div>
   );
 }

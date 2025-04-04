@@ -1,12 +1,12 @@
 // src/sidebar/components/UserInput.jsx
 import React from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
-import { UnifiedInput } from '../../components/input/UnifiedInput'; // Changed to named import
-import TokenCounter from './TokenCounter';
-import { useContent } from '../../components/content/ContentContext'; // Added import
+import { UnifiedInput } from '../../components/input/UnifiedInput';
+// TokenCounter import removed as it's rendered within UnifiedInput
+import { useContent } from '../../components/content/ContentContext';
 
-export function UserInput({ className = '' }) { // Added export keyword
-  const { contentType } = useContent(); // Added hook call
+export function UserInput({ className = '' }) {
+  const { contentType } = useContent();
   const {
     inputValue,
     setInputValue,
@@ -30,11 +30,6 @@ export function UserInput({ className = '' }) { // Added export keyword
     cancelStream();
   };
 
-  // Note: TokenCounter is now rendered *inside* UnifiedInput when layoutVariant='sidebar'
-  // The outer div structure here might need adjustment if UnifiedInput doesn't provide it.
-  // Based on UnifiedInput implementation, it *does* include the outer flex-col and renders TokenCounter first.
-  // So we just replace MessageInput with UnifiedInput here.
-
   return (
     <UnifiedInput
       value={inputValue}
@@ -50,9 +45,7 @@ export function UserInput({ className = '' }) { // Added export keyword
       tokenStats={tokenStats}     // Pass token stats
       contextStatus={contextStatus} // Pass context status
       layoutVariant='sidebar'   // Specify sidebar layout
-      className={className}       // Pass className through
+      className={className}
     />
   );
 }
-
-// Removed default export

@@ -35,7 +35,7 @@ export function PlatformCard({
       onMouseEnter={() => isDisabled && setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
       onClick={handleClick}
-      aria-disabled={isDisabled} // Added for accessibility
+      aria-disabled={isDisabled}
     >
       <div className="relative">
         <img

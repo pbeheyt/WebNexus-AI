@@ -6,15 +6,12 @@ const logger = require('../shared/logger.js').content;
 let currentExtractionId = null;
 
 // Initialize content script state
-logger.info('Content script initialized');
 
 // Centralized message handler
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  logger.info('Message received in content script:', message.action);
   
   // Handle reset extractor command
   if (message.action === 'resetExtractor') {
-    logger.info('Resetting extractor');
     currentExtractionId = Date.now().toString();
     
     // Force cleanup of all extractors

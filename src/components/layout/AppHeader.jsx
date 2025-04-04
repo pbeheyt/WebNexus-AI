@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-// Re-added children prop, added showRefreshButton prop, added onRefreshClick prop
 export function AppHeader({
   children,
   showSettingsButton = true,
@@ -10,7 +9,7 @@ export function AppHeader({
   onRefreshClick,
   isExpanded = false,
   onToggleExpand = () => {},
-  showExpandToggle = false // Add this with default
+  showExpandToggle = false
 }) {
   const { theme, toggleTheme } = useTheme();
 

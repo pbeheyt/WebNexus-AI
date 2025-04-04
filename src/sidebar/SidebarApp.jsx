@@ -4,8 +4,8 @@ import { useSidebarPlatform } from '../contexts/platform';
 import { useSidebarChat } from './contexts/SidebarChatContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
-import { UserInput } from './components/UserInput'; // Changed to named import
-import { useContent, AppHeader } from '../components'; // Removed ContentTypeDisplay
+import { UserInput } from './components/UserInput';
+import { useContent, AppHeader } from '../components';
 import { MESSAGE_TYPES } from './constants';
 import { setupMessageHandlers } from './services/IframeMessaging';
 
@@ -14,7 +14,7 @@ export default function SidebarApp() {
   const { tabId } = useSidebarPlatform();
   const { resetCurrentTabData } = useSidebarChat();
   const [isReady, setIsReady] = useState(false);
-  const { contentType } = useContent();
+  const { } = useContent(); // contentType removed
   const [messaging, setMessaging] = useState(null);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   
@@ -76,7 +76,6 @@ export default function SidebarApp() {
             headerExpanded ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
-          {/* ContentTypeDisplay removed from here */}
 
           {/* Platform/model selection header */}
           <Header />

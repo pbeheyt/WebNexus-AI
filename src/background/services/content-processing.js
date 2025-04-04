@@ -1,7 +1,7 @@
 // src/background/services/content-processing.js
 
 import { determineContentType } from '../../shared/utils/content-utils.js';
-import { extractContent, checkYouTubeTranscriptAvailability } from './content-extraction.js';
+import { extractContent } from './content-extraction.js';
 import { getPreferredAiPlatform, openAiPlatformWithContent } from './platform-integration.js';
 import { resetExtractionState, savePlatformTabInfo } from '../core/state-manager.js';
 import { processContentViaApi } from '../api/api-coordinator.js';

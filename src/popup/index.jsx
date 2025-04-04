@@ -1,11 +1,9 @@
-// src/popup/index.jsx - Updated
 import { createRoot } from 'react-dom/client';
 import { Popup } from './Popup';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { StatusProvider } from './contexts/StatusContext';
 import { ContentProvider } from '../components';
 import { PopupPlatformProvider } from '../contexts/platform';
-// Removed PromptProvider import
 import '../styles/index.css';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,8 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <ThemeProvider>
       <StatusProvider>
         <ContentProvider>
-          <PopupPlatformProvider> {/* Updated provider */}
-            {/* Removed PromptProvider wrapper */}
+          <PopupPlatformProvider>
             <Popup />
           </PopupPlatformProvider>
         </ContentProvider>

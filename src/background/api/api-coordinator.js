@@ -2,7 +2,7 @@
 
 import ApiServiceManager from '../../services/ApiServiceManager.js';
 import ModelParameterService from '../../services/ModelParameterService.js';
-import { extractContent, checkYouTubeTranscriptAvailability } from '../services/content-extraction.js';
+import { extractContent } from '../services/content-extraction.js';
 import { getPreferredAiPlatform } from '../services/platform-integration.js';
 import { verifyApiCredentials } from '../services/credential-manager.js';
 import { determineContentType } from '../../shared/utils/content-utils.js';

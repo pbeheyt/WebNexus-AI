@@ -120,7 +120,6 @@ const Shortcuts = () => {
       </div>
       
       {/* Behavior Settings Section */}
-      {/* Behavior Settings Section - Removed as selection is no longer a separate processing path */}
     </div>
   );
 };

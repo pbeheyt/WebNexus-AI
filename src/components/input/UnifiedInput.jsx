@@ -1,7 +1,6 @@
 // src/components/input/UnifiedInput.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { TextArea } from '../form/TextArea';
-import Button from '../core/Button';
 import { PromptDropdown } from './PromptDropdown';
 import TokenCounter from '../../sidebar/components/TokenCounter';
 import { CONTENT_TYPES } from '../../shared/constants';

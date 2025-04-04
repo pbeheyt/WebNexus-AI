@@ -8,7 +8,6 @@ class SidebarInjector {
   constructor() {
     // Enforce singleton pattern
     if (SidebarInjector.instance) {
-      console.log('SidebarInjector: Returning existing instance');
       return SidebarInjector.instance;
     }
     
@@ -23,7 +22,6 @@ class SidebarInjector {
     SidebarInjector.instance = this;
     
     // Debugging information
-    console.log('SidebarInjector: New instance created');
   }
   
   /**
@@ -33,24 +31,20 @@ class SidebarInjector {
   async initialize() {
     // Prevent concurrent initialization
     if (this.pendingInitialization) {
-      console.log('SidebarInjector: Initialization already in progress');
       return this;
     }
     
     if (this.initialized) {
-      console.log('SidebarInjector: Already initialized');
       return this;
     }
     
     this.pendingInitialization = true;
-    console.log('SidebarInjector: Initializing...');
     
     try {
       // Get current tab ID
       try {
         // This only works if called from a content script
         this.tabId = await this._getCurrentTabId();
-        console.log(`SidebarInjector: Current tab ID: ${this.tabId}`);
       } catch (err) {
         console.error('SidebarInjector: Failed to get tab ID:', err);
       }
@@ -58,8 +52,6 @@ class SidebarInjector {
       // Check if sidebar should be visible for this tab
       const visible = await this._getTabVisibilityState();
       this.visible = visible;
-      
-      console.log(`SidebarInjector: Initial visibility for tab: ${this.visible}`);
       
       // Preload theme cache before iframe creation
       try {
@@ -71,13 +63,11 @@ class SidebarInjector {
       // Check for existing iframe before creating a new one
       const existingIframe = document.getElementById('ai-content-sidebar-iframe');
       if (existingIframe) {
-        console.log('SidebarInjector: Found existing iframe, reusing');
         this.iframe = existingIframe;
         // Update visibility to match stored state
         this.iframe.style.transform = `translateX(${this.visible ? '0' : '100%'})`;
       } else {
         // Create and inject iframe
-        console.log('SidebarInjector: Creating new iframe');
         this._createIframe();
       }
       
@@ -86,7 +76,6 @@ class SidebarInjector {
       
       this.initialized = true;
       this.pendingInitialization = false;
-      console.log('SidebarInjector: Initialization complete');
     } catch (error) {
       this.pendingInitialization = false;
       console.error('SidebarInjector: Initialization failed', error);
@@ -170,7 +159,6 @@ class SidebarInjector {
           
           if (response && response.theme) {
             this.currentTheme = response.theme;
-            console.log(`SidebarInjector: Preloaded theme: ${this.currentTheme}`);
             resolve(this.currentTheme);
           } else {
             // Fallback to storage directly if background service isn't responding
@@ -181,7 +169,6 @@ class SidebarInjector {
               }
               
               this.currentTheme = result[STORAGE_KEYS.THEME] || 'light';
-              console.log(`SidebarInjector: Fallback theme loaded: ${this.currentTheme}`);
               resolve(this.currentTheme);
             });
           }
@@ -223,7 +210,6 @@ class SidebarInjector {
     // Add to document
     document.body.appendChild(wrapper);
     
-    console.log(`SidebarInjector: Iframe created and injected with visibility: ${this.visible}`);
   }
   
   /**
@@ -243,7 +229,6 @@ class SidebarInjector {
     // Set up extension message listener with cleanup of previous listeners
     this._setupExtensionMessageListener();
     
-    console.log('SidebarInjector: Message handlers set up');
   }
   
   /**
@@ -266,7 +251,6 @@ class SidebarInjector {
     // Add the listener
     chrome.runtime.onMessage.addListener(this[handlerName]);
     
-    console.log(`SidebarInjector: Extension message listener added as ${handlerName}`);
   }
   
   /**
@@ -285,24 +269,20 @@ class SidebarInjector {
     }
     
     const { type } = event.data;
-    console.log(`SidebarInjector: Received iframe message of type: ${type}`);
     
     switch (type) {
       case 'SIDEBAR_READY':
-        console.log('SidebarInjector: Sidebar iframe is ready');
         // Sync current theme
         this._syncTheme();
         break;
         
       case 'TOGGLE_SIDEBAR':
         // Toggle sidebar visibility
-        console.log(`SidebarInjector: Toggle request from iframe, visible: ${event.data.visible}`);
         this.toggle(event.data.visible);
         break;
         
       case 'THEME_CHANGED':
         // Handle theme change notification from iframe
-        console.log(`SidebarInjector: Theme change from iframe: ${event.data.theme}`);
         this.currentTheme = event.data.theme;
         
         // Propagate to background for storage
@@ -318,7 +298,6 @@ class SidebarInjector {
         
       default:
         // Unknown message type
-        console.log(`SidebarInjector: Unknown iframe message type: ${type}`);
         break;
     }
   }
@@ -336,23 +315,18 @@ class SidebarInjector {
       return false;
     }
     
-    console.log(`SidebarInjector: Received extension message: ${message.action}`);
-    
     switch (message.action) {
       case 'ping':
         // Simple ping to check if content script is loaded
-        console.log('SidebarInjector: Ping received, responding with ready status');
         sendResponse({ ready: true }); // Generic ping response
         return false;
 
       case 'pingSidebarInjector':
         // Specific ping for sidebar injector
-        console.log('SidebarInjector: Specific ping received, responding with sidebar injector ready status');
         sendResponse({ ready: true, type: 'sidebarInjector', tabId: this.tabId });
         return false;
         
       case 'toggleSidebar':
-        console.log(`SidebarInjector: Toggle request from extension, visible: ${message.visible}`);
         this.toggle(message.visible);
         
         // Ensure we always respond to the toggle message
@@ -368,7 +342,6 @@ class SidebarInjector {
         
       case 'sidebarExtraction':
         // Forward extraction result to iframe
-        console.log('SidebarInjector: Extraction result received from extension');
         if (this.iframe) {
           this.iframe.contentWindow.postMessage({
             type: 'EXTRACTION_COMPLETE',
@@ -383,7 +356,6 @@ class SidebarInjector {
         
       case 'themeUpdated':
         // Theme was updated from background service
-        console.log(`SidebarInjector: Theme update from background: ${message.theme}`);
         this.currentTheme = message.theme;
         
         // Forward to iframe if available
@@ -398,7 +370,6 @@ class SidebarInjector {
         
       default:
         // Unknown message type
-        console.log(`SidebarInjector: Unknown extension message: ${message.action}`);
         return false;
     }
   }
@@ -408,24 +379,20 @@ class SidebarInjector {
    * @param {boolean} visible - Visibility state
    */
   toggle(visible = !this.visible) {
-    console.log(`SidebarInjector: Toggling sidebar to ${visible} (current: ${this.visible})`);
     
     // Only proceed if state actually changes or first initialization
     if (this.visible === visible && this.initialized) {
-      console.log('SidebarInjector: Visibility already matches requested state, no action needed');
       return;
     }
     
     this.visible = visible;
     
     if (this.iframe) {
-      console.log(`SidebarInjector: Setting iframe transform to ${visible ? 'visible' : 'hidden'}`);
       this.iframe.style.transform = `translateX(${visible ? '0' : '100%'})`;
     } else {
       console.warn('SidebarInjector: No iframe available for toggle');
       // If toggle called before iframe is ready, initialize
       if (!this.initialized && !this.pendingInitialization) {
-        console.log('SidebarInjector: Toggle called before initialization, initializing...');
         this.initialize().then(() => {
           // After initialization, set state correctly
           if (this.iframe) {
@@ -436,7 +403,6 @@ class SidebarInjector {
     }
     
     // Persist state for this tab
-    console.log(`SidebarInjector: Saving visibility state for tab ${this.tabId}: ${visible}`);
     chrome.runtime.sendMessage({
       action: 'toggleSidebar',
       visible: visible,
@@ -459,7 +425,6 @@ class SidebarInjector {
   _syncTheme() {
     try {
       // Use cached theme value to avoid Chrome API direct access
-      console.log(`SidebarInjector: Syncing theme: ${this.currentTheme}`);
       
       if (this.iframe) {
         this.iframe.contentWindow.postMessage({
@@ -506,12 +471,10 @@ class SidebarInjector {
 }
 
 // Create instance and initialize
-console.log('Content script loaded: initializing SidebarInjector');
 const sidebarInjector = new SidebarInjector();
 
 // Initialize sidebar on content script load
 sidebarInjector.initialize().then(() => {
-  console.log('SidebarInjector: Initial setup complete');
   
   // Verify initialized state after a delay to catch potential race conditions
   setTimeout(() => {

@@ -20,13 +20,11 @@ class IframeMessaging {
   initialize(tabId = null) {
     // Guard against multiple initializations
     if (this._initialized) {
-      console.log('IframeMessaging: Already initialized');
       return this;
     }
     
     // Store tab ID for contextual operations
     this._tabId = tabId;
-    console.log(`IframeMessaging: Initializing with tabId: ${this._tabId}`);
     
     // Create bound handler with proper context binding
     this._boundHandleMessage = this._handleMessage.bind(this);
@@ -52,7 +50,6 @@ class IframeMessaging {
     
     this._handlers.clear();
     this._initialized = false;
-    console.log('IframeMessaging: Disposed resources');
   }
   
   /**
@@ -61,7 +58,6 @@ class IframeMessaging {
    */
   setTabId(tabId) {
     if (this._tabId !== tabId) {
-      console.log(`IframeMessaging: Updating tabId from ${this._tabId} to ${tabId}`);
       this._tabId = tabId;
       
       // Notify parent of tab context change
@@ -84,12 +80,10 @@ class IframeMessaging {
     }
     
     this._handlers.set(type, handler);
-    console.log(`IframeMessaging: Registered handler for message type "${type}"`);
     
     // Return unregister function
     return () => {
       this._handlers.delete(type);
-      console.log(`IframeMessaging: Unregistered handler for message type "${type}"`);
     };
   }
   
@@ -193,22 +187,18 @@ export function setupMessageHandlers(tabId = null) {
   
   // Register handlers for common message types
   messagingInstance.registerHandler(MESSAGE_TYPES.EXTRACTION_COMPLETE, (data) => {
-    console.log('Content extraction complete for tab:', data.tabId, data.content);
     // Update local state or trigger callback
   });
   
   messagingInstance.registerHandler(MESSAGE_TYPES.PAGE_INFO_UPDATED, (data) => {
-    console.log('Page info updated for tab:', data.tabId, data.pageInfo);
     // Update local state or trigger callback
   });
   
   messagingInstance.registerHandler(MESSAGE_TYPES.THEME_CHANGED, (data) => {
-    console.log('Theme changed:', data.theme);
     document.documentElement.setAttribute('data-theme', data.theme);
   });
   
   messagingInstance.registerHandler(MESSAGE_TYPES.SIDEBAR_VISIBILITY_CHANGED, (data) => {
-    console.log('Sidebar visibility changed:', data.visible);
     // Handle visibility state changes
   });
   
