@@ -54,7 +54,6 @@ class BaseApiService extends ApiInterface {
       const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent);
 
       this.logger.info(`Processing request for model ${resolvedParams.model} with${formattedContent ? ' included' : 'out'} content.`);
-      this.logger.info(`ResolvedParams, ${JSON.stringify(resolvedParams)}`);
 
       // Directly call the implementation's streaming method
       // Pass the full resolvedParams object
@@ -77,12 +76,6 @@ class BaseApiService extends ApiInterface {
     }
   }
 
-  // Removed _hasStoredFormattedContent
-  // Removed _storeFormattedContent
-  // Removed _storeSystemPrompt
-  // Removed _getStoredSystemPrompt
-  // Removed _normalizeRequestConfig
-
   /**
    * Create a structured prompt combining the base prompt and formatted content.
    * @param {string} prompt - The base user prompt.
@@ -100,13 +93,6 @@ class BaseApiService extends ApiInterface {
       return prompt;
     }
   }
-
-  // Removed _formatContent
-  // Removed _formatYouTubeData
-  // Removed _formatRedditData
-  // Removed _formatGeneralData
-  // Removed _formatPdfData
-  // Removed _processWithApiStreaming
 
   /**
    * Lightweight validation method that doesn't use the full conversation processing pipeline.
