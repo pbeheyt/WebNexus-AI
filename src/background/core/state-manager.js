@@ -288,6 +288,103 @@ export async function trackQuickPromptUsage(contentType) {
 }
 
 /**
+ * Check if formatted content exists for a specific tab.
+ * Assumes content is stored under STORAGE_KEYS.TAB_FORMATTED_CONTENT
+ * with tab IDs as keys.
+ * @param {number} tabId - The ID of the tab to check.
+ * @returns {Promise<boolean>} True if formatted content exists, false otherwise.
+ */
+export async function hasFormattedContentForTab(tabId) {
+  if (typeof tabId !== 'number') {
+    logger.background.warn('hasFormattedContentForTab called with invalid tabId:', tabId);
+    return false;
+  }
+  const key = String(tabId); // Ensure key is a string if needed
+  try {
+    // Note: The original request mentioned STORAGE_KEYS.TAB_FORMATTED_CONTENT
+    // Adjust this key if the actual storage key is different.
+    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT);
+    const allFormattedContent = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
+    
+    if (allFormattedContent && typeof allFormattedContent === 'object' && allFormattedContent.hasOwnProperty(key)) {
+      logger.background.info(`Formatted content found for tab ${tabId}.`);
+      return true;
+    } else {
+      logger.background.info(`No formatted content found for tab ${tabId}.`);
+      return false;
+    }
+  } catch (error) {
+    logger.background.error(`Error checking formatted content for tab ${tabId}:`, error);
+    return false; // Assume no content on error
+  }
+}
+
+/**
+ * Store formatted content in local storage by tab ID.
+ * Assumes content is stored under STORAGE_KEYS.TAB_FORMATTED_CONTENT
+ * with tab IDs as keys.
+ * @param {number} tabId - Tab ID to use as key.
+ * @param {string} formattedContent - The formatted content string to store.
+ * @returns {Promise<void>}
+ */
+export async function storeFormattedContentForTab(tabId, formattedContent) {
+  if (typeof tabId !== 'number') {
+    logger.background.warn('storeFormattedContentForTab called with invalid tabId:', tabId);
+    return;
+  }
+  if (typeof formattedContent !== 'string') {
+    logger.background.warn('storeFormattedContentForTab called with non-string content for tabId:', tabId);
+    // Optionally convert to string or throw error, here we just return
+    return;
+  }
+
+  const key = String(tabId);
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT);
+    const allFormattedContent = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
+
+    allFormattedContent[key] = formattedContent; // Add or update the content
+
+    await chrome.storage.local.set({ [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: allFormattedContent });
+    logger.background.info(`Stored formatted content for tab ${tabId}.`);
+  } catch (error) {
+    logger.background.error(`Error storing formatted content for tab ${tabId}:`, error);
+    throw error; // Re-throw error for the caller to handle
+  }
+}
+
+/**
+ * Get formatted content for a specific tab.
+ * Assumes content is stored under STORAGE_KEYS.TAB_FORMATTED_CONTENT
+ * with tab IDs as keys.
+ * @param {number} tabId - The ID of the tab to retrieve content for.
+ * @returns {Promise<string|null>} The formatted content string, or null if not found or on error.
+ */
+export async function getFormattedContentForTab(tabId) {
+  if (typeof tabId !== 'number') {
+    logger.background.warn('getFormattedContentForTab called with invalid tabId:', tabId);
+    return null;
+  }
+  const key = String(tabId);
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT);
+    const allFormattedContent = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
+
+    if (allFormattedContent && typeof allFormattedContent === 'object' && allFormattedContent.hasOwnProperty(key)) {
+      logger.background.info(`Retrieved formatted content for tab ${tabId}.`);
+      return allFormattedContent[key]; // Return the stored string
+    } else {
+      logger.background.info(`No formatted content found for tab ${tabId} during retrieval.`);
+      return null;
+    }
+  } catch (error) {
+    logger.background.error(`Error retrieving formatted content for tab ${tabId}:`, error);
+    return null; // Return null on error
+  }
+}
+
+
+/**
  * Get stored content extraction
  * @returns {Promise<Object>} Extracted content
  */

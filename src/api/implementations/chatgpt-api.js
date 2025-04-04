@@ -17,7 +17,7 @@ class ChatGptApiService extends BaseApiService {
    * @param {function} onChunk - Callback function for receiving text chunks
    * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
    */
-  async _processWithModelStreaming(text, model, apiKey, params, onChunk) {
+  async _processWithModelStreaming(text, params, apiKey, onChunk) {
     const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
     let reader; // Declare reader outside try block for finally access
 

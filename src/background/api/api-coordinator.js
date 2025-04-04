@@ -2,6 +2,7 @@
 
 import ApiServiceManager from '../../services/ApiServiceManager.js';
 import ModelParameterService from '../../services/ModelParameterService.js';
+import ContentFormatter from '../../services/ContentFormatter.js'; // Added
 import { extractContent } from '../services/content-extraction.js';
 import { getPreferredAiPlatform } from '../services/platform-integration.js';
 import { verifyApiCredentials } from '../services/credential-manager.js';
@@ -11,9 +12,12 @@ import {
   resetExtractionState, 
   updateApiProcessingStatus, 
   initializeStreamResponse,
-  getExtractedContent, 
-  setApiProcessingError, 
-  completeStreamResponse
+  getExtractedContent,
+  setApiProcessingError,
+  completeStreamResponse,
+  hasFormattedContentForTab,
+  storeFormattedContentForTab, // Added
+  getFormattedContentForTab   // Added
 } from '../core/state-manager.js';
 import logger from '../../shared/logger.js';
 
@@ -96,9 +100,10 @@ export async function processContentViaApi(params) {
     url,
     promptId = null,
     platformId = null,
+    modelId = null, // Added modelId override possibility
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null,
-    streaming = false,
+    streaming = false, // Note: streaming is forced to true later
     conversationHistory = []
   } = params;
 
@@ -107,19 +112,39 @@ export async function processContentViaApi(params) {
       tabId, url, promptId, platformId, streaming
     });
 
-    // 1. Reset previous state
-    await resetExtractionState();
-    await updateApiProcessingStatus('extracting', platformId || await getPreferredAiPlatform());
-
-    // 2. Extract content
+    let extractedContent = null;
+    let newlyFormattedContent = null; // To hold content formatted in this run
     const contentType = determineContentType(url);
-    logger.background.info(`Content type determined: ${contentType}`);
 
-    await extractContent(tabId, url);
-    const extractedContent = await getExtractedContent();
+    // 1. Check if formatted content already exists for this tab
+    const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
 
-    if (!extractedContent) {
-      throw new Error('Failed to extract content');
+    if (initialFormattedContentExists) {
+      logger.background.info(`Formatted content already exists for tab ${tabId}, skipping extraction.`);
+      // No need to extract or format
+    } else {
+      logger.background.info(`No formatted content found for tab ${tabId}, proceeding with extraction.`);
+      // 2. Reset previous extraction state
+      await resetExtractionState();
+      await updateApiProcessingStatus('extracting', platformId || await getPreferredAiPlatform());
+
+      // 3. Extract content
+      logger.background.info(`Content type determined: ${contentType}`);
+      await extractContent(tabId, url);
+      extractedContent = await getExtractedContent();
+
+      if (!extractedContent) {
+        throw new Error('Failed to extract content');
+      }
+      logger.background.info('Content extraction completed.');
+
+      // 3.5 Format and Store Content (New step)
+      if (extractedContent) {
+        logger.background.info(`Formatting extracted content (type: ${contentType})...`);
+        newlyFormattedContent = ContentFormatter.formatContent(extractedContent, contentType);
+        await storeFormattedContentForTab(tabId, newlyFormattedContent);
+        logger.background.info(`Formatted and stored content for tab ${tabId}.`);
+      }
     }
 
     // 4. Get the prompt
@@ -136,7 +161,7 @@ export async function processContentViaApi(params) {
     }
 
     // 5. Determine platform to use - tab-aware resolution
-    let effectivePlatformId = platformId;
+    let effectivePlatformId = platformId; // Use provided platformId first
 
     if (!effectivePlatformId && tabId) {
       try {
@@ -155,60 +180,89 @@ export async function processContentViaApi(params) {
         logger.background.error('Error resolving tab-specific platform:', error);
         effectivePlatformId = await getPreferredAiPlatform(source);
       }
-    } else {
-      effectivePlatformId = platformId || await getPreferredAiPlatform(source);
+    }
+    // If still no effectivePlatformId, resolve normally
+    if (!effectivePlatformId) {
+       effectivePlatformId = await getPreferredAiPlatform(source);
     }
 
-    // 6. Verify credentials
+
+    // 6. Verify credentials (using the final effectivePlatformId)
     await verifyApiCredentials(effectivePlatformId);
 
-    // 7. Model resolution - Now uses centralized ModelParameterService
-    const effectiveModelId = await ModelParameterService.resolveModel(
-      effectivePlatformId, 
-      { 
-        tabId, 
-        source 
-      }
+    // 7. Parameter Resolution (Centralized)
+    logger.background.info(`Resolving parameters for platform: ${effectivePlatformId}, model override: ${modelId}`);
+    let resolvedParams = await ModelParameterService.resolveParameters( // Changed const to let
+      effectivePlatformId,
+      modelId || null, // Use the passed modelId override
+      { tabId, source } // Context for resolution
     );
+    logger.background.info(`Resolved parameters:`, resolvedParams);
 
-    // 8. Update processing status
-    await updateApiProcessingStatus('processing', effectivePlatformId);
+    // Add conversation history to resolvedParams
+    resolvedParams.conversationHistory = conversationHistory;
+    logger.background.info(`Added conversation history to resolvedParams. History length: ${conversationHistory.length}`);
+
+
+    // 8. Update processing status (using resolved platform and model)
+    await updateApiProcessingStatus('processing', effectivePlatformId, resolvedParams.model);
 
     // 9. Generate a unique stream ID for this request
     const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     // 10. Initialize streaming response
-    await initializeStreamResponse(streamId, effectivePlatformId);
+    await initializeStreamResponse(streamId, effectivePlatformId, resolvedParams.model); // Include model
 
-    // 11. Notify the content script about streaming start if this is from sidebar
+    // 11. Determine if Formatted Content should be included (only for the first user message)
+    const isFirstUserMessage = conversationHistory.length === 0;
+    logger.background.info(`Is this the first user message (history empty)? ${isFirstUserMessage}`);
+
+    let formattedContentForRequest = null;
+    if (isFirstUserMessage) {
+        const hasStoredContentNow = await hasFormattedContentForTab(tabId);
+        if (hasStoredContentNow) {
+            formattedContentForRequest = await getFormattedContentForTab(tabId);
+            logger.background.info(`First user message: Retrieved stored formatted content for tab ${tabId} for the request.`);
+        } else {
+            // This case might happen if extraction failed or was skipped but history is empty.
+            logger.background.info(`First user message: No formatted content found or stored for tab ${tabId} for the request.`);
+        }
+    } else {
+        logger.background.info(`Not the first user message: Skipping formatted content retrieval.`);
+    }
+
+    // 12. Notify the content script about streaming start if this is from sidebar
     if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
       try {
         chrome.tabs.sendMessage(tabId, {
           action: 'streamStart',
           streamId,
-          platformId: effectivePlatformId
+          platformId: effectivePlatformId,
+          model: resolvedParams.model // Send resolved model
         });
       } catch (err) {
         logger.background.warn('Error notifying content script about stream start:', err);
       }
     }
 
-    // 12. Create unified request configuration
+    // 13. Create unified request configuration
     const requestConfig = {
-      contentData: extractedContent,
       prompt: promptContent,
-      model: effectiveModelId,
-      conversationHistory,
-      streaming: true,
-      onChunk: createStreamHandler(streamId, source, tabId, effectivePlatformId)
+      resolvedParams: resolvedParams, // Pass the whole resolved params object (now includes history)
+      formattedContent: formattedContentForRequest, // Pass the formatted content string or null
+      // conversationHistory, // Removed: Now part of resolvedParams
+      streaming: true, // Always true for this function
+      // Pass resolvedParams to stream handler for model info
+      onChunk: createStreamHandler(streamId, source, tabId, effectivePlatformId, resolvedParams)
     };
 
-    // 13. Process with API
+    // 14. Process with API
     try {
+      logger.background.info('Calling ApiServiceManager.processWithUnifiedConfig with config:', requestConfig);
+      // Pass only platformId and requestConfig. tabId is within resolvedParams if needed.
       const apiResponse = await ApiServiceManager.processWithUnifiedConfig(
         effectivePlatformId,
-        requestConfig,
-        tabId
+        requestConfig
       );
 
       // If we get here without an error, streaming completed successfully
@@ -216,7 +270,7 @@ export async function processContentViaApi(params) {
         success: true,
         streamId,
         response: apiResponse,
-        contentType: extractedContent.contentType
+        contentType: contentType // Use the variable determined earlier
       };
     } catch (processingError) {
       // Handle API processing errors
@@ -239,23 +293,25 @@ export async function processContentViaApi(params) {
  * @param {string} source - Interface source
  * @param {number} tabId - Tab ID for sidebar integration
  * @param {string} platformId - Platform identifier
+ * @param {Object} resolvedParams - Resolved parameters including the model
  * @returns {Function} Chunk handler function
  */
-function createStreamHandler(streamId, source, tabId, platformId) {
+function createStreamHandler(streamId, source, tabId, platformId, resolvedParams) {
   let fullContent = '';
-  let modelToUse = null;
-  
+  // Use the resolved model from the start
+  const modelToUse = resolvedParams.model;
+
   return async function handleChunk(chunkData) {
     if (!chunkData) return;
-    
+
     const chunk = typeof chunkData.chunk === 'string' ? chunkData.chunk : '';
     const done = !!chunkData.done;
-    
-    // Capture or update model information
-    if (chunkData.model) {
-      modelToUse = chunkData.model;
+
+    // Model should be consistent, but log if chunkData provides a different one
+    if (chunkData.model && chunkData.model !== modelToUse) {
+       logger.background.warn(`Stream chunk reported model ${chunkData.model}, but expected ${modelToUse}`);
     }
-    
+
     if (chunk) {
       fullContent += chunk;
       
@@ -273,7 +329,7 @@ function createStreamHandler(streamId, source, tabId, platformId) {
             chunkData: {
               chunk,
               done: false,
-              model: chunkData.model || modelToUse
+              model: modelToUse // Use the consistent resolved model
             }
           });
         } catch (err) {
@@ -287,30 +343,28 @@ function createStreamHandler(streamId, source, tabId, platformId) {
       const finalChunkData = {
         chunk: '',
         done: true,
-        model: chunkData.model || modelToUse,
+        model: modelToUse, // Use the consistent resolved model
         fullContent: chunkData.fullContent || fullContent // Use fullContent from chunk if available
       };
 
       if (chunkData.error) {
         logger.background.error(`Stream ended with error: ${chunkData.error}`);
-        // Set error state
         await setApiProcessingError(chunkData.error);
-        // Complete response with error
+        // Pass modelToUse to completeStreamResponse
         await completeStreamResponse(fullContent, modelToUse, platformId, chunkData.error);
-        // Add error to the final chunk data sent to UI
         finalChunkData.error = chunkData.error;
       } else {
-        // Complete response successfully
+        // Pass modelToUse to completeStreamResponse
         await completeStreamResponse(fullContent, modelToUse, platformId);
       }
-      
+
       // Ensure the final message (success or error) is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
           chrome.tabs.sendMessage(tabId, {
             action: 'streamChunk',
             streamId,
-            chunkData: finalChunkData // Send the potentially modified chunkData
+            chunkData: finalChunkData
           });
         } catch (err) {
           logger.background.warn('Error sending stream completion/error message:', err);

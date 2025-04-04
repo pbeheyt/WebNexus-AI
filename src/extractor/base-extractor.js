@@ -43,7 +43,10 @@ class BaseExtractor {
    */
   setupMessageListeners() {
     this.messageListener = (message, sender, sendResponse) => {
-      this.logger.info(`Message received in ${this.contentType} extractor:`, message);
+      // Only log if the action is not 'streamChunk'
+      if (message.action !== 'streamChunk') {
+        this.logger.info(`Message received in ${this.contentType} extractor:`, message);
+      }
       
       if (message.action === 'ping') {
         this.logger.info('Ping received, responding with pong');

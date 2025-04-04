@@ -17,7 +17,7 @@ class DeepSeekApiService extends BaseApiService {
    * @param {function} onChunk - Callback function for receiving text chunks
    * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
    */
-  async _processWithModelStreaming(text, model, apiKey, params, onChunk) {
+  async _processWithModelStreaming(text, params, apiKey, onChunk) {
     const endpoint = this.config?.endpoint || 'https://api.deepseek.com/v1/chat/completions';
     let reader; // Declare reader outside try block for finally access
     const modelToUse = params.model || model; // Use params.model if available

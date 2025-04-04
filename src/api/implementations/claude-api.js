@@ -17,7 +17,7 @@ class ClaudeApiService extends BaseApiService {
    * @param {Function} onChunk - Callback function for each chunk
    * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
    */
-  async _processWithModelStreaming(text, model, apiKey, params, onChunk) {
+  async _processWithModelStreaming(text, params, apiKey, onChunk) {
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
     let reader; // Declare reader outside try block for finally access
 
@@ -34,9 +34,11 @@ class ClaudeApiService extends BaseApiService {
       };
       if (params.supportsTemperature) requestPayload.temperature = params.temperature;
       if (params.systemPrompt) requestPayload.system = params.systemPrompt;
+      this.logger.info(`Claude API request params conversation history:`, params.conversationHistory);
       if (params.conversationHistory && params.conversationHistory.length > 0) {
         requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, text);
       }
+      this.logger.info(`Claude API request payload:`, requestPayload);
 
       // Make the streaming request
       const response = await fetch(endpoint, {

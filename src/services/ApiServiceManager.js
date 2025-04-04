@@ -22,26 +22,30 @@ class ApiServiceManager {
    * @param {string} requestConfig.prompt - Formatted prompt
    * @param {string} [requestConfig.model] - Optional model override
    * @param {Array} [requestConfig.conversationHistory] - Optional conversation history
-   * @param {boolean} [requestConfig.streaming] - Whether to use streaming
-   * @param {Function} [requestConfig.onChunk] - Callback for streaming chunks
+   * @param {string} requestConfig.prompt - User prompt
+   * @param {Object} requestConfig.resolvedParams - Resolved model parameters (model, temp, etc.)
+   * @param {string|null} requestConfig.formattedContent - Formatted content string or null
+   * @param {Array} [requestConfig.conversationHistory] - Optional conversation history
+   * @param {boolean} requestConfig.streaming - Whether to use streaming (should always be true here)
+   * @param {Function} requestConfig.onChunk - Callback for streaming chunks
    * @returns {Promise<Object>} API response
    */
-  async processWithUnifiedConfig(platformId, requestConfig, tabId) {
+  async processWithUnifiedConfig(platformId, requestConfig) { // Removed tabId parameter
     try {
+      // Log based on the new structure
       logger.info(`Processing content through ${platformId} API with unified config:`, {
         hasStreaming: !!requestConfig.streaming,
-        hasHistory: Array.isArray(requestConfig.conversationHistory) && requestConfig.conversationHistory.length > 0,
-        hasModel: !!requestConfig.model,
-        tabId: tabId
+        hasHistory: Array.isArray(requestConfig.resolvedParams?.conversationHistory) && 
+           requestConfig.resolvedParams?.conversationHistory.length > 0,
+        model: requestConfig.resolvedParams?.model || 'N/A',
+        tabId: requestConfig.resolvedParams?.tabId || 'N/A',
+        hasFormattedContent: requestConfig.formattedContent !== null && requestConfig.formattedContent !== undefined
       });
 
       // Ensure we have the necessary configuration
-      if (!requestConfig) {
-        throw new Error('Request configuration is required');
+      if (!requestConfig || !requestConfig.resolvedParams) {
+        throw new Error('Request configuration with resolvedParams is required');
       }
-
-      // Add tab ID to request config
-      requestConfig.tabId = tabId;
 
       // Get credentials
       const credentials = await this.credentialManager.getCredentials(platformId);
