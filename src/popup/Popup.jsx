@@ -1,52 +1,42 @@
 // src/popup/Popup.jsx
 import { useEffect, useState } from 'react';
-// Removed usePrompts import
-import { useTheme } from '../contexts/ThemeContext';
-import { useStatus } from './contexts/StatusContext';
+import { useStatus } from './contexts/StatusContext'; // Make sure StatusContext is updated too
 import { usePopupPlatform } from '../contexts/platform';
-import { Button, AppHeader } from '../components'; // Import AppHeader
-import { StatusMessage } from '../components';
-import { Toast } from '../components';
-import { useContent } from '../components'; // Removed ContentTypeDisplay
+import { AppHeader, StatusMessage } from '../components'; // Combined imports
+import { useContent } from '../components';
 import { PlatformSelector } from './features/PlatformSelector';
-// Removed QuickPromptEditor and CustomPromptSelector imports
-import { UnifiedInput } from '../components/input/UnifiedInput'; // Changed to named import
-import { STORAGE_KEYS } from '../shared/constants';
-import { INTERFACE_SOURCES } from '../shared/constants';
+import { UnifiedInput } from '../components/input/UnifiedInput';
+import { STORAGE_KEYS, INTERFACE_SOURCES } from '../shared/constants'; // Combined imports
 import { useContentProcessing } from '../hooks/useContentProcessing';
 
 export function Popup() {
-  const { theme, toggleTheme } = useTheme();
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
-  // Removed usePrompts hook call
   const { selectedPlatformId } = usePopupPlatform();
   const {
     statusMessage,
     updateStatus,
-    toastState,
-    showToastMessage,
-    notifyYouTubeError
   } = useStatus();
 
-  // Use the hook and extract all needed functions and states
   const {
     processContent,
     isProcessing: isProcessingContent
   } = useContentProcessing(INTERFACE_SOURCES.POPUP);
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [inputText, setInputText] = useState(''); // Added state for UnifiedInput
+  const [inputText, setInputText] = useState('');
 
-  // Listen for messages from background script (YouTube errors, etc.)
+  // Listen for messages from background script
   useEffect(() => {
     const messageListener = (message) => {
       if (message.action === 'apiResponseReady') {
         updateStatus('API response ready');
         setIsProcessing(false);
       } else if (message.action === 'apiProcessingError') {
-        showToastMessage(`API processing error: ${message.error || 'Unknown error'}`, 'error');
+        // Use updateStatus to show the error
+        updateStatus(`API processing error: ${message.error || 'Unknown error'}`);
         setIsProcessing(false);
       }
+      // Add other message actions if needed
     };
 
     chrome.runtime.onMessage.addListener(messageListener);
@@ -54,16 +44,8 @@ export function Popup() {
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
     };
-  }, [notifyYouTubeError, updateStatus, showToastMessage]);
-
-  const openSettings = () => {
-    try {
-      chrome.runtime.openOptionsPage();
-    } catch (error) {
-      console.error('Could not open options page:', error);
-      chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
-    }
-  };
+    // Updated dependency array: only includes updateStatus
+  }, [updateStatus]);
 
   // Function to close the popup
   const closePopup = () => {
@@ -72,127 +54,125 @@ export function Popup() {
 
   // Function to toggle sidebar with auto-close
   const toggleSidebar = async () => {
+    if (!currentTab?.id) {
+      updateStatus('Error: No active tab found to toggle sidebar.');
+      return;
+    }
+
     try {
-      // If we have a current tab, send the toggle message
-      if (currentTab?.id) {
-        updateStatus('Toggling sidebar...', true);
+      updateStatus('Toggling sidebar...', true); // Indicate processing
 
-        const response = await chrome.runtime.sendMessage({
-          action: 'toggleSidebar',
-          tabId: currentTab.id
-        });
+      const response = await chrome.runtime.sendMessage({
+        action: 'toggleSidebar',
+        tabId: currentTab.id
+      });
 
-        if (response && response.success) {
-          updateStatus(`Sidebar ${response.visible ? 'opened' : 'closed'}`);
-          // Auto-close the popup after successful toggle
-          window.close();
-        } else if (response && response.error) {
-          updateStatus(`Error: ${response.error}`);
-          showToastMessage(`Failed to toggle sidebar: ${response.error}`, 'error');
-        }
+      if (response && response.success) {
+        updateStatus(`Sidebar ${response.visible ? 'opened' : 'closed'}`);
+        window.close(); // Auto-close the popup
+      } else if (response && response.error) {
+        // Use updateStatus for error feedback
+        updateStatus(`Error toggling sidebar: ${response.error}`);
       } else {
-        showToastMessage('No active tab found', 'error');
+        // Handle unexpected response structure
+        updateStatus('Error: Unexpected response when toggling sidebar.');
       }
     } catch (error) {
       console.error('Error toggling sidebar:', error);
-      showToastMessage('Failed to toggle sidebar. Try refreshing the page.', 'error');
-      updateStatus('Error toggling sidebar');
+      // Use updateStatus for error feedback
+      updateStatus(`Error toggling sidebar: ${error.message || 'Unknown error'}`);
     }
   };
 
-  // New handler for UnifiedInput submission
+  // Handler for UnifiedInput submission
   const handleProcessWithText = async (text) => {
-    if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id || !text.trim()) return;
+    if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id || !text.trim()) {
+      // Optionally provide feedback if the button is clicked while disabled
+      if (!isSupported) updateStatus('Error: Extension cannot access this page.');
+      else if (contentLoading) updateStatus('Page content still loading...');
+      else if (!text.trim()) updateStatus('Please enter a prompt.');
+      return;
+    }
 
-    const promptContent = text.trim(); // Use the passed text directly
+    const promptContent = text.trim();
     setIsProcessing(true);
-    updateStatus('Checking page content...', true);
+    updateStatus('Preparing content...', true); // Updated status message
 
     try {
-      // Clear any existing content in storage
+      // Clear previous state related to content processing
       await chrome.storage.local.set({
         [STORAGE_KEYS.CONTENT_READY]: false,
         [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
         [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: null,
         [STORAGE_KEYS.SCRIPT_INJECTED]: false,
-        [STORAGE_KEYS.PRE_PROMPT]: promptContent // Store the final prompt (using the text argument)
+        [STORAGE_KEYS.PRE_PROMPT]: promptContent // Store the user's prompt
       });
 
-      // Process content using the hook
-      updateStatus(`Processing content with ${selectedPlatformId}...`, true);
+      updateStatus(`Processing with ${selectedPlatformId}...`, true);
 
       const result = await processContent({
         platformId: selectedPlatformId,
         promptContent: promptContent,
-        useApi: false // Popup always uses web UI interaction
+        useApi: false // Popup uses web UI interaction
       });
 
       if (result.success) {
         updateStatus('Opening AI platform...', true);
-        // Popup might close automatically if platform opens in new tab
+        // Popup might close automatically if the platform opens in a new tab,
+        // otherwise, it remains open. Consider if explicit closing is needed here.
+        // setIsProcessing(false); // Keep processing state until platform interaction completes or fails
       } else {
-        updateStatus(`Error: ${result.error || 'Unknown error'}`, false);
-        showToastMessage(`Error: ${result.error || 'Unknown error'}`, 'error');
-        setIsProcessing(false);
+        // Use updateStatus for error feedback
+        updateStatus(`Error: ${result.error || 'Processing failed'}`, false);
+        setIsProcessing(false); // Stop processing on failure
       }
     } catch (error) {
       console.error('Process error:', error);
-      updateStatus(`Error: ${error.message}`, false);
-      showToastMessage(`Error: ${error.message}`, 'error');
-      setIsProcessing(false);
+      // Use updateStatus for error feedback
+      updateStatus(`Error: ${error.message || 'An unexpected error occurred'}`, false);
+      setIsProcessing(false); // Stop processing on exception
     }
   };
 
-  // Removed getActualPromptContent, handleProcess, shouldEnableProcessing
   return (
     <div className="min-w-[320px] p-4 bg-theme-primary text-theme-primary">
-      {/* Pass closePopup function to the new onClose prop */}
       <AppHeader onClose={closePopup}>
-        {/* Sidebar toggle button - remains as a child for now, or could be refactored similarly */}
+        {/* Sidebar toggle button */}
         <button
           onClick={toggleSidebar}
           className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
           title="Toggle Sidebar"
+          disabled={!currentTab?.id} // Disable if no tab context
         >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" stroke="currentColor">
             <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
             <line x1="15" y1="3" x2="15" y2="21" stroke="currentColor" strokeWidth="2"/>
           </svg>
         </button>
-        {/* Removed the explicit Close button from here */}
       </AppHeader>
-
-      {/* ContentTypeDisplay removed from here */}
 
       <div className="mt-3">
         <PlatformSelector />
       </div>
 
-      {/* Replaced QuickPromptEditor and CustomPromptSelector with UnifiedInput */}
       <div className="mt-3">
         <UnifiedInput
           value={inputText}
           onChange={setInputText}
           onSubmit={handleProcessWithText}
-          // placeholder prop removed
           disabled={!isSupported || contentLoading || isProcessingContent || isProcessing}
-          isProcessing={isProcessingContent || isProcessing}
+          isProcessing={isProcessingContent || isProcessing} // Combined processing state
           contentType={contentType}
           showTokenInfo={false}
-          layoutVariant="popup" // Ensure string literal
-          onCancel={null} // No cancel button in popup variant
+          layoutVariant="popup"
+          onCancel={null} // No cancel in popup
         />
       </div>
 
+      {/* Status message displayed below the input */}
       <StatusMessage message={statusMessage} context="popup" className="mt-3" />
 
-      <Toast
-        message={toastState.message}
-        type={toastState.type}
-        visible={toastState.visible}
-        onClose={() => toastState.setVisible(false)}
-        duration={5000}
-      />
+      {/* Toast component has been removed */}
     </div>
   );
 }
