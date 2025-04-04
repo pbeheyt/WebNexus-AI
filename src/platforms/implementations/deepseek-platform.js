@@ -73,7 +73,7 @@ class DeepSeekPlatform extends BasePlatform {
           if (!sendButton) {
             // Enhanced logging to help troubleshoot button selector issues
             this.logger.error('DeepSeek send button not found. DOM structure may have changed.');
-            this.logger.debug('Available button elements:', 
+            this.logger.info('Available button elements:', 
               document.querySelectorAll('div[role="button"]').length);
             resolve(false);
             return;

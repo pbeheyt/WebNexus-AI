@@ -15,52 +15,30 @@ class MistralApiService extends BaseApiService {
    * @param {string} apiKey - API key
    * @param {Object} params - Resolved parameters including conversation history
    * @param {function} onChunk - Callback function for receiving text chunks
-   * @returns {Promise<Object>} API response metadata
+   * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
    */
   async _processWithModelStreaming(text, model, apiKey, params, onChunk) {
     const endpoint = this.config?.endpoint || 'https://api.mistral.ai/v1/chat/completions';
-    
+    let reader; // Declare reader outside try block for finally access
+    const modelToUse = model; // Use the provided model directly
+
     try {
-      this.logger.info(`Making Mistral API streaming request with model: ${model}`);
-      
-      // Create the request payload
-      const requestPayload = {
-        model: model,
-        stream: true // Enable streaming
-      };
-      
-      // Add messages array with system prompt if available
+      this.logger.info(`Making Mistral API streaming request with model: ${modelToUse}`);
+
+      // Create the request payload (logic remains the same)
+      const requestPayload = { model: modelToUse, stream: true };
       const messages = [];
-      
-      // Add system message if system prompt is specified in advanced settings
-      if (params.systemPrompt) {
-        messages.push({ role: 'system', content: params.systemPrompt });
-      }
-      
-      // Add conversation history if provided
+      if (params.systemPrompt) messages.push({ role: 'system', content: params.systemPrompt });
       if (params.conversationHistory && params.conversationHistory.length > 0) {
-        // Format conversation history for Mistral API (same format as OpenAI)
         messages.push(...this._formatMistralMessages(params.conversationHistory));
       }
-      
-      // Add user message
       messages.push({ role: 'user', content: text });
-      
       requestPayload.messages = messages;
-      
-      // Add token parameter
       requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
-      
-      // Add temperature if supported
-      if (params.supportsTemperature) {
-        requestPayload.temperature = params.temperature;
-      }
-      
-      // Add top_p if supported
-      if (params.supportsTopP) {
-        requestPayload.top_p = params.topP;
-      }
-      
+      if (params.supportsTemperature) requestPayload.temperature = params.temperature;
+      if (params.supportsTopP) requestPayload.top_p = params.topP;
+
+      // Make the streaming request
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -69,81 +47,104 @@ class MistralApiService extends BaseApiService {
         },
         body: JSON.stringify(requestPayload)
       });
-      
+
+      // Handle non-OK responses by sending an error chunk
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          `API error (${response.status}): ${errorData.error?.message || response.statusText}`
-        );
+        let errorData;
+        let errorMessage = `API error (${response.status}): ${response.statusText}`;
+        try {
+          errorData = await response.json();
+          // Mistral error structure might be { message: ..., type: ..., code: ... }
+          errorMessage = `API error (${response.status}): ${errorData.message || errorData.error?.message || response.statusText}`;
+        } catch (parseError) {
+          this.logger.warn('Could not parse error response body:', parseError);
+        }
+        this.logger.error(`Mistral API Error: ${errorMessage}`, errorData);
+        onChunk({ done: true, error: errorMessage, model: modelToUse });
+        return; // Stop processing on error
       }
-      
+
       // Process the stream
-      const reader = response.body.getReader();
+      reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       let buffer = "";
-      let fullContent = "";
-      
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          // Decode the chunk and append to buffer
-          buffer += decoder.decode(value, { stream: true });
-          
-          // Process complete lines in the buffer
-          let lineEnd;
-          while ((lineEnd = buffer.indexOf('\n')) !== -1) {
-            const line = buffer.substring(0, lineEnd).trim();
-            buffer = buffer.substring(lineEnd + 1);
-            
-            if (!line) continue; // Skip empty lines
-            if (line === 'data: [DONE]') break; // End of stream marker
-            
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.substring(6));
-                const content = data.choices[0]?.delta?.content || '';
-                
-                if (content) {
-                  fullContent += content;
-                  onChunk({ 
-                    chunk: content, 
-                    done: false,
-                    model: model
-                  });
-                }
-              } catch (e) {
-                this.logger.error('Error parsing stream chunk:', e);
+      let accumulatedContent = ""; // Keep track of content for final successful chunk
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break; // Exit loop when stream is finished
+
+        buffer += decoder.decode(value, { stream: true });
+        let lineEnd;
+
+        while ((lineEnd = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.substring(0, lineEnd).trim();
+          buffer = buffer.substring(lineEnd + 1);
+
+          if (!line) continue;
+          if (line === 'data: [DONE]') continue; // Handled by the 'done' check above
+
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.substring(6));
+              const content = data.choices[0]?.delta?.content || '';
+
+              if (content) {
+                accumulatedContent += content;
+                onChunk({
+                  chunk: content, // Send individual chunk
+                  done: false,
+                  model: modelToUse
+                });
               }
+              // Check if the choice indicates completion (though reader 'done' is primary)
+              if (data.choices[0]?.finish_reason) {
+                 this.logger.info(`Stream finished with reason: ${data.choices[0].finish_reason}`);
+                 // We don't break here, let the reader signal 'done'
+              }
+            } catch (e) {
+              // Log parsing errors but attempt to continue processing the stream
+              this.logger.error('Error parsing stream chunk:', e, 'Line:', line);
             }
           }
         }
-        
-        // Send final done signal
-        onChunk({ 
-          chunk: '', 
-          done: true,
-          model: model, 
-          fullContent
-        });
-        
-        return {
-          success: true,
-          content: fullContent,
-          model: model,
-          platformId: this.platformId,
-          timestamp: new Date().toISOString()
-        };
-      } catch (error) {
-        this.logger.error('Stream processing error:', error);
-        throw error;
-      } finally {
-        reader.releaseLock();
       }
+
+      // Send final successful done signal
+      onChunk({
+        chunk: '', // No final chunk content needed here
+        done: true,
+        model: modelToUse,
+        fullContent: accumulatedContent // Include full content
+      });
+
+      // Return metadata only on successful completion
+      return {
+        success: true,
+        content: accumulatedContent,
+        model: modelToUse,
+        platformId: this.platformId,
+        timestamp: new Date().toISOString()
+      };
+
     } catch (error) {
       this.logger.error('API streaming processing error:', error);
-      throw error;
+      // Send error chunk if an unexpected error occurs
+      onChunk({
+        done: true,
+        error: error.message || 'An unknown streaming error occurred',
+        model: modelToUse
+      });
+      // Do not re-throw; error is handled by sending the chunk
+    } finally {
+      // Ensure the reader is released even if errors occur
+      if (reader) {
+        try {
+          await reader.releaseLock();
+        } catch (releaseError) {
+          this.logger.error('Error releasing stream reader lock:', releaseError);
+        }
+      }
     }
   }
 

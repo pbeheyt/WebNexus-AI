@@ -168,38 +168,76 @@ export async function updateStreamContent(fullContent) {
  * @param {string} fullContent - Complete final content
  * @param {string} model - Model used
  * @param {string} platformId - Platform identifier
+ * @param {string|null} [error=null] - Optional error message if the stream failed
  * @returns {Promise<void>}
  */
-export async function completeStreamResponse(fullContent, model, platformId) {
+export async function completeStreamResponse(fullContent, model, platformId, error = null) {
   try {
-    const finalResponse = {
-      success: true,
-      status: 'completed',
-      content: fullContent,
-      model,
-      platformId,
-      timestamp: Date.now()
-    };
-    
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.API_PROCESSING_STATUS]: 'completed',
-      [STORAGE_KEYS.API_RESPONSE]: finalResponse,
-      [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now()
-    });
-    logger.background.info('Stream response completed');
-    
-    // Notify the popup if open
-    try {
-      chrome.runtime.sendMessage({
-        action: 'apiResponseReady',
-        response: finalResponse
-      });
-    } catch (error) {
-      // Ignore if popup isn't open
-      logger.background.info('Could not notify popup of API response completion');
+    let finalResponse;
+    let storageUpdate = {};
+
+    if (error) {
+      // Handle error case
+      finalResponse = {
+        success: false,
+        status: 'error',
+        content: fullContent, // Include content received before error
+        model,
+        platformId,
+        error: error, // Include the error message
+        timestamp: Date.now()
+      };
+      storageUpdate = {
+        [STORAGE_KEYS.API_PROCESSING_STATUS]: 'error',
+        [STORAGE_KEYS.API_PROCESSING_ERROR]: error, // Store the error message
+        [STORAGE_KEYS.API_RESPONSE]: finalResponse,
+        [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now()
+      };
+      logger.background.error(`Stream response completed with error: ${error}`);
+    } else {
+      // Handle success case
+      finalResponse = {
+        success: true,
+        status: 'completed',
+        content: fullContent,
+        model,
+        platformId,
+        timestamp: Date.now()
+      };
+      storageUpdate = {
+        [STORAGE_KEYS.API_PROCESSING_STATUS]: 'completed',
+        [STORAGE_KEYS.API_RESPONSE]: finalResponse,
+        [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now(),
+        [STORAGE_KEYS.API_PROCESSING_ERROR]: null // Clear any previous error
+      };
+      logger.background.info('Stream response completed successfully');
     }
-  } catch (error) {
-    logger.background.error('Error completing stream response:', error);
+    
+    // Update storage
+    await chrome.storage.local.set(storageUpdate);
+    
+    // Notify the popup and potentially other listeners (like sidebar via coordinator)
+    try {
+      // Send the final response object (which includes error details if applicable)
+      chrome.runtime.sendMessage({
+        action: 'apiResponseReady', // Use a consistent action name
+        response: finalResponse // Send the complete finalResponse object
+      });
+    } catch (msgError) {
+      // Ignore if popup isn't open or other listeners fail
+      logger.background.info('Could not notify listeners of API response completion/error:', msgError.message);
+    }
+  } catch (catchError) {
+    logger.background.error('Error in completeStreamResponse function:', catchError);
+    // Attempt to set a generic error state if something goes wrong here
+    try {
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.API_PROCESSING_STATUS]: 'error',
+        [STORAGE_KEYS.API_PROCESSING_ERROR]: 'Internal error completing stream response'
+      });
+    } catch (fallbackError) {
+       logger.background.error('Failed to set fallback error state:', fallbackError);
+    }
   }
 }
 

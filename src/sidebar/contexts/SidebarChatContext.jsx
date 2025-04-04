@@ -262,9 +262,6 @@ export function SidebarChatProvider({ children }) {
         // Handle stream error
         if (chunkData.error) {
           console.error('Stream error:', chunkData.error);
-          setStreamingMessageId(null);
-          setIsProcessing(false);
-          setIsCanceling(false);
           
           // Format the error message
           const errorMessage = typeof chunkData.error === 'string' 
@@ -272,7 +269,13 @@ export function SidebarChatProvider({ children }) {
             : (chunkData.error.message || 'An error occurred during streaming');
           
           // Complete the stream with the error message
-          await handleStreamComplete(streamingMessageId, errorMessage, null, true);
+          await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true); // Pass model if available
+
+          // Reset state *after* handling completion
+          setStreamingMessageId(null);
+          setIsProcessing(false);
+          setIsCanceling(false);
+
           return;
         }
 
@@ -291,7 +294,7 @@ export function SidebarChatProvider({ children }) {
           const finalContent = chunkData.fullContent || streamingContent;
 
           // Handle all post-streaming operations in one function
-          await handleStreamComplete(streamingMessageId, finalContent, chunkData.model);
+          await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false); // Pass false for isError
         } else if (chunkContent) {
           // Append chunk to streaming content
           setStreamingContent(prev => prev + chunkContent);

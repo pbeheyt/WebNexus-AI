@@ -282,25 +282,38 @@ function createStreamHandler(streamId, source, tabId, platformId) {
       }
     }
     
-    // Always send a final message when done
+    // Handle stream completion or error
     if (done) {
-      await completeStreamResponse(fullContent, modelToUse, platformId);
+      const finalChunkData = {
+        chunk: '',
+        done: true,
+        model: chunkData.model || modelToUse,
+        fullContent: chunkData.fullContent || fullContent // Use fullContent from chunk if available
+      };
+
+      if (chunkData.error) {
+        logger.background.error(`Stream ended with error: ${chunkData.error}`);
+        // Set error state
+        await setApiProcessingError(chunkData.error);
+        // Complete response with error
+        await completeStreamResponse(fullContent, modelToUse, platformId, chunkData.error);
+        // Add error to the final chunk data sent to UI
+        finalChunkData.error = chunkData.error;
+      } else {
+        // Complete response successfully
+        await completeStreamResponse(fullContent, modelToUse, platformId);
+      }
       
-      // Ensure the completion message is sent for sidebar
+      // Ensure the final message (success or error) is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
           chrome.tabs.sendMessage(tabId, {
             action: 'streamChunk',
             streamId,
-            chunkData: {
-              chunk: '',
-              done: true,
-              model: chunkData.model || modelToUse,
-              fullContent
-            }
+            chunkData: finalChunkData // Send the potentially modified chunkData
           });
         } catch (err) {
-          logger.background.warn('Error sending stream completion:', err);
+          logger.background.warn('Error sending stream completion/error message:', err);
         }
       }
     }
