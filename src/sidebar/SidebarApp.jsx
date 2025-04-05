@@ -5,26 +5,42 @@ import { useSidebarChat } from './contexts/SidebarChatContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
-import { useContent, AppHeader } from '../components';
+import { useContent, AppHeader } from '../components'; // useContent already imported
 import { MESSAGE_TYPES } from './constants';
 import { setupMessageHandlers } from './services/IframeMessaging';
 
 export default function SidebarApp() {
   const { theme } = useTheme();
   const { tabId } = useSidebarPlatform();
-  const { resetCurrentTabData } = useSidebarChat();
+  const { resetCurrentTabData, resetExtractionFlag } = useSidebarChat(); // Get resetExtractionFlag
   const [isReady, setIsReady] = useState(false);
-  const { } = useContent(); // contentType removed
+  const { updateContentContext } = useContent(); // Get updateContentContext
   const [messaging, setMessaging] = useState(null);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   
-  // Initialize messaging with tabId
+  // Initialize messaging with tabId and set up message handlers
   useEffect(() => {
     if (tabId) {
       const messagingService = setupMessageHandlers(tabId);
       setMessaging(messagingService);
+
+      // Register handler for page navigation events from content script
+      messagingService.registerHandler('pageNavigated', (data) => {
+        console.log('SidebarApp received pageNavigated:', data);
+        if (data.newUrl && data.newContentType) {
+          updateContentContext(data.newUrl, data.newContentType);
+          resetExtractionFlag();
+        } else {
+          console.warn('pageNavigated message missing data:', data);
+        }
+      });
+
+      // Cleanup function to remove handlers if needed (though setupMessageHandlers might handle this)
+      // return () => {
+      //   messagingService.removeHandler('pageNavigated');
+      // };
     }
-  }, [tabId]);
+  }, [tabId, updateContentContext, resetExtractionFlag]); // Add dependencies
   
   useEffect(() => {
     if (!messaging) return;

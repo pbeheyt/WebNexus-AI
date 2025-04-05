@@ -619,6 +619,11 @@ export function SidebarChatProvider({ children }) {
     setIsCanceling // Added setIsCanceling as per requirement
   ]);
 
+  // Function to reset the flag indicating if extracted content has been added to the chat
+  const resetExtractionFlag = useCallback(() => {
+    setExtractedContentAdded(false);
+  }, []);
+
 
   return (
     <SidebarChatContext.Provider value={{
@@ -636,7 +641,8 @@ export function SidebarChatProvider({ children }) {
       contentType,
       tokenStats,
       contextStatus,
-      resetCurrentTabData // Add the new function here
+      resetCurrentTabData, // Add the new function here
+      resetExtractionFlag // Added
     }}>
       {children}
     </SidebarChatContext.Provider>

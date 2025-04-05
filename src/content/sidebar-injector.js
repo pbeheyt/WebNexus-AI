@@ -367,6 +367,18 @@ class SidebarInjector {
           sendResponse({ success: true });
         }
         return false;
+
+      case 'pageNavigated':
+        // Received when the user navigates within the tab while the sidebar is open
+        if (this.iframe) {
+          this.iframe.contentWindow.postMessage({
+            type: 'pageNavigated',
+            newUrl: message.newUrl,
+            newContentType: message.newContentType
+          }, '*');
+        }
+        // No response needed for this message
+        return false;
         
       default:
         // Unknown message type

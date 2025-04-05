@@ -69,20 +69,27 @@ export function ContentProvider({
   }, [detectContent]);
   
   const setManualContentType = useCallback((type) => {
-    setContentType(type);
+     setContentType(type);
+   }, []);
+
+  // Function to update context from external events (like page navigation)
+  const updateContentContext = useCallback((newUrl, newContentType) => {
+    setCurrentTab(prevTab => ({ ...(prevTab || {}), url: newUrl })); // Update URL, handle potential initial null prevTab
+    setContentType(newContentType);
   }, []);
-  
-  return (
-    <ContentContext.Provider 
-      value={{ 
+   
+   return (
+     <ContentContext.Provider 
+       value={{ 
         currentTab,
         contentType,
         isSupported,
-        isLoading,
-        refreshContent,
-        setContentType: setManualContentType
-      }}
-    >
+         isLoading,
+         refreshContent,
+         setContentType: setManualContentType,
+         updateContentContext // Added
+       }}
+     >
       {children}
     </ContentContext.Provider>
   );

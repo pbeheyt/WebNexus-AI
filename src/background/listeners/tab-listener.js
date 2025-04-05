@@ -2,7 +2,9 @@
 
 import { isPlatformTab, getPlatformContentScript } from '../services/platform-integration.js';
 import { injectContentScript } from '../services/content-extraction.js';
-import { getPlatformTabInfo, updateScriptInjectionStatus } from '../core/state-manager.js';
+import { getPlatformTabInfo, updateScriptInjectionStatus, storeFormattedContentForTab } from '../core/state-manager.js';
+import SidebarStateManager from '../../services/SidebarStateManager.js'; // Added
+import { determineContentType } from '../../shared/utils/content-utils.js'; // Added
 import logger from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 
@@ -21,12 +23,11 @@ export function setupTabListener() {
  * @param {Object} tab - Tab information
  */
 async function handleTabUpdate(tabId, changeInfo, tab) {
-  if (changeInfo.status !== 'complete' || !tab.url) {
-    return;
-  }
-
-  try {
-    // Get the current AI platform tab information
+  // --- Existing Platform Injection Logic ---
+  // This part handles injecting the content script into the specific AI platform tab when it loads.
+  if (changeInfo.status === 'complete' && tab.url) {
+    try {
+      // Get the current AI platform tab information
     const { tabId: aiPlatformTabId, platformId, scriptInjected } = await getPlatformTabInfo();
 
     // Check if this is our AI platform tab
@@ -64,6 +65,43 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
       contentType: extractedContent?.contentType
     });
   } catch (error) {
-    logger.background.error(`Error handling tab update for tab ${tabId}:`, error);
+      logger.background.error(`Error handling platform tab injection for tab ${tabId}:`, error);
+    }
+  }
+
+  // --- New Sidebar Update Logic ---
+  // This part handles updating the sidebar context when navigation occurs in *any* tab where the sidebar is open.
+  // Run if URL changes OR status is complete (and URL exists)
+  if (tab.url && (changeInfo.url || changeInfo.status === 'complete')) {
+    try {
+      const isSidebarVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
+      if (isSidebarVisible) {
+        logger.background.info(`Sidebar visible for tab ${tabId}, handling navigation/load.`);
+        const newContentType = determineContentType(tab.url);
+        await storeFormattedContentForTab(tabId, null); // Clear formatted content
+        logger.background.info(`Cleared formatted content for tab ${tabId}.`);
+
+        try {
+          // Send message to the content script in the target tab
+          await chrome.tabs.sendMessage(tabId, {
+            action: 'pageNavigated',
+            newUrl: tab.url,
+            newContentType: newContentType
+          });
+          logger.background.info(`Sent 'pageNavigated' message to tab ${tabId}.`);
+        } catch (error) {
+          // It's common for sendMessage to fail if the content script isn't ready or injected yet,
+          // especially on initial page loads before the sidebar injector runs or if the tab is discarded.
+          if (error.message?.includes('Receiving end does not exist') || error.message?.includes('Could not establish connection')) {
+            logger.background.info(`Could not send 'pageNavigated' message to tab ${tabId} (content script likely not ready/injected): ${error.message}`);
+          } else {
+            // Log other errors as warnings as they might indicate a different issue.
+            logger.background.warn(`Error sending 'pageNavigated' message to tab ${tabId}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      logger.background.error(`Error handling sidebar update logic for tab ${tabId}:`, error);
+    }
   }
 }
