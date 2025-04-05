@@ -32,7 +32,7 @@ const copyToClipboardUtil = (text) => {
 };
 
 /**
- * Simple CodeBlock component with language header
+ * Modern minimalist CodeBlock component with language header
  */
 const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
@@ -58,53 +58,53 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   };
   
   return (
-    <div className="relative code-block-group rounded-md overflow-hidden border border-theme mb-4">
-      {/* Simple language header */}
-      <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 text-xs font-medium border-b border-theme flex justify-between items-center">
+    <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 mb-4 shadow-sm">
+      {/* Minimal header with language display */}
+      <div className="bg-gray-200 dark:bg-gray-800 px-3 py-2 flex justify-between items-center">
         {/* Language name */}
-        <span className="text-gray-600 dark:text-gray-300">{displayLanguage}</span>
+        <span className="text-gray-600 dark:text-gray-400 font-mono">{displayLanguage}</span>
         
         {/* Copy button - Only show when not streaming */}
         {!isStreaming && (
           <button
             onClick={copyCodeToClipboard}
-            className={`p-1 rounded-md transition-all duration-200 shadow-sm text-xs
-                      ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                        copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
-                        'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+            className={`rounded transition-all duration-200 px-2 py-1
+                      ${copyState === 'copied' ? 'text-green-600 dark:text-green-400' : 
+                        copyState === 'error' ? 'text-red-500 dark:text-red-400' : 
+                        'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
             aria-label="Copy code to clipboard"
             title="Copy code to clipboard"
           >
             {copyState === 'copied' ? (
-              <div className="flex items-center">
+              <span className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
                 <span>Copied</span>
-              </div>
+              </span>
             ) : copyState === 'error' ? (
-              <div className="flex items-center">
+              <span className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
                 <span>Error</span>
-              </div>
+              </span>
             ) : (
-              <div className="flex items-center">
+              <span className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
                   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                   <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                 </svg>
                 <span>Copy</span>
-              </div>
+              </span>
             )}
           </button>
         )}
       </div>
       
-      {/* Code content - Added max-height of 50vh and vertical scrolling */}
-      <pre className="bg-theme-hover p-4 m-0 overflow-x-auto overflow-y-auto max-h-[50vh] text-sm font-mono">
+      {/* Clean code content area */}
+      <pre className="bg-gray-50 dark:bg-gray-900 p-4 m-0 overflow-x-auto overflow-y-auto max-h-[50vh] text-xs leading-5 font-mono text-gray-800 dark:text-gray-200">
         <code className={className}>
           {children}
         </code>
@@ -171,7 +171,7 @@ const MessageBubbleComponent = ({
   return (
     <div className={`p-4 w-full message-group relative ${className}`}>
       {/* Main content - Render Markdown for assistant messages */}
-      <div className="prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-hidden">
+      <div className="prose dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-hidden">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
