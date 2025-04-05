@@ -4,6 +4,7 @@ import { isPlatformTab, getPlatformContentScript } from '../services/platform-in
 import { injectContentScript } from '../services/content-extraction.js';
 import { getPlatformTabInfo, updateScriptInjectionStatus, storeFormattedContentForTab } from '../core/state-manager.js';
 import SidebarStateManager from '../../services/SidebarStateManager.js'; // Added
+import { ensureSidebarScriptInjected } from '../services/sidebar-manager.js'; // Added for navigation handling
 import { determineContentType } from '../../shared/utils/content-utils.js'; // Added
 import logger from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
@@ -75,10 +76,33 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
       const isSidebarVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
       if (isSidebarVisible) {
         logger.background.info(`Sidebar visible for tab ${tabId}, handling navigation/load.`);
+
+        // --- New logic for ensuring sidebar visibility after navigation ---
+        logger.background.info(`Navigation/load in tab ${tabId} while sidebar state is true. Ensuring script and visibility.`);
+        await ensureSidebarScriptInjected(tabId);
+
+        // Attempt to explicitly show the sidebar after ensuring script injection
+        try {
+          await chrome.tabs.sendMessage(tabId, {
+            action: 'toggleSidebar',
+            visible: true,
+            tabId: tabId
+          });
+          logger.background.info(`Sent explicit 'toggleSidebar visible: true' message to tab ${tabId} after navigation.`);
+        } catch (error) {
+          // Log errors if the content script isn't ready, but don't stop execution.
+          if (error.message?.includes('Receiving end does not exist') || error.message?.includes('Could not establish connection')) {
+             logger.background.warn(`Could not send explicit 'toggleSidebar visible: true' message to tab ${tabId} (content script likely not ready): ${error.message}`);
+          } else {
+             logger.background.error(`Error sending explicit 'toggleSidebar visible: true' message to tab ${tabId}:`, error);
+          }
+        }
+        // --- End of new logic ---
+
         const newContentType = determineContentType(tab.url);
 
         try {
-          // Send message to the content script in the target tab
+          // Send message to the content script in the target tab to update its context
           await chrome.tabs.sendMessage(tabId, {
             action: 'pageNavigated',
             newUrl: tab.url,

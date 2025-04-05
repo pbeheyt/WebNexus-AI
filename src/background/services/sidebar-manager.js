@@ -189,54 +189,95 @@ export async function getSidebarState(message, sender, sendResponse) {
 }
 
 /**
- * Ensure sidebar script is injected in the tab
+ * Ensure both main content script and sidebar injector script are injected in the tab.
+ * Injects them sequentially if they are missing.
  * @param {number} tabId - Tab ID
  */
-async function ensureSidebarScriptInjected(tabId) {
-  logger.background.info(`Ensuring sidebar script is injected in tab ${tabId}`);
-  
-  // First, check if content script is already loaded
-  let isScriptLoaded = false;
+export async function ensureSidebarScriptInjected(tabId) {
+  logger.background.info(`Ensuring scripts are injected in tab ${tabId}`);
+  const PING_TIMEOUT = 300; // ms
+  const SCRIPT_INIT_DELAY = 150; // ms
+
+  // 1. Check/Inject Main Content Script (content-script.bundle.js)
+  let isMainContentLoaded = false;
   try {
+    logger.background.debug(`Pinging main content script in tab ${tabId}`);
     const response = await Promise.race([
-      chrome.tabs.sendMessage(tabId, { action: 'pingSidebarInjector' }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 300))
+      chrome.tabs.sendMessage(tabId, { action: 'ping' }), // Generic ping
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), PING_TIMEOUT))
     ]);
-    isScriptLoaded = !!(response && response.ready && response.type === 'sidebarInjector');
-    logger.background.info(`Sidebar injector check result: ${isScriptLoaded ? 'Loaded' : 'Not loaded'}`);
+    isMainContentLoaded = !!(response && response.ready);
+    logger.background.info(`Main content script ping result for tab ${tabId}: ${isMainContentLoaded ? 'Loaded' : 'Not loaded'}`);
   } catch (error) {
-    logger.background.info('Sidebar injector not loaded, will inject');
+    // Handle ping error (likely script not loaded or tab inaccessible)
+    if (error.message?.includes('Timeout')) {
+      logger.background.info(`Main content script ping timed out for tab ${tabId}. Assuming not loaded.`);
+    } else if (error.message?.includes('Receiving end does not exist') || error.message?.includes('Could not establish connection')) {
+      logger.background.info(`Main content script not reachable in tab ${tabId}. Assuming not loaded.`);
+    } else {
+      logger.background.warn(`Error pinging main content script in tab ${tabId}:`, error);
+    }
+    isMainContentLoaded = false;
   }
 
-  // Inject if needed
-  if (!isScriptLoaded) {
-    // Check if main content script is loaded first, and inject if not
-    let isMainContentScriptLoaded = false;
+  if (!isMainContentLoaded) {
+    logger.background.info(`Injecting main content script into tab ${tabId}`);
     try {
-      const mainContentResponse = await Promise.race([
-        chrome.tabs.sendMessage(tabId, { action: 'ping' }), // Generic ping for main content script
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 300))
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['dist/content-script.bundle.js']
+      });
+      logger.background.info(`Successfully injected main content script into tab ${tabId}. Waiting for initialization...`);
+      // Wait a bit for the script to potentially initialize
+      await new Promise(resolve => setTimeout(resolve, SCRIPT_INIT_DELAY));
+      isMainContentLoaded = true; // Assume success for the next step
+    } catch (injectionError) {
+      logger.background.error(`Failed to inject main content script into tab ${tabId}:`, injectionError);
+      // Decide if we should proceed or stop if the main script fails
+      // For now, we'll log the error and attempt to inject the sidebar script anyway,
+      // but it might fail if it depends on the main script.
+    }
+  }
+
+  // 2. Check/Inject Sidebar Injector Script (sidebar-injector.bundle.js)
+  // Only proceed if the main script is loaded or was just injected
+  if (isMainContentLoaded) {
+    let isSidebarInjectorLoaded = false;
+    try {
+      logger.background.debug(`Pinging sidebar injector script in tab ${tabId}`);
+      const response = await Promise.race([
+        chrome.tabs.sendMessage(tabId, { action: 'pingSidebarInjector' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), PING_TIMEOUT))
       ]);
-      isMainContentScriptLoaded = !!(mainContentResponse && mainContentResponse.ready);
-      logger.background.info(`Main content script check result: ${isMainContentScriptLoaded ? 'Loaded' : 'Not loaded'}`);
+      isSidebarInjectorLoaded = !!(response && response.ready && response.type === 'sidebarInjector');
+      logger.background.info(`Sidebar injector ping result for tab ${tabId}: ${isSidebarInjectorLoaded ? 'Loaded' : 'Not loaded'}`);
     } catch (error) {
-      logger.background.info('Main content script not loaded, will inject');
+      // Handle ping error
+       if (error.message?.includes('Timeout')) {
+        logger.background.info(`Sidebar injector ping timed out for tab ${tabId}. Assuming not loaded.`);
+      } else if (error.message?.includes('Receiving end does not exist') || error.message?.includes('Could not establish connection')) {
+        logger.background.info(`Sidebar injector not reachable in tab ${tabId}. Assuming not loaded.`);
+      } else {
+        logger.background.warn(`Error pinging sidebar injector in tab ${tabId}:`, error);
+      }
+      isSidebarInjectorLoaded = false;
     }
 
-    if (!isMainContentScriptLoaded) {
-      const contentScriptResult = await injectContentScript(tabId, 'dist/content-script.bundle.js');
-      if (!contentScriptResult) {
-        logger.background.error(`Failed to inject main content script into tab ${tabId}`);
+    if (!isSidebarInjectorLoaded) {
+      logger.background.info(`Injecting sidebar injector script into tab ${tabId}`);
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          files: ['dist/sidebar-injector.bundle.js']
+        });
+        logger.background.info(`Successfully injected sidebar injector script into tab ${tabId}.`);
+        // Optional: Add a small delay if needed for its initialization
+        // await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (injectionError) {
+        logger.background.error(`Failed to inject sidebar injector script into tab ${tabId}:`, injectionError);
       }
     }
-
-    // Inject sidebar script
-    const sidebarScriptResult = await injectContentScript(tabId, 'dist/sidebar-injector.bundle.js');
-    if (!sidebarScriptResult) {
-      logger.background.error(`Failed to inject sidebar script into tab ${tabId}`);
-    }
-
-    // Give time for script to initialize
-    await new Promise(resolve => setTimeout(resolve, 300));
+  } else {
+     logger.background.warn(`Skipping sidebar injector check/injection for tab ${tabId} because main content script is not loaded.`);
   }
 }

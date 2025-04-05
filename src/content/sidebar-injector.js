@@ -59,18 +59,26 @@ class SidebarInjector {
       } catch (err) {
         console.warn('SidebarInjector: Failed to preload theme:', err);
       }
-      
+
       // Check for existing iframe before creating a new one
       const existingIframe = document.getElementById('ai-content-sidebar-iframe');
       if (existingIframe) {
         this.iframe = existingIframe;
         // Update visibility to match stored state
         this.iframe.style.transform = `translateX(${this.visible ? '0' : '100%'})`;
+        console.log('SidebarInjector: Found existing iframe, updated visibility.');
       } else {
-        // Create and inject iframe
-        this._createIframe();
+        // Only create iframe if it should be visible initially
+        if (this.visible) {
+          console.log('SidebarInjector: No existing iframe, creating because visible=true.');
+          this._createIframe();
+        } else {
+          console.log('SidebarInjector: No existing iframe, not creating because visible=false.');
+          // Ensure this.iframe is null if not created
+          this.iframe = null;
+        }
       }
-      
+
       // Set up message listeners
       this._setupMessageHandlers();
       
@@ -199,9 +207,10 @@ class SidebarInjector {
       z-index: 2147483647; /* Maximum z-index */
       box-shadow: -2px 0 10px rgba(0,0,0,0.2);
       transition: transform 0.3s ease;
+      /* Ensure transform reflects current visibility state at creation */
       transform: translateX(${this.visible ? '0' : '100%'});
     `;
-    
+
     // Create wrapper to ensure proper cleanup
     const wrapper = document.createElement('div');
     wrapper.id = 'ai-content-sidebar-wrapper';
