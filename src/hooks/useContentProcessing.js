@@ -1,8 +1,8 @@
 // src/hooks/useContentProcessing.js
 
 import { useState, useCallback, useEffect } from 'react';
-import { INTERFACE_SOURCES, CONTENT_TYPES } from '../shared/constants';
-import { determineContentType } from '../shared/utils/content-utils';
+import { INTERFACE_SOURCES } from '../shared/constants';
+import { useContent } from '../components/content/ContentContext';
 
 /**
  * Hook for content extraction and processing
@@ -15,11 +15,10 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   const [processingStatus, setProcessingStatus] = useState('idle');
   const [processedContent, setProcessedContent] = useState(null);
   const [streamId, setStreamId] = useState(null);
-
-  // Common states
   const [error, setError] = useState(null);
-  const [currentTab, setCurrentTab] = useState(null);
-  const [contentType, setContentType] = useState(null);
+
+  // Get content context
+  const { currentTab, contentType } = useContent();
 
   // Cleanup function when component unmounts
   useEffect(() => {
@@ -32,25 +31,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       }
     };
   }, [streamId]);
-
-  // Get current tab information
-  useEffect(() => {
-    const getCurrentTab = async () => {
-      try {
-        const queryOptions = { active: true, currentWindow: true };
-        const [tab] = await chrome.tabs.query(queryOptions);
-        if (tab) {
-          setCurrentTab(tab);
-          const type = tab.url ? determineContentType(tab.url) : CONTENT_TYPES.GENERAL;
-          setContentType(type);
-        }
-      } catch (err) {
-        console.error('Error getting current tab:', err);
-      }
-    };
-
-    getCurrentTab();
-  }, []);
 
   /**
    * Process content with web AI platform (non-API path)
@@ -89,8 +69,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     try {
       const response = await chrome.runtime.sendMessage({
         action: 'processContent',
-        tabId: currentTab.id,
-        url: currentTab.url,
+        tabId: currentTab?.id,
+        url: currentTab?.url,
         platformId,
         promptContent,
         contentType,
@@ -150,8 +130,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       // Prepare unified request configuration
       const request = {
         action: 'processContentViaApi',
-        tabId: currentTab.id,
-        url: currentTab.url,
+        tabId: currentTab?.id,
+        url: currentTab?.url,
         platformId,
         promptId,
         contentType,
@@ -223,10 +203,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     processingStatus,
     processedContent,
     error,
-    currentTab,
-    contentType,
     streamId,
-    
+
     // Helper states
     isProcessing: processingStatus === 'loading',
     isStreaming: !!streamId,
