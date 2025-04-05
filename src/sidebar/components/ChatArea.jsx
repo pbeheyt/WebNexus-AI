@@ -160,28 +160,17 @@ function ChatArea({ className = '' }) {
           </>
         ) : (
           <>
-            {/* Content Extraction Toggle */}
-            <div className="flex items-center justify-center gap-2 mb-4 px-4 text-sm text-theme-secondary">
-              <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract page content for context</label>
-              <Toggle
-                id="content-extract-toggle"
-                checked={isContentExtractionEnabled}
-                onChange={() => setIsContentExtractionEnabled(prev => !prev)}
-                disabled={!hasAnyPlatformCredentials} // Disable if no credentials
-              />
-            </div>
-
             {/* Platform Logo and Model */}
             {selectedPlatformId && selectedPlatform.iconUrl ? (
               <>
                 <img
                   src={selectedPlatform.iconUrl}
                   alt={selectedPlatform.name}
-                  className="w-12 h-12 mb-2"
+                  className="w-12 h-12 mb-4"
                 />
                 {/* Display just the model name below the platform logo */}
                 {selectedModel && (
-                  <div className="text-sm text-theme-secondary mb-8">
+                  <div className="text-sm text-theme-secondary mb-20">
                     {selectedModel}
                   </div>
                 )}
@@ -190,17 +179,32 @@ function ChatArea({ className = '' }) {
               <div></div>
             )}
             <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
-            <p className="text-sm mb-3">
+            <p className="text-sm mb-10">
               {getWelcomeMessage(contentType)}
             </p>
+            
+            {/* Content Type Icon and Toggle (moved together) */}
             {getContentTypeIconSvg(contentType) && (
-              <div className="flex items-center justify-center mt-4"> {/* Parent div for horizontal layout */}
-                <div
-                  className="" // Removed margin class
-                  dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
-                />
-                <div className="text-sm text-theme-secondary ml-3"> {/* Added left margin */}
-                  {getContentTypeName(contentType)}
+              <div className="flex flex-col items-center mt-4"> 
+                {/* Content Type Display */}
+                <div className="flex items-center justify-center">
+                  <div
+                    dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
+                  />
+                  <div className="text-sm text-theme-secondary ml-3">
+                    {getContentTypeName(contentType)}
+                  </div>
+                </div>
+                
+                {/* Content Extraction Toggle (now below content type) */}
+                <div className="flex items-center justify-center gap-3 mt-4 px-4 text-sm text-theme-secondary">
+                  <label htmlFor="content-extract-toggle" className="cursor-pointer">Include page content</label>
+                  <Toggle
+                    id="content-extract-toggle"
+                    checked={isContentExtractionEnabled}
+                    onChange={() => setIsContentExtractionEnabled(prev => !prev)}
+                    disabled={!hasAnyPlatformCredentials}
+                  />
                 </div>
               </div>
             )}
