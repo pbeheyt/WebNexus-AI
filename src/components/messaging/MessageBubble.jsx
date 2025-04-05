@@ -34,7 +34,7 @@ const copyToClipboardUtil = (text) => {
 /**
  * Simple CodeBlock component with language header
  */
-const CodeBlock = memo(({ className, children }) => {
+const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
   const codeContent = String(children).replace(/\n$/, '');
   
@@ -64,45 +64,47 @@ const CodeBlock = memo(({ className, children }) => {
         {/* Language name */}
         <span className="text-gray-600 dark:text-gray-300">{displayLanguage}</span>
         
-        {/* Copy button */}
-        <button
-          onClick={copyCodeToClipboard}
-          className={`p-1 rounded-md transition-all duration-200 shadow-sm text-xs
-                     ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                       copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
-                       'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-          aria-label="Copy code to clipboard"
-          title="Copy code to clipboard"
-        >
-          {copyState === 'copied' ? (
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              <span>Copied</span>
-            </div>
-          ) : copyState === 'error' ? (
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-              <span>Error</span>
-            </div>
-          ) : (
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-              </svg>
-              <span>Copy</span>
-            </div>
-          )}
-        </button>
+        {/* Copy button - Only show when not streaming */}
+        {!isStreaming && (
+          <button
+            onClick={copyCodeToClipboard}
+            className={`p-1 rounded-md transition-all duration-200 shadow-sm text-xs
+                      ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                        copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
+                        'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+            aria-label="Copy code to clipboard"
+            title="Copy code to clipboard"
+          >
+            {copyState === 'copied' ? (
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Copied</span>
+              </div>
+            ) : copyState === 'error' ? (
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                <span>Error</span>
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>
+                <span>Copy</span>
+              </div>
+            )}
+          </button>
+        )}
       </div>
       
-      {/* Code content */}
-      <pre className="bg-theme-hover p-4 m-0 overflow-x-auto text-sm font-mono">
+      {/* Code content - Added max-height of 50vh and vertical scrolling */}
+      <pre className="bg-theme-hover p-4 m-0 overflow-x-auto overflow-y-auto max-h-[50vh] text-sm font-mono">
         <code className={className}>
           {children}
         </code>
@@ -188,7 +190,8 @@ const MessageBubbleComponent = ({
               const match = /language-(\w+)/.exec(className || '');
               return !inline ? (
                 // Block code with copy button: use our CodeBlock component
-                <CodeBlock className={className}>
+                // Pass the isStreaming prop to CodeBlock
+                <CodeBlock className={className} isStreaming={isStreaming}>
                   {children}
                 </CodeBlock>
               ) : (
@@ -235,7 +238,7 @@ const MessageBubbleComponent = ({
           {model && !isUser && <span>{model}</span>}
         </div>
         
-        {/* Copy button - Right aligned, same height as model info */}
+        {/* Copy button - only show when not streaming */}
         {!isStreaming && content && (
           <button
             onClick={copyToClipboard}
