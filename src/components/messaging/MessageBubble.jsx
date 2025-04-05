@@ -177,10 +177,12 @@ const MessageBubbleComponent = ({
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mb-2" {...props} />,
             p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed" {...props} />,
-            // Balanced spacing for list elements
-            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-3 ml-3" {...props} />,
-            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-3 ml-3" {...props} />,
-            li: ({node, ...props}) => <li className="mb-1.5 leading-relaxed pl-0" {...props} />,
+            
+            // Fixed list rendering to prevent marker line breaks
+            ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
+            li: ({node, ...props}) => <li className="leading-relaxed" {...props} />,
+            
             code: ({node, inline, className, children, ...props}) => {
               // Check if it's a block code (has language class) or inline
               const match = /language-(\w+)/.exec(className || '');
