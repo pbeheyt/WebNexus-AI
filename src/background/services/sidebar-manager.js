@@ -41,7 +41,7 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
     // Save the intended state *before* attempting to change the panel
     // This ensures our internal state reflects the desired outcome even if the panel API fails
     await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, visible);
-    logger.background.info(`Stored intended visibility for tab ${targetTabId} as ${visible}`);
+    // Removed log about storing intended visibility
 
     // Perform the side panel action
     if (visible) {

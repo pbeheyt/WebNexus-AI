@@ -89,6 +89,8 @@ function registerCoreHandlers() {
     }
     return false;
   });
+
+  // Removed 'getSidebarTabId' handler as sidebar now relies solely on URL parameter
 }
 
 /**
