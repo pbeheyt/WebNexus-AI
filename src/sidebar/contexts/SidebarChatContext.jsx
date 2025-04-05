@@ -9,20 +9,19 @@ import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
-import logger from '../../shared/logger'; // Added logger import
 
 const SidebarChatContext = createContext(null);
 
 export function SidebarChatProvider({ children }) {
-  const { 
-    selectedPlatformId, 
-    selectedModel, 
+  const {
+    selectedPlatformId,
+    selectedModel,
     hasAnyPlatformCredentials,
-    tabId, 
-    platforms, 
-    getPlatformConfig 
+    tabId,
+    platforms,
+    getPlatformConfig
   } = useSidebarPlatform();
-  
+
   const { contentType } = useContent();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -33,7 +32,7 @@ export function SidebarChatProvider({ children }) {
   const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
-  
+
   // Platform and model configuration
   const [fullPlatformConfig, setFullPlatformConfig] = useState(null);
   const [modelConfigData, setModelConfigData] = useState(null);
@@ -62,12 +61,12 @@ export function SidebarChatProvider({ children }) {
   useEffect(() => {
     const loadFullConfig = async () => {
       if (!selectedPlatformId || !selectedModel || !tabId) return;
-      
+
       try {
         // Get full configuration either from context or directly
         const config = await getPlatformConfig(selectedPlatformId);
         setFullPlatformConfig(config);
-        
+
         if (!config || !config.api || !config.api.models) {
           console.warn('Platform configuration missing required structure:', {
             platformId: selectedPlatformId,
@@ -76,14 +75,11 @@ export function SidebarChatProvider({ children }) {
           });
           return;
         }
-        
+
         const modelData = config.api.models.find(m => m.id === selectedModel);
-        // Removed console.log
-        
         setModelConfigData(modelData);
       } catch (error) {
         console.error('Failed to load full platform configuration:', error);
-        // Optionally reset state or set defaults if config fails
         setFullPlatformConfig(null);
         setModelConfigData(null);
       }
@@ -159,7 +155,7 @@ export function SidebarChatProvider({ children }) {
       try {
         // Calculate output tokens
         const outputTokens = TokenManagementService.estimateTokens(finalContent);
-    
+
         // Update message with final content
         let updatedMessages = messages.map(msg =>
           msg.id === messageId
@@ -175,24 +171,24 @@ export function SidebarChatProvider({ children }) {
               }
             : msg
         );
-    
+
         // Check if this is the first assistant message
         const visibleAssistantMessages = visibleMessages.filter(
           msg => msg.role === MESSAGE_ROLES.ASSISTANT
         );
         const isFirstMessage = visibleAssistantMessages.length === 1;
-    
+
         // If content not added yet, add extracted content message
         if (!extractedContentAdded && !isError) {
           try {
             // Get formatted content from storage
             const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_FORMATTED_CONTENT]);
             const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
-    
+
             if (allTabContents) {
               const tabIdKey = tabId.toString();
               const extractedContent = allTabContents[tabIdKey];
-    
+
               if (extractedContent && typeof extractedContent === 'string' && extractedContent.trim()) {
                 const contentMessage = {
                   id: `extracted_${Date.now()}`,
@@ -203,13 +199,13 @@ export function SidebarChatProvider({ children }) {
                   outputTokens: 0,
                   isExtractedContent: true
                 };
-    
+
                 // Add extracted content at beginning
                 updatedMessages = [contentMessage, ...updatedMessages];
-    
+
                 // Mark as added to prevent duplicate additions
                 setExtractedContentAdded(true);
-    
+
                 // Track tokens for extracted content using the service
                 await trackTokens({
                   messageId: contentMessage.id,
@@ -224,11 +220,11 @@ export function SidebarChatProvider({ children }) {
             console.error('Error adding extracted content:', extractError);
           }
         }
-    
+
         // Set messages with all updates at once
         setMessages(updatedMessages);
         setStreamingContent(''); // Reset streaming content
-    
+
         // Track tokens for assistant message
         await trackTokens({
           messageId: messageId,
@@ -237,7 +233,7 @@ export function SidebarChatProvider({ children }) {
           input: 0,
           output: outputTokens
         }, modelConfigData);
-    
+
         // Save history and update accumulated cost
         if (tabId) {
           await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
@@ -261,12 +257,12 @@ export function SidebarChatProvider({ children }) {
         // Handle stream error
         if (chunkData.error) {
           console.error('Stream error:', chunkData.error);
-          
+
           // Format the error message
-          const errorMessage = typeof chunkData.error === 'string' 
-            ? chunkData.error 
+          const errorMessage = typeof chunkData.error === 'string'
+            ? chunkData.error
             : (chunkData.error.message || 'An error occurred during streaming');
-          
+
           // Complete the stream with the error message
           await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true); // Pass model if available
 
@@ -443,9 +439,9 @@ export function SidebarChatProvider({ children }) {
   // Cancel the current stream
   const cancelStream = async () => {
     if (!streamingMessageId || !isProcessing || isCanceling) return;
-    
+
     setIsCanceling(true);
-    
+
     try {
       // Send cancellation message to background script
       const result = await chrome.runtime.sendMessage({
@@ -453,17 +449,16 @@ export function SidebarChatProvider({ children }) {
         platformId: selectedPlatformId,
         tabId
       });
-      
+
       // Update the streaming message content to indicate cancellation
       const cancelledContent = streamingContent + '\n\n_Stream cancelled by user._';
       let messagesAfterCancel = messages; // Start with current messages
 
-      // --- Add extracted content if not already added ---
       if (!extractedContentAdded) {
         try {
           const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_FORMATTED_CONTENT]);
           const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
-          
+
           if (allTabContents) {
             const tabIdKey = tabId.toString();
             const extractedContent = allTabContents[tabIdKey];
@@ -481,7 +476,7 @@ export function SidebarChatProvider({ children }) {
 
               // Find index of the message being cancelled
               const cancelledMsgIndex = messages.findIndex(msg => msg.id === streamingMessageId);
-              
+
               if (cancelledMsgIndex !== -1) {
                 // Insert content message before the cancelled message
                 const messagesWithContent = [
@@ -489,12 +484,12 @@ export function SidebarChatProvider({ children }) {
                   contentMessage,
                   ...messages.slice(cancelledMsgIndex)
                 ];
-                
+
                 // Update the local variable holding the messages
-                messagesAfterCancel = messagesWithContent; 
-                
+                messagesAfterCancel = messagesWithContent;
+
                 // Update state immediately to reflect added content
-                setMessages(messagesAfterCancel); 
+                setMessages(messagesAfterCancel);
                 setExtractedContentAdded(true);
 
                 // Track tokens for the added content
@@ -514,13 +509,12 @@ export function SidebarChatProvider({ children }) {
           console.error('Error adding extracted content during cancellation:', extractError);
         }
       }
-      // --- End of adding extracted content ---
 
       // Update the cancelled message content within the potentially updated array
       const finalMessages = messagesAfterCancel.map(msg =>
         msg.id === streamingMessageId
-          ? { 
-              ...msg, 
+          ? {
+              ...msg,
               content: cancelledContent,
               isStreaming: false // Ensure streaming is marked false
             }
@@ -528,22 +522,21 @@ export function SidebarChatProvider({ children }) {
       );
 
       // Update state with the final message list (including potential extracted content and cancelled message update)
-      setMessages(finalMessages); 
-      
+      setMessages(finalMessages);
+
       // Save the final state to history
       if (tabId) {
         await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
       }
-      
+
       // Reset streaming state (after all updates and saves)
       setStreamingMessageId(null);
       setStreamingContent('');
       setIsProcessing(false);
-      
-      // Removed console.log
+
     } catch (error) {
       console.error('Error cancelling stream:', error);
-      
+
       // Still reset the streaming state on error
       setStreamingMessageId(null);
       setIsProcessing(false);
@@ -572,14 +565,11 @@ export function SidebarChatProvider({ children }) {
     }
 
     if (window.confirm("Are you sure you want to clear all chat history and data for this tab? This action cannot be undone.")) {
-      // Removed console.log
       try {
         const response = await chrome.runtime.sendMessage({
           action: 'clearTabData',
           tabId: tabId
         });
-
-        // Removed console.log
 
         if (response && response.success) {
           // Reset local state immediately
@@ -594,16 +584,11 @@ export function SidebarChatProvider({ children }) {
           // Clear token data (which also recalculates stats)
           await clearTokenData();
 
-          // Removed console.log
-          // Optionally: Show a success notification to the user
-          // e.g., using a toast notification system if available
         } else {
           throw new Error(response?.error || 'Background script failed to clear data.');
         }
       } catch (error) {
         console.error('Failed to reset tab data:', error);
-        // Optionally: Show an error notification to the user
-        // e.g., alert(`Error: ${error.message}`);
       }
     }
   }, [
@@ -621,12 +606,12 @@ export function SidebarChatProvider({ children }) {
   // Function to clear the stored formatted content for the current tab
   const clearFormattedContentForTab = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
-      logger.sidebar.warn('clearFormattedContentForTab called without a valid tabId.');
+      console.warn('clearFormattedContentForTab called without a valid tabId.');
       return;
     }
 
     const tabIdKey = tabId.toString();
-    logger.sidebar.info(`Attempting to clear formatted content for tab: ${tabIdKey}`);
+    console.info(`Attempting to clear formatted content for tab: ${tabIdKey}`);
 
     try {
       // Retrieve the entire formatted content object
@@ -643,21 +628,19 @@ export function SidebarChatProvider({ children }) {
 
         // Save the modified object back to storage
         await chrome.storage.local.set({ [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: updatedFormattedContent });
-        logger.sidebar.info(`Successfully cleared formatted content for tab: ${tabIdKey}`);
+        console.info(`Successfully cleared formatted content for tab: ${tabIdKey}`);
       } else {
-        logger.sidebar.info(`No formatted content found in storage for tab: ${tabIdKey}. No action needed.`);
+        console.info(`No formatted content found in storage for tab: ${tabIdKey}. No action needed.`);
       }
 
       // Also reset the local flag indicating if extracted content was added to the current chat view
       setExtractedContentAdded(false);
-      logger.sidebar.info(`Reset extractedContentAdded flag for tab: ${tabIdKey}`);
+      console.info(`Reset extractedContentAdded flag for tab: ${tabIdKey}`);
 
     } catch (error) {
-      logger.sidebar.error(`Error clearing formatted content for tab ${tabIdKey}:`, error);
-      // Optionally: Show an error notification to the user
+      console.error(`Error clearing formatted content for tab ${tabIdKey}:`, error);
     }
   }, [tabId, setExtractedContentAdded]); // Dependencies: tabId and the setter
-
 
   return (
     <SidebarChatContext.Provider value={{
