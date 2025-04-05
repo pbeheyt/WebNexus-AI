@@ -28,5 +28,3 @@ export { MessageInput } from './messaging/MessageInput';
 export { PromptDropdown } from './input/PromptDropdown';
 export { UnifiedInput } from './input/UnifiedInput';
 
-// Display components
-export { ContentProvider, useContent } from './content/ContentContext';

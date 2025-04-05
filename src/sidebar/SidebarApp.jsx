@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSidebarPlatform } from '../contexts/platform'; // Keep this for setTabId
 import { useSidebarChat } from './contexts/SidebarChatContext';
-import { useContent } from '../components/content/ContentContext'; // Added useContent import
+import { useContent } from '../contexts/ContentContext'; // Corrected path
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';

@@ -4,7 +4,7 @@ import SidebarApp from './SidebarApp';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { SidebarPlatformProvider } from '../contexts/platform';
 import { SidebarChatProvider } from './contexts/SidebarChatContext';
-import { ContentProvider } from '../components';
+import { ContentProvider } from '../contexts/ContentContext'; // Corrected path
 import '../styles/index.css';
 
 document.addEventListener('DOMContentLoaded', () => {

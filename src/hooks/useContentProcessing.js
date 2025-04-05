@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { INTERFACE_SOURCES } from '../shared/constants';
-import { useContent } from '../components/content/ContentContext';
+import { useContent } from '../contexts/ContentContext';
 
 /**
  * Hook for content extraction and processing

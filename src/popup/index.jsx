@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { Popup } from './Popup';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { StatusProvider } from './contexts/StatusContext';
-import { ContentProvider } from '../components';
+import { ContentProvider } from '../contexts/ContentContext'; // Corrected path
 import { PopupPlatformProvider } from '../contexts/platform';
 import '../styles/index.css';
 

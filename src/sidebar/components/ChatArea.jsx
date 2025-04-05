@@ -4,7 +4,7 @@ import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle'; // Added Toggle import
-import { useContent } from '../../components/content/ContentContext'; // Added import
+import { useContent } from '../../contexts/ContentContext'; // Corrected path
 import { CONTENT_TYPES } from '../../shared/constants'; // Added import
 
 function ChatArea({ className = '' }) {

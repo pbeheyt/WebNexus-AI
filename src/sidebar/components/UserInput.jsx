@@ -3,7 +3,7 @@ import React from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { UnifiedInput } from '../../components/input/UnifiedInput';
 // TokenCounter import removed as it's rendered within UnifiedInput
-import { useContent } from '../../components/content/ContentContext';
+import { useContent } from '../../contexts/ContentContext';
 
 export function UserInput({ className = '' }) {
   const { contentType } = useContent();

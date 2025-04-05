@@ -1,6 +1,6 @@
 // src/components/content/ContentContext.jsx
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { determineContentType } from '../../shared/utils/content-utils';
+import { determineContentType } from '../shared/utils/content-utils'; // Corrected path
 
 const ContentContext = createContext(null);
 

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useStatus } from './contexts/StatusContext'; // Make sure StatusContext is updated too
 import { usePopupPlatform } from '../contexts/platform';
 import { AppHeader, StatusMessage } from '../components'; // Combined imports
-import { useContent } from '../components';
+import { useContent } from '../contexts/ContentContext'; // Corrected path
 import { PlatformSelector } from './features/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../shared/constants'; // Combined imports

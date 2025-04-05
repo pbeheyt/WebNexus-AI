@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
-import { useContent } from '../../components';
+import { useContent } from '../../contexts/ContentContext'; // Corrected path
 import { useTokenTracking } from '../hooks/useTokenTracking';
 import ChatHistoryService from '../services/ChatHistoryService';
 import TokenManagementService from '../services/TokenManagementService';
