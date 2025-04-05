@@ -102,7 +102,7 @@ export function UnifiedInput({
   const sidebarButtonDisabled = (!value.trim() && !isStreamingActive) || disabled || (isStreamingActive && isCanceling);
 
   // Calculate button area width based on layout variant - reduced to minimal functional space
-  const buttonAreaWidth = layoutVariant === 'sidebar' ? 'w-16' : 'w-14';
+  const buttonAreaWidth = layoutVariant === 'sidebar' ? 'w-12' : 'w-10';
 
   // --- Render Logic ---
   if (layoutVariant === 'sidebar') {
@@ -134,9 +134,9 @@ export function UnifiedInput({
                   placeholder={getDynamicPlaceholder(contentType)}
                   disabled={disabled || isProcessing}
                   autoResize={true}
-                  minHeight={44}
+                  minHeight={70}
                   maxHeight={200}
-                  className="w-full py-3 px-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
+                  className="w-full py-3 pl-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
                 />
               </div>
               
@@ -144,31 +144,8 @@ export function UnifiedInput({
               <div className={buttonAreaWidth}></div>
             </div>
             
-            {/* Button container */}
-            <div className="absolute right-3 top-3 flex items-center gap-2">
-              {/* Prompt Selection Button with Dropdown */}
-              <div className="relative">
-                <button
-                  ref={promptButtonRef}
-                  onClick={() => setIsDropdownOpen(prev => !prev)}
-                  disabled={disabled || isProcessing}
-                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-6 h-6 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  aria-label="Select prompt"
-                  title="Select a custom prompt"
-                >
-                  <span className="font-semibold text-sm">P</span> 
-                </button>
-                
-                {/* Prompt dropdown positioned inside the button container */}
-                <PromptDropdown
-                  isOpen={isDropdownOpen}
-                  onClose={() => setIsDropdownOpen(false)}
-                  onSelectPrompt={handlePromptSelected}
-                  contentType={contentType}
-                  anchorRef={promptButtonRef}
-                />
-              </div>
-              
+            {/* Button container - column layout */}
+            <div className="absolute right-3 top-3 flex flex-col items-center gap-2">
               {/* Send/Cancel Button */}
               <button
                 className={`flex items-center justify-center cursor-pointer border-none outline-none ${sidebarButtonStyle} w-6 h-6 rounded ${isCanceling ? 'opacity-70' : ''}`}
@@ -191,13 +168,30 @@ export function UnifiedInput({
                   </svg>
                 )}
               </button>
+
+              {/* Prompt Selection Button with Dropdown */}
+              <div className="relative">
+                <button
+                  ref={promptButtonRef}
+                  onClick={() => setIsDropdownOpen(prev => !prev)}
+                  disabled={disabled || isProcessing}
+                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 rounded w-6 h-6 ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label="Select prompt"
+                  title="Select a custom prompt"
+                >
+                  <span className="font-semibold text-sm">P</span> 
+                </button>
+                
+                {/* Prompt dropdown positioned inside the button container */}
+                <PromptDropdown
+                  isOpen={isDropdownOpen}
+                  onClose={() => setIsDropdownOpen(false)}
+                  onSelectPrompt={handlePromptSelected}
+                  contentType={contentType}
+                  anchorRef={promptButtonRef}
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="py-2 text-xs text-gray-500 dark:text-gray-400 px-4">
-            {isStreamingActive 
-              ? "Processing... Click button to cancel" 
-              : "Press Enter to send, Shift+Enter for new line"}
           </div>
         </div>
       </div>
@@ -234,7 +228,7 @@ export function UnifiedInput({
                   autoResize={true}
                   minHeight={60}
                   maxHeight={150}
-                  className="w-full py-3 px-3 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
+                  className="w-full py-3 pl-3 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
                 />
               </div>
               
@@ -242,7 +236,21 @@ export function UnifiedInput({
               <div className={buttonAreaWidth}></div>
             </div>
             
-            <div className="absolute right-3 top-3 flex items-center gap-2">
+            <div className="absolute right-3 top-3 flex flex-col items-center gap-2">
+              {/* Send Button */}
+              <button
+                className={`flex items-center justify-center cursor-pointer border-none outline-none ${popupSendButtonStyle} w-5 h-5 rounded`}
+                onClick={handleSubmit}
+                disabled={popupSendButtonDisabled}
+                aria-label="Send"
+                title="Send"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 20V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+
               {/* Prompt Selection Button with Dropdown */}
               <div className="relative">
                 <button
@@ -265,20 +273,6 @@ export function UnifiedInput({
                   anchorRef={promptButtonRef}
                 />
               </div>
-              
-              {/* Send Button */}
-              <button
-                className={`flex items-center justify-center cursor-pointer border-none outline-none ${popupSendButtonStyle} w-5 h-5 rounded`}
-                onClick={handleSubmit}
-                disabled={popupSendButtonDisabled}
-                aria-label="Send"
-                title="Send"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 20V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
             </div>
           </div>
         </div>
