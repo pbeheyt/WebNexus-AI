@@ -57,33 +57,40 @@ export default function SidebarApp() {
   
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary">
-      <div className="p-4 pb-0">
-        <AppHeader 
-          onClose={handleClose} 
-          showRefreshButton={true} 
-          onRefreshClick={resetCurrentTabData}
-          isExpanded={headerExpanded}
-          onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
-          showExpandToggle={true}
-        />
-      </div>
-      
-      {/* Collapsible header section */}
-      <div className="relative">
-        {/* Fully collapsible section containing Header */}
-        <div
-          className={`transition-all duration-300 ease-in-out border-b border-theme ${ // Added border classes here
-            headerExpanded ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
-          }`}
-        >
+      {isReady ? (
+        <>
+          <div className="p-4 pb-0">
+            <AppHeader 
+              onClose={handleClose} 
+              showRefreshButton={true} 
+              onRefreshClick={resetCurrentTabData}
+              isExpanded={headerExpanded}
+              onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
+              showExpandToggle={true}
+            />
+          </div>
+          
+          {/* Collapsible header section */}
+          <div className="relative">
+            {/* Fully collapsible section containing Header */}
+            <div
+              className={`transition-all duration-300 ease-in-out border-b border-theme ${ // Added border classes here
+                headerExpanded ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
 
-          {/* Platform/model selection header */}
-          <Header />
-        </div>
-      </div>
-      
-      <ChatArea/>
-      <UserInput/>
+              {/* Platform/model selection header */}
+              <Header />
+            </div>
+          </div>
+          
+          <ChatArea/>
+          <UserInput/>
+        </>
+      ) : (
+        // Render nothing or a placeholder while loading
+        null 
+      )}
     </div>
   );
 }

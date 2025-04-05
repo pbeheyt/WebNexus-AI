@@ -106,7 +106,7 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-theme-hover rounded;
+    @apply bg-gray-300 dark:bg-theme-hover rounded; /* Updated base and added dark override */
   }
   
   ::-webkit-scrollbar-thumb:hover {
