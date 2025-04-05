@@ -23,7 +23,6 @@ export function setupTabListener() {
  * @param {Object} tab - Tab information
  */
 async function handleTabUpdate(tabId, changeInfo, tab) {
-  // --- Existing Platform Injection Logic ---
   // This part handles injecting the content script into the specific AI platform tab when it loads.
   if (changeInfo.status === 'complete' && tab.url) {
     try {
@@ -69,7 +68,6 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     }
   }
 
-  // --- New Sidebar Update Logic ---
   // This part handles updating the sidebar context when navigation occurs in *any* tab where the sidebar is open.
   // Run if URL changes OR status is complete (and URL exists)
   if (tab.url && (changeInfo.url || changeInfo.status === 'complete')) {
@@ -78,8 +76,6 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
       if (isSidebarVisible) {
         logger.background.info(`Sidebar visible for tab ${tabId}, handling navigation/load.`);
         const newContentType = determineContentType(tab.url);
-        await storeFormattedContentForTab(tabId, null); // Clear formatted content
-        logger.background.info(`Cleared formatted content for tab ${tabId}.`);
 
         try {
           // Send message to the content script in the target tab
