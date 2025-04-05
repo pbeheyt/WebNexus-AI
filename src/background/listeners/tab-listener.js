@@ -6,6 +6,7 @@ import { getPlatformTabInfo, updateScriptInjectionStatus } from '../core/state-m
 import SidebarStateManager from '../../services/SidebarStateManager.js'; // Import the state manager
 import logger from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
+import { determineContentType } from '../../shared/utils/content-utils.js'; // Added import
 
 /**
  * Set up tab update and activation listeners
@@ -24,7 +25,7 @@ export function setupTabListener() {
  * @param {Object} tab - Tab information
  */
 async function handleTabUpdate(tabId, changeInfo, tab) {
-  // This part handles injecting the content script into the specific AI platform tab when it loads.
+  // --- Platform Tab Injection Logic ---
   if (changeInfo.status === 'complete' && tab.url) {
     try {
       // Get the current AI platform tab information
@@ -69,10 +70,31 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     }
   }
 
-  // Removed the old sidebar handling logic that checked SidebarStateManager,
-  // called ensureSidebarScriptInjected, and sent 'pageNavigated' messages.
-  // The native Side Panel API handles its own lifecycle and doesn't require this specific logic on tab updates.
-  // Platform tab injection logic above remains unchanged.
+  // --- Side Panel Navigation Detection Logic ---
+  // Check if the URL changed or the tab finished loading (status === 'complete')
+  if ((changeInfo.status === 'complete' || changeInfo.url) && tab.url) {
+    try {
+      // Check if the side panel is *intended* to be visible for this tab
+      const isVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
+
+      if (isVisible) {
+        logger.background.info(`Tab ${tabId} navigated to ${tab.url}. Side panel is relevant. Checking content type.`);
+        const newContentType = determineContentType(tab.url);
+
+        // Send message to the runtime (listened to by SidebarApp)
+        chrome.runtime.sendMessage({
+          action: 'pageNavigated',
+          tabId: tabId,
+          newUrl: tab.url,
+          newContentType: newContentType
+        });
+        logger.background.info(`Sent 'pageNavigated' message for tab ${tabId} with new URL and type: ${newContentType}`);
+      }
+      // No need for an else block, if not visible, we do nothing.
+    } catch (error) {
+      logger.background.error(`Error handling side panel navigation detection for tab ${tabId}:`, error);
+    }
+  }
 }
 
 /**

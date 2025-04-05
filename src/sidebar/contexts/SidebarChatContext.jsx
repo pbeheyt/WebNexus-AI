@@ -9,6 +9,7 @@ import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
+import logger from '../../shared/logger'; // Added logger import
 
 const SidebarChatContext = createContext(null);
 
@@ -16,8 +17,7 @@ export function SidebarChatProvider({ children }) {
   const { 
     selectedPlatformId, 
     selectedModel, 
-    hasCredentials, // Assuming this might still be used elsewhere
-    hasAnyPlatformCredentials, // Add this one
+    hasAnyPlatformCredentials,
     tabId, 
     platforms, 
     getPlatformConfig 
@@ -618,10 +618,45 @@ export function SidebarChatProvider({ children }) {
     setIsCanceling // Added setIsCanceling as per requirement
   ]);
 
-  // Function to reset the flag indicating if extracted content has been added to the chat
-  const resetExtractionFlag = useCallback(() => {
-    setExtractedContentAdded(false);
-  }, []);
+  // Function to clear the stored formatted content for the current tab
+  const clearFormattedContentForTab = useCallback(async () => {
+    if (tabId === null || tabId === undefined) {
+      logger.sidebar.warn('clearFormattedContentForTab called without a valid tabId.');
+      return;
+    }
+
+    const tabIdKey = tabId.toString();
+    logger.sidebar.info(`Attempting to clear formatted content for tab: ${tabIdKey}`);
+
+    try {
+      // Retrieve the entire formatted content object
+      const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT);
+      const allFormattedContent = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
+
+      // Check if the key exists before deleting
+      if (allFormattedContent.hasOwnProperty(tabIdKey)) {
+        // Create a mutable copy to avoid modifying the original object directly from storage result
+        const updatedFormattedContent = { ...allFormattedContent };
+
+        // Delete the entry for the current tab
+        delete updatedFormattedContent[tabIdKey];
+
+        // Save the modified object back to storage
+        await chrome.storage.local.set({ [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: updatedFormattedContent });
+        logger.sidebar.info(`Successfully cleared formatted content for tab: ${tabIdKey}`);
+      } else {
+        logger.sidebar.info(`No formatted content found in storage for tab: ${tabIdKey}. No action needed.`);
+      }
+
+      // Also reset the local flag indicating if extracted content was added to the current chat view
+      setExtractedContentAdded(false);
+      logger.sidebar.info(`Reset extractedContentAdded flag for tab: ${tabIdKey}`);
+
+    } catch (error) {
+      logger.sidebar.error(`Error clearing formatted content for tab ${tabIdKey}:`, error);
+      // Optionally: Show an error notification to the user
+    }
+  }, [tabId, setExtractedContentAdded]); // Dependencies: tabId and the setter
 
 
   return (
@@ -640,7 +675,7 @@ export function SidebarChatProvider({ children }) {
       tokenStats,
       contextStatus,
       resetCurrentTabData, // Add the new function here
-      resetExtractionFlag // Added
+      clearFormattedContentForTab // Renamed and implemented function
     }}>
       {children}
     </SidebarChatContext.Provider>

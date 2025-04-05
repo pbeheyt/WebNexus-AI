@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-// Removed unused useTheme import
 import { useSidebarPlatform } from '../contexts/platform'; // Keep this for setTabId
 import { useSidebarChat } from './contexts/SidebarChatContext';
+import { useContent } from '../components/content/ContentContext'; // Added useContent import
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
@@ -9,12 +9,10 @@ import { AppHeader } from '../components';
 import logger from '../shared/logger'; // Import logger
 
 export default function SidebarApp() {
-  // Removed unused theme variable
   const { tabId, setTabId } = useSidebarPlatform(); // Get setTabId
-  const { resetCurrentTabData } = useSidebarChat(); // Removed resetExtractionFlag
+  const { resetCurrentTabData, clearFormattedContentForTab } = useSidebarChat(); // Get clearFormattedContentForTab
+  const { updateContentContext } = useContent(); // Get updateContentContext
   const [isReady, setIsReady] = useState(false);
-  // Removed updateContentContext state
-  // Removed messaging state
   const [headerExpanded, setHeaderExpanded] = useState(true);
 
   // Parse Tab ID from URL on mount, with fallback to background message
@@ -44,6 +42,38 @@ export default function SidebarApp() {
 
   // Removed useEffect for IframeMessaging initialization and pageNavigated handler
   // Removed useEffect for sending THEME_CHANGED and SIDEBAR_READY via IframeMessaging
+
+  // Effect to listen for navigation events from the background script
+  useEffect(() => {
+    if (!tabId) return; // Don't set up listener if tabId isn't ready
+
+    const messageListener = (message, sender, sendResponse) => {
+      if (message.action === 'pageNavigated' && message.tabId === tabId) {
+        logger.sidebar.info(`Received pageNavigated event for current tab ${tabId}:`, message);
+        try {
+          // Update the content context with the new URL and type
+          updateContentContext(message.newUrl, message.newContentType);
+          logger.sidebar.info(`Content context updated for tab ${tabId} to URL: ${message.newUrl}, Type: ${message.newContentType}`);
+
+          // Clear the stored formatted content for this tab
+          clearFormattedContentForTab(); // Already knows the tabId from context
+          logger.sidebar.info(`Cleared formatted content for tab ${tabId} due to navigation.`);
+
+        } catch (error) {
+          logger.sidebar.error(`Error handling pageNavigated event for tab ${tabId}:`, error);
+        }
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(messageListener);
+    logger.sidebar.info(`Added runtime message listener for pageNavigated events (tabId: ${tabId})`);
+
+    // Cleanup function
+    return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
+      logger.sidebar.info(`Removed runtime message listener for pageNavigated events (tabId: ${tabId})`);
+    };
+  }, [tabId, updateContentContext, clearFormattedContentForTab]); // Dependencies: run when tabId or context functions change
 
   // Removed handleClose function
 
