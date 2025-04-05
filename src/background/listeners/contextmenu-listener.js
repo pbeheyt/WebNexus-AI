@@ -1,9 +1,9 @@
 // src/background/listeners/contextmenu-listener.js - Context menu actions
 
-import { toggleSidebar } from '../services/sidebar-manager.js';
+import { toggleNativeSidePanel } from '../services/sidebar-manager.js'; // Updated import
 import logger from '../../shared/logger.js';
 
-const CONTEXT_MENU_ID = "open-sidebar-context";
+const CONTEXT_MENU_ID = "open-sidebar-context"; // Keep the same ID for now
 
 /**
  * Handle context menu item clicks
@@ -14,22 +14,31 @@ async function handleContextMenuClick(info, tab) {
   if (info.menuItemId === CONTEXT_MENU_ID) {
     logger.background.info(`Context menu "${CONTEXT_MENU_ID}" clicked for tab ${tab.id}`);
     try {
-      // Construct message and sender objects similar to how toggleSidebar expects them
-      const message = { tabId: tab.id, visible: true }; // Explicitly open
+      // Construct message and sender objects
+      const message = { tabId: tab.id, visible: true }; // Explicitly request to enable
       const sender = { tab: tab };
-      const sendResponse = (response) => {
-        if (!response?.success) {
-          logger.background.error('Context menu toggleSidebar failed:', response);
+      const sendResponse = async (response) => { // Make callback async
+        if (response && response.success) {
+          logger.background.info(`Context menu toggleNativeSidePanel succeeded for tab ${tab.id}. State: ${response.visible}`);
+          // If enabled, open it from the user gesture context
+          if (response.visible) {
+            try {
+              await chrome.sidePanel.open({ tabId: tab.id });
+              logger.background.info(`Opened side panel via context menu for tab ${tab.id}.`);
+            } catch (openError) {
+              logger.background.error(`Error opening side panel via context menu for tab ${tab.id}:`, openError);
+            }
+          }
         } else {
-           logger.background.info(`Context menu toggleSidebar succeeded for tab ${tab.id}`);
+          logger.background.error('Context menu toggleNativeSidePanel failed:', response);
         }
       };
 
-      // Call toggleSidebar to open the sidebar
-      await toggleSidebar(message, sender, sendResponse);
+      // Call toggleNativeSidePanel to enable the side panel
+      await toggleNativeSidePanel(message, sender, sendResponse);
 
     } catch (error) {
-      logger.background.error(`Error handling context menu click for tab ${tab.id}:`, error);
+      logger.background.error(`Error handling native side panel context menu click for tab ${tab.id}:`, error);
     }
   }
 }

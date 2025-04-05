@@ -323,7 +323,8 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
       // Send to content script for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
-          chrome.tabs.sendMessage(tabId, {
+          // Use runtime API for sidebar communication
+          chrome.runtime.sendMessage({
             action: 'streamChunk',
             streamId,
             chunkData: {
@@ -361,7 +362,8 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
       // Ensure the final message (success or error) is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
-          chrome.tabs.sendMessage(tabId, {
+          // Use runtime API for sidebar communication
+          chrome.runtime.sendMessage({
             action: 'streamChunk',
             streamId,
             chunkData: finalChunkData

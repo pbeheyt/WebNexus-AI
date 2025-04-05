@@ -66,6 +66,11 @@ const logger = {
     warn: (message, data) => log('service', 'warn', message, data),
     error: (message, data) => log('service', 'error', message, data)
   },
+  sidebar: { // Add sidebar logger instance
+    info: (message, data) => log('sidebar', 'info', message, data),
+    warn: (message, data) => log('sidebar', 'warn', message, data),
+    error: (message, data) => log('sidebar', 'error', message, data)
+  },
   getLogs,
   clearLogs
 };

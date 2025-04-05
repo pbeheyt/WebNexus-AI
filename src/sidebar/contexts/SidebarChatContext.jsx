@@ -78,18 +78,17 @@ export function SidebarChatProvider({ children }) {
         }
         
         const modelData = config.api.models.find(m => m.id === selectedModel);
-        console.log('Model configuration found:', {
-          modelFound: !!modelData,
-          selectedModel,
-          availableModels: config.api.models.map(m => m.id)
-        });
+        // Removed console.log
         
         setModelConfigData(modelData);
       } catch (error) {
         console.error('Failed to load full platform configuration:', error);
+        // Optionally reset state or set defaults if config fails
+        setFullPlatformConfig(null);
+        setModelConfigData(null);
       }
     };
-    
+
     loadFullConfig();
   }, [selectedPlatformId, selectedModel, tabId, getPlatformConfig]);
 
@@ -541,7 +540,7 @@ export function SidebarChatProvider({ children }) {
       setStreamingContent('');
       setIsProcessing(false);
       
-      console.log('Stream cancelled successfully:', result);
+      // Removed console.log
     } catch (error) {
       console.error('Error cancelling stream:', error);
       
@@ -573,14 +572,14 @@ export function SidebarChatProvider({ children }) {
     }
 
     if (window.confirm("Are you sure you want to clear all chat history and data for this tab? This action cannot be undone.")) {
-      console.log(`Attempting to clear data for tab: ${tabId}`);
+      // Removed console.log
       try {
         const response = await chrome.runtime.sendMessage({
           action: 'clearTabData',
           tabId: tabId
         });
 
-        console.log('Response from background script:', response);
+        // Removed console.log
 
         if (response && response.success) {
           // Reset local state immediately
@@ -595,7 +594,7 @@ export function SidebarChatProvider({ children }) {
           // Clear token data (which also recalculates stats)
           await clearTokenData();
 
-          console.log("Tab data cleared and context reset successfully.");
+          // Removed console.log
           // Optionally: Show a success notification to the user
           // e.g., using a toast notification system if available
         } else {
@@ -633,7 +632,6 @@ export function SidebarChatProvider({ children }) {
       setInputValue,
       sendMessage,
       cancelStream,
-      isProcessing,
       isCanceling,
       clearChat,
       processingStatus,

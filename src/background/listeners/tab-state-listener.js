@@ -143,7 +143,16 @@ export function setupTabStateListener() {
     }
 
     // Run existing sidebar state cleanup (handles TAB_SIDEBAR_STATES)
+    // Run existing sidebar state cleanup (handles TAB_SIDEBAR_STATES)
     SidebarStateManager.cleanupTabStates([tabId]); // Pass removed tabId for targeted cleanup
+
+    // Also disable the side panel for the closed tab, if it was enabled
+    logger.background.info(`Attempting to disable side panel for closed tab ${tabId}`); // Changed debug to info
+    chrome.sidePanel.setOptions({ tabId, enabled: false })
+      .catch(err => {
+        // Log warning, but don't throw - tab might already be gone or panel wasn't open
+        logger.background.warn(`Failed to disable side panel for closed tab ${tabId}:`, err.message);
+      });
   });
 
   // Periodically clean up tab states to prevent storage bloat

@@ -63,13 +63,26 @@ export function Popup() {
       updateStatus('Toggling sidebar...', true); // Indicate processing
 
       const response = await chrome.runtime.sendMessage({
-        action: 'toggleSidebar',
+        action: 'toggleNativeSidePanelAction', // Updated action name
         tabId: currentTab.id
       });
 
       if (response && response.success) {
-        updateStatus(`Sidebar ${response.visible ? 'opened' : 'closed'}`);
-        window.close(); // Auto-close the popup
+        updateStatus(`Sidebar ${response.visible ? 'enabled' : 'disabled'}`); // Updated status message
+        // If the panel was enabled, explicitly open it from the user gesture context
+        if (response.visible) {
+          try {
+            // Use tabId instead of windowId for opening the side panel
+            await chrome.sidePanel.open({ tabId: currentTab.id }); 
+            updateStatus('Sidebar opened'); // Update status after successful open
+          } catch (openError) {
+             console.error('Error opening side panel:', openError);
+             updateStatus(`Error opening sidebar: ${openError.message}`);
+             // Don't close popup if opening failed
+             return; // Exit early
+          }
+        }
+        window.close(); // Auto-close the popup after successful enable/disable and open
       } else if (response && response.error) {
         // Use updateStatus for error feedback
         updateStatus(`Error toggling sidebar: ${response.error}`);

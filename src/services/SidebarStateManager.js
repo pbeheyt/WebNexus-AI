@@ -68,11 +68,7 @@ class SidebarStateManager {
           // Toggle for active tab
           await this._toggleForTab(activeTab.id, message.visible);
           
-          // Send toggle command to active tab
-          chrome.tabs.sendMessage(activeTab.id, {
-            action: 'toggleSidebar',
-            visible: await this.getSidebarVisibilityForTab(activeTab.id)
-          });
+          // Removed obsolete chrome.tabs.sendMessage call
           
           sendResponse({ 
             success: true, 
@@ -86,11 +82,7 @@ class SidebarStateManager {
         // Toggle for specified tab
         await this._toggleForTab(tabId, message.visible);
         
-        // Send toggle command to specified tab
-        chrome.tabs.sendMessage(tabId, {
-          action: 'toggleSidebar',
-          visible: await this.getSidebarVisibilityForTab(tabId)
-        });
+        // Removed obsolete chrome.tabs.sendMessage call
         
         sendResponse({ 
           success: true, 

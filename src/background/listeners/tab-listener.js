@@ -2,10 +2,8 @@
 
 import { isPlatformTab, getPlatformContentScript } from '../services/platform-integration.js';
 import { injectContentScript } from '../services/content-extraction.js';
-import { getPlatformTabInfo, updateScriptInjectionStatus, storeFormattedContentForTab } from '../core/state-manager.js';
-import SidebarStateManager from '../../services/SidebarStateManager.js'; // Added
-import { ensureSidebarScriptInjected } from '../services/sidebar-manager.js'; // Added for navigation handling
-import { determineContentType } from '../../shared/utils/content-utils.js'; // Added
+import { getPlatformTabInfo, updateScriptInjectionStatus } from '../core/state-manager.js'; // Removed storeFormattedContentForTab import (if unused elsewhere)
+// Removed SidebarStateManager, ensureSidebarScriptInjected, determineContentType imports as they are no longer needed here
 import logger from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 
@@ -69,59 +67,8 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     }
   }
 
-  // This part handles updating the sidebar context when navigation occurs in *any* tab where the sidebar is open.
-  // Run if URL changes OR status is complete (and URL exists)
-  if (tab.url && (changeInfo.url || changeInfo.status === 'complete')) {
-    try {
-      const isSidebarVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
-      if (isSidebarVisible) {
-        logger.background.info(`Sidebar visible for tab ${tabId}, handling navigation/load.`);
-
-        // --- New logic for ensuring sidebar visibility after navigation ---
-        logger.background.info(`Navigation/load in tab ${tabId} while sidebar state is true. Ensuring script and visibility.`);
-        await ensureSidebarScriptInjected(tabId);
-
-        // Attempt to explicitly show the sidebar after ensuring script injection
-        try {
-          await chrome.tabs.sendMessage(tabId, {
-            action: 'toggleSidebar',
-            visible: true,
-            tabId: tabId
-          });
-          logger.background.info(`Sent explicit 'toggleSidebar visible: true' message to tab ${tabId} after navigation.`);
-        } catch (error) {
-          // Log errors if the content script isn't ready, but don't stop execution.
-          if (error.message?.includes('Receiving end does not exist') || error.message?.includes('Could not establish connection')) {
-             logger.background.warn(`Could not send explicit 'toggleSidebar visible: true' message to tab ${tabId} (content script likely not ready): ${error.message}`);
-          } else {
-             logger.background.error(`Error sending explicit 'toggleSidebar visible: true' message to tab ${tabId}:`, error);
-          }
-        }
-        // --- End of new logic ---
-
-        const newContentType = determineContentType(tab.url);
-
-        try {
-          // Send message to the content script in the target tab to update its context
-          await chrome.tabs.sendMessage(tabId, {
-            action: 'pageNavigated',
-            newUrl: tab.url,
-            newContentType: newContentType
-          });
-          logger.background.info(`Sent 'pageNavigated' message to tab ${tabId}.`);
-        } catch (error) {
-          // It's common for sendMessage to fail if the content script isn't ready or injected yet,
-          // especially on initial page loads before the sidebar injector runs or if the tab is discarded.
-          if (error.message?.includes('Receiving end does not exist') || error.message?.includes('Could not establish connection')) {
-            logger.background.info(`Could not send 'pageNavigated' message to tab ${tabId} (content script likely not ready/injected): ${error.message}`);
-          } else {
-            // Log other errors as warnings as they might indicate a different issue.
-            logger.background.warn(`Error sending 'pageNavigated' message to tab ${tabId}:`, error);
-          }
-        }
-      }
-    } catch (error) {
-      logger.background.error(`Error handling sidebar update logic for tab ${tabId}:`, error);
-    }
-  }
+  // Removed the old sidebar handling logic that checked SidebarStateManager,
+  // called ensureSidebarScriptInjected, and sent 'pageNavigated' messages.
+  // The native Side Panel API handles its own lifecycle and doesn't require this specific logic on tab updates.
+  // Platform tab injection logic above remains unchanged.
 }

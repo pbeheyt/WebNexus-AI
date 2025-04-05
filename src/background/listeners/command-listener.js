@@ -1,6 +1,6 @@
 // src/background/listeners/command-listener.js - Keyboard shortcuts
 
-import { toggleSidebar } from '../services/sidebar-manager.js'; // Import the function directly
+import { toggleNativeSidePanel } from '../services/sidebar-manager.js'; // Import the updated function
 import logger from '../../shared/logger.js';
 
 /**
@@ -29,21 +29,32 @@ async function handleCommand(command) {
       }
       
       const activeTab = tabs[0];
-      logger.background.info(`Active tab for sidebar toggle: ${activeTab.id}`);
+      logger.background.info(`Active tab for native side panel toggle: ${activeTab.id}`);
       
-      // Call toggleSidebar directly with appropriate parameters
-      await toggleSidebar(
+      // Call toggleNativeSidePanel directly with appropriate parameters
+      await toggleNativeSidePanel(
         { tabId: activeTab.id },  // message object with tabId
         { tab: activeTab },       // sender object with tab info
-        (response) => {           // sendResponse callback
-          if (!response.success) {
-            logger.background.error('Sidebar toggle failed:', response);
+        async (response) => {     // Make the callback async
+          if (response && response.success) {
+            logger.background.info(`Native side panel ${response.visible ? 'enabled' : 'disabled'} via shortcut for tab ${activeTab.id}.`);
+            // If enabled, open it from the user gesture context
+            if (response.visible) {
+              try {
+                await chrome.sidePanel.open({ tabId: activeTab.id });
+                logger.background.info(`Opened side panel via shortcut for tab ${activeTab.id}.`);
+              } catch (openError) {
+                logger.background.error(`Error opening side panel via shortcut for tab ${activeTab.id}:`, openError);
+              }
+            }
+          } else {
+            logger.background.error('Native side panel toggle failed via shortcut:', response);
           }
         }
       );
       
     } catch (error) {
-      logger.background.error('Error handling sidebar toggle shortcut:', error);
+      logger.background.error('Error handling native side panel toggle shortcut:', error);
     }
   }
 }

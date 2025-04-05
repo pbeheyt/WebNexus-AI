@@ -357,11 +357,12 @@ export function createTabAwarePlatformContext(options = {}) {
       platforms,
       selectedPlatformId,
       selectPlatform,
-      isLoading,
-      getPlatformConfig,
-      tabId,
+  isLoading,
+  getPlatformConfig,
+  tabId,
+  setTabId, // <--- ADD THIS LINE
 
-      // Sidebar-specific properties (undefined for popup)
+  // Sidebar-specific properties (undefined for popup)
       ...(interfaceType === INTERFACE_SOURCES.SIDEBAR ? {
         models,
         selectedModel: selectedModelId, // Renamed for clarity

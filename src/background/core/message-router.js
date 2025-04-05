@@ -5,7 +5,7 @@ import { determineContentType } from '../../shared/utils/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
 import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
-import { toggleSidebar, getSidebarState } from '../services/sidebar-manager.js';
+import { toggleNativeSidePanel } from '../services/sidebar-manager.js'; // Import the native panel toggle function
 import { handleThemeOperation } from '../services/theme-service.js';
 import { clearSingleTabData } from '../listeners/tab-state-listener.js';
 
@@ -134,18 +134,8 @@ function registerServiceHandlers() {
     handleProcessContentRequest(message, sendResponse);
     return true; // Keep channel open for async response
   });
-  
-  // Toggle sidebar
-  messageHandlers.set('toggleSidebar', (message, sender, sendResponse) => {
-    toggleSidebar(message, sender, sendResponse);
-    return true; // Keep channel open for async response
-  });
-  
-  // Get sidebar state
-  messageHandlers.set('getSidebarState', (message, sender, sendResponse) => {
-    getSidebarState(message, sender, sendResponse);
-    return true; // Keep channel open for async response
-  });
+
+  // Removed 'toggleSidebar' and 'getSidebarState' handlers as they are obsolete with native side panel
 
   // Get theme
   messageHandlers.set('getTheme', (message, sender, sendResponse) => {
@@ -184,5 +174,14 @@ function registerServiceHandlers() {
       });
 
     return true;
+  });
+
+  // Handle requests to toggle the native side panel (e.g., from popup)
+  messageHandlers.set('toggleNativeSidePanelAction', (message, sender, sendResponse) => {
+    logger.background.info('Received toggleNativeSidePanelAction request');
+    // Call the actual function from sidebar-manager
+    toggleNativeSidePanel(message, sender, sendResponse);
+    // toggleNativeSidePanel is async and handles sendResponse itself
+    return true; // Keep channel open for async response
   });
 }
