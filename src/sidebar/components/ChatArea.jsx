@@ -3,11 +3,12 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
+import { Toggle } from '../../components/core/Toggle'; // Added Toggle import
 import { useContent } from '../../components/content/ContentContext'; // Added import
 import { CONTENT_TYPES } from '../../shared/constants'; // Added import
 
 function ChatArea({ className = '' }) {
-  const { messages, isProcessing } = useSidebarChat();
+  const { messages, isProcessing, isContentExtractionEnabled, setIsContentExtractionEnabled } = useSidebarChat(); // Added state
   const { contentType } = useContent(); // Get contentType
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null); // Ref for the scrollable container
@@ -159,6 +160,18 @@ function ChatArea({ className = '' }) {
           </>
         ) : (
           <>
+            {/* Content Extraction Toggle */}
+            <div className="flex items-center justify-center gap-2 mb-4 px-4 text-sm text-theme-secondary">
+              <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract page content for context</label>
+              <Toggle
+                id="content-extract-toggle"
+                checked={isContentExtractionEnabled}
+                onChange={() => setIsContentExtractionEnabled(prev => !prev)}
+                disabled={!hasAnyPlatformCredentials} // Disable if no credentials
+              />
+            </div>
+
+            {/* Platform Logo and Model */}
             {selectedPlatformId && selectedPlatform.iconUrl ? (
               <>
                 <img

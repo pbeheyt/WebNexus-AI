@@ -115,36 +115,46 @@ export async function processContentViaApi(params) {
     let extractedContent = null;
     let newlyFormattedContent = null; // To hold content formatted in this run
     const contentType = determineContentType(url);
+    const skipExtractionRequested = params.skipInitialExtraction === true; // Retrieve the flag
 
-    // 1. Check if formatted content already exists for this tab
+    // 1. Decide whether to extract content based on existence and user request
     const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
+    const shouldExtract = !initialFormattedContentExists && !skipExtractionRequested; // New condition
 
-    if (initialFormattedContentExists) {
-      logger.background.info(`Formatted content already exists for tab ${tabId}, skipping extraction.`);
-      // No need to extract or format
-    } else {
-      logger.background.info(`No formatted content found for tab ${tabId}, proceeding with extraction.`);
-      // 2. Reset previous extraction state
-      await resetExtractionState();
-      await updateApiProcessingStatus('extracting', platformId || await getPreferredAiPlatform());
+    if (shouldExtract) {
+        logger.background.info(`Content extraction will proceed for tab ${tabId}.`);
+        // Reset previous extraction state (ensure this happens ONLY if extracting)
+        await resetExtractionState();
+        // Determine effectivePlatformId *before* using it here
+        let tempEffectivePlatformId = platformId || await getPreferredAiPlatform(source); // Resolve temporarily if needed
+        await updateApiProcessingStatus('extracting', tempEffectivePlatformId); // Use resolved platform
 
-      // 3. Extract content
-      logger.background.info(`Content type determined: ${contentType}`);
-      await extractContent(tabId, url);
-      extractedContent = await getExtractedContent();
+        // Extract content
+        logger.background.info(`Content type determined: ${contentType}`);
+        await extractContent(tabId, url); // url should be available here
+        extractedContent = await getExtractedContent(); // Assign to the outer scope variable
 
-      if (!extractedContent) {
-        throw new Error('Failed to extract content');
-      }
-      logger.background.info('Content extraction completed.');
-
-      // 3.5 Format and Store Content (New step)
-      if (extractedContent) {
-        logger.background.info(`Formatting extracted content (type: ${contentType})...`);
-        newlyFormattedContent = ContentFormatter.formatContent(extractedContent, contentType);
-        await storeFormattedContentForTab(tabId, newlyFormattedContent);
-        logger.background.info(`Formatted and stored content for tab ${tabId}.`);
-      }
+        if (!extractedContent) {
+            // Handle extraction failure more gracefully if needed, maybe log and continue?
+            logger.background.warn(`Failed to extract content for tab ${tabId}, proceeding without it.`);
+            newlyFormattedContent = null; // Ensure null if extraction failed
+        } else {
+            logger.background.info('Content extraction completed.');
+            // Format and Store Content
+            logger.background.info(`Formatting extracted content (type: ${contentType})...`);
+            newlyFormattedContent = ContentFormatter.formatContent(extractedContent, contentType); // Assign to outer scope variable
+            await storeFormattedContentForTab(tabId, newlyFormattedContent);
+            logger.background.info(`Formatted and stored content for tab ${tabId}.`);
+        }
+    } else if (initialFormattedContentExists) {
+        logger.background.info(`Formatted content already exists for tab ${tabId}, skipping extraction.`);
+        // Ensure these are null if not extracting now
+        extractedContent = null;
+        newlyFormattedContent = null;
+    } else { // Content doesn't exist AND skipExtractionRequested is true
+        logger.background.info(`Content extraction skipped for tab ${tabId} by user request.`);
+        extractedContent = null; // Ensure null if skipped
+        newlyFormattedContent = null; // Ensure null if skipped
     }
 
     // 4. Get the prompt
@@ -213,23 +223,27 @@ export async function processContentViaApi(params) {
     // 10. Initialize streaming response
     await initializeStreamResponse(streamId, effectivePlatformId, resolvedParams.model); // Include model
 
-    // 11. Determine if Formatted Content should be included (only for the first user message)
-    const isFirstUserMessage = conversationHistory.length === 0;
+    // 11. Determine the formatted content to use for the request based on the extraction outcome and message history
+    let formattedContentForRequest = null;
+    const isFirstUserMessage = conversationHistory.length === 0; // Ensure conversationHistory is correctly passed/available
     logger.background.info(`Is this the first user message (history empty)? ${isFirstUserMessage}`);
 
-    let formattedContentForRequest = null;
     if (isFirstUserMessage) {
-        const hasStoredContentNow = await hasFormattedContentForTab(tabId);
-        if (hasStoredContentNow) {
+        if (shouldExtract && newlyFormattedContent) { // Use the content just formatted
+            formattedContentForRequest = newlyFormattedContent;
+            logger.background.info(`First user message: Using newly extracted/formatted content for tab ${tabId}.`);
+        } else if (initialFormattedContentExists) { // Use previously stored content
             formattedContentForRequest = await getFormattedContentForTab(tabId);
-            logger.background.info(`First user message: Retrieved stored formatted content for tab ${tabId} for the request.`);
-        } else {
-            // This case might happen if extraction failed or was skipped but history is empty.
-            logger.background.info(`First user message: No formatted content found or stored for tab ${tabId} for the request.`);
+            logger.background.info(`First user message: Using pre-existing formatted content for tab ${tabId}.`);
+        } else { // No content exists and extraction was skipped or failed
+            logger.background.info(`First user message: No content available (extraction skipped or failed) for tab ${tabId}.`);
+            formattedContentForRequest = null;
         }
-    } else {
+    } else { // Not the first message
         logger.background.info(`Not the first user message: Skipping formatted content retrieval.`);
+        formattedContentForRequest = null;
     }
+
 
     // 12. Notify the content script about streaming start if this is from sidebar
     if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {

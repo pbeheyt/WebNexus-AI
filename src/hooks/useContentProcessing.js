@@ -105,7 +105,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       modelId = null, // This is now just passed as a model override
       streaming = false,
       onStreamChunk = null,
-      conversationHistory = []
+      conversationHistory = [],
+      skipInitialExtraction = false // Added new option with default
     } = options;
 
     if (!currentTab?.id) {
@@ -140,6 +141,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       };
 
       // Add optional parameters if provided
+      if (skipInitialExtraction !== undefined) request.skipInitialExtraction = skipInitialExtraction; // Add the new flag
       if (modelId) request.modelId = modelId; // Just pass as model override
       if (promptContent) request.customPrompt = promptContent;
       if (conversationHistory?.length > 0) request.conversationHistory = conversationHistory;

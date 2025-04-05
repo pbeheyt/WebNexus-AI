@@ -32,6 +32,7 @@ export function SidebarChatProvider({ children }) {
   const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [isContentExtractionEnabled, setIsContentExtractionEnabled] = useState(true); // Added state for content extraction toggle
 
   // Platform and model configuration
   const [fullPlatformConfig, setFullPlatformConfig] = useState(null);
@@ -372,6 +373,9 @@ export function SidebarChatProvider({ children }) {
     setStreamingMessageId(assistantMessageId);
     setStreamingContent('');
 
+    // Determine if this is the first message (before adding the current user message)
+    const isFirstMessage = messages.length === 0;
+
     // Track tokens for user message
     await trackTokens({
       messageId: userMessageId,
@@ -402,7 +406,9 @@ export function SidebarChatProvider({ children }) {
         modelId: selectedModel,
         promptContent: text.trim(),
         conversationHistory,
-        streaming: true
+        streaming: true,
+        // Pass extraction flag based on whether it's the first message and the toggle state
+        skipInitialExtraction: isFirstMessage ? !isContentExtractionEnabled : false
       });
 
       if (!result || !result.success) {
@@ -658,7 +664,9 @@ export function SidebarChatProvider({ children }) {
       tokenStats,
       contextStatus,
       resetCurrentTabData, // Add the new function here
-      clearFormattedContentForTab // Renamed and implemented function
+      clearFormattedContentForTab, // Renamed and implemented function
+      isContentExtractionEnabled, // Added state
+      setIsContentExtractionEnabled // Added setter
     }}>
       {children}
     </SidebarChatContext.Provider>
