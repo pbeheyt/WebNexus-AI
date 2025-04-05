@@ -32,6 +32,7 @@ module.exports = {
     },
   },
   plugins: [
+    // Original theme-aware utility classes
     function({ addUtilities }) {
       // Define theme-aware utility classes
       const themeUtilities = {
@@ -66,6 +67,22 @@ module.exports = {
       };
 
       addUtilities(themeUtilities);
+    },
+    
+    // New custom group variants for code block hover states
+    function({ addVariant, e }) {
+      // Add custom group variants for code blocks and message containers
+      addVariant('code-block-group-hover', ({ modifySelectors, separator }) => {
+        modifySelectors(({ className }) => {
+          return `.code-block-group:hover .${e(`code-block-group-hover${separator}${className}`)}`
+        })
+      });
+      
+      addVariant('message-group-hover', ({ modifySelectors, separator }) => {
+        modifySelectors(({ className }) => {
+          return `.message-group:hover .${e(`message-group-hover${separator}${className}`)}`
+        })
+      });
     }
   ],
 }

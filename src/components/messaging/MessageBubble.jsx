@@ -34,6 +34,7 @@ const copyToClipboardUtil = (text) => {
 /**
  * CodeBlock component with copy functionality
  * Extracted as a separate component to properly manage state
+ * Use a unique group name to prevent conflicts with parent groups
  */
 const CodeBlock = memo(({ className, children }) => {
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
@@ -52,7 +53,7 @@ const CodeBlock = memo(({ className, children }) => {
   };
   
   return (
-    <div className="relative group">
+    <div className="relative code-block-group">
       <pre className="bg-theme-hover p-2 rounded overflow-x-auto text-sm font-mono mb-3 max-w-full">
         <code className={className}>
           {children}
@@ -62,7 +63,7 @@ const CodeBlock = memo(({ className, children }) => {
         onClick={copyCodeToClipboard}
         className={`absolute bottom-[-8px] right-2 p-1 rounded-md transition-opacity duration-200 shadow-sm
                    transform scale-90 z-10
-                   ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} 
+                   ${copyState === 'idle' ? 'opacity-0 code-block-group-hover:opacity-100' : 'opacity-100'} 
                    ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
                      copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
                      'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
@@ -148,7 +149,7 @@ const MessageBubbleComponent = ({
 
   // Assistant messages with no bubble, taking full width
   return (
-    <div className={`p-4 w-full group relative ${className}`}>
+    <div className={`p-4 w-full message-group relative ${className}`}>
       {/* Main content - Render Markdown for assistant messages */}
       <div className="prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-hidden">
         <ReactMarkdown
@@ -219,7 +220,7 @@ const MessageBubbleComponent = ({
           <button
             onClick={copyToClipboard}
             className={`p-1 rounded-md transition-opacity duration-200 z-50
-                       ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} 
+                       ${copyState === 'idle' ? 'opacity-0 message-group-hover:opacity-100' : 'opacity-100'} 
                        ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
                          copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
                          'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
