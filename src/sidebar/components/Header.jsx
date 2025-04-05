@@ -88,7 +88,7 @@ function Header() {
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div className=""> {/* Removed border-b border-theme */}
-        <div className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center justify-between px-4">
           {/* Container for conditional content (grows) */}
           <div className="flex items-center flex-grow min-w-0">
             {hasAnyPlatformCredentials ? (
@@ -99,7 +99,7 @@ function Header() {
                     <div ref={triggerRef}>
                       <button
                         onClick={() => setOpenDropdown(openDropdown === 'platform' ? null : 'platform')}
-                        className="flex items-center h-9 px-2 py-1.5 rounded focus:outline-none transition-colors"
+                        className="flex items-center h-9 px-2 py-2 rounded focus:outline-none transition-colors"
                         aria-label="Change Platform"
                         aria-haspopup="true"
                         aria-expanded={isPlatformDropdownOpen}
@@ -107,7 +107,7 @@ function Header() {
                         <img
                           src={selectedPlatformForDisplay.iconUrl}
                           alt={`${selectedPlatformForDisplay.name} logo`}
-                          className="w-6 h-6 object-contain mr-1"
+                          className="w-4 h-4 object-contain mr-1"
                         />
                         <span className="text-theme-secondary">
                           <ChevronIcon />

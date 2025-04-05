@@ -3,29 +3,27 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
-import { Toggle } from '../../components/core/Toggle'; // Added Toggle import
-import { useContent } from '../../contexts/ContentContext'; // Corrected path
-import { CONTENT_TYPES } from '../../shared/constants'; // Added import
+import { Toggle } from '../../components/core/Toggle';
+import { useContent } from '../../contexts/ContentContext';
+import { CONTENT_TYPES } from '../../shared/constants';
 
 function ChatArea({ className = '' }) {
-  const { messages, isProcessing, isContentExtractionEnabled, setIsContentExtractionEnabled } = useSidebarChat(); // Added state
-  const { contentType } = useContent(); // Get contentType
+  const { messages, isProcessing, isContentExtractionEnabled, setIsContentExtractionEnabled } = useSidebarChat();
+  const { contentType } = useContent();
   const messagesEndRef = useRef(null);
-  const scrollContainerRef = useRef(null); // Ref for the scrollable container
+  const scrollContainerRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
-  const { platforms, selectedPlatformId, selectedModel, hasAnyPlatformCredentials } = useSidebarPlatform(); // Add hasAnyPlatformCredentials
+  const { platforms, selectedPlatformId, selectedModel, hasAnyPlatformCredentials } = useSidebarPlatform();
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
 
   const getContentTypeIconSvg = (contentType) => {
     let iconSvg = '';
-    // Use a specific grey for the general icon, other colors as defined
-    const generalColor = '#6B7280'; // Changed from 'currentColor' to grey-500 hex
+    const generalColor = '#6B7280';
     const redditColor = '#FF4500';
     const pdfColor = '#F40F02';
 
     switch (contentType) {
       case CONTENT_TYPES.YOUTUBE:
-        // Reduced size
         iconSvg = `
           <svg class="youtube-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" viewBox="0 0 461.001 461.001" xml:space="preserve">
             <g>
@@ -35,7 +33,6 @@ function ChatArea({ className = '' }) {
         `;
         break;
       case CONTENT_TYPES.REDDIT:
-        // Reduced size
         iconSvg = `
           <svg class="reddit-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
             <circle cx="400" cy="400" fill="#ff4500" r="400"/>
@@ -44,7 +41,6 @@ function ChatArea({ className = '' }) {
         `;
         break;
       case CONTENT_TYPES.PDF:
-        // Reduced size
         iconSvg = `
           <svg class="pdf-icon w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z"
@@ -57,7 +53,6 @@ function ChatArea({ className = '' }) {
         break;
       case CONTENT_TYPES.GENERAL:
       default:
-        // Reduced size
         iconSvg = `
           <svg class="general-icon w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="2" y="2" width="20" height="20" rx="2" stroke="${generalColor}" stroke-width="1.5"/>
@@ -75,7 +70,6 @@ function ChatArea({ className = '' }) {
     return iconSvg;
   };
 
-  // Helper function to get content type display name
   const getContentTypeName = (type) => {
     switch (type) {
       case CONTENT_TYPES.YOUTUBE:
@@ -87,27 +81,24 @@ function ChatArea({ className = '' }) {
       case CONTENT_TYPES.GENERAL:
         return "Web Page";
       default:
-        return "Content"; // Fallback name
+        return "Content";
     }
   };
 
-  // Handle user scroll interaction
   const handleScroll = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
 
-    // Check if processing (streaming)
     if (isProcessing) {
       const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 25;
       if (!isAtBottom) {
-        setUserInteractedWithScroll(true); // User scrolled up during streaming
+        setUserInteractedWithScroll(true);
       } else {
-        setUserInteractedWithScroll(false); // User scrolled back to bottom during streaming
+        setUserInteractedWithScroll(false);
       }
     }
-  }, [isProcessing]); // Dependency: isProcessing
+  }, [isProcessing]);
 
-  // Effect to add/remove scroll listener
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
@@ -116,21 +107,18 @@ function ChatArea({ className = '' }) {
         scrollContainer.removeEventListener('scroll', handleScroll);
       };
     }
-  }, [handleScroll]); // Dependency: handleScroll callback
+  }, [handleScroll]);
 
-  // Auto-scroll to bottom when messages change, only if user hasn't scrolled up
   useEffect(() => {
     if (!userInteractedWithScroll && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, userInteractedWithScroll]); // Dependencies: messages, userInteractedWithScroll
+  }, [messages, userInteractedWithScroll]);
 
-  // Reset scroll interaction state when processing starts/stops
   useEffect(() => {
     setUserInteractedWithScroll(false);
-  }, [isProcessing]); // Dependency: isProcessing
+  }, [isProcessing]);
 
-  // Helper function to get the welcome message based on content type
   const getWelcomeMessage = (type) => {
     switch (type) {
       case CONTENT_TYPES.YOUTUBE:
@@ -148,46 +136,51 @@ function ChatArea({ className = '' }) {
 
   if (messages.length === 0) {
     return (
-      <div className={`${className} flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}>
+      <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5`}>
         {!hasAnyPlatformCredentials ? (
           // Display message if no credentials are set up
-          <>
+          <div className="flex flex-col items-center">
             <div className="text-4xl mb-4">⚙️</div> 
             <h3 className="text-base font-semibold mb-2">API Credentials Required</h3>
-            <p className="text-sm mb-4">
+            <p className="text-sm">
               Please configure API keys in the extension settings to enable chat features.
             </p>
-          </>
+          </div>
         ) : (
           <>
-            {/* Platform Logo and Model */}
-            {selectedPlatformId && selectedPlatform.iconUrl ? (
-              <>
-                <img
-                  src={selectedPlatform.iconUrl}
-                  alt={selectedPlatform.name}
-                  className="w-12 h-12 mb-4"
-                />
-                {/* Display just the model name below the platform logo */}
-                {selectedModel && (
-                  <div className="text-sm text-theme-secondary mb-20">
-                    {selectedModel}
-                  </div>
-                )}
-              </>
-            ) : (
-              <div></div>
-            )}
-            <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
-            <p className="text-sm mb-10">
-              {getWelcomeMessage(contentType)}
-            </p>
+            {/* First div: Platform Logo and Model */}
+            <div className="flex flex-col items-center">
+              {selectedPlatformId && selectedPlatform.iconUrl ? (
+                <>
+                  <img
+                    src={selectedPlatform.iconUrl}
+                    alt={selectedPlatform.name}
+                    className="w-12 h-12 mb-4"
+                  />
+                  {selectedModel && (
+                    <div className="text-sm text-theme-secondary">
+                      {selectedModel}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div></div>
+              )}
+            </div>
+
+            {/* Second div: Start a conversation message */}
+            <div className="flex flex-col items-center">
+              <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
+              <p className="text-sm">
+                {getWelcomeMessage(contentType)}
+              </p>
+            </div>
             
-            {/* Content Type Icon and Toggle (moved together) */}
-            {getContentTypeIconSvg(contentType) && (
-              <div className="flex flex-col items-center mt-4"> 
-                {/* Content Type Display */}
-                <div className="flex items-center justify-center">
+            {/* Third div: Content Type Icon and Toggle */}
+            <div className="flex flex-col items-center"> 
+              {/* Content Type Display */}
+              {getContentTypeIconSvg(contentType) && (
+                <div className="flex items-center justify-center mb-2">
                   <div
                     dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
                   />
@@ -195,19 +188,19 @@ function ChatArea({ className = '' }) {
                     {getContentTypeName(contentType)}
                   </div>
                 </div>
-                
-                {/* Content Extraction Toggle (now below content type) */}
-                <div className="flex items-center justify-center gap-3 mt-4 px-4 text-sm text-theme-secondary">
-                  <label htmlFor="content-extract-toggle" className="cursor-pointer">Include page content</label>
-                  <Toggle
-                    id="content-extract-toggle"
-                    checked={isContentExtractionEnabled}
-                    onChange={() => setIsContentExtractionEnabled(prev => !prev)}
-                    disabled={!hasAnyPlatformCredentials}
-                  />
-                </div>
+              )}
+              
+              {/* Content Extraction Toggle */}
+              <div className="flex items-center justify-center gap-3 text-sm text-theme-secondary">
+                <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
+                <Toggle
+                  id="content-extract-toggle"
+                  checked={isContentExtractionEnabled}
+                  onChange={() => setIsContentExtractionEnabled(prev => !prev)}
+                  disabled={!hasAnyPlatformCredentials}
+                />
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
@@ -215,7 +208,6 @@ function ChatArea({ className = '' }) {
   }
 
   return (
-    // Attach the ref to the scrollable container
     <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col">
       {messages.map((message) => (
         <MessageBubble
@@ -228,7 +220,6 @@ function ChatArea({ className = '' }) {
         />
       ))}
 
-      {/* Only show this typing indicator if there's no streaming message */}
       {isProcessing && !messages.some(m => m.isStreaming) && (
         <div className="flex gap-1 p-3">
           <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce"></div>
