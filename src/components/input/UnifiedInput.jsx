@@ -29,22 +29,6 @@ export function UnifiedInput({
   const promptButtonRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Helper function for dynamic placeholder
-  const getDynamicPlaceholder = (type) => {
-    switch (type) {
-      case CONTENT_TYPES.YOUTUBE:
-        return "Type a prompt for this YouTube video...";
-      case CONTENT_TYPES.REDDIT:
-        return "Type a prompt for this Reddit post...";
-      case CONTENT_TYPES.PDF:
-        return "Type a prompt for this PDF document...";
-      case CONTENT_TYPES.GENERAL:
-        return "Type a prompt for this web page...";
-      default:
-        return "Type a prompt or select one...";
-    }
-  };
-
   useEffect(() => {
     if (!isProcessing && !isDropdownOpen && textareaRef.current) {
        setTimeout(() => textareaRef.current?.focus(), 50);
@@ -131,7 +115,7 @@ export function UnifiedInput({
                   value={value}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
-                  placeholder={getDynamicPlaceholder(contentType)}
+                  placeholder="Type a prompt or select one..."
                   disabled={disabled || isProcessing}
                   autoResize={true}
                   minHeight={70}
@@ -223,7 +207,7 @@ export function UnifiedInput({
                   value={value}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
-                  placeholder={getDynamicPlaceholder(contentType)}
+                  placeholder="Type a prompt or select one..."
                   disabled={disabled || isProcessing}
                   autoResize={true}
                   minHeight={60}
