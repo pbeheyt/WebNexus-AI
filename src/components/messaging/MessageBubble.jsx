@@ -32,13 +32,18 @@ const copyToClipboardUtil = (text) => {
 };
 
 /**
- * CodeBlock component with copy functionality
- * Extracted as a separate component to properly manage state
- * Use a unique group name to prevent conflicts with parent groups
+ * Simple CodeBlock component with language header
  */
 const CodeBlock = memo(({ className, children }) => {
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
   const codeContent = String(children).replace(/\n$/, '');
+  
+  // Extract language from className (format: language-python, language-javascript, etc.)
+  const languageMatch = /language-(\w+)/.exec(className || '');
+  const language = languageMatch ? languageMatch[1] : 'code';
+  
+  // Format the raw language name - just capitalize first letter
+  const displayLanguage = language.charAt(0).toUpperCase() + language.slice(1);
   
   const copyCodeToClipboard = () => {
     try {
@@ -53,42 +58,55 @@ const CodeBlock = memo(({ className, children }) => {
   };
   
   return (
-    <div className="relative code-block-group">
-      <pre className="bg-theme-hover p-2 rounded overflow-x-auto text-sm font-mono mb-3 max-w-full">
+    <div className="relative code-block-group rounded-md overflow-hidden border border-theme mb-4">
+      {/* Simple language header */}
+      <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 text-xs font-medium border-b border-theme flex justify-between items-center">
+        {/* Language name */}
+        <span className="text-gray-600 dark:text-gray-300">{displayLanguage}</span>
+        
+        {/* Copy button */}
+        <button
+          onClick={copyCodeToClipboard}
+          className={`p-1 rounded-md transition-all duration-200 shadow-sm text-xs
+                     ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                       copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
+                       'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+          aria-label="Copy code to clipboard"
+          title="Copy code to clipboard"
+        >
+          {copyState === 'copied' ? (
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Copied</span>
+            </div>
+          ) : copyState === 'error' ? (
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Error</span>
+            </div>
+          ) : (
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+              <span>Copy</span>
+            </div>
+          )}
+        </button>
+      </div>
+      
+      {/* Code content */}
+      <pre className="bg-theme-hover p-4 m-0 overflow-x-auto text-sm font-mono">
         <code className={className}>
           {children}
         </code>
       </pre>
-      <button
-        onClick={copyCodeToClipboard}
-        className={`absolute bottom-[-8px] right-2 p-1 rounded-md transition-opacity duration-200 shadow-sm
-                   transform scale-90 z-10
-                   ${copyState === 'idle' ? 'opacity-0 code-block-group-hover:opacity-100' : 'opacity-100'} 
-                   ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                     copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
-                     'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-        aria-label="Copy code to clipboard"
-        title="Copy code to clipboard"
-      >
-        {copyState === 'copied' ? (
-          // Checkmark icon for copied state
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        ) : copyState === 'error' ? (
-          // X icon for error state
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        ) : (
-          // Clipboard icon for idle state
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-          </svg>
-        )}
-      </button>
     </div>
   );
 });
