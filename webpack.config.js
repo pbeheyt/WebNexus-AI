@@ -8,7 +8,7 @@ module.exports = {
     'platform-content': './src/content/platform-content.js',
     popup: './src/popup/index.jsx',
     settings: './src/settings/index.jsx',
-    // 'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
+    'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
     sidebar: './src/sidebar/index.jsx',
     'sidebar-injector': './src/content/sidebar-injector.js'
   },
