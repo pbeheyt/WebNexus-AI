@@ -30,34 +30,28 @@ const AdvancedSettings = ({
   
   // Get default settings from model config
   const getDefaultSettings = () => {
-    if (!modelConfig) {
-      return {
-        maxTokens: 1000,
-        temperature: 0.7,
-        topP: 1.0,
-        contextWindow: 16000
-      };
-    }
-    
-    // Extract default values from model config
+    // Get model config again or ensure it's available in scope if needed
+    const currentModelConfig = models.find(m => m.id === selectedModelId);
+
     const defaults = {
-      maxTokens: modelConfig.maxTokens || 1000,
-      contextWindow: modelConfig.contextWindow || 16000
+      // Use modelConfig value, fallback only if undefined
+      maxTokens: currentModelConfig?.maxTokens !== undefined ? currentModelConfig.maxTokens : 1000,
+      contextWindow: currentModelConfig?.contextWindow !== undefined ? currentModelConfig.contextWindow : 16000,
     };
-    
-    // Add temperature if supported
-    if (modelConfig.supportsTemperature !== false) {
-      defaults.temperature = modelConfig.temperature || 0.7;
+
+    // Add temperature only if supported, use modelConfig value, fallback only if undefined
+    if (currentModelConfig?.supportsTemperature !== false) {
+      defaults.temperature = currentModelConfig?.temperature !== undefined ? currentModelConfig.temperature : 0.7;
     }
-    
-    // Add top_p if supported
-    if (modelConfig.supportsTopP === true) {
-      defaults.topP = modelConfig.topP || 1.0;
+
+    // Add topP only if supported, use modelConfig value, fallback only if undefined
+    if (currentModelConfig?.supportsTopP === true) {
+      defaults.topP = currentModelConfig?.topP !== undefined ? currentModelConfig.topP : 1.0;
     }
-    
-    // This ensures complete parameter reset during configuration reversion
+
+    // Add systemPrompt only if the platform supports it
     if (platform.apiConfig?.hasSystemPrompt !== false) {
-      defaults.systemPrompt = '';
+      defaults.systemPrompt = ''; // Default is always empty string
     }
 
     return defaults;
@@ -77,26 +71,43 @@ const AdvancedSettings = ({
   // Original values reference for comparison
   const [originalValues, setOriginalValues] = useState({...formValues});
   
-  // Check if current form values match default settings
+  // Check if current form values match default settings for the selected model
   const checkIfAtDefaults = (formVals) => {
-    const modelDefaults = getDefaultSettings();
-    
-    // Check each property that should be compared
-    if (formVals.maxTokens !== modelDefaults.maxTokens) return false;
-    
-    // Only check temperature if it exists in both objects
-    if ('temperature' in formVals && 'temperature' in modelDefaults) {
-      if (formVals.temperature !== modelDefaults.temperature) return false;
+    const modelDefaults = getDefaultSettings(); // Get defaults for the current model
+    const currentModelConfig = models.find(m => m.id === selectedModelId); // Get config for checks
+
+    // Compare maxTokens (strict equality)
+    // Ensure the key exists in formVals before comparing
+    if (!('maxTokens' in formVals) || formVals.maxTokens !== modelDefaults.maxTokens) {
+      return false;
     }
-    
-    // Only check topP if it exists in both objects
-    if ('topP' in formVals && 'topP' in modelDefaults) {
-      if (formVals.topP !== modelDefaults.topP) return false;
+
+    // Compare temperature only if supported (strict equality)
+    if (currentModelConfig?.supportsTemperature !== false) {
+      // Ensure both have the key before comparing
+      if (!('temperature' in formVals) || !('temperature' in modelDefaults) || formVals.temperature !== modelDefaults.temperature) {
+        return false;
+      }
     }
-    
-    // Check if system prompt is empty (default state)
-    if (formVals.systemPrompt && formVals.systemPrompt.trim() !== '') return false;
-    
+
+    // Compare topP only if supported (strict equality)
+    if (currentModelConfig?.supportsTopP === true) {
+      // Ensure both have the key before comparing
+       if (!('topP' in formVals) || !('topP' in modelDefaults) || formVals.topP !== modelDefaults.topP) {
+        return false;
+      }
+    }
+
+    // Compare systemPrompt only if supported (check against default empty string)
+    if (platform.apiConfig?.hasSystemPrompt !== false) {
+      // Default is '', compare trimmed form value to ''
+      // Ensure the key exists in formVals before comparing
+      if (!('systemPrompt' in formVals) || formVals.systemPrompt.trim() !== '') {
+        return false;
+      }
+    }
+
+    // If all relevant checks pass, values are at defaults
     return true;
   };
 
@@ -152,37 +163,29 @@ const AdvancedSettings = ({
 
   // Refactored handleChange to accept name and newValue directly
   const handleChange = (name, newValue) => {
-    // Create updated values to check for changes
-    let updatedValues = {...formValues};
+    // Calculate the next state based on the current state and the change
+    const updatedValues = { ...formValues };
 
-    // Convert numeric values
-    if (['maxTokens'].includes(name)) {
-      updatedValues = {
-        ...updatedValues,
-        // Ensure it's an integer, default to 0 if parsing fails
-        [name]: parseInt(newValue, 10) || 0
-      };
-    } else if (['temperature', 'topP'].includes(name)) {
-      updatedValues = {
-        ...updatedValues,
-        // Ensure it's a float, default to 0 if parsing fails
-        [name]: parseFloat(newValue) || 0
-      };
+    if (name === 'maxTokens') {
+      const parsedValue = parseInt(newValue, 10);
+      // Revert to current value in state if parsing fails (e.g., empty input)
+      updatedValues[name] = isNaN(parsedValue) ? formValues.maxTokens : parsedValue;
+    } else if (name === 'temperature' || name === 'topP') {
+      const parsedValue = parseFloat(newValue);
+      // Revert to current value in state if parsing fails
+      updatedValues[name] = isNaN(parsedValue) ? formValues[name] : parsedValue;
+    } else if (name === 'systemPrompt') {
+       updatedValues[name] = newValue; // Directly use the string value
     } else {
-      // Handle non-numeric values like systemPrompt
-      updatedValues = {
-        ...updatedValues,
-        [name]: newValue
-      };
+       // Handle potential other fields if necessary
+       updatedValues[name] = newValue;
     }
 
-    // Update form values
+    // Update form state *first*
     setFormValues(updatedValues);
 
-    // Check if values have changed from original
+    // *Then* update dependent states using the calculated `updatedValues`
     setHasChanges(checkForChanges(updatedValues, originalValues));
-
-    // Check if current values match defaults
     setIsAtDefaults(checkIfAtDefaults(updatedValues));
   };
 
@@ -259,38 +262,40 @@ const AdvancedSettings = ({
     <div className="settings-section bg-theme-surface p-5 rounded-lg border border-theme">
       <div className="flex justify-between items-center mb-4">
         <h4 className="section-subtitle text-lg font-medium">Advanced Settings</h4>
-        
+
         <Button
-          variant={!isAtDefaults ? "inactive" : "danger"}
+          variant={isAtDefaults ? 'inactive' : 'danger'} // Corrected variant logic
           size="sm"
-          disabled={isAtDefaults}
+          disabled={isAtDefaults} // Corrected disabled logic
           onClick={() => {
-            if (!isAtDefaults) {
-              // Immediately update form values to defaults
-              const defaults = getDefaultSettings();
-              setFormValues({
-                maxTokens: defaults.maxTokens,
-                temperature: defaults.temperature,
-                topP: defaults.topP,
-                contextWindow: defaults.contextWindow,
-                systemPrompt: ''
-              });
-              
-              // Update state tracking
-              setOriginalValues({
-                maxTokens: defaults.maxTokens,
-                temperature: defaults.temperature,
-                topP: defaults.topP,
-                contextWindow: defaults.contextWindow,
-                systemPrompt: ''
-              });
-              setHasChanges(false);
-              setIsAtDefaults(true);
-              
-              // Signal complete removal of custom settings for this model
-              // by passing a special '__RESET__' action parameter
-              onSettingsUpdate(selectedModelId, { __RESET__: true });
+            // No need to check !isAtDefaults, button is disabled if true
+            const defaults = getDefaultSettings();
+            const currentModelConfig = models.find(m => m.id === selectedModelId);
+
+            // Construct resetValues based on defaults and what's supported
+            const resetValues = {
+              maxTokens: defaults.maxTokens,
+              contextWindow: defaults.contextWindow, // Keep context window from defaults
+              // Only include supported fields that are present in defaults
+            };
+            if (currentModelConfig?.supportsTemperature !== false && 'temperature' in defaults) {
+              resetValues.temperature = defaults.temperature;
             }
+            if (currentModelConfig?.supportsTopP === true && 'topP' in defaults) {
+              resetValues.topP = defaults.topP;
+            }
+            if (platform.apiConfig?.hasSystemPrompt !== false && 'systemPrompt' in defaults) {
+              resetValues.systemPrompt = defaults.systemPrompt; // Should be '' from getDefaultSettings
+            }
+
+            // Update local state immediately
+            setFormValues(resetValues);
+            setOriginalValues(resetValues); // Reset original values as well
+            setHasChanges(false);
+            setIsAtDefaults(true); // We just reset to defaults
+
+            // Signal parent component to reset settings for this model
+            onSettingsUpdate(selectedModelId, { __RESET__: true });
           }}
         >
           Reset to Configuration Defaults
@@ -426,7 +431,7 @@ const AdvancedSettings = ({
               className="system-prompt-input w-full min-h-[100px] p-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
               placeholder="Enter a system prompt for API requests"
               value={formValues.systemPrompt}
-              onChange={handleChange}
+              onChange={(e) => handleChange('systemPrompt', e.target.value)} // Pass name and value
             />
             <p className="help-text text-xs text-theme-secondary mt-1">
               Optional system prompt to provide context for API requests.
