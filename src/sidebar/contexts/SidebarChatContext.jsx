@@ -25,7 +25,7 @@ export function SidebarChatProvider({ children }) {
   const { contentType } = useContent();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  // Removed local isProcessing state, will use from useContentProcessing hook
   const [streamingMessageId, setStreamingMessageId] = useState(null);
   const [streamingContent, setStreamingContent] = useState('');
   const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
@@ -50,7 +50,8 @@ export function SidebarChatProvider({ children }) {
   // Use the content processing hook
   const {
     processContentViaApi,
-    processingStatus,
+    isProcessing, // Use isProcessing from the hook
+    processingStatus, // Keep original if needed elsewhere, or remove if redundant
     error: processingError,
     reset: resetContentProcessing
   } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
@@ -267,9 +268,9 @@ export function SidebarChatProvider({ children }) {
           // Complete the stream with the error message
           await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true); // Pass model if available
 
-          // Reset state *after* handling completion
+          // Reset state *after* handling completion (setIsProcessing removed)
           setStreamingMessageId(null);
-          setIsProcessing(false);
+          // setIsProcessing(false); // Removed
           setIsCanceling(false);
 
           return;
@@ -281,9 +282,9 @@ export function SidebarChatProvider({ children }) {
           : (chunkData.chunk ? JSON.stringify(chunkData.chunk) : '');
 
         if (chunkData.done) {
-          // Streaming complete
+          // Streaming complete (setIsProcessing removed)
           setStreamingMessageId(null);
-          setIsProcessing(false);
+          // setIsProcessing(false); // Removed
           setIsCanceling(false);
 
           // Get final content
@@ -369,7 +370,7 @@ export function SidebarChatProvider({ children }) {
     const updatedMessages = [...messages, userMessage, assistantMessage];
     setMessages(updatedMessages);
     setInputValue('');
-    setIsProcessing(true);
+    // setIsProcessing(true); // Removed - Handled by useContentProcessing hook
     setStreamingMessageId(assistantMessageId);
     setStreamingContent('');
 
@@ -438,7 +439,7 @@ export function SidebarChatProvider({ children }) {
       }
 
       setStreamingMessageId(null);
-      setIsProcessing(false);
+      // setIsProcessing(false); // Removed - Handled by useContentProcessing hook
     }
   };
 
@@ -535,17 +536,17 @@ export function SidebarChatProvider({ children }) {
         await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
       }
 
-      // Reset streaming state (after all updates and saves)
+      // Reset streaming state (after all updates and saves) (setIsProcessing removed)
       setStreamingMessageId(null);
       setStreamingContent('');
-      setIsProcessing(false);
+      // setIsProcessing(false); // Removed
 
     } catch (error) {
       console.error('Error cancelling stream:', error);
 
-      // Still reset the streaming state on error
+      // Still reset the streaming state on error (setIsProcessing removed)
       setStreamingMessageId(null);
-      setIsProcessing(false);
+      // setIsProcessing(false); // Removed
     } finally {
       setIsCanceling(false);
     }
@@ -578,10 +579,10 @@ export function SidebarChatProvider({ children }) {
         });
 
         if (response && response.success) {
-          // Reset local state immediately
+          // Reset local state immediately (setIsProcessing removed)
           setMessages([]);
           setInputValue('');
-          setIsProcessing(false);
+          // setIsProcessing(false); // Removed
           setStreamingMessageId(null);
           setStreamingContent('');
           setExtractedContentAdded(false); // Allow extracted content to be added again
@@ -602,7 +603,7 @@ export function SidebarChatProvider({ children }) {
     clearTokenData,
     setMessages,
     setInputValue,
-    setIsProcessing,
+    // setIsProcessing, // Removed as it's now handled by the hook
     setStreamingMessageId,
     setStreamingContent,
     setExtractedContentAdded,
@@ -658,7 +659,8 @@ export function SidebarChatProvider({ children }) {
       cancelStream,
       isCanceling,
       clearChat,
-      processingStatus,
+      isProcessing, // Use isProcessing from the hook
+      processingStatus, // Keep original if needed elsewhere
       apiError: processingError,
       contentType,
       tokenStats,
