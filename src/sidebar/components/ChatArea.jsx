@@ -155,7 +155,7 @@ function ChatArea({ className = '' }) {
                   <img
                     src={selectedPlatform.iconUrl}
                     alt={selectedPlatform.name}
-                    className="w-12 h-12 mb-2"
+                    className="w-12 h-12 mb-3"
                   />
                   {selectedModel && (
                     <div className="text-sm text-theme-secondary">
@@ -180,7 +180,7 @@ function ChatArea({ className = '' }) {
             <div className="flex flex-col items-center"> 
               {/* Content Type Display */}
               {getContentTypeIconSvg(contentType) && (
-                <div className="flex items-center justify-center mb-2">
+                <div className="flex items-center justify-center mb-3">
                   <div
                     dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
                   />
