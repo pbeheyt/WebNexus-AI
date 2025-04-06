@@ -53,7 +53,7 @@ export function SidebarChatProvider({ children }) {
     isProcessing, // Use isProcessing from the hook
     processingStatus, // Keep original if needed elsewhere, or remove if redundant
     error: processingError,
-    reset: resetContentProcessing
+    reset: resetContentProcessing,
   } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
 
   // Get platform info
@@ -447,14 +447,18 @@ export function SidebarChatProvider({ children }) {
   const cancelStream = async () => {
     if (!streamingMessageId || !isProcessing || isCanceling) return;
 
+    const result = await chrome.storage.local.get(STORAGE_KEYS.STREAM_ID);
+    // Extract the actual string ID from the object
+    const streamId = result[STORAGE_KEYS.STREAM_ID];
     setIsCanceling(true);
 
     try {
       // Send cancellation message to background script
       const result = await chrome.runtime.sendMessage({
         action: 'cancelStream',
-        platformId: selectedPlatformId,
-        tabId
+        // platformId: selectedPlatformId,
+        streamId: streamId,
+        // tabId
       });
 
       // Update the streaming message content to indicate cancellation
