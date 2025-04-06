@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, useNotification } from '../../../../components';
+import { Button, useNotification, SliderInput } from '../../../../components'; // Add SliderInput
 
 const AdvancedSettings = ({
   platform,
@@ -149,41 +149,43 @@ const AdvancedSettings = ({
     
     return false;
   };
-  
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    
+
+  // Refactored handleChange to accept name and newValue directly
+  const handleChange = (name, newValue) => {
     // Create updated values to check for changes
     let updatedValues = {...formValues};
-    
+
     // Convert numeric values
     if (['maxTokens'].includes(name)) {
       updatedValues = {
         ...updatedValues,
-        [name]: parseInt(value, 10) || 0
+        // Ensure it's an integer, default to 0 if parsing fails
+        [name]: parseInt(newValue, 10) || 0
       };
     } else if (['temperature', 'topP'].includes(name)) {
       updatedValues = {
         ...updatedValues,
-        [name]: parseFloat(value) || 0
+        // Ensure it's a float, default to 0 if parsing fails
+        [name]: parseFloat(newValue) || 0
       };
     } else {
+      // Handle non-numeric values like systemPrompt
       updatedValues = {
         ...updatedValues,
-        [name]: value
+        [name]: newValue
       };
     }
-    
+
     // Update form values
     setFormValues(updatedValues);
-    
+
     // Check if values have changed from original
     setHasChanges(checkForChanges(updatedValues, originalValues));
-    
+
     // Check if current values match defaults
     setIsAtDefaults(checkIfAtDefaults(updatedValues));
   };
-  
+
   const handleModelChange = (e) => {
     onModelSelect(e.target.value);
   };
@@ -355,82 +357,60 @@ const AdvancedSettings = ({
             )}
           </div>
         </div>
-        
-        {/* Max tokens setting */}
-        <div className="form-group mb-4">
-          <label 
-            htmlFor={`${platform.id}-${selectedModelId}-max-tokens`}
-            className="block mb-2 text-sm font-medium text-theme-secondary"
-          >
-            {platform.id === 'chatgpt' || platform.id === 'grok' ? 'Max Completion Tokens:' : 'Max Tokens:'}
-          </label>
-          <input
-            type="number"
-            id={`${platform.id}-${selectedModelId}-max-tokens`}
-            name="maxTokens"
-            className="settings-input w-32 px-3 py-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
-            value={formValues.maxTokens}
-            onChange={handleChange}
-            min={0}
-            max={modelConfig?.maxTokens || 32000}
-          />
-          <p className="help-text text-xs text-theme-secondary mt-1">
-            Maximum number of tokens to generate in the response.
-          </p>
-        </div>
-        
-        {/* Temperature setting (if supported) */}
+
+        {/* Max tokens setting - Replaced with SliderInput */}
+        <SliderInput
+          label={platform.id === 'chatgpt' || platform.id === 'grok' ? 'Max Completion Tokens:' : 'Max Tokens:'}
+          value={formValues.maxTokens}
+          onChange={(newValue) => handleChange('maxTokens', newValue)}
+          min={0}
+          max={modelConfig?.maxTokens || 32000}
+          step={1}
+          disabled={isSaving}
+          className="form-group" // Keep existing spacing if needed
+        />
+        <p className="help-text text-xs text-theme-secondary mt-1 -mt-3 mb-4"> {/* Adjust margin for spacing */}
+          Maximum number of tokens to generate in the response.
+        </p>
+
+        {/* Temperature setting (if supported) - Replaced with SliderInput */}
         {modelConfig?.supportsTemperature !== false && (
-          <div className="form-group mb-4">
-            <label 
-              htmlFor={`${platform.id}-${selectedModelId}-temperature`}
-              className="block mb-2 text-sm font-medium text-theme-secondary"
-            >
-              Temperature:
-            </label>
-            <input
-              type="number"
-              id={`${platform.id}-${selectedModelId}-temperature`}
-              name="temperature"
-              className="settings-input w-32 px-3 py-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
+          <>
+            <SliderInput
+              label="Temperature:"
               value={formValues.temperature}
-              onChange={handleChange}
+              onChange={(newValue) => handleChange('temperature', newValue)}
               min={modelConfig?.minTemperature !== undefined ? modelConfig.minTemperature : 0}
               max={modelConfig?.maxTemperature !== undefined ? modelConfig.maxTemperature : 2}
               step={0.1}
+              disabled={isSaving}
+              className="form-group"
             />
-            <p className="help-text text-xs text-theme-secondary mt-1">
+            <p className="help-text text-xs text-theme-secondary mt-1 -mt-3 mb-4"> {/* Adjust margin */}
               Controls randomness: lower values are more deterministic, higher values more creative.
             </p>
-          </div>
+          </>
         )}
-        
-        {/* Top P setting (if supported) */}
+
+        {/* Top P setting (if supported) - Replaced with SliderInput */}
         {modelConfig?.supportsTopP === true && (
-          <div className="form-group mb-4">
-            <label 
-              htmlFor={`${platform.id}-${selectedModelId}-top-p`}
-              className="block mb-2 text-sm font-medium text-theme-secondary"
-            >
-              Top P:
-            </label>
-            <input
-              type="number"
-              id={`${platform.id}-${selectedModelId}-top-p`}
-              name="topP"
-              className="settings-input w-32 px-3 py-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
+          <>
+            <SliderInput
+              label="Top P:"
               value={formValues.topP}
-              onChange={handleChange}
+              onChange={(newValue) => handleChange('topP', newValue)}
               min={0}
               max={1}
               step={0.01}
+              disabled={isSaving}
+              className="form-group"
             />
-            <p className="help-text text-xs text-theme-secondary mt-1">
+            <p className="help-text text-xs text-theme-secondary mt-1 -mt-3 mb-4"> {/* Adjust margin */}
               Alternative to temperature, controls diversity via nucleus sampling.
             </p>
-          </div>
+          </>
         )}
-        
+
         {/* System prompt (if supported) */}
         {platform.apiConfig?.hasSystemPrompt !== false && (
           <div className="form-group mb-4">

@@ -12,6 +12,7 @@ export { useNotification, NotificationProvider } from './feedback/NotificationCo
 export { TextArea } from './form/TextArea';
 export { RadioGroup } from './form/RadioGroup';
 export { SelectList } from './form/SelectList';
+export { SliderInput } from './form/SliderInput';
 
 // Layout components
 export { Card, CardHeader, CardTitle, CardContent } from './layout/Card';
@@ -27,4 +28,3 @@ export { MessageInput } from './messaging/MessageInput';
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';
 export { UnifiedInput } from './input/UnifiedInput';
-
