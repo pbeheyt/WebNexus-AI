@@ -133,7 +133,7 @@ export default function SidebarApp() {
               }`}
             >
               {/* Platform/model selection header */}
-              <Header />
+              <Header/>
             </div>
           </div>
 

@@ -152,7 +152,7 @@ const MessageBubbleComponent = ({
   // System messages (typically errors) with special styling
   if (isSystem) {
     return (
-      <div className={`p-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-5 py-4 ${className}`}>
+      <div className={`px-6 py-2 my-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 ${className}`}>
         {/* System messages render raw content, preserving whitespace */}
         <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
       </div>
@@ -162,8 +162,8 @@ const MessageBubbleComponent = ({
   // User messages with cleaner grey color scheme
   if (isUser) {
     return (
-      <div className={`p-5 w-full flex justify-end ${className}`}>
-        <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-4 max-w-[85%] overflow-hidden">
+      <div className={`px-6 py-2 w-full flex justify-end ${className}`}>
+        <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
           {/* User messages render raw content, preserving whitespace */}
           <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
         </div>
@@ -173,7 +173,7 @@ const MessageBubbleComponent = ({
 
   // Assistant messages with no bubble, taking full width
   return (
-    <div className={`p-4 w-full message-group relative ${className}`}>
+    <div className={`px-6 py-2 w-full message-group relative ${className}`}>
       {/* Main content - Render Markdown for assistant messages */}
       <div className="prose dark:prose-invert prose-sm max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible">
         <ReactMarkdown
@@ -252,27 +252,26 @@ const MessageBubbleComponent = ({
         </ReactMarkdown>
       </div>
 
-      {/* Streaming indicator */}
-      {isStreaming && (
-        <div className="flex gap-1 mt-3">
-          <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce"></div>
-          <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-        </div>
-      )}
-      
-      {/* Footer section with model info and copy button aligned horizontally */}
+      {/* Footer section with model info, copy button, and streaming indicator aligned horizontally */}
       <div className="flex justify-between items-center mt-3">
-        {/* Model info with platform icon */}
+        {/* Model info with platform icon and streaming indicator */}
         <div className="text-xs opacity-70 flex items-center">
           {platformIconUrl && !isUser && (
-            <img 
-              src={platformIconUrl} 
-              alt="AI Platform" 
+            <img
+              src={platformIconUrl}
+              alt="AI Platform"
               className="w-3 h-3 mr-1 object-contain"
             />
           )}
           {model && !isUser && <span>{model}</span>}
+          {/* Streaming indicator */}
+          {isStreaming && (
+            <div className="flex gap-1 ml-2">
+              <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce"></div>
+              <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          )}
         </div>
         
         {/* Copy button - only show when not streaming */}
