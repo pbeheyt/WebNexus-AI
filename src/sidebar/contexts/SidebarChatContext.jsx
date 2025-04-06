@@ -463,6 +463,10 @@ export function SidebarChatProvider({ children }) {
 
       // Update the streaming message content to indicate cancellation
       const cancelledContent = streamingContent + '\n\n_Stream cancelled by user._';
+      
+      // Calculate output tokens for the cancelled content
+      const outputTokens = TokenManagementService.estimateTokens(cancelledContent);
+      
       let messagesAfterCancel = messages; // Start with current messages
 
       if (!extractedContentAdded) {
@@ -527,17 +531,29 @@ export function SidebarChatProvider({ children }) {
           ? {
               ...msg,
               content: cancelledContent,
-              isStreaming: false // Ensure streaming is marked false
+              isStreaming: false, // Ensure streaming is marked false
+              outputTokens // Add token count to message object
             }
           : msg
       );
 
-      // Update state with the final message list (including potential extracted content and cancelled message update)
+      // Update state with the final message list
       setMessages(finalMessages);
+      
+      // Track tokens for the cancelled message
+      await trackTokens({
+        messageId: streamingMessageId,
+        role: MESSAGE_ROLES.ASSISTANT,
+        content: cancelledContent,
+        input: 0,
+        output: outputTokens
+      }, modelConfigData);
 
       // Save the final state to history
       if (tabId) {
         await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
+        // Update accumulated cost with the new token count
+        await TokenManagementService.updateAccumulatedCost(tabId);
       }
 
       // Reset streaming state (after all updates and saves) (setIsProcessing removed)
