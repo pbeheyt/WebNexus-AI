@@ -20,9 +20,9 @@ export const SHARED_TYPE = 'shared';
  */
 export const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.GENERAL]: 'Web Content',
-  [CONTENT_TYPES.REDDIT]: 'Reddit Posts',
-  [CONTENT_TYPES.YOUTUBE]: 'YouTube Videos',
-  [CONTENT_TYPES.PDF]: 'PDF Documents',
+  [CONTENT_TYPES.REDDIT]: 'Reddit Post',
+  [CONTENT_TYPES.YOUTUBE]: 'YouTube Video',
+  [CONTENT_TYPES.PDF]: 'PDF Document',
   [SHARED_TYPE]: 'Shared Prompts'
 };
 

@@ -6,8 +6,9 @@ import { AppHeader, StatusMessage } from '../components'; // Combined imports
 import { useContent } from '../contexts/ContentContext'; // Corrected path
 import { PlatformSelector } from './features/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';
-import { STORAGE_KEYS, INTERFACE_SOURCES } from '../shared/constants'; // Combined imports
+import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants'; // Combined imports & Added CONTENT_TYPE_LABELS
 import { useContentProcessing } from '../hooks/useContentProcessing';
+import { InfoPanel } from './components/InfoPanel'; // Added InfoPanel import
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
@@ -21,6 +22,8 @@ export function Popup() {
     processContent,
     isProcessing: isProcessingContent
   } = useContentProcessing(INTERFACE_SOURCES.POPUP);
+
+  const contentTypeLabel = contentType ? CONTENT_TYPE_LABELS[contentType] : null; // Determine label
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -169,7 +172,14 @@ export function Popup() {
         </button>
       </AppHeader>
 
-      <div className="mt-3">
+      {/* Info Panel */}
+      {!contentLoading && contentTypeLabel && (
+        <div className="mt-3">
+          <InfoPanel contentTypeLabel={contentTypeLabel} />
+        </div>
+      )}
+
+      <div className="mt-3"> {/* Ensured mt-3 is present */}
         <PlatformSelector />
       </div>
 

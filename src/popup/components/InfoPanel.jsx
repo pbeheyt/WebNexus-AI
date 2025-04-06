@@ -1,0 +1,29 @@
+import React from 'react';
+
+export function InfoPanel({ contentTypeLabel }) {
+  const displayLabel = contentTypeLabel || 'content';
+
+  return (
+    // Removed mb-3 from here as it's handled by the wrapping div in Popup.jsx
+    <div className="p-2.5 rounded-lg bg-theme-hover/20 dark:bg-theme-hover/10 text-xs text-theme-secondary leading-relaxed">
+      <p className="mb-1.5">
+        Extract this <span className="font-medium text-theme-primary">{displayLabel}</span> and send it with your prompt to the selected platform.
+      </p>
+      <p>
+        Open <span className="font-medium text-theme-primary">SidePanel</span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-4 h-4 inline-block align-text-bottom mx-1 text-theme-primary" // Added text-theme-primary
+          stroke="currentColor"
+          strokeWidth="2.5" // Slightly increased stroke width for boldness
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/>
+          <line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/>
+        </svg>
+        to have your AI conversation directly on this page.
+      </p>
+    </div>
+  );
+}
