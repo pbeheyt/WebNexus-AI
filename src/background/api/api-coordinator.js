@@ -432,8 +432,9 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
         finalChunkData.cancelled = true; // Add cancellation flag
         // Do NOT add finalChunkData.error
       } else if (chunkData.error) { // Handle other errors
-        logger.background.error(`Stream ended with error: ${chunkData.error}`);
-        const errorMessage = chunkData.error instanceof Error ? chunkData.error.message : String(chunkData.error);
+        // chunkData.error should now be the pre-formatted string from extractApiErrorMessage
+        const errorMessage = chunkData.error; 
+        logger.background.error(`Stream ended with error: ${errorMessage}`);
         await setApiProcessingError(errorMessage);
         // Pass modelToUse and error to completeStreamResponse
         await completeStreamResponse(fullContent, modelToUse, platformId, errorMessage);

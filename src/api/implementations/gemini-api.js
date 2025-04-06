@@ -1,4 +1,5 @@
 const BaseApiService = require('../api-base');
+const { extractApiErrorMessage } = require('../../shared/utils/error-utils');
 
 /**
  * Gemini API implementation
@@ -95,16 +96,8 @@ class GeminiApiService extends BaseApiService {
 
       // Handle non-OK responses by sending an error chunk
       if (!response.ok) {
-        let errorBody = await response.text();
-        let errorMessage = `API error (${response.status}): ${response.statusText}`;
-        try {
-            const errorData = JSON.parse(errorBody);
-            errorMessage = `API error (${response.status}): ${errorData.error?.message || errorMessage}`;
-        } catch (e) {
-            if (errorBody.length < 500) errorMessage = `API error (${response.status}): ${errorBody}`;
-             this.logger.info("Failed to parse error response as JSON:", errorBody);
-        }
-        this.logger.error(`Gemini API Error: ${errorMessage}`);
+        const errorMessage = await extractApiErrorMessage(response);
+        this.logger.error(`Gemini API Error: ${errorMessage}`, response); // Log the original response
         onChunk({ done: true, error: errorMessage, model: params.model });
         return; // Stop processing on error
       }

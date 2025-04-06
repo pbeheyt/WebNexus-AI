@@ -257,12 +257,9 @@ export function SidebarChatProvider({ children }) {
 
         // Handle stream error
         if (chunkData.error) {
-          console.error('Stream error:', chunkData.error);
-
-          // Format the error message
-          const errorMessage = typeof chunkData.error === 'string'
-            ? chunkData.error
-            : (chunkData.error.message || 'An error occurred during streaming');
+          // chunkData.error should now be the pre-formatted string
+          const errorMessage = chunkData.error; 
+          console.error('Stream error:', errorMessage);
 
           // Complete the stream with the error message
           await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true); // Pass model if available
@@ -287,8 +284,9 @@ export function SidebarChatProvider({ children }) {
             await handleStreamComplete(streamingMessageId, chunkData.fullContent || streamingContent, chunkData.model, false, true); // isError=false, isCancelled=true
           } else if (chunkData.error) {
             // Handle Error: Stream ended with an error (other than user cancellation)
-            console.error(`Stream ${message.streamId} error:`, chunkData.error);
-            const errorMessage = `Error: ${chunkData.error instanceof Error ? chunkData.error.message : chunkData.error}`;
+            // chunkData.error should now be the pre-formatted string
+            const errorMessage = chunkData.error; 
+            console.error(`Stream ${message.streamId} error:`, errorMessage);
             // Update the message with the error, mark as error, not cancelled
             await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true, false); // isError=true, isCancelled=false
           } else {

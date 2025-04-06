@@ -1,4 +1,5 @@
 const BaseApiService = require('../api-base');
+const { extractApiErrorMessage } = require('../../shared/utils/error-utils');
 
 /**
  * Claude API implementation
@@ -53,24 +54,8 @@ class ClaudeApiService extends BaseApiService {
 
       // Handle non-OK responses by sending an error chunk
       if (!response.ok) {
-        let errorData;
-        let errorMessage = `API error (${response.status}): ${response.statusText}`;
-        try {
-          errorData = await response.json();
-          // Check for specific Claude error structure
-          if (errorData.error && errorData.error.type === 'error' && errorData.error.message) {
-             // Enhance error handling for context window errors
-            if (errorData.error.message.includes('context window') || errorData.error.message.includes('token limit')) {
-              errorMessage = 'Context window exceeded. The conversation is too long for the model.';
-            } else {
-              errorMessage = `API error (${response.status}): ${errorData.error.message}`;
-            }
-          }
-        } catch (parseError) {
-          this.logger.warn('Could not parse error response body:', parseError);
-          // Use the basic status text if JSON parsing fails
-        }
-        this.logger.error(`Claude API Error: ${errorMessage}`, errorData);
+        const errorMessage = await extractApiErrorMessage(response);
+        this.logger.error(`Claude API Error: ${errorMessage}`, response); // Log the original response
         onChunk({ done: true, error: errorMessage, model: params.model });
         return; // Stop processing on error
       }

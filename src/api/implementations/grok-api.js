@@ -1,4 +1,5 @@
 const BaseApiService = require('../api-base');
+const { extractApiErrorMessage } = require('../../shared/utils/error-utils');
 
 /**
  * Grok API implementation
@@ -51,16 +52,8 @@ class GrokApiService extends BaseApiService {
 
       // Handle non-OK responses by sending an error chunk
       if (!response.ok) {
-        let errorData;
-        let errorMessage = `API error (${response.status}): ${response.statusText}`;
-        try {
-          errorData = await response.json();
-          // Grok might use 'error' object like OpenAI
-          errorMessage = `API error (${response.status}): ${errorData.error?.message || response.statusText}`;
-        } catch (parseError) {
-          this.logger.warn('Could not parse error response body:', parseError);
-        }
-        this.logger.error(`Grok API Error: ${errorMessage}`, errorData);
+        const errorMessage = await extractApiErrorMessage(response);
+        this.logger.error(`Grok API Error: ${errorMessage}`, response); // Log the original response
         onChunk({ done: true, error: errorMessage, model: params.model });
         return; // Stop processing on error
       }
