@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../../../components';
-import PromptList from '../ui/PromptList';
-import PromptDetail from '../ui/PromptDetail';
-import PromptForm from '../ui/PromptForm';
-import { 
-  SHARED_TYPE, 
-  CONTENT_TYPES, 
-  CONTENT_TYPE_LABELS 
-} from '../../../shared/constants';
+import PromptList from '../ui/prompts/PromptList';
+import PromptDetail from '../ui/prompts/PromptDetail';
+import PromptForm from '../ui/prompts/PromptForm';
+import { CONTENT_TYPE_LABELS } from '../../../shared/constants';
 
 const PromptManagement = () => {
   const { error } = useNotification();

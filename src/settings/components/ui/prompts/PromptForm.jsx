@@ -1,12 +1,11 @@
 // src/settings/components/ui/PromptForm.jsx
 import React, { useState } from 'react';
-import { Button, useNotification } from '../../../components';
+import { Button, useNotification } from '../../../../components';
 import { 
-  SHARED_TYPE, 
   STORAGE_KEYS, 
   CONTENT_TYPES, 
   CONTENT_TYPE_LABELS 
-} from '../../../shared/constants';
+} from '../../../../shared/constants';
 
 const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
   const { success, error } = useNotification();
@@ -97,36 +96,38 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="add-prompt-form bg-theme-surface rounded-lg p-5 border border-theme">
-      <h3 className="type-heading mb-4 pb-2 border-b border-theme">
+    <form onSubmit={handleSubmit} className="add-prompt-form bg-theme-surface rounded-lg p-6 border border-theme">
+      <h3 className="type-heading mb-5 pb-3 border-b border-theme text-xl font-semibold text-theme-primary">
         {isEditing ? 'Edit Prompt' : 'Create New Prompt'}
       </h3>
       
-      <div className="form-group mb-4">
+      <div className="form-group mb-6">
         <label 
           htmlFor="contentType" 
-          className="block mb-2 text-sm font-medium text-theme-secondary"
+          className="block mb-3 text-sm font-medium text-theme-secondary"
         >
           Content Type:
         </label>
-        <select
-          id="contentType"
-          name="contentType"
-          className="w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md pr-8"
-          value={formData.contentType}
-          onChange={handleChange}
-        >
-          {/* Map directly over the imported CONTENT_TYPE_LABELS */}
-          {Object.entries(CONTENT_TYPE_LABELS).map(([type, label]) => (
-            <option key={type} value={type}>{label}</option>
-          ))}
-        </select>
+        <div className="inline-block min-w-[200px] max-w-full">
+          <select
+            id="contentType"
+            name="contentType"
+            className="w-auto min-w-full p-2.5 bg-theme-surface text-theme-primary border border-theme rounded-md"
+            value={formData.contentType}
+            onChange={handleChange}
+          >
+            {/* Map directly over the imported CONTENT_TYPE_LABELS */}
+            {Object.entries(CONTENT_TYPE_LABELS).map(([type, label]) => (
+              <option key={type} value={type}>{label}</option>
+            ))}
+          </select>
+        </div>
       </div>
       
-      <div className="form-group mb-4">
+      <div className="form-group mb-6">
         <label 
           htmlFor="name" 
-          className="block mb-2 text-sm font-medium text-theme-secondary"
+          className="block mb-3 text-sm font-medium text-theme-secondary"
         >
           Prompt Name:
         </label>
@@ -134,7 +135,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
           type="text"
           id="name"
           name="name"
-          className="w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
+          className="w-full p-2.5 bg-theme-surface text-theme-primary border border-theme rounded-md"
           placeholder="Give your prompt a descriptive name"
           value={formData.name}
           onChange={handleChange}
@@ -142,17 +143,17 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
         />
       </div>
       
-      <div className="form-group mb-4">
+      <div className="form-group mb-6">
         <label 
           htmlFor="content" 
-          className="block mb-2 text-sm font-medium text-theme-secondary"
+          className="block mb-3 text-sm font-medium text-theme-secondary"
         >
           Prompt Content:
         </label>
         <textarea
           id="content"
           name="content"
-          className="w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md min-h-[200px]"
+          className="w-full p-3 bg-theme-surface text-theme-primary border border-theme rounded-md min-h-[220px]"
           placeholder="Enter your prompt content here..."
           value={formData.content}
           onChange={handleChange}
@@ -160,10 +161,11 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
         />
       </div>
       
-      <div className="form-actions flex justify-end gap-3 mt-5">
+      <div className="form-actions flex justify-end gap-4 mt-7">
         <Button
           type="button"
           variant="secondary"
+          className="px-5 py-2"
           onClick={onCancel}
         >
           Cancel
@@ -171,6 +173,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
         
         <Button
           type="submit"
+          className="px-5 py-2"
           disabled={isSaving}
         >
           {isSaving ? 'Saving...' : (isEditing ? 'Update Prompt' : 'Create Prompt')}

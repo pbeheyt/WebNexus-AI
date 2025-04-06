@@ -1,7 +1,7 @@
 // src/settings/components/ui/PromptDetail.jsx
 import React from 'react';
-import { Button, useNotification } from '../../../components';
-import { STORAGE_KEYS } from '../../../shared/constants';
+import { Button, useNotification } from '../../../../components';
+import { STORAGE_KEYS } from '../../../../shared/constants';
 
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();

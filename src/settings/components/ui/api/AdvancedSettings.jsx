@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, useNotification, SliderInput } from '../../../../components'; // Add SliderInput
+import { Button, useNotification, SliderInput } from '../../../../components';
 
 const AdvancedSettings = ({
   platform,

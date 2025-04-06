@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNotification } from '../../../components';
-import { STORAGE_KEYS, CONTENT_TYPES, SHARED_TYPE } from '../../../shared/constants';
+import { useNotification } from '../../../../components';
+import { STORAGE_KEYS, CONTENT_TYPES, SHARED_TYPE } from '../../../../shared/constants';
 
 const PromptList = ({ 
   filterValue, 
@@ -76,39 +76,39 @@ const PromptList = ({
   
   if (isLoading || localLoading) {
     return (
-      <div className="animate-pulse space-y-3">
-        <div className="h-20 bg-theme-hover rounded-lg"></div>
-        <div className="h-20 bg-theme-hover rounded-lg"></div>
-        <div className="h-20 bg-theme-hover rounded-lg"></div>
+      <div className="animate-pulse space-y-4 mt-2">
+        <div className="h-24 bg-theme-hover rounded-lg"></div>
+        <div className="h-24 bg-theme-hover rounded-lg"></div>
+        <div className="h-24 bg-theme-hover rounded-lg"></div>
       </div>
     );
   }
   
   if (filteredPrompts.length === 0) {
     return (
-      <div className="empty-state bg-theme-surface p-5 text-center text-theme-secondary rounded-lg">
-        <p>No prompts available{filterValue !== 'all' ? ` for ${contentTypeLabels[filterValue]}` : ''}. Create a new prompt to get started.</p>
+      <div className="empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme">
+        <p className="text-base">No prompts available{filterValue !== 'all' ? ` for ${contentTypeLabels[filterValue]}` : ''}. Create a new prompt to get started.</p>
       </div>
     );
   }
   
   return (
-    <div className="prompt-list max-h-[500px] overflow-y-auto pr-2">
+    <div className="prompt-list max-h-[550px] overflow-y-auto pr-3">
       {filteredPrompts.map((item) => (
         <div
           key={item.id}
-          className={`prompt-item border border-theme rounded-lg p-4 mb-3 bg-theme-surface cursor-pointer transition-all hover:bg-theme-hover hover:border-primary ${
+          className={`prompt-item border border-theme rounded-lg p-5 mb-4 bg-theme-surface cursor-pointer transition-all hover:bg-theme-hover hover:border-primary ${
             selectedPromptId === item.id ? 'border-primary bg-theme-active shadow-sm' : ''
           }`}
           onClick={() => onSelectPrompt(item)}
         >
-          <div className="prompt-header flex justify-between items-center mb-2">
-            <h3 className="prompt-title font-medium text-sm truncate">
+          <div className="prompt-header flex justify-between items-center mb-3">
+            <h3 className="prompt-title font-medium text-base truncate text-theme-primary">
               {item.prompt.name}
             </h3>
           </div>
           <small className="flex items-center text-theme-secondary text-xs">
-            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${contentTypeColors[item.contentType] || contentTypeColors.default}`}></span>
+            <span className={`inline-block w-2.5 h-2.5 rounded-full mr-2 ${contentTypeColors[item.contentType] || contentTypeColors.default}`}></span>
             {item.contentTypeLabel}
           </small>
         </div>
