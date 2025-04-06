@@ -28,6 +28,7 @@ function ChatArea({ className = '' }) {
           <svg class="youtube-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" viewBox="0 0 461.001 461.001" xml:space="preserve">
             <g>
               <path style="fill:#F61C0D;" d="M365.257,67.393H95.744C42.866,67.393,0,110.259,0,163.137v134.728   c0,52.878,42.866,95.744,95.744,95.744h269.513c52.878,0,95.744-42.866,95.744-95.744V163.137   C461.001,110.259,418.135,67.393,365.257,67.393z M300.506,237.056l-126.06,60.123c-3.359,1.602-7.239-0.847-7.239-4.568V168.607   c0-3.774,3.982-6.22,7.348-4.514l126.06,63.881C304.363,229.873,304.298,235.248,300.506,237.056z"/>
+              <path style="fill:#FFFFFF;" d="M167.207,168.607v124.004l126.06-60.123c3.792-1.808,3.857-7.183,0.109-9.082L167.207,168.607z"/>
             </g>
           </svg>
         `;
@@ -53,16 +54,10 @@ function ChatArea({ className = '' }) {
         break;
       case CONTENT_TYPES.GENERAL:
       default:
+        // Using the requested web icon from previous solution
         iconSvg = `
-          <svg class="general-icon w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="20" height="20" rx="2" stroke="${generalColor}" stroke-width="1.5"/>
-            <rect x="3" y="3" width="18" height="3" rx="1" stroke="${generalColor}" stroke-width="1.5"/>
-            <circle cx="4.5" cy="4.5" r="0.75" fill="${generalColor}"/>
-            <circle cx="7.5" cy="4.5" r="0.75" fill="${generalColor}"/>
-            <circle cx="10.5" cy="4.5" r="0.75" fill="${generalColor}"/>
-            <path d="M5 10H19" stroke="${generalColor}" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M5 14H15" stroke="${generalColor}" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M5 18H12" stroke="${generalColor}" stroke-width="1.5" stroke-linecap="round"/>
+          <svg class="general-icon w-5 h-5" viewBox="0 0 24 24" fill="${generalColor}" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-1 10.199l-3.64 1.801 3.64 1.796v2.204l-6-2.935v-2.131l6-2.934v2.199zm8 2.866l-6 2.935v-2.204l3.64-1.796-3.64-1.801v-2.199l6 2.935v2.13z"/>
           </svg>
         `;
         break;
@@ -84,6 +79,8 @@ function ChatArea({ className = '' }) {
         return "Content";
     }
   };
+
+  // This function has been removed as we no longer use border accents
 
   const handleScroll = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -176,21 +173,29 @@ function ChatArea({ className = '' }) {
               </p>
             </div>
             
-            {/* Third div: Content Type Icon and Toggle */}
+            {/* Third div: Content Type Badge and Toggle */}
             <div className="flex flex-col items-center"> 
-              {/* Content Type Display */}
+              {/* Content Type Badge Display */}
               {getContentTypeIconSvg(contentType) && (
-                <div className="flex items-center justify-center mb-3">
-                  <div
-                    dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
-                  />
-                  <div className="text-sm text-theme-secondary ml-3">
-                    {getContentTypeName(contentType)}
+                <div className="mb-4">
+                  {/* Content Type Badge */}
+                  <div 
+                    className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm 
+                      bg-gray-100 dark:bg-gray-800
+                      text-theme-primary dark:text-theme-primary-dark"
+                  >
+                    <div
+                      className="mr-3"
+                      dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
+                    />
+                    <span className="text-sm font-medium">
+                      {getContentTypeName(contentType)}
+                    </span>
                   </div>
                 </div>
               )}
               
-              {/* Content Extraction Toggle */}
+              {/* Content Extraction Toggle - Kept as is */}
               <div className="flex items-center justify-center gap-3 text-sm text-theme-secondary">
                 <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
                 <Toggle
