@@ -52,6 +52,7 @@ export async function extractContent(tabId, url) {
   return new Promise((resolve) => {
     const storageListener = (changes, area) => {
       if (area === 'local' && changes[STORAGE_KEYS.CONTENT_READY]?.newValue === true) {
+        clearTimeout(timeoutId); // Ensure timeout is cleared on success
         chrome.storage.onChanged.removeListener(storageListener);
         resolve(true);
       }
@@ -63,12 +64,12 @@ export async function extractContent(tabId, url) {
     chrome.tabs.sendMessage(tabId, {
       action: 'extractContent',
       contentType: contentType
-    });
+        });
 
-    // Failsafe timeout
-    setTimeout(() => {
-      chrome.storage.onChanged.removeListener(storageListener);
-      logger.background.warn(`Extraction timeout for ${contentType}, proceeding anyway`);
+        // Failsafe timeout
+        const timeoutId = setTimeout(() => {
+          chrome.storage.onChanged.removeListener(storageListener);
+          logger.background.warn(`Extraction timeout for ${contentType}, proceeding anyway`);
       resolve(false);
     }, 15000);
   });
