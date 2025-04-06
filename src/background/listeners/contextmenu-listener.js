@@ -14,8 +14,8 @@ async function handleContextMenuClick(info, tab) {
   if (info.menuItemId === CONTEXT_MENU_ID) {
     logger.background.info(`Context menu "${CONTEXT_MENU_ID}" clicked for tab ${tab.id}`);
     try {
-      // Construct message and sender objects
-      const message = { tabId: tab.id, visible: true }; // Explicitly request to enable
+      // Construct message and sender objects. Do not send 'visible'.
+      const message = { tabId: tab.id };
       const sender = { tab: tab };
       const sendResponse = async (response) => { // Make callback async
         if (response && response.success) {

@@ -14,88 +14,12 @@ class SidebarStateManager {
    */
   initialize() {
     logger.info('Initializing SidebarStateManager with tab-specific states');
-    
-    // Set up message listeners
-    this._setupMessageListeners();
+    // Message listeners are no longer set up here; handled by background connection listener.
   }
-  
-  /**
-   * Set up listeners for sidebar-related messages
-   * @private
-   */
-  _setupMessageListeners() {
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (!message || typeof message !== 'object') {
-        return false;
-      }
-      
-      // Handle sidebar toggle request
-      if (message.action === 'toggleSidebar') {
-        this._handleToggleSidebar(message, sender, sendResponse);
-        return true; // Keep channel open for async response
-      }
-      
-      // Handle sidebar state query
-      if (message.action === 'getSidebarState') {
-        this._handleGetSidebarState(message, sender, sendResponse);
-        return true; // Keep channel open for async response
-      }
-      
-      return false;
-    });
-  }
-  
-  /**
-   * Handle sidebar toggle request
-   * @private
-   * @param {Object} message - Message object
-   * @param {Object} sender - Message sender
-   * @param {Function} sendResponse - Response function
-   */
-  async _handleToggleSidebar(message, sender, sendResponse) {
-    try {
-      logger.info('Handling tab-specific sidebar toggle request');
-      
-      // Get target tab ID
-      const tabId = message.tabId || (sender.tab && sender.tab.id);
-      
-      if (!tabId) {
-        // Get active tab if no tab ID specified
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        const activeTab = tabs[0];
-        
-        if (activeTab && activeTab.id) {
-          // Toggle for active tab
-          await this._toggleForTab(activeTab.id, message.visible);
-          
-          // Removed obsolete chrome.tabs.sendMessage call
-          
-          sendResponse({ 
-            success: true, 
-            visible: await this.getSidebarVisibilityForTab(activeTab.id),
-            tabId: activeTab.id
-          });
-        } else {
-          throw new Error('No active tab found');
-        }
-      } else {
-        // Toggle for specified tab
-        await this._toggleForTab(tabId, message.visible);
-        
-        // Removed obsolete chrome.tabs.sendMessage call
-        
-        sendResponse({ 
-          success: true, 
-          visible: await this.getSidebarVisibilityForTab(tabId),
-          tabId
-        });
-      }
-    } catch (error) {
-      logger.error('Error handling tab-specific sidebar toggle:', error);
-      sendResponse({ success: false, error: error.message });
-    }
-  }
-  
+
+  // _setupMessageListeners, _handleToggleSidebar, and _handleGetSidebarState removed
+  // as state changes are now driven by background connection events.
+
   /**
    * Toggle sidebar visibility for a specific tab
    * @private
@@ -131,48 +55,6 @@ class SidebarStateManager {
   }
   
   /**
-   * Handle sidebar state query
-   * @private
-   * @param {Object} message - Message object
-   * @param {Object} sender - Message sender
-   * @param {Function} sendResponse - Response function
-   */
-  async _handleGetSidebarState(message, sender, sendResponse) {
-    try {
-      logger.info('Handling tab-specific sidebar state query');
-      
-      // Get target tab ID
-      const tabId = message.tabId || (sender.tab && sender.tab.id);
-      
-      if (!tabId) {
-        // Get active tab if no tab ID specified
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        const activeTab = tabs[0];
-        
-        if (!activeTab || !activeTab.id) {
-          throw new Error('No active tab found');
-        }
-        
-        const state = await this._getStateForTab(activeTab.id);
-        sendResponse({
-          success: true,
-          state,
-          tabId: activeTab.id
-        });
-      } else {
-        const state = await this._getStateForTab(tabId);
-        sendResponse({
-          success: true,
-          state,
-          tabId
-        });
-      }
-    } catch (error) {
-      logger.error('Error handling tab-specific sidebar state query:', error);
-      sendResponse({ success: false, error: error.message });
-    }
-  }
-  
   /**
    * Get sidebar state for a specific tab
    * @private

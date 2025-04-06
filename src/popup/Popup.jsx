@@ -52,48 +52,53 @@ export function Popup() {
     window.close();
   };
 
-  // Function to toggle sidebar with auto-close
+  // Function to toggle sidebar with auto-close (Refactored)
   const toggleSidebar = async () => {
     if (!currentTab?.id) {
-      updateStatus('Error: No active tab found to toggle sidebar.');
+      updateStatus('Error: No active tab found.');
       return;
     }
 
+    updateStatus('Toggling sidebar...', true); // Indicate processing
     try {
-      updateStatus('Toggling sidebar...', true); // Indicate processing
-
+      // Send message to background to toggle the native side panel state (enable/disable)
       const response = await chrome.runtime.sendMessage({
-        action: 'toggleNativeSidePanelAction', // Updated action name
-        tabId: currentTab.id
+        action: 'toggleNativeSidePanelAction', // Action handled by message router
+        tabId: currentTab.id,
+        // No 'visible' property sent; background determines new state
       });
 
-      if (response && response.success) {
-        updateStatus(`Sidebar ${response.visible ? 'enabled' : 'disabled'}`); // Updated status message
-        // If the panel was enabled, explicitly open it from the user gesture context
+      if (response?.success) {
+        // Background confirmed state update (enabled/disabled)
+        updateStatus(`Sidebar state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`);
+
+        // If the panel's intended state is now 'visible', attempt to open it.
+        // This MUST be done here, within the user gesture context.
         if (response.visible) {
           try {
-            // Use tabId instead of windowId for opening the side panel
-            await chrome.sidePanel.open({ tabId: currentTab.id }); 
-            updateStatus('Sidebar opened'); // Update status after successful open
+            await chrome.sidePanel.open({ tabId: currentTab.id });
+            updateStatus('Sidebar opened successfully.');
+            // Close popup *after* successful open attempt
+            window.close();
           } catch (openError) {
-             console.error('Error opening side panel:', openError);
-             updateStatus(`Error opening sidebar: ${openError.message}`);
-             // Don't close popup if opening failed
-             return; // Exit early
+            console.error('Error opening side panel:', openError);
+            updateStatus(`Error opening sidebar: ${openError.message}`);
+            // Keep popup open to show the error
           }
+        } else {
+          // If the panel was disabled (response.visible is false), just close the popup.
+          // The browser handles closing the panel itself if it was open.
+          updateStatus('Sidebar disabled.');
+          window.close();
         }
-        window.close(); // Auto-close the popup after successful enable/disable and open
-      } else if (response && response.error) {
-        // Use updateStatus for error feedback
-        updateStatus(`Error toggling sidebar: ${response.error}`);
       } else {
-        // Handle unexpected response structure
-        updateStatus('Error: Unexpected response when toggling sidebar.');
+        // Handle failure reported by the background script
+        throw new Error(response?.error || 'Failed to toggle sidebar state in background.');
       }
     } catch (error) {
-      console.error('Error toggling sidebar:', error);
-      // Use updateStatus for error feedback
-      updateStatus(`Error toggling sidebar: ${error.message || 'Unknown error'}`);
+      console.error('Error in toggleSidebar:', error);
+      updateStatus(`Error: ${error.message}`, false); // Show error, stop loading indicator
+      // Keep popup open to show the error
     }
   };
 

@@ -11,11 +11,12 @@ import logger from '../../shared/logger.js';
  */
 export async function toggleNativeSidePanel(message, sender, sendResponse) {
   let targetTabId;
+  let newState; // To store the final state (true for open, false for closed)
   try {
-    logger.background.info('Handling native side panel toggle request');
+    logger.background.info('Handling native side panel toggle request (Refactored)');
 
     // Determine the target tab ID
-    const explicitTabId = message.tabId || (sender?.tab?.id);
+    const explicitTabId = message?.tabId || sender?.tab?.id;
     if (explicitTabId) {
       targetTabId = explicitTabId;
     } else {
@@ -27,57 +28,55 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
     }
     logger.background.info(`Targeting tab ${targetTabId} for side panel operation.`);
 
-    // Determine the desired visibility state
-    let visible = message.visible;
-    if (visible === undefined) {
-      // If visibility isn't specified, toggle based on the stored intended state
-      const currentState = await SidebarStateManager.getSidebarState(targetTabId);
-      visible = !currentState.visible;
-      logger.background.info(`Visibility not specified, toggling based on stored state. New state: ${visible}`);
-    } else {
-      logger.background.info(`Explicit visibility requested: ${visible}`);
-    }
+    // Read the current *intended* state from storage
+    const currentState = await SidebarStateManager.getSidebarVisibilityForTab(targetTabId);
+    logger.background.info(`Current stored visibility for tab ${targetTabId}: ${currentState}`);
 
-    // Save the intended state *before* attempting to change the panel
-    // This ensures our internal state reflects the desired outcome even if the panel API fails
-    await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, visible);
-    // Removed log about storing intended visibility
-
-    // Perform the side panel action
-    if (visible) {
-      logger.background.info(`Enabling side panel for tab ${targetTabId}`);
-      // Set options to enable the panel and set its path, including tabId. Opening is handled by the caller (user gesture context).
+    // Determine the new state and perform actions
+    if (currentState === false) {
+      // Current state is closed, so we intend to open (enable) it
+      newState = true;
+      logger.background.info(`Action: Enable side panel for tab ${targetTabId}`);
+      await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, true);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         path: `sidepanel.html?tabId=${targetTabId}`, // Pass tabId via URL
         enabled: true
       });
-      // DO NOT call chrome.sidePanel.open() here; it must be called in response to a user gesture.
+      logger.background.info(`Side panel enabled and path set for tab ${targetTabId}.`);
     } else {
-      logger.background.info(`Disabling side panel for tab ${targetTabId}`);
-      // Just disable it; the browser handles closing it if it was open.
+      // Current state is open, so we intend to close (disable) it
+      newState = false;
+      logger.background.info(`Action: Disable side panel for tab ${targetTabId}`);
+      await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, false);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         enabled: false
       });
+      logger.background.info(`Side panel disabled for tab ${targetTabId}.`);
     }
+
+    // IMPORTANT: Do NOT call chrome.sidePanel.open() here.
+    // Opening must be triggered by a user gesture (popup click, command, context menu)
+    // after this function confirms the panel is enabled (newState is true).
 
     sendResponse({
       success: true,
-      visible,
+      visible: newState, // Send back the new intended state
       tabId: targetTabId,
-      message: `Side panel for tab ${targetTabId} ${visible ? 'enabled' : 'disabled'}.` // Updated message
+      message: `Side panel state updated for tab ${targetTabId}. Intended visibility: ${newState}.`
     });
 
   } catch (error) {
     logger.background.error(`Error handling native side panel toggle for tab ${targetTabId || 'unknown'}:`, error);
-    // Attempt to revert the stored state if the API call failed, though this might be tricky
-    // For now, just report the error. The stored state might be out of sync if the API failed.
-    if (targetTabId && message.visible !== undefined) {
-       logger.background.warn(`Side panel API failed. Stored state for tab ${targetTabId} might be ${message.visible}, but the panel state is uncertain.`);
-       // Consider trying to revert SidebarStateManager state here if critical
-    }
-    sendResponse({ success: false, error: error.message, tabId: targetTabId });
+    // If an error occurred, the actual panel state might not match the intended state.
+    // We send back the intended newState if determined, otherwise report failure.
+    sendResponse({
+      success: false,
+      error: error.message,
+      tabId: targetTabId,
+      visible: newState // Include intended state if available, even on error
+    });
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSidebarPlatform } from '../contexts/platform'; // Keep this for setTabId
 import { useSidebarChat } from './contexts/SidebarChatContext';
 import { useContent } from '../contexts/ContentContext'; // Corrected path
@@ -69,6 +69,46 @@ export default function SidebarApp() {
       console.info(`Removed runtime message listener for pageNavigated events (tabId: ${tabId})`);
     };
   }, [tabId, updateContentContext, clearFormattedContentForTab]); // Dependencies: run when tabId or context functions change
+
+  // Effect for managing connection to background script
+  const portRef = useRef(null);
+  useEffect(() => {
+    if (tabId && !isNaN(tabId)) {
+      const portName = `sidepanel-connect-${tabId}`;
+      console.log(`[SidebarApp] Attempting to connect to background with name: ${portName}`);
+      try {
+        portRef.current = chrome.runtime.connect({ name: portName });
+        console.log(`[SidebarApp] Connection established for tab ${tabId}`, portRef.current);
+
+        // Optional: Add listener for messages from background if needed later
+        // portRef.current.onMessage.addListener((msg) => {
+        //   console.log(`[SidebarApp] Message received from background for tab ${tabId}:`, msg);
+        // });
+
+        portRef.current.onDisconnect.addListener(() => {
+          console.log(`[SidebarApp] Port disconnected for tab ${tabId}.`);
+          if (chrome.runtime.lastError) {
+            console.error(`[SidebarApp] Disconnect error for tab ${tabId}:`, chrome.runtime.lastError.message);
+          }
+          portRef.current = null; // Clear the ref on disconnect
+        });
+
+      } catch (error) {
+        console.error(`[SidebarApp] Error connecting to background for tab ${tabId}:`, error);
+      }
+
+      // Cleanup function: Disconnect the port when the component unmounts or tabId changes
+      return () => {
+        if (portRef.current) {
+          console.log(`[SidebarApp] Disconnecting port for tab ${tabId} due to cleanup.`);
+          portRef.current.disconnect();
+          portRef.current = null;
+        }
+      };
+    } else {
+      console.log(`[SidebarApp] Skipping connection attempt: tabId is not valid (${tabId})`);
+    }
+  }, [tabId]); // Re-run effect if tabId changes
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary">
