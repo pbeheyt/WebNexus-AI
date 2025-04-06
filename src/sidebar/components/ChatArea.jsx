@@ -155,7 +155,7 @@ function ChatArea({ className = '' }) {
                   <img
                     src={selectedPlatform.iconUrl}
                     alt={selectedPlatform.name}
-                    className="w-12 h-12 mb-4"
+                    className="w-12 h-12 mb-2"
                   />
                   {selectedModel && (
                     <div className="text-sm text-theme-secondary">
