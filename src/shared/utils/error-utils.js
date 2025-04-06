@@ -41,6 +41,10 @@ export async function extractApiErrorMessage(response) {
     if (!detailString && errorData.error && typeof errorData.error === 'object' && typeof errorData.error.message === 'string') {
       detailString = errorData.error.message;
     }
+    // NEW: Check if errorData.error is the string itself
+    else if (!detailString && errorData.error && typeof errorData.error === 'string') {
+      detailString = errorData.error;
+    }
 
     // 3. Check errorData.detail (string)
     if (!detailString && typeof errorData.detail === 'string') {
