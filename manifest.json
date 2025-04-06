@@ -9,7 +9,6 @@
     "storage",
     "tabs",
     "webRequest",
-    "contextMenus",
     "sidePanel"
   ],
   "content_security_policy": {
@@ -53,12 +52,6 @@
         "default": "Ctrl+Shift+A"
       },
       "description": "Activate the extension"
-    },
-    "toggle-sidebar": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+Q"
-      },
-      "description": "Toggle sidebar"
     }
   },
   "web_accessible_resources": [

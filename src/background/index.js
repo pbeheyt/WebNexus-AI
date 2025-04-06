@@ -4,8 +4,6 @@ import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
 import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-state-listener.js';
-import { setupCommandListener } from './listeners/command-listener.js';
-import { setupContextMenuListener } from './listeners/contextmenu-listener.js';
 import SidebarStateManager from '../services/SidebarStateManager.js';
 
 /**
@@ -22,8 +20,6 @@ async function startBackgroundService() {
     // 3. Set up event listeners
     setupTabListener();
     setupTabStateListener();
-    setupCommandListener();
-    setupContextMenuListener();
     setupConnectionListener(); // Add connection listener setup
 
     // Perform initial cleanup on startup

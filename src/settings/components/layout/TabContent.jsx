@@ -3,7 +3,6 @@ import { useTabs } from '../../contexts/TabContext';
 
 // Import tab components directly
 import PromptManagement from '../tabs/PromptManagement';
-import Shortcuts from '../tabs/Shortcuts';
 import ApiSettings from '../tabs/ApiSettings';
 
 const TabContent = () => {
@@ -13,10 +12,6 @@ const TabContent = () => {
     <div className="tabs-container relative min-h-[400px]">
       <div className={`tab-content ${activeTab === TABS.PROMPT_MANAGEMENT ? 'active' : ''}`} id={TABS.PROMPT_MANAGEMENT}>
         {activeTab === TABS.PROMPT_MANAGEMENT && <PromptManagement />}
-        </div>
-        
-        <div className={`tab-content ${activeTab === TABS.SHORTCUTS ? 'active' : ''}`} id={TABS.SHORTCUTS}>
-          {activeTab === TABS.SHORTCUTS && <Shortcuts />}
         </div>
         
         <div className={`tab-content ${activeTab === TABS.API_SETTINGS ? 'active' : ''}`} id={TABS.API_SETTINGS}>
