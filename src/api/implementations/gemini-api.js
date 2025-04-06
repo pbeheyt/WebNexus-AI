@@ -43,9 +43,10 @@ class GeminiApiService extends BaseApiService {
    * @param {string} apiKey - API key
    * @param {Object} params - Resolved parameters including conversation history
    * @param {function} onChunk - Callback function for receiving text chunks
+   * @param {AbortSignal} [abortSignal] - Optional AbortSignal for cancellation
    * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
    */
-  async _processWithModelStreaming(text, params, apiKey, onChunk) {
+  async _processWithModelStreaming(text, params, apiKey, onChunk, abortSignal) {
     let reader; // Declare reader outside try block for finally access
 
     try {
@@ -88,7 +89,8 @@ class GeminiApiService extends BaseApiService {
       const response = await fetch(url.toString(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formattedRequest)
+        body: JSON.stringify(formattedRequest),
+        signal: abortSignal // Add this line
       });
 
       // Handle non-OK responses by sending an error chunk
@@ -237,14 +239,24 @@ class GeminiApiService extends BaseApiService {
 
     } catch (error) {
       // Catch errors from initial setup, fetch, or errors re-thrown/missed by inner catches
-      this.logger.error('API streaming processing error (outer catch):', error);
-      // Send error chunk if an unexpected error occurs
-      onChunk({
-        done: true,
-        error: error.message || 'An unknown streaming error occurred',
-        model: params.model
-      });
-      // Do not re-throw; error is handled by sending the chunk
+      if (error.name === 'AbortError') {
+        this.logger.info('API request cancelled via AbortController.');
+        // Send a specific cancellation message/error via onChunk
+        onChunk({
+          done: true,
+          error: 'Cancelled by user', // Specific cancellation message
+          model: params.model
+        });
+      } else {
+        // Handle other errors as before
+        this.logger.error('API streaming processing error (outer catch):', error);
+        onChunk({
+          done: true,
+          error: error.message || 'An unknown streaming error occurred',
+          model: params.model // Use model from params
+        });
+      }
+      // Do not re-throw error here, it's handled by onChunk
     } finally {
       // Ensure the reader is released even if errors occur
       if (reader && typeof reader.releaseLock === 'function') {

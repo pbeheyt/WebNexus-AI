@@ -43,7 +43,8 @@ class BaseApiService extends ApiInterface {
         throw new Error('Invalid requestConfig provided to BaseApiService.processRequest');
       }
 
-      const { prompt, resolvedParams, formattedContent, onChunk } = requestConfig;
+      // Extract abortSignal along with other properties
+      const { prompt, resolvedParams, formattedContent, onChunk, abortSignal } = requestConfig;
       const { apiKey } = this.credentials;
 
       if (!apiKey) {
@@ -61,7 +62,8 @@ class BaseApiService extends ApiInterface {
         structuredPrompt,
         resolvedParams, // Pass the whole object
         apiKey,
-        onChunk // Pass the callback directly
+        onChunk, // Pass the callback directly
+        abortSignal // Pass the signal as the last argument
       );
 
     } catch (error) {
@@ -164,9 +166,10 @@ class BaseApiService extends ApiInterface {
    * @param {string} apiKey - API key
    * @param {Object} params - Resolved parameters with conversation history
    * @param {function} onChunk - Callback function for receiving text chunks
+   * @param {AbortSignal} [abortSignal] - Optional AbortSignal for cancellation
    * @returns {Promise<Object>} API response metadata
    */
-  async _processWithModelStreaming(text, params, apiKey, onChunk) {
+  async _processWithModelStreaming(text, params, apiKey, onChunk, abortSignal) {
     throw new Error('_processWithModelStreaming must be implemented by subclasses');
   }
 

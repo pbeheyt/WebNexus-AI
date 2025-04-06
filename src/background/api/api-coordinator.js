@@ -21,6 +21,8 @@ import {
 } from '../core/state-manager.js';
 import logger from '../../shared/logger.js';
 
+const activeAbortControllers = new Map();
+
 /**
  * Handle API model requests
  * @param {string} requestType - Type of request
@@ -71,11 +73,29 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
       }
 
       case 'cancelStream': {
-        const { streamId } = message;
-        // Simply acknowledge the cancellation; cleanup is handled by the component
-        sendResponse({ success: true });
-        break;
-      }
+            const { streamId } = message; // Ensure streamId is received
+            if (!streamId) {
+              logger.background.warn('cancelStream message received without streamId.');
+              sendResponse({ success: false, error: 'Missing streamId' });
+              break; // Exit case if no streamId
+            }
+            const controller = activeAbortControllers.get(streamId);
+            if (controller) {
+              try {
+                controller.abort();
+                activeAbortControllers.delete(streamId); // Remove immediately after aborting
+                logger.background.info(`Abort signal sent for stream: ${streamId}`);
+                sendResponse({ success: true });
+              } catch (abortError) {
+                logger.background.error(`Error aborting controller for stream ${streamId}:`, abortError);
+                sendResponse({ success: false, error: 'Failed to abort stream' });
+              }
+            } else {
+              logger.background.warn(`No active AbortController found for stream: ${streamId}`);
+              sendResponse({ success: false, error: 'Stream not found or already completed/cancelled' });
+            }
+            break; // Ensure case exits
+          }
 
       default:
         throw new Error(`Unknown API model request type: ${requestType}`);
@@ -295,6 +315,10 @@ export async function processContentViaApi(params) {
     };
 
     // 14. Process with API
+    const controller = new AbortController();
+    activeAbortControllers.set(streamId, controller);
+    requestConfig.abortSignal = controller.signal; // Add signal to request config
+
     try {
       logger.background.info('Calling ApiServiceManager.processWithUnifiedConfig with config:', requestConfig);
       // Pass only platformId and requestConfig. tabId is within resolvedParams if needed.
@@ -313,9 +337,13 @@ export async function processContentViaApi(params) {
     } catch (processingError) {
       // Handle API processing errors
       await setApiProcessingError(processingError.message);
-      throw processingError;
+      throw processingError; // Re-throw to be caught by the outer catch
+    } finally {
+      activeAbortControllers.delete(streamId);
+      logger.background.info(`Removed AbortController for stream: ${streamId}`);
     }
   } catch (error) {
+    // This outer catch handles errors from setup (extraction, param resolution) AND re-thrown processing errors
     logger.background.error('API content processing error:', error);
     await setApiProcessingError(error.message);
     return {
