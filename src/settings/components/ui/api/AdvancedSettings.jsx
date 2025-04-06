@@ -374,7 +374,7 @@ const AdvancedSettings = ({
           disabled={isSaving}
           className="form-group" // Keep existing spacing if needed
         />
-        <p className="help-text text-xs text-theme-secondary mt-1 -mt-3 mb-4"> {/* Adjust margin for spacing */}
+        <p className="help-text text-xs text-theme-secondary mt-2 mb-4"> {/* Adjust margin for spacing */}
           Maximum number of tokens to generate in the response.
         </p>
 
@@ -391,7 +391,7 @@ const AdvancedSettings = ({
               disabled={isSaving}
               className="form-group"
             />
-            <p className="help-text text-xs text-theme-secondary mt-1 -mt-3 mb-4"> {/* Adjust margin */}
+            <p className="help-text text-xs text-theme-secondary mt-2 mb-4"> {/* Adjust margin */}
               Controls randomness: lower values are more deterministic, higher values more creative.
             </p>
           </>
@@ -410,7 +410,7 @@ const AdvancedSettings = ({
               disabled={isSaving}
               className="form-group"
             />
-            <p className="help-text text-xs text-theme-secondary mt-1 -mt-3 mb-4"> {/* Adjust margin */}
+            <p className="help-text text-xs text-theme-secondary mt-2 mb-4"> {/* Adjust margin */}
               Alternative to temperature, controls diversity via nucleus sampling.
             </p>
           </>

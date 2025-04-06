@@ -44,8 +44,8 @@ export const SliderInput = ({
   const displayValue = Math.max(min, Math.min(max, value ?? min));
 
   return (
-    <div className={`mb-4 ${className}`}>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+    <div className={`${className}`}>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
         {label}
       </label>
       <div className="flex items-center space-x-3">
@@ -67,7 +67,7 @@ export const SliderInput = ({
           value={displayValue} // Use displayValue to ensure consistency
           onChange={handleInputChange}
           disabled={disabled}
-          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:text-gray-200 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:border-primary sm:text-sm dark:bg-gray-800 dark:text-gray-200 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
           // Prevent scrolling from changing the value
           onWheel={(e) => e.target.blur()}
         />
