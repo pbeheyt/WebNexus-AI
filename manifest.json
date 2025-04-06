@@ -58,8 +58,8 @@
     {
       "resources": [
         "platform-config.json",
+        "prompt-config.json",
         "dist/*.bundle.js",
-        "dist/pdf.worker.bundle.js",
         "images/*.png"
       ],
       "matches": ["<all_urls>"]

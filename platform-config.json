@@ -68,7 +68,7 @@
             "supportsTopP": true
           }
         ],
-        "defaultModel": "claude-3-7-sonnet-latest",
+        "defaultModel": "claude-3-5-haiku-latest",
         "requiresModel": true,
         "authType": "header",
         "authHeaderName": "x-api-key",
@@ -94,8 +94,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
-            "inputTokenPrice": 75,
-            "outputTokenPrice": 150,
+            "inputTokenPrice": 75.00,
+            "outputTokenPrice": 150.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -109,8 +109,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
-            "inputTokenPrice": 5.00,
-            "outputTokenPrice": 15.00,
+            "inputTokenPrice": 2.50,
+            "outputTokenPrice": 10.00,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -124,8 +124,8 @@
             "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 128000,
-            "inputTokenPrice": 1.10,
-            "outputTokenPrice": 4.40,
+            "inputTokenPrice": 0.15,
+            "outputTokenPrice": 0.60,
             "supportsTemperature": true,
             "supportsTopP": true,
             "tokenParameter": "max_tokens"
@@ -164,6 +164,21 @@
             "supportsTopP": false
           },
           {
+            "id": "gpt-4-turbo",
+            "maxTokens": 4096,
+            "temperature": 1.0,
+            "minTemperature": 0.0,
+            "maxTemperature": 2.0,
+            "topP": 1.0,
+            "parameterStyle": "standard",
+            "contextWindow": 128000,
+            "inputTokenPrice": 10.00,
+            "outputTokenPrice": 30.00,
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "tokenParameter": "max_tokens"
+          },
+          {
             "id": "gpt-3.5-turbo",
             "maxTokens": 4096,
             "temperature": 1.0,
@@ -179,7 +194,7 @@
             "tokenParameter": "max_tokens"
           }
         ],
-        "defaultModel": "gpt-4o",
+        "defaultModel": "gpt-4o-mini",
         "requiresModel": true,
         "authType": "bearer",
         "authHeaderName": "Authorization",
@@ -261,21 +276,6 @@
           },
           {
             "id": "mistral-large-latest",
-            "maxTokens": 4096,
-            "temperature": 0.7,
-            "minTemperature": 0.0,
-            "maxTemperature": 1.5,
-            "topP": 1.0,
-            "parameterStyle": "standard",
-            "contextWindow": 131000,
-            "inputTokenPrice": 0.00,
-            "outputTokenPrice": 0.00,
-            "supportsTemperature": true,
-            "supportsTopP": true,
-            "tokenParameter": "max_tokens"
-          },
-          {
-            "id": "pixtral-large-latest",
             "maxTokens": 4096,
             "temperature": 0.7,
             "minTemperature": 0.0,
@@ -457,7 +457,7 @@
             "tokenParameter": "maxOutputTokens"
           }
         ],
-        "defaultModel": "gemini-2.5-pro-exp-03-25",
+        "defaultModel": "gemini-2.0-flash",
         "requiresModel": true,
         "authType": "query",
         "authParamName": "key",
