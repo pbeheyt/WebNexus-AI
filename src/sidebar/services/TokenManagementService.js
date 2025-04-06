@@ -1,6 +1,7 @@
 // src/sidebar/services/TokenManagementService.js
 
 import { STORAGE_KEYS } from "../../shared/constants";
+import ChatHistoryService from "./ChatHistoryService"; // Added import
 
 /**
  * Service for token estimation, cost calculation, storage, and context window monitoring
@@ -64,21 +65,21 @@ class TokenManagementService {
   /**
    * Calculate token statistics from chat history
    * @param {Array} messages - Chat messages
-   * @param {string} systemPrompt - System prompt text
+   * @param {string} systemPrompt - System prompt text (optional)
    * @returns {Object} - Token statistics
    */
-  static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') {
+  static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') { // Signature updated (already had default)
     let inputTokens = 0;
     let outputTokens = 0;
     let promptTokens = 0;
     let historyTokens = 0;
-    let systemTokens = 0;
+    let systemTokens = 0; // Initialize systemTokens
     
-    // Process system prompt if present
-    if (systemPrompt) {
+    // Process system prompt if present (New logic)
+    if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
       const systemPromptTokens = this.estimateTokens(systemPrompt);
-      inputTokens += systemPromptTokens;
-      systemTokens += systemPromptTokens;
+      inputTokens += systemPromptTokens; // System prompt contributes to input
+      systemTokens = systemPromptTokens; // Assign to the specific systemTokens field
     }
     
     // Process each message
@@ -117,31 +118,7 @@ class TokenManagementService {
     };
   }
   
-  /**
-   * Get system prompt tokens for a tab
-   * @param {number} tabId - Tab identifier
-   * @returns {Promise<number>} - Token count for system prompt
-   */
-  static async getSystemPromptTokens(tabId) {
-    try {
-      if (!tabId) return 0;
-      
-      // Get system prompt for this tab
-      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_SYSTEM_PROMPTS]);
-      const allTabSystemPrompts = result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] || {};
-      
-      // Get system prompt for this tab
-      const systemPrompt = allTabSystemPrompts[tabId];
-      
-      if (!systemPrompt || !systemPrompt.systemPrompt) return 0;
-      
-      // Estimate tokens for system prompt
-      return this.estimateTokens(systemPrompt.systemPrompt);
-    } catch (error) {
-      console.error('TokenManagementService: Error getting system prompt tokens:', error);
-      return 0;
-    }
-  }
+  // Removed getSystemPromptTokens as it's no longer needed here
   
   /**
    * Track tokens for a message
@@ -243,15 +220,17 @@ class TokenManagementService {
     if (!tabId) return this._getEmptyStats();
     
     try {
-      // Get system prompt tokens
-      const systemPromptTokens = await this.getSystemPromptTokens(tabId);
+      // Get the actual system prompt string
+      const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId); // Use ChatHistoryService
       
-      // Calculate token statistics from messages
-      const stats = this.calculateTokenStatisticsFromMessages(messages, '');
+      // Calculate token statistics from messages, passing the system prompt
+      const stats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt); // Pass systemPrompt
       
-      // Add system prompt tokens
-      stats.inputTokens += systemPromptTokens;
-      stats.systemTokens += systemPromptTokens;
+      // System prompt tokens are now calculated *inside* calculateTokenStatisticsFromMessages
+      // Remove the manual addition here:
+      // const systemPromptTokens = await this.getSystemPromptTokens(tabId); // REMOVED
+      // stats.inputTokens += systemPromptTokens; // REMOVED
+      // stats.systemTokens += systemPromptTokens; // REMOVED
       
       // Calculate cost if model config is provided
       if (modelConfig) {
@@ -415,7 +394,7 @@ class TokenManagementService {
       accumulatedCost: 0, // New field for accumulated costs
       promptTokens: 0,
       historyTokens: 0,
-      systemTokens: 0,
+      systemTokens: 0, // Ensure systemTokens is part of the empty state
       isCalculated: false
     };
   }

@@ -25,6 +25,55 @@ export async function resetState() {
 }
 
 /**
+ * Store or remove the system prompt for a specific tab.
+ * If systemPrompt is a non-empty string, it's stored.
+ * If systemPrompt is null, undefined, or empty, the entry for the tab is removed.
+ * @param {number} tabId - Tab ID to use as key.
+ * @param {string | null | undefined} systemPrompt - The system prompt string to store, or null/undefined/empty to remove.
+ * @returns {Promise<void>}
+ */
+export async function storeSystemPromptForTab(tabId, systemPrompt) {
+  if (typeof tabId !== 'number') {
+    logger.background.warn('storeSystemPromptForTab called with invalid tabId:', tabId);
+    return;
+  }
+
+  const key = String(tabId);
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_SYSTEM_PROMPTS);
+    // Ensure we always work with an object, even if storage is empty/corrupt
+    const allTabSystemPrompts = (result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] && typeof result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] === 'object')
+                               ? { ...result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] } // Create a mutable copy
+                               : {};
+
+    // Check if the provided prompt is a valid, non-empty string
+    if (typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
+      // Store the valid prompt
+      if (allTabSystemPrompts[key] !== systemPrompt) { // Only update if changed
+         allTabSystemPrompts[key] = systemPrompt;
+         logger.background.info(`Stored/Updated system prompt for tab ${tabId}.`);
+         await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: allTabSystemPrompts });
+      } else {
+         logger.background.info(`System prompt for tab ${tabId} is unchanged. No storage update needed.`);
+      }
+    } else {
+      // If prompt is invalid (null, undefined, empty), remove the key if it exists
+      if (allTabSystemPrompts.hasOwnProperty(key)) {
+        delete allTabSystemPrompts[key];
+        logger.background.info(`Removed system prompt entry for tab ${tabId} as new prompt is absent/empty.`);
+        // Save the modified object back (only if a key was actually deleted)
+        await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: allTabSystemPrompts });
+      } else {
+        // Key doesn't exist, nothing to remove, no storage update needed.
+        logger.background.info(`No system prompt entry to remove for tab ${tabId}.`);
+      }
+    }
+  } catch (error) {
+    logger.background.error(`Error updating system prompt state for tab ${tabId}:`, error);
+  }
+}
+
+/**
  * Reset extraction state
  * @returns {Promise<void>}
  */

@@ -17,7 +17,8 @@ import {
   completeStreamResponse,
   hasFormattedContentForTab,
   storeFormattedContentForTab, // Added
-  getFormattedContentForTab   // Added
+  getFormattedContentForTab,   // Added
+  storeSystemPromptForTab // Added for system prompt tracking
 } from '../core/state-manager.js';
 import logger from '../../shared/logger.js';
 
@@ -288,6 +289,15 @@ export async function processContentViaApi(params) {
         formattedContentForRequest = null;
     }
 
+    if (tabId) {
+      try {
+        const promptToStoreOrClear = resolvedParams.systemPrompt;
+        logger.background.info(`Updating system prompt state for tab ${tabId}. Prompt is ${promptToStoreOrClear ? 'present' : 'absent/empty'}.`);
+        await storeSystemPromptForTab(tabId, promptToStoreOrClear);
+      } catch (storeError) {
+        logger.background.error(`Failed to update system prompt state for tab ${tabId}:`, storeError);
+      }
+    }
 
     // 12. Notify the content script about streaming start if this is from sidebar
     if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
