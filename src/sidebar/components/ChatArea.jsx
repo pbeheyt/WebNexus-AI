@@ -87,14 +87,18 @@ function ChatArea({ className = '' }) {
     if (!scrollContainer) return;
 
     if (isProcessing) {
-      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 25;
+      // Calculate dynamic threshold (10% of height, min 10px)
+      const threshold = Math.max(10, scrollContainer.clientHeight * 0.10); 
+      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= threshold; // Use the calculated threshold
+      
+      // Keep the logic for setting userInteractedWithScroll based on isAtBottom
       if (!isAtBottom) {
         setUserInteractedWithScroll(true);
       } else {
         setUserInteractedWithScroll(false);
       }
     }
-  }, [isProcessing]);
+  }, [isProcessing]); // Keep original dependencies
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
