@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
-import { useContent } from '../../contexts/ContentContext'; // Corrected path
+import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';
 import ChatHistoryService from '../services/ChatHistoryService';
 import TokenManagementService from '../services/TokenManagementService';
@@ -25,14 +25,13 @@ export function SidebarChatProvider({ children }) {
   const { contentType } = useContent();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  // Removed local isProcessing state, will use from useContentProcessing hook
   const [streamingMessageId, setStreamingMessageId] = useState(null);
   const [streamingContent, setStreamingContent] = useState('');
   const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
   const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
-  const [isContentExtractionEnabled, setIsContentExtractionEnabled] = useState(true); // Added state for content extraction toggle
+  const [isContentExtractionEnabled, setIsContentExtractionEnabled] = useState(true);
 
   // Platform and model configuration
   const [fullPlatformConfig, setFullPlatformConfig] = useState(null);
@@ -174,12 +173,6 @@ export function SidebarChatProvider({ children }) {
             : msg
         );
 
-        // Check if this is the first assistant message
-        const visibleAssistantMessages = visibleMessages.filter(
-          msg => msg.role === MESSAGE_ROLES.ASSISTANT
-        );
-        const isFirstMessage = visibleAssistantMessages.length === 1;
-
         // If content not added yet, add extracted content message
         if (!extractedContentAdded && !isError) {
           try {
@@ -225,7 +218,7 @@ export function SidebarChatProvider({ children }) {
 
         // Set messages with all updates at once
         setMessages(updatedMessages);
-        setStreamingContent(''); // Reset streaming content
+        setStreamingContent('');
 
         // Track tokens for assistant message
         await trackTokens({
@@ -268,9 +261,7 @@ export function SidebarChatProvider({ children }) {
           // Complete the stream with the error message
           await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true); // Pass model if available
 
-          // Reset state *after* handling completion (setIsProcessing removed)
           setStreamingMessageId(null);
-          // setIsProcessing(false); // Removed
           setIsCanceling(false);
 
           return;
@@ -282,9 +273,7 @@ export function SidebarChatProvider({ children }) {
           : (chunkData.chunk ? JSON.stringify(chunkData.chunk) : '');
 
         if (chunkData.done) {
-          // Streaming complete (setIsProcessing removed)
           setStreamingMessageId(null);
-          // setIsProcessing(false); // Removed
           setIsCanceling(false);
 
           // Get final content
@@ -329,7 +318,7 @@ export function SidebarChatProvider({ children }) {
       return;
     }
 
-    if (!hasAnyPlatformCredentials) { // Change this condition
+    if (!hasAnyPlatformCredentials) {
       setMessages(prev => [...prev, {
         id: `msg_${Date.now()}`,
         role: MESSAGE_ROLES.SYSTEM,
@@ -361,7 +350,7 @@ export function SidebarChatProvider({ children }) {
       model: selectedModel,
       platformIconUrl: selectedPlatform.iconUrl, // Add platform icon URL
       timestamp: new Date().toISOString(),
-      isStreaming: true, // Explicit boolean flag
+      isStreaming: true, 
       inputTokens: 0, // No input tokens for assistant messages
       outputTokens: 0 // Will be updated when streaming completes
     };
@@ -370,7 +359,6 @@ export function SidebarChatProvider({ children }) {
     const updatedMessages = [...messages, userMessage, assistantMessage];
     setMessages(updatedMessages);
     setInputValue('');
-    // setIsProcessing(true); // Removed - Handled by useContentProcessing hook
     setStreamingMessageId(assistantMessageId);
     setStreamingContent('');
 
@@ -408,7 +396,6 @@ export function SidebarChatProvider({ children }) {
         promptContent: text.trim(),
         conversationHistory,
         streaming: true,
-        // Pass extraction flag based on whether it's the first message and the toggle state
         skipInitialExtraction: isFirstMessage ? !isContentExtractionEnabled : false
       });
 
@@ -439,7 +426,6 @@ export function SidebarChatProvider({ children }) {
       }
 
       setStreamingMessageId(null);
-      // setIsProcessing(false); // Removed - Handled by useContentProcessing hook
     }
   };
 
@@ -456,9 +442,7 @@ export function SidebarChatProvider({ children }) {
       // Send cancellation message to background script
       const result = await chrome.runtime.sendMessage({
         action: 'cancelStream',
-        // platformId: selectedPlatformId,
         streamId: streamId,
-        // tabId
       });
 
       // Update the streaming message content to indicate cancellation
@@ -531,8 +515,8 @@ export function SidebarChatProvider({ children }) {
           ? {
               ...msg,
               content: cancelledContent,
-              isStreaming: false, // Ensure streaming is marked false
-              outputTokens // Add token count to message object
+              isStreaming: false,
+              outputTokens
             }
           : msg
       );
@@ -559,14 +543,12 @@ export function SidebarChatProvider({ children }) {
       // Reset streaming state (after all updates and saves) (setIsProcessing removed)
       setStreamingMessageId(null);
       setStreamingContent('');
-      // setIsProcessing(false); // Removed
 
     } catch (error) {
       console.error('Error cancelling stream:', error);
 
       // Still reset the streaming state on error (setIsProcessing removed)
       setStreamingMessageId(null);
-      // setIsProcessing(false); // Removed
     } finally {
       setIsCanceling(false);
     }
@@ -599,14 +581,12 @@ export function SidebarChatProvider({ children }) {
         });
 
         if (response && response.success) {
-          // Reset local state immediately (setIsProcessing removed)
           setMessages([]);
           setInputValue('');
-          // setIsProcessing(false); // Removed
           setStreamingMessageId(null);
           setStreamingContent('');
           setExtractedContentAdded(false); // Allow extracted content to be added again
-          setIsCanceling(false); // Ensure canceling state is reset
+          setIsCanceling(false);
 
           // Clear token data (which also recalculates stats)
           await clearTokenData();
@@ -623,11 +603,10 @@ export function SidebarChatProvider({ children }) {
     clearTokenData,
     setMessages,
     setInputValue,
-    // setIsProcessing, // Removed as it's now handled by the hook
     setStreamingMessageId,
     setStreamingContent,
     setExtractedContentAdded,
-    setIsCanceling // Added setIsCanceling as per requirement
+    setIsCanceling
   ]);
 
   // Function to clear the stored formatted content for the current tab
@@ -667,28 +646,28 @@ export function SidebarChatProvider({ children }) {
     } catch (error) {
       console.error(`Error clearing formatted content for tab ${tabIdKey}:`, error);
     }
-  }, [tabId, setExtractedContentAdded]); // Dependencies: tabId and the setter
+  }, [tabId, setExtractedContentAdded]);
 
   return (
     <SidebarChatContext.Provider value={{
-      messages: visibleMessages, // Only expose visible messages (without extracted content)
-      allMessages: messages, // Provide access to all messages including extracted content
+      messages: visibleMessages,
+      allMessages: messages,
       inputValue,
       setInputValue,
       sendMessage,
       cancelStream,
       isCanceling,
       clearChat,
-      isProcessing, // Use isProcessing from the hook
-      processingStatus, // Keep original if needed elsewhere
+      isProcessing,
+      processingStatus,
       apiError: processingError,
       contentType,
       tokenStats,
       contextStatus,
-      resetCurrentTabData, // Add the new function here
-      clearFormattedContentForTab, // Renamed and implemented function
-      isContentExtractionEnabled, // Added state
-      setIsContentExtractionEnabled // Added setter
+      resetCurrentTabData,
+      clearFormattedContentForTab,
+      isContentExtractionEnabled,
+      setIsContentExtractionEnabled
     }}>
       {children}
     </SidebarChatContext.Provider>
