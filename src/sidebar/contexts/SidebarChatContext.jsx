@@ -152,12 +152,18 @@ export function SidebarChatProvider({ children }) {
   // Handle streaming response chunks
   useEffect(() => {
     // Utility function to handle all post-streaming operations in one place
-    const handleStreamComplete = async (messageId, finalContent, model, isError = false) => {
+    const handleStreamComplete = async (messageId, finalContentInput, model, isError = false, isCancelled = false) => {
       try {
-        // Calculate output tokens
+        let finalContent = finalContentInput; // Use a mutable variable
+        if (isCancelled) {
+          // Append cancellation notice if the stream was cancelled
+          finalContent += '\n\n_Stream cancelled by user._';
+        }
+
+        // Calculate output tokens using the potentially modified finalContent
         const outputTokens = TokenManagementService.estimateTokens(finalContent);
 
-        // Update message with final content
+        // Update message with final content (using the potentially modified finalContent)
         let updatedMessages = messages.map(msg =>
           msg.id === messageId
             ? {
@@ -272,17 +278,32 @@ export function SidebarChatProvider({ children }) {
           ? chunkData.chunk
           : (chunkData.chunk ? JSON.stringify(chunkData.chunk) : '');
 
+        // Handle stream completion, cancellation, or error
         if (chunkData.done) {
+          if (chunkData.cancelled === true) {
+            // Handle Cancellation: Stream was cancelled by the user (via background script signal)
+            console.info(`Stream ${message.streamId} received cancellation signal.`);
+            // Use partial content received so far, mark as cancelled but not an error
+            await handleStreamComplete(streamingMessageId, chunkData.fullContent || streamingContent, chunkData.model, false, true); // isError=false, isCancelled=true
+          } else if (chunkData.error) {
+            // Handle Error: Stream ended with an error (other than user cancellation)
+            console.error(`Stream ${message.streamId} error:`, chunkData.error);
+            const errorMessage = `Error: ${chunkData.error instanceof Error ? chunkData.error.message : chunkData.error}`;
+            // Update the message with the error, mark as error, not cancelled
+            await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true, false); // isError=true, isCancelled=false
+          } else {
+            // Handle Success: Stream completed normally
+            const finalContent = chunkData.fullContent || streamingContent; // Use fullContent if available
+            console.info(`Stream ${message.streamId} completed successfully. Final length: ${finalContent.length}`);
+            // Update message with final content, mark as success (not error, not cancelled)
+            await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false, false); // isError=false, isCancelled=false
+          }
+          // Reset state regardless of outcome (completion, cancellation, error)
           setStreamingMessageId(null);
-          setIsCanceling(false);
-
-          // Get final content
-          const finalContent = chunkData.fullContent || streamingContent;
-
-          // Handle all post-streaming operations in one function
-          await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false); // Pass false for isError
+          setStreamingContent('');
+          setIsCanceling(false); // Reset canceling state
         } else if (chunkContent) {
-          // Append chunk to streaming content
+          // Process Intermediate Chunk: Append chunk to streaming content
           setStreamingContent(prev => prev + chunkContent);
 
           // Update message with current accumulated content

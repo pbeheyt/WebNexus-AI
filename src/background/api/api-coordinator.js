@@ -414,18 +414,27 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
         fullContent: chunkData.fullContent || fullContent // Use fullContent from chunk if available
       };
 
-      if (chunkData.error) {
+      // Check for user cancellation first
+      if (chunkData.error === 'Cancelled by user' || (chunkData.error instanceof Error && chunkData.error.name === 'AbortError')) {
+        logger.background.info(`Stream ${streamId} cancelled by user. Processing partial content.`);
+        // Complete successfully to save partial state, but mark as cancelled for UI
+        await completeStreamResponse(fullContent, modelToUse, platformId); // No error passed
+        finalChunkData.cancelled = true; // Add cancellation flag
+        // Do NOT add finalChunkData.error
+      } else if (chunkData.error) { // Handle other errors
         logger.background.error(`Stream ended with error: ${chunkData.error}`);
-        await setApiProcessingError(chunkData.error);
-        // Pass modelToUse to completeStreamResponse
-        await completeStreamResponse(fullContent, modelToUse, platformId, chunkData.error);
-        finalChunkData.error = chunkData.error;
-      } else {
+        const errorMessage = chunkData.error instanceof Error ? chunkData.error.message : String(chunkData.error);
+        await setApiProcessingError(errorMessage);
+        // Pass modelToUse and error to completeStreamResponse
+        await completeStreamResponse(fullContent, modelToUse, platformId, errorMessage);
+        finalChunkData.error = errorMessage;
+      } else { // Handle successful completion
+        logger.background.info(`Stream ${streamId} completed successfully.`);
         // Pass modelToUse to completeStreamResponse
         await completeStreamResponse(fullContent, modelToUse, platformId);
       }
 
-      // Ensure the final message (success or error) is sent for sidebar
+      // Ensure the final message (success, error, or cancelled) is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
           // Use runtime API for sidebar communication
