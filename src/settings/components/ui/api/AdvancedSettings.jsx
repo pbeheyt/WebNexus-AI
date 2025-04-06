@@ -11,7 +11,7 @@ const AdvancedSettings = ({
   const { error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [isAtDefaults, setIsAtDefaults] = useState(false);
+  const [isAtDefaults, setIsAtDefaults] = useState(true);
   const models = platform.apiConfig?.models || [];
   
   // Get model config for selected model
@@ -259,7 +259,7 @@ const AdvancedSettings = ({
         <h4 className="section-subtitle text-lg font-medium">Advanced Settings</h4>
         
         <Button
-          variant={isAtDefaults ? "inactive" : "danger"}
+          variant={!isAtDefaults ? "inactive" : "danger"}
           size="sm"
           disabled={isAtDefaults}
           onClick={() => {

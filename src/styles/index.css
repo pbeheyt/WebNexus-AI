@@ -20,97 +20,97 @@
   .btn {
     @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm transition-colors;
   }
-  
+
   .btn-primary {
     @apply bg-primary text-white hover:bg-primary-hover;
   }
-  
+
   .btn-secondary {
     @apply bg-theme-surface text-theme-primary border border-theme hover:border-primary;
   }
-  
+
   .btn-danger {
     @apply bg-error text-white hover:bg-red-600;
   }
-  
+
   .btn:disabled {
     @apply bg-gray-500 text-gray-300 cursor-not-allowed hover:bg-gray-500;
   }
-  
+
   /* Toggle switch component */
   .toggle-switch {
     @apply relative inline-block w-9 h-5;
   }
-  
+
   .toggle-switch input {
     @apply opacity-0 w-0 h-0;
   }
-  
+
   .slider {
     @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-theme-hover rounded-full transition-all;
   }
-  
+
   .slider:before {
     @apply absolute content-[''] h-4 w-4 left-0.5 bottom-0.5 bg-white rounded-full transition-all;
   }
-  
+
   input:checked + .slider {
     @apply bg-primary;
   }
-  
+
   input:checked + .slider:before {
     @apply transform translate-x-4;
   }
-  
+
   /* Status indicators */
   .notification,
   .toast {
     @apply fixed p-4 bg-theme-surface text-theme-primary rounded-lg shadow-theme-medium transform -translate-y-full opacity-0 transition-all duration-300 z-50 border-l-4 border-primary;
   }
-  
+
   .notification.show,
   .toast.show {
     @apply translate-y-0 opacity-100;
   }
-  
+
   .notification.error,
   .toast.error {
     @apply border-l-error;
   }
-  
+
   .notification.warning,
   .toast.warning {
     @apply border-l-warning;
   }
-  
+
   .notification.success,
   .toast.success {
     @apply border-l-success;
   }
-  
+
   .status-message {
     @apply text-sm text-theme-secondary p-2 rounded-md bg-opacity-5 min-h-[18px] transition-all;
   }
-  
+
   .error-message {
     @apply text-error text-sm p-2 text-center;
   }
-  
+
   /* Scrollbar styling */
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
-  
+
   ::-webkit-scrollbar-track {
     @apply bg-theme-primary rounded;
   }
-  
+
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-theme-hover rounded; /* Updated base and added dark override */
+    @apply bg-gray-300 dark:bg-theme-hover rounded; /* Base style */
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary;
+    @apply bg-gray-400 dark:bg-gray-500; /* <<< MODIFIED LINE >>> Subtle hover effect */
   }
 }
 
@@ -119,12 +119,12 @@
   .focus-primary {
     @apply focus:ring-2 focus:ring-primary focus:ring-opacity-50 focus:border-primary focus:outline-none;
   }
-  
+
   /* Apply to all inputs, selects, and textareas */
   input:focus, select:focus, textarea:focus {
     @apply ring-2 ring-primary ring-opacity-50 border-primary outline-none;
   }
-  
+
   /* For link styling */
   .link {
     @apply text-primary hover:text-primary-hover hover:underline transition-colors;
