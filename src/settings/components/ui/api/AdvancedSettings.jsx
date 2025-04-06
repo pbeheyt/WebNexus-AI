@@ -259,14 +259,14 @@ const AdvancedSettings = ({
   };
   
   return (
-    <div className="settings-section bg-theme-surface p-5 rounded-lg border border-theme">
-      <div className="flex justify-between items-center mb-4">
-        <h4 className="section-subtitle text-lg font-medium">Advanced Settings</h4>
+    <div className="settings-section bg-theme-surface p-6 rounded-lg border border-theme">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="section-title text-xl font-semibold text-theme-primary">Advanced Settings</h3>
 
         <Button
-          variant={isAtDefaults ? 'inactive' : 'danger'} // Corrected variant logic
+          variant={isAtDefaults ? 'inactive' : 'danger'} 
           size="sm"
-          disabled={isAtDefaults} // Corrected disabled logic
+          disabled={isAtDefaults}
           onClick={() => {
             // No need to check !isAtDefaults, button is disabled if true
             const defaults = getDefaultSettings();
@@ -302,38 +302,40 @@ const AdvancedSettings = ({
         </Button>
       </div>
       
-      <div className="form-group mb-4">
+      <div className="form-group mb-6">
         <label 
           htmlFor={`${platform.id}-settings-model-selector`}
-          className="block mb-2 text-sm font-medium text-theme-secondary"
+          className="block mb-3 text-sm font-medium text-theme-secondary"
         >
           Configure Settings For:
         </label>
-        <select
-          id={`${platform.id}-settings-model-selector`}
-          className="settings-model-selector w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md pr-8"
-          value={selectedModelId}
-          onChange={handleModelChange}
-        >
-          {models.length > 0 ? (
-            models.map(model => (
-              <option key={model.id} value={model.id}>
-                {model.id}
+        <div className="inline-block min-w-[200px] max-w-full">
+          <select
+            id={`${platform.id}-settings-model-selector`}
+            className="settings-model-selector w-auto min-w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
+            value={selectedModelId}
+            onChange={handleModelChange}
+          >
+            {models.length > 0 ? (
+              models.map(model => (
+                <option key={model.id} value={model.id}>
+                  {model.id}
+                </option>
+              ))
+            ) : (
+              <option value="default" disabled>
+                No models available
               </option>
-            ))
-          ) : (
-            <option value="default" disabled>
-              No models available
-            </option>
-          )}
-        </select>
+            )}
+          </select>
+        </div>
       </div>
       
       <form onSubmit={handleSubmit} className="model-advanced-settings">
         {/* Model specifications - pricing and context window */}
-        <div className="model-specs-section p-3 bg-theme-hover rounded-md border border-theme mb-6">
-          <h5 className="specs-title text-sm font-medium mb-2">Model Specifications</h5>
-          <div className="specs-info space-y-1.5">
+        <div className="model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8">
+          <h4 className="specs-title text-base font-semibold mb-3 text-theme-primary">Model Specifications</h4>
+          <div className="specs-info space-y-2.5">
             {/* Context window info (now display-only) */}
             <div className="spec-item flex justify-between text-sm">
               <span className="spec-label font-medium text-theme-secondary">Context window:</span>
@@ -364,23 +366,25 @@ const AdvancedSettings = ({
         </div>
 
         {/* Max tokens setting - Replaced with SliderInput */}
-        <SliderInput
-          label={platform.id === 'chatgpt' || platform.id === 'grok' ? 'Max Completion Tokens:' : 'Max Tokens:'}
-          value={formValues.maxTokens}
-          onChange={(newValue) => handleChange('maxTokens', newValue)}
-          min={0}
-          max={modelConfig?.maxTokens || 32000}
-          step={1}
-          disabled={isSaving}
-          className="form-group" // Keep existing spacing if needed
-        />
-        <p className="help-text text-xs text-theme-secondary mt-2 mb-4"> {/* Adjust margin for spacing */}
-          Maximum number of tokens to generate in the response.
-        </p>
+        <div className="mb-7">
+          <SliderInput
+            label={platform.id === 'chatgpt' || platform.id === 'grok' ? 'Max Completion Tokens:' : 'Max Tokens:'}
+            value={formValues.maxTokens}
+            onChange={(newValue) => handleChange('maxTokens', newValue)}
+            min={0}
+            max={modelConfig?.maxTokens || 32000}
+            step={1}
+            disabled={isSaving}
+            className="form-group"
+          />
+          <p className="help-text text-xs text-theme-secondary mt-2">
+            Maximum number of tokens to generate in the response.
+          </p>
+        </div>
 
         {/* Temperature setting (if supported) - Replaced with SliderInput */}
         {modelConfig?.supportsTemperature !== false && (
-          <>
+          <div className="mb-7">
             <SliderInput
               label="Temperature:"
               value={formValues.temperature}
@@ -391,15 +395,15 @@ const AdvancedSettings = ({
               disabled={isSaving}
               className="form-group"
             />
-            <p className="help-text text-xs text-theme-secondary mt-2 mb-4"> {/* Adjust margin */}
+            <p className="help-text text-xs text-theme-secondary mt-2">
               Controls randomness: lower values are more deterministic, higher values more creative.
             </p>
-          </>
+          </div>
         )}
 
         {/* Top P setting (if supported) - Replaced with SliderInput */}
         {modelConfig?.supportsTopP === true && (
-          <>
+          <div className="mb-7">
             <SliderInput
               label="Top P:"
               value={formValues.topP}
@@ -410,40 +414,41 @@ const AdvancedSettings = ({
               disabled={isSaving}
               className="form-group"
             />
-            <p className="help-text text-xs text-theme-secondary mt-2 mb-4"> {/* Adjust margin */}
+            <p className="help-text text-xs text-theme-secondary mt-2">
               Alternative to temperature, controls diversity via nucleus sampling.
             </p>
-          </>
+          </div>
         )}
 
         {/* System prompt (if supported) */}
         {platform.apiConfig?.hasSystemPrompt !== false && (
-          <div className="form-group mb-4">
+          <div className="form-group mb-8">
             <label 
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
-              className="block mb-2 text-sm font-medium text-theme-secondary"
+              className="block mb-3 text-sm font-semibold text-theme-secondary"
             >
               System Prompt:
             </label>
             <textarea
               id={`${platform.id}-${selectedModelId}-system-prompt`}
               name="systemPrompt"
-              className="system-prompt-input w-full min-h-[100px] p-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
+              className="system-prompt-input w-full min-h-[120px] p-3 bg-theme-surface text-theme-primary border border-theme rounded-md"
               placeholder="Enter a system prompt for API requests"
               value={formValues.systemPrompt}
-              onChange={(e) => handleChange('systemPrompt', e.target.value)} // Pass name and value
+              onChange={(e) => handleChange('systemPrompt', e.target.value)}
             />
-            <p className="help-text text-xs text-theme-secondary mt-1">
+            <p className="help-text text-xs text-theme-secondary mt-2">
               Optional system prompt to provide context for API requests.
             </p>
           </div>
         )}
         
-        <div className="form-actions flex justify-end">
+        <div className="form-actions flex justify-end mt-8">
           <Button
             type="submit"
             disabled={isSaving || !hasChanges}
             variant={!hasChanges ? 'inactive' : 'primary'}
+            className="px-5 py-2"
           >
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
