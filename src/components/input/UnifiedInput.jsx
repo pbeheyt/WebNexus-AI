@@ -263,7 +263,4 @@ export function UnifiedInput({
       </div>
     );
   }
-
-  // Fallback
-  return <div className="text-red-500">Error: Invalid layoutVariant specified.</div>;
 }

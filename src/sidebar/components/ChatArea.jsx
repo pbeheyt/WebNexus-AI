@@ -225,14 +225,6 @@ function ChatArea({ className = '' }) {
         />
       ))}
 
-      {isProcessing && !messages.some(m => m.isStreaming) && (
-        <div className="flex gap-1 p-3">
-          <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce"></div>
-          <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-        </div>
-      )}
-
       <div ref={messagesEndRef} />
     </div>
   );
