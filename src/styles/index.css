@@ -110,7 +110,7 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-500; /* <<< MODIFIED LINE >>> Subtle hover effect */
+    @apply bg-gray-400 dark:bg-gray-500; /* Subtle hover effect */
   }
 }
 
@@ -120,7 +120,7 @@
     @apply focus:ring-2 focus:ring-primary focus:ring-opacity-50 focus:border-primary focus:outline-none;
   }
 
-  /* Apply to all inputs, selects, and textareas */
+  /* Apply general focus styles, but allow overrides */
   input:focus, select:focus, textarea:focus {
     @apply ring-2 ring-primary ring-opacity-50 border-primary outline-none;
   }
@@ -131,18 +131,18 @@
   }
 }
 
-/* Custom Slider Styles */
+/* --- Custom Slider Styles (Webkit/Chrome Only) --- */
 .custom-slider {
   -webkit-appearance: none; /* Override default look */
   appearance: none;
-  width: 100%; /* Full width */
+  /* width: 100%; Let Tailwind handle width */
   height: 8px; /* Specified height */
   background: transparent; /* Background set on the track */
   cursor: pointer;
   border-radius: 9999px; /* Fully rounded */
 }
 
-/* Webkit (Chrome, Safari, Edge) Track */
+/* Webkit Track */
 .custom-slider::-webkit-slider-runnable-track {
   width: 100%;
   height: 8px;
@@ -173,37 +173,7 @@
    background: theme('colors.primary.hover'); /* Use hover state for active as well */
 }
 
-/* Mozilla (Firefox) Track */
-.custom-slider::-moz-range-track {
-  width: 100%;
-  height: 8px;
-  cursor: pointer;
-  background: theme('colors.gray.300');
-  border-radius: 9999px;
-  border: none; /* Firefox might add a border */
-}
-.dark .custom-slider::-moz-range-track {
-  background: theme('colors.gray.700');
-}
-
-/* Mozilla Thumb */
-.custom-slider::-moz-range-thumb {
-  height: 16px;
-  width: 16px;
-  background: theme('colors.primary.DEFAULT');
-  border-radius: 50%;
-  border: none; /* Firefox might add a border */
-  cursor: pointer;
-  transition: background .2s ease-in-out;
-}
-.custom-slider:hover::-moz-range-thumb {
-   background: theme('colors.primary.hover');
-}
-.custom-slider:active::-moz-range-thumb {
-   background: theme('colors.primary.hover'); /* Use hover state for active as well */
-}
-
-/* Disabled State */
+/* Disabled State (Webkit Only) */
 .custom-slider:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -215,13 +185,6 @@
 .dark .custom-slider:disabled::-webkit-slider-thumb {
   background: theme('colors.gray.500');
 }
-.custom-slider:disabled::-moz-range-thumb {
-  background: theme('colors.gray.400');
-  cursor: not-allowed;
-}
-.dark .custom-slider:disabled::-moz-range-thumb {
-  background: theme('colors.gray.500');
-}
 .custom-slider:disabled::-webkit-slider-runnable-track {
   background: theme('colors.gray.200');
   cursor: not-allowed;
@@ -229,10 +192,10 @@
 .dark .custom-slider:disabled::-webkit-slider-runnable-track {
   background: theme('colors.gray.800');
 }
-.custom-slider:disabled::-moz-range-track {
-  background: theme('colors.gray.200');
-  cursor: not-allowed;
-}
-.dark .custom-slider:disabled::-moz-range-track {
-  background: theme('colors.gray.800');
+
+/* --- Hide spin buttons on ALL number inputs --- */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
