@@ -42,6 +42,11 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   const languageMatch = /language-(\w+)/.exec(className || '');
   const language = languageMatch ? languageMatch[1] : 'code';
   
+  // Check if this is just a filename (single line, no spaces, has extension)
+  const isFilename = codeContent.trim().indexOf('\n') === -1 && 
+                    codeContent.trim().indexOf(' ') === -1 && 
+                    /\.\w{1,4}$/.test(codeContent.trim());
+  
   // Format the raw language name - just capitalize first letter
   const displayLanguage = language.charAt(0).toUpperCase() + language.slice(1);
   
@@ -57,18 +62,27 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
     }
   };
   
+  // For filenames, render a simpler component
+  if (isFilename) {
+    return (
+      <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs font-mono inline-block">
+        {codeContent}
+      </code>
+    );
+  }
+  
   return (
-    <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 mb-4 shadow-sm">
+    <div className="relative rounded-lg overflow-visible border border-gray-200 dark:border-gray-700 mb-4 shadow-sm">
       {/* Minimal header with language display */}
-      <div className="bg-gray-200 dark:bg-gray-800 px-3 py-2 flex justify-between items-center">
+      <div className="bg-gray-200 dark:bg-gray-800 px-3 py-1 flex justify-between items-center">
         {/* Language name */}
-        <span className="text-gray-600 dark:text-gray-400 font-mono">{displayLanguage}</span>
+        <span className="text-gray-600 dark:text-gray-400 font-mono text-xs">{displayLanguage}</span>
         
-        {/* Copy button - Only show when not streaming */}
+        {/* Copy button - Only show when not streaming - SMALLER VERSION */}
         {!isStreaming && (
           <button
             onClick={copyCodeToClipboard}
-            className={`rounded transition-all duration-200 px-2 py-1
+            className={`rounded transition-all duration-200 px-1.5 py-0.5 text-xs
                       ${copyState === 'copied' ? 'text-green-600 dark:text-green-400' : 
                         copyState === 'error' ? 'text-red-500 dark:text-red-400' : 
                         'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
@@ -76,36 +90,27 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
             title="Copy code to clipboard"
           >
             {copyState === 'copied' ? (
-              <span className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <span>Copied</span>
-              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
             ) : copyState === 'error' ? (
-              <span className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-                <span>Error</span>
-              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             ) : (
-              <span className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                </svg>
-                <span>Copy</span>
-              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
             )}
           </button>
         )}
       </div>
       
-      {/* Clean code content area */}
-      <pre className="bg-gray-50 dark:bg-gray-900 p-4 m-0 overflow-x-auto overflow-y-auto max-h-[50vh] text-xs leading-5 font-mono text-gray-800 dark:text-gray-200">
-        <code className={className}>
+      {/* Clean code content area with equal padding top and bottom */}
+      <pre className="bg-gray-50 dark:bg-gray-900 py-2 px-4 m-0 overflow-x-auto overflow-y-auto max-h-[50vh] text-xs leading-5 font-mono text-gray-800 dark:text-gray-200 w-full">
+        <code className={`${className} whitespace-pre-wrap break-words overflow-wrap-anywhere block min-h-[1.5rem] mt-0`}>
           {children}
         </code>
       </pre>
@@ -150,7 +155,7 @@ const MessageBubbleComponent = ({
     return (
       <div className={`p-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-5 py-4 ${className}`}>
         {/* System messages render raw content, preserving whitespace */}
-        <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed">{content}</div>
+        <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
       </div>
     );
   }
@@ -161,7 +166,7 @@ const MessageBubbleComponent = ({
       <div className={`p-5 w-full flex justify-end ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-4 max-w-[85%] overflow-hidden">
           {/* User messages render raw content, preserving whitespace */}
-          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed">{content}</div>
+          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
         </div>
       </div>
     );
@@ -171,26 +176,53 @@ const MessageBubbleComponent = ({
   return (
     <div className={`p-4 w-full message-group relative ${className}`}>
       {/* Main content - Render Markdown for assistant messages */}
-      <div className="prose dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-hidden">
+      <div className="prose dark:prose-invert prose-sm max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
             h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-3" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mb-2" {...props} />,
-            p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed" {...props} />,
+            p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed text-sm" {...props} />,
             
             // Fixed list rendering to prevent marker line breaks
             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-            li: ({node, ...props}) => <li className="leading-relaxed" {...props} />,
+            li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
             
             code: ({node, inline, className, children, ...props}) => {
               // Check if it's a block code (has language class) or inline
               const match = /language-(\w+)/.exec(className || '');
+              const content = String(children).trim();
+              
+              // Check if this is just a filename (single line, no spaces, has extension)
+              const isFilename = content.indexOf('\n') === -1 && 
+                                content.indexOf(' ') === -1 && 
+                                /\.\w{1,4}$/.test(content);
+              
+              // Check if parent is a list item by traversing up the tree
+              const isInListItem = () => {
+                let parent = node.parent;
+                while (parent) {
+                  if (parent.type === 'listItem') {
+                    return true;
+                  }
+                  parent = parent.parent;
+                }
+                return false;
+              };
+              
+              // For filenames or list items with code, use simple inline style
+              if ((!inline && (isFilename || isInListItem()))) {
+                return (
+                  <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs font-mono">
+                    {children}
+                  </code>
+                );
+              }
+              
               return !inline ? (
                 // Block code with copy button: use our CodeBlock component
-                // Pass the isStreaming prop to CodeBlock
                 <CodeBlock className={className} isStreaming={isStreaming}>
                   {children}
                 </CodeBlock>
@@ -204,11 +236,17 @@ const MessageBubbleComponent = ({
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
             pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary mb-3 py-0.5" {...props} />,
+            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary mb-3 py-0.5 text-sm" {...props} />,
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
             em: ({node, ...props}) => <em className="italic" {...props} />,
             hr: ({node, ...props}) => <hr className="my-4 border-t border-gray-300 dark:border-gray-600" {...props} />,
-            // Add other elements if needed, e.g., table
+            // Table handling
+            table: ({node, ...props}) => <div className="overflow-x-auto mb-4"><table className="border-collapse w-full text-sm" {...props} /></div>,
+            thead: ({node, ...props}) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
+            tbody: ({node, ...props}) => <tbody {...props} />,
+            tr: ({node, ...props}) => <tr className="border-b border-gray-200 dark:border-gray-700" {...props} />,
+            th: ({node, ...props}) => <th className="p-2 text-left font-medium" {...props} />,
+            td: ({node, ...props}) => <td className="p-2 border-gray-200 dark:border-gray-700" {...props} />,
           }}
         >
           {content}
