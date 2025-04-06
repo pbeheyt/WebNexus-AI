@@ -116,13 +116,16 @@ export async function processContentViaApi(params) {
     let newlyFormattedContent = null; // To hold content formatted in this run
     const contentType = determineContentType(url);
     const skipExtractionRequested = params.skipInitialExtraction === true; // Retrieve the flag
+    const isFirstUserMessage = conversationHistory.length === 0; // Calculate earlier
+    logger.background.info(`Is this the first user message (history empty)? ${isFirstUserMessage}`);
 
-    // 1. Decide whether to extract content based on existence and user request
+    // 1. Decide whether to extract content based on existence, user request, and message history
     const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
-    const shouldExtract = !initialFormattedContentExists && !skipExtractionRequested; // New condition
+    // Extraction only happens on the first message, if not skipped, and if content doesn't already exist.
+    const shouldExtract = isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested;
 
     if (shouldExtract) {
-        logger.background.info(`Content extraction will proceed for tab ${tabId}.`);
+        logger.background.info(`First message: Extraction will proceed for tab ${tabId} (no existing content, not skipped).`);
         // Reset previous extraction state (ensure this happens ONLY if extracting)
         await resetExtractionState();
         // Determine effectivePlatformId *before* using it here
@@ -146,16 +149,27 @@ export async function processContentViaApi(params) {
             await storeFormattedContentForTab(tabId, newlyFormattedContent);
             logger.background.info(`Formatted and stored content for tab ${tabId}.`);
         }
-    } else if (initialFormattedContentExists) {
-        logger.background.info(`Formatted content already exists for tab ${tabId}, skipping extraction.`);
-        // Ensure these are null if not extracting now
+        // Ensure these are null if extraction happened but failed
+        if (!newlyFormattedContent) {
+             extractedContent = null;
+        }
+    } else {
+        // Log the reason why extraction was skipped
+        if (!isFirstUserMessage) {
+            logger.background.info(`Not first message: Skipping extraction for tab ${tabId}.`);
+        } else if (skipExtractionRequested) {
+            logger.background.info(`First message: Extraction skipped for tab ${tabId} by user request.`);
+        } else if (initialFormattedContentExists) {
+            logger.background.info(`First message: Formatted content already exists for tab ${tabId}, skipping extraction.`);
+        } else {
+             // Should not happen based on shouldExtract logic, but log just in case
+             logger.background.warn(`Extraction skipped for unknown reason for tab ${tabId}. Conditions: isFirst=${isFirstUserMessage}, skipped=${skipExtractionRequested}, exists=${initialFormattedContentExists}`);
+        }
+        // Ensure these are null if extraction didn't happen
         extractedContent = null;
         newlyFormattedContent = null;
-    } else { // Content doesn't exist AND skipExtractionRequested is true
-        logger.background.info(`Content extraction skipped for tab ${tabId} by user request.`);
-        extractedContent = null; // Ensure null if skipped
-        newlyFormattedContent = null; // Ensure null if skipped
     }
+
 
     // 4. Get the prompt
     let promptContent;
@@ -223,24 +237,34 @@ export async function processContentViaApi(params) {
     // 10. Initialize streaming response
     await initializeStreamResponse(streamId, effectivePlatformId, resolvedParams.model); // Include model
 
-    // 11. Determine the formatted content to use for the request based on the extraction outcome and message history
+    // 11. Determine the formatted content to include in the request (only for the first message under specific conditions)
     let formattedContentForRequest = null;
-    const isFirstUserMessage = conversationHistory.length === 0; // Ensure conversationHistory is correctly passed/available
-    logger.background.info(`Is this the first user message (history empty)? ${isFirstUserMessage}`);
 
     if (isFirstUserMessage) {
-        if (shouldExtract && newlyFormattedContent) { // Use the content just formatted
-            formattedContentForRequest = newlyFormattedContent;
-            logger.background.info(`First user message: Using newly extracted/formatted content for tab ${tabId}.`);
-        } else if (initialFormattedContentExists) { // Use previously stored content
-            formattedContentForRequest = await getFormattedContentForTab(tabId);
-            logger.background.info(`First user message: Using pre-existing formatted content for tab ${tabId}.`);
-        } else { // No content exists and extraction was skipped or failed
-            logger.background.info(`First user message: No content available (extraction skipped or failed) for tab ${tabId}.`);
+        logger.background.info(`Processing first user message for content inclusion.`);
+        if (!skipExtractionRequested) {
+            logger.background.info(`Extraction was allowed for this first message.`);
+            if (shouldExtract && newlyFormattedContent) {
+                // Extraction was triggered now and succeeded
+                formattedContentForRequest = newlyFormattedContent;
+                logger.background.info(`Using newly extracted/formatted content for tab ${tabId}.`);
+            } else if (initialFormattedContentExists) {
+                // Extraction wasn't triggered now (because content existed), but it was allowed and content exists
+                formattedContentForRequest = await getFormattedContentForTab(tabId);
+                logger.background.info(`Using pre-existing formatted content for tab ${tabId}.`);
+            } else {
+                // Extraction was allowed, but either failed or wasn't triggered (and no pre-existing content)
+                logger.background.info(`No content available (extraction allowed but failed, or content didn't exist) for tab ${tabId}.`);
+                formattedContentForRequest = null;
+            }
+        } else {
+            // Extraction was explicitly skipped by the user for the first message
+            logger.background.info(`Extraction was skipped by user request for this first message. No content included.`);
             formattedContentForRequest = null;
         }
-    } else { // Not the first message
-        logger.background.info(`Not the first user message: Skipping formatted content retrieval.`);
+    } else {
+        // Not the first message, never include content
+        logger.background.info(`Not the first user message: Skipping content inclusion.`);
         formattedContentForRequest = null;
     }
 
