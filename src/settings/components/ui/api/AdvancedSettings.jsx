@@ -200,8 +200,10 @@ const AdvancedSettings = ({
     try {
       // Validate inputs
       const maxTokensMax = modelConfig?.maxTokens || 32000;
-      if (formValues.maxTokens < 0 || formValues.maxTokens > maxTokensMax) {
-        throw new Error(`Max tokens must be between 0 and ${maxTokensMax}`);
+      // *** MODIFIED LINE: Changed minimum check from 0 to 1 ***
+      if (formValues.maxTokens < 1 || formValues.maxTokens > maxTokensMax) { 
+        // *** MODIFIED LINE: Updated error message ***
+        throw new Error(`Max tokens must be between 1 and ${maxTokensMax}`); 
       }
       
       // Only validate temperature and topP if they exist in the form values
@@ -371,7 +373,8 @@ const AdvancedSettings = ({
             label={platform.id === 'chatgpt' || platform.id === 'grok' ? 'Max Completion Tokens:' : 'Max Tokens:'}
             value={formValues.maxTokens}
             onChange={(newValue) => handleChange('maxTokens', newValue)}
-            min={0}
+            // *** MODIFIED LINE: Changed min from 0 to 1 ***
+            min={1} 
             max={modelConfig?.maxTokens || 32000}
             step={1}
             disabled={isSaving}
