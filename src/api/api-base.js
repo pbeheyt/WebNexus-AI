@@ -1,6 +1,4 @@
 const ApiInterface = require('./api-interface');
-const ModelParameterService = require('../services/ModelParameterService');
-const { STORAGE_KEYS } = require('../shared/constants');
 
 /**
  * Base class with shared API functionality

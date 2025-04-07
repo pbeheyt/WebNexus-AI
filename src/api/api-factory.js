@@ -36,32 +36,6 @@ class ApiFactory {
         throw new Error(`Unsupported API platform: ${platformId}`);
     }
   }
-
-  /**
-   * Get list of all supported platform IDs
-   * @returns {string[]} Array of supported platform identifiers
-   */
-  static getSupportedPlatforms() {
-    return [
-      'chatgpt',
-      'claude',
-      'gemini',
-      'mistral',
-      'deepseek',
-      'grok'
-    ];
-  }
-
-  /**
-   * Check if a platform is supported
-   * @param {string} platformId - Platform identifier to check
-   * @returns {boolean} True if platform is supported
-   */
-  static isPlatformSupported(platformId) {
-    return this.getSupportedPlatforms()
-      .map(p => p.toLowerCase())
-      .includes(platformId.toLowerCase());
-  }
 }
 
 module.exports = ApiFactory;
