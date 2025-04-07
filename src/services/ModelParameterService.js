@@ -85,20 +85,6 @@ class ModelParameterService {
     } catch (error) {
       logger.error('Error loading platform config:', error);
     }
-
-    // 4. Last resort fallbacks
-    const fallbackMap = {
-      'chatgpt': 'gpt-4o',
-      'claude': 'claude-3-7-sonnet-latest',
-      'gemini': 'gemini-1.5-flash',
-      'mistral': 'mistral-large-latest',
-      'deepseek': 'deepseek-chat',
-      'grok': 'grok-2-1212'
-    };
-
-    modelId = fallbackMap[platformId] || 'gpt-4o';
-    logger.info(`Using fallback model for ${platformId}: ${modelId}`);
-    return modelId;
   }
 
   /**
@@ -264,7 +250,6 @@ class ModelParameterService {
       // Determine effective toggle values, defaulting to true if not set
       const effectiveIncludeTemperature = userSettings.includeTemperature ?? true;
       const effectiveIncludeTopP = userSettings.includeTopP ?? false; // Changed default to false
-      logger.info(`Effective Toggles: Temp=${effectiveIncludeTemperature}, TopP=${effectiveIncludeTopP}`);
 
       // Start with base parameters
       const params = {
@@ -282,9 +267,6 @@ class ModelParameterService {
         params.temperature = userSettings.temperature !== undefined
           ? userSettings.temperature
           : (platformApiConfig?.temperature !== undefined ? platformApiConfig.temperature : 0.7); // Final fallback
-        logger.info(`Including Temperature: ${params.temperature}`);
-      } else {
-        logger.info(`Excluding Temperature (Supported: ${modelSupportsTemperature}, Included: ${effectiveIncludeTemperature})`);
       }
 
       // Add topP ONLY if model supports it AND user included it
@@ -294,9 +276,6 @@ class ModelParameterService {
         params.topP = userSettings.topP !== undefined
           ? userSettings.topP
           : (platformApiConfig?.topP !== undefined ? platformApiConfig.topP : 1.0); // Final fallback
-        logger.info(`Including Top P: ${params.topP}`);
-      } else {
-         logger.info(`Excluding Top P (Supported: ${modelSupportsTopP}, Included: ${effectiveIncludeTopP})`);
       }
 
       // Add system prompt if platform/model supports it AND user provided one
@@ -304,13 +283,11 @@ class ModelParameterService {
       const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false;
       if (platformSupportsSystemPrompt && modelSupportsSystemPrompt && userSettings.systemPrompt) {
         params.systemPrompt = userSettings.systemPrompt;
-         logger.info(`Including System Prompt`);
       }
 
       // Add conversation history if provided in options
       if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
         params.conversationHistory = conversationHistory;
-         logger.info(`Including Conversation History (Length: ${conversationHistory.length})`);
       }
 
       // Include tabId if provided (useful for downstream token tracking)
@@ -318,7 +295,7 @@ class ModelParameterService {
           params.tabId = tabId;
       }
 
-      logger.info(`FINAL Resolved parameters for ${platformId}/${modelToUse}:`, { ...params }); // Log a copy
+      logger.info(`FINAL Resolved parameters for ${platformId}/${modelToUse}:`, { ...params }); 
       return params;
 
     } catch (error) {
@@ -336,7 +313,6 @@ class ModelParameterService {
         topP: fallbackPlatformApiConfig?.topP !== undefined ? fallbackPlatformApiConfig.topP : 1.0, // Default include topP
         parameterStyle: 'standard',
         tokenParameter: 'max_tokens',
-        // No supports flags needed in final object
       };
     }
   }
