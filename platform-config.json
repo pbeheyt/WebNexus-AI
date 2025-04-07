@@ -320,8 +320,8 @@
         "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
         "minTemperature": 0.0,
         "maxTemperature": 2.0,
-        "temperature": 1.0,
-        "topP": 1.0,
+        "temperature": 0.7,
+        "topP": 0.95,
         "models": [
           {
             "id": "gemini-2.5-pro-exp-03-25",
@@ -394,7 +394,7 @@
         "requiresModel": true,
         "authType": "query",
         "authParamName": "key",
-        "hasSystemPrompt": false
+        "hasSystemPrompt": true
       }
     },
     "grok": {
