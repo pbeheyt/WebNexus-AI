@@ -6,7 +6,8 @@ const AdvancedSettings = ({
   selectedModelId,
   advancedSettings,
   onModelSelect,
-  onSettingsUpdate
+  onSettingsUpdate,
+  onResetToDefaults // Add the new prop
 }) => {
   const { error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
@@ -287,7 +288,8 @@ const AdvancedSettings = ({
             setHasChanges(false);
             setIsAtDefaults(true);
 
-            onSettingsUpdate(selectedModelId, { __RESET__: true });
+            // Call the new reset handler prop instead of onSettingsUpdate with __RESET__
+            onResetToDefaults(selectedModelId); 
           }}
         >
           Reset to Configuration Defaults

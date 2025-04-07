@@ -136,60 +136,81 @@ const PlatformDetails = ({
   const handleModelSelect = (modelId) => {
     setSelectedModelId(modelId);
   };
-  
-  const handleAdvancedSettingsUpdate = async (modelId, settings) => {
+
+  // New function to handle resetting advanced settings to defaults
+  const handleResetAdvancedSettings = async (modelId) => {
     try {
-      // Check if this is a reset operation
-      if (settings.__RESET__) {
-        // Load current settings from storage
-        const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
-        const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
-        
-        if (!currentSettings[platform.id]) {
-          // Nothing to remove, already at defaults
-          onAdvancedSettingsUpdated(platform.id, modelId, {});
-          success('Settings reset to defaults');
-          return true;
+      // Load current settings from storage
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
+
+      if (!currentSettings[platform.id]) {
+        // Nothing to remove, already at defaults
+        onAdvancedSettingsUpdated(platform.id, modelId, {}); // Notify with empty settings
+        success('Settings already at defaults'); // Adjusted message
+        return true;
+      }
+
+      let settingsChanged = false; // Track if anything was actually deleted
+
+      // Handle model-specific or default settings removal
+      if (!modelId || modelId === 'default') {
+        // Remove default settings
+        if (currentSettings[platform.id].default) {
+          delete currentSettings[platform.id].default;
+          settingsChanged = true;
         }
-        
-        // Handle model-specific or default settings removal
-        if (!modelId || modelId === 'default') {
-          // Remove default settings
-          if (currentSettings[platform.id].default) {
-            delete currentSettings[platform.id].default;
-          }
-        } else {
-          // Remove model-specific settings
-          if (currentSettings[platform.id].models && 
-              currentSettings[platform.id].models[modelId]) {
-            delete currentSettings[platform.id].models[modelId];
-          }
-          
-          // Clean up empty models object if needed
-          if (currentSettings[platform.id].models && 
-              Object.keys(currentSettings[platform.id].models).length === 0) {
-            delete currentSettings[platform.id].models;
-          }
+      } else {
+        // Remove model-specific settings
+        if (currentSettings[platform.id].models &&
+            currentSettings[platform.id].models[modelId]) {
+          delete currentSettings[platform.id].models[modelId];
+          settingsChanged = true;
         }
-        
-        // Remove entire platform entry if it's now empty
-        if (Object.keys(currentSettings[platform.id]).length === 0) {
-          delete currentSettings[platform.id];
+
+        // Clean up empty models object if needed
+        if (currentSettings[platform.id].models &&
+            Object.keys(currentSettings[platform.id].models).length === 0) {
+          delete currentSettings[platform.id].models;
+          // No need to set settingsChanged here, already handled above or below
         }
-        
+      }
+
+      // Remove entire platform entry if it's now empty
+      if (currentSettings[platform.id] && Object.keys(currentSettings[platform.id]).length === 0) {
+        delete currentSettings[platform.id];
+        settingsChanged = true; // Ensure change is tracked if only the platform entry is removed
+      }
+
+      // Only save and notify if changes were made
+      if (settingsChanged) {
         // Save updated settings to storage
         await chrome.storage.sync.set({
           [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings
         });
-        
-        // Notify parent component of reset
+
+        // Notify parent component of reset with empty settings object
         onAdvancedSettingsUpdated(platform.id, modelId, {});
-        
+
         // Show success message
         success('Advanced settings reset to defaults');
-        
-        return true;
+      } else {
+         // If no settings were actually removed (e.g., trying to reset non-existent model settings)
+         onAdvancedSettingsUpdated(platform.id, modelId, {}); // Still notify parent
+         success('Settings already at defaults');
       }
+
+      return true;
+    } catch (err) {
+      console.error('Error resetting advanced settings:', err);
+      error(`Failed to reset advanced settings: ${err.message}`);
+      return false;
+    }
+  };
+  
+  const handleAdvancedSettingsUpdate = async (modelId, settings) => {
+    try {
+      // Removed the __RESET__ check block, logic moved to handleResetAdvancedSettings
       
       // Normal update (non-reset) continues with existing logic...
       // Load current settings
@@ -347,6 +368,7 @@ const PlatformDetails = ({
         advancedSettings={advancedSettings}
         onModelSelect={handleModelSelect}
         onSettingsUpdate={handleAdvancedSettingsUpdate}
+        onResetToDefaults={handleResetAdvancedSettings} // Pass the new reset handler
       />
     </div>
   );
