@@ -11,10 +11,10 @@ class GeminiApiService extends BaseApiService {
 
   /**
    * Constructs the correct Gemini API endpoint based on the model and method.
-   * @param {string} model - The model ID (e.g., "gemini-1.5-pro", "gemini-2.5-pro-exp-03-25")
+   * @param {string} model - The model ID (e.g., "gemini-1.5-pro", "gemini-1.5-pro-exp-03-25")
    * @param {string} method - The API method (e.g., ":streamGenerateContent", ":generateContent")
    * @returns {string} The fully constructed endpoint URL.
-   * @throws {Error} If Gemini endpoint configuration is missing.
+   * @throws {Error} If Gemini endpoint configuration is missing or model/method are invalid.
    */
   _getGeminiEndpoint(model, method) {
     // Use a base structure, ignore the specific endpoint in config for flexibility
@@ -25,7 +25,7 @@ class GeminiApiService extends BaseApiService {
     }
 
     const isExperimental = model.includes('-exp-');
-    const apiVersion = isExperimental ? 'v1beta' : 'v1';
+    const apiVersion = isExperimental ? 'v1beta' : 'v1'; // v1beta supports systemInstruction
 
     this.logger.info(`Using API version '${apiVersion}' for model '${model}'`);
 
@@ -40,12 +40,11 @@ class GeminiApiService extends BaseApiService {
   /**
    * Process with model-specific parameters and streaming support
    * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
+   * @param {Object} params - Resolved parameters including conversation history, model, systemPrompt, etc.
    * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters including conversation history
    * @param {function} onChunk - Callback function for receiving text chunks
    * @param {AbortSignal} [abortSignal] - Optional AbortSignal for cancellation
-   * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
+   * @returns {Promise<Object|undefined>} API response metadata on success, undefined on error handled via onChunk.
    */
   async _processWithModelStreaming(text, params, apiKey, onChunk, abortSignal) {
     let reader; // Declare reader outside try block for finally access
@@ -59,27 +58,42 @@ class GeminiApiService extends BaseApiService {
       const url = new URL(endpoint);
       url.searchParams.append('key', apiKey);
 
-      // Format content according to Gemini requirements (logic remains the same)
-      let formattedContent = text;
+      // Determine API version for feature check (systemInstruction)
+      const isExperimental = params.model.includes('-exp-');
+      const apiVersion = isExperimental ? 'v1beta' : 'v1';
+
+      // Format content according to Gemini requirements
       let formattedRequest;
       if (params.conversationHistory && params.conversationHistory.length > 0) {
+        // History formatting function no longer handles system prompt directly
         formattedRequest = this._formatGeminiRequestWithHistory(
-          params.conversationHistory, text, params.systemPrompt
+          params.conversationHistory, text // Pass only history and current text
         );
       } else {
-        if (params.systemPrompt) {
-           this.logger.warn('Gemini does not officially support system prompts via this API structure, prepending to user text.');
-           formattedContent = `${params.systemPrompt}\n\n${text}`;
-        }
-        formattedRequest = { contents: [{ parts: [{ text: formattedContent }] }] };
+        // No history, just the current prompt
+        formattedRequest = { contents: [{ role: 'user', parts: [{ text: text }] }] };
       }
+
+      // Add systemInstruction if provided and supported by the API version
+      if (params.systemPrompt) {
+        if (apiVersion === 'v1beta') {
+          this.logger.info('Adding system prompt using systemInstruction for v1beta model.');
+          formattedRequest.systemInstruction = {
+            parts: [{ text: params.systemPrompt }]
+          };
+        } else {
+          this.logger.warn(`System prompts via systemInstruction are only supported in v1beta (experimental models). The provided system prompt will be IGNORED for model: ${params.model}`);
+          // Do not prepend or add in any other way for v1
+        }
+      }
+
+      // Add generation configuration
       formattedRequest.generationConfig = {};
       if (params.tokenParameter) {
         formattedRequest.generationConfig[params.tokenParameter] = params.maxTokens;
       } else {
         formattedRequest.generationConfig.maxOutputTokens = params.maxTokens;
       }
-      // Add generation config if parameters are defined in params (inclusion handled by ModelParameterService)
       if ('temperature' in params) {
          formattedRequest.generationConfig.temperature = params.temperature;
       }
@@ -92,7 +106,7 @@ class GeminiApiService extends BaseApiService {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formattedRequest),
-        signal: abortSignal // Add this line
+        signal: abortSignal
       });
 
       // Handle non-OK responses by sending an error chunk
@@ -126,6 +140,7 @@ class GeminiApiService extends BaseApiService {
 
             try {
               // Find the end of the first complete JSON structure (simplified logic)
+              // ...(rest of the JSON parsing logic remains the same)...
               let openBrackets = 0;
               let openBraces = 0;
               let inString = false;
@@ -193,7 +208,7 @@ class GeminiApiService extends BaseApiService {
                     // Release lock and return immediately from the outer function
                     if (reader) await reader.releaseLock().catch(e => this.logger.error('Error releasing lock after stream error:', e));
                     reader = null;
-                    return;
+                    return; // Exit outer function
                   }
 
                   if (data.candidates?.[0]?.content?.parts?.[0]) {
@@ -204,6 +219,8 @@ class GeminiApiService extends BaseApiService {
                       onChunk({ chunk: content, done: false, model: params.model });
                     }
                   }
+                  // Handle potential finishReason if needed in the future
+                  // if (data.candidates?.[0]?.finishReason) { ... }
                 }
                 processAgain = true; // Successfully processed, check buffer again
               } else {
@@ -246,6 +263,7 @@ class GeminiApiService extends BaseApiService {
         model: params.model,
         platformId: this.platformId,
         timestamp: new Date().toISOString()
+        // Include usage/token info here if Gemini provides it in the stream summary
       };
 
     } catch (error) {
@@ -268,6 +286,7 @@ class GeminiApiService extends BaseApiService {
         });
       }
       // Do not re-throw error here, it's handled by onChunk
+      return undefined; // Indicate error handled via onChunk
     } finally {
       // Ensure the reader is released even if errors occur
       if (reader && typeof reader.releaseLock === 'function') {
@@ -281,28 +300,21 @@ class GeminiApiService extends BaseApiService {
   }
 
   /**
-   * Format conversation history for Gemini API
-   * @param {Array} history - Conversation history array
+   * Format conversation history for Gemini API.
+   * NOTE: This function NO LONGER handles the system prompt. It's handled separately
+   *       in _processWithModelStreaming using the `systemInstruction` field for v1beta.
+   * @param {Array<Object>} history - Conversation history array ( { role: 'user'|'assistant', content: string } )
    * @param {string} currentPrompt - Current user prompt
-   * @param {string} systemPrompt - Optional system prompt
    * @returns {Object} Formatted request object structure { contents: [...] }
    */
-  _formatGeminiRequestWithHistory(history, currentPrompt, systemPrompt = null) {
+  _formatGeminiRequestWithHistory(history, currentPrompt) {
     const contents = [];
 
-    // Add system prompt as a user message if provided
-    if (systemPrompt) {
-      this.logger.info('Prepending system prompt as first user message for Gemini history.');
-      contents.push({
-        role: 'user',
-        parts: [{ text: systemPrompt }]
-      });
-    }
-
-    // Append each message from history with its corresponding role
+    // Append each message from history with its corresponding role (user or model)
     for (const message of history) {
+      // Map 'assistant' role from internal representation to 'model' for Gemini API
       const messageRole = message.role === 'assistant' ? 'model' : 'user';
-      
+
       contents.push({
         role: messageRole,
         parts: [{ text: message.content }]
@@ -315,7 +327,7 @@ class GeminiApiService extends BaseApiService {
       parts: [{ text: currentPrompt }]
     });
 
-    // Return the structure Gemini expects
+    // Return the structure Gemini expects (systemInstruction is added elsewhere if needed)
     return { contents };
   }
 
@@ -346,6 +358,7 @@ class GeminiApiService extends BaseApiService {
         body: JSON.stringify({
           contents: [
             {
+              role: 'user', // Explicitly set role for validation consistency
               parts: [
                 { text: "API validation check" } // Minimal prompt
               ]
@@ -354,6 +367,7 @@ class GeminiApiService extends BaseApiService {
           generationConfig: {
             maxOutputTokens: 1 // Request minimal output
           }
+          // No systemInstruction needed for basic validation
         })
       });
 
@@ -363,6 +377,7 @@ class GeminiApiService extends BaseApiService {
         return true;
       } else {
          const errorText = await response.text();
+         // Log specific error codes if helpful (e.g., 400 for bad API key)
          this.logger.warn(`API key validation failed for model ${model} (Status: ${response.status}): ${errorText.substring(0, 500)}`);
          return false;
       }
