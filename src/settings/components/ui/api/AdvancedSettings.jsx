@@ -45,7 +45,7 @@ const AdvancedSettings = ({
     // Add topP and its toggle default only if supported
     if (currentModelConfig?.supportsTopP === true) {
       defaults.topP = platform.apiConfig?.topP !== undefined ? platform.apiConfig.topP : 1.0;
-      defaults.includeTopP = true; // Default include to true if supported
+      defaults.includeTopP = false; // Default include to false if supported
     }
 
     // Add systemPrompt only if the platform supports it
@@ -66,7 +66,7 @@ const AdvancedSettings = ({
     contextWindow: settings.contextWindow ?? defaultSettings.contextWindow,
     systemPrompt: settings.systemPrompt ?? '',
     includeTemperature: settings.includeTemperature ?? true, // Default to true
-    includeTopP: settings.includeTopP ?? true,       // Default to true
+    includeTopP: settings.includeTopP ?? false,      // Default to false
   });
 
   // Original values reference for comparison
@@ -98,8 +98,8 @@ const AdvancedSettings = ({
        if (!('topP' in formVals) || !('topP' in modelDefaults) || formVals.topP !== modelDefaults.topP) {
         return false;
       }
-       // Compare includeTopP (default is true if supported)
-       if (formVals.includeTopP !== (modelDefaults.includeTopP ?? true)) {
+       // Compare includeTopP (default is false if supported)
+       if (formVals.includeTopP !== (modelDefaults.includeTopP ?? false)) {
         return false;
       }
     }
@@ -127,7 +127,7 @@ const AdvancedSettings = ({
       contextWindow: currentSettings.contextWindow ?? modelDefaults.contextWindow,
       systemPrompt: currentSettings.systemPrompt ?? '',
       includeTemperature: currentSettings.includeTemperature ?? true, // Use ?? true
-      includeTopP: currentSettings.includeTopP ?? true,             // Use ?? true
+      includeTopP: currentSettings.includeTopP ?? false,            // Use ?? false
     };
 
     setFormValues(newFormValues);
@@ -276,7 +276,7 @@ const AdvancedSettings = ({
             }
             if (currentModelConfig?.supportsTopP === true && 'topP' in defaults) {
               resetValues.topP = defaults.topP;
-              resetValues.includeTopP = defaults.includeTopP ?? true; // Reset toggle
+              resetValues.includeTopP = defaults.includeTopP ?? false; // Reset toggle to false
             }
             if (platform.apiConfig?.hasSystemPrompt !== false && 'systemPrompt' in defaults) {
               resetValues.systemPrompt = defaults.systemPrompt;

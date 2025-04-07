@@ -263,7 +263,7 @@ class ModelParameterService {
 
       // Determine effective toggle values, defaulting to true if not set
       const effectiveIncludeTemperature = userSettings.includeTemperature ?? true;
-      const effectiveIncludeTopP = userSettings.includeTopP ?? true;
+      const effectiveIncludeTopP = userSettings.includeTopP ?? false; // Changed default to false
       logger.info(`Effective Toggles: Temp=${effectiveIncludeTemperature}, TopP=${effectiveIncludeTopP}`);
 
       // Start with base parameters
