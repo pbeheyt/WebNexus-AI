@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, useNotification, SliderInput, Toggle } from '../../../../components'; // Added Toggle
+import { Button, useNotification, SliderInput, Toggle, StatusMessage } from '../../../../components';
 
 const AdvancedSettings = ({
   platform,
@@ -299,7 +299,7 @@ const AdvancedSettings = ({
           htmlFor={`${platform.id}-settings-model-selector`}
           className="block mb-3 text-sm font-medium text-theme-secondary"
         >
-          Configure Settings For:
+          Model to Configure
         </label>
         <div className="inline-block min-w-[200px] max-w-full">
           <select
@@ -329,14 +329,14 @@ const AdvancedSettings = ({
           <h4 className="specs-title text-base font-semibold mb-3 text-theme-primary">Model Specifications</h4>
           <div className="specs-info space-y-2.5">
             <div className="spec-item flex justify-between text-sm">
-              <span className="spec-label font-medium text-theme-secondary">Context window:</span>
+              <span className="spec-label font-medium text-theme-secondary">Context window</span>
               <span className="spec-value font-mono">
                 {formValues.contextWindow?.toLocaleString() || modelConfig?.contextWindow?.toLocaleString() || "16,000"} tokens
               </span>
             </div>
             {modelConfig && modelConfig.inputTokenPrice !== undefined && (
               <div className="spec-item flex justify-between text-sm">
-                <span className="spec-label font-medium text-theme-secondary">Input tokens:</span>
+                <span className="spec-label font-medium text-theme-secondary">Input tokens</span>
                 <span className="spec-value font-mono">
                   {Math.abs(modelConfig.inputTokenPrice) < 0.0001 ? "Free" : `$${formatPrice(modelConfig.inputTokenPrice)} per 1M tokens`}
                 </span>
@@ -344,7 +344,7 @@ const AdvancedSettings = ({
             )}
             {modelConfig && modelConfig.outputTokenPrice !== undefined && (
               <div className="spec-item flex justify-between text-sm">
-                <span className="spec-label font-medium text-theme-secondary">Output tokens:</span>
+                <span className="spec-label font-medium text-theme-secondary">Output tokens</span>
                 <span className="spec-value font-mono">
                   {Math.abs(modelConfig.outputTokenPrice) < 0.0001 ? "Free" : `$${formatPrice(modelConfig.outputTokenPrice)} per 1M tokens`}
                 </span>
@@ -355,8 +355,14 @@ const AdvancedSettings = ({
 
         {/* Max tokens setting */}
         <div className="mb-7">
+          <div className="mb-2">
+            <span className="block mb-3 text-sm font-semibold text-theme-secondary">Max Tokens</span>
+          </div>
+          <p className="help-text text-xs text-theme-secondary mb-2">
+            Maximum number of tokens to generate in the response.
+          </p>
           <SliderInput
-            label={platform.id === 'chatgpt' || platform.id === 'grok' ? 'Max Completion Tokens:' : 'Max Tokens:'}
+            label=""
             value={formValues.maxTokens}
             onChange={(newValue) => handleChange('maxTokens', newValue)}
             min={1}
@@ -365,71 +371,86 @@ const AdvancedSettings = ({
             disabled={isSaving}
             className="form-group"
           />
-          <p className="help-text text-xs text-theme-secondary mt-2">
-            Maximum number of tokens to generate in the response.
-          </p>
         </div>
 
         {/* Temperature setting (if supported) */}
         {modelConfig?.supportsTemperature !== false && (
-          <div className="form-group mb-7"> {/* Changed div class */}
-            <SliderInput
-              label="Temperature:"
-              value={formValues.temperature}
-              onChange={(newValue) => handleChange('temperature', newValue)}
-              min={platform.apiConfig?.minTemperature ?? 0}
-              max={platform.apiConfig?.maxTemperature ?? 2}
-              step={0.1}
-              disabled={isSaving}
-              className="form-group" // Keep class for consistency if needed
-            />
-            <p className="help-text text-xs text-theme-secondary mt-2">
-              Controls randomness: lower values are more deterministic, higher values more creative.
-            </p>
-            {/* Include Temperature Toggle */}
-            <div className="flex items-center mt-3">
+          <div className="form-group mb-7">
+            {/* Temperature Toggle - Always visible */}
+            <div className="mb-3 flex items-center">
+              <span className="text-sm font-semibold text-theme-secondary mr-2">Temperature</span>
               <Toggle
                 checked={formValues.includeTemperature}
                 onChange={(e) => handleChange('includeTemperature', e.target.checked)}
                 disabled={isSaving}
                 id={`${platform.id}-${selectedModelId}-include-temperature`}
               />
-              <label htmlFor={`${platform.id}-${selectedModelId}-include-temperature`} className="ml-2 text-sm text-theme-secondary cursor-pointer">
-                Include Temperature in API call
-              </label>
             </div>
+            
+            {/* Help text - Always visible */}
+            <p className="help-text text-xs text-theme-secondary mb-3">
+              Controls randomness: lower values are more deterministic, higher values more creative.
+            </p>
+            
+            {/* Conditionally render Temperature Slider */}
+            {formValues.includeTemperature && (
+              <SliderInput
+                label=""
+                value={formValues.temperature}
+                onChange={(newValue) => handleChange('temperature', newValue)}
+                min={platform.apiConfig?.minTemperature ?? 0}
+                max={platform.apiConfig?.maxTemperature ?? 2}
+                step={0.1}
+                disabled={isSaving}
+                className="form-group mt-2"
+              />
+            )}
           </div>
         )}
 
         {/* Top P setting (if supported) */}
         {modelConfig?.supportsTopP === true && (
-          <div className="mb-7"> {/* Keep original class */}
-            <SliderInput
-              label="Top P:"
-              value={formValues.topP}
-              onChange={(newValue) => handleChange('topP', newValue)}
-              min={platform.apiConfig?.minTopP ?? 0}
-              max={platform.apiConfig?.maxTopP ?? 1}
-              step={0.01}
-              disabled={isSaving}
-              className="form-group" // Keep class for consistency if needed
-            />
-            <p className="help-text text-xs text-theme-secondary mt-2">
-              Alternative to temperature, controls diversity via nucleus sampling.
-            </p>
-            {/* Include Top P Toggle */}
-            <div className="flex items-center mt-3">
+          <div className="form-group mb-7">
+            {/* Top P Toggle - Always visible */}
+            <div className="mb-3 flex items-center">
+              <span className="text-sm font-semibold text-theme-secondary mr-2">Top P</span>
               <Toggle
                 checked={formValues.includeTopP}
                 onChange={(e) => handleChange('includeTopP', e.target.checked)}
                 disabled={isSaving}
                 id={`${platform.id}-${selectedModelId}-include-topp`}
               />
-              <label htmlFor={`${platform.id}-${selectedModelId}-include-topp`} className="ml-2 text-sm text-theme-secondary cursor-pointer">
-                Include Top P in API call
-              </label>
             </div>
+            
+            {/* Help text - Always visible */}
+            <p className="help-text text-xs text-theme-secondary mb-3">
+              Alternative to temperature, controls diversity via nucleus sampling.
+            </p>
+            
+            {/* Conditionally render Top P Slider */}
+            {formValues.includeTopP && (
+              <SliderInput
+                label=""
+                value={formValues.topP}
+                onChange={(newValue) => handleChange('topP', newValue)}
+                min={platform.apiConfig?.minTopP ?? 0}
+                max={platform.apiConfig?.maxTopP ?? 1}
+                step={0.01}
+                disabled={isSaving}
+                className="form-group mt-2"
+              />
+            )}
           </div>
+        )}
+
+        {/* Warning for using both Temp and TopP */}
+        {modelConfig?.supportsTemperature !== false &&
+          modelConfig?.supportsTopP === true &&
+          formValues.includeTemperature &&
+          formValues.includeTopP && (
+            <p className="text-amber-600 text-xs -mt-4 mb-8">
+              It is generally recommended to alter Temperature or Top P, but not both.
+            </p>
         )}
 
         {/* System prompt (if supported) */}
@@ -439,7 +460,7 @@ const AdvancedSettings = ({
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
               className="block mb-3 text-sm font-semibold text-theme-secondary"
             >
-              System Prompt:
+              System Prompt
             </label>
             <textarea
               id={`${platform.id}-${selectedModelId}-system-prompt`}
