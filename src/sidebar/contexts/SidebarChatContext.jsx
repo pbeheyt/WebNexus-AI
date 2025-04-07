@@ -9,6 +9,7 @@ import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
+import logger from '../../shared/logger.js'; // Added logger import
 
 const SidebarChatContext = createContext(null);
 
@@ -258,7 +259,7 @@ export function SidebarChatProvider({ children }) {
         // Handle stream error
         if (chunkData.error) {
           // chunkData.error should now be the pre-formatted string
-          const errorMessage = chunkData.error; 
+          const errorMessage = chunkData.error;
           console.error('Stream error:', errorMessage);
 
           // Complete the stream with the error message
@@ -285,7 +286,7 @@ export function SidebarChatProvider({ children }) {
           } else if (chunkData.error) {
             // Handle Error: Stream ended with an error (other than user cancellation)
             // chunkData.error should now be the pre-formatted string
-            const errorMessage = chunkData.error; 
+            const errorMessage = chunkData.error;
             console.error(`Stream ${message.streamId} error:`, errorMessage);
             // Update the message with the error, mark as error, not cancelled
             await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true, false); // isError=true, isCancelled=false
@@ -369,7 +370,7 @@ export function SidebarChatProvider({ children }) {
       model: selectedModel,
       platformIconUrl: selectedPlatform.iconUrl, // Add platform icon URL
       timestamp: new Date().toISOString(),
-      isStreaming: true, 
+      isStreaming: true,
       inputTokens: 0, // No input tokens for assistant messages
       outputTokens: 0 // Will be updated when streaming completes
     };
@@ -418,33 +419,76 @@ export function SidebarChatProvider({ children }) {
         skipInitialExtraction: isFirstMessage ? !isContentExtractionEnabled : false
       });
 
+      // Handle case where context extraction was skipped (e.g., non-injectable page)
+      if (result && result.skippedContext === true) {
+        logger.sidebar.info('Context extraction skipped by background:', result.reason);
+
+        // Create the system message explaining why
+        const systemMessage = {
+          id: `sys_${Date.now()}`,
+          role: MESSAGE_ROLES.SYSTEM,
+          content: `Note: ${result.reason || 'Page content could not be included.'}`,
+          timestamp: new Date().toISOString(),
+        };
+
+        // Remove the temporary assistant placeholder and add the system message
+        // We already added the user message before the call
+        const finalMessages = messages // Use 'messages' which doesn't include the placeholder yet
+            .concat(userMessage, systemMessage); // Add user msg + system msg
+
+        setMessages(finalMessages); // Update UI immediately
+
+        // Save this state (user message + system message) to history
+        if (tabId) {
+          await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
+          // No API call made, so no cost to update here, user msg tokens already tracked
+        }
+
+        // Reset streaming state as no stream was initiated
+        setStreamingMessageId(null);
+        setStreamingContent('');
+        resetContentProcessing(); // Reset the hook's processing state
+
+        return; // Stop further processing for this message send
+      }
+
       if (!result || !result.success) {
-        throw new Error('Failed to initialize streaming');
+        // Use the error from the result if available, otherwise use a default
+        const errorMsg = result?.error || 'Failed to initialize streaming';
+        throw new Error(errorMsg);
       }
 
     } catch (error) {
       console.error('Error processing streaming message:', error);
 
       // Update streaming message to show error
-      const errorMessages = messages.map(msg =>
-        msg.id === assistantMessageId
-          ? {
-              ...msg,
-              role: MESSAGE_ROLES.SYSTEM,
-              content: `Error: ${error.message || 'Failed to process request'}`,
-              isStreaming: false // Turn off streaming state
-            }
-          : msg
-      );
+      const errorMessages = messages.map(msg => // Use 'messages' which doesn't include the placeholder yet
+        msg.id === userMessageId // Find the user message we just added
+          ? msg // Keep user message as is
+          : null // Placeholder for where the assistant message would have been
+      ).filter(Boolean); // Remove the null placeholder
 
-      setMessages(errorMessages);
+      // Add the system error message
+      const systemErrorMessage = {
+        id: assistantMessageId, // Reuse the ID intended for the assistant
+        role: MESSAGE_ROLES.SYSTEM,
+        content: `Error: ${error.message || 'Failed to process request'}`,
+        timestamp: new Date().toISOString(),
+        isStreaming: false // Turn off streaming state
+      };
+
+      const finalErrorMessages = [...errorMessages, systemErrorMessage];
+
+      setMessages(finalErrorMessages);
 
       // Save error state to history
       if (tabId) {
-        await ChatHistoryService.saveHistory(tabId, errorMessages, modelConfigData);
+        await ChatHistoryService.saveHistory(tabId, finalErrorMessages, modelConfigData);
       }
 
       setStreamingMessageId(null);
+      setStreamingContent(''); // Also clear any potentially leftover streaming content
+      resetContentProcessing(); // Ensure hook state is reset on error too
     }
   };
 
@@ -466,10 +510,10 @@ export function SidebarChatProvider({ children }) {
 
       // Update the streaming message content to indicate cancellation
       const cancelledContent = streamingContent + '\n\n_Stream cancelled by user._';
-      
+
       // Calculate output tokens for the cancelled content
       const outputTokens = TokenManagementService.estimateTokens(cancelledContent);
-      
+
       let messagesAfterCancel = messages; // Start with current messages
 
       if (!extractedContentAdded) {
@@ -542,7 +586,7 @@ export function SidebarChatProvider({ children }) {
 
       // Update state with the final message list
       setMessages(finalMessages);
-      
+
       // Track tokens for the cancelled message
       await trackTokens({
         messageId: streamingMessageId,

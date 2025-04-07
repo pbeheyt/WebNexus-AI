@@ -149,6 +149,13 @@ export async function processContentViaApi(params) {
     // Log if extraction is skipped specifically due to non-injectable URL on first message
     if (isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && !canInject) {
         logger.background.info(`First message: Skipping extraction for tab ${tabId} because URL (${url}) is not injectable.`);
+        // Return immediately indicating context was skipped, preventing further processing for this message
+        return {
+          success: true, // The operation itself didn't fail, it just skipped context
+          skippedContext: true,
+          reason: 'Content extraction not supported on this page type.',
+          contentType: contentType // Pass content type back if needed by UI
+        };
     }
 
     if (shouldExtract) {
