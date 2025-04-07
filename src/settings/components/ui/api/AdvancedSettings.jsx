@@ -378,7 +378,7 @@ const AdvancedSettings = ({
           <div className="form-group mb-7">
             {/* Temperature Toggle - Always visible */}
             <div className="mb-3 flex items-center">
-              <span className="text-sm font-semibold text-theme-secondary mr-2">Temperature</span>
+              <span className="text-sm font-semibold text-theme-secondary mr-3">Temperature</span>
               <Toggle
                 checked={formValues.includeTemperature}
                 onChange={(e) => handleChange('includeTemperature', e.target.checked)}
@@ -413,7 +413,7 @@ const AdvancedSettings = ({
           <div className="form-group mb-7">
             {/* Top P Toggle - Always visible */}
             <div className="mb-3 flex items-center">
-              <span className="text-sm font-semibold text-theme-secondary mr-2">Top P</span>
+              <span className="text-sm font-semibold text-theme-secondary mr-3">Top P</span>
               <Toggle
                 checked={formValues.includeTopP}
                 onChange={(e) => handleChange('includeTopP', e.target.checked)}
