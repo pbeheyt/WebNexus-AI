@@ -27,24 +27,6 @@ export function determineContentType(url) {
   }
 }
 
-/**
- * Get the appropriate content script file for a content type
- * @param {string} contentType - The content type
- * @returns {string} - Path to the content script file
- */
-export function getContentScriptFile(contentType) {
-  // Select appropriate content script based on content type
-  if (contentType === CONTENT_TYPES.PDF) {
-    return 'dist/pdf-content.bundle.js';
-  } else if (contentType === CONTENT_TYPES.YOUTUBE) {
-    return 'dist/youtube-content.bundle.js';
-  } else if (contentType === CONTENT_TYPES.REDDIT) {
-    return 'dist/reddit-content.bundle.js';
-  } else {
-    return 'dist/general-content.bundle.js';
-  }
-}
-
 export function isInjectablePage(url) {
   if (!url) return false;
   try {

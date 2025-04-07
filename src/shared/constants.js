@@ -47,6 +47,7 @@ export const STORAGE_KEYS = {
   EXTRACTED_CONTENT: 'extractedContent',
   SCRIPT_INJECTED: 'scriptInjected',
   TAB_FORMATTED_CONTENT: 'tab_formatted_content',
+  FORMATTED_CONTENT_FOR_INJECTION: 'formatted_content_for_injection',
 
   // Service
   THEME_PREFERENCE: 'theme_preference',

@@ -95,15 +95,17 @@ export async function resetExtractionState() {
  * @param {number} tabId - Tab ID of the AI platform tab
  * @param {string} platformId - Platform identifier
  * @param {string} promptContent - Prompt content to use
+ * @param {string} formattedContentString - The formatted content string to save for injection.
  * @returns {Promise<boolean>} Success flag
  */
-export async function savePlatformTabInfo(tabId, platformId, promptContent) {
+export async function savePlatformTabInfo(tabId, platformId, promptContent, formattedContentString) {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: tabId,
       [STORAGE_KEYS.INJECTION_PLATFORM]: platformId,
       [STORAGE_KEYS.SCRIPT_INJECTED]: false,
-      [STORAGE_KEYS.PRE_PROMPT]: promptContent
+      [STORAGE_KEYS.PRE_PROMPT]: promptContent,
+      [STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION]: formattedContentString,
     });
     
     // Verify the data was stored correctly

@@ -7,6 +7,7 @@ import { resetExtractionState, savePlatformTabInfo } from '../core/state-manager
 import { processContentViaApi } from '../api/api-coordinator.js';
 import logger from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
+import ContentFormatter from '../../services/ContentFormatter.js';
 
 /**
  * Process content using web AI interface (non-API path)
@@ -69,8 +70,11 @@ export async function processContent(params) {
     if (!extractedContent) {
       throw new Error('Failed to extract content');
     }
+
+    // 4. Format content
+    const formattedContentString = ContentFormatter.formatContent(extractedContent, contentType);
     
-    // 4. Get platform and open it with content
+    // 5. Get platform and open it with content
     const effectivePlatformId = platformId || await getPreferredAiPlatform();
     
     const aiPlatformTabId = await openAiPlatformWithContent(contentType, null, effectivePlatformId);
@@ -82,8 +86,8 @@ export async function processContent(params) {
       };
     }
     
-    // Save tab information for later
-    await savePlatformTabInfo(aiPlatformTabId, effectivePlatformId, promptContent);
+    // Save tab information for later, including the formatted content
+    await savePlatformTabInfo(aiPlatformTabId, effectivePlatformId, promptContent, formattedContentString);
     
     return {
       success: true,
