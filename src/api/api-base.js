@@ -87,9 +87,11 @@ class BaseApiService extends ApiInterface {
   _createStructuredPrompt(prompt, formattedContent) {
     // Only include content if it's a non-empty string
     if (typeof formattedContent === 'string' && formattedContent.trim().length > 0) {
-      // Combine prompt and content
-      // Consider adding clear separators if needed, e.g., "\n\n--- Content ---\n"
-      return `${prompt}\n\n${formattedContent}`;
+      return `# INSTRUCTION
+      ${prompt}
+      # EXTRACTED CONTENT
+      ${formattedContent}
+      # END CONTENT`
     } else {
       // Return only the prompt if no valid content is provided
       return prompt;

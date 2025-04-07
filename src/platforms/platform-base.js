@@ -142,10 +142,11 @@ class BasePlatform extends PlatformInterface {
    */
   createStructuredPrompt(prePrompt, formattedContent) {
     // Use a simple structural approach that preserves the entire prePrompt
-    return `# INSTRUCTIONS
+    return `# INSTRUCTION
 ${prePrompt}
-# CONTENT
-${formattedContent}`;
+# EXTRACTED CONTENT
+${formattedContent}
+# END CONTENT`
   }
 }
 
