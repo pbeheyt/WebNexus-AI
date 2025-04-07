@@ -175,7 +175,7 @@ export function Popup() {
       {/* Info Panel */}
       {!contentLoading && contentTypeLabel && (
         <div className="mt-3">
-          <InfoPanel contentTypeLabel={contentTypeLabel} />
+          <InfoPanel contentTypeLabel={contentTypeLabel} contentType={contentType} />
         </div>
       )}
 
