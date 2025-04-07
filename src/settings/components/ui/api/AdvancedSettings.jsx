@@ -39,14 +39,16 @@ const AdvancedSettings = ({
       contextWindow: currentModelConfig?.contextWindow !== undefined ? currentModelConfig.contextWindow : 16000,
     };
 
-    // Add temperature only if supported, use modelConfig value, fallback only if undefined
+    // Add temperature only if supported by the model, use platform default, fallback if needed
     if (currentModelConfig?.supportsTemperature !== false) {
-      defaults.temperature = currentModelConfig?.temperature !== undefined ? currentModelConfig.temperature : 0.7;
+      // Use platform default, fallback to 0.7 if platform default is somehow missing
+      defaults.temperature = platform.apiConfig?.temperature !== undefined ? platform.apiConfig.temperature : 0.7;
     }
 
-    // Add topP only if supported, use modelConfig value, fallback only if undefined
+    // Add topP only if supported by the model, use platform default, fallback if needed
     if (currentModelConfig?.supportsTopP === true) {
-      defaults.topP = currentModelConfig?.topP !== undefined ? currentModelConfig.topP : 1.0;
+       // Use platform default, fallback to 1.0 if platform default is somehow missing
+      defaults.topP = platform.apiConfig?.topP !== undefined ? platform.apiConfig.topP : 1.0;
     }
 
     // Add systemPrompt only if the platform supports it

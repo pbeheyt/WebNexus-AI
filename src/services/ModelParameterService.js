@@ -237,8 +237,16 @@ class ModelParameterService {
       const modelToUse = modelOverride || await this.resolveModel(platformId, { tabId, source });
       logger.info(`Model to use: ${modelToUse}`);
       
+      // Get the full platform config first
+      const config = await this.loadPlatformConfig();
+      const platformConfig = config?.aiPlatforms?.[platformId];
+      if (!platformConfig) {
+        throw new Error(`Platform configuration not found for ${platformId}`);
+      }
+      const platformApiConfig = platformConfig.api; // Get the platform's API config
+
       // Get model config from platform config for the resolved model
-      const modelConfig = await this.getModelConfig(platformId, modelToUse);
+      const modelConfig = platformApiConfig?.models?.find(model => model.id === modelToUse);
       if (!modelConfig) {
         throw new Error(`Model configuration not found for ${modelToUse}`);
       }
@@ -246,14 +254,16 @@ class ModelParameterService {
       // Get user settings for this model
       const userSettings = await this.getUserModelSettings(platformId, modelToUse);
   
-      // Start with model defaults
+      // Start with model-specific mandatory values and platform-level defaults
       const params = {
-        maxTokens: modelConfig.maxTokens || 4000,
-        temperature: modelConfig.temperature || 0.7,
-        topP: modelConfig.topP || 1.0,
-        parameterStyle: modelConfig.parameterStyle || 'standard',
-        tokenParameter: modelConfig.tokenParameter || 'max_tokens',
-        contextWindow: modelConfig.contextWindow || 8192,
+        maxTokens: modelConfig.maxTokens || 4000, // Still model-specific
+        // Use platform default for temperature, fallback if needed
+        temperature: platformApiConfig?.temperature !== undefined ? platformApiConfig.temperature : 0.7,
+        // Use platform default for topP, fallback if needed
+        topP: platformApiConfig?.topP !== undefined ? platformApiConfig.topP : 1.0,
+        parameterStyle: modelConfig.parameterStyle || 'standard', // Still model-specific
+        tokenParameter: modelConfig.tokenParameter || 'max_tokens', // Still model-specific
+        contextWindow: modelConfig.contextWindow || 8192, // Still model-specific
         supportsTemperature: modelConfig.supportsTemperature !== false,
         supportsTopP: modelConfig.supportsTopP !== false,
         model: modelToUse // Add the resolved model to params
@@ -261,11 +271,13 @@ class ModelParameterService {
   
       // Override with user settings if provided
       if (userSettings.maxTokens !== undefined) params.maxTokens = userSettings.maxTokens;
+      // contextWindow is not typically user-settable here, but keep for consistency if it were
       if (userSettings.contextWindow !== undefined) params.contextWindow = userSettings.contextWindow;
+      // Only override if the model supports the parameter
       if (userSettings.temperature !== undefined && params.supportsTemperature) params.temperature = userSettings.temperature;
       if (userSettings.topP !== undefined && params.supportsTopP) params.topP = userSettings.topP;
   
-      // Add system prompt if provided
+      // Add system prompt if provided in user settings
       if (userSettings.systemPrompt !== undefined) params.systemPrompt = userSettings.systemPrompt;
   
       logger.info(`Resolved parameters for ${platformId}/${modelToUse}:`, params);
@@ -274,15 +286,19 @@ class ModelParameterService {
       logger.error('Error resolving parameters:', error);
   
       // Return reasonable defaults if resolution fails
+      // Try to get platform defaults even in fallback
+      const fallbackConfig = await this.loadPlatformConfig().catch(() => null);
+      const fallbackPlatformApiConfig = fallbackConfig?.aiPlatforms?.[platformId]?.api;
+
       return {
         maxTokens: 4000,
-        temperature: 0.7,
-        topP: 1.0,
+        temperature: fallbackPlatformApiConfig?.temperature !== undefined ? fallbackPlatformApiConfig.temperature : 0.7,
+        topP: fallbackPlatformApiConfig?.topP !== undefined ? fallbackPlatformApiConfig.topP : 1.0,
         parameterStyle: 'standard',
         tokenParameter: 'max_tokens',
         supportsTemperature: true,
         supportsTopP: true,
-        model: modelOverride || await this.resolveModel(platformId, options)
+        model: modelOverride || await this.resolveModel(platformId, options) // Ensure model is still resolved
       };
     }
   }

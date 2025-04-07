@@ -12,12 +12,12 @@
         "endpoint": "https://api.anthropic.com/v1/messages",
         "minTemperature": -1.0,
         "maxTemperature": 1.0,
+        "temperature": 0.5,
+        "topP": 0.7,
         "models": [
           {
             "id": "claude-3-7-sonnet-latest",
             "maxTokens": 8192,
-            "temperature": 0.5,
-            "topP": 0.7,
             "parameterStyle": "standard",
             "contextWindow": 200000,
             "inputTokenPrice": 3.00,
@@ -28,8 +28,6 @@
           {
             "id": "claude-3-5-haiku-latest",
             "maxTokens": 8192,
-            "temperature": 0.5,
-            "topP": 0.7,
             "parameterStyle": "standard",
             "contextWindow": 200000,
             "inputTokenPrice": 0.80,
@@ -40,8 +38,6 @@
           {
             "id": "claude-3-5-sonnet-latest",
             "maxTokens": 8192,
-            "temperature": 0.5,
-            "topP": 0.7,
             "parameterStyle": "standard",
             "contextWindow": 200000,
             "inputTokenPrice": 3.00,
@@ -52,8 +48,6 @@
           {
             "id": "claude-3-opus-latest",
             "maxTokens": 4096,
-            "temperature": 0.5,
-            "topP": 0.7,
             "parameterStyle": "standard",
             "contextWindow": 200000,
             "inputTokenPrice": 15.00,
@@ -80,12 +74,12 @@
         "endpoint": "https://api.openai.com/v1/chat/completions",
         "minTemperature": 0.0,
         "maxTemperature": 2.0,
+        "temperature": 0.5,
+        "topP": 0.9,
         "models": [
           {
             "id": "gpt-4.5-preview",
             "maxTokens": 16384,
-            "temperature": 0.5,
-            "topP": 0.9,
             "parameterStyle": "standard",
             "contextWindow": 128000,
             "inputTokenPrice": 75.00,
@@ -97,8 +91,6 @@
           {
             "id": "gpt-4o",
             "maxTokens": 16384,
-            "temperature": 0.5,
-            "topP": 0.9,
             "parameterStyle": "standard",
             "contextWindow": 128000,
             "inputTokenPrice": 2.50,
@@ -110,8 +102,6 @@
           {
             "id": "gpt-4o-mini",
             "maxTokens": 16384,
-            "temperature": 0.5,
-            "topP": 0.9,
             "parameterStyle": "standard",
             "contextWindow": 128000,
             "inputTokenPrice": 0.15,
@@ -158,8 +148,6 @@
           {
             "id": "gpt-4-turbo",
             "maxTokens": 4096,
-            "temperature": 0.5,
-            "topP": 0.9,
             "parameterStyle": "standard",
             "contextWindow": 128000,
             "inputTokenPrice": 10.00,
@@ -171,8 +159,6 @@
           {
             "id": "gpt-3.5-turbo",
             "maxTokens": 4096,
-            "temperature": 0.5,
-            "topP": 0.9,
             "parameterStyle": "standard",
             "contextWindow": 16385,
             "inputTokenPrice": 0.50,
@@ -202,12 +188,12 @@
         "maxTemperature": 2.0,
         "minTopP": 0.1,
         "maxTopP": 1.0,
+        "temperature": 1.0,
+        "topP": 0.9,
         "models": [
           {
             "id": "deepseek-chat",
             "maxTokens": 8000,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 64000,
             "inputTokenPrice": 0.07,
@@ -219,8 +205,6 @@
           {
             "id": "deepseek-reasoner",
             "maxTokens": 8000,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 64000,
             "inputTokenPrice": 0.14,
@@ -248,12 +232,12 @@
         "endpoint": "https://api.mistral.ai/v1/chat/completions",
         "minTemperature": 0.0,
         "maxTemperature": 1.5,
+        "temperature": 0.7,
+        "topP": 1.0,
         "models": [
           {
             "id": "mistral-large-latest",
             "maxTokens": 4096,
-            "temperature": 0.7,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 131000,
             "inputTokenPrice": 0.00,
@@ -265,8 +249,6 @@
           {
             "id": "mistral-small-latest",
             "maxTokens": 4096,
-            "temperature": 0.7,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 131000,
             "inputTokenPrice": 0.00,
@@ -278,8 +260,6 @@
           {
             "id": "codestral-latest",
             "maxTokens": 4096,
-            "temperature": 0.7,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 256000,
             "inputTokenPrice": 0.00,
@@ -291,8 +271,6 @@
           {
             "id": "ministral-8b-latest",
             "maxTokens": 4096,
-            "temperature": 0.7,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 131000,
             "inputTokenPrice": 0.00,
@@ -304,8 +282,6 @@
           {
             "id": "ministral-3b-latest",
             "maxTokens": 4096,
-            "temperature": 0.7,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 131000,
             "inputTokenPrice": 0.00,
@@ -317,8 +293,6 @@
           {
             "id": "mistral-saba-latest",
             "maxTokens": 4096,
-            "temperature": 0.7,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32000,
             "inputTokenPrice": 0.00,
@@ -346,12 +320,12 @@
         "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
         "minTemperature": 0.0,
         "maxTemperature": 2.0,
+        "temperature": 1.0,
+        "topP": 1.0,
         "models": [
           {
             "id": "gemini-2.5-pro-exp-03-25",
             "maxTokens": 65536,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
             "inputTokenPrice": 0.00,
@@ -363,8 +337,6 @@
           {
             "id": "gemini-2.0-flash",
             "maxTokens": 8192,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
             "inputTokenPrice": 0.00,
@@ -376,8 +348,6 @@
           {
             "id": "gemini-2.0-flash-lite",
             "maxTokens": 8192,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
             "inputTokenPrice": 0.00,
@@ -389,8 +359,6 @@
           {
             "id": "gemini-1.5-flash",
             "maxTokens": 8192,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
             "inputTokenPrice": 0.00,
@@ -402,8 +370,6 @@
           {
             "id": "gemini-1.5-flash-8b",
             "maxTokens": 8192,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 1048576,
             "inputTokenPrice": 0.00,
@@ -415,8 +381,6 @@
           {
             "id": "gemini-1.5-pro",
             "maxTokens": 8192,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 2097152,
             "inputTokenPrice": 0.00,
@@ -444,12 +408,12 @@
         "endpoint": "https://api.x.ai/v1/chat/completions",
         "minTemperature": 0.0,
         "maxTemperature": 2.0,
+        "temperature": 1.0,
+        "topP": 1.0,
         "models": [
           {
             "id": "grok-2-1212",
             "maxTokens": 4096,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 131072,
             "inputTokenPrice": 2.00,
@@ -461,8 +425,6 @@
           {
             "id": "grok-2-vision-1212",
             "maxTokens": 4096,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 32768,
             "inputTokenPrice": 2.00,
@@ -474,8 +436,6 @@
           {
             "id": "grok-beta",
             "maxTokens": 4096,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 131072,
             "inputTokenPrice": 5.00,
@@ -487,8 +447,6 @@
           {
             "id": "grok-vision-beta",
             "maxTokens": 4096,
-            "temperature": 1.0,
-            "topP": 1.0,
             "parameterStyle": "standard",
             "contextWindow": 8192,
             "inputTokenPrice": 5.00,
