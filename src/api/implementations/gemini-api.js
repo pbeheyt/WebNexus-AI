@@ -196,7 +196,7 @@ class GeminiApiService extends BaseApiService {
 
             } catch (parseOrProcessError) {
               // Catch errors from JSON.parse or processing the data block
-              this.logger.error('Error parsing/processing stream chunk:', parseOrProcessError, 'Chunk:', jsonStr || buffer.substring(0, 200));
+              this.logger.error('JSON parsing or processing error in stream chunk:', parseOrProcessError, 'Problematic JSON string:', jsonStr || buffer.substring(0, 200));
               // Send error chunk and stop processing
               onChunk({ done: true, error: `Stream parsing error: ${parseOrProcessError.message}`, model: params.model });
               if (reader) await reader.releaseLock().catch(e => this.logger.error('Error releasing lock after parse error:', e));
