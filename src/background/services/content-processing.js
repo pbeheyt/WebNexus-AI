@@ -1,6 +1,6 @@
 // src/background/services/content-processing.js
 
-import { determineContentType } from '../../shared/utils/content-utils.js';
+import { determineContentType, isInjectablePage } from '../../shared/utils/content-utils.js';
 import { extractContent } from './content-extraction.js';
 import { getPreferredAiPlatform, openAiPlatformWithContent } from './platform-integration.js';
 import { resetExtractionState, savePlatformTabInfo } from '../core/state-manager.js';
@@ -31,6 +31,16 @@ export async function processContent(params) {
     // If API mode requested, use API path
     if (useApi) {
       return await processContentViaApi(params);
+    }
+
+    // Check if page is injectable BEFORE attempting extraction
+    if (!isInjectablePage(url)) {
+      logger.background.warn(`processContent: Page is not injectable (${url}). Skipping extraction.`);
+      return {
+        success: false,
+        error: 'Content extraction not supported on this page.',
+        code: 'EXTRACTION_NOT_SUPPORTED'
+      };
     }
     
     // Check for prompt content

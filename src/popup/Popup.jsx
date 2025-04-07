@@ -143,8 +143,13 @@ export function Popup() {
         // otherwise, it remains open. Consider if explicit closing is needed here.
         // setIsProcessing(false); // Keep processing state until platform interaction completes or fails
       } else {
-        // Use updateStatus for error feedback
-        updateStatus(`Error: ${result.error || 'Processing failed'}`, false);
+        // Check for specific non-injectable error code
+        if (result.code === 'EXTRACTION_NOT_SUPPORTED') {
+          updateStatus(result.error, false); // Use the specific message from background
+        } else {
+          // Use updateStatus for generic error feedback
+          updateStatus(`Error: ${result.error || 'Processing failed'}`, false);
+        }
         setIsProcessing(false); // Stop processing on failure
       }
     } catch (error) {
