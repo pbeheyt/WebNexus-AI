@@ -5,9 +5,9 @@ import { determineContentType } from '../../shared/utils/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
 import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
-import { toggleNativeSidePanel } from '../services/sidebar-manager.js'; // Import the native panel toggle function
+import { handleToggleNativeSidePanelAction } from '../services/sidebar-manager.js'; // Import the handler
 import { handleThemeOperation } from '../services/theme-service.js';
-import { clearSingleTabData } from '../listeners/tab-state-listener.js';
+import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js'; // Import the handler
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -151,39 +151,9 @@ function registerServiceHandlers() {
     return true; // Keep channel open for async response
   });
 
-  // Clear specific tab data (for sidebar refresh)
-  messageHandlers.set('clearTabData', (message, sender, sendResponse) => { // Remove async from here
-    if (!message.tabId) {
-      logger.background.error('clearTabData called without tabId');
-      sendResponse({ success: false, error: 'Missing tabId' });
-      return false; // Return false as sendResponse is called synchronously
-    }
+  // Clear specific tab data (for sidebar refresh) - Now uses dedicated handler
+  messageHandlers.set('clearTabData', handleClearTabDataRequest);
 
-    // Call the async function and handle the promise explicitly
-    clearSingleTabData(message.tabId)
-      .then(success => {
-        if (success) {
-          logger.background.info(`clearTabData successful for tab ${message.tabId}, sending success response.`);
-          sendResponse({ success: true });
-        } else {
-          logger.background.warn(`clearTabData failed for tab ${message.tabId}, sending failure response.`);
-          sendResponse({ success: false, error: 'Failed to clear tab data in background' });
-        }
-      })
-      .catch(error => {
-        logger.background.error('Error during clearSingleTabData execution:', error);
-        sendResponse({ success: false, error: 'Internal error during tab data clearing' });
-      });
-
-    return true;
-  });
-
-  // Handle requests to toggle the native side panel (e.g., from popup)
-  messageHandlers.set('toggleNativeSidePanelAction', (message, sender, sendResponse) => {
-    logger.background.info('Received toggleNativeSidePanelAction request');
-    // Call the actual function from sidebar-manager
-    toggleNativeSidePanel(message, sender, sendResponse);
-    // toggleNativeSidePanel is async and handles sendResponse itself
-    return true; // Keep channel open for async response
-  });
+  // Handle requests to toggle the native side panel (e.g., from popup) - Now uses dedicated handler
+  messageHandlers.set('toggleNativeSidePanelAction', handleToggleNativeSidePanelAction);
 }

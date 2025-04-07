@@ -80,6 +80,23 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
   }
 }
 
+
+/**
+ * Handles the 'toggleNativeSidePanelAction' message request.
+ * @param {object} message - The message object.
+ * @param {chrome.runtime.MessageSender} sender - The sender of the message.
+ * @param {function} sendResponse - Function to call to send the response.
+ * @returns {boolean} - True to indicate an asynchronous response.
+ */
+export function handleToggleNativeSidePanelAction(message, sender, sendResponse) {
+  logger.background.info('Received toggleNativeSidePanelAction request via message router');
+  // Call the actual function which handles the logic and response
+  toggleNativeSidePanel(message, sender, sendResponse);
+  // toggleNativeSidePanel is async and handles sendResponse itself
+  return true; // Keep channel open for async response
+}
+
+
 /**
  * Get sidebar state for specific tab
  * @param {Object} message - Message object

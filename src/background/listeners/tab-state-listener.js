@@ -65,6 +65,40 @@ export async function clearSingleTabData(tabId) {
 
 
 /**
+ * Handles the 'clearTabData' message request.
+ * @param {object} message - The message object containing the tabId.
+ * @param {chrome.runtime.MessageSender} sender - The sender of the message.
+ * @param {function} sendResponse - Function to call to send the response.
+ * @returns {boolean} - True to indicate an asynchronous response.
+ */
+export function handleClearTabDataRequest(message, sender, sendResponse) {
+  if (!message.tabId) {
+    logger.background.error('handleClearTabDataRequest called without tabId');
+    sendResponse({ success: false, error: 'Missing tabId' });
+    return false; // Return false as sendResponse is called synchronously here
+  }
+
+  // Call the async function and handle the promise explicitly
+  clearSingleTabData(message.tabId)
+    .then(success => {
+      if (success) {
+        logger.background.info(`handleClearTabDataRequest successful for tab ${message.tabId}, sending success response.`);
+        sendResponse({ success: true });
+      } else {
+        logger.background.warn(`handleClearTabDataRequest failed for tab ${message.tabId}, sending failure response.`);
+        sendResponse({ success: false, error: 'Failed to clear tab data in background' });
+      }
+    })
+    .catch(error => {
+      logger.background.error('Error during clearSingleTabData execution in handler:', error);
+      sendResponse({ success: false, error: 'Internal error during tab data clearing' });
+    });
+
+  return true; // Keep channel open for async response
+}
+
+
+/**
  * Clean up a specific tab-based storage item (used for automatic cleanup)
  * @param {string} storageKey - The storage key to clean up
  * @param {number} tabId - Tab ID to remove (for single tab cleanup on close)

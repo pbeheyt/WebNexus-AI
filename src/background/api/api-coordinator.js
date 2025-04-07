@@ -230,10 +230,6 @@ export async function processContentViaApi(params) {
       throw new Error('No prompt content provided');
     }
 
-    if (!promptContent) {
-      throw new Error('No prompt content provided');
-    }
-
     // 5. Platform Determination - REMOVED. Use platformId directly from params.
     // let effectivePlatformId = ... // REMOVED
 
