@@ -39,6 +39,7 @@ class ModelParameterService {
     const { tabId, source } = options;
     let modelId = null;
 
+    // 1. Try tab-specific model preference (highest priority)
     if (tabId) {
       try {
         const tabPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
@@ -51,6 +52,24 @@ class ModelParameterService {
         }
       } catch (error) {
         logger.error('Error getting tab-specific model:', error);
+      }
+    }
+
+    // 2. Try source-specific global preference (Sidebar only)
+    if (source === INTERFACE_SOURCES.SIDEBAR) {
+      const storageKey = STORAGE_KEYS.SIDEBAR_MODEL;
+
+      try {
+        const sourcePrefs = await chrome.storage.sync.get(storageKey);
+        const sourcePref = sourcePrefs[storageKey] || {};
+
+        if (sourcePref[platformId]) {
+          modelId = sourcePref[platformId];
+          logger.info(`Using ${source} model preference for ${platformId}: ${modelId}`);
+          return modelId;
+        }
+      } catch (error) {
+        logger.error(`Error getting ${source} model preference:`, error);
       }
     }
   }
