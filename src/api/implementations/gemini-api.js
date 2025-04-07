@@ -169,10 +169,27 @@ class GeminiApiService extends BaseApiService {
 
                 for (const data of (Array.isArray(dataArray) ? dataArray : [dataArray])) {
                   if (data.error) {
-                    const streamErrorMessage = `API Error in stream: ${data.error.message || 'Unknown error'}`;
-                    this.logger.error(streamErrorMessage, data.error);
+                    // Refined error message extraction for stream errors
+                    let streamErrorMessage = 'Unknown stream error'; // Default
+                    if (data.error) {
+                      if (typeof data.error.message === 'string') {
+                        streamErrorMessage = data.error.message;
+                      } else {
+                        try {
+                          // Fallback: stringify the error object if message isn't a string
+                          streamErrorMessage = JSON.stringify(data.error);
+                        } catch (stringifyError) {
+                          // If stringify fails, keep the default
+                          this.logger.warn('Could not stringify stream error object:', stringifyError);
+                        }
+                      }
+                    }
+                    // Prepend context
+                    streamErrorMessage = `API Error in stream: ${streamErrorMessage}`;
+
+                    this.logger.error(streamErrorMessage, data.error); // Log the extracted/fallback message and the original error object
                     // Send error chunk and stop processing THIS stream
-                    onChunk({ done: true, error: streamErrorMessage, model: params.model });
+                    onChunk({ done: true, error: streamErrorMessage, model: params.model }); // Use the refined message
                     // Release lock and return immediately from the outer function
                     if (reader) await reader.releaseLock().catch(e => this.logger.error('Error releasing lock after stream error:', e));
                     reader = null;
@@ -273,56 +290,24 @@ class GeminiApiService extends BaseApiService {
   _formatGeminiRequestWithHistory(history, currentPrompt, systemPrompt = null) {
     const contents = [];
 
-    // IMPORTANT: Gemini v1/v1beta generateContent API handles roles differently than some others.
-    // It expects alternating user/model roles. System prompts aren't directly supported
-    // in the main 'contents' array structure in the same way as OpenAI/Anthropic.
-    // The 'systemInstruction' field is available in v1beta but separate from 'contents'.
-
-    let currentRole = 'user'; // Start expecting user
-
-    // Prepend system prompt as the *very first* user message if provided.
-    // This is a common workaround, effectiveness varies.
+    // Add system prompt as a user message if provided
     if (systemPrompt) {
-       this.logger.info('Prepending system prompt as first user message for Gemini history.');
-       contents.push({
-           role: 'user',
-           parts: [{ text: systemPrompt }]
-       });
-       // Add a dummy model response to maintain alternation if needed by model
-       contents.push({
-          role: 'model',
-          parts: [{ text: 'Understood.' }] // Or some other neutral response
-       });
-       currentRole = 'user'; // Next message must be user
+      this.logger.info('Prepending system prompt as first user message for Gemini history.');
+      contents.push({
+        role: 'user',
+        parts: [{ text: systemPrompt }]
+      });
     }
 
-
+    // Append each message from history with its corresponding role
     for (const message of history) {
-      const expectedRole = currentRole;
       const messageRole = message.role === 'assistant' ? 'model' : 'user';
-
-      // Ensure alternation: If the current message role doesn't match the expected
-      // alternating role, log a warning. Simple merging or dropping might be needed
-      // for strict models, but for now, just push it.
-      if (messageRole !== expectedRole) {
-          this.logger.warn(`Gemini History: Expected role '${expectedRole}' but got '${messageRole}'. Model might ignore or error.`);
-          // Simple fix: Force the role? Or skip? For now, let it pass.
-      }
-
+      
       contents.push({
         role: messageRole,
         parts: [{ text: message.content }]
       });
-      currentRole = messageRole === 'user' ? 'model' : 'user'; // Flip expectation
     }
-
-     // Ensure the final prompt is from the user role
-     if (currentRole !== 'user') {
-         // If the last history message was 'user', the model expects 'model' next.
-         // We need to add the current prompt as 'user', which might violate strict alternation.
-         // A common practice is to just add it.
-         this.logger.warn(`Gemini History: Adding final user prompt after a '${currentRole}' message. Strict models might require alternation.`);
-     }
 
     // Add current prompt as the final user message
     contents.push({
@@ -333,7 +318,6 @@ class GeminiApiService extends BaseApiService {
     // Return the structure Gemini expects
     return { contents };
   }
-
 
   /**
    * Platform-specific validation implementation for Gemini

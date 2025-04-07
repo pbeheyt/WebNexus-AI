@@ -21,7 +21,16 @@ export async function extractApiErrorMessage(response) {
     return defaultMessage;
   }
 
-  if (errorData && typeof errorData === 'object') {
+  // Check for array structure first (e.g., some Gemini errors)
+  if (Array.isArray(errorData) && errorData.length > 0) {
+    const firstError = errorData[0];
+    if (firstError?.error?.message && typeof firstError.error.message === 'string') {
+      detailString = firstError.error.message;
+    }
+  }
+
+  // If not found in array or errorData is not an array, check object structure
+  if (!detailString && errorData && typeof errorData === 'object') {
     // 1. Check errorData.message
     if (typeof errorData.message === 'string') {
       detailString = errorData.message;
@@ -41,7 +50,7 @@ export async function extractApiErrorMessage(response) {
     if (!detailString && errorData.error && typeof errorData.error === 'object' && typeof errorData.error.message === 'string') {
       detailString = errorData.error.message;
     }
-    // NEW: Check if errorData.error is the string itself
+    // Check if errorData.error is the string itself
     else if (!detailString && errorData.error && typeof errorData.error === 'string') {
       detailString = errorData.error;
     }
@@ -50,16 +59,19 @@ export async function extractApiErrorMessage(response) {
     if (!detailString && typeof errorData.detail === 'string') {
       detailString = errorData.detail;
     }
+  }
 
-    // If we found a specific detail, format the message
-    if (detailString) {
-      return `API error (${response.status}): ${detailString}`;
-    } else {
-      // If it's an object but we couldn't extract a specific string, log for debugging
-      // but return the default message to avoid large objects in UI.
-      console.warn('API error object received, but no specific message field found:', errorData);
-      return defaultMessage;
-    }
+  // If we found a specific detail, clean it and format the message
+  if (detailString) {
+    // Clean up common prefixes like '* '
+    if (detailString) { detailString = detailString.replace(/^\*\s*/, ''); }
+    return `API error (${response.status}): ${detailString}`;
+  } else {
+    // If we couldn't extract a specific string, log for debugging
+    // but return the default message to avoid large objects in UI.
+    const dataType = Array.isArray(errorData) ? 'array' : (typeof errorData);
+    console.warn(`API error data received (type: ${dataType}), but no specific message field found:`, errorData);
+    return defaultMessage;
   }
 
   // If errorData is not an object or parsing failed earlier
