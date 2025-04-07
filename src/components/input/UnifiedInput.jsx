@@ -120,7 +120,7 @@ export function UnifiedInput({
                   autoResize={true}
                   minHeight={70}
                   maxHeight={200}
-                  className="w-full py-3 pl-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
+                  className="w-full py-3 pl-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-xs"
                 />
               </div>
               

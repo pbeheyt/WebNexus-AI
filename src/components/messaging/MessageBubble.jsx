@@ -165,7 +165,7 @@ const MessageBubbleComponent = ({
       <div className={`px-6 py-2 w-full flex justify-end ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
           {/* User messages render raw content, preserving whitespace */}
-          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
+          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-xs">{content}</div>
         </div>
       </div>
     );
@@ -182,13 +182,13 @@ const MessageBubbleComponent = ({
             h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-3" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mb-2" {...props} />,
-            p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed text-sm" {...props} />,
-            
+            p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed text-xs" {...props} />,
+
             // Fixed list rendering to prevent marker line breaks
             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-            li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
-            
+            li: ({node, ...props}) => <li className="leading-relaxed text-xs" {...props} />,
+
             code: ({node, inline, className, children, ...props}) => {
               // Check if it's a block code (has language class) or inline
               const match = /language-(\w+)/.exec(className || '');
@@ -226,26 +226,26 @@ const MessageBubbleComponent = ({
                   {children}
                 </CodeBlock>
               ) : (
-                // Inline code
-                <code className="bg-theme-hover px-1 py-0.5 rounded text-sm font-mono" {...props}>
-                  {children}
-                </code>
+            // Inline code
+            <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
+              {children}
+            </code>
               );
             },
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
             pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary mb-3 py-0.5 text-sm" {...props} />,
+            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary mb-3 py-0.5 text-xs" {...props} />,
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
             em: ({node, ...props}) => <em className="italic" {...props} />,
             hr: ({node, ...props}) => <hr className="my-4 border-t border-gray-300 dark:border-gray-600" {...props} />,
             // Table handling
-            table: ({node, ...props}) => <div className="overflow-x-auto mb-4"><table className="border-collapse w-full text-sm" {...props} /></div>,
+            table: ({node, ...props}) => <div className="overflow-x-auto mb-4"><table className="border-collapse w-full text-xs" {...props} /></div>,
             thead: ({node, ...props}) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
             tbody: ({node, ...props}) => <tbody {...props} />,
             tr: ({node, ...props}) => <tr className="border-b border-gray-200 dark:border-gray-700" {...props} />,
-            th: ({node, ...props}) => <th className="p-2 text-left font-medium" {...props} />,
-            td: ({node, ...props}) => <td className="p-2 border-gray-200 dark:border-gray-700" {...props} />,
+            th: ({node, ...props}) => <th className="p-2 text-left font-medium text-xs" {...props} />,
+            td: ({node, ...props}) => <td className="p-2 border-gray-200 dark:border-gray-700 text-xs" {...props} />,
           }}
         >
           {content}
