@@ -23,7 +23,6 @@ export { Tooltip } from './layout/Tooltip';
 
 // Messaging components
 export { MessageBubble } from './messaging/MessageBubble';
-export { MessageInput } from './messaging/MessageInput';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';
