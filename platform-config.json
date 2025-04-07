@@ -232,8 +232,8 @@
         "endpoint": "https://api.mistral.ai/v1/chat/completions",
         "minTemperature": 0.0,
         "maxTemperature": 1.5,
-        "temperature": 0.7,
-        "topP": 1.0,
+        "temperature": 0.3,
+        "topP": 0.7,
         "models": [
           {
             "id": "mistral-large-latest",
