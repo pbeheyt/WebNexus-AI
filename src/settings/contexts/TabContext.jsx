@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 // Tab IDs from the original constants.js
 const TABS = {
   PROMPT_MANAGEMENT: 'prompt-management',
-  SHORTCUTS: 'shortcuts',
   API_SETTINGS: 'api-settings'
 };
 
