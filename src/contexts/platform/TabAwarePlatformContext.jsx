@@ -246,8 +246,6 @@ export function createTabAwarePlatformContext(options = {}) {
       try {
         // Update state immediately
         setSelectedPlatformId(platformId);
-        setModels([]); // Clear models when platform changes
-        setSelectedModelId(null);
 
         // Update tab-specific preference
         const tabPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES);
