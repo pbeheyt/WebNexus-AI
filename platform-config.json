@@ -1,5 +1,4 @@
 {
-  "defaultAiPlatform": "chatgpt",
   "aiPlatforms": {
     "claude": {
       "name": "Claude",

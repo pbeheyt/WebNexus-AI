@@ -2,7 +2,7 @@
 
 import { determineContentType, isInjectablePage } from '../../shared/utils/content-utils.js';
 import { extractContent } from './content-extraction.js';
-import { getPreferredAiPlatform, openAiPlatformWithContent } from './platform-integration.js';
+import { openAiPlatformWithContent } from './platform-integration.js';
 import { resetExtractionState, savePlatformTabInfo } from '../core/state-manager.js';
 import { processContentViaApi } from '../api/api-coordinator.js';
 import logger from '../../shared/logger.js';
@@ -75,7 +75,7 @@ export async function processContent(params) {
     const formattedContentString = ContentFormatter.formatContent(extractedContent, contentType);
     
     // 5. Get platform and open it with content
-    const effectivePlatformId = platformId || await getPreferredAiPlatform();
+    const effectivePlatformId = platformId;
     
     const aiPlatformTabId = await openAiPlatformWithContent(contentType, null, effectivePlatformId);
     

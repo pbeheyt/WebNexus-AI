@@ -326,27 +326,37 @@ export function SidebarChatProvider({ children }) {
 
   // Send a message and get a response
   const sendMessage = async (text = inputValue) => {
+    // Retrieve platform/model state from context *inside* the function
+    // This ensures we get the latest values when the function is called
+    const currentPlatformId = selectedPlatformId;
+    const currentModelId = selectedModel; // Assuming selectedModel holds the ID string
+    const currentHasCreds = hasAnyPlatformCredentials;
+
+    // Pre-flight validation check
+    if (!currentPlatformId || !currentModelId || !currentHasCreds) {
+      let errorMessage = 'Error: ';
+      if (!currentPlatformId) errorMessage += 'Please select a platform. ';
+      if (!currentModelId) errorMessage += 'Please select a model. ';
+      if (!currentHasCreds) errorMessage += 'Valid API credentials are required for the selected platform.';
+
+      setMessages(prev => [...prev, {
+        id: `sys_err_${Date.now()}`,
+        role: MESSAGE_ROLES.SYSTEM,
+        content: errorMessage.trim(),
+        timestamp: new Date().toISOString()
+      }]);
+      return; // Abort if validation fails
+    }
+
+    // Original checks remain
     if (!text.trim() || isProcessing || !tabId) return;
 
-    if (!selectedPlatformId || !selectedModel) {
-      setMessages(prev => [...prev, {
-        id: `msg_${Date.now()}`,
-        role: MESSAGE_ROLES.SYSTEM,
-        content: 'Please select an AI platform and model first.',
-        timestamp: new Date().toISOString()
-      }]);
-      return;
-    }
-
-    if (!hasAnyPlatformCredentials) {
-      setMessages(prev => [...prev, {
-        id: `msg_${Date.now()}`,
-        role: MESSAGE_ROLES.SYSTEM,
-            content: `API credentials are needed to enable the chat feature. Please configure them in the settings.`,
-        timestamp: new Date().toISOString()
-      }]);
-      return;
-    }
+    // The specific checks for platform/model/creds are now handled by the pre-flight validation above.
+    // We can remove the older, separate checks.
+    /*
+    if (!selectedPlatformId || !selectedModel) { ... } // Removed
+    if (!hasAnyPlatformCredentials) { ... } // Removed
+    */
 
     // Estimate tokens for the user message
     const inputTokens = TokenManagementService.estimateTokens(text.trim());
@@ -409,14 +419,16 @@ export function SidebarChatProvider({ children }) {
           timestamp: msg.timestamp
         }));
 
-      // Process with API in streaming mode
+      // Process with API in streaming mode - Pass explicit IDs
       const result = await processContentViaApi({
-        platformId: selectedPlatformId,
-        modelId: selectedModel,
+        platformId: currentPlatformId, // Use the ID retrieved at the start
+        modelId: currentModelId,       // Use the ID retrieved at the start
         promptContent: text.trim(),
         conversationHistory,
         streaming: true,
-        skipInitialExtraction: isFirstMessage ? !isContentExtractionEnabled : false
+        skipInitialExtraction: isFirstMessage ? !isContentExtractionEnabled : false,
+        // Pass tabId and source explicitly if needed by the hook/API
+        options: { tabId, source: INTERFACE_SOURCES.SIDEBAR }
       });
 
       // Handle case where context extraction was skipped (e.g., non-injectable page)

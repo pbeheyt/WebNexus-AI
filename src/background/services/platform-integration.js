@@ -14,44 +14,7 @@ export function getPlatformContentScript() {
   return 'dist/platform-content.bundle.js';
 }
 
-/**
- * Get preferred AI platform
- * @param {string} source - Interface source (popup, sidebar)
- * @returns {Promise<string>} Platform identifier
- */
-export async function getPreferredAiPlatform(source = INTERFACE_SOURCES.POPUP) {
-  try {
-    logger.background.info(`Getting preferred AI platform for ${source}`);
-    
-    // Use source-specific storage key
-    const storageKey = source === INTERFACE_SOURCES.SIDEBAR 
-      ? STORAGE_KEYS.SIDEBAR_PLATFORM 
-      : STORAGE_KEYS.POPUP_PLATFORM;
-    
-    const result = await chrome.storage.sync.get(storageKey);
-
-    if (result[storageKey]) {
-      logger.background.info(`Found preferred platform for ${source}: ${result[storageKey]}`);
-      return result[storageKey];
-    }
-
-    // Check config for default platform
-    const configResponse = await fetch(chrome.runtime.getURL('platform-config.json'));
-    const config = await configResponse.json();
-
-    if (config.defaultAiPlatform) {
-      logger.background.info(`Using default platform from config: ${config.defaultAiPlatform}`);
-      return config.defaultAiPlatform;
-    }
-
-    // Fallback to ChatGPT
-    logger.background.info('No preferred platform found, using ChatGPT as default');
-    return AI_PLATFORMS.CHATGPT;
-  } catch (error) {
-    logger.background.error('Error getting preferred AI platform:', error);
-    return AI_PLATFORMS.CHATGPT; // Fallback to ChatGPT
-  }
-}
+// REMOVED getPreferredAiPlatform function
 
 /**
  * Open AI platform with extracted content

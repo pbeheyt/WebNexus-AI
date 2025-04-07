@@ -159,60 +159,51 @@ export function createTabAwarePlatformContext(options = {}) {
         const globalPreferences = await chrome.storage.sync.get(globalStorageKey);
         const globalPlatformPref = globalPreferences[globalStorageKey];
 
-        // Determine the platform to use, prioritizing credentials (if applicable)
+        // Determine the platform to use based strictly on preferences and credentials (for sidebar)
         let platformToUse = null;
-        const credentialedPlatforms = platformList.filter(p => p.hasCredentials);
+        const credentialedPlatformIds = new Set(platformList.filter(p => p.hasCredentials).map(p => p.id));
 
-        if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
-            // Priority: 1. Last used on this tab (if credentialed)
-            if (lastUsedTabPlatform && platformList.find(p => p.id === lastUsedTabPlatform && p.hasCredentials)) {
-                platformToUse = lastUsedTabPlatform;
-            }
-            // Priority: 2. Global preference (if credentialed)
-            else if (globalPlatformPref && platformList.find(p => p.id === globalPlatformPref && p.hasCredentials)) {
-                platformToUse = globalPlatformPref;
-            }
-            // Priority: 3. First available credentialed platform
-            else if (credentialedPlatforms.length > 0) {
-                platformToUse = credentialedPlatforms[0].id;
-            }
-             // Priority: 4. Fallback to default if NO platforms have credentials (allows viewing non-credentialed)
-            else if (platformList.length > 0) {
-                 platformToUse = config.defaultAiPlatform; // Or maybe the first in the list?
-                 // If default isn't in the list, pick the first one
-                 if (!platformList.some(p => p.id === platformToUse)) {
-                     platformToUse = platformList[0].id;
-                 }
-            }
-        } else {
-             // Non-sidebar logic (e.g., popup) - might not prioritize credentials
-             platformToUse = lastUsedTabPlatform || globalPlatformPref || config.defaultAiPlatform;
-             // Ensure the chosen platform exists in the list
-             if (!platformList.some(p => p.id === platformToUse)) {
-                 platformToUse = platformList.length > 0 ? platformList[0].id : null;
-             }
+        // Priority 1: Tab-specific preference
+        if (lastUsedTabPlatform) {
+          const isValidTabPref = platformList.some(p => p.id === lastUsedTabPlatform);
+          const hasCredsForTabPref = interfaceType !== INTERFACE_SOURCES.SIDEBAR || credentialedPlatformIds.has(lastUsedTabPlatform);
+          if (isValidTabPref && hasCredsForTabPref) {
+            platformToUse = lastUsedTabPlatform;
+          }
         }
 
+        // Priority 2: Global preference (if tab pref didn't work out)
+        if (!platformToUse && globalPlatformPref) {
+          const isValidGlobalPref = platformList.some(p => p.id === globalPlatformPref);
+          const hasCredsForGlobalPref = interfaceType !== INTERFACE_SOURCES.SIDEBAR || credentialedPlatformIds.has(globalPlatformPref);
+          if (isValidGlobalPref && hasCredsForGlobalPref) {
+            platformToUse = globalPlatformPref;
+          }
+        }
+
+        // If sidebar and still no platform, try the *first* credentialed platform as a last resort?
+        // DECISION: No, the requirement is to remove fallbacks. If preferences don't yield a valid, credentialed platform, it should be null.
+        // if (!platformToUse && interfaceType === INTERFACE_SOURCES.SIDEBAR && credentialedPlatformIds.size > 0) {
+        //   platformToUse = [...credentialedPlatformIds][0]; // Get the first one
+        // }
 
         // Set platforms (now with credential status)
         setPlatforms(platformList);
 
-        // Only update selectedPlatformId if it's different or null
-        // This prevents unnecessary model reloads if the platform didn't change during refresh
+        // Update selected platform state based on the determined platformToUse
         if (platformToUse && platformToUse !== selectedPlatformId) {
-             setSelectedPlatformId(platformToUse);
-             // If this is sidebar, also load models for the selected platform
-             if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
-               await loadModels(platformToUse);
-             }
-        } else if (platformToUse && interfaceType === INTERFACE_SOURCES.SIDEBAR && !models.length) {
-            // If platform didn't change but models are missing (e.g., initial load), load them
+          setSelectedPlatformId(platformToUse);
+          if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
             await loadModels(platformToUse);
+          }
+        } else if (platformToUse && interfaceType === INTERFACE_SOURCES.SIDEBAR && !models.length) {
+          // If platform didn't change but models are missing (e.g., initial load), load them
+          await loadModels(platformToUse);
         } else if (!platformToUse) {
-            // Handle case where no platform could be selected
-            setSelectedPlatformId(null);
-            setModels([]);
-            setSelectedModelId(null);
+          // Explicitly set to null if no valid platform was found
+          setSelectedPlatformId(null);
+          setModels([]);
+          setSelectedModelId(null);
         }
 
 
@@ -245,6 +236,11 @@ export function createTabAwarePlatformContext(options = {}) {
 
     // Select platform and save preference
     const selectPlatform = useCallback(async (platformId) => {
+      // Add validation check
+      if (!platforms.some(p => p.id === platformId)) {
+        console.error('Attempted to select invalid platform:', platformId);
+        return false;
+      }
       if (!tabId || platformId === selectedPlatformId) return true; // No change needed
 
       try {
@@ -287,6 +283,11 @@ export function createTabAwarePlatformContext(options = {}) {
 
     // Select model and save preference
     const selectModel = useCallback(async (modelId) => {
+      // Add validation check
+      if (!models.some(m => m.id === modelId)) {
+        console.error('Attempted to select invalid model:', modelId);
+        return false;
+      }
       if (!tabId || interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
           !selectedPlatformId || modelId === selectedModelId) {
         return false; // No change or invalid state

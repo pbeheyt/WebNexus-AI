@@ -2,11 +2,11 @@
 
 import ApiServiceManager from '../../services/ApiServiceManager.js';
 import ModelParameterService from '../../services/ModelParameterService.js';
-import ContentFormatter from '../../services/ContentFormatter.js'; // Added
+import ContentFormatter from '../../services/ContentFormatter.js';
 import { extractContent } from '../services/content-extraction.js';
-import { getPreferredAiPlatform } from '../services/platform-integration.js';
-import { verifyApiCredentials } from '../services/credential-manager.js';
-import { determineContentType, isInjectablePage } from '../../shared/utils/content-utils.js'; // Import isInjectablePage
+// Removed: import { getPreferredAiPlatform } from '../services/platform-integration.js';
+// Removed: import { verifyApiCredentials } from '../services/credential-manager.js';
+import { determineContentType, isInjectablePage } from '../../shared/utils/content-utils.js';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
 import { 
   resetExtractionState, 
@@ -16,9 +16,9 @@ import {
   setApiProcessingError,
   completeStreamResponse,
   hasFormattedContentForTab,
-  storeFormattedContentForTab, // Added
-  getFormattedContentForTab,   // Added
-  storeSystemPromptForTab // Added for system prompt tracking
+  storeFormattedContentForTab,
+  getFormattedContentForTab,
+  storeSystemPromptForTab
 } from '../core/state-manager.js';
 import logger from '../../shared/logger.js';
 
@@ -46,7 +46,13 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
       }
 
       case 'getApiModels': {
-        const platformId = message.platformId || await getPreferredAiPlatform();
+        // Removed fallback: const platformId = message.platformId || await getPreferredAiPlatform();
+        const platformId = message.platformId;
+        // Add check for platformId
+        if (!platformId) {
+          sendResponse({ success: false, error: 'Platform ID is required to get models' });
+          return true; // Important: return true to indicate async response handled
+        }
         const models = await ApiServiceManager.getAvailableModels(platformId);
 
         sendResponse({
@@ -116,21 +122,30 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
  * @returns {Promise<Object>} Result information
  */
 export async function processContentViaApi(params) {
+  // Destructure platformId and modelId directly and add checks
   const {
     tabId,
     url,
     promptId = null,
-    platformId = null,
-    modelId = null, // Added modelId override possibility
+    platformId, // No longer optional or defaulted
+    modelId,    // No longer optional or defaulted
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null,
     streaming = false, // Note: streaming is forced to true later
     conversationHistory = []
   } = params;
 
+  // Add check for required platformId and modelId
+  if (!platformId || !modelId) {
+    const missing = [];
+    if (!platformId) missing.push('Platform ID');
+    if (!modelId) missing.push('Model ID');
+    throw new Error(`${missing.join(' and ')} are required for API processing`);
+  }
+
   try {
     logger.background.info(`Starting API-based content processing from ${source}`, {
-      tabId, url, promptId, platformId, streaming
+      tabId, url, promptId, platformId, modelId, streaming // Log modelId too
     });
 
     let extractedContent = null;
@@ -144,7 +159,7 @@ export async function processContentViaApi(params) {
     const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
     // Extraction only happens on the first message, if not skipped, if content doesn't already exist, and if page is injectable.
     const canInject = isInjectablePage(url); // Check if page allows injection
-    const shouldExtract = isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && canInject; // Add canInject check
+    const shouldExtract = isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && canInject;
 
     // Log if extraction is skipped specifically due to non-injectable URL on first message
     if (isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && !canInject) {
@@ -162,9 +177,8 @@ export async function processContentViaApi(params) {
         logger.background.info(`First message: Extraction will proceed for tab ${tabId} (no existing content, not skipped).`);
         // Reset previous extraction state (ensure this happens ONLY if extracting)
         await resetExtractionState();
-        // Determine effectivePlatformId *before* using it here
-        let tempEffectivePlatformId = platformId || await getPreferredAiPlatform(source); // Resolve temporarily if needed
-        await updateApiProcessingStatus('extracting', tempEffectivePlatformId); // Use resolved platform
+        // Use the explicitly passed platformId
+        await updateApiProcessingStatus('extracting', platformId);
 
         // Extract content
         logger.background.info(`Content type determined: ${contentType}`);
@@ -220,57 +234,38 @@ export async function processContentViaApi(params) {
       throw new Error('No prompt content provided');
     }
 
-    // 5. Determine platform to use - tab-aware resolution
-    let effectivePlatformId = platformId; // Use provided platformId first
+    // 5. Platform Determination - REMOVED. Use platformId directly from params.
+    // let effectivePlatformId = ... // REMOVED
 
-    if (!effectivePlatformId && tabId) {
-      try {
-        // Try to get tab-specific platform preference first
-        const tabPreferences = await chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES);
-        const tabPlatformPrefs = tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
+    // 6. Verify Credentials - REMOVED. Should be handled UI-side or implicitly by API call failure.
+    // await verifyApiCredentials(effectivePlatformId); // REMOVED
 
-        if (tabPlatformPrefs[tabId]) {
-          effectivePlatformId = tabPlatformPrefs[tabId];
-          logger.background.info(`Using tab-specific platform for tab ${tabId}: ${effectivePlatformId}`);
-        } else {
-          // Fall back to standard preference resolution
-          effectivePlatformId = await getPreferredAiPlatform(source);
-        }
-      } catch (error) {
-        logger.background.error('Error resolving tab-specific platform:', error);
-        effectivePlatformId = await getPreferredAiPlatform(source);
-      }
-    }
-    // If still no effectivePlatformId, resolve normally
-    if (!effectivePlatformId) {
-       effectivePlatformId = await getPreferredAiPlatform(source);
-    }
-
-    // 6. Verify credentials (using the final effectivePlatformId)
-    await verifyApiCredentials(effectivePlatformId);
-
-    // 7. Parameter Resolution (Centralized)
-    logger.background.info(`Resolving parameters for platform: ${effectivePlatformId}, model override: ${modelId}`);
-    let resolvedParams = await ModelParameterService.resolveParameters( // Changed const to let
-      effectivePlatformId,
-      modelId || null, // Use the passed modelId override
-      { tabId, source } // Context for resolution
+    // 7. Parameter Resolution (Centralized) - Use platformId and modelId from params
+    logger.background.info(`Resolving parameters for platform: ${platformId}, model: ${modelId}`);
+    let resolvedParams = await ModelParameterService.resolveParameters(
+      platformId, // Use directly from params
+      modelId,    // Use directly from params
+      { tabId, source, conversationHistory } // Pass context including history
     );
     logger.background.info(`Resolved parameters:`, resolvedParams);
+
+    // Add conversation history to resolvedParams - Now done inside resolveParameters
+    // resolvedParams.conversationHistory = conversationHistory; // REMOVED
+    // logger.background.info(`Added conversation history to resolvedParams. History length: ${conversationHistory.length}`); // REMOVED
 
     // Add conversation history to resolvedParams
     resolvedParams.conversationHistory = conversationHistory;
     logger.background.info(`Added conversation history to resolvedParams. History length: ${conversationHistory.length}`);
 
 
-    // 8. Update processing status (using resolved platform and model)
-    await updateApiProcessingStatus('processing', effectivePlatformId, resolvedParams.model);
+    // 8. Update processing status (using platformId from params and resolved model)
+    await updateApiProcessingStatus('processing', platformId, resolvedParams.model);
 
     // 9. Generate a unique stream ID for this request
     const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    // 10. Initialize streaming response
-    await initializeStreamResponse(streamId, effectivePlatformId, resolvedParams.model); // Include model
+    // 10. Initialize streaming response (using platformId from params)
+    await initializeStreamResponse(streamId, platformId, resolvedParams.model); // Include model
 
     // 11. Determine the formatted content to include in the request (only for the first message under specific conditions)
     let formattedContentForRequest = null;
@@ -320,7 +315,7 @@ export async function processContentViaApi(params) {
           chrome.tabs.sendMessage(tabId, { // Keep using tabs.sendMessage
             action: 'streamStart',
             streamId,
-            platformId: effectivePlatformId,
+            platformId: platformId, // Use platformId from params
             model: resolvedParams.model // Send resolved model
           });
           logger.background.info(`Sent streamStart notification to content script in tab ${tabId}.`);
@@ -344,20 +339,20 @@ export async function processContentViaApi(params) {
       formattedContent: formattedContentForRequest, // Pass the formatted content string or null
       // conversationHistory, // Removed: Now part of resolvedParams
       streaming: true, // Always true for this function
-      // Pass resolvedParams to stream handler for model info
-      onChunk: createStreamHandler(streamId, source, tabId, effectivePlatformId, resolvedParams)
+      // Pass platformId from params to stream handler
+      onChunk: createStreamHandler(streamId, source, tabId, platformId, resolvedParams)
     };
 
-    // 14. Process with API
+    // 14. Process with API (using platformId from params)
     const controller = new AbortController();
     activeAbortControllers.set(streamId, controller);
     requestConfig.abortSignal = controller.signal; // Add signal to request config
 
     try {
       logger.background.info('Calling ApiServiceManager.processWithUnifiedConfig with config:', requestConfig);
-      // Pass only platformId and requestConfig. tabId is within resolvedParams if needed.
+      // Pass platformId from params directly
       const apiResponse = await ApiServiceManager.processWithUnifiedConfig(
-        effectivePlatformId,
+        platformId,
         requestConfig
       );
 

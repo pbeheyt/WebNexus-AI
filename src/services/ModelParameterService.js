@@ -39,7 +39,6 @@ class ModelParameterService {
     const { tabId, source } = options;
     let modelId = null;
 
-    // 1. Try tab-specific model preference (highest priority)
     if (tabId) {
       try {
         const tabPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
@@ -53,37 +52,6 @@ class ModelParameterService {
       } catch (error) {
         logger.error('Error getting tab-specific model:', error);
       }
-    }
-
-    // 2. Try source-specific global preference (Sidebar only)
-    if (source === INTERFACE_SOURCES.SIDEBAR) {
-      const storageKey = STORAGE_KEYS.SIDEBAR_MODEL;
-
-      try {
-        const sourcePrefs = await chrome.storage.sync.get(storageKey);
-        const sourcePref = sourcePrefs[storageKey] || {};
-
-        if (sourcePref[platformId]) {
-          modelId = sourcePref[platformId];
-          logger.info(`Using ${source} model preference for ${platformId}: ${modelId}`);
-          return modelId;
-        }
-      } catch (error) {
-        logger.error(`Error getting ${source} model preference:`, error);
-      }
-    }
-
-    // 3. Use platform default from config
-    try {
-      const config = await this.loadPlatformConfig();
-      modelId = config?.aiPlatforms?.[platformId]?.api?.defaultModel;
-
-      if (modelId) {
-        logger.info(`Using platform default model for ${platformId}: ${modelId}`);
-        return modelId;
-      }
-    } catch (error) {
-      logger.error('Error loading platform config:', error);
     }
   }
 
@@ -213,22 +181,22 @@ class ModelParameterService {
   /**
    * Resolve parameters for a specific model, combining defaults and user settings
    * @param {string} platformId - Platform ID
-   * @param {string} modelOverride - Optional model override
-   * @param {string} prompt - The prompt to send (for token calculations) - *Parameter Removed*
+   * @param {string} modelId - The specific model ID to use.
    * @param {Object} options - Additional options
-   * @param {number} [options.tabId] - Tab ID for tab-specific preferences
+   * @param {number} [options.tabId] - Tab ID for context (e.g., token tracking)
    * @param {string} [options.source] - Interface source (popup or sidebar)
    * @param {Array} [options.conversationHistory] - Optional conversation history for context
    * @returns {Promise<Object>} Resolved parameters object for API calls
    */
-  async resolveParameters(platformId, modelOverride, options = {}) { // Removed prompt parameter
+  async resolveParameters(platformId, modelId, options = {}) {
+    // Add immediate check for modelId
+    if (!modelId) {
+      throw new Error('Model ID must be provided to resolveParameters');
+    }
+
     try {
       const { tabId, source, conversationHistory } = options; // Added conversationHistory
-      logger.info(`Resolving parameters for ${platformId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`);
-
-      // Determine model to use
-      const modelToUse = modelOverride || await this.resolveModel(platformId, { tabId, source });
-      logger.info(`Model to use: ${modelToUse}`);
+      logger.info(`Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`);
 
       // Get the full platform config first
       const config = await this.loadPlatformConfig();
@@ -238,14 +206,15 @@ class ModelParameterService {
       }
       const platformApiConfig = platformConfig.api; // Get the platform's API config
 
-      // Get model config from platform config for the resolved model
-      const modelConfig = platformApiConfig?.models?.find(model => model.id === modelToUse);
+      // Get model config from platform config for the provided modelId
+      const modelConfig = platformApiConfig?.models?.find(model => model.id === modelId);
       if (!modelConfig) {
-        throw new Error(`Model configuration not found for ${modelToUse}`);
+        // Use the provided modelId in the error message
+        throw new Error(`Model configuration not found for ${modelId}`);
       }
 
-      // Get user settings for this model
-      const userSettings = await this.getUserModelSettings(platformId, modelToUse);
+      // Get user settings for this model using the provided modelId
+      const userSettings = await this.getUserModelSettings(platformId, modelId);
 
       // Determine effective toggle values, defaulting to true if not set
       const effectiveIncludeTemperature = userSettings.includeTemperature ?? true;
@@ -253,7 +222,7 @@ class ModelParameterService {
 
       // Start with base parameters
       const params = {
-        model: modelToUse, // Always include the model
+        model: modelId, // Use the provided modelId
         parameterStyle: modelConfig.parameterStyle || 'standard',
         tokenParameter: modelConfig.tokenParameter || 'max_tokens',
         maxTokens: userSettings.maxTokens !== undefined ? userSettings.maxTokens : (modelConfig.maxTokens || 4000),
@@ -296,25 +265,14 @@ class ModelParameterService {
           params.tabId = tabId;
       }
 
-      logger.info(`FINAL Resolved parameters for ${platformId}/${modelToUse}:`, { ...params }); 
+      // Use modelId in the final log message
+      logger.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, { ...params });
       return params;
 
     } catch (error) {
-      logger.error('Error resolving parameters:', error);
-
-      // Minimal fallback - should be improved if possible
-      const fallbackConfig = await this.loadPlatformConfig().catch(() => null);
-      const fallbackPlatformApiConfig = fallbackConfig?.aiPlatforms?.[platformId]?.api;
-      const finalFallbackModel = modelOverride || await this.resolveModel(platformId, options);
-
-      return {
-        model: finalFallbackModel,
-        maxTokens: 4000,
-        temperature: fallbackPlatformApiConfig?.temperature !== undefined ? fallbackPlatformApiConfig.temperature : 0.7, // Default include temp
-        topP: fallbackPlatformApiConfig?.topP !== undefined ? fallbackPlatformApiConfig.topP : 1.0, // Default include topP
-        parameterStyle: 'standard',
-        tokenParameter: 'max_tokens',
-      };
+      // Log the error and re-throw it. No more fallbacks.
+      logger.error(`Error resolving parameters for ${platformId}/${modelId}:`, error);
+      throw error; // Re-throw the error to be handled by the caller
     }
   }
 }
