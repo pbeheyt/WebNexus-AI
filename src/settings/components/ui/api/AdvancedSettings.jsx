@@ -423,10 +423,10 @@ const AdvancedSettings = ({
           </div>
         )}
 
-        {/* System prompt (if supported) */}
-        {platform.apiConfig?.hasSystemPrompt !== false && (
+        {/* System prompt (if supported by platform AND model) */}
+        {platform.apiConfig?.hasSystemPrompt !== false && modelConfig?.supportsSystemPrompt !== false && (
           <div className="form-group mb-8">
-            <label 
+            <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
               className="block mb-3 text-sm font-semibold text-theme-secondary"
             >

@@ -139,7 +139,8 @@
             "inputTokenPrice": 15.00,
             "outputTokenPrice": 60.00,
             "supportsTemperature": false,
-            "supportsTopP": false
+            "supportsTopP": false,
+            "supportsSystemPrompt": false
           },
           {
             "id": "o3-mini",
@@ -161,7 +162,8 @@
             "inputTokenPrice": 1.10,
             "outputTokenPrice": 4.40,
             "supportsTemperature": false,
-            "supportsTopP": false
+            "supportsTopP": false,
+            "supportsSystemPrompt": false
           },
           {
             "id": "gpt-4-turbo",
