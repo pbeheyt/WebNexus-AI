@@ -48,12 +48,6 @@ class BaseExtractor {
         this.logger.info(`Message received in ${this.contentType} extractor:`, message);
       }
       
-      if (message.action === 'ping') {
-        this.logger.info('Ping received, responding with pong');
-        sendResponse({ status: 'pong', ready: this.contentScriptReady });
-        return true;
-      }
-      
       if (message.action === 'extractContent') {
         this.logger.info('Extract content request received');
         this.extractAndSaveContent();

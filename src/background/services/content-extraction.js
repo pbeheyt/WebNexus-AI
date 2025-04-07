@@ -23,36 +23,23 @@ export async function extractContent(tabId, url) {
   const scriptFile = 'dist/content-script.bundle.js';
 
   logger.background.info(`Extracting content from tab ${tabId}, type: ${contentType}`);
-  
-  // Check if content script is loaded
-  let isScriptLoaded = false;
-  try {
-    const response = await Promise.race([
-      chrome.tabs.sendMessage(tabId, { action: 'ping' }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 300))
-    ]);
-    isScriptLoaded = !!(response && response.ready);
-  } catch (error) {
-    logger.background.info('Content script not loaded, will inject');
-  }
-  
-  // Inject if needed
-  if (!isScriptLoaded) {
-    const result = await injectContentScript(tabId, scriptFile);
-    if (!result) {
-      logger.background.error(`Failed to inject content script`);
-      return false;
-    }
+
+  // Always inject the content script
+  const result = await injectContentScript(tabId, scriptFile);
+  if (!result) {
+    logger.background.error(`Failed to inject content script into tab ${tabId}`);
+    return false; // Stop if injection fails
   }
 
-  // Always reset previous extraction state
+  // Always reset previous extraction state after successful injection
   try {
     await chrome.tabs.sendMessage(tabId, { 
       action: 'resetExtractor'
     });
     logger.background.info('Reset command sent to extractor');
   } catch (error) {
-    logger.background.error('Error sending reset command:', error);
+    // Log error but potentially continue if reset fails, as extraction might still work
+    logger.background.error('Error sending reset command:', error); 
   }
   
   // Return promise that resolves when content extraction completes

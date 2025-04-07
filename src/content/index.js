@@ -25,14 +25,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   
-  // Basic ping check
-  if (message.action === 'ping') {
-    const isReady = !!ExtractorFactory.activeExtractor && 
-                    ExtractorFactory.activeExtractor.contentScriptReady;
-    sendResponse({ status: 'pong', ready: isReady });
-    return true;
-  }
-  
   // Extract content command
   if (message.action === 'extractContent') {
     if (!ExtractorFactory.activeExtractor) {
