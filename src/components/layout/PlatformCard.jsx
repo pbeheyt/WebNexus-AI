@@ -7,15 +7,10 @@ export function PlatformCard({
   iconUrl,
   selected,
   onClick,
-  hasCredentials = true,
-  checkCredentials = false,
   showName = true
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const cardRef = useRef(null);
-
-  // Determine if card should be disabled
-  const isDisabled = checkCredentials && !hasCredentials;
 
   // Handle card click
   const handleClick = () => {

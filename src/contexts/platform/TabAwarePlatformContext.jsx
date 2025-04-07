@@ -1,6 +1,6 @@
-// src/contexts/platform/TabAwarePlatformContext.jsx (partial update, focusing on the model handling part)
+// src/contexts/platform/TabAwarePlatformContext.jsx
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'; // Added useCallback
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
 import ModelParameterService from '../../services/ModelParameterService';
 
@@ -31,7 +31,6 @@ export function createTabAwarePlatformContext(options = {}) {
     const [selectedModelId, setSelectedModelId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false); // New state for refresh
-    const [hasCredentials, setHasCredentials] = useState(false); // For individual platform check
     const [hasAnyPlatformCredentials, setHasAnyPlatformCredentials] = useState(false); // For overall check
     const [tabId, setTabId] = useState(null);
     
@@ -77,9 +76,6 @@ export function createTabAwarePlatformContext(options = {}) {
           );
 
           setSelectedModelId(modelToUse);
-
-          // Check credentials for the specific platform (might be redundant if already checked)
-          await checkCredentials(platformId);
         } else {
            console.warn(`Failed to load models for ${platformId}:`, response?.error);
            setModels([]); // Clear models on failure
@@ -326,31 +322,6 @@ export function createTabAwarePlatformContext(options = {}) {
     }, []); // No dependencies
 
 
-    // Check if credentials exist for platform (memoized)
-    const checkCredentials = useCallback(async (platformId) => {
-      // This check might be less critical now as _loadAndCheckPlatforms handles the bulk check
-      if (interfaceType !== INTERFACE_SOURCES.SIDEBAR || !platformId) return false;
-
-      try {
-        const response = await chrome.runtime.sendMessage({
-          action: 'credentialOperation',
-          operation: 'get',
-          platformId
-        });
-
-        const hasValidCredentials = response && response.success && response.credentials;
-        // Update the specific platform's status in the main list if needed?
-        // Maybe not necessary if refreshPlatformData is used for updates.
-        setHasCredentials(hasValidCredentials); // Keep this for potential direct use?
-        return hasValidCredentials;
-      } catch (error) {
-        console.warn(`Credential check failed for ${platformId}:`, error);
-        setHasCredentials(false);
-        return false;
-      }
-    }, [interfaceType]); // Dependencies
-
-
     // Build context value with interface-specific properties
     const contextValue = {
       // Core properties for all interfaces
@@ -367,8 +338,6 @@ export function createTabAwarePlatformContext(options = {}) {
         models,
         selectedModel: selectedModelId, // Renamed for clarity
         selectModel,
-        // hasCredentials, // Individual platform credential status - less critical now?
-        checkCredentials, // Keep if needed elsewhere
         hasAnyPlatformCredentials, // Overall credential status
         isRefreshing, // Expose refresh loading state
         refreshPlatformData // Expose refresh function

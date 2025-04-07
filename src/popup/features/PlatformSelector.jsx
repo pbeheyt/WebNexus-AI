@@ -27,8 +27,6 @@ export function PlatformSelector() {
           iconUrl={platform.iconUrl}
           selected={platform.id === selectedPlatformId}
           onClick={handlePlatformSelect}
-          // Not enabling credential checks for popup
-          checkCredentials={false}
         />
       ))}
     </div>
