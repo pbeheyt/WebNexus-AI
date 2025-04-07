@@ -258,6 +258,7 @@ class ModelParameterService {
         tokenParameter: modelConfig.tokenParameter || 'max_tokens',
         maxTokens: userSettings.maxTokens !== undefined ? userSettings.maxTokens : (modelConfig.maxTokens || 4000),
         contextWindow: modelConfig.contextWindow || 8192, // Mostly for internal use, not sent to API
+        modelSupportsSystemPrompt: modelConfig?.supportsSystemPrompt ?? false, // Add the new flag here
       };
 
       // Add temperature ONLY if model supports it AND user included it
@@ -278,11 +279,11 @@ class ModelParameterService {
           : (platformApiConfig?.topP !== undefined ? platformApiConfig.topP : 1.0); // Final fallback
       }
 
-      // Add system prompt if platform/model supports it AND user provided one
-      const modelSupportsSystemPrompt = modelConfig?.supportsSystemPrompt !== false; // Default to true if unspecified
-      const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false;
-      if (platformSupportsSystemPrompt && modelSupportsSystemPrompt && userSettings.systemPrompt) {
-        params.systemPrompt = userSettings.systemPrompt;
+      // Add system prompt ONLY if platform supports it, model supports it, AND user provided one
+      const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false; // Keep this check
+      // Replace the old modelSupportsSystemPrompt check with the one from params
+      if (platformSupportsSystemPrompt && params.modelSupportsSystemPrompt === true && userSettings.systemPrompt) {
+          params.systemPrompt = userSettings.systemPrompt;
       }
 
       // Add conversation history if provided in options

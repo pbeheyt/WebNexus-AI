@@ -58,10 +58,6 @@ class GeminiApiService extends BaseApiService {
       const url = new URL(endpoint);
       url.searchParams.append('key', apiKey);
 
-      // Determine API version for feature check (systemInstruction)
-      const isExperimental = params.model.includes('-exp-');
-      const apiVersion = isExperimental ? 'v1beta' : 'v1';
-
       // Format content according to Gemini requirements
       let formattedRequest;
       if (params.conversationHistory && params.conversationHistory.length > 0) {
@@ -74,16 +70,16 @@ class GeminiApiService extends BaseApiService {
         formattedRequest = { contents: [{ role: 'user', parts: [{ text: text }] }] };
       }
 
-      // Add systemInstruction if provided and supported by the API version
+      // Add systemInstruction if provided and supported by the model
       if (params.systemPrompt) {
-        if (apiVersion === 'v1beta') {
-          this.logger.info('Adding system prompt using systemInstruction for v1beta model.');
+        if (params.modelSupportsSystemPrompt === true) {
+          this.logger.info(`Adding system prompt using systemInstruction for model: ${params.model}.`);
           formattedRequest.systemInstruction = {
             parts: [{ text: params.systemPrompt }]
           };
         } else {
-          this.logger.warn(`System prompts via systemInstruction are only supported in v1beta (experimental models). The provided system prompt will be IGNORED for model: ${params.model}`);
-          // Do not prepend or add in any other way for v1
+          this.logger.warn(`System prompts via systemInstruction are not supported by the selected model: ${params.model}. The provided system prompt will be IGNORED.`);
+          // Do not prepend or add in any other way for unsupported models
         }
       }
 

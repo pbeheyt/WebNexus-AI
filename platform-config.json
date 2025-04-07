@@ -332,7 +332,8 @@
             "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
-            "tokenParameter": "maxOutputTokens"
+            "tokenParameter": "maxOutputTokens",
+            "supportsSystemPrompt": true
           },
           {
             "id": "gemini-2.0-flash",
@@ -343,6 +344,7 @@
             "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
+            "supportsSystemPrompt": false,
             "tokenParameter": "maxOutputTokens"
           },
           {
@@ -354,6 +356,7 @@
             "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
+            "supportsSystemPrompt": false,
             "tokenParameter": "maxOutputTokens"
           },
           {
@@ -365,6 +368,7 @@
             "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
+            "supportsSystemPrompt": false,
             "tokenParameter": "maxOutputTokens"
           },
           {
@@ -376,6 +380,7 @@
             "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
+            "supportsSystemPrompt": false,
             "tokenParameter": "maxOutputTokens"
           },
           {
@@ -387,6 +392,7 @@
             "outputTokenPrice": 0.00,
             "supportsTemperature": true,
             "supportsTopP": true,
+            "supportsSystemPrompt": false,
             "tokenParameter": "maxOutputTokens"
           }
         ],
