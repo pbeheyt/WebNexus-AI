@@ -358,7 +358,7 @@ const AdvancedSettings = ({
           <div className="mb-2">
             <span className="block mb-3 text-sm font-semibold text-theme-secondary">Max Tokens</span>
           </div>
-          <p className="help-text text-xs text-theme-secondary mb-2">
+          <p className="help-text text-xs text-theme-secondary mb-3">
             Maximum number of tokens to generate in the response.
           </p>
           <SliderInput
@@ -366,7 +366,7 @@ const AdvancedSettings = ({
             value={formValues.maxTokens}
             onChange={(newValue) => handleChange('maxTokens', newValue)}
             min={1}
-            max={modelConfig?.maxTokens || 32000}
+            max={modelConfig?.maxTokens}
             step={1}
             disabled={isSaving}
             className="form-group"
@@ -448,7 +448,7 @@ const AdvancedSettings = ({
           modelConfig?.supportsTopP === true &&
           formValues.includeTemperature &&
           formValues.includeTopP && (
-            <p className="text-amber-600 text-xs -mt-4 mb-8">
+            <p className="text-amber-600 text-xs -mt-4 mb-10">
               It is generally recommended to alter Temperature or Top P, but not both.
             </p>
         )}
@@ -462,6 +462,9 @@ const AdvancedSettings = ({
             >
               System Prompt
             </label>
+            <p className="help-text text-xs text-theme-secondary mb-4">
+              Optional system prompt to provide context for API requests.
+            </p>
             <textarea
               id={`${platform.id}-${selectedModelId}-system-prompt`}
               name="systemPrompt"
@@ -470,9 +473,6 @@ const AdvancedSettings = ({
               value={formValues.systemPrompt}
               onChange={(e) => handleChange('systemPrompt', e.target.value)}
             />
-            <p className="help-text text-xs text-theme-secondary mt-2">
-              Optional system prompt to provide context for API requests.
-            </p>
           </div>
         )}
 
