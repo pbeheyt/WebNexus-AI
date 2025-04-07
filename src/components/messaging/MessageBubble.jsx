@@ -152,7 +152,7 @@ const MessageBubbleComponent = ({
   // System messages (typically errors) with special styling
   if (isSystem) {
     return (
-      <div className={`px-6 py-2 my-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 ${className}`}>
+      <div className={`px-5 py-2 my-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 ${className}`}>
         {/* System messages render raw content, preserving whitespace */}
         <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
       </div>
@@ -162,7 +162,7 @@ const MessageBubbleComponent = ({
   // User messages with cleaner grey color scheme
   if (isUser) {
     return (
-      <div className={`px-6 py-2 w-full flex justify-end ${className}`}>
+      <div className={`px-5 py-2 w-full flex justify-end ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
           {/* User messages render raw content, preserving whitespace */}
           <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-xs">{content}</div>
@@ -173,7 +173,7 @@ const MessageBubbleComponent = ({
 
   // Assistant messages with no bubble, taking full width
   return (
-    <div className={`px-6 py-2 w-full message-group relative ${className}`}>
+    <div className={`px-5 py-2 w-full message-group relative ${className}`}>
       {/* Main content - Render Markdown for assistant messages */}
       <div className="prose dark:prose-invert prose-sm max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible">
         <ReactMarkdown
@@ -253,7 +253,7 @@ const MessageBubbleComponent = ({
       </div>
 
       {/* Footer section with model info, copy button, and streaming indicator aligned horizontally */}
-      <div className="flex justify-between items-center mt-3">
+      <div className="flex justify-between items-center mt-1">
         {/* Model info with platform icon and streaming indicator */}
         <div className="text-xs opacity-70 flex items-center">
           {platformIconUrl && !isUser && (
