@@ -1,6 +1,6 @@
 // src/background/services/content-extraction.js - Content extraction coordination
 
-import { determineContentType } from '../../shared/utils/content-utils.js';
+import { determineContentType, isInjectablePage } from '../../shared/utils/content-utils.js'; // Import isInjectablePage
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import logger from '../../shared/logger.js';
 
@@ -11,6 +11,13 @@ import logger from '../../shared/logger.js';
  * @returns {Promise<boolean>} Success indicator
  */
 export async function extractContent(tabId, url) {
+  // Check if the page is injectable before proceeding
+  if (!isInjectablePage(url)) {
+    logger.background.warn(`Cannot extract content from non-injectable URL: ${url}`);
+    await chrome.storage.local.set({ [STORAGE_KEYS.CONTENT_READY]: false, [STORAGE_KEYS.EXTRACTED_CONTENT]: null });
+    return false;
+  }
+
   const contentType = determineContentType(url);
   // Use a single content script for all types
   const scriptFile = 'dist/content-script.bundle.js';

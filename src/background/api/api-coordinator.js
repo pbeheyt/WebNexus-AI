@@ -6,7 +6,7 @@ import ContentFormatter from '../../services/ContentFormatter.js'; // Added
 import { extractContent } from '../services/content-extraction.js';
 import { getPreferredAiPlatform } from '../services/platform-integration.js';
 import { verifyApiCredentials } from '../services/credential-manager.js';
-import { determineContentType } from '../../shared/utils/content-utils.js';
+import { determineContentType, isInjectablePage } from '../../shared/utils/content-utils.js'; // Import isInjectablePage
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
 import { 
   resetExtractionState, 
@@ -142,8 +142,14 @@ export async function processContentViaApi(params) {
 
     // 1. Decide whether to extract content based on existence, user request, and message history
     const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
-    // Extraction only happens on the first message, if not skipped, and if content doesn't already exist.
-    const shouldExtract = isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested;
+    // Extraction only happens on the first message, if not skipped, if content doesn't already exist, and if page is injectable.
+    const canInject = isInjectablePage(url); // Check if page allows injection
+    const shouldExtract = isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && canInject; // Add canInject check
+
+    // Log if extraction is skipped specifically due to non-injectable URL on first message
+    if (isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && !canInject) {
+        logger.background.info(`First message: Skipping extraction for tab ${tabId} because URL (${url}) is not injectable.`);
+    }
 
     if (shouldExtract) {
         logger.background.info(`First message: Extraction will proceed for tab ${tabId} (no existing content, not skipped).`);
@@ -182,9 +188,11 @@ export async function processContentViaApi(params) {
             logger.background.info(`First message: Extraction skipped for tab ${tabId} by user request.`);
         } else if (initialFormattedContentExists) {
             logger.background.info(`First message: Formatted content already exists for tab ${tabId}, skipping extraction.`);
+        } else if (isFirstUserMessage && !canInject) {
+            // This case is already logged above where shouldExtract is calculated.
         } else {
              // Should not happen based on shouldExtract logic, but log just in case
-             logger.background.warn(`Extraction skipped for unknown reason for tab ${tabId}. Conditions: isFirst=${isFirstUserMessage}, skipped=${skipExtractionRequested}, exists=${initialFormattedContentExists}`);
+             logger.background.warn(`Extraction skipped for unknown reason for tab ${tabId}. Conditions: isFirst=${isFirstUserMessage}, skipped=${skipExtractionRequested}, exists=${initialFormattedContentExists}, canInject=${canInject}`);
         }
         // Ensure these are null if extraction didn't happen
         extractedContent = null;
@@ -230,7 +238,6 @@ export async function processContentViaApi(params) {
     if (!effectivePlatformId) {
        effectivePlatformId = await getPreferredAiPlatform(source);
     }
-
 
     // 6. Verify credentials (using the final effectivePlatformId)
     await verifyApiCredentials(effectivePlatformId);
@@ -299,17 +306,27 @@ export async function processContentViaApi(params) {
       }
     }
 
-    // 12. Notify the content script about streaming start if this is from sidebar
+    // 12. Notify the content script about streaming start ONLY if possible and from sidebar
     if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
-      try {
-        chrome.tabs.sendMessage(tabId, {
-          action: 'streamStart',
-          streamId,
-          platformId: effectivePlatformId,
-          model: resolvedParams.model // Send resolved model
-        });
-      } catch (err) {
-        logger.background.warn('Error notifying content script about stream start:', err);
+      if (isInjectablePage(url)) { // Check if the page allows content scripts
+        try {
+          chrome.tabs.sendMessage(tabId, { // Keep using tabs.sendMessage
+            action: 'streamStart',
+            streamId,
+            platformId: effectivePlatformId,
+            model: resolvedParams.model // Send resolved model
+          });
+          logger.background.info(`Sent streamStart notification to content script in tab ${tabId}.`);
+        } catch (err) {
+          // Log specific error types differently
+          if (err.message && (err.message.includes('Could not establish connection') || err.message.includes('Receiving end does not exist'))) {
+             logger.background.warn(`Failed to send streamStart to tab ${tabId}: Content script likely not running or injected.`);
+          } else {
+             logger.background.error('Error notifying content script about stream start:', err);
+          }
+        }
+      } else {
+        logger.background.info(`Skipped sending streamStart notification to tab ${tabId} (URL: ${url}) as it's not an injectable page.`);
       }
     }
 
@@ -398,6 +415,7 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
       
       // Send to content script for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+        logger.background.info(`[Stream Handler ${streamId}] Attempting to send intermediate chunk to runtime:`, { chunkData: { chunk, done: false, model: modelToUse } });
         try {
           // Use runtime API for sidebar communication
           chrome.runtime.sendMessage({
@@ -447,6 +465,7 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
 
       // Ensure the final message (success, error, or cancelled) is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+        logger.background.info(`[Stream Handler ${streamId}] Attempting to send final message to runtime:`, { chunkData: finalChunkData });
         try {
           // Use runtime API for sidebar communication
           chrome.runtime.sendMessage({

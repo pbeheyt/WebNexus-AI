@@ -44,3 +44,20 @@ export function getContentScriptFile(contentType) {
     return 'dist/general-content.bundle.js';
   }
 }
+
+export function isInjectablePage(url) {
+  if (!url) return false;
+  try {
+    if (url.startsWith('chrome://') || url.startsWith('about:') || url.startsWith('edge://') || url.startsWith('moz-extension://')) {
+      return false;
+    }
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('file://')) {
+      return true;
+    }
+    const parsedUrl = new URL(url);
+    return ['http:', 'https:', 'file:'].includes(parsedUrl.protocol);
+  } catch (e) {
+    console.warn(`URL parsing failed or non-standard scheme for injection check: ${url}`, e.message);
+    return false;
+  }
+}
