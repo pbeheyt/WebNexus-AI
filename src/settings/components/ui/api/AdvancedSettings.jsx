@@ -208,16 +208,18 @@ const AdvancedSettings = ({
       
       // Only validate temperature and topP if they exist in the form values
       if (formValues.temperature !== undefined) {
-        const minTemp = modelConfig?.minTemperature !== undefined ? modelConfig.minTemperature : 0;
-        const maxTemp = modelConfig?.maxTemperature !== undefined ? modelConfig.maxTemperature : 2;
+        const minTemp = platform.apiConfig?.minTemperature ?? 0; // Read from platform
+        const maxTemp = platform.apiConfig?.maxTemperature ?? 2; // Read from platform
         if (formValues.temperature < minTemp || formValues.temperature > maxTemp) {
           throw new Error(`Temperature must be between ${minTemp} and ${maxTemp}`);
         }
       }
       
       if (formValues.topP !== undefined) {
-        if (formValues.topP < 0 || formValues.topP > 1) {
-          throw new Error('Top P must be between 0 and 1');
+        const minTopP = platform.apiConfig?.minTopP ?? 0; // Use platform value or default
+        const maxTopP = platform.apiConfig?.maxTopP ?? 1; // Use platform value or default
+        if (formValues.topP < minTopP || formValues.topP > maxTopP) {
+          throw new Error(`Top P must be between ${minTopP} and ${maxTopP}`);
         }
       }
       
@@ -392,8 +394,8 @@ const AdvancedSettings = ({
               label="Temperature:"
               value={formValues.temperature}
               onChange={(newValue) => handleChange('temperature', newValue)}
-              min={modelConfig?.minTemperature !== undefined ? modelConfig.minTemperature : 0}
-              max={modelConfig?.maxTemperature !== undefined ? modelConfig.maxTemperature : 2}
+              min={platform.apiConfig?.minTemperature ?? 0}
+              max={platform.apiConfig?.maxTemperature ?? 2}
               step={0.1}
               disabled={isSaving}
               className="form-group"
@@ -411,8 +413,8 @@ const AdvancedSettings = ({
               label="Top P:"
               value={formValues.topP}
               onChange={(newValue) => handleChange('topP', newValue)}
-              min={0}
-              max={1}
+              min={platform.apiConfig?.minTopP ?? 0}
+              max={platform.apiConfig?.maxTopP ?? 1}
               step={0.01}
               disabled={isSaving}
               className="form-group"
