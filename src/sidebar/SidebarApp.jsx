@@ -49,11 +49,6 @@ export default function SidebarApp() {
           // Update the content context with the new URL and type
           updateContentContext(message.newUrl, message.newContentType);
           console.info(`Content context updated for tab ${tabId} to URL: ${message.newUrl}, Type: ${message.newContentType}`);
-
-          // Clear the stored formatted content for this tab
-          // clearFormattedContentForTab(); // Already knows the tabId from context - Removed as per request
-          console.info(`Cleared formatted content for tab ${tabId} due to navigation.`); // Note: This log might now be misleading
-
         } catch (error) {
           console.error(`Error handling pageNavigated event for tab ${tabId}:`, error);
         }
