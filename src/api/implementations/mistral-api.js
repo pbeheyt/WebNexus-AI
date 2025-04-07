@@ -36,14 +36,14 @@ class MistralApiService extends BaseApiService {
       messages.push({ role: 'user', content: text });
       requestPayload.messages = messages;
       requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
-      // Add temperature if defined in params (inclusion handled by ModelParameterService)
-      if ('temperature' in params) {
-        requestPayload.temperature = params.temperature;
-      }
-      // Add top_p if defined in params (inclusion handled by ModelParameterService)
-      if ('topP' in params) { // Check for 'topP' from resolved params
-        requestPayload.top_p = params.topP; // Use 'top_p' for the API payload
-      }
+      // // Add temperature if defined in params (inclusion handled by ModelParameterService)
+      // if ('temperature' in params) {
+      //   requestPayload.temperature = params.temperature;
+      // }
+      // // Add top_p if defined in params (inclusion handled by ModelParameterService)
+      // if ('topP' in params) { // Check for 'topP' from resolved params
+      //   requestPayload.top_p = params.topP; // Use 'top_p' for the API payload
+      // }
 
       // Make the streaming request
       const response = await fetch(endpoint, {

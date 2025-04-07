@@ -422,7 +422,6 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
       
       // Send to content script for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
-        logger.background.info(`[Stream Handler ${streamId}] Attempting to send intermediate chunk to runtime:`, { chunkData: { chunk, done: false, model: modelToUse } });
         try {
           // Use runtime API for sidebar communication
           chrome.runtime.sendMessage({
@@ -472,7 +471,6 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
 
       // Ensure the final message (success, error, or cancelled) is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
-        logger.background.info(`[Stream Handler ${streamId}] Attempting to send final message to runtime:`, { chunkData: finalChunkData });
         try {
           // Use runtime API for sidebar communication
           chrome.runtime.sendMessage({
