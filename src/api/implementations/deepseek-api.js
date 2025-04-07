@@ -49,8 +49,14 @@ class DeepSeekApiService extends BaseApiService {
       // Assign the potentially modified messages array to the payload
       requestPayload.messages = messages;
       requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
-      if (params.supportsTemperature) requestPayload.temperature = params.temperature;
-      if (params.supportsTopP) requestPayload.top_p = params.topP;
+      // Add temperature if defined in params (inclusion handled by ModelParameterService)
+      if ('temperature' in params) {
+        requestPayload.temperature = params.temperature;
+      }
+      // Add top_p if defined in params (inclusion handled by ModelParameterService)
+      if ('topP' in params) { // Check for 'topP' from resolved params
+        requestPayload.top_p = params.topP; // Use 'top_p' for the API payload
+      }
 
       // Make the streaming request
       const response = await fetch(endpoint, {

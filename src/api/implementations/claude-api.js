@@ -30,11 +30,14 @@ class ClaudeApiService extends BaseApiService {
       const requestPayload = {
         model: params.model,
         max_tokens: params.maxTokens,
-        messages: [{ role: 'user', content: [{ type: "text", text: text }] }],
-        stream: true
-      };
-      if (params.supportsTemperature) requestPayload.temperature = params.temperature;
-      if (params.systemPrompt) requestPayload.system = params.systemPrompt;
+          messages: [{ role: 'user', content: [{ type: "text", text: text }] }],
+          stream: true
+        };
+        // Add temperature if defined in params (inclusion is handled by ModelParameterService)
+        if ('temperature' in params) {
+          requestPayload.temperature = params.temperature;
+        }
+        if (params.systemPrompt) requestPayload.system = params.systemPrompt;
       if (params.conversationHistory && params.conversationHistory.length > 0) {
         requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, text);
       }

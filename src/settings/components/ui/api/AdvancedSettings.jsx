@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, useNotification, SliderInput } from '../../../../components';
+import { Button, useNotification, SliderInput, Toggle } from '../../../../components'; // Added Toggle
 
 const AdvancedSettings = ({
   platform,
@@ -13,42 +13,39 @@ const AdvancedSettings = ({
   const [hasChanges, setHasChanges] = useState(false);
   const [isAtDefaults, setIsAtDefaults] = useState(true);
   const models = platform.apiConfig?.models || [];
-  
+
   // Get model config for selected model
   const modelConfig = models.find(m => m.id === selectedModelId);
-  
+
   // Get settings for this model
   const getModelSettings = () => {
     if (!selectedModelId || selectedModelId === 'default') {
       return advancedSettings.default || {};
     }
-    
     return advancedSettings.models?.[selectedModelId] || {};
   };
-  
+
   const settings = getModelSettings();
-  
+
   // Get default settings from model config
   const getDefaultSettings = () => {
-    // Get model config again or ensure it's available in scope if needed
     const currentModelConfig = models.find(m => m.id === selectedModelId);
 
     const defaults = {
-      // Use modelConfig value, fallback only if undefined
       maxTokens: currentModelConfig?.maxTokens !== undefined ? currentModelConfig.maxTokens : 1000,
       contextWindow: currentModelConfig?.contextWindow !== undefined ? currentModelConfig.contextWindow : 16000,
     };
 
-    // Add temperature only if supported by the model, use platform default, fallback if needed
+    // Add temperature and its toggle default only if supported
     if (currentModelConfig?.supportsTemperature !== false) {
-      // Use platform default, fallback to 0.7 if platform default is somehow missing
       defaults.temperature = platform.apiConfig?.temperature !== undefined ? platform.apiConfig.temperature : 0.7;
+      defaults.includeTemperature = true; // Default include to true if supported
     }
 
-    // Add topP only if supported by the model, use platform default, fallback if needed
+    // Add topP and its toggle default only if supported
     if (currentModelConfig?.supportsTopP === true) {
-       // Use platform default, fallback to 1.0 if platform default is somehow missing
       defaults.topP = platform.apiConfig?.topP !== undefined ? platform.apiConfig.topP : 1.0;
+      defaults.includeTopP = true; // Default include to true if supported
     }
 
     // Add systemPrompt only if the platform supports it
@@ -58,52 +55,57 @@ const AdvancedSettings = ({
 
     return defaults;
   };
-  
+
   const defaultSettings = getDefaultSettings();
-  
-  // Form state with proper initialization
+
+  // Form state with proper initialization including new toggles
   const [formValues, setFormValues] = useState({
-    maxTokens: settings.maxTokens || defaultSettings.maxTokens,
-    temperature: settings.temperature || defaultSettings.temperature,
-    topP: settings.topP || defaultSettings.topP,
-    contextWindow: settings.contextWindow || defaultSettings.contextWindow,
-    systemPrompt: settings.systemPrompt || ''
+    maxTokens: settings.maxTokens ?? defaultSettings.maxTokens,
+    temperature: settings.temperature ?? defaultSettings.temperature,
+    topP: settings.topP ?? defaultSettings.topP,
+    contextWindow: settings.contextWindow ?? defaultSettings.contextWindow,
+    systemPrompt: settings.systemPrompt ?? '',
+    includeTemperature: settings.includeTemperature ?? true, // Default to true
+    includeTopP: settings.includeTopP ?? true,       // Default to true
   });
-  
+
   // Original values reference for comparison
   const [originalValues, setOriginalValues] = useState({...formValues});
-  
+
   // Check if current form values match default settings for the selected model
   const checkIfAtDefaults = (formVals) => {
     const modelDefaults = getDefaultSettings(); // Get defaults for the current model
     const currentModelConfig = models.find(m => m.id === selectedModelId); // Get config for checks
 
-    // Compare maxTokens (strict equality)
-    // Ensure the key exists in formVals before comparing
+    // Compare maxTokens
     if (!('maxTokens' in formVals) || formVals.maxTokens !== modelDefaults.maxTokens) {
       return false;
     }
 
-    // Compare temperature only if supported (strict equality)
+    // Compare temperature only if supported
     if (currentModelConfig?.supportsTemperature !== false) {
-      // Ensure both have the key before comparing
       if (!('temperature' in formVals) || !('temperature' in modelDefaults) || formVals.temperature !== modelDefaults.temperature) {
         return false;
       }
-    }
-
-    // Compare topP only if supported (strict equality)
-    if (currentModelConfig?.supportsTopP === true) {
-      // Ensure both have the key before comparing
-       if (!('topP' in formVals) || !('topP' in modelDefaults) || formVals.topP !== modelDefaults.topP) {
+      // Compare includeTemperature (default is true if supported)
+      if (formVals.includeTemperature !== (modelDefaults.includeTemperature ?? true)) {
         return false;
       }
     }
 
-    // Compare systemPrompt only if supported (check against default empty string)
+    // Compare topP only if supported
+    if (currentModelConfig?.supportsTopP === true) {
+       if (!('topP' in formVals) || !('topP' in modelDefaults) || formVals.topP !== modelDefaults.topP) {
+        return false;
+      }
+       // Compare includeTopP (default is true if supported)
+       if (formVals.includeTopP !== (modelDefaults.includeTopP ?? true)) {
+        return false;
+      }
+    }
+
+    // Compare systemPrompt only if supported
     if (platform.apiConfig?.hasSystemPrompt !== false) {
-      // Default is '', compare trimmed form value to ''
-      // Ensure the key exists in formVals before comparing
       if (!('systemPrompt' in formVals) || formVals.systemPrompt.trim() !== '') {
         return false;
       }
@@ -117,76 +119,65 @@ const AdvancedSettings = ({
   useEffect(() => {
     const currentSettings = getModelSettings();
     const modelDefaults = getDefaultSettings();
-    
+
     const newFormValues = {
-      maxTokens: currentSettings.maxTokens || modelDefaults.maxTokens,
-      temperature: currentSettings.temperature !== undefined ? currentSettings.temperature : modelDefaults.temperature,
-      topP: currentSettings.topP !== undefined ? currentSettings.topP : modelDefaults.topP,
-      contextWindow: currentSettings.contextWindow || modelDefaults.contextWindow,
-      systemPrompt: currentSettings.systemPrompt || ''
+      maxTokens: currentSettings.maxTokens ?? modelDefaults.maxTokens,
+      temperature: currentSettings.temperature ?? modelDefaults.temperature,
+      topP: currentSettings.topP ?? modelDefaults.topP,
+      contextWindow: currentSettings.contextWindow ?? modelDefaults.contextWindow,
+      systemPrompt: currentSettings.systemPrompt ?? '',
+      includeTemperature: currentSettings.includeTemperature ?? true, // Use ?? true
+      includeTopP: currentSettings.includeTopP ?? true,             // Use ?? true
     };
-    
+
     setFormValues(newFormValues);
     setOriginalValues(newFormValues);
     setHasChanges(false);
-    
-    // Check if values are already at defaults
     setIsAtDefaults(checkIfAtDefaults(newFormValues));
-  }, [selectedModelId, advancedSettings]);
-  
+  }, [selectedModelId, advancedSettings]); // Dependencies remain the same
+
   // Check if current form values differ from original values
   const checkForChanges = (currentValues, originalVals) => {
-    // Check properties that exist in both objects
     for (const key in currentValues) {
-      // Skip comparing undefined values
       if (currentValues[key] === undefined && originalVals[key] === undefined) {
         continue;
       }
-      
-      // Skip contextWindow as it's no longer editable
-      if (key === 'contextWindow') {
+      if (key === 'contextWindow') { // Skip contextWindow
         continue;
       }
-      
-      // For strings (like system prompt), check if they differ
       if (typeof currentValues[key] === 'string' && currentValues[key] !== originalVals[key]) {
         return true;
       }
-      
-      // For numbers, check if they differ
-      if (typeof currentValues[key] === 'number' && 
-          (!Object.is(currentValues[key], originalVals[key]))) {
+      if (typeof currentValues[key] === 'number' && !Object.is(currentValues[key], originalVals[key])) {
+        return true;
+      }
+      // Add check for boolean toggles
+      if (typeof currentValues[key] === 'boolean' && currentValues[key] !== originalVals[key]) {
         return true;
       }
     }
-    
     return false;
   };
 
-  // Refactored handleChange to accept name and newValue directly
+  // Handle changes for all input types including toggles
   const handleChange = (name, newValue) => {
-    // Calculate the next state based on the current state and the change
     const updatedValues = { ...formValues };
 
     if (name === 'maxTokens') {
       const parsedValue = parseInt(newValue, 10);
-      // Revert to current value in state if parsing fails (e.g., empty input)
       updatedValues[name] = isNaN(parsedValue) ? formValues.maxTokens : parsedValue;
     } else if (name === 'temperature' || name === 'topP') {
       const parsedValue = parseFloat(newValue);
-      // Revert to current value in state if parsing fails
       updatedValues[name] = isNaN(parsedValue) ? formValues[name] : parsedValue;
     } else if (name === 'systemPrompt') {
-       updatedValues[name] = newValue; // Directly use the string value
+       updatedValues[name] = newValue;
+    } else if (name === 'includeTemperature' || name === 'includeTopP') {
+       updatedValues[name] = newValue; // Directly use the boolean value
     } else {
-       // Handle potential other fields if necessary
        updatedValues[name] = newValue;
     }
 
-    // Update form state *first*
     setFormValues(updatedValues);
-
-    // *Then* update dependent states using the calculated `updatedValues`
     setHasChanges(checkForChanges(updatedValues, originalValues));
     setIsAtDefaults(checkIfAtDefaults(updatedValues));
   };
@@ -194,40 +185,34 @@ const AdvancedSettings = ({
   const handleModelChange = (e) => {
     onModelSelect(e.target.value);
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    
+
     try {
-      // Validate inputs
+      // Validations remain mostly the same
       const maxTokensMax = modelConfig?.maxTokens || 32000;
-      // *** MODIFIED LINE: Changed minimum check from 0 to 1 ***
-      if (formValues.maxTokens < 1 || formValues.maxTokens > maxTokensMax) { 
-        // *** MODIFIED LINE: Updated error message ***
-        throw new Error(`Max tokens must be between 1 and ${maxTokensMax}`); 
+      if (formValues.maxTokens < 1 || formValues.maxTokens > maxTokensMax) {
+        throw new Error(`Max tokens must be between 1 and ${maxTokensMax}`);
       }
-      
-      // Only validate temperature and topP if they exist in the form values
       if (formValues.temperature !== undefined) {
-        const minTemp = platform.apiConfig?.minTemperature ?? 0; // Read from platform
-        const maxTemp = platform.apiConfig?.maxTemperature ?? 2; // Read from platform
+        const minTemp = platform.apiConfig?.minTemperature ?? 0;
+        const maxTemp = platform.apiConfig?.maxTemperature ?? 2;
         if (formValues.temperature < minTemp || formValues.temperature > maxTemp) {
           throw new Error(`Temperature must be between ${minTemp} and ${maxTemp}`);
         }
       }
-      
       if (formValues.topP !== undefined) {
-        const minTopP = platform.apiConfig?.minTopP ?? 0; // Use platform value or default
-        const maxTopP = platform.apiConfig?.maxTopP ?? 1; // Use platform value or default
+        const minTopP = platform.apiConfig?.minTopP ?? 0;
+        const maxTopP = platform.apiConfig?.maxTopP ?? 1;
         if (formValues.topP < minTopP || formValues.topP > maxTopP) {
           throw new Error(`Top P must be between ${minTopP} and ${maxTopP}`);
         }
       }
-      
-      // Create settings object with only the fields that exist in formValues
+
+      // Create settings object including new toggles
       const updateSettings = {};
-      
       if ('maxTokens' in formValues) updateSettings.maxTokens = formValues.maxTokens;
       if ('temperature' in formValues && modelConfig?.supportsTemperature !== false) {
         updateSettings.temperature = formValues.temperature;
@@ -238,19 +223,22 @@ const AdvancedSettings = ({
       if ('systemPrompt' in formValues && platform.apiConfig?.hasSystemPrompt !== false) {
         updateSettings.systemPrompt = formValues.systemPrompt;
       }
-      
+      // Add toggles if they exist in formValues
+      if ('includeTemperature' in formValues) {
+        updateSettings.includeTemperature = formValues.includeTemperature;
+      }
+      if ('includeTopP' in formValues) {
+        updateSettings.includeTopP = formValues.includeTopP;
+      }
+
       // Save settings
       const success = await onSettingsUpdate(selectedModelId, updateSettings);
-      
       if (!success) {
         throw new Error('Failed to save settings');
       }
-      
-      // Update original values after successful save
+
       setOriginalValues({...formValues});
       setHasChanges(false);
-      
-      // Update defaults check
       setIsAtDefaults(checkIfAtDefaults(formValues));
     } catch (err) {
       console.error('Error saving settings:', err);
@@ -259,57 +247,55 @@ const AdvancedSettings = ({
       setIsSaving(false);
     }
   };
-  
+
   const formatPrice = (price) => {
     return typeof price === 'number' ? price.toFixed(2) : price;
   };
-  
+
   return (
     <div className="settings-section bg-theme-surface p-6 rounded-lg border border-theme">
       <div className="flex justify-between items-center mb-6">
         <h3 className="section-title text-xl font-semibold text-theme-primary">Advanced Settings</h3>
 
         <Button
-          variant={isAtDefaults ? 'inactive' : 'danger'} 
+          variant={isAtDefaults ? 'inactive' : 'danger'}
           size="sm"
           disabled={isAtDefaults}
           onClick={() => {
-            // No need to check !isAtDefaults, button is disabled if true
             const defaults = getDefaultSettings();
             const currentModelConfig = models.find(m => m.id === selectedModelId);
 
-            // Construct resetValues based on defaults and what's supported
+            // Construct resetValues including toggles
             const resetValues = {
               maxTokens: defaults.maxTokens,
-              contextWindow: defaults.contextWindow, // Keep context window from defaults
-              // Only include supported fields that are present in defaults
+              contextWindow: defaults.contextWindow,
             };
             if (currentModelConfig?.supportsTemperature !== false && 'temperature' in defaults) {
               resetValues.temperature = defaults.temperature;
+              resetValues.includeTemperature = defaults.includeTemperature ?? true; // Reset toggle
             }
             if (currentModelConfig?.supportsTopP === true && 'topP' in defaults) {
               resetValues.topP = defaults.topP;
+              resetValues.includeTopP = defaults.includeTopP ?? true; // Reset toggle
             }
             if (platform.apiConfig?.hasSystemPrompt !== false && 'systemPrompt' in defaults) {
-              resetValues.systemPrompt = defaults.systemPrompt; // Should be '' from getDefaultSettings
+              resetValues.systemPrompt = defaults.systemPrompt;
             }
 
-            // Update local state immediately
             setFormValues(resetValues);
-            setOriginalValues(resetValues); // Reset original values as well
+            setOriginalValues(resetValues);
             setHasChanges(false);
-            setIsAtDefaults(true); // We just reset to defaults
+            setIsAtDefaults(true);
 
-            // Signal parent component to reset settings for this model
             onSettingsUpdate(selectedModelId, { __RESET__: true });
           }}
         >
           Reset to Configuration Defaults
         </Button>
       </div>
-      
+
       <div className="form-group mb-6">
-        <label 
+        <label
           htmlFor={`${platform.id}-settings-model-selector`}
           className="block mb-3 text-sm font-medium text-theme-secondary"
         >
@@ -336,21 +322,18 @@ const AdvancedSettings = ({
           </select>
         </div>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="model-advanced-settings">
-        {/* Model specifications - pricing and context window */}
+        {/* Model specifications */}
         <div className="model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8">
           <h4 className="specs-title text-base font-semibold mb-3 text-theme-primary">Model Specifications</h4>
           <div className="specs-info space-y-2.5">
-            {/* Context window info (now display-only) */}
             <div className="spec-item flex justify-between text-sm">
               <span className="spec-label font-medium text-theme-secondary">Context window:</span>
               <span className="spec-value font-mono">
                 {formValues.contextWindow?.toLocaleString() || modelConfig?.contextWindow?.toLocaleString() || "16,000"} tokens
               </span>
             </div>
-            
-            {/* Token pricing info */}
             {modelConfig && modelConfig.inputTokenPrice !== undefined && (
               <div className="spec-item flex justify-between text-sm">
                 <span className="spec-label font-medium text-theme-secondary">Input tokens:</span>
@@ -359,7 +342,6 @@ const AdvancedSettings = ({
                 </span>
               </div>
             )}
-            
             {modelConfig && modelConfig.outputTokenPrice !== undefined && (
               <div className="spec-item flex justify-between text-sm">
                 <span className="spec-label font-medium text-theme-secondary">Output tokens:</span>
@@ -371,14 +353,13 @@ const AdvancedSettings = ({
           </div>
         </div>
 
-        {/* Max tokens setting - Replaced with SliderInput */}
+        {/* Max tokens setting */}
         <div className="mb-7">
           <SliderInput
             label={platform.id === 'chatgpt' || platform.id === 'grok' ? 'Max Completion Tokens:' : 'Max Tokens:'}
             value={formValues.maxTokens}
             onChange={(newValue) => handleChange('maxTokens', newValue)}
-            // *** MODIFIED LINE: Changed min from 0 to 1 ***
-            min={1} 
+            min={1}
             max={modelConfig?.maxTokens || 32000}
             step={1}
             disabled={isSaving}
@@ -389,9 +370,9 @@ const AdvancedSettings = ({
           </p>
         </div>
 
-        {/* Temperature setting (if supported) - Replaced with SliderInput */}
+        {/* Temperature setting (if supported) */}
         {modelConfig?.supportsTemperature !== false && (
-          <div className="mb-7">
+          <div className="form-group mb-7"> {/* Changed div class */}
             <SliderInput
               label="Temperature:"
               value={formValues.temperature}
@@ -400,17 +381,29 @@ const AdvancedSettings = ({
               max={platform.apiConfig?.maxTemperature ?? 2}
               step={0.1}
               disabled={isSaving}
-              className="form-group"
+              className="form-group" // Keep class for consistency if needed
             />
             <p className="help-text text-xs text-theme-secondary mt-2">
               Controls randomness: lower values are more deterministic, higher values more creative.
             </p>
+            {/* Include Temperature Toggle */}
+            <div className="flex items-center mt-3">
+              <Toggle
+                checked={formValues.includeTemperature}
+                onChange={(e) => handleChange('includeTemperature', e.target.checked)}
+                disabled={isSaving}
+                id={`${platform.id}-${selectedModelId}-include-temperature`}
+              />
+              <label htmlFor={`${platform.id}-${selectedModelId}-include-temperature`} className="ml-2 text-sm text-theme-secondary cursor-pointer">
+                Include Temperature in API call
+              </label>
+            </div>
           </div>
         )}
 
-        {/* Top P setting (if supported) - Replaced with SliderInput */}
+        {/* Top P setting (if supported) */}
         {modelConfig?.supportsTopP === true && (
-          <div className="mb-7">
+          <div className="mb-7"> {/* Keep original class */}
             <SliderInput
               label="Top P:"
               value={formValues.topP}
@@ -419,15 +412,27 @@ const AdvancedSettings = ({
               max={platform.apiConfig?.maxTopP ?? 1}
               step={0.01}
               disabled={isSaving}
-              className="form-group"
+              className="form-group" // Keep class for consistency if needed
             />
             <p className="help-text text-xs text-theme-secondary mt-2">
               Alternative to temperature, controls diversity via nucleus sampling.
             </p>
+            {/* Include Top P Toggle */}
+            <div className="flex items-center mt-3">
+              <Toggle
+                checked={formValues.includeTopP}
+                onChange={(e) => handleChange('includeTopP', e.target.checked)}
+                disabled={isSaving}
+                id={`${platform.id}-${selectedModelId}-include-topp`}
+              />
+              <label htmlFor={`${platform.id}-${selectedModelId}-include-topp`} className="ml-2 text-sm text-theme-secondary cursor-pointer">
+                Include Top P in API call
+              </label>
+            </div>
           </div>
         )}
 
-        {/* System prompt (if supported by platform AND model) */}
+        {/* System prompt (if supported) */}
         {platform.apiConfig?.hasSystemPrompt !== false && modelConfig?.supportsSystemPrompt !== false && (
           <div className="form-group mb-8">
             <label
@@ -449,7 +454,7 @@ const AdvancedSettings = ({
             </p>
           </div>
         )}
-        
+
         <div className="form-actions flex justify-end mt-8">
           <Button
             type="submit"

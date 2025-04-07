@@ -79,10 +79,11 @@ class GeminiApiService extends BaseApiService {
       } else {
         formattedRequest.generationConfig.maxOutputTokens = params.maxTokens;
       }
-      if (params.supportsTemperature && typeof params.temperature === 'number') {
+      // Add generation config if parameters are defined in params (inclusion handled by ModelParameterService)
+      if ('temperature' in params) {
          formattedRequest.generationConfig.temperature = params.temperature;
       }
-      if (params.supportsTopP && typeof params.topP === 'number') {
+      if ('topP' in params) {
          formattedRequest.generationConfig.topP = params.topP;
       }
 

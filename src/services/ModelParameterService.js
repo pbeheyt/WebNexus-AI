@@ -38,13 +38,13 @@ class ModelParameterService {
   async resolveModel(platformId, options = {}) {
     const { tabId, source } = options;
     let modelId = null;
-    
+
     // 1. Try tab-specific model preference (highest priority)
     if (tabId) {
       try {
         const tabPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
         const tabModels = tabPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
-        
+
         if (tabModels[tabId] && tabModels[tabId][platformId]) {
           modelId = tabModels[tabId][platformId];
           logger.info(`Using tab-specific model for ${platformId}: ${modelId}`);
@@ -54,15 +54,15 @@ class ModelParameterService {
         logger.error('Error getting tab-specific model:', error);
       }
     }
-    
+
     // 2. Try source-specific global preference (Sidebar only)
     if (source === INTERFACE_SOURCES.SIDEBAR) {
       const storageKey = STORAGE_KEYS.SIDEBAR_MODEL;
-        
+
       try {
         const sourcePrefs = await chrome.storage.sync.get(storageKey);
         const sourcePref = sourcePrefs[storageKey] || {};
-        
+
         if (sourcePref[platformId]) {
           modelId = sourcePref[platformId];
           logger.info(`Using ${source} model preference for ${platformId}: ${modelId}`);
@@ -72,12 +72,12 @@ class ModelParameterService {
         logger.error(`Error getting ${source} model preference:`, error);
       }
     }
-    
+
     // 3. Use platform default from config
     try {
       const config = await this.loadPlatformConfig();
       modelId = config?.aiPlatforms?.[platformId]?.api?.defaultModel;
-      
+
       if (modelId) {
         logger.info(`Using platform default model for ${platformId}: ${modelId}`);
         return modelId;
@@ -85,7 +85,7 @@ class ModelParameterService {
     } catch (error) {
       logger.error('Error loading platform config:', error);
     }
-    
+
     // 4. Last resort fallbacks
     const fallbackMap = {
       'chatgpt': 'gpt-4o',
@@ -95,7 +95,7 @@ class ModelParameterService {
       'deepseek': 'deepseek-chat',
       'grok': 'grok-2-1212'
     };
-    
+
     modelId = fallbackMap[platformId] || 'gpt-4o';
     logger.info(`Using fallback model for ${platformId}: ${modelId}`);
     return modelId;
@@ -120,8 +120,8 @@ class ModelParameterService {
     logger.info(`Resolving model config for: ${platformId}/${modelId}`);
 
     const platformConfig = config.aiPlatforms[platformId];
-    
-    // Find model in array of objects (directly implemented, no longer calling TokenCalculationService)
+
+    // Find model in array of objects
     return platformConfig.api.models.find(model => model.id === modelId) || null;
   }
 
@@ -145,7 +145,7 @@ class ModelParameterService {
         platformSettings.default ||
         {};
 
-      logger.info(`Settings for ${platformId}/${modelId}:`, modelSettings);
+      logger.info(`User settings retrieved for ${platformId}/${modelId}:`, modelSettings);
 
       return modelSettings;
     } catch (error) {
@@ -166,21 +166,21 @@ class ModelParameterService {
       // Get current tab preferences
       const tabPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
       const tabModels = tabPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
-      
+
       // Initialize tab entry if needed
       if (!tabModels[tabId]) {
         tabModels[tabId] = {};
       }
-      
+
       // Save model preference
       tabModels[tabId][platformId] = modelId;
-      
+
       // Store updated preferences
       await chrome.storage.local.set({
         [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: tabModels,
         [STORAGE_KEYS.LAST_ACTIVE_TAB]: tabId
       });
-      
+
       logger.info(`Saved tab model preference: Tab ${tabId}, Platform ${platformId}, Model ${modelId}`);
       return true;
     } catch (error) {
@@ -197,21 +197,25 @@ class ModelParameterService {
    * @returns {Promise<boolean>} Success indicator
    */
   async saveSourceModelPreference(source, platformId, modelId) {
+    // Only save for sidebar, popup uses last selected via settings or default
+    if (source !== INTERFACE_SOURCES.SIDEBAR) {
+        logger.warn(`Not saving model preference for non-sidebar source: ${source}`);
+        return false;
+    }
+
     try {
-      const storageKey = source === INTERFACE_SOURCES.SIDEBAR 
-        ? STORAGE_KEYS.SIDEBAR_MODEL 
-        : STORAGE_KEYS.API_MODE_PREFERENCE;
-      
+      const storageKey = STORAGE_KEYS.SIDEBAR_MODEL;
+
       // Get current preferences
       const prefs = await chrome.storage.sync.get(storageKey);
       const modelPrefs = prefs[storageKey] || {};
-      
+
       // Update preference
       modelPrefs[platformId] = modelId;
-      
+
       // Save updated preferences
       await chrome.storage.sync.set({ [storageKey]: modelPrefs });
-      
+
       logger.info(`Saved ${source} model preference: Platform ${platformId}, Model ${modelId}`);
       return true;
     } catch (error) {
@@ -224,19 +228,22 @@ class ModelParameterService {
    * Resolve parameters for a specific model, combining defaults and user settings
    * @param {string} platformId - Platform ID
    * @param {string} modelOverride - Optional model override
-   * @param {string} prompt - The prompt to send (for token calculations)
+   * @param {string} prompt - The prompt to send (for token calculations) - *Parameter Removed*
    * @param {Object} options - Additional options
-   * @returns {Promise<Object>} Resolved parameters
+   * @param {number} [options.tabId] - Tab ID for tab-specific preferences
+   * @param {string} [options.source] - Interface source (popup or sidebar)
+   * @param {Array} [options.conversationHistory] - Optional conversation history for context
+   * @returns {Promise<Object>} Resolved parameters object for API calls
    */
-  async resolveParameters(platformId, modelOverride, options = {}) {
+  async resolveParameters(platformId, modelOverride, options = {}) { // Removed prompt parameter
     try {
-      const { tabId, source } = options;
-      logger.info(`Resolving parameters for ${platformId}`);
-      
+      const { tabId, source, conversationHistory } = options; // Added conversationHistory
+      logger.info(`Resolving parameters for ${platformId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`);
+
       // Determine model to use
       const modelToUse = modelOverride || await this.resolveModel(platformId, { tabId, source });
       logger.info(`Model to use: ${modelToUse}`);
-      
+
       // Get the full platform config first
       const config = await this.loadPlatformConfig();
       const platformConfig = config?.aiPlatforms?.[platformId];
@@ -250,55 +257,86 @@ class ModelParameterService {
       if (!modelConfig) {
         throw new Error(`Model configuration not found for ${modelToUse}`);
       }
-  
+
       // Get user settings for this model
       const userSettings = await this.getUserModelSettings(platformId, modelToUse);
-  
-      // Start with model-specific mandatory values and platform-level defaults
+
+      // Determine effective toggle values, defaulting to true if not set
+      const effectiveIncludeTemperature = userSettings.includeTemperature ?? true;
+      const effectiveIncludeTopP = userSettings.includeTopP ?? true;
+      logger.info(`Effective Toggles: Temp=${effectiveIncludeTemperature}, TopP=${effectiveIncludeTopP}`);
+
+      // Start with base parameters
       const params = {
-        maxTokens: modelConfig.maxTokens || 4000, // Still model-specific
-        // Use platform default for temperature, fallback if needed
-        temperature: platformApiConfig?.temperature !== undefined ? platformApiConfig.temperature : 0.7,
-        // Use platform default for topP, fallback if needed
-        topP: platformApiConfig?.topP !== undefined ? platformApiConfig.topP : 1.0,
-        parameterStyle: modelConfig.parameterStyle || 'standard', // Still model-specific
-        tokenParameter: modelConfig.tokenParameter || 'max_tokens', // Still model-specific
-        contextWindow: modelConfig.contextWindow || 8192, // Still model-specific
-        supportsTemperature: modelConfig.supportsTemperature !== false,
-        supportsTopP: modelConfig.supportsTopP !== false,
-        model: modelToUse // Add the resolved model to params
+        model: modelToUse, // Always include the model
+        parameterStyle: modelConfig.parameterStyle || 'standard',
+        tokenParameter: modelConfig.tokenParameter || 'max_tokens',
+        maxTokens: userSettings.maxTokens !== undefined ? userSettings.maxTokens : (modelConfig.maxTokens || 4000),
+        contextWindow: modelConfig.contextWindow || 8192, // Mostly for internal use, not sent to API
       };
-  
-      // Override with user settings if provided
-      if (userSettings.maxTokens !== undefined) params.maxTokens = userSettings.maxTokens;
-      // contextWindow is not typically user-settable here, but keep for consistency if it were
-      if (userSettings.contextWindow !== undefined) params.contextWindow = userSettings.contextWindow;
-      // Only override if the model supports the parameter
-      if (userSettings.temperature !== undefined && params.supportsTemperature) params.temperature = userSettings.temperature;
-      if (userSettings.topP !== undefined && params.supportsTopP) params.topP = userSettings.topP;
-  
-      // Add system prompt if provided in user settings
-      if (userSettings.systemPrompt !== undefined) params.systemPrompt = userSettings.systemPrompt;
-  
-      logger.info(`Resolved parameters for ${platformId}/${modelToUse}:`, params);
+
+      // Add temperature ONLY if model supports it AND user included it
+      const modelSupportsTemperature = modelConfig?.supportsTemperature !== false;
+      if (modelSupportsTemperature && effectiveIncludeTemperature) {
+        // Prioritize user setting, then platform default
+        params.temperature = userSettings.temperature !== undefined
+          ? userSettings.temperature
+          : (platformApiConfig?.temperature !== undefined ? platformApiConfig.temperature : 0.7); // Final fallback
+        logger.info(`Including Temperature: ${params.temperature}`);
+      } else {
+        logger.info(`Excluding Temperature (Supported: ${modelSupportsTemperature}, Included: ${effectiveIncludeTemperature})`);
+      }
+
+      // Add topP ONLY if model supports it AND user included it
+      const modelSupportsTopP = modelConfig?.supportsTopP === true; // Explicitly check for true
+      if (modelSupportsTopP && effectiveIncludeTopP) {
+        // Prioritize user setting, then platform default
+        params.topP = userSettings.topP !== undefined
+          ? userSettings.topP
+          : (platformApiConfig?.topP !== undefined ? platformApiConfig.topP : 1.0); // Final fallback
+        logger.info(`Including Top P: ${params.topP}`);
+      } else {
+         logger.info(`Excluding Top P (Supported: ${modelSupportsTopP}, Included: ${effectiveIncludeTopP})`);
+      }
+
+      // Add system prompt if platform/model supports it AND user provided one
+      const modelSupportsSystemPrompt = modelConfig?.supportsSystemPrompt !== false; // Default to true if unspecified
+      const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false;
+      if (platformSupportsSystemPrompt && modelSupportsSystemPrompt && userSettings.systemPrompt) {
+        params.systemPrompt = userSettings.systemPrompt;
+         logger.info(`Including System Prompt`);
+      }
+
+      // Add conversation history if provided in options
+      if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+        params.conversationHistory = conversationHistory;
+         logger.info(`Including Conversation History (Length: ${conversationHistory.length})`);
+      }
+
+      // Include tabId if provided (useful for downstream token tracking)
+      if (tabId) {
+          params.tabId = tabId;
+      }
+
+      logger.info(`FINAL Resolved parameters for ${platformId}/${modelToUse}:`, { ...params }); // Log a copy
       return params;
+
     } catch (error) {
       logger.error('Error resolving parameters:', error);
-  
-      // Return reasonable defaults if resolution fails
-      // Try to get platform defaults even in fallback
+
+      // Minimal fallback - should be improved if possible
       const fallbackConfig = await this.loadPlatformConfig().catch(() => null);
       const fallbackPlatformApiConfig = fallbackConfig?.aiPlatforms?.[platformId]?.api;
+      const finalFallbackModel = modelOverride || await this.resolveModel(platformId, options);
 
       return {
+        model: finalFallbackModel,
         maxTokens: 4000,
-        temperature: fallbackPlatformApiConfig?.temperature !== undefined ? fallbackPlatformApiConfig.temperature : 0.7,
-        topP: fallbackPlatformApiConfig?.topP !== undefined ? fallbackPlatformApiConfig.topP : 1.0,
+        temperature: fallbackPlatformApiConfig?.temperature !== undefined ? fallbackPlatformApiConfig.temperature : 0.7, // Default include temp
+        topP: fallbackPlatformApiConfig?.topP !== undefined ? fallbackPlatformApiConfig.topP : 1.0, // Default include topP
         parameterStyle: 'standard',
         tokenParameter: 'max_tokens',
-        supportsTemperature: true,
-        supportsTopP: true,
-        model: modelOverride || await this.resolveModel(platformId, options) // Ensure model is still resolved
+        // No supports flags needed in final object
       };
     }
   }
