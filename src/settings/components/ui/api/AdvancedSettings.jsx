@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, useNotification, SliderInput, Toggle } from '../../../../components';
+import { CustomSelect } from '../../../../components/core/CustomSelect';
 
 const AdvancedSettings = ({
   platform,
@@ -183,8 +184,8 @@ const AdvancedSettings = ({
     setIsAtDefaults(checkIfAtDefaults(updatedValues));
   };
 
-  const handleModelChange = (e) => {
-    onModelSelect(e.target.value);
+  const handleModelChange = (modelId) => {
+    onModelSelect(modelId);
   };
 
   const handleSubmit = async (e) => {
@@ -300,24 +301,13 @@ const AdvancedSettings = ({
           Model to Configure
         </label>
         <div className="inline-block min-w-[200px] max-w-full">
-          <select
-            id={`${platform.id}-settings-model-selector`}
-            className="settings-model-selector w-auto min-w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md"
-            value={selectedModelId}
+          <CustomSelect
+            options={models.map(model => ({ id: model.id, name: model.id }))}
+            selectedValue={selectedModelId}
             onChange={handleModelChange}
-          >
-            {models.length > 0 ? (
-              models.map(model => (
-                <option key={model.id} value={model.id}>
-                  {model.id}
-                </option>
-              ))
-            ) : (
-              <option value="default" disabled>
-                No models available
-              </option>
-            )}
-          </select>
+            placeholder="Select Model"
+            disabled={models.length === 0}
+          />
         </div>
       </div>
 

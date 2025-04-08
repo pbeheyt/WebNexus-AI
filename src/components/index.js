@@ -2,6 +2,7 @@
 // Core components
 export { Button } from './core/Button';
 export { Toggle } from './core/Toggle';
+export { CustomSelect } from './core/CustomSelect';
 
 // Feedback components
 export { StatusMessage } from './feedback/StatusMessage';

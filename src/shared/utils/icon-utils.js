@@ -14,10 +14,18 @@ export function getContentTypeIconSvg(contentType) {
   const generalColor = '#6B7280'; // text-gray-500
   const redditColor = '#FF4500';  // Brand color
   const pdfColor = '#F40F02';     // Custom red for PDF
+  const sharedColor = '#4A90E2';  // A distinct blue for shared (layers icon)
 
   switch (contentType) {
     case SHARED_TYPE:
-      iconSvg = ''
+      // SVG for Shared/Common icon (Layers symbol)
+      iconSvg = `
+        <svg class="shared-icon w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="${sharedColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 17L12 22L22 17" stroke="${sharedColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 12L12 17L22 12" stroke="${sharedColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
       break;
     case CONTENT_TYPES.YOUTUBE:
       // SVG for YouTube icon (red play button style)

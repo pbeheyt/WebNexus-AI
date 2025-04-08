@@ -1,3 +1,4 @@
+// src/settings/components/tabs/PromptManagement.jsx
 import React, { useState, useEffect } from 'react';
 import PromptList from '../ui/prompts/PromptList';
 import PromptDetail from '../ui/prompts/PromptDetail';
@@ -9,120 +10,111 @@ const PromptManagement = () => {
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [filterValue, setFilterValue] = useState('all');
-  
+  const [filterValue, setFilterValue] = useState('all'); // State lives here
+
   useEffect(() => {
-    // Initialize content types using keys from the imported labels object
     setContentTypes(Object.keys(CONTENT_TYPE_LABELS));
   }, []);
-  
+
   const handleNewPrompt = () => {
     setSelectedPrompt(null);
     setIsEditing(false);
     setIsCreating(true);
   };
-  
+
   const handleEditPrompt = (prompt) => {
     setSelectedPrompt(prompt);
     setIsCreating(false);
     setIsEditing(true);
   };
-  
+
   const handleViewPrompt = (prompt) => {
     setSelectedPrompt(prompt);
     setIsEditing(false);
     setIsCreating(false);
   };
-  
+
   const handleCancelForm = () => {
     setIsEditing(false);
     setIsCreating(false);
+    // Optionally reset selectedPrompt if cancelling edit/create should deselect
+    // setSelectedPrompt(null);
   };
-  
-  const handlePromptDeleted = () => {
-    setSelectedPrompt(null);
+
+  const handlePromptSavedOrDeleted = () => {
+    setSelectedPrompt(null); // Deselect after save/delete
     setIsEditing(false);
     setIsCreating(false);
+    // Force prompt list to refresh? Ideally, PromptList would listen to storage changes,
+    // but for now, maybe trigger a reload or pass a refresh function.
+    // For simplicity, we rely on PromptList's own useEffect for now.
   };
-  
-  const handleFilterChange = (e) => {
-    setFilterValue(e.target.value);
+
+  // This function now correctly updates the state in this component
+  const handleFilterChange = (selectedId) => {
+    setFilterValue(selectedId);
   };
-  
+
   // Determine what to show in the detail panel
   let detailContent;
-  
   if (isCreating) {
     detailContent = (
-      <PromptForm 
+      <PromptForm
         onCancel={handleCancelForm}
-        onSuccess={handlePromptDeleted}
+        onSuccess={handlePromptSavedOrDeleted} // Renamed for clarity
       />
     );
   } else if (isEditing && selectedPrompt) {
     detailContent = (
-      <PromptForm 
+      <PromptForm
         prompt={selectedPrompt}
         onCancel={handleCancelForm}
-        onSuccess={handlePromptDeleted}
+        onSuccess={handlePromptSavedOrDeleted} // Renamed for clarity
       />
     );
   } else if (selectedPrompt) {
     detailContent = (
-      <PromptDetail 
+      <PromptDetail
         prompt={selectedPrompt}
         onEdit={() => handleEditPrompt(selectedPrompt)}
-        onDelete={handlePromptDeleted}
+        onDelete={handlePromptSavedOrDeleted} // Renamed for clarity
       />
     );
   } else {
     detailContent = (
-      <div className="empty-state bg-theme-surface p-8 text-center text-theme-secondary rounded-lg">
-        <p>Select a prompt from the list or create a new one</p>
+      <div className="empty-state bg-theme-surface p-8 text-center text-theme-secondary rounded-lg border border-theme">
+        <p>Select a prompt from the list or create a new one.</p>
       </div>
     );
   }
-  
+
   return (
-    <div className="master-detail flex gap-6">
-      <div className="master-panel w-64 flex-shrink-0 border-r border-theme pr-5">
+    <div className="master-detail flex flex-col md:flex-row gap-6">
+      {/* Master Panel */}
+      <div className="master-panel w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-theme pb-5 md:pb-0 md:pr-5">
         <div className="master-header flex justify-between items-center mb-4">
           <h2 className="type-heading text-lg font-medium">Prompts</h2>
-          <button 
-            className="new-prompt-btn bg-primary text-white px-3 py-2 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1 text-sm font-medium"
+          <button
+            className="new-prompt-btn bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1 text-sm font-medium"
             onClick={handleNewPrompt}
           >
             + New
           </button>
         </div>
-        <p className="section-description text-theme-secondary mb-6">
-          Manage your custom prompts for different content types. Create, edit, or delete prompts that can be used for content processing.
+        <p className="section-description text-theme-secondary text-sm mb-4">
+          Manage your custom prompts for different content types.
         </p>
-        
-        <div className="form-group mb-4">
-          <select
-            id="content-type-filter"
-            className="content-type-filter w-full p-2 bg-theme-surface text-theme-primary border border-theme rounded-md pr-8"
-            value={filterValue}
-            onChange={handleFilterChange}
-          >
-            <option value="all">All Content Types</option>
-            {contentTypes.map(type => (
-              <option key={type} value={type}>
-                {CONTENT_TYPE_LABELS[type]} 
-              </option>
-            ))}
-          </select>
-        </div>
-        
+
+        {/* Pass state and handlers down to PromptList */}
         <PromptList
           filterValue={filterValue}
           contentTypeLabels={CONTENT_TYPE_LABELS}
           onSelectPrompt={handleViewPrompt}
           selectedPromptId={selectedPrompt?.id}
+          onFilterChange={handleFilterChange} // Pass the correct handler
         />
       </div>
-      
+
       {/* Detail Panel */}
       <div className="detail-panel flex-grow">
         {detailContent}
