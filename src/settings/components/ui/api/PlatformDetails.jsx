@@ -10,7 +10,6 @@ const PlatformDetails = ({
   onCredentialsUpdated,
   onCredentialsRemoved,
   onAdvancedSettingsUpdated,
-  refreshData,
   credentialsKey
 }) => {
   const { success, error } = useNotification();
@@ -210,9 +209,6 @@ const PlatformDetails = ({
   
   const handleAdvancedSettingsUpdate = async (modelId, settings) => {
     try {
-      // Removed the __RESET__ check block, logic moved to handleResetAdvancedSettings
-      
-      // Normal update (non-reset) continues with existing logic...
       // Load current settings
       const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
       const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
@@ -368,7 +364,7 @@ const PlatformDetails = ({
         advancedSettings={advancedSettings}
         onModelSelect={handleModelSelect}
         onSettingsUpdate={handleAdvancedSettingsUpdate}
-        onResetToDefaults={handleResetAdvancedSettings} // Pass the new reset handler
+        onResetToDefaults={handleResetAdvancedSettings}
       />
     </div>
   );

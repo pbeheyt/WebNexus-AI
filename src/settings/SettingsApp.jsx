@@ -2,7 +2,7 @@
 import React from 'react';
 import TabNavigation from './components/layout/TabNavigation';
 import TabContent from './components/layout/TabContent';
-import { Toast, AppHeader } from '../components'; // Import AppHeader
+import { Toast, AppHeader } from '../components';
 
 const SettingsApp = () => {
   return (

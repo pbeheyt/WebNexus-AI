@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, useNotification, SliderInput, Toggle, StatusMessage } from '../../../../components';
+import { Button, useNotification, SliderInput, Toggle } from '../../../../components';
 
 const AdvancedSettings = ({
   platform,
@@ -7,7 +7,7 @@ const AdvancedSettings = ({
   advancedSettings,
   onModelSelect,
   onSettingsUpdate,
-  onResetToDefaults // Add the new prop
+  onResetToDefaults
 }) => {
   const { error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
@@ -33,19 +33,19 @@ const AdvancedSettings = ({
     const currentModelConfig = models.find(m => m.id === selectedModelId);
 
     const defaults = {
-      maxTokens: currentModelConfig?.maxTokens !== undefined ? currentModelConfig.maxTokens : 1000,
-      contextWindow: currentModelConfig?.contextWindow !== undefined ? currentModelConfig.contextWindow : 16000,
+      maxTokens: currentModelConfig.maxTokens,
+      contextWindow: currentModelConfig.contextWindow,
     };
 
     // Add temperature and its toggle default only if supported
     if (currentModelConfig?.supportsTemperature !== false) {
-      defaults.temperature = platform.apiConfig?.temperature !== undefined ? platform.apiConfig.temperature : 0.7;
-      defaults.includeTemperature = true; // Default include to true if supported
+      defaults.temperature = platform.apiConfig.temperature,
+      defaults.includeTemperature = true;
     }
 
     // Add topP and its toggle default only if supported
     if (currentModelConfig?.supportsTopP === true) {
-      defaults.topP = platform.apiConfig?.topP !== undefined ? platform.apiConfig.topP : 1.0;
+      defaults.topP = platform.apiConfig.topP;
       defaults.includeTopP = false; // Default include to false if supported
     }
 
@@ -66,8 +66,8 @@ const AdvancedSettings = ({
     topP: settings.topP ?? defaultSettings.topP,
     contextWindow: settings.contextWindow ?? defaultSettings.contextWindow,
     systemPrompt: settings.systemPrompt ?? '',
-    includeTemperature: settings.includeTemperature ?? true, // Default to true
-    includeTopP: settings.includeTopP ?? false,      // Default to false
+    includeTemperature: settings.includeTemperature ?? true,
+    includeTopP: settings.includeTopP ?? false, // Default to false
   });
 
   // Original values reference for comparison
@@ -127,15 +127,15 @@ const AdvancedSettings = ({
       topP: currentSettings.topP ?? modelDefaults.topP,
       contextWindow: currentSettings.contextWindow ?? modelDefaults.contextWindow,
       systemPrompt: currentSettings.systemPrompt ?? '',
-      includeTemperature: currentSettings.includeTemperature ?? true, // Use ?? true
-      includeTopP: currentSettings.includeTopP ?? false,            // Use ?? false
+      includeTemperature: currentSettings.includeTemperature ?? true,
+      includeTopP: currentSettings.includeTopP ?? false,
     };
 
     setFormValues(newFormValues);
     setOriginalValues(newFormValues);
     setHasChanges(false);
     setIsAtDefaults(checkIfAtDefaults(newFormValues));
-  }, [selectedModelId, advancedSettings]); // Dependencies remain the same
+  }, [selectedModelId, advancedSettings]);
 
   // Check if current form values differ from original values
   const checkForChanges = (currentValues, originalVals) => {
@@ -192,21 +192,20 @@ const AdvancedSettings = ({
     setIsSaving(true);
 
     try {
-      // Validations remain mostly the same
-      const maxTokensMax = modelConfig?.maxTokens || 32000;
+      const maxTokensMax = modelConfig.maxTokens;
       if (formValues.maxTokens < 1 || formValues.maxTokens > maxTokensMax) {
         throw new Error(`Max tokens must be between 1 and ${maxTokensMax}`);
       }
       if (formValues.temperature !== undefined) {
-        const minTemp = platform.apiConfig?.minTemperature ?? 0;
-        const maxTemp = platform.apiConfig?.maxTemperature ?? 2;
+        const minTemp = platform.apiConfig.minTemperatur;
+        const maxTemp = platform.apiConfig.maxTemperature;
         if (formValues.temperature < minTemp || formValues.temperature > maxTemp) {
           throw new Error(`Temperature must be between ${minTemp} and ${maxTemp}`);
         }
       }
       if (formValues.topP !== undefined) {
-        const minTopP = platform.apiConfig?.minTopP ?? 0;
-        const maxTopP = platform.apiConfig?.maxTopP ?? 1;
+        const minTopP = platform.apiConfig.minTopP;
+        const maxTopP = platform.apiConfig.maxTopP;
         if (formValues.topP < minTopP || formValues.topP > maxTopP) {
           throw new Error(`Top P must be between ${minTopP} and ${maxTopP}`);
         }
@@ -266,18 +265,17 @@ const AdvancedSettings = ({
             const defaults = getDefaultSettings();
             const currentModelConfig = models.find(m => m.id === selectedModelId);
 
-            // Construct resetValues including toggles
             const resetValues = {
               maxTokens: defaults.maxTokens,
               contextWindow: defaults.contextWindow,
             };
             if (currentModelConfig?.supportsTemperature !== false && 'temperature' in defaults) {
               resetValues.temperature = defaults.temperature;
-              resetValues.includeTemperature = defaults.includeTemperature ?? true; // Reset toggle
+              resetValues.includeTemperature = defaults.includeTemperature ?? true;
             }
             if (currentModelConfig?.supportsTopP === true && 'topP' in defaults) {
               resetValues.topP = defaults.topP;
-              resetValues.includeTopP = defaults.includeTopP ?? false; // Reset toggle to false
+              resetValues.includeTopP = defaults.includeTopP ?? false;
             }
             if (platform.apiConfig?.hasSystemPrompt !== false && 'systemPrompt' in defaults) {
               resetValues.systemPrompt = defaults.systemPrompt;
@@ -287,8 +285,6 @@ const AdvancedSettings = ({
             setOriginalValues(resetValues);
             setHasChanges(false);
             setIsAtDefaults(true);
-
-            // Call the new reset handler prop instead of onSettingsUpdate with __RESET__
             onResetToDefaults(selectedModelId); 
           }}
         >
@@ -400,8 +396,8 @@ const AdvancedSettings = ({
                 label=""
                 value={formValues.temperature}
                 onChange={(newValue) => handleChange('temperature', newValue)}
-                min={platform.apiConfig?.minTemperature ?? 0}
-                max={platform.apiConfig?.maxTemperature ?? 2}
+                min={platform.apiConfig.minTemperature}
+                max={platform.apiConfig.maxTemperature}
                 step={0.1}
                 disabled={isSaving}
                 className="form-group mt-2"
@@ -435,8 +431,8 @@ const AdvancedSettings = ({
                 label=""
                 value={formValues.topP}
                 onChange={(newValue) => handleChange('topP', newValue)}
-                min={platform.apiConfig?.minTopP ?? 0}
-                max={platform.apiConfig?.maxTopP ?? 1}
+                min={platform.apiConfig.minTopP}
+                max={platform.apiConfig.maxTopP}
                 step={0.01}
                 disabled={isSaving}
                 className="form-group mt-2"

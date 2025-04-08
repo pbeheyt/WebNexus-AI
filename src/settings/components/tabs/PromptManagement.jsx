@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNotification } from '../../../components';
 import PromptList from '../ui/prompts/PromptList';
 import PromptDetail from '../ui/prompts/PromptDetail';
 import PromptForm from '../ui/prompts/PromptForm';
 import { CONTENT_TYPE_LABELS } from '../../../shared/constants';
 
 const PromptManagement = () => {
-  const { error } = useNotification();
   const [contentTypes, setContentTypes] = useState([]);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -90,7 +88,6 @@ const PromptManagement = () => {
   
   return (
     <div className="master-detail flex gap-6">
-      {/* Master Panel (Prompt List) */}
       <div className="master-panel w-64 flex-shrink-0 border-r border-theme pr-5">
         <div className="master-header flex justify-between items-center mb-4">
           <h2 className="type-heading text-lg font-medium">Prompts</h2>
@@ -113,10 +110,8 @@ const PromptManagement = () => {
             onChange={handleFilterChange}
           >
             <option value="all">All Content Types</option>
-            {/* Map over contentTypes state (now derived from CONTENT_TYPE_LABELS keys) */}
             {contentTypes.map(type => (
               <option key={type} value={type}>
-                {/* Use imported CONTENT_TYPE_LABELS for display */}
                 {CONTENT_TYPE_LABELS[type]} 
               </option>
             ))}
