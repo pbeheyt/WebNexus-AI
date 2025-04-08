@@ -98,9 +98,22 @@ async function initializeDefaultPrompts() {
 export async function initializeExtension() {
   logger.background.info('Running core extension initialization...');
   try {
-     // Note: Resetting state might clear things needed by prompt init if called before.
     await resetState();
     logger.background.info('Volatile state reset complete');
+
+    // Reset all tab sidebar visibility states to false
+    logger.background.info('Resetting all tab sidebar visibility states to false...');
+    const tabs = await chrome.tabs.query({});
+    const initialSidebarStates = {};
+    for (const tab of tabs) {
+      if (tab.id) {
+        initialSidebarStates[tab.id.toString()] = false;
+      }
+    }
+    await chrome.storage.local.set({ 
+      [STORAGE_KEYS.TAB_SIDEBAR_STATES]: initialSidebarStates 
+    });
+    logger.background.info('All tab sidebar visibility states reset.');
 
     return true;
   } catch (error) {

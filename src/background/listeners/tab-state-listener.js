@@ -180,6 +180,7 @@ export function setupTabStateListener() {
     logger.background.info(`Attempting to disable side panel for closed tab ${tabId}`);
     chrome.sidePanel.setOptions({ tabId, enabled: false })
       .catch(err => {
+        // Log warning, but don't throw - tab might already be gone or panel wasn't open
         logger.background.warn(`Failed to disable side panel for closed tab ${tabId}:`, err.message);
       });
   });
