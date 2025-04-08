@@ -172,5 +172,4 @@ class SidebarStateManager {
   }
 }
 
-// Export singleton instance
 module.exports = new SidebarStateManager();

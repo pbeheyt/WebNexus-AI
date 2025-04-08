@@ -118,6 +118,5 @@ class CredentialManager {
   }
 }
 
-// Export singleton instance
 const credentialManager = new CredentialManager();
 module.exports = credentialManager;
