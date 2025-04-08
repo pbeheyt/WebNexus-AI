@@ -44,9 +44,14 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   const language = languageMatch ? languageMatch[1] : 'code';
   
   // Check if this is just a filename (single line, no spaces, has extension)
-  const isFilename = codeContent.trim().indexOf('\n') === -1 && 
-                    codeContent.trim().indexOf(' ') === -1 && 
-                    /\.\w{1,4}$/.test(codeContent.trim());
+  const isFilenameOrModule = codeContent.trim().indexOf('\n') === -1 && 
+                          codeContent.trim().indexOf(' ') === -1 && 
+                          (
+                            // Traditional file extensions
+                            /\.\w{1,4}$/.test(codeContent.trim()) ||
+                            // Module.function patterns (like numpy.polyfit)
+                            /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(codeContent.trim())
+                          );
   
   // Format the raw language name - just capitalize first letter
   const displayLanguage = language.charAt(0).toUpperCase() + language.slice(1);
@@ -63,8 +68,8 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
     }
   };
   
-  // For filenames, render a simpler component
-  if (isFilename) {
+  // For filenames or module references, render a simpler component
+  if (isFilenameOrModule) {
     return (
       <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs font-mono inline-block">
         {codeContent}
@@ -195,10 +200,15 @@ const MessageBubbleComponent = ({
               const match = /language-(\w+)/.exec(className || '');
               const content = String(children).trim();
               
-              // Check if this is just a filename (single line, no spaces, has extension)
-              const isFilename = content.indexOf('\n') === -1 && 
+              // Enhanced check for filename or module references
+              const isFilenameOrModule = content.indexOf('\n') === -1 && 
                                 content.indexOf(' ') === -1 && 
-                                /\.\w{1,4}$/.test(content);
+                                (
+                                  // Traditional file extensions
+                                  /\.\w{1,4}$/.test(content) ||
+                                  // Module.function patterns (like numpy.polyfit)
+                                  /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(content)
+                                );
               
               // Check if parent is a list item by traversing up the tree
               const isInListItem = () => {
@@ -212,35 +222,47 @@ const MessageBubbleComponent = ({
                 return false;
               };
               
-              // NEW: Check for common patterns that should not be treated as code blocks
-              // This includes mathematical symbols like θ0, θ1 and standalone numbers
+              // Enhanced detection for mathematical expressions and formulas
               const isUnintendedCodeBlock = !match && 
                                            !inline && 
                                            (
-                                             // Match Greek letters followed by numbers
-                                             /^(θ|alpha|beta|gamma|delta)\d+/.test(content) ||
-                                             // Match standalone numbers
+                                             // Greek letters with numbers (θ0, θ1)
+                                             /^(θ|theta|alpha|beta|gamma|delta)\d+/.test(content) ||
+                                             // Standalone numbers
                                              /^[0-9]+$/.test(content) ||
-                                             // Mathematical expressions with common operators
+                                             // Mathematical expressions with operators and Greek letters
                                              /^[\d\s+\-*/()=θ]+$/.test(content) ||
-                                             // Mathematical functions like estimatePrice(mileage)
-                                             /^[a-zA-Z]+\([a-zA-Z]+\)\s*=/.test(content)
+                                             // Mathematical functions with parameters
+                                             /^[a-zA-Z]+(\[[a-zA-Z\[\]]+\]|\([a-zA-Z\[\]]+\))\s*=/.test(content) ||
+                                             // Specific formula patterns from linear regression
+                                             /estimatePrice/.test(content) ||
+                                             /tmpθ\d+/.test(content) ||
+                                             // Sum notation
+                                             /\s*∑\s*/.test(content) ||
+                                             // Handle m-1 notation from formulas
+                                             /^m\s*-\s*1$/.test(content)
                                            ) &&
-                                           // Only apply to single-line content without code-like syntax
+                                           // Only apply to content without code-like syntax
                                            !content.includes('\n') && 
                                            !content.includes(';') && 
                                            !content.includes('{') && 
                                            !content.includes('}');
               
-              // For mathematical expressions, filenames, list items, or unintended code blocks, 
-              // use specialized formatting for mathematical notations
-              if ((!inline && (isFilename || isInListItem() || isUnintendedCodeBlock))) {
+              // For mathematical expressions, filenames/modules, list items, or unintended code blocks
+              if ((!inline && (isFilenameOrModule || isInListItem() || isUnintendedCodeBlock))) {
                 // Special treatment for mathematical notations
                 if (isUnintendedCodeBlock && /[=θ()]/.test(content)) {
                   return (
                     <span className="bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded border-b border-gray-200 dark:border-gray-700 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed">
                       {children}
                     </span>
+                  );
+                } else if (isFilenameOrModule) {
+                  // For module.function patterns, render inline as code
+                  return (
+                    <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs font-mono inline-block">
+                      {children}
+                    </code>
                   );
                 }
                 return (
