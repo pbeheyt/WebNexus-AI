@@ -17,24 +17,130 @@ class ClaudePlatform extends BasePlatform {
     return window.location.href.includes('claude.ai');
   }
   
+
   /**
-   * Find Claude's editor element
+ * Helper method to determine if an element is visible and interactive
+ * @param {HTMLElement} element - The element to check
+ * @returns {boolean} True if the element is visible and interactive
+ */
+  isVisibleElement(element) {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    return style.display !== 'none' &&
+            style.visibility !== 'hidden' &&
+            style.opacity !== '0' &&
+            element.getAttribute('aria-hidden') !== 'true' &&
+            rect.width > 0 && rect.height > 0; // Check for actual dimensions
+  }
+
+  /**
+   * Find Claude's editor element using more robust strategies.
    * @returns {HTMLElement|null} The editor element or null if not found
    */
   findEditorElement() {
-    return document.querySelector('p[data-placeholder="How can Claude help you today?"]') || 
-           document.querySelector('[contenteditable="true"]');
+    this.logger.info("Attempting to find Claude editor element...");
+
+    // Strategy 1: Look for contenteditable inside the known wrapper
+    try {
+      const wrapper = document.querySelector('div[aria-label*="Claude"]'); // Find wrapper by aria-label
+      if (wrapper) {
+        const editor = wrapper.querySelector('div[contenteditable="true"].ProseMirror');
+        if (editor && this.isVisibleElement(editor)) {
+          this.logger.info("Found editor using Strategy 1 (Wrapper + Contenteditable)");
+          return editor;
+        }
+      }
+    } catch (e) { this.logger.warn("Error during Strategy 1 editor search:", e); }
+
+    // Strategy 2: Look for contenteditable containing the placeholder paragraph
+    try {
+      // Use partial match for placeholder text to handle language variations
+      const placeholderParagraph = document.querySelector('p[data-placeholder*="Claude"]');
+      if (placeholderParagraph) {
+        const editor = placeholderParagraph.closest('div[contenteditable="true"].ProseMirror');
+        if (editor && this.isVisibleElement(editor)) {
+          this.logger.info("Found editor using Strategy 2 (Placeholder Parent)");
+          return editor;
+        }
+      }
+    } catch (e) { this.logger.warn("Error during Strategy 2 editor search:", e); }
+
+    // Strategy 3: Find the most prominent contenteditable div
+    try {
+      const editors = document.querySelectorAll('div[contenteditable="true"].ProseMirror');
+      // Find the first one that's visible (usually the main input)
+      for (const editor of editors) {
+        if (this.isVisibleElement(editor)) {
+          this.logger.info("Found editor using Strategy 3 (Visible Contenteditable)");
+          return editor;
+        }
+      }
+    } catch (e) { this.logger.warn("Error during Strategy 3 editor search:", e); }
+
+
+    this.logger.error("Claude editor element not found using any strategy.");
+    return null;
   }
   
   /**
-   * Find Claude's submit button
+   * Find Claude's submit button using more robust strategies.
+   * Checks for visibility and enabled state.
    * @returns {HTMLElement|null} The submit button or null if not found
    */
   findSubmitButton() {
-    return document.querySelector('button[aria-label="Send message"]') ||
-           document.querySelector('button[aria-label="Send Message"]') ||
-           document.querySelector('button[type="submit"]') ||
-           document.querySelector('button svg path[d*="M208.49,120.49"]')?.closest('button');
+    this.logger.info("Attempting to find Claude submit button...");
+
+    // Strategy 1: Specific SVG Path within a button
+    try {
+      const svgPathSelector = 'button svg path[d^="M208.49,120.49"]'; // Start of the path data
+      const pathElement = document.querySelector(svgPathSelector);
+      if (pathElement) {
+        const button = pathElement.closest('button');
+        // Check visibility AND ensure it's not disabled
+        if (button && this.isVisibleElement(button) && !button.disabled) {
+          this.logger.info("Found submit button using Strategy 1 (SVG Path)");
+          return button;
+        } else if (button) {
+            this.logger.warn("Strategy 1: Found button via SVG, but it's hidden or disabled.", button);
+        }
+      }
+    } catch (e) { this.logger.warn("Error during Strategy 1 submit button search:", e); }
+
+    // Strategy 2: Aria Label (Multi-language)
+    try {
+      const ariaSelectors = [
+        'button[aria-label*="Send message" i]', // Case-insensitive English
+        'button[aria-label*="Envoyer le message" i]' // Case-insensitive French
+        // Add other potential languages if needed
+      ];
+      for (const selector of ariaSelectors) {
+        const button = document.querySelector(selector);
+         // Check visibility AND ensure it's not disabled
+        if (button && this.isVisibleElement(button) && !button.disabled) {
+          this.logger.info(`Found submit button using Strategy 2 (Aria Label: ${selector})`);
+          return button;
+        } else if (button) {
+             this.logger.warn(`Strategy 2: Found button via aria-label (${selector}), but it's hidden or disabled.`, button);
+        }
+      }
+    } catch (e) { this.logger.warn("Error during Strategy 2 submit button search:", e); }
+
+    // Strategy 3: Structure and Classes (More specific)
+    try {
+        // Look for the button with specific classes within the input area's bottom controls
+        const button = document.querySelector('div.flex.gap-2\\.5.w-full.items-center button.bg-accent-main-000');
+         // Check visibility AND ensure it's not disabled
+        if (button && this.isVisibleElement(button) && !button.disabled) {
+            this.logger.info("Found submit button using Strategy 3 (Structure/Classes)");
+            return button;
+        } else if (button) {
+             this.logger.warn("Strategy 3: Found button via structure/classes, but it's hidden or disabled.", button);
+        }
+    } catch (e) { this.logger.warn("Error during Strategy 3 submit button search:", e); }
+
+    this.logger.error("Claude submit button not found or is disabled using any strategy.");
+    return null; // Return null if no enabled button is found
   }
 
   /**
