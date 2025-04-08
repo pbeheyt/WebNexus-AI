@@ -1,21 +1,18 @@
 const path = require('path');
-// const pdfWorkerPath = require.resolve('pdfjs-dist/build/pdf.worker.entry');
 
 module.exports = {
   entry: {
     background: './src/background/index.js',
-    'content-script': './src/content/index.js',
-    'platform-content': './src/content/platform-content.js',
     popup: './src/popup/index.jsx',
     settings: './src/settings/index.jsx',
-    // 'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
-    sidebar: './src/sidebar/index.jsx'
-    // Removed 'sidebar-injector' entry point
+    sidebar: './src/sidebar/index.jsx',
+    'content-script': './src/content/index.js',
+    'platform-content': './src/content/platform-content.js',
+    'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
   },
   output: {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist')
-    // Removed chunkFormat: 'array-push'
   },
   mode: 'development',
   devtool: 'source-map',

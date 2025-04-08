@@ -188,7 +188,7 @@ const MessageBubbleComponent = ({
             // Fixed list rendering to prevent marker line breaks
             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-            li: ({node, ...props}) => <li className="leading-relaxed text-xs" {...props} />,
+            li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
 
             code: ({node, inline, className, children, ...props}) => {
               // Check if it's a block code (has language class) or inline
