@@ -32,6 +32,7 @@ module.exports = {
     },
   },
   plugins: [
+    require('@tailwindcss/typography'),
     // Original theme-aware utility classes
     function({ addUtilities }) {
       // Define theme-aware utility classes

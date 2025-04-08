@@ -1,4 +1,5 @@
 import React, { useState, memo } from 'react';
+import { useUI } from '../../contexts/UIContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -130,6 +131,7 @@ const MessageBubbleComponent = ({
   metadata = {},
   className = ''
 }) => {
+  const { textSize } = useUI();
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
@@ -175,7 +177,7 @@ const MessageBubbleComponent = ({
   return (
     <div className={`px-5 py-2 w-full message-group relative ${className}`}>
       {/* Main content - Render Markdown for assistant messages */}
-      <div className="prose dark:prose-invert prose-sm max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible">
+      <div className={`prose ${textSize === 'base' ? 'prose-base' : 'prose-sm'} dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{

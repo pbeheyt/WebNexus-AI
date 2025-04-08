@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SidebarApp from './SidebarApp';
-import { ThemeProvider } from '../contexts/ThemeContext';
+import { UIProvider } from '../contexts/UIContext';
 import { SidebarPlatformProvider } from '../contexts/platform';
 import { SidebarChatProvider } from './contexts/SidebarChatContext';
 import { ContentProvider } from '../contexts/ContentContext'; // Corrected path
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const root = createRoot(container);
   
   root.render(
-    <ThemeProvider>
+    <UIProvider>
       <ContentProvider>
         <SidebarPlatformProvider>
           <SidebarChatProvider>
@@ -20,6 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </SidebarChatProvider>
         </SidebarPlatformProvider>
       </ContentProvider>
-    </ThemeProvider>
+    </UIProvider>
   );
 });

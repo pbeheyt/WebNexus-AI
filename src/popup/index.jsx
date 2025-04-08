@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { Popup } from './Popup';
-import { ThemeProvider } from '../contexts/ThemeContext';
+import { UIProvider } from '../contexts/UIContext';
 import { StatusProvider } from './contexts/StatusContext';
 import { ContentProvider } from '../contexts/ContentContext'; // Corrected path
 import { PopupPlatformProvider } from '../contexts/platform';
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const root = createRoot(container);
 
   root.render(
-    <ThemeProvider>
+    <UIProvider>
       <StatusProvider>
         <ContentProvider>
           <PopupPlatformProvider>
@@ -19,6 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </PopupPlatformProvider>
         </ContentProvider>
       </StatusProvider>
-    </ThemeProvider>
+    </UIProvider>
   );
 });

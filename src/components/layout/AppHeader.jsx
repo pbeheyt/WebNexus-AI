@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useUI } from '../../contexts/UIContext';
 
 export function AppHeader({
   children,
@@ -11,7 +11,7 @@ export function AppHeader({
   onToggleExpand = () => {},
   showExpandToggle = false
 }) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, textSize, toggleTextSize } = useUI();
 
   const openSettings = () => {
     try {
@@ -30,6 +30,22 @@ export function AppHeader({
       </h1>
 
       <div className="flex items-center gap-1"> {/* Use gap for spacing */}
+        {/* Text size toggle button */}
+        <button
+          onClick={toggleTextSize}
+          className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
+          title={textSize === 'sm' ? "Switch to Base Size" : "Switch to Small Size"}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7V6h16v1"/>
+            <path d="M10 18h4"/>
+            <path d="M12 6v12"/>
+            <path d="M17 11l-1-1-1 1"/>
+            <path d="M7 11l1-1 1 1"/>
+            <path d="M15 15H9"/>
+          </svg>
+        </button>
+
         {/* Theme toggle button */}
         <button
           onClick={toggleTheme}

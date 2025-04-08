@@ -51,6 +51,7 @@ export const STORAGE_KEYS = {
 
   // Service
   THEME_PREFERENCE: 'theme_preference',
+  TEXT_SIZE_PREFERENCE: 'text_size_preference',
   SHORTCUT_SETTINGS: 'shortcut_settings',
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
   API_CREDENTIALS: 'api_credentials',

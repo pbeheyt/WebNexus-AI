@@ -2,7 +2,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SettingsApp from './SettingsApp';
-import { ThemeProvider } from '../contexts/ThemeContext';
+import { UIProvider } from '../contexts/UIContext';
 import { NotificationProvider } from '../components';
 import { TabProvider } from './contexts/TabContext';
 import '../styles/index.css';
@@ -13,13 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
   
   root.render(
     <React.StrictMode>
-      <ThemeProvider>
+      <UIProvider>
         <NotificationProvider>
           <TabProvider>
             <SettingsApp />
           </TabProvider>
         </NotificationProvider>
-      </ThemeProvider>
+      </UIProvider>
     </React.StrictMode>
   );
 });
