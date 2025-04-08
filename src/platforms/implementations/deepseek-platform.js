@@ -28,16 +28,33 @@ class DeepSeekPlatform extends BasePlatform {
   }
   
   /**
-   * Find DeepSeek's submit button
+   * Find DeepSeek's submit button with enhanced selector resilience
    * @returns {HTMLElement|null} The submit button or null if not found
    */
   findSubmitButton() {
-    // Updated selector based on the new HTML structure
-    // Order by specificity - try most specific first, then try more general fallbacks
-    return document.querySelector('div[role="button"]._7436101') || 
-           document.querySelector('div[role="button"] ._6f28693') ||
-           document.querySelector('div[role="button"].f6d670.bcc55ca1') || 
-           document.querySelector('div[role="button"].f6d670');
+    // Primary selectors - target specific UI patterns unique to the send button
+    const sendButton = 
+      
+      // Target by class combinations (current approach with additions)
+      document.querySelector('div[role="button"]._7436101.bcc55ca1') || 
+      document.querySelector('div[role="button"]._7436101') || 
+      document.querySelector('div[role="button"] ._6f28693')?.closest('div[role="button"]') ||
+      
+      // Position-based fallbacks (rightmost button in the input container)
+      document.querySelector('.ec4f5d61 > div[role="button"]:last-child') ||
+      document.querySelector('.bf38813a > div:last-child > div[role="button"]') ||
+      
+      // Attribute-based fallbacks
+      document.querySelector('div[role="button"][aria-disabled]') ||
+      
+      // Icon-based detection
+      document.querySelector('div[role="button"] .ds-icon svg[width="14"][height="16"]')?.closest('div[role="button"]') ||
+      
+      // Original fallbacks
+      document.querySelector('div[role="button"].f6d670.bcc55ca1') || 
+      document.querySelector('div[role="button"].f6d670');
+      
+    return sendButton;
   }
   
   /**
