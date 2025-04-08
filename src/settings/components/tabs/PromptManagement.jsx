@@ -10,13 +10,10 @@ const PromptManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [filterValue, setFilterValue] = useState('all');
-  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     // Initialize content types using keys from the imported labels object
     setContentTypes(Object.keys(CONTENT_TYPE_LABELS));
-    
-    setIsLoading(false);
   }, []);
   
   const handleNewPrompt = () => {
@@ -123,7 +120,6 @@ const PromptManagement = () => {
           contentTypeLabels={CONTENT_TYPE_LABELS}
           onSelectPrompt={handleViewPrompt}
           selectedPromptId={selectedPrompt?.id}
-          isLoading={isLoading}
         />
       </div>
       

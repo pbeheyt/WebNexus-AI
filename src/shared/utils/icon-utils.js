@@ -1,5 +1,5 @@
 // src/shared/utils/icon-utils.js
-import { CONTENT_TYPES } from '../constants.js';
+import { CONTENT_TYPES, SHARED_TYPE } from '../constants.js';
 
 /**
  * Generates an SVG string representing the icon for a given content type.
@@ -16,6 +16,9 @@ export function getContentTypeIconSvg(contentType) {
   const pdfColor = '#F40F02';     // Custom red for PDF
 
   switch (contentType) {
+    case SHARED_TYPE:
+      iconSvg = ''
+      break;
     case CONTENT_TYPES.YOUTUBE:
       // SVG for YouTube icon (red play button style)
       iconSvg = `

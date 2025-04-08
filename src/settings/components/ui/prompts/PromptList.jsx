@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../../../../components';
-import { STORAGE_KEYS, CONTENT_TYPES, SHARED_TYPE } from '../../../../shared/constants';
+import { STORAGE_KEYS } from '../../../../shared/constants';
+import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils.js';
 
 const PromptList = ({ 
   filterValue, 
   contentTypeLabels, 
   onSelectPrompt, 
   selectedPromptId,
-  isLoading 
 }) => {
   const { error } = useNotification();
   const [prompts, setPrompts] = useState([]);
   const [filteredPrompts, setFilteredPrompts] = useState([]);
-  const [localLoading, setLocalLoading] = useState(true);
   
   // Load prompts when component mounts
   useEffect(() => {
     const loadPrompts = async () => {
-      setLocalLoading(true);
       
       try {
         const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
@@ -48,8 +46,6 @@ const PromptList = ({
       } catch (err) {
         console.error('Error loading prompts:', err);
         error('Failed to load prompts');
-      } finally {
-        setLocalLoading(false);
       }
     };
     
@@ -64,25 +60,6 @@ const PromptList = ({
       setFilteredPrompts(prompts.filter(item => item.contentType === filterValue));
     }
   }, [filterValue, prompts]);
-
-  const contentTypeColors = {
-    [CONTENT_TYPES.GENERAL]: 'bg-blue-500',
-    [CONTENT_TYPES.REDDIT]: 'bg-orange-500',
-    [CONTENT_TYPES.YOUTUBE]: 'bg-red-500',
-    [CONTENT_TYPES.PDF]: 'bg-violet-500',
-    [SHARED_TYPE]: 'bg-gray-500',
-    default: 'bg-gray-400'
-  };
-  
-  if (isLoading || localLoading) {
-    return (
-      <div className="animate-pulse space-y-4 mt-2">
-        <div className="h-24 bg-theme-hover rounded-lg"></div>
-        <div className="h-24 bg-theme-hover rounded-lg"></div>
-        <div className="h-24 bg-theme-hover rounded-lg"></div>
-      </div>
-    );
-  }
   
   if (filteredPrompts.length === 0) {
     return (
@@ -108,8 +85,11 @@ const PromptList = ({
             </h3>
           </div>
           <small className="flex items-center text-theme-secondary text-xs">
-            <span className={`inline-block w-2.5 h-2.5 rounded-full mr-2 ${contentTypeColors[item.contentType] || contentTypeColors.default}`}></span>
             {item.contentTypeLabel}
+            <span
+              className="flex items-center justify-center ml-2 w-4 h-4"
+              dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(item.contentType) }}
+          />
           </small>
         </div>
       ))}
