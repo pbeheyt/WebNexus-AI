@@ -1,9 +1,10 @@
+//src/popup/components/InfoPanel.jsx
 import React from 'react';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 
-export function InfoPanel({ contentTypeLabel, contentType }) { // Add contentType prop
+export function InfoPanel({ contentTypeLabel, contentType }) {
   const displayLabel = contentTypeLabel || 'content';
-  const iconSvg = getContentTypeIconSvg(contentType); // Get the SVG string
+  const iconSvg = getContentTypeIconSvg(contentType);
   
   const modifiedIconSvg = iconSvg.replace('w-5 h-5', 'w-3.5 h-3.5');
 
@@ -13,7 +14,7 @@ export function InfoPanel({ contentTypeLabel, contentType }) { // Add contentTyp
         Extract this <span className="font-medium text-theme-primary">{displayLabel}</span>
         {modifiedIconSvg && (
           <span
-            className="inline-block align-middle mx-1" // Increased horizontal padding
+            className="inline-block align-middle mx-1"
             dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
           />
         )}

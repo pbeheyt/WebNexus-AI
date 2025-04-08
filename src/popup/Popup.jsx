@@ -1,14 +1,14 @@
 // src/popup/Popup.jsx
 import { useEffect, useState } from 'react';
-import { useStatus } from './contexts/StatusContext'; // Make sure StatusContext is updated too
+import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform';
-import { AppHeader, StatusMessage } from '../components'; // Combined imports
-import { useContent } from '../contexts/ContentContext'; // Corrected path
-import { PlatformSelector } from './features/PlatformSelector';
+import { AppHeader, StatusMessage } from '../components';
+import { useContent } from '../contexts/ContentContext';
+import { PlatformSelector } from './components/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';
-import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants'; // Combined imports & Added CONTENT_TYPE_LABELS
+import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
-import { InfoPanel } from './components/InfoPanel'; // Added InfoPanel import
+import { InfoPanel } from './components/InfoPanel';
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
@@ -23,7 +23,7 @@ export function Popup() {
     isProcessing: isProcessingContent
   } = useContentProcessing(INTERFACE_SOURCES.POPUP);
 
-  const contentTypeLabel = contentType ? CONTENT_TYPE_LABELS[contentType] : null; // Determine label
+  const contentTypeLabel = contentType ? CONTENT_TYPE_LABELS[contentType] : null;
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputText, setInputText] = useState('');

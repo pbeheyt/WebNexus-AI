@@ -4,7 +4,7 @@ import { useStatus } from '../contexts/StatusContext';
 import { PlatformCard } from '../../components/layout/PlatformCard';
 
 export function PlatformSelector() {
-  const { platforms, selectedPlatformId, selectPlatform, isLoading } = usePopupPlatform();
+  const { platforms, selectedPlatformId, selectPlatform } = usePopupPlatform();
   const { notifyPlatformChanged } = useStatus();
   
   const handlePlatformSelect = async (platformId) => {
