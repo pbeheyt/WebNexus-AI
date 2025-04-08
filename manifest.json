@@ -57,7 +57,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "platform-config.json",
+        "platform-display-config.json",
+        "platform-api-config.json",
         "prompt-config.json",
         "dist/*.bundle.js",
         "images/*.png"

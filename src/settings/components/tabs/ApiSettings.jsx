@@ -17,26 +17,40 @@ const ApiSettings = () => {
       if (!isLoading) return;
       
       try {
-        // Load platform configuration
-        const response = await fetch(chrome.runtime.getURL('platform-config.json'));
-        const config = await response.json();
-        
-        if (!config.aiPlatforms) {
-          throw new Error('AI platforms configuration not found');
+        // Load display configuration
+        const displayResponse = await fetch(chrome.runtime.getURL('platform-display-config.json'));
+        const displayConfig = await displayResponse.json();
+
+        // Load API configuration
+        const apiResponse = await fetch(chrome.runtime.getURL('platform-api-config.json'));
+        const apiConfigData = await apiResponse.json();
+
+        if (!displayConfig.aiPlatforms || !apiConfigData.aiPlatforms) {
+          throw new Error('AI platforms configuration not found in one or both files');
         }
-        
-        // Transform to array with icon URLs
-        const platformList = Object.entries(config.aiPlatforms).map(([id, platform]) => ({
-          id,
-          name: platform.name,
-          url: platform.url,
-          iconUrl: chrome.runtime.getURL(platform.icon),
-          docUrl: platform.docLink || '#',
-          modelApiLink: platform.modelApiLink || '#',
-          consoleApiLink: platform.consoleApiLink || '#',
-          apiConfig: platform.api
-        }));
-        
+
+        // Combine display and API config
+        const platformList = Object.keys(displayConfig.aiPlatforms).map((id) => {
+          const displayInfo = displayConfig.aiPlatforms[id];
+          const apiInfo = apiConfigData.aiPlatforms[id]; // This is the API config object
+
+          if (!displayInfo || !apiInfo) {
+            console.warn(`Missing config for platform ID: ${id}`);
+            return null; // Skip if data is incomplete for a platform
+          }
+
+          return {
+            id,
+            name: displayInfo.name,
+            url: displayInfo.url,
+            iconUrl: chrome.runtime.getURL(displayInfo.icon),
+            docUrl: displayInfo.docLink || '#', // Renamed from docLink for consistency
+            modelApiLink: displayInfo.modelApiLink || '#',
+            consoleApiLink: displayInfo.consoleApiLink || '#',
+            apiConfig: apiInfo // Attach the whole API config object
+          };
+        }).filter(p => p !== null); // Filter out any null entries
+
         setPlatforms(platformList);
         
         // Load credentials using the unified credential storage key

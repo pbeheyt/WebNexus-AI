@@ -403,9 +403,10 @@ class BaseApiService extends ApiInterface {
    */
   async _loadPlatformConfig() {
     try {
-      const response = await fetch(chrome.runtime.getURL('platform-config.json'));
+      const response = await fetch(chrome.runtime.getURL('platform-api-config.json'));
       const config = await response.json();
-      return config.aiPlatforms[this.platformId].api;
+      // The new config file directly contains the API config under the platform ID
+      return config.aiPlatforms[this.platformId];
     } catch (error) {
       this.logger.error('Error loading platform config:', error);
       return null;

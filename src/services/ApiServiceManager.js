@@ -115,12 +115,12 @@ class ApiServiceManager {
    */
   async getApiSettings(platformId) {
     try {
-      // Load platform config
-      const response = await fetch(chrome.runtime.getURL('platform-config.json'));
+      // Load platform API config
+      const response = await fetch(chrome.runtime.getURL('platform-api-config.json'));
       const config = await response.json();
 
-      // Get API settings
-      return config.aiPlatforms[platformId]?.api || null;
+      // Get API settings (the file now directly contains the API config)
+      return config.aiPlatforms[platformId] || null;
     } catch (error) {
       logger.error(`Error getting API settings for ${platformId}:`, error);
       return null;

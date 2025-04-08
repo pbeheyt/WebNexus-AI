@@ -30,8 +30,8 @@ export function createBasePlatformContext(options = {}) {
         try {
           setIsLoading(true);
           
-          // Load platform config
-          const response = await fetch(chrome.runtime.getURL('platform-config.json'));
+          // Load platform display config
+          const response = await fetch(chrome.runtime.getURL('platform-display-config.json'));
           const config = await response.json();
           
           if (!config || !config.aiPlatforms) {
@@ -83,12 +83,12 @@ export function createBasePlatformContext(options = {}) {
       }
     };
 
-    // Get platform configuration by ID
+    // Get platform API configuration by ID
     const getPlatformConfig = async (platformId) => {
       try {
-        const response = await fetch(chrome.runtime.getURL('platform-config.json'));
+        const response = await fetch(chrome.runtime.getURL('platform-api-config.json'));
         const config = await response.json();
-        return config.aiPlatforms[platformId] || null;
+        return config.aiPlatforms[platformId] || null; // Returns the API config object
       } catch (error) {
         console.error(`Error loading platform config for ${platformId}:`, error);
         return null;

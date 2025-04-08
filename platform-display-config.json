@@ -1,0 +1,52 @@
+{
+  "aiPlatforms": {
+    "claude": {
+      "name": "Claude",
+      "icon": "images/claude_logo.png",
+      "url": "https://claude.ai/new",
+      "docLink": "https://docs.anthropic.com/claude/reference/getting-started-with-the-api",
+      "modelApiLink": "https://docs.anthropic.com/fr/docs/about-claude/models/all-models",
+      "consoleApiLink": "https://console.anthropic.com/"
+    },
+    "chatgpt": {
+      "name": "ChatGPT",
+      "icon": "images/chatgpt_logo.png",
+      "url": "https://chatgpt.com/",
+      "docLink": "https://platform.openai.com/docs/api-reference",
+      "modelApiLink": "https://platform.openai.com/docs/models",
+      "consoleApiLink": "https://platform.openai.com/"
+    },
+    "deepseek": {
+      "name": "DeepSeek",
+      "icon": "images/deepseek_logo.png",
+      "url": "https://chat.deepseek.com/",
+      "docLink": "https://api-docs.deepseek.com/",
+      "modelApiLink": "https://api-docs.deepseek.com/quick_start/pricing",
+      "consoleApiLink": "https://platform.deepseek.com/"
+    },
+    "mistral": {
+      "name": "Mistral",
+      "icon": "images/mistral_logo.png",
+      "url": "https://chat.mistral.ai/chat",
+      "docLink": "https://docs.mistral.ai/api/",
+      "modelApiLink": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "consoleApiLink": "https://console.mistral.ai/"
+    },
+    "gemini": {
+      "name": "Gemini",
+      "icon": "images/gemini_logo.png",
+      "url": "https://gemini.google.com/",
+      "docLink": "https://ai.google.dev/docs",
+      "modelApiLink": "https://ai.google.dev/gemini-api/docs/models/",
+      "consoleApiLink": "https://aistudio.google.com/"
+    },
+    "grok": {
+      "name": "Grok",
+      "icon": "images/grok_logo.png",
+      "url": "https://grok.com/",
+      "docLink": "https://docs.x.ai/docs/overview",
+      "modelApiLink": "https://docs.x.ai/docs/models",
+      "consoleApiLink": "https://console.x.ai/"
+    }
+  }
+}

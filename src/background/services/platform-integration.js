@@ -1,7 +1,7 @@
 // src/background/services/platform-integration.js - AI platform interactions
 
 import { AI_PLATFORMS, INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
-import { getPlatformConfig } from '../core/config-loader.js';
+// Removed getPlatformConfig import
 import logger from '../../shared/logger.js';
 
 /**
@@ -26,23 +26,31 @@ export function getPlatformContentScript() {
 export async function openAiPlatformWithContent(contentType, promptId, platformId) {
   try {
     // Prepare platform and prompt information
-    const effectivePlatformId = platformId || await getPreferredAiPlatform();
-    const platformConfig = await getPlatformConfig(effectivePlatformId);
-
-    if (!platformConfig) {
-      throw new Error(`Could not load config for platform: ${effectivePlatformId}`);
+    const effectivePlatformId = platformId; // Assuming platformId is always provided now
+    if (!effectivePlatformId) {
+        throw new Error('Platform ID must be provided to openAiPlatformWithContent');
     }
 
-    // Open platform in a new tab
-    const platformUrl = platformConfig.url;
-    logger.background.info(`Opening ${platformConfig.name} at URL: ${platformUrl}`);
+    // Fetch display config directly
+    const displayConfigResponse = await fetch(chrome.runtime.getURL('platform-display-config.json'));
+    const displayConfig = await displayConfigResponse.json();
+    const platformDisplayInfo = displayConfig?.aiPlatforms?.[effectivePlatformId];
+
+    if (!platformDisplayInfo || !platformDisplayInfo.url || !platformDisplayInfo.name) {
+      throw new Error(`Could not load display config (url, name) for platform: ${effectivePlatformId}`);
+    }
+
+    // Open platform in a new tab using display info
+    const platformUrl = platformDisplayInfo.url;
+    const platformName = platformDisplayInfo.name;
+    logger.background.info(`Opening ${platformName} at URL: ${platformUrl}`);
     const newTab = await chrome.tabs.create({ url: platformUrl });
 
     if (!newTab || !newTab.id) {
-      throw new Error(`Failed to create ${platformConfig.name} tab or get tab ID`);
+      throw new Error(`Failed to create ${platformName} tab or get tab ID`);
     }
 
-    logger.background.info(`${platformConfig.name} tab created with ID: ${newTab.id}`);
+    logger.background.info(`${platformName} tab created with ID: ${newTab.id}`);
     
     // The prompt content will be retrieved by the caller and passed to savePlatformTabInfo
     

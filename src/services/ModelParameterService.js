@@ -18,7 +18,8 @@ class ModelParameterService {
     if (this.cachedConfig) return this.cachedConfig;
 
     try {
-      const response = await fetch(chrome.runtime.getURL('platform-config.json'));
+      // Load the API-specific config now
+      const response = await fetch(chrome.runtime.getURL('platform-api-config.json'));
       this.cachedConfig = await response.json();
       return this.cachedConfig;
     } catch (error) {
@@ -81,9 +82,10 @@ class ModelParameterService {
    * @returns {Promise<Object|null>} Model configuration or null if not found
    */
   async getModelConfig(platformId, modelIdOrObject) {
-    const config = await this.loadPlatformConfig();
+    const config = await this.loadPlatformConfig(); // Loads platform-api-config.json now
 
-    if (!config?.aiPlatforms?.[platformId]?.api?.models) return null;
+    // Access models directly under the platform ID in the API config
+    if (!config?.aiPlatforms?.[platformId]?.models) return null;
 
     // Normalize input - handle both string IDs and model objects
     const modelId = typeof modelIdOrObject === 'object' && modelIdOrObject !== null
@@ -92,10 +94,10 @@ class ModelParameterService {
 
     logger.info(`Resolving model config for: ${platformId}/${modelId}`);
 
-    const platformConfig = config.aiPlatforms[platformId];
+    const platformApiConfig = config.aiPlatforms[platformId];
 
-    // Find model in array of objects
-    return platformConfig.api.models.find(model => model.id === modelId) || null;
+    // Find model in array of objects within the API config
+    return platformApiConfig.models.find(model => model.id === modelId) || null;
   }
 
   /**
@@ -219,13 +221,13 @@ class ModelParameterService {
 
       // Get the full platform config first
       const config = await this.loadPlatformConfig();
-      const platformConfig = config?.aiPlatforms?.[platformId];
-      if (!platformConfig) {
-        throw new Error(`Platform configuration not found for ${platformId}`);
+      const platformApiConfig = config?.aiPlatforms?.[platformId]; // This is now the API config object
+      if (!platformApiConfig) {
+        throw new Error(`Platform API configuration not found for ${platformId}`);
       }
-      const platformApiConfig = platformConfig.api; // Get the platform's API config
+      // No need for platformConfig.api anymore
 
-      // Get model config from platform config for the provided modelId
+      // Get model config directly from the platform's API config
       const modelConfig = platformApiConfig?.models?.find(model => model.id === modelId);
       if (!modelConfig) {
         // Use the provided modelId in the error message
@@ -253,6 +255,7 @@ class ModelParameterService {
       const modelSupportsTemperature = modelConfig?.supportsTemperature !== false;
       if (modelSupportsTemperature && effectiveIncludeTemperature) {
         // Prioritize user setting, then platform default
+        // Prioritize user setting, then platform API config default
         params.temperature = userSettings.temperature !== undefined
           ? userSettings.temperature
           : (platformApiConfig?.temperature !== undefined ? platformApiConfig.temperature : 0.7); // Final fallback
@@ -262,13 +265,14 @@ class ModelParameterService {
       const modelSupportsTopP = modelConfig?.supportsTopP === true; // Explicitly check for true
       if (modelSupportsTopP && effectiveIncludeTopP) {
         // Prioritize user setting, then platform default
+        // Prioritize user setting, then platform API config default
         params.topP = userSettings.topP !== undefined
           ? userSettings.topP
           : (platformApiConfig?.topP !== undefined ? platformApiConfig.topP : 1.0); // Final fallback
       }
 
       // Add system prompt ONLY if platform supports it, model supports it, AND user provided one
-      const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false; // Keep this check
+      const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false; // Check directly in API config
       // Replace the old modelSupportsSystemPrompt check with the one from params
       if (platformSupportsSystemPrompt && params.modelSupportsSystemPrompt === true && userSettings.systemPrompt) {
           params.systemPrompt = userSettings.systemPrompt;

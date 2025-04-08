@@ -1,0 +1,426 @@
+{
+  "aiPlatforms": {
+    "claude": {
+      "endpoint": "https://api.anthropic.com/v1/messages",
+      "minTemperature": -1.0,
+      "maxTemperature": 1.0,
+      "temperature": 0.5,
+      "topP": 0.7,
+      "models": [
+        {
+          "id": "claude-3-7-sonnet-latest",
+          "maxTokens": 8192,
+          "parameterStyle": "standard",
+          "contextWindow": 200000,
+          "inputTokenPrice": 3.00,
+          "outputTokenPrice": 15.00,
+          "supportsTemperature": true,
+          "supportsTopP": true
+        },
+        {
+          "id": "claude-3-5-haiku-latest",
+          "maxTokens": 8192,
+          "parameterStyle": "standard",
+          "contextWindow": 200000,
+          "inputTokenPrice": 0.80,
+          "outputTokenPrice": 4.00,
+          "supportsTemperature": true,
+          "supportsTopP": true
+        },
+        {
+          "id": "claude-3-5-sonnet-latest",
+          "maxTokens": 8192,
+          "parameterStyle": "standard",
+          "contextWindow": 200000,
+          "inputTokenPrice": 3.00,
+          "outputTokenPrice": 15.00,
+          "supportsTemperature": true,
+          "supportsTopP": true
+        },
+        {
+          "id": "claude-3-opus-latest",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 200000,
+          "inputTokenPrice": 15.00,
+          "outputTokenPrice": 75.00,
+          "supportsTemperature": true,
+          "supportsTopP": true
+        }
+      ],
+      "defaultModel": "claude-3-5-haiku-latest",
+      "requiresModel": true,
+      "authType": "header",
+      "authHeaderName": "x-api-key",
+      "hasSystemPrompt": true
+    },
+    "chatgpt": {
+      "endpoint": "https://api.openai.com/v1/chat/completions",
+      "minTemperature": 0.0,
+      "maxTemperature": 2.0,
+      "temperature": 0.5,
+      "topP": 0.9,
+      "models": [
+        {
+          "id": "gpt-4.5-preview",
+          "maxTokens": 16384,
+          "parameterStyle": "standard",
+          "contextWindow": 128000,
+          "inputTokenPrice": 75.00,
+          "outputTokenPrice": 150.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "gpt-4o",
+          "maxTokens": 16384,
+          "parameterStyle": "standard",
+          "contextWindow": 128000,
+          "inputTokenPrice": 2.50,
+          "outputTokenPrice": 10.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "gpt-4o-mini",
+          "maxTokens": 16384,
+          "parameterStyle": "standard",
+          "contextWindow": 128000,
+          "inputTokenPrice": 0.15,
+          "outputTokenPrice": 0.60,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "o1",
+          "maxTokens": 100000,
+          "parameterStyle": "reasoning",
+          "tokenParameter": "max_completion_tokens",
+          "contextWindow": 200000,
+          "inputTokenPrice": 15.00,
+          "outputTokenPrice": 60.00,
+          "supportsTemperature": false,
+          "supportsTopP": false,
+          "supportsSystemPrompt": false
+        },
+        {
+          "id": "o3-mini",
+          "maxTokens": 100000,
+          "parameterStyle": "reasoning",
+          "tokenParameter": "max_completion_tokens",
+          "contextWindow": 200000,
+          "inputTokenPrice": 1.10,
+          "outputTokenPrice": 4.40,
+          "supportsTemperature": false,
+          "supportsTopP": false
+        },
+        {
+          "id": "o1-mini",
+          "maxTokens": 65536,
+          "parameterStyle": "reasoning",
+          "tokenParameter": "max_completion_tokens",
+          "contextWindow": 128000,
+          "inputTokenPrice": 1.10,
+          "outputTokenPrice": 4.40,
+          "supportsTemperature": false,
+          "supportsTopP": false,
+          "supportsSystemPrompt": false
+        },
+        {
+          "id": "gpt-4-turbo",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 128000,
+          "inputTokenPrice": 10.00,
+          "outputTokenPrice": 30.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "gpt-3.5-turbo",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 16385,
+          "inputTokenPrice": 0.50,
+          "outputTokenPrice": 1.50,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        }
+      ],
+      "defaultModel": "gpt-4o-mini",
+      "requiresModel": true,
+      "authType": "bearer",
+      "authHeaderName": "Authorization",
+      "hasSystemPrompt": true
+    },
+    "deepseek": {
+      "endpoint": "https://api.deepseek.com/v1/chat/completions",
+      "minTemperature": 0.0,
+      "maxTemperature": 2.0,
+      "minTopP": 0.1,
+      "maxTopP": 1.0,
+      "temperature": 1.0,
+      "topP": 0.9,
+      "models": [
+        {
+          "id": "deepseek-chat",
+          "maxTokens": 8000,
+          "parameterStyle": "standard",
+          "contextWindow": 64000,
+          "inputTokenPrice": 0.07,
+          "outputTokenPrice": 1.10,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "deepseek-reasoner",
+          "maxTokens": 8000,
+          "parameterStyle": "standard",
+          "contextWindow": 64000,
+          "inputTokenPrice": 0.14,
+          "outputTokenPrice": 2.19,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        }
+      ],
+      "defaultModel": "deepseek-chat",
+      "requiresModel": true,
+      "authType": "bearer",
+      "authHeaderName": "Authorization",
+      "hasSystemPrompt": true
+    },
+    "mistral": {
+      "endpoint": "https://api.mistral.ai/v1/chat/completions",
+      "minTemperature": 0.0,
+      "maxTemperature": 1.5,
+      "temperature": 0.3,
+      "topP": 0.7,
+      "models": [
+        {
+          "id": "mistral-large-latest",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 131000,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "mistral-small-latest",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 131000,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "codestral-latest",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 256000,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "ministral-8b-latest",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 131000,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "ministral-3b-latest",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 131000,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "mistral-saba-latest",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 32000,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        }
+      ],
+      "defaultModel": "mistral-large-latest",
+      "requiresModel": true,
+      "authType": "bearer",
+      "authHeaderName": "Authorization",
+      "hasSystemPrompt": true
+    },
+    "gemini": {
+      "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
+      "minTemperature": 0.0,
+      "maxTemperature": 2.0,
+      "temperature": 0.7,
+      "topP": 0.9,
+      "models": [
+        {
+          "id": "gemini-2.5-pro-exp-03-25",
+          "maxTokens": 65536,
+          "parameterStyle": "standard",
+          "contextWindow": 1048576,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "maxOutputTokens",
+          "supportsSystemPrompt": true
+        },
+        {
+          "id": "gemini-2.0-flash",
+          "maxTokens": 8192,
+          "parameterStyle": "standard",
+          "contextWindow": 1048576,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "supportsSystemPrompt": false,
+          "tokenParameter": "maxOutputTokens"
+        },
+        {
+          "id": "gemini-2.0-flash-lite",
+          "maxTokens": 8192,
+          "parameterStyle": "standard",
+          "contextWindow": 1048576,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "supportsSystemPrompt": false,
+          "tokenParameter": "maxOutputTokens"
+        },
+        {
+          "id": "gemini-1.5-flash",
+          "maxTokens": 8192,
+          "parameterStyle": "standard",
+          "contextWindow": 1048576,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "supportsSystemPrompt": false,
+          "tokenParameter": "maxOutputTokens"
+        },
+        {
+          "id": "gemini-1.5-flash-8b",
+          "maxTokens": 8192,
+          "parameterStyle": "standard",
+          "contextWindow": 1048576,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "supportsSystemPrompt": false,
+          "tokenParameter": "maxOutputTokens"
+        },
+        {
+          "id": "gemini-1.5-pro",
+          "maxTokens": 8192,
+          "parameterStyle": "standard",
+          "contextWindow": 2097152,
+          "inputTokenPrice": 0.00,
+          "outputTokenPrice": 0.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "supportsSystemPrompt": false,
+          "tokenParameter": "maxOutputTokens"
+        }
+      ],
+      "defaultModel": "gemini-2.0-flash",
+      "requiresModel": true,
+      "authType": "query",
+      "authParamName": "key",
+      "hasSystemPrompt": true
+    },
+    "grok": {
+      "endpoint": "https://api.x.ai/v1/chat/completions",
+      "minTemperature": 0.0,
+      "maxTemperature": 2.0,
+      "minTopP": 0.01,
+      "maxTopP": 1.0,
+      "temperature": 0.7,
+      "topP": 0.9,
+      "models": [
+        {
+          "id": "grok-2-1212",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 131072,
+          "inputTokenPrice": 2.00,
+          "outputTokenPrice": 10.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "grok-2-vision-1212",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 32768,
+          "inputTokenPrice": 2.00,
+          "outputTokenPrice": 10.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "grok-beta",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 131072,
+          "inputTokenPrice": 5.00,
+          "outputTokenPrice": 15.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        },
+        {
+          "id": "grok-vision-beta",
+          "maxTokens": 4096,
+          "parameterStyle": "standard",
+          "contextWindow": 8192,
+          "inputTokenPrice": 5.00,
+          "outputTokenPrice": 15.00,
+          "supportsTemperature": true,
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
+        }
+      ],
+      "defaultModel": "grok-2-1212",
+      "requiresModel": true,
+      "authType": "bearer",
+      "authHeaderName": "Authorization",
+      "hasSystemPrompt": true
+    }
+  }
+}

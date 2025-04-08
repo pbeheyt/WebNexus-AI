@@ -97,9 +97,9 @@ export function createTabAwarePlatformContext(options = {}) {
        }
       setLoadingState(true);
       try {
-        // Load platform config
-        const response = await fetch(chrome.runtime.getURL('platform-config.json'));
-        const config = await response.json();
+        // Load platform display config
+        const response = await fetch(chrome.runtime.getURL('platform-display-config.json'));
+        const config = await response.json(); // This is now the display config
 
         if (!config || !config.aiPlatforms) {
           throw new Error('Invalid platform configuration');
@@ -305,20 +305,7 @@ export function createTabAwarePlatformContext(options = {}) {
         // Optionally revert state or show error
         return false;
       }
-    }, [tabId, interfaceType, selectedPlatformId, selectedModelId]); // Added dependencies
-
-
-    // Get platform configuration by ID
-    const getPlatformConfig = useCallback(async (platformId) => {
-      try {
-        const response = await fetch(chrome.runtime.getURL('platform-config.json'));
-        const config = await response.json();
-        return config.aiPlatforms[platformId] || null;
-      } catch (error) {
-        console.error(`Error loading platform config for ${platformId}:`, error);
-        return null;
-      }
-    }, []); // No dependencies
+    }, [tabId, interfaceType, selectedPlatformId, selectedModelId, models]); // Added models dependency
 
 
     // Build context value with interface-specific properties
@@ -327,10 +314,10 @@ export function createTabAwarePlatformContext(options = {}) {
       platforms,
       selectedPlatformId,
       selectPlatform,
-  isLoading,
-  getPlatformConfig,
-  tabId,
-  setTabId, // <--- ADD THIS LINE
+      isLoading,
+      // getPlatformConfig removed as it's no longer needed here and fetched old config
+      tabId,
+      setTabId,
 
   // Sidebar-specific properties (undefined for popup)
       ...(interfaceType === INTERFACE_SOURCES.SIDEBAR ? {

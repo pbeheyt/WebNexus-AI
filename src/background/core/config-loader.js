@@ -17,26 +17,3 @@ export async function initializeConfigManager() {
     throw error;
   }
 }
-
-/**
- * Load platform configuration
- * @param {string} platformId - Platform identifier
- * @returns {Promise<Object|null>} Platform configuration
- */
-export async function getPlatformConfig(platformId) {
-  try {
-    logger.background.info(`Getting config for platform: ${platformId}`);
-    const response = await fetch(chrome.runtime.getURL('platform-config.json'));
-    const config = await response.json();
-
-    if (config.aiPlatforms && config.aiPlatforms[platformId]) {
-      return config.aiPlatforms[platformId];
-    } else {
-      logger.background.error(`Platform config not found for: ${platformId}`);
-      return null;
-    }
-  } catch (error) {
-    logger.background.error(`Error loading platform config for ${platformId}:`, error);
-    return null;
-  }
-}
