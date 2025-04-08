@@ -106,3 +106,12 @@ export const PROMPT_TYPES = {
   CUSTOM: 'custom',
   QUICK: 'quick'
 };
+
+/**
+ * Sidepanel message types
+ */
+export const MESSAGE_ROLES = {
+  USER: 'user',
+  ASSISTANT: 'assistant',
+  SYSTEM: 'system'
+}

@@ -7,7 +7,7 @@ import { useTokenTracking } from '../hooks/useTokenTracking';
 import ChatHistoryService from '../services/ChatHistoryService';
 import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
-import { MESSAGE_ROLES } from '../constants';
+import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 import logger from '../../shared/logger.js';
 
