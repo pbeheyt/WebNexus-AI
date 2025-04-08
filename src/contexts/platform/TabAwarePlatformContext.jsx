@@ -31,10 +31,9 @@ export function createTabAwarePlatformContext(options = {}) {
     const [selectedPlatformId, setSelectedPlatformId] = useState(null);
     const [selectedModelId, setSelectedModelId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false); // New state for refresh
-    const [hasAnyPlatformCredentials, setHasAnyPlatformCredentials] = useState(false); // For overall check
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [hasAnyPlatformCredentials, setHasAnyPlatformCredentials] = useState(false);
     const [tabId, setTabId] = useState(null);
-    const [apiConfigData, setApiConfigData] = useState(null); // State for API config
     
     // Get current tab ID on mount
     useEffect(() => {
@@ -88,21 +87,16 @@ export function createTabAwarePlatformContext(options = {}) {
         setModels([]); // Clear models on error
         setSelectedModelId(null);
       }
-    }, [tabId, interfaceType]); // Dependencies for loadModels
+    }, [tabId, interfaceType]);
 
-
-    // Refactored logic to load platforms and check credentials
     const _loadAndCheckPlatforms = useCallback(async (setLoadingState) => {
        if (!tabId) {
          console.warn('Attempted to load platforms without tabId.');
-         return; // Don't proceed without tabId
+         return;
        }
       setLoadingState(true);
       try {
-        // Get combined platform configs from ConfigService
         let platformList = await ConfigService.getAllPlatformConfigs();
-        const apiConfig = await ConfigService.getApiConfig();
-        setApiConfigData(apiConfig); // Store the API config data
 
         // Transform to expected format with hasCredentials flag
         platformList = platformList.map(platform => ({
@@ -145,8 +139,8 @@ export function createTabAwarePlatformContext(options = {}) {
 
           setHasAnyPlatformCredentials(anyCredentialsFound); // Set the overall flag
         } else {
-           // For non-sidebar interfaces, assume credentials aren't managed this way
-           setHasAnyPlatformCredentials(true); // Or adjust based on popup logic if needed
+           // For popup interfaces
+           setHasAnyPlatformCredentials(true);
         }
 
         // Get tab-specific platform preference
@@ -180,12 +174,6 @@ export function createTabAwarePlatformContext(options = {}) {
           }
         }
 
-        // If sidebar and still no platform, try the *first* credentialed platform as a last resort?
-        // DECISION: No, the requirement is to remove fallbacks. If preferences don't yield a valid, credentialed platform, it should be null.
-        // if (!platformToUse && interfaceType === INTERFACE_SOURCES.SIDEBAR && credentialedPlatformIds.size > 0) {
-        //   platformToUse = [...credentialedPlatformIds][0]; // Get the first one
-        // }
-
         // Set platforms (now with credential status)
         setPlatforms(platformList);
 
@@ -208,7 +196,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
       } catch (error) {
         console.error('Error loading platforms:', error);
-        setPlatforms([]); // Clear platforms on error
+        setPlatforms([]);
         setHasAnyPlatformCredentials(false);
         setSelectedPlatformId(null);
         setModels([]);
@@ -216,22 +204,19 @@ export function createTabAwarePlatformContext(options = {}) {
       } finally {
         setLoadingState(false);
       }
-    }, [tabId, interfaceType, globalStorageKey, loadModels, selectedPlatformId, models.length, setApiConfigData]); // Added setApiConfigData dependency
-
+    }, [tabId, interfaceType, globalStorageKey, loadModels, selectedPlatformId, models.length]);
 
     // Initial load effect
     useEffect(() => {
       if (tabId) {
         _loadAndCheckPlatforms(setIsLoading);
       }
-    }, [tabId, _loadAndCheckPlatforms]); // Use the callback
-
+    }, [tabId, _loadAndCheckPlatforms]);
 
     // Function to manually refresh platform data
     const refreshPlatformData = useCallback(async () => {
       await _loadAndCheckPlatforms(setIsRefreshing);
-    }, [_loadAndCheckPlatforms]); // Use the callback
-
+    }, [_loadAndCheckPlatforms]);
 
     // Select platform and save preference
     const selectPlatform = useCallback(async (platformId) => {
@@ -272,11 +257,9 @@ export function createTabAwarePlatformContext(options = {}) {
         return true;
       } catch (error) {
         console.error('Error setting platform preference:', error);
-        // Optionally revert state or show error
         return false;
       }
-    }, [tabId, selectedPlatformId, interfaceType, globalStorageKey, platforms, onStatusUpdate, loadModels]); // Added dependencies
-
+    }, [tabId, selectedPlatformId, interfaceType, globalStorageKey, platforms, onStatusUpdate, loadModels]);
 
     // Select model and save preference
     const selectModel = useCallback(async (modelId) => {
@@ -318,7 +301,7 @@ const contextValue = {
       selectedPlatformId,
       selectPlatform,
       isLoading,
-      getPlatformApiConfig, // Add the new function here
+      getPlatformApiConfig,
       tabId,
       setTabId,
 

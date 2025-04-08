@@ -1,6 +1,6 @@
 // src/components/content/ContentContext.jsx
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { determineContentType } from '../shared/utils/content-utils'; // Corrected path
+import { determineContentType } from '../shared/utils/content-utils';
 
 const ContentContext = createContext(null);
 
@@ -74,7 +74,7 @@ export function ContentProvider({
 
   // Function to update context from external events (like page navigation)
   const updateContentContext = useCallback((newUrl, newContentType) => {
-    setCurrentTab(prevTab => ({ ...(prevTab || {}), url: newUrl })); // Update URL, handle potential initial null prevTab
+    setCurrentTab(prevTab => ({ ...(prevTab || {}), url: newUrl }));
     setContentType(newContentType);
   }, []);
    
@@ -87,7 +87,7 @@ export function ContentProvider({
          isLoading,
          refreshContent,
          setContentType: setManualContentType,
-         updateContentContext // Added
+         updateContentContext
        }}
      >
       {children}
