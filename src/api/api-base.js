@@ -1,5 +1,6 @@
 const ApiInterface = require('./api-interface');
 const { extractApiErrorMessage } = require('../shared/utils/error-utils');
+const ConfigService = require('../services/ConfigService');
 
 /**
  * Base class with shared API functionality
@@ -20,7 +21,7 @@ class BaseApiService extends ApiInterface {
    */
   async initialize(credentials) {
     this.credentials = credentials;
-    this.config = await this._loadPlatformConfig();
+    this.config = await ConfigService.getPlatformApiConfig(this.platformId);
     this.logger.info('API service initialized');
   }
 
@@ -136,11 +137,6 @@ class BaseApiService extends ApiInterface {
    */
   async _validateApiKey(apiKey) {
     try {
-      // Get the default model from config
-      if (!this.config) {
-        this.config = await this._loadPlatformConfig();
-      }
-      
       // Get default model from platform config
       const defaultModel = this.config?.defaultModel;
       if (!defaultModel) {
@@ -396,21 +392,6 @@ class BaseApiService extends ApiInterface {
     };
   }
 
-  /**
-   * Load platform API configuration
-   * @returns {Promise<Object>} Platform API configuration
-   */
-  async _loadPlatformConfig() {
-    try {
-      const response = await fetch(chrome.runtime.getURL('platform-api-config.json'));
-      const config = await response.json();
-      // The new config file directly contains the API config under the platform ID
-      return config.aiPlatforms[this.platformId];
-    } catch (error) {
-      this.logger.error('Error loading platform config:', error);
-      return null;
-    }
-  }
 }
 
 module.exports = BaseApiService;

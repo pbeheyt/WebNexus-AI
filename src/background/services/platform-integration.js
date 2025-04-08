@@ -1,8 +1,8 @@
 // src/background/services/platform-integration.js - AI platform interactions
 
 import { AI_PLATFORMS, INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
-// Removed getPlatformConfig import
 import logger from '../../shared/logger.js';
+import ConfigService from '../../services/ConfigService.js';
 
 /**
  * Get platform content script path
@@ -31,10 +31,8 @@ export async function openAiPlatformWithContent(contentType, promptId, platformI
         throw new Error('Platform ID must be provided to openAiPlatformWithContent');
     }
 
-    // Fetch display config directly
-    const displayConfigResponse = await fetch(chrome.runtime.getURL('platform-display-config.json'));
-    const displayConfig = await displayConfigResponse.json();
-    const platformDisplayInfo = displayConfig?.aiPlatforms?.[effectivePlatformId];
+    // Get display config from ConfigService
+    const platformDisplayInfo = await ConfigService.getPlatformDisplayConfig(effectivePlatformId);
 
     if (!platformDisplayInfo || !platformDisplayInfo.url || !platformDisplayInfo.name) {
       throw new Error(`Could not load display config (url, name) for platform: ${effectivePlatformId}`);

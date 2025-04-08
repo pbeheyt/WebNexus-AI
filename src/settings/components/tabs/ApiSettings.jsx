@@ -3,6 +3,7 @@ import { useNotification } from '../../../components';
 import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
 import { STORAGE_KEYS } from '../../../shared/constants';
+import ConfigService from '../../../services/ConfigService';
 
 const ApiSettings = () => {
   const { error } = useNotification();
@@ -17,39 +18,8 @@ const ApiSettings = () => {
       if (!isLoading) return;
       
       try {
-        // Load display configuration
-        const displayResponse = await fetch(chrome.runtime.getURL('platform-display-config.json'));
-        const displayConfig = await displayResponse.json();
-
-        // Load API configuration
-        const apiResponse = await fetch(chrome.runtime.getURL('platform-api-config.json'));
-        const apiConfigData = await apiResponse.json();
-
-        if (!displayConfig.aiPlatforms || !apiConfigData.aiPlatforms) {
-          throw new Error('AI platforms configuration not found in one or both files');
-        }
-
-        // Combine display and API config
-        const platformList = Object.keys(displayConfig.aiPlatforms).map((id) => {
-          const displayInfo = displayConfig.aiPlatforms[id];
-          const apiInfo = apiConfigData.aiPlatforms[id]; // This is the API config object
-
-          if (!displayInfo || !apiInfo) {
-            console.warn(`Missing config for platform ID: ${id}`);
-            return null; // Skip if data is incomplete for a platform
-          }
-
-          return {
-            id,
-            name: displayInfo.name,
-            url: displayInfo.url,
-            iconUrl: chrome.runtime.getURL(displayInfo.icon),
-            docUrl: displayInfo.docLink || '#', // Renamed from docLink for consistency
-            modelApiLink: displayInfo.modelApiLink || '#',
-            consoleApiLink: displayInfo.consoleApiLink || '#',
-            apiConfig: apiInfo // Attach the whole API config object
-          };
-        }).filter(p => p !== null); // Filter out any null entries
+        // Get combined platform configs from ConfigService
+        const platformList = await ConfigService.getAllPlatformConfigs();
 
         setPlatforms(platformList);
         

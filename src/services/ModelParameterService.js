@@ -1,6 +1,7 @@
 // src/services/ModelParameterService.js
 const { STORAGE_KEYS, INTERFACE_SOURCES } = require('../shared/constants');
 const logger = require('../shared/logger.js').service;
+const ConfigService = require('./ConfigService');
 
 /**
  * Service for managing model-specific parameters
@@ -8,24 +9,6 @@ const logger = require('../shared/logger.js').service;
 class ModelParameterService {
   constructor() {
     this.cachedConfig = null;
-  }
-
-  /**
-   * Load platform configuration
-   * @returns {Promise<Object>} Platform configuration
-   */
-  async loadPlatformConfig() {
-    if (this.cachedConfig) return this.cachedConfig;
-
-    try {
-      // Load the API-specific config now
-      const response = await fetch(chrome.runtime.getURL('platform-api-config.json'));
-      this.cachedConfig = await response.json();
-      return this.cachedConfig;
-    } catch (error) {
-      logger.error('Error loading platform config:', error);
-      throw error;
-    }
   }
 
   /**
@@ -82,7 +65,7 @@ class ModelParameterService {
    * @returns {Promise<Object|null>} Model configuration or null if not found
    */
   async getModelConfig(platformId, modelIdOrObject) {
-    const config = await this.loadPlatformConfig(); // Loads platform-api-config.json now
+    const config = await ConfigService.getApiConfig(); // Uses centralized ConfigService
 
     // Access models directly under the platform ID in the API config
     if (!config?.aiPlatforms?.[platformId]?.models) return null;
@@ -220,7 +203,7 @@ class ModelParameterService {
       logger.info(`Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`);
 
       // Get the full platform config first
-      const config = await this.loadPlatformConfig();
+      const config = await ConfigService.getApiConfig();
       const platformApiConfig = config?.aiPlatforms?.[platformId]; // This is now the API config object
       if (!platformApiConfig) {
         throw new Error(`Platform API configuration not found for ${platformId}`);

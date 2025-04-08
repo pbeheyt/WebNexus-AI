@@ -4,6 +4,7 @@ const ApiFactory = require('../api/api-factory');
 const CredentialManager = require('./CredentialManager');
 const ModelParameterService = require('./ModelParameterService');
 const logger = require('../shared/logger.js').service;
+const ConfigService = require('./ConfigService');
 
 /**
  * Centralized manager for API service operations
@@ -109,25 +110,6 @@ class ApiServiceManager {
   }
 
   /**
-   * Get API settings for a platform
-   * @param {string} platformId - Platform identifier
-   * @returns {Promise<Object|null>} API settings
-   */
-  async getApiSettings(platformId) {
-    try {
-      // Load platform API config
-      const response = await fetch(chrome.runtime.getURL('platform-api-config.json'));
-      const config = await response.json();
-
-      // Get API settings (the file now directly contains the API config)
-      return config.aiPlatforms[platformId] || null;
-    } catch (error) {
-      logger.error(`Error getting API settings for ${platformId}:`, error);
-      return null;
-    }
-  }
-
-  /**
    * Check if API mode is available for a platform
    * @param {string} platformId - Platform identifier
    * @returns {Promise<boolean>} True if API mode is available
@@ -151,7 +133,7 @@ class ApiServiceManager {
    */
   async getAvailableModels(platformId) {
     try {
-      const settings = await this.getApiSettings(platformId);
+      const settings = await ConfigService.getPlatformApiConfig(platformId);
       return settings?.models || null;
     } catch (error) {
       logger.error(`Error getting available models for ${platformId}:`, error);

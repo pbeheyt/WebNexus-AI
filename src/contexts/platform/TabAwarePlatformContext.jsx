@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
 import ModelParameterService from '../../services/ModelParameterService';
+import ConfigService from '../../services/ConfigService';
 
 /**
  * Creates a tab-aware platform context with shared functionality.
@@ -98,30 +99,17 @@ export function createTabAwarePlatformContext(options = {}) {
        }
       setLoadingState(true);
       try {
-        // Load platform display and API configs in parallel
-        const [displayResponse, apiResponse] = await Promise.all([
-          fetch(chrome.runtime.getURL('platform-display-config.json')),
-          fetch(chrome.runtime.getURL('platform-api-config.json'))
-        ]);
-
-        if (!displayResponse.ok || !apiResponse.ok) {
-          throw new Error('Failed to fetch platform configuration files');
-        }
-
-        const displayConfig = await displayResponse.json();
-        const apiConfig = await apiResponse.json();
+        // Get combined platform configs from ConfigService
+        let platformList = await ConfigService.getAllPlatformConfigs();
+        const apiConfig = await ConfigService.getApiConfig();
         setApiConfigData(apiConfig); // Store the API config data
 
-        if (!displayConfig || !displayConfig.aiPlatforms) {
-          throw new Error('Invalid platform display configuration');
-        }
-
-        // Transform to array with icon URLs using displayConfig
-        let platformList = Object.entries(displayConfig.aiPlatforms).map(([id, platform]) => ({
-          id,
+        // Transform to expected format with hasCredentials flag
+        platformList = platformList.map(platform => ({
+          id: platform.id,
           name: platform.name,
           url: platform.url || null,
-          iconUrl: chrome.runtime.getURL(platform.icon),
+          iconUrl: platform.iconUrl,
           hasCredentials: false // Initialize with false
         }));
 
@@ -320,8 +308,8 @@ export function createTabAwarePlatformContext(options = {}) {
 
 // Function to get API config for a specific platform
 const getPlatformApiConfig = useCallback((platformId) => {
-  return apiConfigData?.aiPlatforms?.[platformId] || null;
-}, [apiConfigData]); // Depends only on apiConfigData
+  return ConfigService.getPlatformApiConfig(platformId);
+}, []); // No dependencies since ConfigService manages its own state
 
 // Build context value with interface-specific properties
 const contextValue = {
