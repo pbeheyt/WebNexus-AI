@@ -9,7 +9,7 @@ import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
-import logger from '../../shared/logger.js'; // Added logger import
+import logger from '../../shared/logger.js';
 
 const SidebarChatContext = createContext(null);
 
@@ -20,7 +20,7 @@ export function SidebarChatProvider({ children }) {
     hasAnyPlatformCredentials,
     tabId,
     platforms,
-    getPlatformApiConfig // Replaced getPlatformConfig
+    getPlatformApiConfig
   } = useSidebarPlatform();
 
   const { contentType } = useContent();
@@ -29,13 +29,11 @@ export function SidebarChatProvider({ children }) {
   const [streamingMessageId, setStreamingMessageId] = useState(null);
   const [streamingContent, setStreamingContent] = useState('');
   const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
-  const [isContextStatusLoading, setIsContextStatusLoading] = useState(false);
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isContentExtractionEnabled, setIsContentExtractionEnabled] = useState(true);
 
   // Platform and model configuration
-  const [fullPlatformConfig, setFullPlatformConfig] = useState(null);
   const [modelConfigData, setModelConfigData] = useState(null);
 
   // Use the token tracking hook
@@ -67,7 +65,6 @@ export function SidebarChatProvider({ children }) {
       try {
         // Get API configuration using the new function (synchronous)
         const config = getPlatformApiConfig(selectedPlatformId);
-        setFullPlatformConfig(config); // Still store it, might be useful
 
         // Update checks to use the new structure (config.models instead of config.api.models)
         if (!config || !config.models) {
@@ -85,13 +82,12 @@ export function SidebarChatProvider({ children }) {
       } catch (error) {
         // Catch potential errors from getPlatformApiConfig or find
         console.error('Failed to load or process platform API configuration:', error);
-        setFullPlatformConfig(null);
         setModelConfigData(null);
       }
     };
 
     loadFullConfig();
-  }, [selectedPlatformId, selectedModel, tabId, getPlatformApiConfig]); // Updated dependency
+  }, [selectedPlatformId, selectedModel, tabId, getPlatformApiConfig]);
 
   // Update context status when model config or token stats change
   useEffect(() => {
@@ -101,15 +97,12 @@ export function SidebarChatProvider({ children }) {
         return;
       }
 
-      setIsContextStatusLoading(true);
       try {
         const status = await calculateContextStatus(modelConfigData);
         setContextStatus(status);
       } catch (error) {
         console.error('Error calculating context status:', error);
         setContextStatus({ warningLevel: 'none' });
-      } finally {
-        setIsContextStatusLoading(false);
       }
     };
 
@@ -332,7 +325,7 @@ export function SidebarChatProvider({ children }) {
     // Retrieve platform/model state from context *inside* the function
     // This ensures we get the latest values when the function is called
     const currentPlatformId = selectedPlatformId;
-    const currentModelId = selectedModel; // Assuming selectedModel holds the ID string
+    const currentModelId = selectedModel;
     const currentHasCreds = hasAnyPlatformCredentials;
 
     // Pre-flight validation check
@@ -353,13 +346,6 @@ export function SidebarChatProvider({ children }) {
 
     // Original checks remain
     if (!text.trim() || isProcessing || !tabId) return;
-
-    // The specific checks for platform/model/creds are now handled by the pre-flight validation above.
-    // We can remove the older, separate checks.
-    /*
-    if (!selectedPlatformId || !selectedModel) { ... } // Removed
-    if (!hasAnyPlatformCredentials) { ... } // Removed
-    */
 
     // Estimate tokens for the user message
     const inputTokens = TokenManagementService.estimateTokens(text.trim());
@@ -446,8 +432,6 @@ export function SidebarChatProvider({ children }) {
           timestamp: new Date().toISOString(),
         };
 
-        // Remove the temporary assistant placeholder and add the system message
-        // We already added the user message before the call
         const finalMessages = messages // Use 'messages' which doesn't include the placeholder yet
             .concat(userMessage, systemMessage); // Add user msg + system msg
 
