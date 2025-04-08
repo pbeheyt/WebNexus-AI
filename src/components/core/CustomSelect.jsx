@@ -8,12 +8,6 @@ const ChevronIcon = () => (
   </svg>
 );
 
-const CheckIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-primary">
-    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-  </svg>
-);
-
 /**
  * A reusable custom select component.
  *
@@ -26,7 +20,7 @@ const CheckIcon = () => (
  * @param {string} [props.className=''] - Additional CSS classes for the main container.
  */
 export function CustomSelect({
-  options = [], // Default to empty array
+  options = [],
   selectedValue,
   onChange,
   placeholder = "Select an option",
@@ -112,18 +106,16 @@ export function CustomSelect({
             options.map((option) => (
               <button
                 key={option.id}
-                type="button" // *** CRITICAL FIX: Prevents form submission ***
+                type="button"
                 role="option" // Accessibility attribute
                 aria-selected={selectedValue === option.id} // Accessibility attribute
                 className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between hover:bg-theme-hover ${
                   selectedValue === option.id ? 'font-medium bg-theme-hover' : '' // Style selected option
                 }`}
                 onClick={() => handleOptionClick(option.id)}
-                disabled={disabled} // Optionally disable individual options if needed
+                disabled={disabled}
               >
                 <span className="truncate">{option.name}</span>
-                {/* Show checkmark for the selected option */}
-                {selectedValue === option.id && <CheckIcon />}
               </button>
             ))
           )}

@@ -5,8 +5,8 @@ const TabNavigation = () => {
   const { TABS, activeTab, switchTab } = useTabs();
   
   const tabsConfig = [
-    { id: TABS.API_SETTINGS, label: 'API Settings' },
-    { id: TABS.PROMPT_MANAGEMENT, label: 'Prompts' }
+    { id: TABS.PROMPT_MANAGEMENT, label: 'Prompts' },
+    { id: TABS.API_SETTINGS, label: 'API Settings' }
   ];
   
   return (
@@ -14,7 +14,7 @@ const TabNavigation = () => {
       {tabsConfig.map((tab) => (
         <button
           key={tab.id}
-          className={`tab-btn relative py-3 px-5 text-sm cursor-pointer bg-transparent border-none transition-colors ${
+          className={`tab-btn relative py-3 px-5 text-base cursor-pointer bg-transparent border-none transition-colors ${
             activeTab === tab.id 
               ? 'text-primary font-medium after:content-[""] after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-primary' 
               : 'text-theme-secondary hover:text-theme-primary'

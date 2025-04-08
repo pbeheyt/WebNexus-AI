@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button, useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
-import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils'; // Import the icon utility
+import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils';
 
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();
@@ -44,7 +44,6 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
          }
       }
 
-
       // Save to storage
       await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
 
@@ -63,26 +62,25 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     <div className="prompt-detail bg-theme-surface rounded-lg p-5 border border-theme">
       <div className="prompt-detail-header flex justify-between items-center mb-4 pb-3 border-b border-theme">
         <h3 className="prompt-detail-title text-lg font-medium text-theme-primary">
-          {prompt.prompt.name} {/* Access name from nested prompt object */}
+          {prompt.prompt.name}
         </h3>
       </div>
 
       {/* Updated Content Type Display */}
-      <div className="prompt-detail-meta mb-4 text-sm text-theme-secondary">
-        <div className="inline-flex items-center gap-2"> {/* Use inline-flex and gap */}
+      <div className="prompt-detail-meta mb-4 text-base text-theme-secondary">
+        <div className="inline-flex items-center gap-2">
           <span>{prompt.contentTypeLabel}</span>
-          {/* Render the icon if available */}
           {iconSvg && (
             <span
-              className="w-4 h-4 flex items-center justify-center" // Adjusted size slightly
+              className="w-4 h-4 flex items-center justify-center"
               dangerouslySetInnerHTML={{ __html: iconSvg }}
             />
           )}
         </div>
       </div>
 
-      <div className="prompt-detail-content whitespace-pre-wrap bg-theme-hover/20 p-4 rounded-lg border border-theme mb-5 text-theme-secondary">
-        {prompt.prompt.content} {/* Access content from nested prompt object */}
+      <div className="prompt-detail-content whitespace-pre-wrap bg-theme-hover/20 p-4 rounded-lg border border-theme mb-5 test-sm text-theme-secondary">
+        {prompt.prompt.content}
       </div>
 
       <div className="prompt-detail-actions flex justify-end gap-3">

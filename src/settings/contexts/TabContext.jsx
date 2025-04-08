@@ -11,7 +11,7 @@ const TabContext = createContext(null);
 export const useTabs = () => useContext(TabContext);
 
 export const TabProvider = ({ children }) => {
-  const [activeTab, setActiveTab] = useState(TABS.API_SETTINGS);
+  const [activeTab, setActiveTab] = useState(TABS.PROMPT_MANAGEMENT);
   
   // Initialize from URL hash if present
   useEffect(() => {

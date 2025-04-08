@@ -6,15 +6,10 @@ import PromptForm from '../ui/prompts/PromptForm';
 import { CONTENT_TYPE_LABELS } from '../../../shared/constants';
 
 const PromptManagement = () => {
-  const [contentTypes, setContentTypes] = useState([]);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [filterValue, setFilterValue] = useState('all'); // State lives here
-
-  useEffect(() => {
-    setContentTypes(Object.keys(CONTENT_TYPE_LABELS));
-  }, []);
+  const [filterValue, setFilterValue] = useState('all');
 
   const handleNewPrompt = () => {
     setSelectedPrompt(null);
@@ -37,20 +32,14 @@ const PromptManagement = () => {
   const handleCancelForm = () => {
     setIsEditing(false);
     setIsCreating(false);
-    // Optionally reset selectedPrompt if cancelling edit/create should deselect
-    // setSelectedPrompt(null);
   };
 
   const handlePromptSavedOrDeleted = () => {
-    setSelectedPrompt(null); // Deselect after save/delete
+    setSelectedPrompt(null);
     setIsEditing(false);
     setIsCreating(false);
-    // Force prompt list to refresh? Ideally, PromptList would listen to storage changes,
-    // but for now, maybe trigger a reload or pass a refresh function.
-    // For simplicity, we rely on PromptList's own useEffect for now.
   };
 
-  // This function now correctly updates the state in this component
   const handleFilterChange = (selectedId) => {
     setFilterValue(selectedId);
   };
@@ -61,7 +50,7 @@ const PromptManagement = () => {
     detailContent = (
       <PromptForm
         onCancel={handleCancelForm}
-        onSuccess={handlePromptSavedOrDeleted} // Renamed for clarity
+        onSuccess={handlePromptSavedOrDeleted}
       />
     );
   } else if (isEditing && selectedPrompt) {
@@ -69,7 +58,7 @@ const PromptManagement = () => {
       <PromptForm
         prompt={selectedPrompt}
         onCancel={handleCancelForm}
-        onSuccess={handlePromptSavedOrDeleted} // Renamed for clarity
+        onSuccess={handlePromptSavedOrDeleted}
       />
     );
   } else if (selectedPrompt) {
@@ -77,12 +66,12 @@ const PromptManagement = () => {
       <PromptDetail
         prompt={selectedPrompt}
         onEdit={() => handleEditPrompt(selectedPrompt)}
-        onDelete={handlePromptSavedOrDeleted} // Renamed for clarity
+        onDelete={handlePromptSavedOrDeleted}
       />
     );
   } else {
     detailContent = (
-      <div className="empty-state bg-theme-surface p-8 text-center text-theme-secondary rounded-lg border border-theme">
+      <div className="empty-state bg-theme-surface p-8 text-center text-sm text-theme-secondary rounded-lg border border-theme">
         <p>Select a prompt from the list or create a new one.</p>
       </div>
     );
@@ -91,9 +80,9 @@ const PromptManagement = () => {
   return (
     <div className="master-detail flex flex-col md:flex-row gap-6">
       {/* Master Panel */}
-      <div className="master-panel w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-theme pb-5 md:pb-0 md:pr-5">
-        <div className="master-header flex justify-between items-center mb-4">
-          <h2 className="type-heading text-lg font-medium">Prompts</h2>
+      <div className="master-panel w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-theme pb-3 md:pb-0 md:pr-5">
+        <div className="master-header flex justify-between items-center">
+          <h2 className="text-lg font-medium">Prompts</h2>
           <button
             className="new-prompt-btn bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1 text-sm font-medium"
             onClick={handleNewPrompt}
@@ -101,7 +90,8 @@ const PromptManagement = () => {
             + New
           </button>
         </div>
-        <p className="section-description text-theme-secondary text-sm mb-4">
+        <div className="border-b border-theme w-full my-4"></div>
+        <p className="section-description text-theme-secondary text-sm mb-6">
           Manage your custom prompts for different content types.
         </p>
 
@@ -111,7 +101,7 @@ const PromptManagement = () => {
           contentTypeLabels={CONTENT_TYPE_LABELS}
           onSelectPrompt={handleViewPrompt}
           selectedPromptId={selectedPrompt?.id}
-          onFilterChange={handleFilterChange} // Pass the correct handler
+          onFilterChange={handleFilterChange}
         />
       </div>
 

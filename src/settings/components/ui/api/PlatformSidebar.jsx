@@ -28,7 +28,7 @@ const PlatformSidebar = ({
                 alt={`${platform.name} icon`} 
               />
             ) : (
-              <div className="platform-icon-placeholder w-6 h-6 mr-3 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+              <div className="platform-icon-placeholder w-6 h-6 mr-3 rounded-full bg-primary text-white text-sm flex items-center justify-center font-bold">
                 {platform.name.charAt(0)}
               </div>
             )}

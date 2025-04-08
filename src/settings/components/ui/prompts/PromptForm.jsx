@@ -1,6 +1,6 @@
 // src/settings/components/ui/PromptForm.jsx
 import React, { useState } from 'react';
-import { Button, useNotification, CustomSelect } from '../../../../components'; // Import CustomSelect
+import { Button, useNotification, CustomSelect } from '../../../../components';
 import {
   STORAGE_KEYS,
   CONTENT_TYPES,
@@ -13,7 +13,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: prompt?.prompt?.name || '',
     content: prompt?.prompt?.content || '',
-    contentType: prompt?.contentType || CONTENT_TYPES.GENERAL // Default to general
+    contentType: prompt?.contentType || CONTENT_TYPES.GENERAL
   });
 
   const isEditing = !!prompt;
@@ -67,30 +67,33 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
       const promptData = {
         name: name.trim(),
         content: content.trim(),
-        contentType: contentType, // Use selected contentType
+        contentType: contentType,
         updatedAt: new Date().toISOString(),
       };
 
-      if (isEditing) {
-        // Update existing prompt
-        promptData.id = prompt.id; // Keep existing ID
-        // Ensure createdAt is preserved if it exists
-        promptData.createdAt = prompt.prompt.createdAt || promptData.updatedAt;
-        customPromptsByType[contentType].prompts[prompt.id] = promptData;
-        success('Prompt updated successfully');
+        if (isEditing) {
+          promptData.id = prompt.id;
+          // Ensure createdAt is preserved if it exists
+          promptData.createdAt = prompt.prompt.createdAt || promptData.updatedAt;
+          
+          // Check if the content type has changed during the edit
+          if (prompt.contentType !== formData.contentType) {
+            // If changed, remove the prompt from its original content type location
+            if (customPromptsByType[prompt.contentType]?.prompts) {
+              delete customPromptsByType[prompt.contentType].prompts[prompt.id];
+              console.log(`Removed prompt ${prompt.id} from old content type ${prompt.contentType}`);
+            }
+          }
+          
+          customPromptsByType[contentType].prompts[prompt.id] = promptData;
+          success('Prompt updated successfully');
       } else {
         // Create new prompt
         const promptId = 'prompt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
         promptData.id = promptId;
-        promptData.createdAt = promptData.updatedAt; // Set createdAt for new prompt
+        promptData.createdAt = promptData.updatedAt;
 
         customPromptsByType[contentType].prompts[promptId] = promptData;
-
-        // If no preferred prompt is set, make this one preferred (optional, consider if needed)
-        // if (!customPromptsByType[contentType].preferredPromptId) {
-        //   customPromptsByType[contentType].preferredPromptId = promptId;
-        // }
-
         success('Prompt created successfully');
       }
 
@@ -122,19 +125,16 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
       {/* Content Type Selection using CustomSelect */}
       <div className="form-group mb-6">
         <label
-          // No htmlFor needed as CustomSelect isn't a standard input
-          className="block mb-3 text-sm font-medium text-theme-secondary"
+          className="block mb-3 text-base font-medium text-theme-secondary"
         >
-          Content Type:
+          Content Type
         </label>
-        <div className="inline-block min-w-[200px] max-w-full">
+        <div className="inline-block min-w-[150px] max-w-full">
           <CustomSelect
             options={contentTypeOptions}
             selectedValue={formData.contentType}
-            onChange={handleContentTypeChange} // Use the specific handler
+            onChange={handleContentTypeChange}
             placeholder="Select Content Type"
-            // Optionally disable if editing? Depends on requirements.
-            // disabled={isEditing}
           />
         </div>
       </div>
@@ -143,18 +143,18 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
       <div className="form-group mb-6">
         <label
           htmlFor="name"
-          className="block mb-3 text-sm font-medium text-theme-secondary"
+          className="block mb-3 text-base font-medium text-theme-secondary"
         >
-          Prompt Name:
+          Prompt Name
         </label>
         <input
           type="text"
           id="name"
-          name="name" // Keep name for standard handleChange
-          className="w-full p-2.5 bg-theme-surface text-theme-primary border border-theme rounded-md focus-primary" // Added focus style
+          name="name"
+          className="w-full p-2.5 bg-theme-surface test-sm text-theme-primary border border-theme rounded-md focus-primary" // Added focus style
           placeholder="Give your prompt a descriptive name"
           value={formData.name}
-          onChange={handleChange} // Use standard handler
+          onChange={handleChange}
           required
         />
       </div>
@@ -163,17 +163,17 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
       <div className="form-group mb-6">
         <label
           htmlFor="content"
-          className="block mb-3 text-sm font-medium text-theme-secondary"
+          className="block mb-3 text-base font-medium text-theme-secondary"
         >
-          Prompt Content:
+          Prompt Content
         </label>
         <textarea
           id="content"
-          name="content" // Keep name for standard handleChange
-          className="w-full p-3 bg-theme-surface text-theme-primary border border-theme rounded-md min-h-[220px] focus-primary" // Added focus style
+          name="content"
+          className="w-full p-3 bg-theme-surface text-sm text-theme-primary border border-theme rounded-md min-h-[220px] focus-primary"
           placeholder="Enter your prompt content here..."
           value={formData.content}
-          onChange={handleChange} // Use standard handler
+          onChange={handleChange}
           required
         />
       </div>
@@ -193,7 +193,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
           type="submit"
           className="px-5 py-2"
           disabled={isSaving}
-          variant={isSaving ? 'inactive' : 'primary'} // Use inactive variant when saving
+          variant={isSaving ? 'inactive' : 'primary'}
         >
           {isSaving ? 'Saving...' : (isEditing ? 'Update Prompt' : 'Create Prompt')}
         </Button>

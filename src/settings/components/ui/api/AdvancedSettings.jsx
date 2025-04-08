@@ -260,7 +260,7 @@ const AdvancedSettings = ({
 
         <Button
           variant={isAtDefaults ? 'inactive' : 'danger'}
-          size="sm"
+          size="base"
           disabled={isAtDefaults}
           onClick={() => {
             const defaults = getDefaultSettings();
@@ -296,11 +296,11 @@ const AdvancedSettings = ({
       <div className="form-group mb-6">
         <label
           htmlFor={`${platform.id}-settings-model-selector`}
-          className="block mb-3 text-sm font-medium text-theme-secondary"
+          className="block mb-3 text-base font-medium text-theme-secondary"
         >
           Model to Configure
         </label>
-        <div className="inline-block min-w-[200px] max-w-full">
+        <div className="inline-block min-w-[160px] max-w-full">
           <CustomSelect
             options={models.map(model => ({ id: model.id, name: model.id }))}
             selectedValue={selectedModelId}
@@ -344,14 +344,14 @@ const AdvancedSettings = ({
         {/* Max tokens setting */}
         <div className="mb-7">
           <div className="mb-2">
-            <span className="block mb-3 text-sm font-semibold text-theme-secondary">Max Tokens</span>
+            <span className="block mb-3 text-base font-semibold text-theme-secondary">Max Tokens</span>
           </div>
-          <p className="help-text text-xs text-theme-secondary mb-3">
+          <p className="help-text text-sm text-theme-secondary mb-3">
             Maximum number of tokens to generate in the response.
           </p>
           <SliderInput
             label=""
-            value={formValues.maxTokens}
+            value={formValues?.maxTokens}
             onChange={(newValue) => handleChange('maxTokens', newValue)}
             min={1}
             max={modelConfig?.maxTokens}
@@ -366,7 +366,7 @@ const AdvancedSettings = ({
           <div className="form-group mb-7">
             {/* Temperature Toggle - Always visible */}
             <div className="mb-3 flex items-center">
-              <span className="text-sm font-semibold text-theme-secondary mr-3">Temperature</span>
+              <span className="text-base font-semibold text-theme-secondary mr-3">Temperature</span>
               <Toggle
                 checked={formValues.includeTemperature}
                 onChange={(e) => handleChange('includeTemperature', e.target.checked)}
@@ -376,7 +376,7 @@ const AdvancedSettings = ({
             </div>
             
             {/* Help text - Always visible */}
-            <p className="help-text text-xs text-theme-secondary mb-3">
+            <p className="help-text text-sm text-theme-secondary mb-3">
               Controls randomness: lower values are more deterministic, higher values more creative.
             </p>
             
@@ -386,8 +386,8 @@ const AdvancedSettings = ({
                 label=""
                 value={formValues.temperature}
                 onChange={(newValue) => handleChange('temperature', newValue)}
-                min={platform.apiConfig.minTemperature}
-                max={platform.apiConfig.maxTemperature}
+                min={platform.apiConfig?.minTemperature}
+                max={platform.apiConfig?.maxTemperature}
                 step={0.1}
                 disabled={isSaving}
                 className="form-group mt-2"
@@ -401,7 +401,7 @@ const AdvancedSettings = ({
           <div className="form-group mb-7">
             {/* Top P Toggle - Always visible */}
             <div className="mb-3 flex items-center">
-              <span className="text-sm font-semibold text-theme-secondary mr-3">Top P</span>
+              <span className="text-base font-semibold text-theme-secondary mr-3">Top P</span>
               <Toggle
                 checked={formValues.includeTopP}
                 onChange={(e) => handleChange('includeTopP', e.target.checked)}
@@ -411,7 +411,7 @@ const AdvancedSettings = ({
             </div>
             
             {/* Help text - Always visible */}
-            <p className="help-text text-xs text-theme-secondary mb-3">
+            <p className="help-text text-sm text-theme-secondary mb-3">
               Alternative to temperature, controls diversity via nucleus sampling.
             </p>
             
@@ -421,8 +421,8 @@ const AdvancedSettings = ({
                 label=""
                 value={formValues.topP}
                 onChange={(newValue) => handleChange('topP', newValue)}
-                min={platform.apiConfig.minTopP}
-                max={platform.apiConfig.maxTopP}
+                min={platform.apiConfig?.minTopP}
+                max={platform.apiConfig?.maxTopP}
                 step={0.01}
                 disabled={isSaving}
                 className="form-group mt-2"
@@ -436,7 +436,7 @@ const AdvancedSettings = ({
           modelConfig?.supportsTopP === true &&
           formValues.includeTemperature &&
           formValues.includeTopP && (
-            <p className="text-amber-600 text-xs -mt-4 mb-10">
+            <p className="text-amber-600 text-sm -mt-4 mb-10">
               It is generally recommended to alter Temperature or Top P, but not both.
             </p>
         )}
@@ -446,17 +446,17 @@ const AdvancedSettings = ({
           <div className="form-group mb-8">
             <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
-              className="block mb-3 text-sm font-semibold text-theme-secondary"
+              className="block mb-3 text-base font-semibold text-theme-secondary"
             >
               System Prompt
             </label>
-            <p className="help-text text-xs text-theme-secondary mb-4">
+            <p className="help-text text-sm text-theme-secondary mb-4">
               Optional system prompt to provide context for API requests.
             </p>
             <textarea
               id={`${platform.id}-${selectedModelId}-system-prompt`}
               name="systemPrompt"
-              className="system-prompt-input w-full min-h-[120px] p-3 bg-theme-surface text-theme-primary border border-theme rounded-md"
+              className="system-prompt-input w-full min-h-[120px] p-3 bg-theme-surface text-sm text-theme-primary border border-theme rounded-md"
               placeholder="Enter a system prompt for API requests"
               value={formValues.systemPrompt}
               onChange={(e) => handleChange('systemPrompt', e.target.value)}
@@ -464,7 +464,7 @@ const AdvancedSettings = ({
           </div>
         )}
 
-        <div className="form-actions flex justify-end mt-8">
+        <div className="form-actions flex justify-end">
           <Button
             type="submit"
             disabled={isSaving || !hasChanges}

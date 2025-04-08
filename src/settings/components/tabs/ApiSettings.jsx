@@ -107,7 +107,7 @@ const ApiSettings = () => {
   return (
     <div>
       <h2 className="type-heading mb-4 pb-3 border-b border-theme text-lg font-medium">API Settings</h2>
-      <p className="section-description text-theme-secondary mb-6">
+      <p className="section-description text-sm text-theme-secondary mb-6">
         Configure API credentials for different AI platforms and customize advanced settings for each model. 
         These settings will be used when making API requests directly from the browser extension.
       </p>
@@ -134,7 +134,7 @@ const ApiSettings = () => {
             advancedSettingsKey={STORAGE_KEYS.API_ADVANCED_SETTINGS}
           />
         ) : (
-          <div className="platform-details-panel flex-1 bg-theme-surface p-8 text-center text-theme-secondary rounded-lg border border-theme">
+          <div className="platform-details-panel flex-1 bg-theme-surface p-8 text-center text-sm text-theme-secondary rounded-lg border border-theme">
             <p>Select a platform from the list to configure its API settings.</p>
           </div>
         )}
