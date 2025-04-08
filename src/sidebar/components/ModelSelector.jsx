@@ -20,6 +20,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
   const { openDropdown, setOpenDropdown } = useContext(DropdownContext);
   const isOpen = openDropdown === 'model';
   const dropdownRef = useRef(null);
+  const modelTriggerRef = useRef(null);
 
   // Format models for dropdown display
   useEffect(() => {
@@ -46,6 +47,25 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     setFormattedModels(formatted);
   }, [models]);
 
+  // Effect to handle clicks outside the model dropdown
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(event.target) &&
+        modelTriggerRef.current && !modelTriggerRef.current.contains(event.target)
+      ) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, setOpenDropdown]);
+
   const handleModelChange = async (modelId) => {
     if (modelId && selectedPlatformId) {
       await selectModel(modelId);
@@ -60,6 +80,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
   return (
     <div className={`relative w-full ${className}`}>
       <button
+        ref={modelTriggerRef}
         onClick={() => setOpenDropdown(isOpen ? null : 'model')}
         className="flex items-center w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
       >
