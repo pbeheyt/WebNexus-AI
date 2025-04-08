@@ -1,5 +1,5 @@
 const BaseApiService = require('../api-base');
-const { extractApiErrorMessage } = require('../../shared/utils/error-utils');
+// extractApiErrorMessage is now used in the base class
 
 /**
  * DeepSeek API implementation
@@ -8,164 +8,111 @@ class DeepSeekApiService extends BaseApiService {
   constructor() {
     super('deepseek');
   }
-  
+
   /**
-   * Process with model-specific parameters and streaming support
-   * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
-   * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters including conversation history
-   * @param {function} onChunk - Callback function for receiving text chunks
-   * @param {AbortSignal} [abortSignal] - Optional AbortSignal for cancellation
-   * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
+   * Build the platform-specific API request options for DeepSeek.
+   * Handles merging consecutive user messages as required by the API.
+   * @override
+   * @protected
+   * @param {string} prompt - The final structured prompt (current user input).
+   * @param {Object} params - Resolved model parameters (model, temp, history, etc.).
+   * @param {string} apiKey - The API key.
+   * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
-  async _processWithModelStreaming(text, params, apiKey, onChunk, abortSignal) {
+  async _buildApiRequest(prompt, params, apiKey) {
     const endpoint = this.config?.endpoint || 'https://api.deepseek.com/v1/chat/completions';
-    let reader; // Declare reader outside try block for finally access
+    this.logger.info(`Building DeepSeek API request for model: ${params.model}`);
 
-    try {
-      this.logger.info(`Making DeepSeek API streaming request with model: ${params.model}`);
+    const requestPayload = {
+      model: params.model,
+      stream: true
+    };
 
-      // Create the request payload (logic remains the same)
-      const requestPayload = { model: params.model, stream: true };
-      const messages = [];
-      if (params.systemPrompt) messages.push({ role: 'system', content: params.systemPrompt });
-      if (params.conversationHistory && params.conversationHistory.length > 0) {
-        messages.push(...this._formatDeepSeekMessages(params.conversationHistory));
-      }
+    let messages = [];
+    // Add system prompt first if it exists
+    if (params.systemPrompt) {
+      messages.push({ role: 'system', content: params.systemPrompt });
+    }
 
-      // Check the last message before adding the current user prompt for DeepSeek compatibility
-      const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    // Format history, merging consecutive roles (excluding system)
+    if (params.conversationHistory && params.conversationHistory.length > 0) {
+      messages.push(...this._formatDeepSeekMessages(params.conversationHistory));
+    }
 
-      if (lastMessage && lastMessage.role === 'user') {
-        // Merge with the last user message
-        this.logger.info('Merging current user prompt with previous user message for DeepSeek compatibility.');
-        lastMessage.content += `\n\n${text}`; // Append the new text
-      } else {
-        // Add the current user prompt as a new message if no merge is needed
-        messages.push({ role: 'user', content: text });
-      }
+    // Now, handle the current user prompt, merging if necessary
+    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
 
-      // Assign the potentially modified messages array to the payload
-      requestPayload.messages = messages;
-      requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
-      if ('temperature' in params) {
-        requestPayload.temperature = params.temperature;
-      }
-      if ('topP' in params) {
-        requestPayload.top_p = params.topP;
-      }
+    if (lastMessage && lastMessage.role === 'user') {
+      // Merge the current prompt into the last user message
+      this.logger.info('Merging current user prompt with previous user message for DeepSeek compatibility.');
+      lastMessage.content += `\n\n${prompt}`; // Append the new prompt text
+    } else {
+      // Add the current prompt as a new user message
+      messages.push({ role: 'user', content: prompt });
+    }
 
-      // Make the streaming request
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(requestPayload),
-        signal: abortSignal // Add this line
-      });
+    // Assign the final message list to the payload
+    requestPayload.messages = messages;
 
-      // Handle non-OK responses by sending an error chunk
-      if (!response.ok) {
-        const errorMessage = await extractApiErrorMessage(response);
-        this.logger.error(`DeepSeek API Error: ${errorMessage}`, response); // Log the original response
-        onChunk({ done: true, error: errorMessage, model: params.model });
-        return; // Stop processing on error
-      }
+    // Apply other parameters
+    requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
+    if ('temperature' in params) {
+      requestPayload.temperature = params.temperature;
+    }
+    if ('topP' in params) {
+      requestPayload.top_p = params.topP;
+    }
 
-      // Process the stream
-      reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let buffer = "";
-      let accumulatedContent = ""; // Keep track of content for final successful chunk
+    return {
+      url: endpoint,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestPayload)
+    };
+  }
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break; // Exit loop when stream is finished
+  /**
+   * Parse a single line/chunk from the DeepSeek API stream.
+   * Similar format to OpenAI.
+   * @override
+   * @protected
+   * @param {string} line - A single line string from the stream.
+   * @returns {Object} Parsed result: { type: 'content' | 'done' | 'ignore' | 'error', chunk?: string, error?: string }.
+   */
+  _parseStreamChunk(line) {
+    if (!line) {
+      return { type: 'ignore' };
+    }
 
-        buffer += decoder.decode(value, { stream: true });
-        let lineEnd;
+    // DeepSeek also uses 'data: [DONE]'
+    if (line === 'data: [DONE]') {
+      return { type: 'done' };
+    }
 
-        while ((lineEnd = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.substring(0, lineEnd).trim();
-          buffer = buffer.substring(lineEnd + 1);
+    if (line.startsWith('data: ')) {
+      try {
+        const data = JSON.parse(line.substring(6));
+        const content = data.choices?.[0]?.delta?.content;
 
-          if (!line) continue;
-          if (line === 'data: [DONE]') continue; // Handled by the 'done' check above
-
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.substring(6));
-              const content = data.choices[0]?.delta?.content || '';
-
-              if (content) {
-                accumulatedContent += content;
-                onChunk({
-                  chunk: content, // Send individual chunk
-                  done: false,
-                  model: params.model
-                });
-              }
-              // Check finish reason if needed
-              if (data.choices[0]?.finish_reason) {
-                 this.logger.info(`Stream finished with reason: ${data.choices[0].finish_reason}`);
-              }
-            } catch (e) {
-              // Log parsing errors but attempt to continue processing the stream
-              this.logger.error('Error parsing stream chunk:', e, 'Line:', line);
-            }
+        if (content) {
+          return { type: 'content', chunk: content };
+        } else {
+          // Ignore chunks without content (like finish_reason markers)
+          if (data.choices?.[0]?.finish_reason) {
+             this.logger.info(`DeepSeek stream finished with reason: ${data.choices[0].finish_reason}`);
           }
+          return { type: 'ignore' };
         }
-      }
-
-      // Send final successful done signal
-      onChunk({
-        chunk: '', // No final chunk content needed here
-        done: true,
-        model: params.model,
-        fullContent: accumulatedContent // Include full content
-      });
-
-      // Return metadata only on successful completion
-      return {
-        success: true,
-        content: accumulatedContent,
-        model: params.model,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString()
-      };
-
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        this.logger.info('API request cancelled via AbortController.');
-        // Send a specific cancellation message/error via onChunk
-        onChunk({
-          done: true,
-          error: 'Cancelled by user', // Specific cancellation message
-          model: params.model
-        });
-      } else {
-        // Handle other errors as before
-        this.logger.error('API streaming processing error:', error);
-        onChunk({
-          done: true,
-          error: error.message || 'An unknown streaming error occurred',
-          model: params.model // Use model from params
-        });
-      }
-      // Do not re-throw error here, it's handled by onChunk
-    } finally {
-      // Ensure the reader is released even if errors occur
-      if (reader) {
-        try {
-          await reader.releaseLock();
-        } catch (releaseError) {
-          this.logger.error('Error releasing stream reader lock:', releaseError);
-        }
+      } catch (e) {
+        this.logger.error('Error parsing DeepSeek stream chunk:', e, 'Line:', line);
+        return { type: 'error', error: `Error parsing stream data: ${e.message}` };
       }
     }
+
+    return { type: 'ignore' };
   }
 
   /**

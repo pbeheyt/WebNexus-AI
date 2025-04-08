@@ -1,5 +1,5 @@
 const BaseApiService = require('../api-base');
-const { extractApiErrorMessage } = require('../../shared/utils/error-utils');
+// extractApiErrorMessage is now used in the base class
 
 /**
  * ChatGPT API implementation
@@ -10,154 +10,94 @@ class ChatGptApiService extends BaseApiService {
   }
 
   /**
-   * Process with model-specific parameters and streaming support
-   * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
-   * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters including conversation history
-   * @param {function} onChunk - Callback function for receiving text chunks
-   * @param {AbortSignal} [abortSignal] - Optional AbortSignal for cancellation
-   * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
+   * Build the platform-specific API request options for ChatGPT.
+   * @override
+   * @protected
+   * @param {string} prompt - The final structured prompt.
+   * @param {Object} params - Resolved model parameters (model, temp, history, etc.).
+   * @param {string} apiKey - The API key.
+   * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
-  async _processWithModelStreaming(text, params, apiKey, onChunk, abortSignal) {
+  async _buildApiRequest(prompt, params, apiKey) {
     const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
-    let reader; // Declare reader outside try block for finally access
+    this.logger.info(`Building ChatGPT API request for model: ${params.model}`);
 
-    try {
-      this.logger.info(`Making ChatGPT API streaming request with model: ${params.model}`);
+    const requestPayload = {
+      model: params.model,
+      stream: true
+    };
 
-      // Create the request payload (logic remains the same)
-      const requestPayload = {
-        model: params.model,
-        stream: true
-      };
-      const messages = [];
-      if (params.systemPrompt) {
-        messages.push({ role: 'system', content: params.systemPrompt });
+    const messages = [];
+    if (params.systemPrompt) {
+      messages.push({ role: 'system', content: params.systemPrompt });
+    }
+    if (params.conversationHistory && params.conversationHistory.length > 0) {
+      messages.push(...this._formatOpenAIMessages(params.conversationHistory));
+    }
+    messages.push({ role: 'user', content: prompt }); // Use the structured prompt
+    requestPayload.messages = messages;
+
+    // Apply model parameters
+    if (params.parameterStyle === 'reasoning') {
+      requestPayload[params.tokenParameter || 'max_completion_tokens'] = params.maxTokens;
+    } else {
+      requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
+      if ('temperature' in params) {
+        requestPayload.temperature = params.temperature;
       }
-      if (params.conversationHistory && params.conversationHistory.length > 0) {
-        messages.push(...this._formatOpenAIMessages(params.conversationHistory));
-      }
-      messages.push({ role: 'user', content: text });
-      requestPayload.messages = messages;
-      if (params.parameterStyle === 'reasoning') {
-        requestPayload[params.tokenParameter || 'max_completion_tokens'] = params.maxTokens;
-      } else {
-        requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
-        if ('temperature' in params) {
-          requestPayload.temperature = params.temperature;
-        }
-        if ('topP' in params) {
-          requestPayload.top_p = params.topP;
-        }
-      }
-
-      // Make the streaming request
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(requestPayload),
-        signal: abortSignal // Add this line
-      });
-
-      // Handle non-OK responses by sending an error chunk
-      if (!response.ok) {
-        const errorMessage = await extractApiErrorMessage(response);
-        this.logger.error(`ChatGPT API Error: ${errorMessage}`, response); // Log the original response for context
-        onChunk({ done: true, error: errorMessage, model: params.model });
-        return; // Stop processing on error
-      }
-
-      // Process the stream
-      reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let buffer = "";
-      let accumulatedContent = ""; // Keep track of content for final successful chunk
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break; // Exit loop when stream is finished
-
-        buffer += decoder.decode(value, { stream: true });
-        let lineEnd;
-
-        while ((lineEnd = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.substring(0, lineEnd).trim();
-          buffer = buffer.substring(lineEnd + 1);
-
-          if (!line) continue;
-          if (line === 'data: [DONE]') continue; // Handled by the 'done' check above
-
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.substring(6));
-              const content = data.choices[0]?.delta?.content || '';
-
-              if (content) {
-                accumulatedContent += content;
-                onChunk({
-                  chunk: content, // Send individual chunk
-                  done: false,
-                  model: params.model
-                });
-              }
-            } catch (e) {
-              // Log parsing errors but attempt to continue processing the stream
-              this.logger.error('Error parsing stream chunk:', e, 'Line:', line);
-            }
-          }
-        }
-      }
-
-      // Send final successful done signal
-      onChunk({
-        chunk: '', // No final chunk content needed here, already sent incrementally
-        done: true,
-        model: params.model,
-        fullContent: accumulatedContent // Include full content for potential use later
-      });
-
-      // Return metadata only on successful completion
-      return {
-        success: true,
-        model: params.model,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString(),
-        content: accumulatedContent
-      };
-
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        this.logger.info('API request cancelled via AbortController.');
-        // Send a specific cancellation message/error via onChunk
-        onChunk({
-          done: true,
-          error: 'Cancelled by user', // Specific cancellation message
-          model: params.model
-        });
-      } else {
-        // Handle other errors as before
-        this.logger.error('API streaming processing error:', error);
-        onChunk({
-          done: true,
-          error: error.message || 'An unknown streaming error occurred',
-          model: params.model // Use model from params
-        });
-      }
-      // Do not re-throw error here, it's handled by onChunk
-    } finally {
-      // Ensure the reader is released even if errors occur
-      if (reader) {
-        try {
-          await reader.releaseLock();
-        } catch (releaseError) {
-          this.logger.error('Error releasing stream reader lock:', releaseError);
-        }
+      if ('topP' in params) {
+        requestPayload.top_p = params.topP;
       }
     }
+
+    return {
+      url: endpoint,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestPayload)
+    };
+  }
+
+  /**
+   * Parse a single line/chunk from the ChatGPT API stream.
+   * @override
+   * @protected
+   * @param {string} line - A single line string from the stream.
+   * @returns {Object} Parsed result: { type: 'content' | 'done' | 'ignore', chunk?: string }.
+   */
+  _parseStreamChunk(line) {
+    if (!line) {
+      return { type: 'ignore' };
+    }
+
+    // OpenAI uses 'data: [DONE]' to signal the end of the stream content
+    if (line === 'data: [DONE]') {
+      return { type: 'done' }; // Signal done, but let the reader confirm stream end
+    }
+
+    if (line.startsWith('data: ')) {
+      try {
+        const data = JSON.parse(line.substring(6));
+        const content = data.choices?.[0]?.delta?.content;
+
+        if (content) {
+          return { type: 'content', chunk: content };
+        } else {
+          // Ignore chunks without content (e.g., role markers, finish_reason)
+          return { type: 'ignore' };
+        }
+      } catch (e) {
+        this.logger.error('Error parsing ChatGPT stream chunk:', e, 'Line:', line);
+        // Treat parsing errors as stream errors - return error type
+        return { type: 'error', error: `Error parsing stream data: ${e.message}` };
+      }
+    }
+
+    // Ignore lines that don't start with 'data: ' (e.g., potential comments or empty lines already handled)
+    return { type: 'ignore' };
   }
 
   /**

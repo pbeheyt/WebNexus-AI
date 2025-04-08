@@ -1,5 +1,5 @@
 const BaseApiService = require('../api-base');
-const { extractApiErrorMessage } = require('../../shared/utils/error-utils');
+// extractApiErrorMessage is now used in the base class
 
 /**
  * Claude API implementation
@@ -8,173 +8,111 @@ class ClaudeApiService extends BaseApiService {
   constructor() {
     super('claude');
   }
-  
+
   /**
-   * Process with model-specific parameters using streaming
-   * @param {string} text - Prompt text
-   * @param {string} model - Model ID to use
-   * @param {string} apiKey - API key
-   * @param {Object} params - Resolved parameters including conversation history
-   * @param {Function} onChunk - Callback function for each chunk
-   * @param {AbortSignal} [abortSignal] - Optional AbortSignal for cancellation
-   * @returns {Promise<Object>} API response metadata (only returned on success, otherwise error is handled via onChunk)
+   * Build the platform-specific API request options for Claude.
+   * @override
+   * @protected
+   * @param {string} prompt - The final structured prompt.
+   * @param {Object} params - Resolved model parameters (model, temp, history, etc.).
+   * @param {string} apiKey - The API key.
+   * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
-  async _processWithModelStreaming(text, params, apiKey, onChunk, abortSignal) {
+  async _buildApiRequest(prompt, params, apiKey) {
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
-    let reader; // Declare reader outside try block for finally access
+    this.logger.info(`Building Claude API request for model: ${params.model}`);
 
-    try {
-      this.logger.info(`Making Claude API streaming request with model: ${params.model}`);
+    const requestPayload = {
+      model: params.model,
+      max_tokens: params.maxTokens,
+      messages: [{ role: 'user', content: [{ type: "text", text: prompt }] }], // Start with current prompt
+      stream: true
+    };
 
-      // Create the request payload (logic remains the same)
-      const requestPayload = {
-        model: params.model,
-        max_tokens: params.maxTokens,
-          messages: [{ role: 'user', content: [{ type: "text", text: text }] }],
-          stream: true
-        };
-        if ('temperature' in params) {
-          requestPayload.temperature = params.temperature;
-        }
-        if ('topP' in params) { 
-          requestPayload.top_p = params.topP;
-        }
-        if (params.systemPrompt) requestPayload.system = params.systemPrompt;
-      if (params.conversationHistory && params.conversationHistory.length > 0) {
-        requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, text);
+    // Apply optional parameters
+    if ('temperature' in params) {
+      requestPayload.temperature = params.temperature;
+    }
+    if ('topP' in params) {
+      requestPayload.top_p = params.topP;
+    }
+    if (params.systemPrompt) {
+      requestPayload.system = params.systemPrompt;
+    }
+
+    // Prepend conversation history if available
+    if (params.conversationHistory && params.conversationHistory.length > 0) {
+      // Use the helper to format history and add the current prompt correctly
+      requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, prompt);
+    }
+
+    return {
+      url: endpoint,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true' // Required for direct browser calls
+      },
+      body: JSON.stringify(requestPayload)
+    };
+  }
+
+  /**
+   * Parse a single line/chunk from the Claude API stream.
+   * Handles Server-Sent Events (SSE) format used by Claude.
+   * @override
+   * @protected
+   * @param {string} line - A single line string from the stream.
+   * @returns {Object} Parsed result: { type: 'content' | 'error' | 'done' | 'ignore', chunk?: string, error?: string }.
+   */
+  _parseStreamChunk(line) {
+    if (!line) {
+      return { type: 'ignore' };
+    }
+
+    // Claude uses event types
+    if (line.startsWith('event: ')) {
+      const eventType = line.substring(7).trim();
+      // We only care about the data associated with specific events.
+      // 'message_stop' signals completion, but we let the reader handle the actual stream end.
+      // 'ping' can be ignored.
+      if (eventType === 'message_stop') {
+        return { type: 'done' }; // Signal potential end, base class waits for reader
       }
+      // Other events like 'message_start', 'content_block_start/stop' are ignored for now.
+      return { type: 'ignore' };
+    }
 
-      // Make the streaming request
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': true // Required for direct browser calls
-        },
-        body: JSON.stringify(requestPayload),
-        signal: abortSignal // Add this line
-      });
+    if (line.startsWith('data: ')) {
+      try {
+        const data = JSON.parse(line.substring(6));
 
-      // Handle non-OK responses by sending an error chunk
-      if (!response.ok) {
-        const errorMessage = await extractApiErrorMessage(response);
-        this.logger.error(`Claude API Error: ${errorMessage}`, response); // Log the original response
-        onChunk({ done: true, error: errorMessage, model: params.model });
-        return; // Stop processing on error
-      }
-
-      // Process the stream
-      reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let buffer = "";
-      let accumulatedContent = ""; // Keep track of content for final successful chunk
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break; // Exit loop when stream is finished
-
-        buffer += decoder.decode(value, { stream: true });
-        let lineEnd;
-
-        while ((lineEnd = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.substring(0, lineEnd).trim();
-          buffer = buffer.substring(lineEnd + 1);
-
-          if (!line) continue;
-          // Claude uses event types, not just 'data:'
-          if (line.startsWith('event: ')) {
-             const eventType = line.substring(7).trim();
-             // We are interested in 'content_block_delta' for text chunks
-             // and 'message_stop' for completion. Other events like 'ping' are ignored.
-             if (eventType === 'message_stop') {
-                 // This indicates the end, but we rely on reader.read() done flag
-                 continue;
-             }
-             // We'll process the 'data:' line associated with the event next
-          } else if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.substring(6));
-              // Check for content delta
-              if (data.type === 'content_block_delta' && data.delta?.type === 'text_delta') {
-                const content = data.delta.text || '';
-                if (content) {
-                  accumulatedContent += content;
-                  onChunk({
-                    chunk: content, // Send individual chunk
-                    done: false,
-                    model: params.model
-                  });
-                }
-              } else if (data.type === 'message_delta' && data.delta?.stop_reason) {
-                 // Can capture stop reason if needed, but completion is handled by reader done
-                 this.logger.info(`Stream stopped with reason: ${data.delta.stop_reason}`);
-              } else if (data.type === 'error') {
-                 // Handle potential errors signaled within the stream itself
-                 const streamErrorMessage = `Stream error: ${data.error?.message || 'Unknown stream error'}`;
-                 this.logger.error(streamErrorMessage, data.error);
-                 // Send error chunk and stop processing this stream
-                 onChunk({ done: true, error: streamErrorMessage, model: params.model });
-                 // Attempt to release lock early if possible
-                 if (reader) await reader.releaseLock().catch(e => this.logger.error('Error releasing lock after stream error:', e));
-                 reader = null; // Prevent finally block from trying again
-                 return;
-              }
-            } catch (e) {
-              // Log parsing errors but attempt to continue processing the stream
-              this.logger.error('Error parsing stream chunk:', e, 'Line:', line);
-            }
-          }
+        // Check for content delta
+        if (data.type === 'content_block_delta' && data.delta?.type === 'text_delta') {
+          const content = data.delta.text;
+          return content ? { type: 'content', chunk: content } : { type: 'ignore' };
         }
-      }
 
-      // Send final successful done signal
-      onChunk({
-        chunk: '', // No final chunk content needed here
-        done: true,
-        model: params.model,
-        fullContent: accumulatedContent // Include full content
-      });
-
-      // Return metadata only on successful completion
-      return {
-        success: true,
-        model: params.model,
-        platformId: this.platformId,
-        timestamp: new Date().toISOString(),
-        content: accumulatedContent
-      };
-
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        this.logger.info('API request cancelled via AbortController.');
-        // Send a specific cancellation message/error via onChunk
-        onChunk({
-          done: true,
-          error: 'Cancelled by user', // Specific cancellation message
-          model: params.model
-        });
-      } else {
-        // Handle other errors as before
-        this.logger.error('API streaming processing error:', error);
-        onChunk({
-          done: true,
-          error: error.message || 'An unknown streaming error occurred',
-          model: params.model // Use model from params
-        });
-      }
-      // Do not re-throw error here, it's handled by onChunk
-    } finally {
-      // Ensure the reader is released even if errors occur
-      if (reader) {
-        try {
-          await reader.releaseLock();
-        } catch (releaseError) {
-          this.logger.error('Error releasing stream reader lock:', releaseError);
+        // Check for errors reported within the stream
+        if (data.type === 'error') {
+          const streamErrorMessage = `Stream error: ${data.error?.type} - ${data.error?.message || 'Unknown stream error'}`;
+          this.logger.error(streamErrorMessage, data.error);
+          return { type: 'error', error: streamErrorMessage };
         }
+
+        // Ignore other data types like 'message_delta' (stop_reason is handled by 'message_stop' event or reader end)
+        return { type: 'ignore' };
+
+      } catch (e) {
+        this.logger.error('Error parsing Claude stream chunk:', e, 'Line:', line);
+        return { type: 'error', error: `Error parsing stream data: ${e.message}` };
       }
     }
+
+    // Ignore lines that are not 'event:' or 'data:'
+    return { type: 'ignore' };
   }
 
   /**
