@@ -247,10 +247,26 @@ class ModelParameterService {
           : platformApiConfig.topP;
       }
 
-      // Add system prompt ONLY if platform supports it, model supports it, AND user provided one
+      // Calculate effective system prompt support
       const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false;
-      if (platformSupportsSystemPrompt && params.modelSupportsSystemPrompt === true && userSettings.systemPrompt) {
+      const modelExplicitlyForbidsSystemPrompt = modelConfig?.supportsSystemPrompt === false;
+      const effectiveModelSupportsSystemPrompt = platformSupportsSystemPrompt && !modelExplicitlyForbidsSystemPrompt;
+
+      // Update modelSupportsSystemPrompt with the calculated value
+      params.modelSupportsSystemPrompt = effectiveModelSupportsSystemPrompt;
+
+      // Add system prompt ONLY if effectively supported AND user provided one
+      if (params.modelSupportsSystemPrompt && userSettings.systemPrompt) {
           params.systemPrompt = userSettings.systemPrompt;
+          logger.info(`Adding system prompt for ${platformId}/${modelId}.`);
+      } else if (userSettings.systemPrompt) {
+          if (!platformSupportsSystemPrompt) {
+              logger.warn(`System prompt provided but platform ${platformId} does not support it.`);
+          } else if (modelExplicitlyForbidsSystemPrompt) {
+              logger.warn(`System prompt provided but model ${modelId} explicitly forbids it.`);
+          } else {
+               logger.warn(`System prompt provided but effective support is false for ${platformId}/${modelId}.`);
+          }
       }
 
       // Add conversation history if provided in options
