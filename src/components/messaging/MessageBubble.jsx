@@ -75,7 +75,7 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   return (
     <div className="relative rounded-lg overflow-visible border border-gray-200 dark:border-gray-700 mb-4 shadow-sm">
       {/* Minimal header with language display */}
-      <div className="bg-gray-200 dark:bg-gray-800 px-3 py-1 flex justify-between items-center">
+      <div className="bg-gray-200 dark:bg-gray-800 px-3 py-1.5 flex justify-between items-center">
         {/* Language name */}
         <span className="text-gray-600 dark:text-gray-400 font-mono text-xs">{displayLanguage}</span>
         
@@ -212,12 +212,41 @@ const MessageBubbleComponent = ({
                 return false;
               };
               
-              // For filenames or list items with code, use simple inline style
-              if ((!inline && (isFilename || isInListItem()))) {
+              // NEW: Check for common patterns that should not be treated as code blocks
+              // This includes mathematical symbols like θ0, θ1 and standalone numbers
+              const isUnintendedCodeBlock = !match && 
+                                           !inline && 
+                                           (
+                                             // Match Greek letters followed by numbers
+                                             /^(θ|alpha|beta|gamma|delta)\d+/.test(content) ||
+                                             // Match standalone numbers
+                                             /^[0-9]+$/.test(content) ||
+                                             // Mathematical expressions with common operators
+                                             /^[\d\s+\-*/()=θ]+$/.test(content) ||
+                                             // Mathematical functions like estimatePrice(mileage)
+                                             /^[a-zA-Z]+\([a-zA-Z]+\)\s*=/.test(content)
+                                           ) &&
+                                           // Only apply to single-line content without code-like syntax
+                                           !content.includes('\n') && 
+                                           !content.includes(';') && 
+                                           !content.includes('{') && 
+                                           !content.includes('}');
+              
+              // For mathematical expressions, filenames, list items, or unintended code blocks, 
+              // use specialized formatting for mathematical notations
+              if ((!inline && (isFilename || isInListItem() || isUnintendedCodeBlock))) {
+                // Special treatment for mathematical notations
+                if (isUnintendedCodeBlock && /[=θ()]/.test(content)) {
+                  return (
+                    <span className="bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded border-b border-gray-200 dark:border-gray-700 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed">
+                      {children}
+                    </span>
+                  );
+                }
                 return (
-                  <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs font-mono">
+                  <span className="whitespace-pre-wrap break-words leading-relaxed">
                     {children}
-                  </code>
+                  </span>
                 );
               }
               
@@ -227,10 +256,10 @@ const MessageBubbleComponent = ({
                   {children}
                 </CodeBlock>
               ) : (
-            // Inline code
-            <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
-              {children}
-            </code>
+                // Inline code
+                <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                  {children}
+                </code>
               );
             },
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
