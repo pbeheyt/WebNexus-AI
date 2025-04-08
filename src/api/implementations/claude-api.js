@@ -153,50 +153,44 @@ class ClaudeApiService extends BaseApiService {
     
     return formattedMessages;
   }
-  
+
   /**
-   * Platform-specific validation implementation for Claude
+   * Build the platform-specific API request options for validation.
+   * @override
    * @protected
-   * @param {string} apiKey - The API key to validate
-   * @param {string} model - The model to use for validation
-   * @returns {Promise<boolean>} Whether the API key is valid
+   * @param {string} apiKey - The API key to validate.
+   * @param {string} model - The model to use for validation.
+   * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
-  async _validateWithModel(apiKey, model) {
+  async _buildValidationRequest(apiKey, model) {
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
-    
-    try {
-      // Make a minimal validation request
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': true
-        },
-        body: JSON.stringify({
-          model: model, // Use the default model from config
-          max_tokens: 1, // Minimum tokens needed
-          messages: [
-            { 
-              role: 'user', 
-              content: [
-                {
-                  type: "text",
-                  text: "API validation check"
-                }
-              ]
+    const validationPayload = {
+      model: model,
+      max_tokens: 1, // Minimum tokens needed
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: "text",
+              text: "API validation check"
             }
           ]
-        })
-      });
-      
-      // Just check if we get a valid response (not error)
-      return response.ok;
-    } catch (error) {
-      this.logger.error('API key validation error:', error);
-      return false;
-    }
+        }
+      ]
+    };
+
+    return {
+      url: endpoint,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true' // Required for direct browser calls
+      },
+      body: JSON.stringify(validationPayload)
+    };
   }
 }
 

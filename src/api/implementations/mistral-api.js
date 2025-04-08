@@ -120,40 +120,34 @@ class MistralApiService extends BaseApiService {
       };
     });
   }
-  
+
   /**
-   * Platform-specific validation implementation for Mistral
+   * Build the platform-specific API request options for validation.
+   * @override
    * @protected
-   * @param {string} apiKey - The API key to validate
-   * @param {string} model - The model to use for validation
-   * @returns {Promise<boolean>} Whether the API key is valid
+   * @param {string} apiKey - The API key to validate.
+   * @param {string} model - The model to use for validation.
+   * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
-  async _validateWithModel(apiKey, model) {
+  async _buildValidationRequest(apiKey, model) {
     const endpoint = this.config?.endpoint || 'https://api.mistral.ai/v1/chat/completions';
-    
-    try {
-      // Make a minimal validation request
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            { role: 'user', content: 'API validation check' }
-          ],
-          max_tokens: 1 // Minimum tokens needed
-        })
-      });
-      
-      // Check if the response is valid
-      return response.ok;
-    } catch (error) {
-      this.logger.error('API key validation error:', error);
-      return false;
-    }
+    const validationPayload = {
+      model: model,
+      messages: [
+        { role: 'user', content: 'API validation check' }
+      ],
+      max_tokens: 1 // Minimum tokens needed
+    };
+
+    return {
+      url: endpoint,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(validationPayload)
+    };
   }
 }
 

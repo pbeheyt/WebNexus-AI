@@ -165,10 +165,51 @@ class BaseApiService extends ApiInterface {
    * @returns {Promise<boolean>} Whether the API key is valid
    */
   async _validateWithModel(apiKey, model) {
-    throw new Error('_validateWithModel must be implemented by subclasses');
+    // This method now contains the common fetch logic for validation.
+    try {
+      this.logger.info(`Attempting API key validation for model ${model}...`);
+      // 1. Get platform-specific request details
+      const fetchOptions = await this._buildValidationRequest(apiKey, model);
+
+      // 2. Perform the fetch request
+      const response = await fetch(fetchOptions.url, {
+        method: fetchOptions.method,
+        headers: fetchOptions.headers,
+        body: fetchOptions.body,
+        // Note: No AbortSignal needed for quick validation requests
+      });
+
+      // 3. Check the response
+      if (response.ok) {
+        this.logger.info(`API key validation successful for model ${model} (Status: ${response.status})`);
+        return true;
+      } else {
+        // Attempt to get a more specific error message
+        const errorMessage = await extractApiErrorMessage(response);
+        this.logger.warn(`API key validation failed for model ${model} (Status: ${response.status}): ${errorMessage}`);
+        return false;
+      }
+    } catch (error) {
+      // Catch fetch errors or errors from _buildValidationRequest
+      this.logger.error(`API key validation error for model ${model}:`, error);
+      return false;
+    }
   }
 
   // --- Abstract Methods for Subclasses ---
+
+  /**
+   * Build the platform-specific API request options for validation.
+   * Must be implemented by subclasses.
+   * @protected
+   * @abstract
+   * @param {string} apiKey - The API key to validate.
+   * @param {string} model - The model to use for validation (usually the default).
+   * @returns {Promise<Object>} An object like { url: string, method: string, headers: Object, body: string } for the validation call.
+   */
+  async _buildValidationRequest(apiKey, model) {
+    throw new Error('_buildValidationRequest must be implemented by subclasses');
+  }
 
   /**
    * Build the platform-specific API request options.

@@ -234,60 +234,45 @@ class GeminiApiService extends BaseApiService {
   }
 
   /**
-   * Platform-specific validation implementation for Gemini
+   * Build the platform-specific API request options for validation.
+   * @override
    * @protected
-   * @param {string} apiKey - The API key to validate
-   * @param {string} model - The model to use for validation
-   * @returns {Promise<boolean>} Whether the API key is valid
+   * @param {string} apiKey - The API key to validate.
+   * @param {string} model - The model to use for validation.
+   * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
-  async _validateWithModel(apiKey, model) {
-     this.logger.info(`Validating Gemini API key with model: ${model}`);
-    try {
-      // Construct the endpoint dynamically based on model version
-      const endpoint = this._getGeminiEndpoint(model, ':generateContent'); // Use non-streaming method
-      this.logger.info(`Validation endpoint: ${endpoint}`);
+  async _buildValidationRequest(apiKey, model) {
+    // Construct the endpoint dynamically based on model version
+    const endpoint = this._getGeminiEndpoint(model, ':generateContent'); // Use non-streaming method
+    this.logger.info(`Building Gemini validation request to: ${endpoint}`);
 
-      // Prepare URL with API key
-      const url = new URL(endpoint);
-      url.searchParams.append('key', apiKey);
+    // Prepare URL with API key
+    const url = new URL(endpoint);
+    url.searchParams.append('key', apiKey);
 
-      // Make a minimal validation request
-      const response = await fetch(url.toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user', // Explicitly set role for validation consistency
-              parts: [
-                { text: "API validation check" } // Minimal prompt
-              ]
-            }
-          ],
-          generationConfig: {
-            maxOutputTokens: 1 // Request minimal output
-          }
-          // No systemInstruction needed for basic validation
-        })
-      });
-
-      // Check if the response is valid (2xx status code)
-      if(response.ok) {
-        this.logger.info(`API key validation successful for model ${model} (Status: ${response.status})`);
-        return true;
-      } else {
-         const errorText = await response.text();
-         // Log specific error codes if helpful (e.g., 400 for bad API key)
-         this.logger.warn(`API key validation failed for model ${model} (Status: ${response.status}): ${errorText.substring(0, 500)}`);
-         return false;
+    const validationPayload = {
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: "API validation check" } // Minimal prompt
+          ]
+        }
+      ],
+      generationConfig: {
+        maxOutputTokens: 1 // Request minimal output
       }
+      // No systemInstruction needed for basic validation
+    };
 
-    } catch (error) {
-      this.logger.error(`API key validation error for model ${model}:`, error);
-      return false;
-    }
+    return {
+      url: url.toString(),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(validationPayload)
+    };
   }
 }
 
