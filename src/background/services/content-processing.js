@@ -77,7 +77,7 @@ export async function processContent(params) {
     // 5. Get platform and open it with content
     const effectivePlatformId = platformId;
     
-    const aiPlatformTabId = await openAiPlatformWithContent(contentType, null, effectivePlatformId);
+    const aiPlatformTabId = await openAiPlatformWithContent(effectivePlatformId);
     
     if (!aiPlatformTabId) {
       return {

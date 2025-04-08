@@ -10,11 +10,8 @@ import ConfigService from '../../services/ConfigService.js';
  * @returns {string} Path to content script
  */
 export function getPlatformContentScript() {
-  // We use a unified platform content script for all platforms
   return 'dist/platform-content.bundle.js';
 }
-
-// REMOVED getPreferredAiPlatform function
 
 /**
  * Open AI platform with extracted content
