@@ -33,6 +33,7 @@ export function createTabAwarePlatformContext(options = {}) {
     const [isRefreshing, setIsRefreshing] = useState(false); // New state for refresh
     const [hasAnyPlatformCredentials, setHasAnyPlatformCredentials] = useState(false); // For overall check
     const [tabId, setTabId] = useState(null);
+    const [apiConfigData, setApiConfigData] = useState(null); // State for API config
     
     // Get current tab ID on mount
     useEffect(() => {
@@ -97,16 +98,26 @@ export function createTabAwarePlatformContext(options = {}) {
        }
       setLoadingState(true);
       try {
-        // Load platform display config
-        const response = await fetch(chrome.runtime.getURL('platform-display-config.json'));
-        const config = await response.json(); // This is now the display config
+        // Load platform display and API configs in parallel
+        const [displayResponse, apiResponse] = await Promise.all([
+          fetch(chrome.runtime.getURL('platform-display-config.json')),
+          fetch(chrome.runtime.getURL('platform-api-config.json'))
+        ]);
 
-        if (!config || !config.aiPlatforms) {
-          throw new Error('Invalid platform configuration');
+        if (!displayResponse.ok || !apiResponse.ok) {
+          throw new Error('Failed to fetch platform configuration files');
         }
 
-        // Transform to array with icon URLs
-        let platformList = Object.entries(config.aiPlatforms).map(([id, platform]) => ({
+        const displayConfig = await displayResponse.json();
+        const apiConfig = await apiResponse.json();
+        setApiConfigData(apiConfig); // Store the API config data
+
+        if (!displayConfig || !displayConfig.aiPlatforms) {
+          throw new Error('Invalid platform display configuration');
+        }
+
+        // Transform to array with icon URLs using displayConfig
+        let platformList = Object.entries(displayConfig.aiPlatforms).map(([id, platform]) => ({
           id,
           name: platform.name,
           url: platform.url || null,
@@ -217,7 +228,7 @@ export function createTabAwarePlatformContext(options = {}) {
       } finally {
         setLoadingState(false);
       }
-    }, [tabId, interfaceType, globalStorageKey, loadModels, selectedPlatformId, models.length]); // Added dependencies
+    }, [tabId, interfaceType, globalStorageKey, loadModels, selectedPlatformId, models.length, setApiConfigData]); // Added setApiConfigData dependency
 
 
     // Initial load effect
@@ -305,17 +316,21 @@ export function createTabAwarePlatformContext(options = {}) {
         // Optionally revert state or show error
         return false;
       }
-    }, [tabId, interfaceType, selectedPlatformId, selectedModelId, models]); // Added models dependency
+}, [tabId, interfaceType, selectedPlatformId, selectedModelId, models]); // Added models dependency
 
+// Function to get API config for a specific platform
+const getPlatformApiConfig = useCallback((platformId) => {
+  return apiConfigData?.aiPlatforms?.[platformId] || null;
+}, [apiConfigData]); // Depends only on apiConfigData
 
-    // Build context value with interface-specific properties
-    const contextValue = {
+// Build context value with interface-specific properties
+const contextValue = {
       // Core properties for all interfaces
       platforms,
       selectedPlatformId,
       selectPlatform,
       isLoading,
-      // getPlatformConfig removed as it's no longer needed here and fetched old config
+      getPlatformApiConfig, // Add the new function here
       tabId,
       setTabId,
 

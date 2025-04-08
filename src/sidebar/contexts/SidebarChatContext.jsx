@@ -20,7 +20,7 @@ export function SidebarChatProvider({ children }) {
     hasAnyPlatformCredentials,
     tabId,
     platforms,
-    getPlatformConfig
+    getPlatformApiConfig // Replaced getPlatformConfig
   } = useSidebarPlatform();
 
   const { contentType } = useContent();
@@ -65,30 +65,33 @@ export function SidebarChatProvider({ children }) {
       if (!selectedPlatformId || !selectedModel || !tabId) return;
 
       try {
-        // Get full configuration either from context or directly
-        const config = await getPlatformConfig(selectedPlatformId);
-        setFullPlatformConfig(config);
+        // Get API configuration using the new function (synchronous)
+        const config = getPlatformApiConfig(selectedPlatformId);
+        setFullPlatformConfig(config); // Still store it, might be useful
 
-        if (!config || !config.api || !config.api.models) {
-          console.warn('Platform configuration missing required structure:', {
+        // Update checks to use the new structure (config.models instead of config.api.models)
+        if (!config || !config.models) {
+          console.warn('Platform API configuration missing required structure:', {
             platformId: selectedPlatformId,
-            hasApi: !!config?.api,
-            hasModels: !!config?.api?.models
+            hasModels: !!config?.models
           });
+          setModelConfigData(null); // Clear model data if config is invalid
           return;
         }
 
-        const modelData = config.api.models.find(m => m.id === selectedModel);
+        // Find model data directly in config.models
+        const modelData = config.models.find(m => m.id === selectedModel);
         setModelConfigData(modelData);
       } catch (error) {
-        console.error('Failed to load full platform configuration:', error);
+        // Catch potential errors from getPlatformApiConfig or find
+        console.error('Failed to load or process platform API configuration:', error);
         setFullPlatformConfig(null);
         setModelConfigData(null);
       }
     };
 
     loadFullConfig();
-  }, [selectedPlatformId, selectedModel, tabId, getPlatformConfig]);
+  }, [selectedPlatformId, selectedModel, tabId, getPlatformApiConfig]); // Updated dependency
 
   // Update context status when model config or token stats change
   useEffect(() => {
