@@ -78,7 +78,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     "Select a model";
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative w-max max-w-sm ${className}`}>
       <button
         ref={modelTriggerRef}
         onClick={() => setOpenDropdown(isOpen ? null : 'model')}
@@ -95,7 +95,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto w-max max-w-sm"
+          className="absolute left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {formattedModels.length === 0 ? (
