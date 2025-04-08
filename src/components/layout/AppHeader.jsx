@@ -34,7 +34,11 @@ export function AppHeader({
         <button
           onClick={toggleTextSize}
           className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
-          title={textSize === 'sm' ? "Switch to Base Size" : "Switch to Small Size"}
+          title={
+            textSize === 'sm' ? "Switch to Base Size" :
+            textSize === 'base' ? "Switch to Large Size" : 
+            "Switch to Small Size"
+          }
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 7V6h16v1"/>

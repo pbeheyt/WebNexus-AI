@@ -13,7 +13,6 @@ export const TextArea = forwardRef(({
   autoResize = true,
   minHeight = 80,
   maxHeight = 300,
-  textSize = 'sm',
   ...props
 }, ref) => {
   const textareaRef = useRef(null);
@@ -41,7 +40,7 @@ export const TextArea = forwardRef(({
       onChange={onChange}
       placeholder={placeholder}
       maxLength={maxLength}
-      className={`w-full min-h-[${minHeight}px] p-3 bg-transparent border-none outline-none text-theme-primary ${textSize === 'base' ? 'text-base' : 'text-sm'} resize-vertical ${className}`}
+      className={`w-full min-h-[${minHeight}px] p-3 bg-transparent border-none outline-none text-theme-primary text-sm resize-vertical ${className}`}
       style={{ minHeight: `${minHeight}px` }}
       {...props}
     />

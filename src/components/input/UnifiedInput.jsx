@@ -4,7 +4,6 @@ import { useUI } from '../../contexts/UIContext';
 import { TextArea } from '../form/TextArea';
 import { PromptDropdown } from './PromptDropdown';
 import TokenCounter from '../../sidebar/components/TokenCounter';
-import { CONTENT_TYPES } from '../../shared/constants';
 
 /**
  * Unified input component for both popup and sidebar, supporting direct input
@@ -25,7 +24,6 @@ export function UnifiedInput({
   layoutVariant,
   className = ''
 }) {
-  const { textSize } = useUI();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const textareaRef = useRef(null);
   const promptButtonRef = useRef(null);
@@ -123,7 +121,6 @@ export function UnifiedInput({
                   minHeight={70}
                   maxHeight={200}
                   className="w-full py-3 pl-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-xs"
-                  textSize={textSize}
                 />
               </div>
               
@@ -216,7 +213,6 @@ export function UnifiedInput({
                   minHeight={60}
                   maxHeight={150}
                   className="w-full py-3 pl-3 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
-                  textSize={textSize}
                 />
               </div>
               

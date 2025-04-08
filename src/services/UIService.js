@@ -23,7 +23,7 @@ class UIService {
       }
 
       // Set text size
-      if (savedTextSize && (savedTextSize === 'sm' || savedTextSize === 'base')) {
+      if (savedTextSize && (savedTextSize === 'sm' || savedTextSize === 'base' || savedTextSize === 'lg')) {
         this.#textSize = savedTextSize;
       } else {
         this.#textSize = 'sm'; // Default size
@@ -72,7 +72,14 @@ class UIService {
 
   async toggleTextSize() {
     try {
-      const newTextSize = this.#textSize === 'sm' ? 'base' : 'sm';
+      let newTextSize;
+      if (this.#textSize === 'sm') {
+        newTextSize = 'base';
+      } else if (this.#textSize === 'base') {
+        newTextSize = 'lg';
+      } else {
+        newTextSize = 'sm';
+      }
       this.#textSize = newTextSize;
       
       // Save to storage
@@ -119,8 +126,11 @@ class UIService {
   }
 
   applyTextSize(size) {
-    document.documentElement.classList.remove('text-sm', 'text-base');
-    document.documentElement.classList.add(size === 'base' ? 'text-base' : 'text-sm');
+    document.documentElement.classList.remove('text-sm', 'text-base', 'text-lg');
+    const sizeClass = 
+      size === 'base' ? 'text-base' :
+      size === 'lg' ? 'text-lg' : 'text-sm';
+    document.documentElement.classList.add(sizeClass);
   }
 
   #notifyObservers() {
