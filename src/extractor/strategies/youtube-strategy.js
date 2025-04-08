@@ -1,7 +1,6 @@
 // src/extractor/strategies/youtube-strategy.js
 const BaseExtractor = require('../base-extractor');
 const { YoutubeTranscript } = require('youtube-transcript');
-const STORAGE_KEYS = require('../../shared/constants').STORAGE_KEYS;
 
 class YoutubeExtractorStrategy extends BaseExtractor {
   constructor() {

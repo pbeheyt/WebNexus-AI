@@ -1,6 +1,5 @@
 // src/extractor/strategies/reddit-strategy.js
 const BaseExtractor = require('../base-extractor');
-const STORAGE_KEYS = require('../../shared/constants').STORAGE_KEYS;
 
 class RedditExtractorStrategy extends BaseExtractor {
   constructor() {

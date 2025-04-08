@@ -118,7 +118,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
     return true;
   }
 
-
   /**
    * Recursively extracts visible text content from a node and its children.
    * Appends extracted text chunks to the `accumulatedText` array.
@@ -172,7 +171,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
       // Inline elements generally don't add newlines; spacing comes from text nodes.
     }
   }
-
 
   // --- Metadata Extraction Methods ---
 
