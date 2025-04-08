@@ -12,7 +12,7 @@ let cachedDisplayConfig = null;
  */
 async function _loadConfig(urlPath, cacheRef) {
   if (cacheRef) {
-    // logger.service.info(`ConfigService: Cache hit for ${urlPath}`);
+    logger.service.info(`ConfigService: Cache hit for ${urlPath}`);
     return cacheRef;
   }
 
@@ -146,5 +146,4 @@ const ConfigService = {
   clearConfigCache
 };
 
-// Export the service functions using CommonJS module.exports
 module.exports = ConfigService;

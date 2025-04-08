@@ -5,21 +5,7 @@ const { STORAGE_KEYS } = require('../shared/constants');
  * Service for managing tab-specific sidebar state
  */
 class SidebarStateManager {
-  constructor() {
-    // No local STORAGE_KEYS definition, using imported constants
-  }
   
-  /**
-   * Initialize sidebar state management
-   */
-  initialize() {
-    logger.info('Initializing SidebarStateManager with tab-specific states');
-    // Message listeners are no longer set up here; handled by background connection listener.
-  }
-
-  // _setupMessageListeners, _handleToggleSidebar, and _handleGetSidebarState removed
-  // as state changes are now driven by background connection events.
-
   /**
    * Toggle sidebar visibility for a specific tab
    * @private

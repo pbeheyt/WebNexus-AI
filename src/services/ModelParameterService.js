@@ -65,7 +65,7 @@ class ModelParameterService {
    * @returns {Promise<Object|null>} Model configuration or null if not found
    */
   async getModelConfig(platformId, modelIdOrObject) {
-    const config = await ConfigService.getApiConfig(); // Uses centralized ConfigService
+    const config = await ConfigService.getApiConfig();
 
     // Access models directly under the platform ID in the API config
     if (!config?.aiPlatforms?.[platformId]?.models) return null;
@@ -199,21 +199,19 @@ class ModelParameterService {
     }
 
     try {
-      const { tabId, source, conversationHistory } = options; // Added conversationHistory
+      const { tabId, source, conversationHistory } = options;
       logger.info(`Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`);
 
       // Get the full platform config first
       const config = await ConfigService.getApiConfig();
-      const platformApiConfig = config?.aiPlatforms?.[platformId]; // This is now the API config object
+      const platformApiConfig = config?.aiPlatforms?.[platformId];
       if (!platformApiConfig) {
         throw new Error(`Platform API configuration not found for ${platformId}`);
       }
-      // No need for platformConfig.api anymore
 
       // Get model config directly from the platform's API config
       const modelConfig = platformApiConfig?.models?.find(model => model.id === modelId);
       if (!modelConfig) {
-        // Use the provided modelId in the error message
         throw new Error(`Model configuration not found for ${modelId}`);
       }
 
@@ -222,41 +220,36 @@ class ModelParameterService {
 
       // Determine effective toggle values, defaulting to true if not set
       const effectiveIncludeTemperature = userSettings.includeTemperature ?? true;
-      const effectiveIncludeTopP = userSettings.includeTopP ?? false; // Changed default to false
+      const effectiveIncludeTopP = userSettings.includeTopP ?? false; // TopP default to false
 
       // Start with base parameters
       const params = {
-        model: modelId, // Use the provided modelId
-        parameterStyle: modelConfig.parameterStyle || 'standard',
-        tokenParameter: modelConfig.tokenParameter || 'max_tokens',
-        maxTokens: userSettings.maxTokens !== undefined ? userSettings.maxTokens : (modelConfig.maxTokens || 4000),
-        contextWindow: modelConfig.contextWindow || 8192, // Mostly for internal use, not sent to API
-        modelSupportsSystemPrompt: modelConfig?.supportsSystemPrompt ?? false, // Add the new flag here
+        model: modelId,
+        parameterStyle: modelConfig.parameterStyle,
+        tokenParameter: modelConfig.tokenParameter,
+        maxTokens: userSettings.maxTokens !== undefined ? userSettings.maxTokens : (modelConfig.maxTokens),
+        contextWindow: modelConfig.contextWindow,
+        modelSupportsSystemPrompt: modelConfig?.supportsSystemPrompt ?? false,
       };
 
       // Add temperature ONLY if model supports it AND user included it
       const modelSupportsTemperature = modelConfig?.supportsTemperature !== false;
       if (modelSupportsTemperature && effectiveIncludeTemperature) {
-        // Prioritize user setting, then platform default
-        // Prioritize user setting, then platform API config default
         params.temperature = userSettings.temperature !== undefined
           ? userSettings.temperature
-          : (platformApiConfig?.temperature !== undefined ? platformApiConfig.temperature : 0.7); // Final fallback
+          : platformApiConfig.temperature;
       }
 
       // Add topP ONLY if model supports it AND user included it
-      const modelSupportsTopP = modelConfig?.supportsTopP === true; // Explicitly check for true
+      const modelSupportsTopP = modelConfig?.supportsTopP === true;
       if (modelSupportsTopP && effectiveIncludeTopP) {
-        // Prioritize user setting, then platform default
-        // Prioritize user setting, then platform API config default
         params.topP = userSettings.topP !== undefined
           ? userSettings.topP
-          : (platformApiConfig?.topP !== undefined ? platformApiConfig.topP : 1.0); // Final fallback
+          : platformApiConfig.topP;
       }
 
       // Add system prompt ONLY if platform supports it, model supports it, AND user provided one
-      const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false; // Check directly in API config
-      // Replace the old modelSupportsSystemPrompt check with the one from params
+      const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false;
       if (platformSupportsSystemPrompt && params.modelSupportsSystemPrompt === true && userSettings.systemPrompt) {
           params.systemPrompt = userSettings.systemPrompt;
       }
@@ -271,14 +264,12 @@ class ModelParameterService {
           params.tabId = tabId;
       }
 
-      // Use modelId in the final log message
       logger.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, { ...params });
       return params;
 
     } catch (error) {
-      // Log the error and re-throw it. No more fallbacks.
       logger.error(`Error resolving parameters for ${platformId}/${modelId}:`, error);
-      throw error; // Re-throw the error to be handled by the caller
+      throw error;
     }
   }
 }

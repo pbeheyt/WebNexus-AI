@@ -1,5 +1,5 @@
 // src/services/ContentFormatter.js
-const logger = require('../shared/logger.js').service; // Integrate logger
+const logger = require('../shared/logger.js').service;
 
 class ContentFormatter {
   /**

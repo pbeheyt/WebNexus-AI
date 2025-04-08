@@ -1,6 +1,5 @@
 // src/background/initialization.js - Handles extension initialization
 
-import { initializeConfigManager } from './core/config-loader.js';
 import { resetState } from './core/state-manager.js';
 import logger from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
@@ -99,12 +98,7 @@ async function initializeDefaultPrompts() {
 export async function initializeExtension() {
   logger.background.info('Running core extension initialization...');
   try {
-    // 1. Initialize configuration in storage (if needed)
-    await initializeConfigManager();
-    logger.background.info('Configuration manager initialized');
-
-    // 2. Reset volatile state (like processing status, extracted content etc.)
-    // Note: Resetting state might clear things needed by prompt init if called before.
+     // Note: Resetting state might clear things needed by prompt init if called before.
     await resetState();
     logger.background.info('Volatile state reset complete');
 

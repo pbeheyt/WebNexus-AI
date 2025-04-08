@@ -1,5 +1,6 @@
 // src/services/CredentialManager.js
 const { STORAGE_KEYS } = require('../shared/constants');
+const logger = require('../shared/logger.js').service;
 
 /**
  * Service for secure API credential management
@@ -7,7 +8,7 @@ const { STORAGE_KEYS } = require('../shared/constants');
 class CredentialManager {
   constructor() {
     this.STORAGE_KEY = STORAGE_KEYS.API_CREDENTIALS;
-    this.logger = this._createLogger();
+    this.logger = logger;
   }
   
   /**
@@ -114,18 +115,6 @@ class CredentialManager {
         message: `Validation error: ${error.message}`
       };
     }
-  }
-  
-  /**
-   * Create a logger instance
-   * @returns {Object} Logger object
-   */
-  _createLogger() {
-    return {
-      info: (message, data = null) => console.log(`[CredentialManager] INFO: ${message}`, data || ''),
-      warn: (message, data = null) => console.warn(`[CredentialManager] WARN: ${message}`, data || ''),
-      error: (message, data = null) => console.error(`[CredentialManager] ERROR: ${message}`, data || '')
-    };
   }
 }
 

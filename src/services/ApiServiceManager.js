@@ -31,9 +31,9 @@ class ApiServiceManager {
    * @param {Function} requestConfig.onChunk - Callback for streaming chunks
    * @returns {Promise<Object>} API response
    */
-  async processWithUnifiedConfig(platformId, requestConfig) { // Removed tabId parameter
+  async processWithUnifiedConfig(platformId, requestConfig) {
     try {
-      // Log based on the new structure
+
       logger.info(`Processing content through ${platformId} API with unified config:`, {
         hasStreaming: !!requestConfig.streaming,
         hasHistory: Array.isArray(requestConfig.resolvedParams?.conversationHistory) && 
