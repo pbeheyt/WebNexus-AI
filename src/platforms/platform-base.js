@@ -246,8 +246,7 @@ class BasePlatform extends PlatformInterface {
     return `# INSTRUCTION
 ${prePrompt}
 # EXTRACTED CONTENT
-${formattedContent}
-# END CONTENT`
+${formattedContent}`
   }
 }
 

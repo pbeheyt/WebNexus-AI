@@ -97,8 +97,7 @@ class BaseApiService extends ApiInterface {
       return `# INSTRUCTION
       ${prompt}
       # EXTRACTED CONTENT
-      ${formattedContent}
-      # END CONTENT`
+      ${formattedContent}`
     } else {
       // Return only the prompt if no valid content is provided
       return prompt;

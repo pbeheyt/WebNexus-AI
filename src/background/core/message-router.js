@@ -89,8 +89,6 @@ function registerCoreHandlers() {
     }
     return false;
   });
-
-  // Removed 'getSidebarTabId' handler as sidebar now relies solely on URL parameter
 }
 
 /**
@@ -136,8 +134,6 @@ function registerServiceHandlers() {
     handleProcessContentRequest(message, sendResponse);
     return true; // Keep channel open for async response
   });
-
-  // Removed 'toggleSidebar' and 'getSidebarState' handlers as they are obsolete with native side panel
 
   // Get theme
   messageHandlers.set('getTheme', (message, sender, sendResponse) => {
