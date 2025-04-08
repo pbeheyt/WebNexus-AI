@@ -48,8 +48,7 @@ export function SidebarChatProvider({ children }) {
   // Use the content processing hook
   const {
     processContentViaApi,
-    isProcessing, // Use isProcessing from the hook
-    processingStatus, // Keep original if needed elsewhere, or remove if redundant
+    isProcessing,
     error: processingError,
     reset: resetContentProcessing,
   } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
@@ -65,8 +64,6 @@ export function SidebarChatProvider({ children }) {
       try {
         // Get API configuration using the new function (synchronous)
         const config = await getPlatformApiConfig(selectedPlatformId);
-
-        // Update checks to use the new structure (config.models instead of config.api.models)
         if (!config || !config.models) {
           console.warn('Platform API configuration missing required structure:', {
             platformId: selectedPlatformId,
@@ -80,7 +77,6 @@ export function SidebarChatProvider({ children }) {
         const modelData = config.models.find(m => m.id === selectedModel);
         setModelConfigData(modelData);
       } catch (error) {
-        // Catch potential errors from getPlatformApiConfig or find
         console.error('Failed to load or process platform API configuration:', error);
         setModelConfigData(null);
       }
@@ -259,7 +255,7 @@ export function SidebarChatProvider({ children }) {
           console.error('Stream error:', errorMessage);
 
           // Complete the stream with the error message
-          await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true); // Pass model if available
+          await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true);
 
           setStreamingMessageId(null);
           setIsCanceling(false);
@@ -288,7 +284,7 @@ export function SidebarChatProvider({ children }) {
             await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true, false); // isError=true, isCancelled=false
           } else {
             // Handle Success: Stream completed normally
-            const finalContent = chunkData.fullContent || streamingContent; // Use fullContent if available
+            const finalContent = chunkData.fullContent || streamingContent;
             console.info(`Stream ${message.streamId} completed successfully. Final length: ${finalContent.length}`);
             // Update message with final content, mark as success (not error, not cancelled)
             await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false, false); // isError=false, isCancelled=false
@@ -367,7 +363,7 @@ export function SidebarChatProvider({ children }) {
       role: MESSAGE_ROLES.ASSISTANT,
       content: '', // Empty initially, will be streamed
       model: selectedModel,
-      platformIconUrl: selectedPlatform.iconUrl, // Add platform icon URL
+      platformIconUrl: selectedPlatform.iconUrl,
       timestamp: new Date().toISOString(),
       isStreaming: true,
       inputTokens: 0, // No input tokens for assistant messages
@@ -602,14 +598,12 @@ export function SidebarChatProvider({ children }) {
         await TokenManagementService.updateAccumulatedCost(tabId);
       }
 
-      // Reset streaming state (after all updates and saves) (setIsProcessing removed)
+      // Reset streaming state
       setStreamingMessageId(null);
       setStreamingContent('');
 
     } catch (error) {
       console.error('Error cancelling stream:', error);
-
-      // Still reset the streaming state on error (setIsProcessing removed)
       setStreamingMessageId(null);
     } finally {
       setIsCanceling(false);
@@ -721,7 +715,6 @@ export function SidebarChatProvider({ children }) {
       isCanceling,
       clearChat,
       isProcessing,
-      processingStatus,
       apiError: processingError,
       contentType,
       tokenStats,

@@ -8,7 +8,6 @@ import ChatHistoryService from "./ChatHistoryService"; // Added import
  * Central authority for all token-related operations
  */
 class TokenManagementService {
-  static TOKEN_STATS_KEY = STORAGE_KEYS.TAB_TOKEN_STATISTICS || 'tabTokenStatistics';
   
   /**
    * Get token statistics for a specific tab
@@ -22,8 +21,8 @@ class TokenManagementService {
     
     try {
       // Get all tab token statistics
-      const result = await chrome.storage.local.get([this.TOKEN_STATS_KEY]);
-      const allTokenStats = result[this.TOKEN_STATS_KEY] || {};
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
+      const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
       
       // Return stats for this tab or empty object
       return allTokenStats[tabId] || this._getEmptyStats();
@@ -44,8 +43,8 @@ class TokenManagementService {
     
     try {
       // Get all tab token statistics
-      const result = await chrome.storage.local.get([this.TOKEN_STATS_KEY]);
-      const allTokenStats = result[this.TOKEN_STATS_KEY] || {};
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
+      const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
       
       // Update stats for this tab
       allTokenStats[tabId] = {
@@ -54,7 +53,7 @@ class TokenManagementService {
       };
       
       // Save all token statistics
-      await chrome.storage.local.set({ [this.TOKEN_STATS_KEY]: allTokenStats });
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats });
       return true;
     } catch (error) {
       console.error('TokenManagementService: Error updating token statistics:', error);
@@ -68,14 +67,14 @@ class TokenManagementService {
    * @param {string} systemPrompt - System prompt text (optional)
    * @returns {Object} - Token statistics
    */
-  static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') { // Signature updated (already had default)
+  static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') {
     let inputTokens = 0;
     let outputTokens = 0;
     let promptTokens = 0;
     let historyTokens = 0;
     let systemTokens = 0; // Initialize systemTokens
     
-    // Process system prompt if present (New logic)
+    // Process system prompt if present
     if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
       const systemPromptTokens = this.estimateTokens(systemPrompt);
       inputTokens += systemPromptTokens; // System prompt contributes to input
@@ -117,8 +116,6 @@ class TokenManagementService {
       accumulatedCost: 0  // Will be set from stored value
     };
   }
-  
-  // Removed getSystemPromptTokens as it's no longer needed here
   
   /**
    * Track tokens for a message
@@ -194,14 +191,14 @@ class TokenManagementService {
     
     try {
       // Get all tab token statistics
-      const result = await chrome.storage.local.get([this.TOKEN_STATS_KEY]);
-      const allTokenStats = result[this.TOKEN_STATS_KEY] || {};
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
+      const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
       
       // Remove stats for this tab
       delete allTokenStats[tabId];
       
       // Save updated stats
-      await chrome.storage.local.set({ [this.TOKEN_STATS_KEY]: allTokenStats });
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats });
       return true;
     } catch (error) {
       console.error('TokenManagementService: Error clearing token statistics:', error);
@@ -225,12 +222,6 @@ class TokenManagementService {
       
       // Calculate token statistics from messages, passing the system prompt
       const stats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt); // Pass systemPrompt
-      
-      // System prompt tokens are now calculated *inside* calculateTokenStatisticsFromMessages
-      // Remove the manual addition here:
-      // const systemPromptTokens = await this.getSystemPromptTokens(tabId); // REMOVED
-      // stats.inputTokens += systemPromptTokens; // REMOVED
-      // stats.systemTokens += systemPromptTokens; // REMOVED
       
       // Calculate cost if model config is provided
       if (modelConfig) {
@@ -263,22 +254,6 @@ class TokenManagementService {
   }
   
   /**
-   * Estimate tokens for a JSON object (serializes then counts)
-   * @param {Object} object - Object to estimate tokens for
-   * @returns {number} - Estimated token count
-   */
-  static estimateObjectTokens(object) {
-    if (!object) return 0;
-    try {
-      const serialized = JSON.stringify(object);
-      return this.estimateTokens(serialized);
-    } catch (error) {
-      console.warn('Error estimating object tokens', error);
-      return 0;
-    }
-  }
-  
-  /**
    * Calculate pricing for token usage
    * @param {number} inputTokens - Number of input tokens
    * @param {number} outputTokens - Number of output tokens
@@ -291,7 +266,7 @@ class TokenManagementService {
     const inputPrice = modelConfig.inputTokenPrice || 0;
     const outputPrice = modelConfig.outputTokenPrice || 0;
     
-    // Convert from price per million tokens (standard industry pricing)
+    // Convert from price per million tokens
     const inputCost = (inputTokens / 1000000) * inputPrice;
     const outputCost = (outputTokens / 1000000) * outputPrice;
     const totalCost = inputCost + outputCost;
@@ -314,8 +289,8 @@ class TokenManagementService {
     if (!modelConfig) return null;
     
     return {
-      inputTokenPrice: modelConfig.inputTokenPrice || 0,
-      outputTokenPrice: modelConfig.outputTokenPrice || 0
+      inputTokenPrice: modelConfig.inputTokenPrice,
+      outputTokenPrice: modelConfig.outputTokenPrice
     };
   }
   
@@ -361,27 +336,6 @@ class TokenManagementService {
   }
   
   /**
-   * Format conversation history as token countable structure
-   * @param {Array} history - Conversation history
-   * @returns {Object} - Token countable structure
-   */
-  static tokenizeConversationHistory(history) {
-    if (!history || !Array.isArray(history) || history.length === 0) {
-      return { tokens: 0, structure: [] };
-    }
-    
-    const structure = history.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }));
-    
-    return {
-      tokens: this.estimateObjectTokens(structure),
-      structure
-    };
-  }
-  
-  /**
    * Create empty token statistics object
    * @private
    * @returns {Object} - Empty token statistics
@@ -391,10 +345,10 @@ class TokenManagementService {
       inputTokens: 0,
       outputTokens: 0,
       totalCost: 0,
-      accumulatedCost: 0, // New field for accumulated costs
+      accumulatedCost: 0,
       promptTokens: 0,
       historyTokens: 0,
-      systemTokens: 0, // Ensure systemTokens is part of the empty state
+      systemTokens: 0,
       isCalculated: false
     };
   }

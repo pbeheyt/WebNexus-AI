@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useSidebarPlatform } from '../contexts/platform'; // Keep this for setTabId
+import { useSidebarPlatform } from '../contexts/platform';
 import { useSidebarChat } from './contexts/SidebarChatContext';
-import { useContent } from '../contexts/ContentContext'; // Corrected path
+import { useContent } from '../contexts/ContentContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
 import { AppHeader } from '../components';
 
 export default function SidebarApp() {
-  const { tabId, setTabId } = useSidebarPlatform(); // Get setTabId
-  const { resetCurrentTabData, clearFormattedContentForTab } = useSidebarChat(); // Get clearFormattedContentForTab
-  const { updateContentContext } = useContent(); // Get updateContentContext
+  const { tabId, setTabId } = useSidebarPlatform();
+  const { resetCurrentTabData, clearFormattedContentForTab } = useSidebarChat();
+  const { updateContentContext } = useContent();
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
 
@@ -74,11 +74,6 @@ export default function SidebarApp() {
       try {
         portRef.current = chrome.runtime.connect({ name: portName });
         console.log(`[SidebarApp] Connection established for tab ${tabId}`, portRef.current);
-
-        // Optional: Add listener for messages from background if needed later
-        // portRef.current.onMessage.addListener((msg) => {
-        //   console.log(`[SidebarApp] Message received from background for tab ${tabId}:`, msg);
-        // });
 
         portRef.current.onDisconnect.addListener(() => {
           console.log(`[SidebarApp] Port disconnected for tab ${tabId}.`);

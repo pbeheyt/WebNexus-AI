@@ -6,7 +6,7 @@ import { MessageBubble } from '../../components/messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle';
 import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES } from '../../shared/constants';
-import { getContentTypeIconSvg } from '../../shared/utils/icon-utils'; // Import the utility
+import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 
 function ChatArea({ className = '' }) {
   const { messages, isProcessing, isContentExtractionEnabled, setIsContentExtractionEnabled } = useSidebarChat();
@@ -32,25 +32,22 @@ function ChatArea({ className = '' }) {
     }
   };
 
-  // This function has been removed as we no longer use border accents
-
   const handleScroll = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
 
     if (isProcessing) {
-      // Calculate dynamic threshold (10% of height, min 10px)
-      const threshold = Math.max(10, scrollContainer.clientHeight * 0.10); 
-      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= threshold; // Use the calculated threshold
+      // Calculate dynamic threshold (5% of height, min 10px)
+      const threshold = Math.max(10, scrollContainer.clientHeight * 0.05); 
+      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= threshold;
       
-      // Keep the logic for setting userInteractedWithScroll based on isAtBottom
       if (!isAtBottom) {
         setUserInteractedWithScroll(true);
       } else {
         setUserInteractedWithScroll(false);
       }
     }
-  }, [isProcessing]); // Keep original dependencies
+  }, [isProcessing]);
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
