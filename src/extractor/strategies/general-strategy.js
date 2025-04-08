@@ -174,7 +174,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
 
-  // --- Metadata Extraction Methods (Unchanged) ---
+  // --- Metadata Extraction Methods ---
 
   /**
    * Extract the page title
