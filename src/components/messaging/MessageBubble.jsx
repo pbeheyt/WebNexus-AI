@@ -1,5 +1,4 @@
 import React, { useState, memo } from 'react';
-import { useUI } from '../../contexts/UIContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -33,7 +32,7 @@ const copyToClipboardUtil = (text) => {
 };
 
 /**
- * Modern minimalist CodeBlock component with language header
+ * Modern minimalist CodeBlock
  */
 const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
@@ -84,7 +83,7 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
         {/* Language name */}
         <span className="text-gray-600 dark:text-gray-400 font-mono text-xs">{displayLanguage}</span>
         
-        {/* Copy button - Only show when not streaming - SMALLER VERSION */}
+        {/* Copy button - Only show when not streaming */}
         {!isStreaming && (
           <button
             onClick={copyCodeToClipboard}
@@ -165,7 +164,7 @@ const MessageBubbleComponent = ({
     );
   }
 
-  // User messages with cleaner grey color scheme
+  // User messages with grey color scheme
   if (isUser) {
     return (
       <div className={`px-5 py-2 w-full flex justify-end ${className}`}>

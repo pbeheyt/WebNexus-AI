@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 /**
  * A reusable component combining a range slider and a number input.
  */
-export const SliderInput = ({
+export function SliderInput ({
   label,
   value,
   onChange,
@@ -13,7 +13,7 @@ export const SliderInput = ({
   step,
   className = '',
   disabled = false,
-}) => {
+}) {
   const handleInputChange = (event) => {
     const newValue = event.target.value;
     // Allow empty input temporarily, but pass 0 or min if empty/invalid
@@ -87,5 +87,4 @@ SliderInput.propTypes = {
   disabled: PropTypes.bool,
 };
 
-// Default export for convenience if needed elsewhere, but named export is primary
-// export default SliderInput;
+export default SliderInput;
