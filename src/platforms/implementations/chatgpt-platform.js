@@ -32,27 +32,23 @@ class ChatGptPlatform extends BasePlatform {
   findSubmitButton() {
     return document.querySelector('button[data-testid="send-button"]:not(:disabled)');
   }
-  
-  /**
-   * Insert text into ChatGPT's editor and submit
-   * @param {string} text - The text to insert
-   * @returns {Promise<boolean>} Success status
-   */
-  async insertAndSubmitText(text) {
-    const editorElement = this.findEditorElement();
-    
-    if (!editorElement) {
-      this.logger.error('ChatGPT editor element not found');
-      return false;
-    }
 
+  /**
+   * Override: Insert text into ChatGPT's contenteditable editor.
+   * @param {HTMLElement} editorElement - The editor element (ProseMirror).
+   * @param {string} text - The text to insert.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
+   */
+  async _insertTextIntoEditor(editorElement, text) {
     try {
+      this.logger.info(`Inserting text into ChatGPT editor (ProseMirror)`);
       // Clear existing content
       editorElement.innerHTML = '';
-      
+
       // Split the text into paragraphs by newline
       const paragraphs = text.split('\n');
-      
+
       // Insert each paragraph
       paragraphs.forEach((paragraph) => {
         if (paragraph.trim() === '') {
@@ -67,53 +63,56 @@ class ChatGptPlatform extends BasePlatform {
           editorElement.appendChild(p);
         }
       });
-      
-      // Remove placeholder class if it exists
+
+      // Remove placeholder class if it exists (though clearing innerHTML might handle this)
       const placeholderP = editorElement.querySelector('p.placeholder');
       if (placeholderP) {
         placeholderP.classList.remove('placeholder');
       }
-      
+
       // Focus the editor
       editorElement.focus();
-      
+
       // Dispatch input event to ensure ChatGPT recognizes the change
-      const inputEvent = new Event('input', {
-        bubbles: true
-      });
-      editorElement.dispatchEvent(inputEvent);
-      
-      // Wait a moment for UI to update (longer timeout for reliability)
-      return new Promise(resolve => {
-        setTimeout(() => {
-          // Find enabled send button
-          const sendButton = this.findSubmitButton();
-          
-          if (!sendButton) {
-            this.logger.error('ChatGPT send button not found or disabled');
-            resolve(false);
-            return;
-          }
-          
-          this.logger.info('Send button found, clicking...');
-          
-          // Create and dispatch multiple events for better compatibility
-          ['mousedown', 'mouseup', 'click'].forEach(eventType => {
-            const event = new MouseEvent(eventType, {
-              view: window,
-              bubbles: true,
-              cancelable: true,
-              buttons: 1
-            });
-            sendButton.dispatchEvent(event);
-          });
-          
-          this.logger.info('Text submitted to ChatGPT successfully');
-          resolve(true);
-        }, 1000);
-      });
+      this._dispatchEvents(editorElement, ['input']); // Use base class helper
+
+      this.logger.info(`Successfully inserted text into ChatGPT editor.`);
+      return true;
     } catch (error) {
-      this.logger.error('Error inserting text into ChatGPT:', error);
+      this.logger.error('Error inserting text into ChatGPT editor:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Override: Click ChatGPT's submit button using a more robust event sequence.
+   * @param {HTMLElement} buttonElement - The submit button element.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
+   */
+  async _clickSubmitButton(buttonElement) {
+    try {
+      this.logger.info(`Attempting to click submit button for ChatGPT with event sequence`);
+      if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
+        this.logger.warn(`Submit button for ChatGPT is disabled.`);
+        return false;
+      }
+
+      // Create and dispatch multiple events for better compatibility
+      ['mousedown', 'mouseup', 'click'].forEach(eventType => {
+        const event = new MouseEvent(eventType, {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          buttons: eventType === 'mousedown' ? 1 : 0 // Set buttons only for mousedown
+        });
+        buttonElement.dispatchEvent(event);
+      });
+
+      this.logger.info(`Successfully clicked submit button for ChatGPT.`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to click submit button for ChatGPT:`, error);
       return false;
     }
   }

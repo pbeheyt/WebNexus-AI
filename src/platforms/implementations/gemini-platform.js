@@ -19,81 +19,92 @@ class GeminiPlatform extends BasePlatform {
     // Exact selector based on provided HTML
     return document.querySelector('button.send-button');
   }
-  
-  async insertAndSubmitText(text) {
-    const editorElement = this.findEditorElement();
-    
-    if (!editorElement) {
-      this.logger.error('Gemini editor element not found');
-      return false;
-    }
 
+  /**
+   * Override: Insert text into Gemini's contenteditable editor (Quill).
+   * @param {HTMLElement} editorElement - The editor element (div.ql-editor).
+   * @param {string} text - The text to insert.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
+   */
+  async _insertTextIntoEditor(editorElement, text) {
     try {
+      this.logger.info(`Inserting text into Gemini editor (Quill)`);
       // Focus the editor
       editorElement.focus();
-      
+
       // Clear existing content and set new content
       editorElement.innerHTML = '';
-      
+
       // Create paragraph for each line
       const paragraphs = text.split('\n');
       paragraphs.forEach(paragraph => {
+        const p = document.createElement('p');
         if (paragraph.trim()) {
-          const p = document.createElement('p');
           p.textContent = paragraph;
-          editorElement.appendChild(p);
         } else {
-          // Empty paragraph with br
-          const p = document.createElement('p');
+          // Empty paragraph with br for line breaks
           p.appendChild(document.createElement('br'));
-          editorElement.appendChild(p);
         }
+        editorElement.appendChild(p);
       });
-      
+
       // Remove placeholder class if present
       if (editorElement.classList.contains('ql-blank')) {
         editorElement.classList.remove('ql-blank');
       }
-      
-      // Trigger input events
-      ['input', 'change'].forEach(eventType => {
-        const event = new Event(eventType, { bubbles: true });
-        editorElement.dispatchEvent(event);
-      });
-      
-      // Wait for UI to update
-      return new Promise(resolve => {
-        setTimeout(() => {
-          const sendButton = this.findSubmitButton();
-          
-          if (!sendButton) {
-            this.logger.error('Gemini send button not found');
-            resolve(false);
-            return;
-          }
-          
-          // Remove disabled state if present
-          if (sendButton.getAttribute('aria-disabled') === 'true') {
-            sendButton.removeAttribute('aria-disabled');
-          }
-          
-          // Click the button with multiple events
-          ['mousedown', 'mouseup', 'click'].forEach(eventType => {
-            const event = new MouseEvent(eventType, {
-              view: window,
-              bubbles: true,
-              cancelable: true,
-              buttons: 1
-            });
-            sendButton.dispatchEvent(event);
-          });
-          
-          this.logger.info('Text submitted to Gemini successfully');
-          resolve(true);
-        }, 800);
-      });
+
+      // Trigger input events using base class helper
+      this._dispatchEvents(editorElement, ['input', 'change']);
+
+      this.logger.info(`Successfully inserted text into Gemini editor.`);
+      return true;
     } catch (error) {
-      this.logger.error('Error inserting text into Gemini:', error);
+      this.logger.error('Error inserting text into Gemini editor:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Override: Click Gemini's submit button, ensuring it's enabled and using event sequence.
+   * @param {HTMLElement} buttonElement - The submit button element.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
+   */
+  async _clickSubmitButton(buttonElement) {
+    try {
+      this.logger.info(`Attempting to click submit button for Gemini`);
+      // Check and potentially remove disabled state
+      if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
+        this.logger.warn(`Gemini submit button is disabled, attempting to enable.`);
+        if (buttonElement.hasAttribute('disabled')) {
+            buttonElement.disabled = false;
+        }
+        if (buttonElement.hasAttribute('aria-disabled')) {
+            buttonElement.removeAttribute('aria-disabled');
+        }
+        // Re-check after attempting to enable
+        if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
+            this.logger.error(`Gemini submit button remained disabled.`);
+            return false;
+        }
+      }
+
+      // Click the button with multiple events
+      ['mousedown', 'mouseup', 'click'].forEach(eventType => {
+        const event = new MouseEvent(eventType, {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          buttons: eventType === 'mousedown' ? 1 : 0 // Set buttons only for mousedown
+        });
+        buttonElement.dispatchEvent(event);
+      });
+
+      this.logger.info(`Successfully clicked submit button for Gemini.`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to click submit button for Gemini:`, error);
       return false;
     }
   }

@@ -113,6 +113,8 @@ class DeepSeekPlatform extends BasePlatform {
       return false;
     }
   }
+  // No override needed for _insertTextIntoEditor - default implementation works
+  // No override needed for _clickSubmitButton - default implementation works
 }
 
 module.exports = DeepSeekPlatform;

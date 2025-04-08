@@ -20,83 +20,86 @@ class MistralPlatform extends BasePlatform {
     return document.querySelector('button[aria-label="Send question"].bg-inverted.text-inverted-default');
   }
 
-  async insertAndSubmitText(text) {
-    const editorElement = this.findEditorElement();
-    
-    if (!editorElement) {
-      this.logger.error('Mistral editor element not found');
-      return false;
-    }
-
+  /**
+   * Override: Insert text into Mistral's editor using specific event sequence.
+   * @param {HTMLElement} editorElement - The editor element (textarea).
+   * @param {string} text - The text to insert.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
+   */
+  async _insertTextIntoEditor(editorElement, text) {
     try {
+      this.logger.info(`Inserting text into Mistral editor with specific events`);
       // Focus first to ensure proper state
       editorElement.focus();
-      
+
       // Set value directly
       editorElement.value = text;
-      
+
       // Trigger comprehensive set of events to ensure React state updates
-      const events = ['input', 'change', 'keydown', 'keyup', 'keypress'];
-      events.forEach(eventType => {
-        editorElement.dispatchEvent(new Event(eventType, {
-          bubbles: true,
-          cancelable: true
-        }));
-      });
+      // Use base helper for standard events, manually dispatch others if needed
+      this._dispatchEvents(editorElement, ['input', 'change']);
+      // Additional events previously used: ['keydown', 'keyup', 'keypress']
+      // Let's try without them first, add back if necessary
+      // ['keydown', 'keyup', 'keypress'].forEach(eventType => {
+      //   editorElement.dispatchEvent(new Event(eventType, { bubbles: true, cancelable: true }));
+      // });
 
-      // Additional blur/focus cycle to trigger validation
-      editorElement.blur();
-      editorElement.focus();
 
-      return new Promise((resolve) => {
-        const attemptSubmission = (retries = 5) => {
-          setTimeout(() => {
-            const sendButton = this.findSubmitButton();
-            
-            if (!sendButton) {
-              this.logger.error('Send button not found');
-              return resolve(false);
-            }
+      // Additional blur/focus cycle previously used
+      // editorElement.blur();
+      // editorElement.focus();
+      // Let's try without this first, add back if necessary
 
-            // Remove disabled attribute if present
-            if (sendButton.disabled) {
-              sendButton.removeAttribute('disabled');
-              this.logger.info('Removed disabled attribute from button');
-            }
-
-            // Create full click simulation
-            if (!sendButton.disabled) {
-              const mouseEvents = ['mousedown', 'mouseup', 'click'];
-              mouseEvents.forEach(eventType => {
-                const event = new MouseEvent(eventType, {
-                  view: window,
-                  bubbles: true,
-                  cancelable: true,
-                  buttons: 1
-                });
-                sendButton.dispatchEvent(event);
-              });
-              
-              this.logger.info('Text submitted to Mistral successfully');
-              return resolve(true);
-            }
-
-            // Retry mechanism
-            if (retries > 0) {
-              this.logger.info(`Retrying submission (${retries} attempts remaining)`);
-              return attemptSubmission(retries - 1);
-            }
-
-            this.logger.error('Submit button remained disabled after retries');
-            resolve(false);
-          }, 500); // Reduced delay between checks
-        };
-
-        // Initial attempt with retries
-        attemptSubmission();
-      });
+      this.logger.info(`Successfully inserted text into Mistral editor.`);
+      return true;
     } catch (error) {
-      this.logger.error('Error inserting text into Mistral:', error);
+      this.logger.error('Error inserting text into Mistral editor:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Override: Click Mistral's submit button, ensuring it's enabled and using event sequence.
+   * @param {HTMLElement} buttonElement - The submit button element.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
+   */
+  async _clickSubmitButton(buttonElement) {
+    try {
+      this.logger.info(`Attempting to click submit button for Mistral`);
+      // Remove disabled attribute if present
+      if (buttonElement.disabled) {
+        this.logger.warn(`Mistral submit button is disabled, attempting to enable.`);
+        buttonElement.removeAttribute('disabled');
+        // Re-check after attempting to enable
+        if (buttonElement.disabled) {
+            this.logger.error(`Mistral submit button remained disabled.`);
+            return false;
+        }
+      }
+       // Also check aria-disabled just in case
+      if (buttonElement.getAttribute('aria-disabled') === 'true') {
+         this.logger.warn(`Mistral submit button is aria-disabled.`);
+         // Cannot directly change aria-disabled usually, proceed but might fail
+      }
+
+
+      // Create full click simulation
+      ['mousedown', 'mouseup', 'click'].forEach(eventType => {
+        const event = new MouseEvent(eventType, {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          buttons: eventType === 'mousedown' ? 1 : 0 // Set buttons only for mousedown
+        });
+        buttonElement.dispatchEvent(event);
+      });
+
+      this.logger.info(`Successfully clicked submit button for Mistral.`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to click submit button for Mistral:`, error);
       return false;
     }
   }
