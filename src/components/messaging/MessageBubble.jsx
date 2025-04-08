@@ -261,7 +261,7 @@ const MessageBubbleComponent = ({
             <img
               src={platformIconUrl}
               alt="AI Platform"
-              className="w-3 h-3 mr-1 object-contain"
+              className="w-3 h-3 mr-2 object-contain"
             />
           )}
           {model && !isUser && <span>{model}</span>}
