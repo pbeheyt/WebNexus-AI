@@ -78,11 +78,11 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     "Select a model";
 
   return (
-    <div className={`relative w-full ${className}`}>
+    <div className={`relative ${className}`}>
       <button
         ref={modelTriggerRef}
         onClick={() => setOpenDropdown(isOpen ? null : 'model')}
-        className="flex items-center w-full px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
+        className="flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
       >
         <span className="truncate">{selectedModelName}</span>
         
@@ -95,7 +95,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto"
+          className="absolute left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto w-max max-w-sm"
           onClick={(e) => e.stopPropagation()}
         >
           {formattedModels.length === 0 ? (
