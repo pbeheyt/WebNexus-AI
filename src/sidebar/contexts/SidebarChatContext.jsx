@@ -64,7 +64,7 @@ export function SidebarChatProvider({ children }) {
 
       try {
         // Get API configuration using the new function (synchronous)
-        const config = getPlatformApiConfig(selectedPlatformId);
+        const config = await getPlatformApiConfig(selectedPlatformId);
 
         // Update checks to use the new structure (config.models instead of config.api.models)
         if (!config || !config.models) {
