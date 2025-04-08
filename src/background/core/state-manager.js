@@ -240,7 +240,7 @@ export async function completeStreamResponse(fullContent, model, platformId, err
       };
       storageUpdate = {
         [STORAGE_KEYS.API_PROCESSING_STATUS]: 'error',
-        [STORAGE_KEYS.API_PROCESSING_ERROR]: error, // Store the error message
+        [STORAGE_KEYS.API_PROCESSING_ERROR]: error,
         [STORAGE_KEYS.API_RESPONSE]: finalResponse,
         [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now()
       };
@@ -259,7 +259,7 @@ export async function completeStreamResponse(fullContent, model, platformId, err
         [STORAGE_KEYS.API_PROCESSING_STATUS]: 'completed',
         [STORAGE_KEYS.API_RESPONSE]: finalResponse,
         [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now(),
-        [STORAGE_KEYS.API_PROCESSING_ERROR]: null // Clear any previous error
+        [STORAGE_KEYS.API_PROCESSING_ERROR]: null
       };
       logger.background.info('Stream response completed successfully');
     }
@@ -267,12 +267,12 @@ export async function completeStreamResponse(fullContent, model, platformId, err
     // Update storage
     await chrome.storage.local.set(storageUpdate);
     
-    // Notify the popup and potentially other listeners (like sidebar via coordinator)
+    // Notify the popup and potentially other listeners
     try {
-      // Send the final response object (which includes error details if applicable)
+      // Send the final response object
       chrome.runtime.sendMessage({
-        action: 'apiResponseReady', // Use a consistent action name
-        response: finalResponse // Send the complete finalResponse object
+        action: 'apiResponseReady',
+        response: finalResponse
       });
     } catch (msgError) {
       // Ignore if popup isn't open or other listeners fail
@@ -316,25 +316,6 @@ export async function setApiProcessingError(error) {
     }
   } catch (err) {
     logger.background.error('Error setting API processing error:', err);
-  }
-}
-
-/**
- * Track quick prompt usage
- * @param {string} contentType - Content type
- * @returns {Promise<void>}
- */
-export async function trackQuickPromptUsage(contentType) {
-  try {
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.QUICK_PROMPTS]: {
-        contentType,
-        timestamp: Date.now()
-      }
-    });
-    logger.background.info(`Quick prompt usage tracked for: ${contentType}`);
-  } catch (error) {
-    logger.background.error('Error tracking quick prompt usage:', error);
   }
 }
 
@@ -385,7 +366,6 @@ export async function storeFormattedContentForTab(tabId, formattedContent) {
   }
   if (typeof formattedContent !== 'string') {
     logger.background.warn('storeFormattedContentForTab called with non-string content for tabId:', tabId);
-    // Optionally convert to string or throw error, here we just return
     return;
   }
 
@@ -394,7 +374,7 @@ export async function storeFormattedContentForTab(tabId, formattedContent) {
     const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT);
     const allFormattedContent = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
 
-    allFormattedContent[key] = formattedContent; // Add or update the content
+    allFormattedContent[key] = formattedContent;
 
     await chrome.storage.local.set({ [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: allFormattedContent });
     logger.background.info(`Stored formatted content for tab ${tabId}.`);

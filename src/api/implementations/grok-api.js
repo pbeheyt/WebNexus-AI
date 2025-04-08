@@ -1,5 +1,4 @@
 const BaseApiService = require('../api-base');
-// extractApiErrorMessage is now used in the base class
 
 /**
  * Grok API implementation

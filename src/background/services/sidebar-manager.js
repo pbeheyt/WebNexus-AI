@@ -56,10 +56,6 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
       logger.background.info(`Side panel disabled for tab ${targetTabId}.`);
     }
 
-    // IMPORTANT: Do NOT call chrome.sidePanel.open() here.
-    // Opening must be triggered by a user gesture (popup click, command, context menu)
-    // after this function confirms the panel is enabled (newState is true).
-
     sendResponse({
       success: true,
       visible: newState, // Send back the new intended state
@@ -135,4 +131,3 @@ export async function getSidebarState(message, sender, sendResponse) {
     sendResponse({ success: false, error: error.message });
   }
 }
-// Removed ensureSidebarScriptInjected function as it's no longer needed with the native Side Panel API.

@@ -1,4 +1,4 @@
-// src/background/services/content-processing.js
+// src/background/services/content-processing.js - Content processing
 
 import { determineContentType, isInjectablePage } from '../../shared/utils/content-utils.js';
 import { extractContent } from './content-extraction.js';

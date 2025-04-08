@@ -87,6 +87,5 @@ function setupConnectionListener() {
   console.log('[Background] Runtime connection listener set up.');
 }
 
-
 // Start the background service when the file is loaded
 startBackgroundService();

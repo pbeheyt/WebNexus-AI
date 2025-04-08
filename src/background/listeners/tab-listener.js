@@ -3,10 +3,10 @@
 import { isPlatformTab, getPlatformContentScript } from '../services/platform-integration.js';
 import { injectContentScript } from '../services/content-extraction.js';
 import { getPlatformTabInfo, updateScriptInjectionStatus } from '../core/state-manager.js';
-import SidebarStateManager from '../../services/SidebarStateManager.js'; // Import the state manager
+import SidebarStateManager from '../../services/SidebarStateManager.js';
 import logger from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
-import { determineContentType } from '../../shared/utils/content-utils.js'; // Added import
+import { determineContentType } from '../../shared/utils/content-utils.js';
 
 /**
  * Set up tab update and activation listeners

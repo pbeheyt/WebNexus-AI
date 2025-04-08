@@ -5,9 +5,9 @@ import { determineContentType } from '../../shared/utils/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
 import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
-import { handleToggleNativeSidePanelAction } from '../services/sidebar-manager.js'; // Import the handler
+import { handleToggleNativeSidePanelAction } from '../services/sidebar-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
-import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js'; // Import the handler
+import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -147,9 +147,9 @@ function registerServiceHandlers() {
     return true; // Keep channel open for async response
   });
 
-  // Clear specific tab data (for sidebar refresh) - Now uses dedicated handler
+  // Clear specific tab data (for sidebar refresh)
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
 
-  // Handle requests to toggle the native side panel (e.g., from popup) - Now uses dedicated handler
+  // Handle requests to toggle the native side panel
   messageHandlers.set('toggleNativeSidePanelAction', handleToggleNativeSidePanelAction);
 }

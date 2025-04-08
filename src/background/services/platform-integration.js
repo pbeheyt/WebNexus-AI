@@ -1,6 +1,6 @@
 // src/background/services/platform-integration.js - AI platform interactions
 
-import { AI_PLATFORMS, INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
+import { AI_PLATFORMS } from '../../shared/constants.js';
 import logger from '../../shared/logger.js';
 import ConfigService from '../../services/ConfigService.js';
 
@@ -23,10 +23,10 @@ export function getPlatformContentScript() {
  * @param {string} platformId - Platform ID
  * @returns {Promise<number|null>} Tab ID or null
  */
-export async function openAiPlatformWithContent(contentType, promptId, platformId) {
+export async function openAiPlatformWithContent(platformId) {
   try {
     // Prepare platform and prompt information
-    const effectivePlatformId = platformId; // Assuming platformId is always provided now
+    const effectivePlatformId = platformId;
     if (!effectivePlatformId) {
         throw new Error('Platform ID must be provided to openAiPlatformWithContent');
     }
@@ -49,8 +49,6 @@ export async function openAiPlatformWithContent(contentType, promptId, platformI
     }
 
     logger.background.info(`${platformName} tab created with ID: ${newTab.id}`);
-    
-    // The prompt content will be retrieved by the caller and passed to savePlatformTabInfo
     
     return newTab.id;
   } catch (error) {

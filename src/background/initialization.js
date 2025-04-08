@@ -92,7 +92,6 @@ async function initializeDefaultPrompts() {
   }
 }
 
-
 /**
  * Initialize the extension's core configuration and state.
  * Should run on install and update.
@@ -106,15 +105,13 @@ export async function initializeExtension() {
 
     // 2. Reset volatile state (like processing status, extracted content etc.)
     // Note: Resetting state might clear things needed by prompt init if called before.
-    // Consider if resetState needs adjustment or if prompt init should handle existing state.
-    // For now, assuming resetState is safe here.
     await resetState();
     logger.background.info('Volatile state reset complete');
 
     return true;
   } catch (error) {
     logger.background.error('Core initialization error:', error);
-    throw error; // Re-throw to indicate failure
+    throw error;
   }
 }
 
