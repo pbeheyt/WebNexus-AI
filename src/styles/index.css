@@ -131,11 +131,10 @@
   }
 }
 
-/* --- Custom Slider Styles (Webkit/Chrome Only) --- */
+/* Custom Slider Styles */
 .custom-slider {
   -webkit-appearance: none; /* Override default look */
   appearance: none;
-  /* width: 100%; Let Tailwind handle width */
   height: 8px; /* Specified height */
   background: transparent; /* Background set on the track */
   cursor: pointer;
@@ -170,7 +169,7 @@
    background: theme('colors.primary.hover');
 }
 .custom-slider:active::-webkit-slider-thumb {
-   background: theme('colors.primary.hover'); /* Use hover state for active as well */
+   background: theme('colors.primary.hover');
 }
 
 /* Disabled State (Webkit Only) */
@@ -193,7 +192,7 @@
   background: theme('colors.gray.800');
 }
 
-/* --- Hide spin buttons on ALL number inputs --- */
+/* Hide spin buttons on ALL number inputs */
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
