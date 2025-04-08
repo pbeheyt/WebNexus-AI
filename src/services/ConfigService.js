@@ -1,5 +1,5 @@
 // src/services/ConfigService.js
-import logger from '../shared/logger.js'; // Use the shared logger
+const logger = require('../shared/logger.js'); // Changed from import to require
 
 let cachedApiConfig = null;
 let cachedDisplayConfig = null;
@@ -37,7 +37,7 @@ async function _loadConfig(urlPath, cacheRef) {
  * Gets the entire API configuration object, loading and caching if necessary.
  * @returns {Promise<object>} The API configuration object.
  */
-export async function getApiConfig() {
+async function getApiConfig() {
   if (!cachedApiConfig) {
     cachedApiConfig = await _loadConfig('platform-api-config.json', cachedApiConfig);
   }
@@ -48,7 +48,7 @@ export async function getApiConfig() {
  * Gets the entire display configuration object, loading and caching if necessary.
  * @returns {Promise<object>} The display configuration object.
  */
-export async function getDisplayConfig() {
+async function getDisplayConfig() {
   if (!cachedDisplayConfig) {
     cachedDisplayConfig = await _loadConfig('platform-display-config.json', cachedDisplayConfig);
   }
@@ -60,7 +60,7 @@ export async function getDisplayConfig() {
  * @param {string} platformId - The ID of the platform.
  * @returns {Promise<object|null>} The API configuration for the platform, or null if not found.
  */
-export async function getPlatformApiConfig(platformId) {
+async function getPlatformApiConfig(platformId) {
   try {
     const config = await getApiConfig();
     return config?.aiPlatforms?.[platformId] || null;
@@ -75,7 +75,7 @@ export async function getPlatformApiConfig(platformId) {
  * @param {string} platformId - The ID of the platform.
  * @returns {Promise<object|null>} The display configuration for the platform, or null if not found.
  */
-export async function getPlatformDisplayConfig(platformId) {
+async function getPlatformDisplayConfig(platformId) {
   try {
     const config = await getDisplayConfig();
     return config?.aiPlatforms?.[platformId] || null;
@@ -90,7 +90,7 @@ export async function getPlatformDisplayConfig(platformId) {
  * Useful for UI components needing comprehensive platform info.
  * @returns {Promise<Array<object>>} A list of combined platform configuration objects.
  */
-export async function getAllPlatformConfigs() {
+async function getAllPlatformConfigs() {
   try {
     const [displayConfig, apiConfigData] = await Promise.all([
       getDisplayConfig(),
@@ -130,13 +130,13 @@ export async function getAllPlatformConfigs() {
 }
 
 // Optional: Add a function to clear the cache if needed for hot-reloading during development
-export function clearConfigCache() {
+function clearConfigCache() {
   cachedApiConfig = null;
   cachedDisplayConfig = null;
   logger.service.info('ConfigService: Cache cleared.');
 }
 
-// Export the service functions
+// Define the ConfigService object with all exported functions
 const ConfigService = {
   getApiConfig,
   getDisplayConfig,
@@ -146,4 +146,5 @@ const ConfigService = {
   clearConfigCache
 };
 
-export default ConfigService;
+// Export the service functions using CommonJS module.exports
+module.exports = ConfigService;
