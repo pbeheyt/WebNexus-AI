@@ -136,7 +136,6 @@ class ModelParameterService {
       // Store updated preferences
       await chrome.storage.local.set({
         [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: tabModels,
-        [STORAGE_KEYS.LAST_ACTIVE_TAB]: tabId
       });
 
       logger.info(`Saved tab model preference: Tab ${tabId}, Platform ${platformId}, Model ${modelId}`);

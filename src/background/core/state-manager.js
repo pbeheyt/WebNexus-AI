@@ -16,7 +16,6 @@ export async function resetState() {
       [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
       [STORAGE_KEYS.API_PROCESSING_STATUS]: null,
       [STORAGE_KEYS.API_RESPONSE]: null,
-      [STORAGE_KEYS.CURRENT_CONTENT_PROCESSING_MODE]: null
     });
   } catch (error) {
     logger.background.error('Error resetting state:', error);
@@ -160,7 +159,6 @@ export async function updateApiProcessingStatus(status, platformId) {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: status,
-      [STORAGE_KEYS.CURRENT_CONTENT_PROCESSING_MODE]: 'api',
       [STORAGE_KEYS.API_CONTENT_PROCESSING_PLATFORM]: platformId,
       [STORAGE_KEYS.API_CONTENT_PROCESSING_TIMESTAMP]: Date.now()
     });

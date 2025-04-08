@@ -52,14 +52,11 @@ export const STORAGE_KEYS = {
   // Service
   THEME_PREFERENCE: 'theme_preference',
   TEXT_SIZE_PREFERENCE: 'text_size_preference',
-  SHORTCUT_SETTINGS: 'shortcut_settings',
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
   API_CREDENTIALS: 'api_credentials',
 
   // Prompt
   PRE_PROMPT: 'prePrompt',
-  SELECTED_PROMPT_IDS: 'selected_prompt_ids',
-  QUICK_PROMPTS: 'quick_prompts',
   CUSTOM_PROMPTS: 'custom_prompts_by_type',
   DEFAULT_PROMPTS_INIT_FLAG: 'default_prompts_initialized_v1',
 
@@ -71,7 +68,6 @@ export const STORAGE_KEYS = {
   SIDEBAR_MODEL: 'sidebar_model_preferences',
   TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
-  LAST_ACTIVE_TAB: 'last_active_tab',
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
   
   // API
@@ -79,16 +75,15 @@ export const STORAGE_KEYS = {
   API_RESPONSE: 'apiResponse',
   API_PROCESSING_ERROR: 'apiProcessingError',
   API_RESPONSE_TIMESTAMP: 'apiResponseTimestamp',
-  CURRENT_CONTENT_PROCESSING_MODE: 'currentContentProcessingMode',
   API_CONTENT_PROCESSING_PLATFORM: 'apiContentProcessingPlatform',
   API_CONTENT_PROCESSING_TIMESTAMP: 'apiContentProcessingTimestamp',
-  TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
+  STREAM_CONTENT: 'streamContent',
+  STREAM_ID: 'streamId',
   
   // Sidebar
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
+  TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
   TAB_TOKEN_STATISTICS: 'tab_token_statistics',
-  STREAM_CONTENT: 'streamContent',
-  STREAM_ID: 'streamId',
 };
 
 /**

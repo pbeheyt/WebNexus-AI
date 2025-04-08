@@ -73,7 +73,4 @@ export async function extractApiErrorMessage(response) {
     console.warn(`API error data received (type: ${dataType}), but no specific message field found:`, errorData);
     return defaultMessage;
   }
-
-  // If errorData is not an object or parsing failed earlier
-  return defaultMessage;
 }

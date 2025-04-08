@@ -239,7 +239,6 @@ export function createTabAwarePlatformContext(options = {}) {
 
         await chrome.storage.local.set({
           [STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]: tabPlatformPrefs,
-          [STORAGE_KEYS.LAST_ACTIVE_TAB]: tabId
         });
 
         // Update global preference for new tabs
