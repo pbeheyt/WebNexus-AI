@@ -26,7 +26,6 @@ export function AppHeader({
     <header className="flex items-center justify-between pb-1 mb-1 border-b border-theme">
       <h1 className="text-base font-semibold flex items-center">
         <img src={chrome.runtime.getURL('images/icon128.png')} alt="AI Content Assistant logo" className="w-5 h-5 mr-2" />
-        AI Assistant
       </h1>
 
       <div className="flex items-center gap-1"> {/* Use gap for spacing */}

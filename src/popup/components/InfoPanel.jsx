@@ -8,7 +8,7 @@ export function InfoPanel({ contentTypeLabel, contentType }) { // Add contentTyp
   const modifiedIconSvg = iconSvg.replace('w-5 h-5', 'w-3.5 h-3.5');
 
   return (
-    <div className="p-1.5 rounded-lg bg-theme-hover/20 dark:bg-theme-hover/10 text-xs text-theme-secondary leading-relaxed">
+    <div className="p-1 rounded-lg bg-theme-hover/20 dark:bg-theme-hover/10 text-xs text-theme-secondary leading-relaxed">
       <p className="mb-1.5">
         Extract this <span className="font-medium text-theme-primary">{displayLabel}</span>
         {modifiedIconSvg && (
