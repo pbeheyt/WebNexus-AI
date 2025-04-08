@@ -109,7 +109,7 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
       </div>
       
       {/* Clean code content area with equal padding top and bottom */}
-      <pre className="bg-gray-50 dark:bg-gray-900 py-2 px-4 m-0 overflow-x-auto overflow-y-auto max-h-[50vh] text-xs leading-5 font-mono text-gray-800 dark:text-gray-200 w-full">
+      <pre className="bg-gray-50 dark:bg-gray-900 py-2 px-4 m-0 overflow-x-auto overflow-y-auto max-h-[50vh] text-sm leading-5 font-mono text-gray-800 dark:text-gray-200 w-full">
         <code className={`${className} whitespace-pre-wrap break-words overflow-wrap-anywhere block min-h-[1.5rem] mt-0`}>
           {children}
         </code>
@@ -166,7 +166,7 @@ const MessageBubbleComponent = ({
       <div className={`px-5 py-2 w-full flex justify-end ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
           {/* User messages render raw content, preserving whitespace */}
-          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-xs">{content}</div>
+          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
         </div>
       </div>
     );
@@ -183,7 +183,7 @@ const MessageBubbleComponent = ({
             h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-3" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mb-2" {...props} />,
-            p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed text-xs" {...props} />,
+            p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed text-sm" {...props} />,
 
             // Fixed list rendering to prevent marker line breaks
             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,

@@ -120,7 +120,7 @@ export function UnifiedInput({
                   autoResize={true}
                   minHeight={70}
                   maxHeight={200}
-                  className="w-full py-3 pl-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-xs"
+                  className="w-full py-3 pl-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
                 />
               </div>
               
@@ -210,7 +210,7 @@ export function UnifiedInput({
                   placeholder="Type a prompt or select one..."
                   disabled={disabled || isProcessing}
                   autoResize={true}
-                  minHeight={60}
+                  minHeight={50}
                   maxHeight={150}
                   className="w-full py-3 pl-3 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
                 />

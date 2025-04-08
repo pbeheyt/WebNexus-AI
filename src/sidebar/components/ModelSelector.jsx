@@ -14,7 +14,6 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     models,
     selectedModel,
     selectModel,
-    isLoading
   } = useSidebarPlatform();
 
   const [formattedModels, setFormattedModels] = useState([]);
