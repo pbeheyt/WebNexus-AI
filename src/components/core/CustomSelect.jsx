@@ -71,7 +71,7 @@ export function CustomSelect({
   };
 
   return (
-    <div ref={dropdownRef} className={`relative ${className}`}>
+    <div ref={dropdownRef} className={`relative w-max max-w-xs ${className}`}>
       {/* Trigger Button */}
       <button
         ref={triggerRef}
@@ -95,7 +95,7 @@ export function CustomSelect({
       {/* Dropdown Panel */}
       {isOpen && (
         <div
-          className="absolute top-full left-0 right-0 mt-1 w-full bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-y-auto py-1"
+          className="absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-y-auto py-1"
           role="listbox" // Accessibility attribute
         >
           {/* Handle case where no options are provided */}

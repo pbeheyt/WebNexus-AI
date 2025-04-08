@@ -129,7 +129,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
         >
           Content Type
         </label>
-        <div className="inline-block min-w-[150px] max-w-full">
+        <div className="inline-block">
           <CustomSelect
             options={contentTypeOptions}
             selectedValue={formData.contentType}

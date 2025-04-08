@@ -300,7 +300,7 @@ const AdvancedSettings = ({
         >
           Model to Configure
         </label>
-        <div className="inline-block min-w-[160px] max-w-full">
+        <div className="inline-block">
           <CustomSelect
             options={models.map(model => ({ id: model.id, name: model.id }))}
             selectedValue={selectedModelId}
