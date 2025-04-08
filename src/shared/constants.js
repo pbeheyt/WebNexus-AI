@@ -75,9 +75,6 @@ export const STORAGE_KEYS = {
   API_RESPONSE: 'apiResponse',
   API_PROCESSING_ERROR: 'apiProcessingError',
   API_RESPONSE_TIMESTAMP: 'apiResponseTimestamp',
-  API_CONTENT_PROCESSING_PLATFORM: 'apiContentProcessingPlatform',
-  API_CONTENT_PROCESSING_TIMESTAMP: 'apiContentProcessingTimestamp',
-  STREAM_CONTENT: 'streamContent',
   STREAM_ID: 'streamId',
   
   // Sidebar

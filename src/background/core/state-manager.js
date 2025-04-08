@@ -150,25 +150,6 @@ export async function saveExtractedContent(content) {
 }
 
 /**
- * Update API processing status
- * @param {string} status - Processing status
- * @param {string} platformId - Platform identifier
- * @returns {Promise<void>}
- */
-export async function updateApiProcessingStatus(status, platformId) {
-  try {
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.API_PROCESSING_STATUS]: status,
-      [STORAGE_KEYS.API_CONTENT_PROCESSING_PLATFORM]: platformId,
-      [STORAGE_KEYS.API_CONTENT_PROCESSING_TIMESTAMP]: Date.now()
-    });
-    logger.background.info(`API processing status updated: ${status}`);
-  } catch (error) {
-    logger.background.error('Error updating API processing status:', error);
-  }
-}
-
-/**
  * Save API streaming response
  * @param {string} streamId - Stream identifier
  * @param {string} platformId - Platform identifier
@@ -188,27 +169,11 @@ export async function initializeStreamResponse(streamId, platformId) {
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: 'streaming',
       [STORAGE_KEYS.API_RESPONSE]: initialResponse,
-      [STORAGE_KEYS.STREAM_CONTENT]: '',
       [STORAGE_KEYS.STREAM_ID]: streamId
     });
     logger.background.info(`Stream response initialized: ${streamId}`);
   } catch (error) {
     logger.background.error('Error initializing stream response:', error);
-  }
-}
-
-/**
- * Update stream content
- * @param {string} fullContent - Complete content so far
- * @returns {Promise<void>}
- */
-export async function updateStreamContent(fullContent) {
-  try {
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.STREAM_CONTENT]: fullContent
-    });
-  } catch (error) {
-    logger.background.error('Error updating stream content:', error);
   }
 }
 

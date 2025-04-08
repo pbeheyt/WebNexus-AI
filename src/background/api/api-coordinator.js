@@ -8,7 +8,6 @@ import { determineContentType, isInjectablePage } from '../../shared/utils/conte
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
 import { 
   resetExtractionState, 
-  updateApiProcessingStatus, 
   initializeStreamResponse,
   getExtractedContent,
   setApiProcessingError,
@@ -171,8 +170,6 @@ export async function processContentViaApi(params) {
         logger.background.info(`First message: Extraction will proceed for tab ${tabId} (no existing content, not skipped).`);
         // Reset previous extraction state (ensure this happens ONLY if extracting)
         await resetExtractionState();
-        // Use the explicitly passed platformId
-        await updateApiProcessingStatus('extracting', platformId);
 
         // Extract content
         logger.background.info(`Content type determined: ${contentType}`);
@@ -232,16 +229,13 @@ export async function processContentViaApi(params) {
     resolvedParams.conversationHistory = conversationHistory;
     logger.background.info(`Resolved parameters:`, resolvedParams);
 
-    // 6. Update processing status (using platformId from params and resolved model)
-    await updateApiProcessingStatus('processing', platformId, resolvedParams.model);
-
-    // 7. Generate a unique stream ID for this request
+    // 6. Generate a unique stream ID for this request
     const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    // 8. Initialize streaming response (using platformId from params)
+    // 7. Initialize streaming response (using platformId from params)
     await initializeStreamResponse(streamId, platformId, resolvedParams.model); // Include model
 
-    // 9. Determine the formatted content to include in the request (only for the first message under specific conditions)
+    // 8. Determine the formatted content to include in the request (only for the first message under specific conditions)
     let formattedContentForRequest = null;
 
     if (isFirstUserMessage) {
@@ -282,7 +276,7 @@ export async function processContentViaApi(params) {
       }
     }
 
-    // 10. Notify the content script about streaming start ONLY if possible and from sidebar
+    // 9. Notify the content script about streaming start ONLY if possible and from sidebar
     if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
       if (isInjectablePage(url)) { // Check if the page allows content scripts
         try {
@@ -306,7 +300,7 @@ export async function processContentViaApi(params) {
       }
     }
 
-    // 11. Create unified request configuration
+    // 10. Create unified request configuration
     const requestConfig = {
       prompt: promptContent,
       resolvedParams: resolvedParams, // Pass the whole resolved params object ( includes history)
@@ -315,7 +309,7 @@ export async function processContentViaApi(params) {
       onChunk: createStreamHandler(streamId, source, tabId, platformId, resolvedParams)
     };
 
-    // 12. Process with API (using platformId from params)
+    // 11. Process with API (using platformId from params)
     const controller = new AbortController();
     activeAbortControllers.set(streamId, controller);
     requestConfig.abortSignal = controller.signal; // Add signal to request config
@@ -381,11 +375,6 @@ function createStreamHandler(streamId, source, tabId, platformId, resolvedParams
 
     if (chunk) {
       fullContent += chunk;
-      
-      // Update storage with latest content
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.STREAM_CONTENT]: fullContent
-      });
       
       // Send to content script for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
