@@ -46,14 +46,6 @@
     "48": "images/icon48.png",
     "128": "images/icon128.png"
   },
-  "commands": {
-    "_execute_action": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+A"
-      },
-      "description": "Activate the extension"
-    }
-  },
   "web_accessible_resources": [
     {
       "resources": [
