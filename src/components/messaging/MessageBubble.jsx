@@ -3,6 +3,37 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 /**
+ * Reusable Copy Button Icon component
+ * Provides consistent SVG icons for different copy states
+ */
+const CopyButtonIcon = memo(({ state = 'idle', size = 14 }) => {
+  switch (state) {
+    case 'copied':
+      // Checkmark icon for copied state
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      );
+    case 'error':
+      // X icon for error state
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      );
+    default:
+      // Default copy icon
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 352.804 352.804" fill="currentColor">
+          <path d="M318.54,57.282h-47.652V15c0-8.284-6.716-15-15-15H34.264c-8.284,0-15,6.716-15,15v265.522c0,8.284,6.716,15,15,15h47.651v42.281c0,8.284,6.716,15,15,15H318.54c8.284,0,15-6.716,15-15V72.282C333.54,63.998,326.824,57.282,318.54,57.282z M49.264,265.522V30h191.623v27.282H96.916c-8.284,0-15,6.716-15,15v193.24H49.264z M303.54,322.804H111.916V87.282H303.54V322.804z"/>
+        </svg>
+      );
+  }
+});
+
+/**
  * Utility function for clipboard operations
  * Implements the document.execCommand approach for maximum compatibility
  * @param {string} text - The text content to copy to clipboard
@@ -94,20 +125,7 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
             aria-label="Copy code to clipboard"
             title="Copy code to clipboard"
           >
-            {copyState === 'copied' ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            ) : copyState === 'error' ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 352.804 352.804" fill="currentColor">
-                <path d="M318.54,57.282h-47.652V15c0-8.284-6.716-15-15-15H34.264c-8.284,0-15,6.716-15,15v265.522c0,8.284,6.716,15,15,15h47.651v42.281c0,8.284,6.716,15,15,15H318.54c8.284,0,15-6.716,15-15V72.282C333.54,63.998,326.824,57.282,318.54,57.282z M49.264,265.522V30h191.623v27.282H96.916c-8.284,0-15,6.716-15,15v193.24H49.264z M303.54,322.804H111.916V87.282H303.54V322.804z"/>
-              </svg>
-            )}
+            <CopyButtonIcon state={copyState} size={12} />
           </button>
         )}
       </div>
@@ -303,7 +321,6 @@ const MessageBubbleComponent = ({
         </ReactMarkdown>
       </div>
 
-      {/* Footer section with model info, copy button, and streaming indicator aligned horizontally */}
       <div className="flex justify-between items-center mt-1">
         {/* Model info with platform icon and streaming indicator */}
         <div className="text-xs opacity-70 flex items-center">
@@ -325,37 +342,23 @@ const MessageBubbleComponent = ({
           )}
         </div>
         
-        {/* Copy button - only show when not streaming */}
-        {!isStreaming && content && (
-          <button
-            onClick={copyToClipboard}
-            className={`p-1 rounded-md transition-opacity duration-200 z-50
-                       ${copyState === 'idle' ? 'opacity-0 message-group-hover:opacity-100' : 'opacity-100'} 
-                       ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
-                         copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
-                         'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-            aria-label="Copy to clipboard"
-            title="Copy to clipboard"
-          >
-            {copyState === 'copied' ? (
-              // Checkmark icon for copied state
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            ) : copyState === 'error' ? (
-              // X icon for error state
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            ) : (
-              // Material Icon for content_copy
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 352.804 352.804" fill="currentColor">
-                <path d="M318.54,57.282h-47.652V15c0-8.284-6.716-15-15-15H34.264c-8.284,0-15,6.716-15,15v265.522c0,8.284,6.716,15,15,15h47.651v42.281c0,8.284,6.716,15,15,15H318.54c8.284,0,15-6.716,15-15V72.282C333.54,63.998,326.824,57.282,318.54,57.282z M49.264,265.522V30h191.623v27.282H96.916c-8.284,0-15,6.716-15,15v193.24H49.264z M303.54,322.804H111.916V87.282H303.54V322.804z"/>
-              </svg>
-            )}
-          </button>
-        )}
+        {/* Always reserve space for button */}
+        <div className="w-7 h-7 flex items-center justify-center">
+          {!isStreaming && content && (
+            <button
+              onClick={copyToClipboard}
+              className={`p-1 rounded-md transition-opacity duration-200 z-50
+                        ${copyState === 'idle' ? 'opacity-0 message-group-hover:opacity-100' : 'opacity-100'} 
+                        ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                          copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 
+                          'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+              aria-label="Copy to clipboard"
+              title="Copy to clipboard"
+            >
+              <CopyButtonIcon state={copyState} size={14} />
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Additional metadata display */}
