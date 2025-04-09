@@ -148,7 +148,7 @@ function Header() {
                 />
               </div>
 
-              {/* 3. Spacer Element - consumes excess space */}
+              {/* 3. Spacer Element */}
               <div className="flex-grow" style={{ pointerEvents: 'none' }}></div>
 
               {/* 4. Refresh Button - fixed position */}

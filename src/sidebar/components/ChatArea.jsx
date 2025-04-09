@@ -112,7 +112,7 @@ function ChatArea({ className = '' }) {
           </button>
         ) : (
           <>
-            {/* First div: Platform Logo and Model */}
+            {/* Platform Logo and Model */}
             <div className="flex flex-col items-center">
               {selectedPlatformId && selectedPlatform.iconUrl ? (
                 <>
@@ -132,7 +132,7 @@ function ChatArea({ className = '' }) {
               )}
             </div>
 
-            {/* Second div: Start a conversation message */}
+            {/* Start a conversation message */}
             <div className="flex flex-col items-center">
               <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
               <p className="text-sm">
@@ -140,7 +140,7 @@ function ChatArea({ className = '' }) {
               </p>
             </div>
             
-            {/* Third div: Content Type Badge and Toggle */}
+            {/* Content Type Badge and Toggle */}
             <div className="flex flex-col items-center"> 
               {/* Content Type Badge Display */}
               {getContentTypeIconSvg(contentType) && (
@@ -162,7 +162,7 @@ function ChatArea({ className = '' }) {
                 </div>
               )}
               
-              {/* Content Extraction Toggle - Kept as is */}
+              {/* Content Extraction Toggle */}
               <div className="flex items-center justify-center gap-3 text-sm text-theme-secondary">
                 <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
                 <Toggle
