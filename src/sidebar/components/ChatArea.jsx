@@ -84,18 +84,32 @@ function ChatArea({ className = '' }) {
     }
   };
 
+  const openApiSettings = () => {
+    try {
+      chrome.tabs.create({ url: chrome.runtime.getURL('settings.html#api-settings') });
+    } catch (error) {
+      console.error('Could not open API options page:', error);
+    }
+  };
+
   if (messages.length === 0) {
     return (
       <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5`}>
         {!hasAnyPlatformCredentials ? (
           // Display message if no credentials are set up
-          <div className="flex flex-col items-center">
-            <div className="text-4xl mb-4">⚙️</div> 
+          <button 
+            onClick={openApiSettings} 
+            className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1.51-1V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
             <h3 className="text-base font-semibold mb-2">API Credentials Required</h3>
             <p className="text-sm">
-              Please configure API keys in the extension settings to enable chat features.
+              Click here to configure API keys in settings.
             </p>
-          </div>
+          </button>
         ) : (
           <>
             {/* First div: Platform Logo and Model */}
