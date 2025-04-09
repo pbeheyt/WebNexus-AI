@@ -1,7 +1,7 @@
 {
   "general": {
-    "Short Summary": "Analyze the primary content provided, ignoring headers, footers, navigation, ads, and similar boilerplate. Identify the content type (e.g., news, blog, product page) and create a concise 3-sentence summary highlighting the main topic and key points.",
-    "Detailed Summary": "Analyze the primary content provided, ignoring headers, footers, navigation, ads, and similar boilerplate. Identify the content type (e.g., news, blog, product page) and provide a comprehensive summary including: the main topic or purpose, key sections or arguments, important facts or features, and the central message or conclusion."
+    "Short Summary": "Summarize the primary content provided, ignoring headers, footers, navigation, ads, and similar boilerplate. Identify the content type (e.g., news, blog, product page) and create a concise 3-sentence summary highlighting the main topic and key points.",
+    "Detailed Summary": "Summarize the primary content provided, ignoring headers, footers, navigation, ads, and similar boilerplate. Identify the content type (e.g., news, blog, product page) and provide a comprehensive summary including: the main topic or purpose, key sections or arguments, important facts or features, and the central message or conclusion."
   },
   "youtube": {
     "Short Summary": "Summarize this YouTube video in 3-5 sentences covering the main topic and key points discussed or shown.",

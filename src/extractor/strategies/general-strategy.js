@@ -11,7 +11,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
    */
   async extractAndSaveContent() {
     try {
-      this.logger.info('Starting comprehensive visible text extraction...');
+      this.logger.info('Starting less restrictive text extraction...');
 
       // Extract all page data using the revised method
       const pageData = await this.extractData();
@@ -31,7 +31,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
   /**
-   * Extract page data using revised logic (capture all visible text).
+   * Extract page data using revised logic (capture almost all text).
    * @returns {Promise<Object>} The extracted page data
    */
   async extractData() {
@@ -43,23 +43,29 @@ class GeneralExtractorStrategy extends BaseExtractor {
       const title = this.extractPageTitle();
       const url = this.extractPageUrl();
       const description = this.extractMetaDescription();
-      const author = this.extractAuthor();
+      const author = this.extractAuthor(); // Keep existing author logic
 
-      // Extract content (either selection or all visible text)
+      // Extract content (either selection or all text from main/body)
       let content;
       if (selectedText) {
         content = selectedText;
         this.logger.info('Using selected text as content.');
       } else {
-        this.logger.info('No selection, extracting all visible text from BODY.');
+        this.logger.info('No selection, extracting all text recursively from MAIN or BODY.');
         const textChunks = [];
-        this._extractVisibleTextRecursive(document.body, textChunks);
+        // Try to start from <main>, fall back to <body>
+        const startNode = document.querySelector('main') || document.body;
+        if (startNode) {
+            this._extractTextRecursive(startNode, textChunks);
+        } else {
+            this.logger.warn('Could not find MAIN or BODY element.');
+        }
         // Join chunks, normalize multiple newlines/spaces, and trim
         content = textChunks.join('')
                            .replace(/ {2,}/g, ' ') // Replace multiple spaces with one
                            .replace(/\n{3,}/g, '\n\n') // Replace 3+ newlines with 2
                            .trim();
-        this.logger.info(`Extracted ${content.length} characters of visible text.`);
+        this.logger.info(`Extracted ${content.length} characters of text.`);
       }
 
       // Return the complete page data object
@@ -67,7 +73,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
         pageTitle: title,
         pageUrl: url,
         pageDescription: description,
-        pageAuthor: author,
+        pageAuthor: author, // Include extracted author
         content: content,
         isSelection: !!selectedText,
         extractedAt: new Date().toISOString()
@@ -79,6 +85,8 @@ class GeneralExtractorStrategy extends BaseExtractor {
       return {
         pageTitle: this.extractPageTitle(),
         pageUrl: this.extractPageUrl(),
+        pageDescription: this.extractMetaDescription(), // Attempt to get metadata even on error
+        pageAuthor: this.extractAuthor(), // Attempt to get metadata even on error
         content: 'Error extracting content: ' + error.message,
         error: true,
         message: error.message || 'Unknown error occurred',
@@ -87,79 +95,66 @@ class GeneralExtractorStrategy extends BaseExtractor {
     }
   }
 
-  /**
-   * Checks if an element is visible in the DOM.
-   * @param {HTMLElement} element - The element to check.
-   * @returns {boolean} True if the element is considered visible.
-   * @private
-   */
-  _isElementVisible(element) {
-    if (!element) return false;
-    // Check computed style first, as it's often the most definitive
-    const style = window.getComputedStyle(element);
-    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0' || style.pointerEvents === 'none') {
-        return false;
-    }
-    // Check offsetParent as a fallback (null means not rendered or fixed/absolute ancestor is hidden)
-    if (element.offsetParent === null) {
-        // Allow fixed position elements even if offsetParent is null initially
-        if (style.position !== 'fixed') {
-            // Check if it has dimensions, maybe it's just not in flow
-            const rect = element.getBoundingClientRect();
-            if (rect.width === 0 && rect.height === 0) {
-                return false;
-            }
-        }
-    }
-    // Check hidden attributes
-    if (element.hasAttribute('hidden') || element.getAttribute('aria-hidden') === 'true') {
-      return false;
-    }
-    return true;
-  }
+  // _isElementVisible function is REMOVED as it's no longer needed.
 
   /**
-   * Recursively extracts visible text content from a node and its children.
+   * Recursively extracts text content from a node and its children,
+   * including Shadow DOM, with minimal exclusions.
    * Appends extracted text chunks to the `accumulatedText` array.
    * @param {Node} node - The current node to process.
    * @param {string[]} accumulatedText - An array to store the extracted text chunks.
    * @private
    */
-  _extractVisibleTextRecursive(node, accumulatedText) {
-    // 1. Filter out non-element/non-text nodes, excluded tags, and hidden elements
+  _extractTextRecursive(node, accumulatedText) {
+    // 1. Filter out non-element/non-text nodes and essential excluded tags
     if (node.nodeType === Node.ELEMENT_NODE) {
       const tagName = node.tagName.toLowerCase();
-      // More comprehensive list of tags to generally ignore for text content
-      const excludedTags = ['script', 'style', 'noscript', 'iframe', 'svg', 'canvas', 'video', 'audio', 'button', 'input', 'select', 'textarea', 'img', 'nav', 'footer', 'aside', 'form', 'head', 'link', 'meta'];
-      if (excludedTags.includes(tagName) || !this._isElementVisible(node)) {
-        return; // Skip this element and its children
+      // Minimal list of tags to exclude (scripts, styles, non-textual media)
+      const excludedTags = ['script', 'style', 'noscript', 'head', 'link', 'meta', 'svg', 'canvas', 'video', 'audio', 'img', 'iframe'];
+      if (excludedTags.includes(tagName)) {
+        return; // Skip this element and its children entirely
       }
+      // Recurse into Shadow DOM if it exists
+      if (node.shadowRoot) {
+        node.shadowRoot.childNodes.forEach(child => {
+            this._extractTextRecursive(child, accumulatedText);
+        });
+      }
+
     } else if (node.nodeType === Node.TEXT_NODE) {
-      // Process Text Node: Ensure parent is visible and text has content
-      if (!node.parentElement || !this._isElementVisible(node.parentElement)) {
-        return; // Skip text node if parent is hidden
-      }
+      // Process Text Node: Append its content after basic normalization
       const text = node.textContent;
       if (text && text.trim().length > 0) {
-        // Normalize whitespace within the text node and add a trailing space
-        // The final cleanup will handle extra spaces between words/chunks.
+        // Normalize whitespace within the text node and add a trailing space.
+        // The final cleanup in extractData will handle extra spaces between words/chunks.
         accumulatedText.push(text.replace(/\s+/g, ' ') + ' ');
       }
-      return; // Text nodes have no children
-    } else {
+      return; // Text nodes have no children to recurse into
+
+    } else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+        // This handles the case when recursing into a shadowRoot
+        // Just proceed to iterate children
+    }
+     else {
       return; // Ignore other node types (comments, etc.)
     }
 
-    // 2. Recurse into children
-    node.childNodes.forEach(child => {
-      this._extractVisibleTextRecursive(child, accumulatedText);
-    });
+    // 2. Recurse into children for Element Nodes and Document Fragments (like Shadow Roots)
+    if (node.childNodes && node.childNodes.length > 0) {
+        node.childNodes.forEach(child => {
+            this._extractTextRecursive(child, accumulatedText);
+        });
+    }
+
 
     // 3. Add appropriate newline(s) after processing children of block-level elements
+    // This helps preserve some structure, even though we removed visibility checks.
     if (node.nodeType === Node.ELEMENT_NODE) {
       const tagName = node.tagName.toLowerCase();
       // Common block-level tags that usually warrant a line break separation
-      const blockTags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'li', 'blockquote', 'pre', 'section', 'article', 'header', 'address', 'dl', 'dt', 'dd', 'ul', 'ol', 'table', 'tr', 'th', 'td', 'hr', 'center'];
+      const blockTags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'li', 'blockquote', 'pre', 'section', 'article', 'header', 'address', 'dl', 'dt', 'dd', 'ul', 'ol', 'table', 'tr', 'th', 'td', 'hr', 'center', 'main', 'nav', 'footer', 'aside', 'form'];
+      // Note: Some tags previously excluded for content (nav, footer, aside, form) are now included here
+      // for block formatting, as we are aiming for maximum text capture.
       const lineBreakTags = ['br'];
 
       if (blockTags.includes(tagName)) {
@@ -173,6 +168,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
   // --- Metadata Extraction Methods ---
+  // These remain unchanged as they target specific elements/attributes
 
   /**
    * Extract the page title
@@ -201,6 +197,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
 
   /**
    * Attempt to extract the author name from the page
+   * (Kept the original logic, including its visibility check, as it's specific metadata hunting)
    * @returns {string|null} The author name or null if not found
    */
   extractAuthor() {
@@ -217,17 +214,34 @@ class GeneralExtractorStrategy extends BaseExtractor {
       }
     }
 
-    // Try common author selectors
+    // Try common author selectors - *Keeping the original visibility check here*
+    // because we are looking for a specific, *visibly presented* author name,
+    // not just any text that might match the selector.
     const authorSelectors = [
       '.author', '.byline', '.post-author', '.entry-author',
       '[rel="author"]', 'a[href*="/author/"]', '.author-name',
-      '[data-testid="author-name"]'
+      '[data-testid="author-name"]' // Added from Reddit example
     ];
     for (const selector of authorSelectors) {
       const authorElement = document.querySelector(selector);
-      if (authorElement && authorElement.textContent?.trim() && this._isElementVisible(authorElement)) {
-        const nameNode = authorElement.querySelector('.author-name') || authorElement;
+      // Use a temporary visibility check function just for this specific metadata extraction
+      const isVisible = (el) => {
+            if (!el) return false;
+            const style = window.getComputedStyle(el);
+            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+            if (el.offsetParent === null && style.position !== 'fixed') {
+                const rect = el.getBoundingClientRect();
+                if (rect.width === 0 && rect.height === 0) return false;
+            }
+            if (el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true') return false;
+            return true;
+      };
+
+      if (authorElement && authorElement.textContent?.trim() && isVisible(authorElement)) {
+        // Prefer a specific child element if available, otherwise use the element itself
+        const nameNode = authorElement.querySelector('.author-name') || authorElement.querySelector('[data-testid="author-name"]') || authorElement;
         let name = nameNode.textContent.trim();
+        // Basic cleanup like removing "by " prefix
         name = name.replace(/^by\s+/i, '').trim();
         if (name) return name;
       }
