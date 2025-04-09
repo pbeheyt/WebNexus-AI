@@ -141,23 +141,27 @@ function Header() {
                 )}
               </div>
 
-              {/* Model Selector */}
-              <div className="flex-grow flex items-center h-9 ml-2">
+              <div 
+                className="flex-grow min-w-0 overflow-visible mr-2" 
+                style={{ outline: '1px solid rgba(0,0,255,0.3)' }}
+                onClick={(e) => console.log('Model container clicked', e.target)}
+              >
                 <ModelSelector 
                   selectedPlatformId={selectedPlatformId}
+                  className="w-full"
                 />
               </div>
             </>
           ) : (
             // When no credentials, show message
-            <div className="h-9 flex items-center"> 
+            <div className="flex-grow min-w-0 overflow-hidden mr-2"> 
               <span className="text-theme-secondary text-sm">No API credentials configured.</span>
             </div>
           )}
         </div>
 
         {/* Refresh Button */}
-        <div className="flex items-center h-9 flex-shrink-0 ml-2">
+        <div className="relative self-end ml-2 flex-shrink-0">
           <button
             ref={refreshButtonRef}
             onClick={refreshPlatformData}

@@ -77,16 +77,30 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     formattedModels.find(m => m.id === selectedModel)?.name || selectedModel :
     "Select a model";
 
+  // Explicit debugging handler to trace event propagation
+  const handleDebugClick = (e) => {
+    console.log('ModelSelector button clicked', e.target);
+    // Stop propagation to isolate event capture problems
+    e.stopPropagation();
+    setOpenDropdown(isOpen ? null : 'model');
+  };
+
   return (
-    <div className={`relative w-max max-w-sm ${className}`}>
+    <div 
+      className={`relative ${className}`}
+      // Add diagnostic outline to visualize boundaries
+      style={{ outline: '1px solid rgba(255,0,0,0.3)' }}
+      onClick={(e) => console.log('Outer container clicked', e.target)}
+    >
       <button
         ref={modelTriggerRef}
-        onClick={() => setOpenDropdown(isOpen ? null : 'model')}
-        className="flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer"
+        onClick={handleDebugClick}
+        className="flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full"
+        // Force pointer events and ensure button has physical dimensions
+        style={{ pointerEvents: 'auto', minHeight: '36px', position: 'relative', zIndex: 10 }}
       >
-        <span className="truncate">{selectedModelName}</span>
-        
-        <span className="ml-1 text-theme-secondary flex-shrink-0">
+        <span className="truncate mr-1">{selectedModelName}</span>
+        <span className="text-theme-secondary flex-shrink-0">
           <ChevronIcon />
         </span>
       </button>
@@ -95,7 +109,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto"
+          className="absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto w-max max-w-xs"
           onClick={(e) => e.stopPropagation()}
         >
           {formattedModels.length === 0 ? (
