@@ -175,16 +175,16 @@ export function useTokenTracking(tabId) {
     }
   }, [tabId, tokenStats]);
 
-  // Utility methods wrapped from the service
   return {
-    tokenStats,
-    isLoading,
-    calculateContextStatus,
-    trackTokens,
-    clearTokenData,
-    calculateStats,
-    estimateTokens: TokenManagementService.estimateTokens,
-    getPricingInfo: TokenManagementService.getPricingInfo,
-    calculateCost: TokenManagementService.calculateCost
+      tokenStats,
+      setTokenStats,
+      isLoading,
+      calculateContextStatus,
+      trackTokens,
+      clearTokenData,
+      calculateStats,
+      estimateTokens: TokenManagementService.estimateTokens,
+      getPricingInfo: TokenManagementService.getPricingInfo,
+      calculateCost: TokenManagementService.calculateCost
   };
 }
