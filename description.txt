@@ -8,7 +8,7 @@ Nexus AI transforms how you interact with online content. Go beyond simple copy-
 
 ## Your AI Hub
 
-Nexus AI integrates seamlessly with:
+Nexus AI integrates seamlessly with the APIs or Web UIs of:
 
 *   ChatGPT (OpenAI)
 *   Claude (Anthropic)
@@ -25,7 +25,8 @@ Nexus AI integrates seamlessly with:
 
 *   Open a persistent sidebar alongside any compatible page.
 *   Chat directly with the page's extracted content using your API key.
-*   Select specific models from your chosen platform (e.g., GPT-4o, Claude 3.5 Sonnet).
+*   **Select from the full range of available models** on your chosen platform (e.g., GPT-4o, Claude 3.7 Sonnet, Gemini 2.0 Flash).
+*   Leverage **free API usage options** available from platforms like Gemini and Mistral.
 *   Maintains conversation history per tab.
 *   Tracks token usage and estimates costs.
 *   Configure advanced API parameters (temperature, max tokens, system prompts).
@@ -42,7 +43,7 @@ Nexus AI integrates seamlessly with:
 
 ## Core Features
 
-*   **Wide Content Compatibility:** Analyze articles, summarize YouTube videos or Reddit posts and query PDF documents.
+*   **Wide Content Compatibility:** Analyze articles, summarize YouTube videos, understand Reddit posts, and query PDF documents.
 *   **Intelligent Content Extraction:** Focuses on the core information, filtering out ads, navigation, and footers. Specialized strategies for YouTube, Reddit, and PDFs.
 *   **Prompt Management:** Create, edit, and organize custom prompts **tailored to specific content types** (like Web Pages, YouTube, PDFs, Reddit) for faster workflows.
 *   **Local API Key Storage:** Stores your API keys using Chrome's local storage API within your browser profile.
@@ -50,4 +51,4 @@ Nexus AI integrates seamlessly with:
 
 ---
 
-Nexus AI is a versatile tool for anyone looking to leverage AI for deeper content understanding and interaction.
+Nexus AI is a versatile tool for anyone looking to leverage AI for deeper content understanding and interaction. Install now and enhance your browsing experience!
