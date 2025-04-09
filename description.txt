@@ -1,0 +1,53 @@
+# Nexus AI: Web Content Assistant (ChatGPT, Claude, Gemini & More)
+
+**Interact directly with web pages, YouTube videos, PDFs, and Reddit posts using popular AI models like ChatGPT, Claude, Gemini, and others.**
+
+Nexus AI transforms how you interact with online content. Go beyond simple copy-pasting and engage directly with web pages, YouTube videos, PDFs, and Reddit posts using various AI models.
+
+---
+
+## Your AI Hub
+
+Nexus AI integrates seamlessly with:
+
+*   ChatGPT (OpenAI)
+*   Claude (Anthropic)
+*   Gemini (Google)
+*   Mistral AI
+*   DeepSeek
+*   Grok (xAI)
+
+---
+
+## Flexible Interaction Modes
+
+**1. Sidebar Chat (Requires API Keys):**
+
+*   Open a persistent sidebar alongside any compatible page.
+*   Chat directly with the page's extracted content using your API key.
+*   Select specific models from your chosen platform (e.g., GPT-4o, Claude 3.5 Sonnet).
+*   Maintains conversation history per tab.
+*   Tracks token usage and estimates costs.
+*   Configure advanced API parameters (temperature, max tokens, system prompts).
+
+**2. Popup Action (Uses Web UIs):**
+
+*   Click the extension icon to open the popup.
+*   Select an AI platform.
+*   Choose a prompt (or write your own).
+*   Nexus AI extracts the page content and opens the platform's official website in a new tab, pre-filling your prompt and the content.
+*   *Does not require API keys.*
+
+---
+
+## Core Features
+
+*   **Wide Content Compatibility:** Analyze articles, summarize YouTube videos or Reddit posts and query PDF documents.
+*   **Intelligent Content Extraction:** Focuses on the core information, filtering out ads, navigation, and footers. Specialized strategies for YouTube, Reddit, and PDFs.
+*   **Prompt Management:** Create, edit, and organize custom prompts **tailored to specific content types** (like Web Pages, YouTube, PDFs, Reddit) for faster workflows.
+*   **Local API Key Storage:** Stores your API keys using Chrome's local storage API within your browser profile.
+*   **UI Customization:** Adapt the interface with Light/Dark themes and adjustable text sizes.
+
+---
+
+Nexus AI is a versatile tool for anyone looking to leverage AI for deeper content understanding and interaction.
