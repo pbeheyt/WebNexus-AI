@@ -70,13 +70,44 @@ export function createTabAwarePlatformContext(options = {}) {
         if (response && response.success && response.models) {
           setModels(response.models);
 
-          // Use centralized ModelParameterService for model resolution
-          const modelToUse = await ModelParameterService.resolveModel(
-            platformId,
-            { tabId, source: interfaceType }
-          );
+          // Determine the model to use, prioritizing tab preference, then falling back to default
+          let finalModelIdToUse = null;
+          try {
+            const preferredModelId = await ModelParameterService.resolveModel(
+              platformId,
+              { tabId, source: interfaceType }
+            );
 
-          setSelectedModelId(modelToUse);
+            if (preferredModelId && response.models.some(m => m.id === preferredModelId)) {
+              finalModelIdToUse = preferredModelId;
+              console.info(`Using preferred model for ${platformId}: ${finalModelIdToUse}`);
+            } else {
+              // Get default model from config if preference is invalid
+              const platformApiConfig = await ConfigService.getPlatformApiConfig(platformId);
+              const defaultModelId = platformApiConfig?.defaultModel;
+              
+              if (defaultModelId && response.models.some(m => m.id === defaultModelId)) {
+                finalModelIdToUse = defaultModelId;
+                console.info(`No valid preference found, using default model for ${platformId}: ${finalModelIdToUse}`);
+              } else if (response.models.length > 0) {
+                // Fallback to first available model
+                finalModelIdToUse = response.models[0].id;
+                console.warn(`No valid default model, falling back to first available for ${platformId}: ${finalModelIdToUse}`);
+              }
+            }
+          } catch (error) {
+            console.error(`Error resolving model for ${platformId}:`, error);
+            // Attempt to use default model on error
+            const platformApiConfig = await ConfigService.getPlatformApiConfig(platformId);
+            const defaultModelId = platformApiConfig?.defaultModel;
+            if (defaultModelId && response.models.some(m => m.id === defaultModelId)) {
+              finalModelIdToUse = defaultModelId;
+            } else if (response.models.length > 0) {
+              finalModelIdToUse = response.models[0].id;
+            }
+          }
+
+          setSelectedModelId(finalModelIdToUse);
         } else {
            console.warn(`Failed to load models for ${platformId}:`, response?.error);
            setModels([]); // Clear models on failure
@@ -154,6 +185,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
         // Determine the platform to use based strictly on preferences and credentials (for sidebar)
         let platformToUse = null;
+        let defaultModelId = null;
         const credentialedPlatformIds = new Set(platformList.filter(p => p.hasCredentials).map(p => p.id));
 
         // Priority 1: Tab-specific preference

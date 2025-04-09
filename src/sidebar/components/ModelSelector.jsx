@@ -73,9 +73,9 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     }
   };
 
-  const selectedModelName = selectedModel ?
-    formattedModels.find(m => m.id === selectedModel)?.name || selectedModel :
-    "Select a model";
+  const selectedModelName = formattedModels.find(m => m.id === selectedModel)?.name 
+                           || selectedModel 
+                           || "Loading...";
 
   const toggleDropdown = (e) => {
     e.stopPropagation();
