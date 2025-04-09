@@ -77,27 +77,17 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     formattedModels.find(m => m.id === selectedModel)?.name || selectedModel :
     "Select a model";
 
-  // Explicit debugging handler to trace event propagation
-  const handleDebugClick = (e) => {
-    console.log('ModelSelector button clicked', e.target);
-    // Stop propagation to isolate event capture problems
+  const toggleDropdown = (e) => {
     e.stopPropagation();
     setOpenDropdown(isOpen ? null : 'model');
   };
 
   return (
-    <div 
-      className={`relative ${className}`}
-      // Add diagnostic outline to visualize boundaries
-      style={{ outline: '1px solid rgba(255,0,0,0.3)' }}
-      onClick={(e) => console.log('Outer container clicked', e.target)}
-    >
+    <div className={`relative ${className}`}>
       <button
         ref={modelTriggerRef}
-        onClick={handleDebugClick}
+        onClick={toggleDropdown}
         className="flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full"
-        // Force pointer events and ensure button has physical dimensions
-        style={{ pointerEvents: 'auto', minHeight: '36px', position: 'relative', zIndex: 10 }}
       >
         <span className="truncate mr-1">{selectedModelName}</span>
         <span className="text-theme-secondary flex-shrink-0">
@@ -109,7 +99,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-auto w-max max-w-xs"
+          className="absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {formattedModels.length === 0 ? (
@@ -120,7 +110,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
             formattedModels.map((model) => (
               <button
                 key={model.id}
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover ${
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap ${
                   selectedModel === model.id ? 'font-medium bg-theme-hover' : ''
                 }`}
                 onClick={() => handleModelChange(model.id)}

@@ -80,13 +80,13 @@ function Header() {
 
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
-      <div className="flex items-center justify-between px-4">
-        {/* Container for conditional content (grows) */}
-        <div className="flex items-center flex-grow min-w-0">
+      <div className="flex items-center px-4">
+        {/* Four-segment layout structure */}
+        <div className="flex items-center w-full min-w-0">
           {hasAnyPlatformCredentials ? (
             <>
-              {/* Platform Selector */}
-              <div className="relative flex items-center h-9 flex-shrink-0">
+              {/* 1. Platform Selector - fixed width, non-shrinkable */}
+              <div className="relative flex items-center h-9 flex-shrink-0 mr-2">
                 {selectedPlatformForDisplay && (
                   <div ref={triggerRef}>
                     <button
@@ -141,53 +141,41 @@ function Header() {
                 )}
               </div>
 
-              <div 
-                className="flex-grow min-w-0 overflow-visible mr-2" 
-                style={{ outline: '1px solid rgba(0,0,255,0.3)' }}
-                onClick={(e) => console.log('Model container clicked', e.target)}
-              >
+              {/* 2. Model Selector - constrained width, allows truncation */}
+              <div className="min-w-0">
                 <ModelSelector 
                   selectedPlatformId={selectedPlatformId}
-                  className="w-full"
                 />
               </div>
-            </>
-          ) : (
-            // When no credentials, show message
-            <div className="flex-grow min-w-0 overflow-hidden mr-2"> 
-              <span className="text-theme-secondary text-sm">No API credentials configured.</span>
-            </div>
-          )}
-        </div>
 
-        {/* Refresh Button */}
-        <div className="relative self-end ml-2 flex-shrink-0">
-          <button
-            ref={refreshButtonRef}
-            onClick={refreshPlatformData}
-            disabled={isRefreshing || isLoading}
-            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Refresh platforms and credentials"
-            title="Refresh platforms and credentials"
-          >
-            {isRefreshing ? (
-              <span className="animate-spin">
+              {/* 3. Spacer Element - consumes excess space */}
+              <div className="flex-grow" style={{ pointerEvents: 'none' }}></div>
+
+              {/* 4. Refresh Button - fixed position */}
+              <div className="flex-shrink-0 ml-2">
+                <button
+                  ref={refreshButtonRef}
+                  onClick={refreshPlatformData}
+                  disabled={isRefreshing || isLoading}
+                  className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Refresh platforms and credentials"
+                  title="Refresh platforms and credentials"
+                >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M23 4v6h-6"></path>
                   <path d="M1 20v-6h6"></path>
                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
                   <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
                 </svg>
-              </span>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 4v6h-6"></path>
-                <path d="M1 20v-6h6"></path>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
-              </svg>
-            )}
-          </button>
+                </button>
+              </div>
+            </>
+          ) : (
+            // When no credentials, show message
+            <div className="flex-grow"> 
+              <span className="text-theme-secondary text-sm">No API credentials configured.</span>
+            </div>
+          )}
         </div>
       </div>
     </DropdownContext.Provider>
