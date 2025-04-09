@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, createContext, useContext } from 'react';
+import React, { useEffect, useState, useRef, createContext } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import ModelSelector from './ModelSelector';
 
@@ -26,9 +26,11 @@ function Header() {
     refreshPlatformData
   } = useSidebarPlatform();
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [showAnimation, setShowAnimation] = useState(false);
   const dropdownRef = useRef(null);
   const refreshButtonRef = useRef(null);
   const triggerRef = useRef(null);
+  const prevIsRefreshingRef = useRef(isRefreshing);
 
   // Filter platforms based on credentials
   const availablePlatforms = platforms.filter(p => p.hasCredentials);
@@ -70,6 +72,24 @@ function Header() {
       selectPlatform(availablePlatforms[0].id);
     }
   }, [platforms, selectedPlatformId, hasAnyPlatformCredentials, isLoading, selectPlatform, availablePlatforms]);
+
+  // Effect to handle refresh animation
+  useEffect(() => {
+    if (isRefreshing) {
+      setShowAnimation(true);
+    }
+    
+    if (prevIsRefreshingRef.current && !isRefreshing) {
+      const timer = setTimeout(() => {
+        setShowAnimation(false);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+    
+    // Update previous state reference
+    prevIsRefreshingRef.current = isRefreshing;
+  }, [isRefreshing]);
 
   const handleSelectPlatform = (platformId) => {
     selectPlatform(platformId);
@@ -157,7 +177,7 @@ function Header() {
             </div>
           )}
           
-          {/* 4. Refresh Button - now always visible */}
+          {/* 4. Refresh Button - updated with rotation animation */}
           <div className="flex-shrink-0 ml-2">
             <button
               ref={refreshButtonRef}
@@ -167,7 +187,15 @@ function Header() {
               aria-label="Refresh platforms and credentials"
               title="Refresh platforms and credentials"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" 
+                className={`w-4 h-4 ${showAnimation ? 'animate-spin' : ''}`} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
                 <path d="M23 4v6h-6"></path>
                 <path d="M1 20v-6h6"></path>
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
