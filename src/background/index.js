@@ -3,37 +3,47 @@
 import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
+// Import the specific cleanup function and the listener setup
 import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-state-listener.js';
 import SidebarStateManager from '../services/SidebarStateManager.js';
+import logger from '../shared/logger.js';
 
 /**
  * Main entry point for the background service worker
  */
 async function startBackgroundService() {
   try {
+    logger.background.info('Starting background service...');
     // 1. Initialize extension configuration and state
+    // Note: initializeExtension is also called within onInstalled listener
+    //       but it's safe to run multiple times as it primarily resets state.
     await initializeExtension();
-    
+
     // 2. Set up message router to handle communication
     setupMessageRouter();
-    
+
     // 3. Set up event listeners
     setupTabListener();
-    setupTabStateListener();
+    setupTabStateListener(); // Sets up onRemoved listener
     setupConnectionListener(); // Add connection listener setup
 
-    // Perform initial cleanup on startup
-    console.log('[Background] Performing initial stale tab data cleanup...');
-    try {
-      await performStaleTabCleanup();
-      console.log('[Background] Initial stale tab data cleanup completed.');
-    } catch (cleanupError) {
-      console.error('[Background] Error during initial stale tab data cleanup:', cleanupError);
-    }
+    // 4. Add the onStartup listener for cleanup
+    // This listener persists across service worker restarts.
+    chrome.runtime.onStartup.addListener(async () => {
+      logger.background.info('Browser startup detected via onStartup listener. Running stale tab cleanup...');
+      try {
+        // Call the cleanup function directly
+        await performStaleTabCleanup();
+        logger.background.info('Startup stale tab cleanup completed.');
+      } catch (cleanupError) {
+        logger.background.error('Error during startup stale tab cleanup:', cleanupError);
+      }
+    });
+    logger.background.info('onStartup listener registered for cleanup.');
 
-    console.log('[Background] Service worker started successfully');
+    logger.background.info('Service worker started successfully and listeners are set up.');
   } catch (error) {
-    console.error('[Background] Error starting background service:', error);
+    logger.background.error('Error starting background service:', error);
   }
 }
 
@@ -41,8 +51,9 @@ async function startBackgroundService() {
  * Sets up the listener for runtime connections (e.g., from side panel).
  */
 function setupConnectionListener() {
+  // This listener also persists across service worker restarts.
   chrome.runtime.onConnect.addListener((port) => {
-    console.log(`[Background] Connection received: ${port.name}`);
+    logger.background.info(`Connection received: ${port.name}`);
 
     if (port.name.startsWith('sidepanel-connect-')) {
       const parts = port.name.split('-');
@@ -50,42 +61,44 @@ function setupConnectionListener() {
       const tabId = parseInt(tabIdStr, 10);
 
       if (!isNaN(tabId)) {
-        console.log(`[Background] Side panel connected for tab ${tabId}`);
+        logger.background.info(`Side panel connected for tab ${tabId}`);
 
         // Mark sidebar as visible upon connection
         SidebarStateManager.setSidebarVisibilityForTab(tabId, true)
           .then(() => {
-            console.log(`[Background] Set sidebar visibility to true for tab ${tabId}`);
+            logger.background.info(`Set sidebar visibility to true for tab ${tabId}`);
           })
           .catch(error => {
-            console.error(`[Background] Error setting sidebar visibility to true for tab ${tabId}:`, error);
+            logger.background.error(`Error setting sidebar visibility to true for tab ${tabId}:`, error);
           });
 
         // Handle disconnection
         port.onDisconnect.addListener(() => {
-          console.log(`[Background] Side panel disconnected for tab ${tabId}`);
+          logger.background.info(`Side panel disconnected for tab ${tabId}`);
           if (chrome.runtime.lastError) {
-            console.error(`[Background] Port disconnect error for tab ${tabId}:`, chrome.runtime.lastError.message);
+            // Log error but don't crash the extension
+            logger.background.error(`Port disconnect error for tab ${tabId}: ${chrome.runtime.lastError.message}`);
           }
           // Mark sidebar as not visible upon disconnection
           SidebarStateManager.setSidebarVisibilityForTab(tabId, false)
             .then(() => {
-              console.log(`[Background] Set sidebar visibility to false for tab ${tabId}`);
+              logger.background.info(`Set sidebar visibility to false for tab ${tabId}`);
             })
             .catch(error => {
-              console.error(`[Background] Error setting sidebar visibility to false for tab ${tabId}:`, error);
+              logger.background.error(`Error setting sidebar visibility to false for tab ${tabId}:`, error);
             });
         });
 
       } else {
-        console.error(`[Background] Could not parse tabId from port name: ${port.name}`);
+        logger.background.error(`Could not parse tabId from port name: ${port.name}`);
       }
     } else {
-      console.log(`[Background] Ignoring connection from non-sidepanel source: ${port.name}`);
+      logger.background.info(`Ignoring connection from non-sidepanel source: ${port.name}`);
     }
   });
-  console.log('[Background] Runtime connection listener set up.');
+  logger.background.info('Runtime connection listener set up.');
 }
 
 // Start the background service when the file is loaded
+// This runs every time the service worker starts (initial load, wake-up)
 startBackgroundService();
