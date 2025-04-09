@@ -81,7 +81,6 @@ function Header() {
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div className="flex items-center px-4">
-        {/* Four-segment layout structure */}
         <div className="flex items-center w-full min-w-0">
           {hasAnyPlatformCredentials ? (
             <>
@@ -107,7 +106,7 @@ function Header() {
                     </button>
                   </div>
                 )}
-
+  
                 {/* Platform Dropdown */}
                 {isPlatformDropdownOpen && (
                   <div
@@ -140,42 +139,42 @@ function Header() {
                   </div>
                 )}
               </div>
-
+  
               {/* 2. Model Selector - constrained width, allows truncation */}
               <div className="min-w-0">
                 <ModelSelector 
                   selectedPlatformId={selectedPlatformId}
                 />
               </div>
-
+  
               {/* 3. Spacer Element */}
               <div className="flex-grow" style={{ pointerEvents: 'none' }}></div>
-
-              {/* 4. Refresh Button - fixed position */}
-              <div className="flex-shrink-0 ml-2">
-                <button
-                  ref={refreshButtonRef}
-                  onClick={refreshPlatformData}
-                  disabled={isRefreshing || isLoading}
-                  className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Refresh platforms and credentials"
-                  title="Refresh platforms and credentials"
-                >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 4v6h-6"></path>
-                  <path d="M1 20v-6h6"></path>
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                  <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
-                </svg>
-                </button>
-              </div>
             </>
           ) : (
             // When no credentials, show message
-            <div className="flex-grow"> 
+            <div className="flex-grow py-1"> 
               <span className="text-theme-secondary text-sm">No API credentials configured.</span>
             </div>
           )}
+          
+          {/* 4. Refresh Button - now always visible */}
+          <div className="flex-shrink-0 ml-2">
+            <button
+              ref={refreshButtonRef}
+              onClick={refreshPlatformData}
+              disabled={isRefreshing || isLoading}
+              className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Refresh platforms and credentials"
+              title="Refresh platforms and credentials"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </DropdownContext.Provider>
