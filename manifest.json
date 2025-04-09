@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "AI Content Assistant",
-  "description": "Interact with web content, YouTube, Reddit, and PDFs using various AI models via a sidebar chat or popup.",
+  "name": "Nexus AI: Web Content Assistant",
+  "description": "Chat with web pages, YouTube Videos, PDFs & Reddit Posts using ChatGPT, Claude, Gemini & more via Sidebar (API) or Popup (Web UI).",
   "version": "1.0.0",
   "permissions": [
     "activeTab",
@@ -15,30 +15,34 @@
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "host_permissions": [
-    "https://*.youtube.com/*",
-    "https://*.reddit.com/*",
-    "https://claude.ai/*",
-    "https://chatgpt.com/*",
-    "https://chat.deepseek.com/*",
-    "https://chat.mistral.ai/*",
-    "https://gemini.google.com/*",
-    "https://grok.com/*",
-    "https://*/*",
-    "file://*.pdf",
-    "<all_urls>",
-    "https://api.anthropic.com/*",
-    "https://api.openai.com/*",
-    "https://api.mistral.ai/*",
-    "https://api.deepseek.com/*",
-    "https://generativelanguage.googleapis.com/*",
-    "https://api.grok.ai/*"
+  "https://.youtube.com/",
+  "https://.reddit.com/",
+  "https://claude.ai/",
+  "https://chatgpt.com/",
+  "https://chat.deepseek.com/",
+  "https://chat.mistral.ai/",
+  "https://gemini.google.com/",
+  "https://grok.com/",
+  "https:///",
+  "file://.pdf",
+  "<all_urls>",
+  "https://api.anthropic.com/",
+  "https://api.openai.com/",
+  "https://api.mistral.ai/",
+  "https://api.deepseek.com/",
+  "https://generativelanguage.googleapis.com/",
+  "https://api.grok.ai/"
   ],
   "background": {
     "service_worker": "dist/background.bundle.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "images/icon128.png"
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
   },
   "options_page": "settings.html",
   "icons": {
@@ -55,7 +59,9 @@
         "dist/*.bundle.js",
         "images/*.png"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+        ]
     }
   ]
 }

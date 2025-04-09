@@ -27,7 +27,7 @@ export function AppHeader({
       <h1 className="text-base font-semibold flex items-center">
         <img src={chrome.runtime.getURL('images/icon128.png')} alt="AI Content Assistant logo" className="w-5 h-5 mr-2" />
         <span className="truncate overflow-hidden whitespace-nowrap max-w-[150px]">
-          AI Assistant
+          Nexus AI
         </span>
       </h1>
 
