@@ -250,95 +250,128 @@ const MessageBubbleComponent = ({
             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
             li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
 
-            code: ({node, inline, className, children, ...props}) => {
-              // Check if it's a block code (has language class) or inline
-              const match = /language-(\w+)/.exec(className || '');
-              const content = String(children).trim();
-              
-              // Enhanced check for filename or module references
-              const isFilenameOrModule = content.indexOf('\n') === -1 && 
-                                content.indexOf(' ') === -1 && 
-                                (
-                                  // Traditional file extensions
-                                  /\.\w{1,4}$/.test(content) ||
-                                  // Module.function patterns (like numpy.polyfit)
-                                  /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(content)
-                                );
-              
-              // Check if parent is a list item by traversing up the tree
-              const isInListItem = () => {
-                let parent = node.parent;
-                while (parent) {
-                  if (parent.type === 'listItem') {
-                    return true;
-                  }
-                  parent = parent.parent;
-                }
-                return false;
-              };
-              
-              // Enhanced detection for mathematical expressions and formulas
-              const isUnintendedCodeBlock = !match && 
-                                           !inline && 
-                                           (
-                                             // Greek letters with numbers (θ0, θ1)
-                                             /^(θ|theta|alpha|beta|gamma|delta)\d+/.test(content) ||
-                                             // Standalone numbers
-                                             /^[0-9]+$/.test(content) ||
-                                             // Mathematical expressions with operators and Greek letters
-                                             /^[\d\s+\-*/()=θ]+$/.test(content) ||
-                                             // Mathematical functions with parameters
-                                             /^[a-zA-Z]+(\[[a-zA-Z\[\]]+\]|\([a-zA-Z\[\]]+\))\s*=/.test(content) ||
-                                             // Specific formula patterns from linear regression
-                                             /estimatePrice/.test(content) ||
-                                             /tmpθ\d+/.test(content) ||
-                                             // Sum notation
-                                             /\s*∑\s*/.test(content) ||
-                                             // Handle m-1 notation from formulas
-                                             /^m\s*-\s*1$/.test(content)
-                                           ) &&
-                                           // Only apply to content without code-like syntax
-                                           !content.includes('\n') && 
-                                           !content.includes(';') && 
-                                           !content.includes('{') && 
-                                           !content.includes('}');
-              
-              // For mathematical expressions, filenames/modules, list items, or unintended code blocks
-              if ((!inline && (isFilenameOrModule || isInListItem() || isUnintendedCodeBlock))) {
-                // Special treatment for mathematical notations
-                if (isUnintendedCodeBlock && /[=θ()]/.test(content)) {
-                  return (
-                    <span className="bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded border-b border-gray-200 dark:border-gray-700 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed">
-                      {children}
-                    </span>
-                  );
-                } else if (isFilenameOrModule) {
-                  // For module.function patterns, render inline as code
-                  return (
-                    <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs font-mono inline-block">
-                      {children}
-                    </code>
-                  );
-                }
-                return (
-                  <span className="whitespace-pre-wrap break-words leading-relaxed">
-                    {children}
-                  </span>
-                );
-              }
-              
-              return !inline ? (
-                // Block code with syntax highlighting: use our EnhancedCodeBlock component
-                <EnhancedCodeBlock className={className} isStreaming={isStreaming}>
-                  {children}
-                </EnhancedCodeBlock>
-              ) : (
-                // Inline code
-                <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
-                  {children}
-                </code>
-              );
-            },
+// Modify the code component handler in your ReactMarkdown components configuration:
+
+code: ({node, inline, className, children, ...props}) => {
+  // Check if it's a block code (has language class) or inline
+  const match = /language-(\w+)/.exec(className || '');
+  const content = String(children).trim();
+  
+  // First, determine if this is explicitly marked as a language code block
+  const isExplicitCodeBlock = match && match[1] !== 'text';
+  
+  // Enhanced check for simple variables and expressions that should NOT render as code blocks
+  const isSimpleVariable = !inline && 
+                           content.length < 15 && // Short content
+                           !content.includes('\n') && // Single line
+                           !content.includes(';') && // No semicolons
+                           !content.includes('{') && // No braces
+                           !content.includes('}') &&
+                           !/^(function|class|const|let|var|import|export)/.test(content) && // Not starting with code keywords
+                           !/[\(\)\{\}\[\]<>]/.test(content); // No parentheses or brackets typical of code
+
+  // Enhanced check for filename or module references
+  const isFilenameOrModule = content.indexOf('\n') === -1 && 
+                    content.indexOf(' ') === -1 && 
+                    (
+                      // Traditional file extensions
+                      /\.\w{1,4}$/.test(content) ||
+                      // Module.function patterns (like numpy.polyfit)
+                      /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(content)
+                    );
+  
+  // Check if parent is a list item by traversing up the tree
+  const isInListItem = () => {
+    let parent = node.parent;
+    while (parent) {
+      if (parent.type === 'listItem') {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
+  };
+  
+  // Enhanced detection for mathematical expressions and formulas
+  const isUnintendedCodeBlock = !isExplicitCodeBlock && 
+                               !inline && 
+                               (
+                                 // Greek letters with numbers (θ0, θ1)
+                                 /^(θ|theta|alpha|beta|gamma|delta)\d+/.test(content) ||
+                                 // Standalone numbers
+                                 /^[0-9]+$/.test(content) ||
+                                 // Mathematical expressions with operators and Greek letters
+                                 /^[\d\s+\-*/()=θ]+$/.test(content) ||
+                                 // Mathematical functions with parameters
+                                 /^[a-zA-Z]+(\[[a-zA-Z\[\]]+\]|\([a-zA-Z\[\]]+\))\s*=/.test(content) ||
+                                 // Specific formula patterns from linear regression
+                                 /estimatePrice/.test(content) ||
+                                 /tmpθ\d+/.test(content) ||
+                                 // Sum notation
+                                 /\s*∑\s*/.test(content) ||
+                                 // Handle m-1 notation from formulas
+                                 /^m\s*-\s*1$/.test(content) ||
+                                 // Single variable names
+                                 /^[a-zA-Z]$/.test(content) ||
+                                 // Simple variable names with length < 3
+                                 /^[a-zA-Z_][a-zA-Z0-9_]{0,2}$/.test(content)
+                               ) &&
+                               // Only apply to content without code-like syntax
+                               !content.includes('\n') && 
+                               !content.includes(';') && 
+                               !content.includes('{') && 
+                               !content.includes('}');
+  
+  // KEY CHANGE: If it's a simple variable or in a list, render as inline code
+  if (isSimpleVariable || (!inline && (isInListItem() || isUnintendedCodeBlock))) {
+    // For single-letter variables like 'n', render as inline code
+    if (/^[a-zA-Z]$/.test(content) || /^[a-zA-Z_][a-zA-Z0-9_]{0,2}$/.test(content)) {
+      return (
+        <code className="px-1 py-0.5 rounded text-xs font-mono inline">
+          {children}
+        </code>
+      );
+    }
+    
+    // Special treatment for mathematical notations
+    if (isUnintendedCodeBlock && /[=θ()]/.test(content)) {
+      return (
+        <span className= "px-2 py-1 rounded border-b font-mono text-sm whitespace-pre-wrap break-words leading-relaxed">
+          {children}
+        </span>
+      );
+    } else if (isFilenameOrModule) {
+      // For module.function patterns, render inline as code
+      return (
+        <code className="px-2 py-1 rounded text-xs font-mono inline-block">
+          {children}
+        </code>
+      );
+    }
+    return (
+      <span className="whitespace-pre-wrap break-words leading-relaxed">
+        {children}
+      </span>
+    );
+  }
+  
+  // Only apply code block rendering for explicit language code blocks or complex content
+  if (!inline && (isExplicitCodeBlock || content.includes('\n') || content.includes(';'))) {
+    // Block code with syntax highlighting: use our EnhancedCodeBlock component
+    return (
+      <EnhancedCodeBlock className={className} isStreaming={isStreaming}>
+        {children}
+      </EnhancedCodeBlock>
+    );
+  } else {
+    // Inline code
+    return (
+      <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
+        {children}
+      </code>
+    );
+  }
+},
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
             pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
