@@ -320,7 +320,7 @@ const MessageBubbleComponent = ({
                                           !content.includes('{') && 
                                           !content.includes('}');
               
-              // KEY CHANGE: If it's a simple variable or in a list, render as inline code
+              // If it's a simple variable or in a list, render as inline code
               if (isSimpleVariable || (!inline && (isInListItem() || isUnintendedCodeBlock))) {
                 // For single-letter variables like 'n', render as inline code
                 if (/^[a-zA-Z]$/.test(content) || /^[a-zA-Z_][a-zA-Z0-9_]{0,2}$/.test(content)) {
