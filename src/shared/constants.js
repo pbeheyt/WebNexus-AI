@@ -68,7 +68,7 @@ export const STORAGE_KEYS = {
   SIDEBAR_MODEL: 'sidebar_model_preferences',
   TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
-  TAB_SIDEBAR_STATES: 'tab_sidebar_states',
+  TAB_SIDEBAR_INFO: 'tab_sidebar_info',
   
   // API
   API_PROCESSING_STATUS: 'apiProcessingStatus',
@@ -106,4 +106,15 @@ export const MESSAGE_ROLES = {
   USER: 'user',
   ASSISTANT: 'assistant',
   SYSTEM: 'system'
-}
+};
+
+/**
+ * Message actions for Floating Action Button (FAB) functionality
+ */
+export const MESSAGE_ACTIONS = {
+  SHOW_FAB: 'showFab',
+  HIDE_FAB: 'hideFab',
+  GET_FAB_STATE: 'getFabState',
+  TOGGLE_SIDEBAR_FROM_FAB: 'toggleSidebarFromFab',
+  GET_CURRENT_TAB_ID: 'getCurrentTabId'
+};

@@ -14,27 +14,36 @@ class SidebarStateManager {
    */
   async _toggleForTab(tabId, visible) {
     // Get current tab states
-    const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
-      await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
+    const { [STORAGE_KEYS.TAB_SIDEBAR_INFO]: tabStates = {} } = 
+      await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_INFO);
     
     // Convert tabId to string for use as object key
     const tabIdStr = tabId.toString();
     
-    // Determine new visibility
-    if (visible === undefined) {
-      // Toggle current state
-      visible = !(tabStates[tabIdStr] === true);
-    }
+    // Get current state (default to hidden and not opened)
+    const currentState = tabStates[tabIdStr] || { 
+      isVisible: false, 
+      hasBeenOpenedOnce: false 
+    };
     
-    // Update tab state
+    // Determine new visibility
+    const newVisible = visible === undefined ? !currentState.isVisible : visible;
+    
+    // Create new state object
+    const newState = {
+      isVisible: newVisible,
+      hasBeenOpenedOnce: currentState.hasBeenOpenedOnce || newVisible
+    };
+    
+    // Update tab states
     const updatedStates = {
       ...tabStates,
-      [tabIdStr]: visible
+      [tabIdStr]: newState
     };
     
     // Save updated states
     await chrome.storage.local.set({ 
-      [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates 
+      [STORAGE_KEYS.TAB_SIDEBAR_INFO]: updatedStates 
     });
     
     logger.info(`Tab ${tabId} sidebar visibility set to ${visible}`);
@@ -49,15 +58,16 @@ class SidebarStateManager {
    */
   async _getStateForTab(tabId) {
     const result = await chrome.storage.local.get([
-      STORAGE_KEYS.TAB_SIDEBAR_STATES,
+      STORAGE_KEYS.TAB_SIDEBAR_INFO,
       STORAGE_KEYS.SIDEBAR_PLATFORM,
       STORAGE_KEYS.SIDEBAR_MODEL
     ]);
     
-    const tabStates = result[STORAGE_KEYS.TAB_SIDEBAR_STATES] || {};
+    const tabStates = result[STORAGE_KEYS.TAB_SIDEBAR_INFO] || {};
+    const tabState = tabStates[tabId.toString()] || { isVisible: false };
     
     return {
-      visible: tabStates[tabId.toString()] === true,
+      visible: tabState.isVisible,
       platform: result[STORAGE_KEYS.SIDEBAR_PLATFORM] || null,
       model: result[STORAGE_KEYS.SIDEBAR_MODEL] || null
     };
@@ -105,10 +115,11 @@ class SidebarStateManager {
    */
   async getSidebarVisibilityForTab(tabId) {
     try {
-      const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
-        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
+      const { [STORAGE_KEYS.TAB_SIDEBAR_INFO]: tabStates = {} } = 
+        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_INFO);
       
-      return tabStates[tabId.toString()] === true;
+      const tabState = tabStates[tabId.toString()] || { isVisible: false };
+      return tabState.isVisible;
     } catch (error) {
       logger.error(`Error getting sidebar visibility for tab ${tabId}:`, error);
       return false;
@@ -143,8 +154,8 @@ class SidebarStateManager {
       const activeTabIds = new Set(tabs.map(tab => tab.id.toString()));
       
       // Get current tab states
-      const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } = 
-        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
+      const { [STORAGE_KEYS.TAB_SIDEBAR_INFO]: tabStates = {} } = 
+        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_INFO);
       
       // Filter out closed tabs
       const updatedStates = {};
@@ -162,12 +173,29 @@ class SidebarStateManager {
       // Save updated states if changed
       if (stateChanged) {
         await chrome.storage.local.set({ 
-          [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates 
+          [STORAGE_KEYS.TAB_SIDEBAR_INFO]: updatedStates 
         });
         logger.info('Tab sidebar states cleaned up');
       }
     } catch (error) {
       logger.error('Error cleaning up tab sidebar states:', error);
+    }
+  }
+  /**
+   * Get whether sidebar has been opened at least once for a tab
+   * @param {number} tabId - Tab ID
+   * @returns {Promise<boolean>} Whether sidebar has been opened once
+   */
+  async getSidebarOpenedOnceState(tabId) {
+    try {
+      const { [STORAGE_KEYS.TAB_SIDEBAR_INFO]: tabStates = {} } = 
+        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_INFO);
+      
+      const tabState = tabStates[tabId.toString()] || { hasBeenOpenedOnce: false };
+      return tabState.hasBeenOpenedOnce;
+    } catch (error) {
+      logger.error(`Error getting sidebar opened state for tab ${tabId}:`, error);
+      return false;
     }
   }
 }

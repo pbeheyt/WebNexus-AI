@@ -152,4 +152,34 @@ function registerServiceHandlers() {
 
   // Handle requests to toggle the native side panel
   messageHandlers.set('toggleNativeSidePanelAction', handleToggleNativeSidePanelAction);
+
+  // FAB state management handlers
+  messageHandlers.set('getFabState', async (message, sender, sendResponse) => {
+    const tabId = sender?.tab?.id;
+    logger.background.info(`Received getFabState request for tab: ${tabId}`);
+    if (!tabId) { 
+      sendResponse({ success: false, error: 'No sender tab ID' }); 
+      return false; 
+    }
+    try {
+      const isVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
+      const hasBeenOpenedOnce = await SidebarStateManager.getSidebarOpenedOnceState(tabId);
+      logger.background.info(`State retrieved for tab ${tabId}: isVisible=${isVisible}, hasBeenOpenedOnce=${hasBeenOpenedOnce}`);
+      sendResponse({ success: true, isVisible, hasBeenOpenedOnce });
+    } catch (error) { 
+      logger.background.error(`Error getting FAB state for tab ${tabId}:`, error); 
+      sendResponse({ success: false, error: error.message || 'Failed to retrieve FAB state' }); 
+    }
+    return true; // Async
+  });
+
+  messageHandlers.set('toggleSidebarFromFab', (message, sender, sendResponse) => {
+    const { tabId } = message;
+    if (!tabId) { 
+      sendResponse({ success: false, error: 'Missing tabId' }); 
+      return false; 
+    }
+    handleToggleNativeSidePanelAction({ tabId }, { tab: { id: tabId } }, sendResponse);
+    return true; // Async
+  });
 }

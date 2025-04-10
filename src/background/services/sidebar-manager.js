@@ -56,6 +56,36 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
       logger.background.info(`Side panel disabled for tab ${targetTabId}.`);
     }
 
+    // Handle FAB visibility after side panel state change
+    const hasBeenOpenedOnce = await SidebarStateManager.getSidebarOpenedOnceState(targetTabId);
+    const isVisible = await SidebarStateManager.getSidebarVisibilityForTab(targetTabId);
+
+    if (hasBeenOpenedOnce) {
+      logger.background.info(`Tab ${targetTabId} has been opened once. Ensuring content script exists and sending FAB state.`);
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: targetTabId },
+          files: ['dist/content-script.bundle.js']
+        });
+        logger.background.info(`Content script injection successful (or already present) for tab ${targetTabId}.`);
+
+        chrome.tabs.sendMessage(targetTabId, {
+          action: isVisible ? 'showFab' : 'hideFab',
+          isVisible: isVisible
+        });
+        logger.background.info(`Sent FAB message ('${isVisible ? 'showFab' : 'hideFab'}') to tab ${targetTabId}.`);
+
+      } catch (error) {
+        if (error.message.includes('Cannot access') || error.message.includes('extension context') || error.message.includes('No tab with id')) {
+          logger.background.warn(`Cannot inject script or send message to tab ${targetTabId} (likely a restricted page or closed tab): ${error.message}`);
+        } else {
+          logger.background.error(`Error ensuring content script or sending FAB message to tab ${targetTabId}:`, error);
+        }
+      }
+    } else {
+      logger.background.info(`Tab ${targetTabId} has not been opened before. FAB message not sent.`);
+    }
+
     sendResponse({
       success: true,
       visible: newState, // Send back the new intended state

@@ -90,6 +90,35 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
         });
         logger.background.info(`Sent 'pageNavigated' message for tab ${tabId} with new URL and type: ${newContentType}`);
       }
+
+      // --- Add FAB State Check on Tab Update ---
+      try {
+        const hasBeenOpenedOnce = await SidebarStateManager.getSidebarOpenedOnceState(tabId);
+
+        if (hasBeenOpenedOnce && isVisible) {
+          logger.background.info(`Tab ${tabId} updated and FAB should be visible. Sending showFab.`);
+          try {
+            await chrome.scripting.executeScript({ target: { tabId: tabId }, files: ['dist/content-script.bundle.js'] });
+            chrome.tabs.sendMessage(tabId, { action: 'showFab', isVisible: true });
+          } catch (scriptError) {
+            if (scriptError.message.includes('Cannot access') || scriptError.message.includes('No tab with id')) {
+              logger.background.warn(`Cannot inject/send showFab to tab ${tabId} on update (restricted page or closed tab): ${scriptError.message}`);
+            } else {
+              logger.background.error(`Error sending showFab on update to tab ${tabId}:`, scriptError);
+            }
+          }
+        } else if (hasBeenOpenedOnce && !isVisible) {
+          logger.background.info(`Tab ${tabId} updated and FAB should be hidden. Sending hideFab.`);
+          try { 
+            chrome.tabs.sendMessage(tabId, { action: 'hideFab', isVisible: false }); 
+          } catch (msgError) {
+            logger.background.warn(`Failed to send hideFab on update to tab ${tabId} (may be closed or restricted):`, msgError.message);
+          }
+        }
+      } catch (error) { 
+        logger.background.error(`Error checking FAB state on tab update for ${tabId}:`, error); 
+      }
+      // --- End FAB State Check ---
       // No need for an else block, if not visible, we do nothing.
     } catch (error) {
       logger.background.error(`Error handling side panel navigation detection for tab ${tabId}:`, error);
@@ -128,6 +157,31 @@ async function handleTabActivation(activeInfo) {
       });
       logger.background.info(`Side panel disabled for activated tab ${tabId}`);
     }
+
+    // --- Add FAB State Check on Tab Activation ---
+    const hasBeenOpenedOnce = await SidebarStateManager.getSidebarOpenedOnceState(tabId);
+
+    if (hasBeenOpenedOnce && isVisible) {
+      logger.background.info(`Tab ${tabId} activated and FAB should be visible. Sending showFab.`);
+      try {
+        await chrome.scripting.executeScript({ target: { tabId: tabId }, files: ['dist/content-script.bundle.js'] });
+        chrome.tabs.sendMessage(tabId, { action: 'showFab', isVisible: true });
+      } catch (scriptError) {
+        if (scriptError.message.includes('Cannot access')) {
+          logger.background.warn(`Cannot inject/send showFab to tab ${tabId} on activation (restricted page).`);
+        } else {
+          logger.background.error(`Error sending showFab on activation to tab ${tabId}:`, scriptError);
+        }
+      }
+    } else if (hasBeenOpenedOnce && !isVisible) {
+      logger.background.info(`Tab ${tabId} activated and FAB should be hidden. Sending hideFab.`);
+      try { 
+        chrome.tabs.sendMessage(tabId, { action: 'hideFab', isVisible: false }); 
+      } catch (msgError) {
+        logger.background.warn(`Failed to send hideFab on activation to tab ${tabId} (may be closed or restricted):`, msgError.message);
+      }
+    }
+    // --- End FAB State Check ---
 
   } catch (error) {
     logger.background.error(`Error setting side panel options for activated tab ${tabId}:`, error);
