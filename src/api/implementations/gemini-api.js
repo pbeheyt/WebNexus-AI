@@ -7,14 +7,6 @@ const BaseApiService = require('../api-base');
 class GeminiApiService extends BaseApiService {
   constructor() {
     super('gemini');
-    this._streamBuffer = ""; // Buffer specific to Gemini's JSON stream parsing
-    // REMOVED: No longer needed --> this._lastEmittedText = "";
-  }
-
-  _resetStreamState() {
-    this.logger.info('Resetting Gemini stream state (buffer)');
-    this._streamBuffer = "";
-    // REMOVED: No longer needed --> this._lastEmittedText = "";
   }
 
   _getGeminiEndpoint(model, method) {
@@ -35,6 +27,7 @@ class GeminiApiService extends BaseApiService {
     const endpoint = this._getGeminiEndpoint(params.model, ':streamGenerateContent');
     this.logger.info(`Building Gemini API request to: ${endpoint}`);
     const url = new URL(endpoint);
+    url.searchParams.append('alt', 'sse');
     url.searchParams.append('key', apiKey);
 
     let formattedRequest;
@@ -85,117 +78,66 @@ class GeminiApiService extends BaseApiService {
    * @returns {Object} Parsed result: { type: 'content', chunks: string[] } | { type: 'error', error: string } | { type: 'ignore' }.
    *                   Returns 'ignore' if the buffer doesn't contain a complete JSON object yet.
    */
-   _parseStreamChunk(line) {
-    if (line) {
-        this._streamBuffer += line;
+  _parseStreamChunk(line) {
+    if (!line || !line.startsWith('data: ')) {
+      // Ignore empty lines or lines not starting with 'data: '
+      // Also handles potential 'event:' lines if Gemini SSE uses them.
+      // Check for potential [DONE] signal if Gemini SSE uses it.
+      if (line === 'data: [DONE]') {
+         this.logger.info('Gemini SSE stream signal [DONE] received.');
+         return { type: 'done' };
+      }
+      return { type: 'ignore' };
     }
-    this._streamBuffer = this._streamBuffer.trimStart();
 
-    let jsonStr = null;
-    let endPos = -1;
+    // Extract the JSON string part after 'data: '
+    const jsonString = line.substring(5).trim(); // Get content after 'data: '
+
+    // --- DEBUG LOGGING ---
+    // Log the raw JSON string received in the data part
+    this.logger.info('Received Gemini SSE data chunk (raw JSON string):', jsonString);
+    // --- END DEBUG LOGGING ---
+
+    if (!jsonString) {
+      return { type: 'ignore' }; // Ignore if data part is empty
+    }
 
     try {
-        if (this._streamBuffer.length === 0) {
-            return { type: 'ignore' };
+      const data = JSON.parse(jsonString);
+
+      // --- DEBUG LOGGING ---
+      // Log the parsed JSON object
+      this.logger.info('Parsed Gemini SSE data chunk (object):', data);
+      // --- END DEBUG LOGGING ---
+
+      // Extract text content - assuming the same structure as the previous JSON stream
+      // Check candidates -> content -> parts -> text
+      const textChunk = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (textChunk && typeof textChunk === 'string') {
+        // Return the extracted text chunk
+        return { type: 'content', chunk: textChunk };
+      } else {
+        // If structure is valid but no text found, or if error field exists
+        if (data?.error) {
+            const errorMessage = data.error.message || JSON.stringify(data.error);
+            this.logger.error(`Gemini SSE stream returned an error: ${errorMessage}`, data.error);
+            return { type: 'error', error: `API Error in stream: ${errorMessage}` };
         }
-
-        // --- Find JSON boundary logic (unchanged) ---
-        let openBrackets = 0;
-        let openBraces = 0;
-        let inString = false;
-        let escapeNext = false;
-        let firstChar = this._streamBuffer.charAt(0);
-        if (firstChar !== '[' && firstChar !== '{') {
-             const nextJsonStart = this._streamBuffer.search(/[\{\[]/);
-             if (nextJsonStart !== -1) {
-                 this.logger.warn(`Gemini stream buffer recovery: Discarding "${this._streamBuffer.substring(0, nextJsonStart)}"`);
-                 this._streamBuffer = this._streamBuffer.substring(nextJsonStart);
-                 firstChar = this._streamBuffer.charAt(0);
-                 if (this._streamBuffer.length === 0) return { type: 'ignore' };
-             } else {
-                 this.logger.warn("Clearing Gemini buffer, no JSON start found.");
-                 this._streamBuffer = "";
-                 return { type: 'ignore' };
-             }
-         }
-        for (let i = 0; i < this._streamBuffer.length; i++) {
-            const char = this._streamBuffer[i];
-            if (escapeNext) { escapeNext = false; continue; }
-            if (char === '\\') { escapeNext = true; continue; }
-            if (char === '"') { inString = !inString; }
-            if (!inString) {
-                if (char === '{') openBraces++; else if (char === '}') openBraces--;
-                else if (char === '[') openBrackets++; else if (char === ']') openBrackets--;
-            }
-            if (openBrackets === 0 && openBraces === 0 && i >= 0 && (firstChar === '[' || firstChar === '{')) {
-                endPos = i + 1;
-                break;
-            }
-        }
-        // --- End JSON boundary logic ---
-
-
-        if (endPos !== -1) {
-            jsonStr = this._streamBuffer.substring(0, endPos);
-            this._streamBuffer = this._streamBuffer.substring(endPos).trimStart(); // Consume
-
-            const parsedJson = JSON.parse(jsonStr);
-
-            // --- START SIMPLIFIED HANDLING ---
-            let dataToProcess = [];
-            if (Array.isArray(parsedJson)) {
-                dataToProcess = parsedJson;
-            } else if (typeof parsedJson === 'object' && parsedJson !== null) {
-                dataToProcess = [parsedJson]; // Treat single object as an array of one
-            } else {
-                this.logger.warn(`Gemini parsed unexpected JSON type: ${typeof parsedJson}. Ignoring.`);
-                return { type: 'ignore' };
-            }
-
-            let newChunks = []; // Array to hold individual chunks
-
-            for (const data of dataToProcess) {
-                if (!data) continue; // Skip null/empty elements
-
-                if (data.error) {
-                    let errMsg = data.error.message || JSON.stringify(data.error);
-                    this.logger.error(`Gemini stream error in element: ${errMsg}`, data.error);
-                    // No need to reset _lastEmittedText anymore
-                    return { type: 'error', error: `API Error in stream: ${errMsg}` };
-                }
-
-                // Directly extract the text chunk if available
-                const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (textChunk && textChunk.length > 0) {
-                    this.logger.info(`Gemini extracted text chunk. Length: ${textChunk.length}. Chunk start: "${textChunk.substring(0, 100)}"`);
-                    newChunks.push(textChunk); // Add the chunk directly
-                } else {
-                    // Log if we got a valid structure but no text
-                    this.logger.info("Gemini element has no text content, skipping.");
-                }
-            } // End loop through array elements
-
-            // After processing all elements:
-            if (newChunks.length > 0) {
-                this.logger.info(`Gemini returning ${newChunks.length} new content chunks.`);
-                return { type: 'content', chunks: newChunks }; // Return array of chunks
-            } else {
-                this.logger.info("Gemini processed JSON but found no new text chunks, ignoring.");
-                return { type: 'ignore' };
-            }
-            // --- END SIMPLIFIED HANDLING ---
-
+        // Log other valid structures without text for debugging
+        if (data?.candidates?.[0]?.finishReason) {
+            this.logger.info(`Gemini SSE stream finished with reason: ${data.candidates[0].finishReason}`);
+            // We might treat specific finish reasons differently later if needed.
+            // For now, ignore finish reason markers unless they contain an error.
         } else {
-            // Incomplete JSON object in buffer
-            return { type: 'ignore' };
+            this.logger.warn('Parsed Gemini SSE data, but no text chunk found or structure mismatch.', data);
         }
-
+        return { type: 'ignore' }; // Ignore chunks without usable text content
+      }
     } catch (parseError) {
-        this.logger.error('Gemini JSON parsing error:', parseError, 'Buffer state:', jsonStr || this._streamBuffer.substring(0, 200));
-        this._streamBuffer = "";
-        // No need to reset _lastEmittedText anymore
-        return { type: 'error', error: `Stream parsing error: ${parseError.message}` };
+      this.logger.error('Error parsing Gemini SSE JSON chunk:', parseError, 'Raw JSON String:', jsonString);
+      // Return error type on JSON parsing failure
+      return { type: 'error', error: `Error parsing stream data: ${parseError.message}` };
     }
   }
 

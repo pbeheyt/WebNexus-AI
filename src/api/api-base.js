@@ -201,87 +201,52 @@ class BaseApiService extends ApiInterface {
 
         if (done) {
           this.logger.info(`Stream finished for model ${model}.`);
-          // --- Final buffer processing ---
-          if (this.platformId === 'gemini') {
-              // Final call to Gemini parser for its internal buffer
-              try {
-                  const parsedResult = this._parseStreamChunk(""); // Process internal buffer
-                  accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent); // <<< USE HANDLER
-                   if (parsedResult.type === 'error') { // Check for error from final parse
-                       onChunk({ done: true, error: parsedResult.error, model });
-                       return false;
-                   }
-              } catch (parseError) {
-                   this.logger.error(`Error parsing final Gemini internal buffer chunk for model ${model}:`, parseError);
-                   onChunk({ done: true, error: `Error parsing final stream data: ${parseError.message}`, model });
-                   return false;
+          // Final buffer processing for all platforms
+          if (buffer.trim()) {
+            this.logger.warn(`Processing remaining buffer content after stream end for model ${model}: "${buffer}"`);
+            try {
+              const parsedResult = this._parseStreamChunk(buffer.trim());
+              accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent);
+              if (parsedResult.type === 'error') {
+                onChunk({ done: true, error: parsedResult.error, model });
+                return false;
               }
-          } else if (buffer.trim()) {
-             // Final buffer processing for non-Gemini
-             this.logger.warn(`Processing remaining buffer content after stream end for model ${model}: "${buffer}"`);
-             try {
-                const parsedResult = this._parseStreamChunk(buffer.trim());
-                accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent); // <<< USE HANDLER
-                if (parsedResult.type === 'error') { // Check for error from final parse
-                    onChunk({ done: true, error: parsedResult.error, model });
-                    return false;
-                }
-             } catch (parseError) {
-                 this.logger.error(`Error parsing final buffer chunk for model ${model}:`, parseError, 'Buffer:', buffer);
-                 onChunk({ done: true, error: `Error parsing final stream data: ${parseError.message}`, model });
-                 return false;
-             }
+            } catch (parseError) {
+              this.logger.error(`Error parsing final buffer chunk for model ${model}:`, parseError, 'Buffer:', buffer);
+              onChunk({ done: true, error: `Error parsing final stream data: ${parseError.message}`, model });
+              return false;
+            }
           }
-          // --- End Final buffer processing ---
           onChunk({ chunk: '', done: true, model, fullContent: accumulatedContent });
           break; // Exit the loop
         }
 
         const decodedChunk = decoder.decode(value, { stream: true });
 
-        // --- Platform-Specific Handling ---
-        if (this.platformId === 'gemini') {
+        // Standard SSE handling for all platforms
+        buffer += decodedChunk;
+        let lineEnd;
+        while ((lineEnd = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.substring(0, lineEnd).trim();
+          buffer = buffer.substring(lineEnd + 1);
+          if (!line) continue;
+
           try {
-            const parsedResult = this._parseStreamChunk(decodedChunk); // Pass NEW data
-            accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent); // <<< USE HANDLER
+            const parsedResult = this._parseStreamChunk(line);
+            accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent);
 
             if (parsedResult.type === 'error') {
-              this.logger.error(`Parsed stream error (Gemini direct) for model ${model}: ${parsedResult.error}`);
+              this.logger.error(`Parsed stream error for model ${model}: ${parsedResult.error}`);
               onChunk({ done: true, error: parsedResult.error, model });
               return false; // Stop processing loop
             }
-            // Ignore 'done' and 'ignore' types here, let reader handle stream end
+            // Ignore 'done' and 'ignore' types here
           } catch (parseError) {
-            this.logger.error(`Error parsing stream chunk (Gemini direct) for model ${model}:`, parseError, 'Chunk:', decodedChunk);
+            this.logger.error(`Error parsing stream chunk for model ${model}:`, parseError, 'Line:', line);
             onChunk({ done: true, error: `Error parsing stream data: ${parseError.message}`, model });
             return false; // Stop processing loop
           }
-        } else {
-          // Original logic for other platforms (newline splitting)
-          buffer += decodedChunk;
-          let lineEnd;
-          while ((lineEnd = buffer.indexOf('\n')) !== -1) {
-            const line = buffer.substring(0, lineEnd).trim();
-            buffer = buffer.substring(lineEnd + 1);
-            if (!line) continue;
-
-            try {
-              const parsedResult = this._parseStreamChunk(line);
-              accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent); // <<< USE HANDLER
-
-              if (parsedResult.type === 'error') {
-                this.logger.error(`Parsed stream error for model ${model}: ${parsedResult.error}`);
-                onChunk({ done: true, error: parsedResult.error, model });
-                return false; // Stop processing loop
-              }
-              // Ignore 'done' and 'ignore' types here
-            } catch (parseError) {
-              this.logger.error(`Error parsing stream chunk for model ${model}:`, parseError, 'Line:', line);
-              onChunk({ done: true, error: `Error parsing stream data: ${parseError.message}`, model });
-              return false; // Stop processing loop
-            }
-          } // end while(lineEnd)
-        } // --- End Platform-Specific Handling ---
+        }
 
       } // end while(true)
 
