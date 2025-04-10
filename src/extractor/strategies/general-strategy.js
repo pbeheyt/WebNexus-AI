@@ -8,10 +8,10 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
   /**
-   * Cleans extracted text content with improved whitespace normalization.
-   * Preserves paragraph breaks while eliminating excessive empty lines.
+   * Cleans extracted text content with space-based condensation.
+   * Replaces all newlines with spaces for a more compact, inline output.
    * @param {string} text - The raw text content.
-   * @returns {string} - The cleaned text content.
+   * @returns {string} - The cleaned, condensed text content.
    */
   _moderateCleanText(text) {
     if (!text) return '';
@@ -23,20 +23,13 @@ class GeneralExtractorStrategy extends BaseExtractor {
     // 2. Replace various whitespace chars (tabs, vertical tabs, form feeds) with spaces
     cleaned = cleaned.replace(/[\t\v\f]+/g, ' ');
     
-    // 3. Collapse multiple spaces into a single space
+    // 3. Replace all newlines with spaces for condensed output
+    cleaned = cleaned.replace(/\n+/g, ' ');
+    
+    // 4. Collapse multiple spaces into a single space
     cleaned = cleaned.replace(/ {2,}/g, ' ');
     
-    // 4. Replace any combination of whitespace and newlines that creates empty lines
-    // with just two newlines (for paragraph separation)
-    cleaned = cleaned.replace(/\n[\s\n]+/g, '\n\n');
-    
-    // 5. Remove spaces directly before newlines
-    cleaned = cleaned.replace(/ +\n/g, '\n');
-    
-    // 6. Ensure we don't have more than 2 consecutive newlines anywhere
-    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-    
-    // 7. Trim leading/trailing whitespace (including newlines)
+    // 5. Trim leading/trailing whitespace
     cleaned = cleaned.trim();
 
     return cleaned;
