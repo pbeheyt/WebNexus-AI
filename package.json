@@ -4,7 +4,8 @@
   "description": "Chrome extension to interact with web content, YouTube, Reddit, & PDFs using multiple AI models via sidebar or popup.",
   "main": "webpack.config.js",
   "scripts": {
-    "build": "webpack",
+    "build": "NODE_ENV=production webpack",
+    "build:dev": "webpack",
     "watch": "webpack --watch"
   },
   "devDependencies": {
