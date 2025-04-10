@@ -1,6 +1,6 @@
 // src/extractor/strategies/general-strategy.js
 const BaseExtractor = require('../base-extractor');
-const cheerio = require('cheerio');
+const cheerio = require('cheerio'); // Make sure cheerio is required
 
 class GeneralExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -8,21 +8,45 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
   /**
+   * Cleans extracted text content with moderate whitespace normalization.
+   * Tries to preserve paragraph breaks while collapsing other whitespace.
+   * @param {string} text - The raw text content.
+   * @returns {string} - The cleaned text content.
+   */
+  _moderateCleanText(text) {
+    if (!text) return '';
+
+    let cleaned = text;
+
+    // 1. Replace various whitespace chars (tabs, vertical tabs, form feeds) with spaces
+    cleaned = cleaned.replace(/[\t\v\f]+/g, ' ');
+
+    // 2. Collapse multiple spaces into a single space
+    cleaned = cleaned.replace(/ {2,}/g, ' ');
+
+    // 3. Collapse more than two consecutive newlines into exactly two
+    cleaned = cleaned.replace(/(\r?\n){3,}/g, '\n\n');
+
+    // 4. Remove spaces directly before newlines
+    cleaned = cleaned.replace(/ +\n/g, '\n');
+
+    // 5. Trim leading/trailing whitespace (including newlines)
+    cleaned = cleaned.trim();
+
+    return cleaned;
+  }
+
+
+  /**
    * Extract and save page data to Chrome storage
    */
   async extractAndSaveContent() {
     try {
-      this.logger.info('Starting less restrictive text extraction...');
-
-      // Extract all page data using the revised method
+      this.logger.info('Starting general content extraction (Cheerio - Take 2)...');
       const pageData = await this.extractData();
-
-      // Save to Chrome storage
       await this.saveToStorage(pageData);
     } catch (error) {
       this.logger.error('Error in general content extraction:', error);
-
-      // Save error message to storage
       await this.saveToStorage({
         error: true,
         message: error.message || 'Unknown error occurred',
@@ -32,81 +56,68 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
   /**
-   * Extract page data using revised logic (capture almost all text).
+   * Extract page data using Cheerio with minimal filtering and moderate cleaning.
    * @returns {Promise<Object>} The extracted page data
    */
   async extractData() {
+    let title = 'Unknown Title';
+    let url = 'Unknown URL';
+    let description = null;
+    let author = null;
+    let content = '';
+    let isSelection = false;
+
     try {
       // Get user selection if any
       const selectedText = window.getSelection().toString().trim();
+      isSelection = !!selectedText;
 
-      // Extract basic page metadata
-      const title = this.extractPageTitle();
-      const url = this.extractPageUrl();
-      const description = this.extractMetaDescription();
-      const author = this.extractAuthor(); // Keep existing author logic
+      // Extract basic page metadata (always attempt this)
+      title = this.extractPageTitle();
+      url = this.extractPageUrl();
+      description = this.extractMetaDescription();
+      author = this.extractAuthor();
 
-      // Extract content (either selection or all text from main/body)
-      let content;
+      // Extract content
       if (selectedText) {
-        content = selectedText;
-        this.logger.info('Using selected text as content.');
+        // Use selection directly, apply moderate cleaning
+        content = this._moderateCleanText(selectedText);
+        this.logger.info('Using selected text as content (moderately cleaned).');
       } else {
-        this.logger.info('No selection, extracting content using Cheerio.');
+        this.logger.info('No selection, extracting content using Cheerio (minimal filtering).');
         content = ''; // Initialize content variable
         try {
             const pageHtml = document.body.innerHTML;
             const $ = cheerio.load(pageHtml);
 
-            // Selectors for elements to remove (noise)
-            const noiseSelectors = [
-                'script', 'style', 'noscript', 'head', 'link', 'meta',
-                'svg', 'canvas', 'video', 'audio', 'img', 'iframe',
-                'nav', 'footer', 'aside', '[role="banner"]', '[role="navigation"]',
-                '[role="complementary"]', '[class*="ad"], [id*="ad"]',
-                '[class*="advert"], [id*="advert"]', '[class*="popup"], [id*="popup"]',
-                '[class*="modal"], [id*="modal"]', '[aria-modal="true"]',
-                '.cookie-banner', '#cookie-banner', '.sidebar', '#sidebar'
-            ].join(', '); // Join selectors into a single string
+            // *** Minimal Noise Removal: Only remove truly non-content tags ***
+            const essentialNoise = 'script, style, noscript, head, link, meta, svg, canvas, video, audio, iframe';
+            $(essentialNoise).remove();
+            this.logger.info('Removed essential noise elements using Cheerio.');
 
-            $(noiseSelectors).remove();
-            this.logger.info('Removed noise elements using Cheerio.');
+            // *** Extract text from the entire body ***
+            const extractedText = $('body').text();
 
-            // Selectors for potential main content areas (prioritized)
-            const contentSelectors = ['main', 'article', '[role="main"]'];
-            let contentElement = null;
-
-            for (const selector of contentSelectors) {
-                const element = $(selector);
-                if (element.length > 0) {
-                    contentElement = element.first();
-                    this.logger.info(`Using Cheerio content selector: ${selector}`);
-                    break;
-                }
-            }
-
-            // Fallback to body if no specific container found
-            if (!contentElement) {
-                contentElement = $('body');
-                this.logger.info('Using Cheerio fallback selector: body');
-            }
-
-            // Extract text from the selected container
-            let extractedText = contentElement.text();
-
-            // Clean up whitespace: replace multiple spaces/newlines with single ones, then trim
-            content = extractedText
-                .replace(/[\t\f\v ]+/g, ' ')   // Replace various spaces with a single space
-                .replace(/(\r?\n){2,}/g, '\n\n') // Replace 2+ newlines with exactly two
-                .replace(/ \n/g, '\n')         // Remove spaces before newlines
-                .trim();                       // Trim leading/trailing whitespace
-
-            this.logger.info(`Cheerio extracted ${content.length} characters of text.`);
+            // *** Apply moderate cleaning ***
+            content = this._moderateCleanText(extractedText);
+            this.logger.info(`Cheerio extracted and moderately cleaned ${content.length} characters.`);
 
         } catch (cheerioError) {
             this.logger.error('Error during Cheerio processing:', cheerioError);
             content = 'Error extracting content using Cheerio: ' + cheerioError.message;
-            // Consider adding error flag here if needed, similar to the outer catch
+            // Fallback to basic text extraction on error
+            try {
+                 let bodyText = document.body.textContent || '';
+                 content += this._moderateCleanText(bodyText); // Apply cleaning to fallback
+                 if (!content.trim().replace('Error extracting content using Cheerio: ' + cheerioError.message, '')) {
+                     content = 'Content extraction failed completely after Cheerio error.';
+                 } else {
+                     this.logger.info(`Fallback extracted and cleaned ${content.length} characters after Cheerio error.`);
+                 }
+            } catch (fallbackError) {
+                 this.logger.error('Fallback text extraction failed after Cheerio error:', fallbackError);
+                 content = 'Content extraction failed completely.';
+            }
         }
       }
 
@@ -115,21 +126,20 @@ class GeneralExtractorStrategy extends BaseExtractor {
         pageTitle: title,
         pageUrl: url,
         pageDescription: description,
-        pageAuthor: author, // Include extracted author
-        content: content,
-        isSelection: !!selectedText,
+        pageAuthor: author,
+        content: content, // Use the moderately cleaned content
+        isSelection: isSelection,
         extractedAt: new Date().toISOString()
       };
     } catch (error) {
       this.logger.error('Error extracting page data:', error);
-
-      // Return what we could get, with error message
+      // Return minimal data with error message
       return {
-        pageTitle: this.extractPageTitle(),
-        pageUrl: this.extractPageUrl(),
-        pageDescription: this.extractMetaDescription(), // Attempt to get metadata even on error
-        pageAuthor: this.extractAuthor(), // Attempt to get metadata even on error
-        content: 'Error extracting content: ' + error.message,
+        pageTitle: title,
+        pageUrl: url,
+        pageDescription: description,
+        pageAuthor: author,
+        content: `Error extracting content: ${error.message}`,
         error: true,
         message: error.message || 'Unknown error occurred',
         extractedAt: new Date().toISOString()
@@ -137,44 +147,22 @@ class GeneralExtractorStrategy extends BaseExtractor {
     }
   }
 
-  // _isElementVisible function is REMOVED as it's no longer needed.
+  // --- Metadata Extraction Methods (Unchanged) ---
 
-
-  // --- Metadata Extraction Methods ---
-  // These remain unchanged as they target specific elements/attributes
-
-  /**
-   * Extract the page title
-   * @returns {string} The page title
-   */
   extractPageTitle() {
     return document.title || 'Unknown Title';
   }
 
-  /**
-   * Extract the page URL
-   * @returns {string} The current page URL
-   */
   extractPageUrl() {
     return window.location.href;
   }
 
-  /**
-   * Extract meta description from the page
-   * @returns {string|null} The meta description or null if not found
-   */
   extractMetaDescription() {
     const metaDescription = document.querySelector('meta[name="description"]');
     return metaDescription ? metaDescription.getAttribute('content') : null;
   }
 
-  /**
-   * Attempt to extract the author name from the page
-   * (Kept the original logic, including its visibility check, as it's specific metadata hunting)
-   * @returns {string|null} The author name or null if not found
-   */
   extractAuthor() {
-    // Try meta tags first
     const metaSelectors = [
       'meta[name="author"]',
       'meta[property="author"]',
@@ -187,17 +175,13 @@ class GeneralExtractorStrategy extends BaseExtractor {
       }
     }
 
-    // Try common author selectors - *Keeping the original visibility check here*
-    // because we are looking for a specific, *visibly presented* author name,
-    // not just any text that might match the selector.
     const authorSelectors = [
       '.author', '.byline', '.post-author', '.entry-author',
       '[rel="author"]', 'a[href*="/author/"]', '.author-name',
-      '[data-testid="author-name"]' // Added from Reddit example
+      '[data-testid="author-name"]'
     ];
     for (const selector of authorSelectors) {
       const authorElement = document.querySelector(selector);
-      // Use a temporary visibility check function just for this specific metadata extraction
       const isVisible = (el) => {
             if (!el) return false;
             const style = window.getComputedStyle(el);
@@ -211,15 +195,12 @@ class GeneralExtractorStrategy extends BaseExtractor {
       };
 
       if (authorElement && authorElement.textContent?.trim() && isVisible(authorElement)) {
-        // Prefer a specific child element if available, otherwise use the element itself
         const nameNode = authorElement.querySelector('.author-name') || authorElement.querySelector('[data-testid="author-name"]') || authorElement;
         let name = nameNode.textContent.trim();
-        // Basic cleanup like removing "by " prefix
         name = name.replace(/^by\s+/i, '').trim();
         if (name) return name;
       }
     }
-
     return null;
   }
 }
