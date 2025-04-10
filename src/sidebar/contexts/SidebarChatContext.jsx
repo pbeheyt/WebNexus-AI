@@ -9,7 +9,6 @@ import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
-import logger from '../../shared/logger.js';
 
 const SidebarChatContext = createContext(null);
 
@@ -444,7 +443,7 @@ export function SidebarChatProvider({ children }) {
 
       // Handle case where context extraction was skipped (e.g., non-injectable page)
       if (result && result.skippedContext === true) {
-        logger.sidebar.info('Context extraction skipped by background:', result.reason);
+        console.info('Context extraction skipped by background:', result.reason);
 
         // Create the system message explaining why
         const systemMessage = {
