@@ -119,7 +119,6 @@ class BaseApiService extends ApiInterface {
       }
       
       // Platform-specific validation should be implemented in subclasses
-      // This lightweight validation doesn't use the full content processing pipeline
       const isValid = await this._validateApiKey(apiKey);
       return isValid;
     } catch (error) {
@@ -130,7 +129,6 @@ class BaseApiService extends ApiInterface {
   
   /**
    * Validate an API key with a minimal request
-   * This method should be implemented by subclasses
    * @protected
    * @param {string} apiKey - The API key to validate
    * @returns {Promise<boolean>} Whether the API key is valid
@@ -144,7 +142,6 @@ class BaseApiService extends ApiInterface {
         return false;
       }
       
-      // Each platform must implement its own validation logic
       return await this._validateWithModel(apiKey, defaultModel);
     } catch (error) {
       this.logger.error('Error validating API key:', error);
@@ -153,39 +150,32 @@ class BaseApiService extends ApiInterface {
   }
   
   /**
-   * Platform-specific validation implementation
+   * Platform-specific validation implementation using fetch
    * @protected
    * @param {string} apiKey - The API key to validate
    * @param {string} model - The model to use for validation
    * @returns {Promise<boolean>} Whether the API key is valid
    */
   async _validateWithModel(apiKey, model) {
-    // This method now contains the common fetch logic for validation.
     try {
       this.logger.info(`Attempting API key validation for model ${model}...`);
-      // 1. Get platform-specific request details
       const fetchOptions = await this._buildValidationRequest(apiKey, model);
 
-      // 2. Perform the fetch request
       const response = await fetch(fetchOptions.url, {
         method: fetchOptions.method,
         headers: fetchOptions.headers,
         body: fetchOptions.body,
-        // Note: No AbortSignal needed for quick validation requests
       });
 
-      // 3. Check the response
       if (response.ok) {
         this.logger.info(`API key validation successful for model ${model} (Status: ${response.status})`);
         return true;
       } else {
-        // Attempt to get a more specific error message
         const errorMessage = await extractApiErrorMessage(response);
         this.logger.warn(`API key validation failed for model ${model} (Status: ${response.status}): ${errorMessage}`);
         return false;
       }
     } catch (error) {
-      // Catch fetch errors or errors from _buildValidationRequest
       this.logger.error(`API key validation error for model ${model}:`, error);
       return false;
     }
@@ -193,49 +183,27 @@ class BaseApiService extends ApiInterface {
 
   // --- Abstract Methods for Subclasses ---
 
-  /**
-   * Build the platform-specific API request options for validation.
-   * Must be implemented by subclasses.
-   * @protected
-   * @abstract
-   * @param {string} apiKey - The API key to validate.
-   * @param {string} model - The model to use for validation (usually the default).
-   * @returns {Promise<Object>} An object like { url: string, method: string, headers: Object, body: string } for the validation call.
-   */
   async _buildValidationRequest(apiKey, model) {
     throw new Error('_buildValidationRequest must be implemented by subclasses');
   }
 
-  /**
-   * Build the platform-specific API request options.
-   * Must be implemented by subclasses.
-   * @protected
-   * @abstract
-   * @param {string} prompt - The final structured prompt.
-   * @param {Object} params - Resolved model parameters (model, temp, history, etc.).
-   * @param {string} apiKey - The API key.
-   * @returns {Promise<Object>} An object like { url: string, method: string, headers: Object, body: string }.
-   */
   async _buildApiRequest(prompt, params, apiKey) {
     throw new Error('_buildApiRequest must be implemented by subclasses');
   }
 
-  /**
-   * Parse a single line/chunk from the API stream.
-   * Must be implemented by subclasses.
-   * @protected
-   * @abstract
-   * @param {string} line - A single line string from the stream.
-   * @returns {Object} An object like { type: 'content' | 'error' | 'done' | 'ignore', chunk?: string, error?: string }.
-   */
   _parseStreamChunk(line) {
     throw new Error('_parseStreamChunk must be implemented by subclasses');
+  }
+
+  _resetStreamState() {
+    // Base implementation does nothing. Subclasses can override.
   }
 
   // --- Core Streaming Logic ---
 
   /**
    * Executes the streaming fetch request and processes the response stream.
+   * Handles Gemini differently by passing raw chunks directly to its parser.
    * @protected
    * @param {Object} fetchOptions - The options returned by _buildApiRequest { url, method, headers, body }.
    * @param {Function} onChunk - The callback function to send data/status updates.
@@ -247,7 +215,13 @@ class BaseApiService extends ApiInterface {
     let reader;
     let accumulatedContent = ""; // Keep track of content for final successful chunk
     const decoder = new TextDecoder("utf-8");
-    let buffer = "";
+    let buffer = ""; // Buffer for non-Gemini platforms
+
+    // Reset subclass-specific stream state if the method exists
+    if (typeof this._resetStreamState === 'function') {
+      this.logger.info(`Resetting stream state for ${this.platformId}`);
+      this._resetStreamState();
+    }
 
     try {
       this.logger.info(`Executing streaming request to ${fetchOptions.url} for model ${model}`);
@@ -259,12 +233,10 @@ class BaseApiService extends ApiInterface {
         signal: abortSignal
       });
 
-      // Handle non-OK initial responses
       if (!response.ok) {
         const errorMessage = await extractApiErrorMessage(response);
         this.logger.error(`API Error (${response.status}) for model ${model}: ${errorMessage}`, response);
         onChunk({ done: true, error: errorMessage, model });
-        // Throw an error to signal failure in processRequest
         throw new Error(`API request failed with status ${response.status}: ${errorMessage}`);
       }
 
@@ -280,10 +252,9 @@ class BaseApiService extends ApiInterface {
 
         if (done) {
           this.logger.info(`Stream finished for model ${model}.`);
-          // Process any remaining buffer content if necessary (though usually handled by line splitting)
-          if (buffer.trim()) {
+          // Process any remaining buffer content (relevant for non-Gemini)
+          if (this.platformId !== 'gemini' && buffer.trim()) {
              this.logger.warn(`Processing remaining buffer content after stream end for model ${model}: "${buffer}"`);
-             // Attempt to parse the final bit if it seems relevant
              try {
                 const parsedResult = this._parseStreamChunk(buffer.trim());
                 if (parsedResult.type === 'content' && parsedResult.chunk) {
@@ -291,33 +262,47 @@ class BaseApiService extends ApiInterface {
                     onChunk({ chunk: parsedResult.chunk, done: false, model });
                 } else if (parsedResult.type === 'error' && parsedResult.error) {
                     onChunk({ done: true, error: parsedResult.error, model });
-                    // Don't signal final success below if an error occurred here
                     return false; // Indicate handled error
                 }
              } catch (parseError) {
                  this.logger.error(`Error parsing final buffer chunk for model ${model}:`, parseError, 'Buffer:', buffer);
-                 // Decide if this constitutes a stream failure
                  onChunk({ done: true, error: `Error parsing final stream data: ${parseError.message}`, model });
                  return false; // Indicate handled error
              }
+          } else if (this.platformId === 'gemini') {
+              // For Gemini, make one final call to its parser with empty string
+              // to process any data left in its *internal* buffer.
+              try {
+                  const parsedResult = this._parseStreamChunk(""); // Process internal buffer
+                   if (parsedResult.type === 'content' && parsedResult.chunk) {
+                       accumulatedContent += parsedResult.chunk;
+                       onChunk({ chunk: parsedResult.chunk, done: false, model });
+                   } else if (parsedResult.type === 'error' && parsedResult.error) {
+                       onChunk({ done: true, error: parsedResult.error, model });
+                       return false; // Indicate handled error
+                   } else if (parsedResult.type !== 'ignore') {
+                       // Log if the final parse attempt returned something unexpected other than ignore/content/error
+                       this.logger.warn(`Unexpected result type '${parsedResult.type}' from final Gemini parse attempt.`);
+                   }
+              } catch (parseError) {
+                   this.logger.error(`Error parsing final Gemini internal buffer chunk for model ${model}:`, parseError);
+                   onChunk({ done: true, error: `Error parsing final stream data: ${parseError.message}`, model });
+                   return false; // Indicate handled error
+              }
           }
           // Signal successful completion
           onChunk({ chunk: '', done: true, model, fullContent: accumulatedContent });
           break; // Exit the loop
         }
 
-        buffer += decoder.decode(value, { stream: true });
-        let lineEnd;
+        // Decode the received chunk
+        const decodedChunk = decoder.decode(value, { stream: true });
 
-        // Process lines separated by newline characters
-        while ((lineEnd = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.substring(0, lineEnd).trim();
-          buffer = buffer.substring(lineEnd + 1);
-
-          if (!line) continue; // Skip empty lines
-
+        // --- Platform-Specific Handling ---
+        if (this.platformId === 'gemini') {
+          // Pass the raw decoded chunk directly to the Gemini parser
           try {
-            const parsedResult = this._parseStreamChunk(line);
+            const parsedResult = this._parseStreamChunk(decodedChunk); // Pass NEW data
 
             switch (parsedResult.type) {
               case 'content':
@@ -327,29 +312,66 @@ class BaseApiService extends ApiInterface {
                 }
                 break;
               case 'error':
-                this.logger.error(`Parsed stream error for model ${model}: ${parsedResult.error}`);
+                this.logger.error(`Parsed stream error (Gemini direct) for model ${model}: ${parsedResult.error}`);
                 onChunk({ done: true, error: parsedResult.error, model });
-                // Critical error from the stream, stop processing.
-                // Release lock in finally block.
-                return false; // Indicate handled error, stop processing loop
+                return false; // Stop processing loop
               case 'done':
-                // Platform indicated done, but we wait for the reader to confirm.
-                this.logger.info(`Platform signaled stream end for model ${model}. Line: "${line}"`);
-                // Do not break here; let the reader.read() loop determine final 'done'.
+                this.logger.info(`Platform signaled stream end (Gemini direct) for model ${model}.`);
+                // Let the reader determine final 'done'
                 break;
               case 'ignore':
-                // Ignore pings, comments, or irrelevant lines
+                // Gemini parser is buffering or ignoring non-content JSON
                 break;
               default:
-                this.logger.warn(`Unknown parsed chunk type: ${parsedResult.type} for model ${model}. Line: "${line}"`);
+                this.logger.warn(`Unknown parsed chunk type (Gemini direct): ${parsedResult.type} for model ${model}.`);
             }
           } catch (parseError) {
-            this.logger.error(`Error parsing stream chunk for model ${model}:`, parseError, 'Line:', line);
-            // Decide if this is fatal. For now, send error and stop.
+            this.logger.error(`Error parsing stream chunk (Gemini direct) for model ${model}:`, parseError, 'Chunk:', decodedChunk);
             onChunk({ done: true, error: `Error parsing stream data: ${parseError.message}`, model });
-            return false; // Indicate handled error, stop processing loop
+            return false; // Stop processing loop
           }
-        } // end while(lineEnd)
+        } else {
+          // Original logic for other platforms (newline splitting)
+          buffer += decodedChunk;
+          let lineEnd;
+          while ((lineEnd = buffer.indexOf('\n')) !== -1) {
+            const line = buffer.substring(0, lineEnd).trim();
+            buffer = buffer.substring(lineEnd + 1); // Consume line from buffer
+
+            if (!line) continue; // Skip empty lines
+
+            try {
+              const parsedResult = this._parseStreamChunk(line);
+
+              switch (parsedResult.type) {
+                case 'content':
+                  if (parsedResult.chunk) {
+                    accumulatedContent += parsedResult.chunk;
+                    onChunk({ chunk: parsedResult.chunk, done: false, model });
+                  }
+                  break;
+                case 'error':
+                  this.logger.error(`Parsed stream error for model ${model}: ${parsedResult.error}`);
+                  onChunk({ done: true, error: parsedResult.error, model });
+                  return false; // Stop processing loop
+                case 'done':
+                  this.logger.info(`Platform signaled stream end for model ${model}. Line: "${line}"`);
+                  // Let the reader determine final 'done'
+                  break;
+                case 'ignore':
+                  // Ignore pings, comments, or irrelevant lines
+                  break;
+                default:
+                  this.logger.warn(`Unknown parsed chunk type: ${parsedResult.type} for model ${model}. Line: "${line}"`);
+              }
+            } catch (parseError) {
+              this.logger.error(`Error parsing stream chunk for model ${model}:`, parseError, 'Line:', line);
+              onChunk({ done: true, error: `Error parsing stream data: ${parseError.message}`, model });
+              return false; // Stop processing loop
+            }
+          } // end while(lineEnd)
+        } // --- End Platform-Specific Handling ---
+
       } // end while(true)
 
       return true; // Signal successful completion of the stream
@@ -362,8 +384,6 @@ class BaseApiService extends ApiInterface {
         this.logger.error(`Unhandled streaming error for model ${model}:`, error);
         onChunk({ done: true, error: error.message || 'An unknown streaming error occurred', model });
       }
-      // Re-throw the error so processRequest catches it and returns a failure object
-      // unless it was an AbortError or an error already handled via onChunk and returning false.
       if (error.name !== 'AbortError') {
           throw error; // Propagate unexpected errors
       }
@@ -371,7 +391,7 @@ class BaseApiService extends ApiInterface {
     } finally {
       if (reader) {
         try {
-          // Ensure the reader lock is always released
+          await reader.cancel(); // Cancel first
           reader.releaseLock();
         } catch (releaseError) {
           this.logger.error(`Error releasing stream reader lock for model ${model}:`, releaseError);
@@ -386,9 +406,9 @@ class BaseApiService extends ApiInterface {
    */
   _createLogger() {
     return {
-      info: (message, data = null) => console.log(`[${this.platformId}-api] INFO: ${message}`, data || ''),
-      warn: (message, data = null) => console.warn(`[${this.platformId}-api] WARN: ${message}`, data || ''),
-      error: (message, data = null) => console.error(`[${this.platformId}-api] ERROR: ${message}`, data || '')
+      info: (message, data = null) => console.log(`[${this.platformId}-api] INFO: ${message}`, data ?? ''),
+      warn: (message, data = null) => console.warn(`[${this.platformId}-api] WARN: ${message}`, data ?? ''),
+      error: (message, data = null) => console.error(`[${this.platformId}-api] ERROR: ${message}`, data ?? '')
     };
   }
 
