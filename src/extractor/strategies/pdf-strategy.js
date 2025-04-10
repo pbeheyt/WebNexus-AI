@@ -1,3 +1,4 @@
+// src/extractor/strategies/pdf-strategy.js
 const BaseExtractor = require('../base-extractor');
 const pdfjs = require('pdfjs-dist/build/pdf');
 
@@ -32,63 +33,62 @@ class PdfExtractorStrategy extends BaseExtractor {
    */
   async extractPdfContent() {
     const pdfUrl = window.location.href;
-    
+
     try {
       // Fetch the PDF document
-      const response = await fetch(pdfUrl, { 
+      const response = await fetch(pdfUrl, {
         credentials: 'include',
         cache: 'no-store'
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch PDF: ${response.status}`);
       }
-      
+
       const pdfData = await response.arrayBuffer();
-      
-      // Load the PDF document
+
+      // Load the PDF document WITHOUT CMap options
+      this.logger.info('Loading PDF document without external CMaps...');
       const loadingTask = pdfjs.getDocument({
-        data: pdfData,
-        cMapUrl: chrome.runtime.getURL('dist/cmaps/'),
-        cMapPacked: true
+        data: pdfData
       });
-      
+
       const pdf = await loadingTask.promise;
       const pageCount = pdf.numPages;
-      
+
       // Extract basic metadata
       const metadata = await this.extractBasicMetadata(pdf);
-      
+
       // Extract text content from each page
       let fullText = '';
       let isSearchable = false;
-      
+
       for (let i = 1; i <= pageCount; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        
+
         if (textContent.items && textContent.items.length > 0) {
           isSearchable = true;
-          
+
           // Process text with simple layout preservation
           let lastY;
           let text = '';
-          
+
           for (const item of textContent.items) {
             if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
               text += '\n';
             }
-            
+
             text += item.str + ' ';
             lastY = item.transform[5];
           }
-          
+
           fullText += `\n--- Page ${i} ---\n\n${text.trim()}\n\n`;
         } else {
           fullText += `\n--- Page ${i} ---\n\n[No text content found on this page]\n\n`;
         }
       }
-      
+
       // Build and return the complete data object
       return {
         pdfTitle: this.extractPdfTitle() || metadata.title || 'Unknown PDF',
@@ -117,7 +117,7 @@ class PdfExtractorStrategy extends BaseExtractor {
       title: null,
       pageCount: pdf.numPages
     };
-    
+
     try {
       const info = await pdf.getMetadata();
       if (info && info.info) {
@@ -128,7 +128,7 @@ class PdfExtractorStrategy extends BaseExtractor {
     } catch (error) {
       this.logger.warn('Failed to extract PDF metadata:', error);
     }
-    
+
     return metadata;
   }
 
@@ -142,20 +142,20 @@ class PdfExtractorStrategy extends BaseExtractor {
     if (documentTitle && !documentTitle.includes('PDF viewer')) {
       return documentTitle.replace('.pdf', '').trim();
     }
-    
+
     // Try basic viewer elements
     const titleElement = document.querySelector('#toolbar #file-name, .pdf-title, .document-title');
     if (titleElement) {
       return titleElement.textContent.trim();
     }
-    
+
     // Fall back to filename from URL
     const urlParts = window.location.pathname.split('/');
     const fileName = urlParts[urlParts.length - 1];
     if (fileName.endsWith('.pdf')) {
       return fileName.replace('.pdf', '');
     }
-    
+
     return 'Unknown PDF Document';
   }
 }
