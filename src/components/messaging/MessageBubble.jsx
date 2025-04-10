@@ -1,6 +1,8 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 /**
  * Reusable Copy Button Icon component
@@ -63,15 +65,33 @@ const copyToClipboardUtil = (text) => {
 };
 
 /**
- * Modern minimalist CodeBlock
+ * Enhanced CodeBlock with syntax highlighting
  */
-const CodeBlock = memo(({ className, children, isStreaming = false }) => {
+const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) => {
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
   const codeContent = String(children).replace(/\n$/, '');
+  const [isDarkMode, setIsDarkMode] = useState(
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
+  
+  // Listen for theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => setIsDarkMode(e.matches);
+    
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      // Fallback for older browsers
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, []);
   
   // Extract language from className (format: language-python, language-javascript, etc.)
   const languageMatch = /language-(\w+)/.exec(className || '');
-  const language = languageMatch ? languageMatch[1] : 'code';
+  const language = languageMatch ? languageMatch[1] : 'text';
   
   // Check if this is just a filename (single line, no spaces, has extension)
   const isFilenameOrModule = codeContent.trim().indexOf('\n') === -1 && 
@@ -107,6 +127,9 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
     );
   }
   
+  // Define the syntax highlighter theme based on current app theme
+  const syntaxTheme = isDarkMode ? oneDark : oneLight;
+  
   return (
     <div className="relative rounded-lg overflow-visible border border-gray-200 dark:border-gray-700 mb-4 shadow-sm">
       {/* Minimal header with language display */}
@@ -130,12 +153,27 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
         )}
       </div>
       
-      {/* Clean code content area with equal padding top and bottom */}
-      <pre className="bg-gray-50 dark:bg-gray-900 py-2 px-4 m-0 overflow-x-auto overflow-y-auto max-h-[50vh] text-sm leading-5 font-mono text-gray-800 dark:text-gray-200 w-full">
-        <code className={`${className} whitespace-pre-wrap break-words overflow-wrap-anywhere block min-h-[1.5rem] mt-0`}>
-          {children}
-        </code>
-      </pre>
+      {/* Code content area with syntax highlighting */}
+      <div className="bg-gray-50 dark:bg-gray-900 overflow-x-auto overflow-y-auto max-h-[50vh] w-full">
+        <SyntaxHighlighter
+          language={language}
+          style={syntaxTheme}
+          customStyle={{
+            margin: 0,
+            padding: '0.5rem 1rem',
+            background: 'transparent',
+            fontSize: '0.875rem',
+            lineHeight: 1.25,
+            minHeight: '1.5rem'
+          }}
+          wrapLongLines={true}
+          codeTagProps={{
+            className: 'font-mono text-gray-800 dark:text-gray-200'
+          }}
+        >
+          {codeContent}
+        </SyntaxHighlighter>
+      </div>
     </div>
   );
 });
@@ -290,10 +328,10 @@ const MessageBubbleComponent = ({
               }
               
               return !inline ? (
-                // Block code with copy button: use our CodeBlock component
-                <CodeBlock className={className} isStreaming={isStreaming}>
+                // Block code with syntax highlighting: use our EnhancedCodeBlock component
+                <EnhancedCodeBlock className={className} isStreaming={isStreaming}>
                   {children}
-                </CodeBlock>
+                </EnhancedCodeBlock>
               ) : (
                 // Inline code
                 <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
