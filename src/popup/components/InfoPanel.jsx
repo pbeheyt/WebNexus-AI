@@ -21,7 +21,7 @@ export function InfoPanel({ contentTypeLabel, contentType }) {
         and send it with your prompt to the selected platform.
       </p>
       <p>
-        Open <span className="font-medium text-theme-primary">SidePanel</span>
+        Open <span className="font-medium text-theme-primary">Side Panel</span>
         <svg
           viewBox="0 0 24 24"
           fill="none"
