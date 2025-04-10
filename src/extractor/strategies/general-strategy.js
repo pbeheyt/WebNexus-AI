@@ -8,34 +8,39 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
   /**
-   * Cleans extracted text content with moderate whitespace normalization.
-   * Tries to preserve paragraph breaks while collapsing other whitespace.
+   * Cleans extracted text content with improved whitespace normalization.
+   * Preserves paragraph breaks while eliminating excessive empty lines.
    * @param {string} text - The raw text content.
    * @returns {string} - The cleaned text content.
    */
   _moderateCleanText(text) {
     if (!text) return '';
-
     let cleaned = text;
 
-    // 1. Replace various whitespace chars (tabs, vertical tabs, form feeds) with spaces
+    // 1. Normalize line breaks to \n
+    cleaned = cleaned.replace(/\r\n/g, '\n');
+    
+    // 2. Replace various whitespace chars (tabs, vertical tabs, form feeds) with spaces
     cleaned = cleaned.replace(/[\t\v\f]+/g, ' ');
-
-    // 2. Collapse multiple spaces into a single space
+    
+    // 3. Collapse multiple spaces into a single space
     cleaned = cleaned.replace(/ {2,}/g, ' ');
-
-    // 3. Collapse more than two consecutive newlines into exactly two
-    cleaned = cleaned.replace(/(\r?\n){3,}/g, '\n\n');
-
-    // 4. Remove spaces directly before newlines
+    
+    // 4. Replace any combination of whitespace and newlines that creates empty lines
+    // with just two newlines (for paragraph separation)
+    cleaned = cleaned.replace(/\n[\s\n]+/g, '\n\n');
+    
+    // 5. Remove spaces directly before newlines
     cleaned = cleaned.replace(/ +\n/g, '\n');
-
-    // 5. Trim leading/trailing whitespace (including newlines)
+    
+    // 6. Ensure we don't have more than 2 consecutive newlines anywhere
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    
+    // 7. Trim leading/trailing whitespace (including newlines)
     cleaned = cleaned.trim();
 
     return cleaned;
   }
-
 
   /**
    * Extract and save page data to Chrome storage
@@ -66,7 +71,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
     let author = null;
     let content = '';
     let isSelection = false;
-
     try {
       // Get user selection if any
       const selectedText = window.getSelection().toString().trim();
@@ -87,37 +91,37 @@ class GeneralExtractorStrategy extends BaseExtractor {
         this.logger.info('No selection, extracting content using Cheerio (minimal filtering).');
         content = ''; // Initialize content variable
         try {
-            const pageHtml = document.body.innerHTML;
-            const $ = cheerio.load(pageHtml);
+          const pageHtml = document.body.innerHTML;
+          const $ = cheerio.load(pageHtml);
 
-            // *** Minimal Noise Removal: Only remove truly non-content tags ***
-            const essentialNoise = 'script, style, noscript, head, link, meta, svg, canvas, video, audio, iframe';
-            $(essentialNoise).remove();
-            this.logger.info('Removed essential noise elements using Cheerio.');
+          // *** Minimal Noise Removal: Only remove truly non-content tags ***
+          const essentialNoise = 'script, style, noscript, head, link, meta, svg, canvas, video, audio, iframe';
+          $(essentialNoise).remove();
+          this.logger.info('Removed essential noise elements using Cheerio.');
 
-            // *** Extract text from the entire body ***
-            const extractedText = $('body').text();
+          // *** Extract text from the entire body ***
+          const extractedText = $('body').text();
 
-            // *** Apply moderate cleaning ***
-            content = this._moderateCleanText(extractedText);
-            this.logger.info(`Cheerio extracted and moderately cleaned ${content.length} characters.`);
+          // *** Apply moderate cleaning ***
+          content = this._moderateCleanText(extractedText);
+          this.logger.info(`Cheerio extracted and moderately cleaned ${content.length} characters.`);
 
         } catch (cheerioError) {
-            this.logger.error('Error during Cheerio processing:', cheerioError);
-            content = 'Error extracting content using Cheerio: ' + cheerioError.message;
-            // Fallback to basic text extraction on error
-            try {
-                 let bodyText = document.body.textContent || '';
-                 content += this._moderateCleanText(bodyText); // Apply cleaning to fallback
-                 if (!content.trim().replace('Error extracting content using Cheerio: ' + cheerioError.message, '')) {
-                     content = 'Content extraction failed completely after Cheerio error.';
-                 } else {
-                     this.logger.info(`Fallback extracted and cleaned ${content.length} characters after Cheerio error.`);
-                 }
-            } catch (fallbackError) {
-                 this.logger.error('Fallback text extraction failed after Cheerio error:', fallbackError);
-                 content = 'Content extraction failed completely.';
+          this.logger.error('Error during Cheerio processing:', cheerioError);
+          content = 'Error extracting content using Cheerio: ' + cheerioError.message;
+          // Fallback to basic text extraction on error
+          try {
+            let bodyText = document.body.textContent || '';
+            content += this._moderateCleanText(bodyText); // Apply cleaning to fallback
+            if (!content.trim().replace('Error extracting content using Cheerio: ' + cheerioError.message, '')) {
+              content = 'Content extraction failed completely after Cheerio error.';
+            } else {
+              this.logger.info(`Fallback extracted and cleaned ${content.length} characters after Cheerio error.`);
             }
+          } catch (fallbackError) {
+            this.logger.error('Fallback text extraction failed after Cheerio error:', fallbackError);
+            content = 'Content extraction failed completely.';
+          }
         }
       }
 
@@ -148,7 +152,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
   // --- Metadata Extraction Methods (Unchanged) ---
-
   extractPageTitle() {
     return document.title || 'Unknown Title';
   }
@@ -174,7 +177,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
         return metaElement.getAttribute('content');
       }
     }
-
     const authorSelectors = [
       '.author', '.byline', '.post-author', '.entry-author',
       '[rel="author"]', 'a[href*="/author/"]', '.author-name',
@@ -183,15 +185,15 @@ class GeneralExtractorStrategy extends BaseExtractor {
     for (const selector of authorSelectors) {
       const authorElement = document.querySelector(selector);
       const isVisible = (el) => {
-            if (!el) return false;
-            const style = window.getComputedStyle(el);
-            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
-            if (el.offsetParent === null && style.position !== 'fixed') {
-                const rect = el.getBoundingClientRect();
-                if (rect.width === 0 && rect.height === 0) return false;
-            }
-            if (el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true') return false;
-            return true;
+        if (!el) return false;
+        const style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+        if (el.offsetParent === null && style.position !== 'fixed') {
+          const rect = el.getBoundingClientRect();
+          if (rect.width === 0 && rect.height === 0) return false;
+        }
+        if (el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true') return false;
+        return true;
       };
 
       if (authorElement && authorElement.textContent?.trim() && isVisible(authorElement)) {
