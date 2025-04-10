@@ -164,6 +164,20 @@ export async function handleInstallation(details) {
   } catch(error) {
      logger.background.error('Failed to complete core extension initialization after install/update event.');
   }
+
+  // --- Context Menu Setup ---
+  try {
+    chrome.contextMenus.create({
+      id: "nexusai_open_sidebar",
+      title: "Open Nexus AI Sidebar",
+      contexts: ["page"] // Show only when right-clicking the page itself
+    });
+    logger.background.info('Context menu item "nexusai_open_sidebar" created.');
+  } catch (contextMenuError) {
+    // Log error if context menu creation fails (e.g., during update if ID exists)
+    // It might be okay if it already exists, so just log a warning.
+    logger.background.warn('Failed to create context menu item (it might already exist):', contextMenuError.message);
+  }
 }
 
 // Setup installation handler

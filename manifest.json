@@ -9,7 +9,9 @@
     "storage",
     "tabs",
     "webRequest",
-    "sidePanel"
+    "sidePanel",
+    "commands",
+    "contextMenus"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
@@ -47,6 +49,15 @@
     "16": "images/icon16.png",
     "48": "images/icon48.png",
     "128": "images/icon128.png"
+  },
+  "commands": {
+    "open_nexusai_sidebar": {
+      "suggested_key": {
+        "default": "Alt+Shift+O",
+        "mac": "Alt+Shift+O"
+      },
+      "description": "Open Nexus AI Sidebar"
+    }
   },
   "web_accessible_resources": [
     {

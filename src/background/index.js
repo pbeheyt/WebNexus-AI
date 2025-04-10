@@ -27,6 +27,52 @@ async function startBackgroundService() {
     setupTabStateListener(); // Sets up onRemoved listener
     setupConnectionListener(); // Add connection listener setup
 
+    // Listener for keyboard shortcuts
+    chrome.commands.onCommand.addListener(async (command) => {
+      logger.background.info(`Command received: ${command}`);
+      if (command === "open_nexusai_sidebar") {
+        try {
+          // Get the current active tab
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tab?.id) {
+            logger.background.info(`Command: Opening side panel for active tab: ${tab.id}`);
+            // Open the side panel for the current tab
+            await chrome.sidePanel.open({ tabId: tab.id });
+            // Update internal state to reflect the panel should be visible
+            await SidebarStateManager.setSidebarVisibilityForTab(tab.id, true);
+            logger.background.info(`Command: Side panel opened and visibility state updated for tab ${tab.id}.`);
+          } else {
+            logger.background.warn("Command: No active tab found to open the side panel for.");
+          }
+        } catch (error) {
+          logger.background.error(`Command: Error opening side panel via command for tab ${tab?.id}:`, error);
+        }
+      }
+    });
+    logger.background.info('Keyboard command listener registered.');
+
+    // Listener for context menu clicks
+    chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+      logger.background.info(`Context menu item clicked: ${info.menuItemId}`);
+      if (info.menuItemId === "nexusai_open_sidebar") {
+        if (tab?.id) {
+          try {
+            logger.background.info(`Context Menu: Opening side panel for tab: ${tab.id}`);
+            // Open the side panel for the clicked tab context
+            await chrome.sidePanel.open({ tabId: tab.id });
+            // Update internal state to reflect the panel should be visible
+            await SidebarStateManager.setSidebarVisibilityForTab(tab.id, true);
+            logger.background.info(`Context Menu: Side panel opened and visibility state updated for tab ${tab.id}.`);
+          } catch (error) {
+            logger.background.error(`Context Menu: Error opening side panel via context menu for tab ${tab.id}:`, error);
+          }
+        } else {
+          logger.background.warn("Context Menu: Click received but no valid tab context found.");
+        }
+      }
+    });
+    logger.background.info('Context menu click listener registered.');
+
     // 4. Add the onStartup listener for cleanup
     // This listener persists across service worker restarts.
     chrome.runtime.onStartup.addListener(async () => {
