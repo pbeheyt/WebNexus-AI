@@ -93,22 +93,12 @@ class GeminiApiService extends BaseApiService {
     // Extract the JSON string part after 'data: '
     const jsonString = line.substring(5).trim(); // Get content after 'data: '
 
-    // --- DEBUG LOGGING ---
-    // Log the raw JSON string received in the data part
-    this.logger.info('Received Gemini SSE data chunk (raw JSON string):', jsonString);
-    // --- END DEBUG LOGGING ---
-
     if (!jsonString) {
       return { type: 'ignore' }; // Ignore if data part is empty
     }
 
     try {
       const data = JSON.parse(jsonString);
-
-      // --- DEBUG LOGGING ---
-      // Log the parsed JSON object
-      this.logger.info('Parsed Gemini SSE data chunk (object):', data);
-      // --- END DEBUG LOGGING ---
 
       // Extract text content - assuming the same structure as the previous JSON stream
       // Check candidates -> content -> parts -> text
