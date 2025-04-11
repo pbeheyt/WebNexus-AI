@@ -65,10 +65,6 @@ const copyToClipboardUtil = (text) => {
 };
 
 /**
- * Utility function to determine if content is a mathematical formula
- * Extracted as separate function for better organization and reusability
- */
-/**
  * Comprehensive utility function to determine if content is a mathematical formula
  * Covers notation from various mathematical domains
  */
@@ -478,109 +474,76 @@ const MessageBubbleComponent = ({
               const match = /language-(\w+)/.exec(className || '');
               const content = String(children).trim();
               
-              // First, determine if this is explicitly marked as a language code block
-              const isExplicitCodeBlock = match && match[1] !== 'text';
+              // Check if this is marked as "text" language - Priority #1
+              const isTextLanguage = match && match[1]?.toLowerCase() === 'text';
               
-              // Enhanced check for simple variables and expressions that should NOT render as code blocks
-              const isSimpleVariable = !inline && 
-                                      content.length < 15 && // Short content
-                                      !content.includes('\n') && // Single line
-                                      !content.includes(';') && // No semicolons
-                                      !content.includes('{') && // No braces
-                                      !content.includes('}') &&
-                                      !/^(function|class|const|let|var|import|export)/.test(content) && // Not starting with code keywords
-                                      !/[\(\)\{\}\[\]<>]/.test(content); // No parentheses or brackets typical of code
-
-              // Enhanced check for filename or module references
-              const isFilenameOrModule = content.indexOf('\n') === -1 && 
-                                content.indexOf(' ') === -1 && 
-                                (
-                                  // Traditional file extensions
-                                  /\.\w{1,4}$/.test(content) ||
-                                  // Module.function patterns (like numpy.polyfit)
-                                  /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(content)
-                                );
-              
-              // Check if parent is a list item by traversing up the tree
-              const isInListItem = () => {
-                let parent = node.parent;
-                while (parent) {
-                  if (parent.type === 'listItem') {
-                    return true;
-                  }
-                  parent = parent.parent;
-                }
-                return false;
-              };
-              
-              // Enhanced detection for mathematical expressions and formulas
-              const isMathematicalFormula = !isExplicitCodeBlock && 
-                                       !inline && 
-                                       isMathFormula(content);
-              
-              // Special explicit check for mutual information and similar formulas
-              const isSpecialMathFormula = 
-                /I\(X;Y\)\s*=\s*Σ\s*P\(x,y\)\s*\*\s*log₂/.test(content) || 
-                /det\(\[.*\]\)/.test(content);
-              
-              // If it's a simple variable or in a list, render as inline code
-              if (isSimpleVariable || (!inline && (isInListItem() || isMathematicalFormula || isSpecialMathFormula))) {
-                // For single-letter variables like 'n', render as inline code
-                if (/^[a-zA-Z]$/.test(content) || /^[a-zA-Z_][a-zA-Z0-9_]{0,2}$/.test(content)) {
-                  return (
-                    <code className="px-1 py-0.5 rounded text-xs font-mono inline">
-                      {children}
-                    </code>
-                  );
-                }
-                
-                // For mathematical formulas, use consistent math formula styling
-                if (isMathematicalFormula || isSpecialMathFormula) {
-                  return (
-                    <code className="bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded font-mono text-sm">
-                      {children}
-                    </code>
-                  );
-                } else if (isFilenameOrModule) {
-                  // For module.function patterns, render inline as code
-                  return (
-                    <code className="px-2 py-1 rounded text-xs font-mono inline-block">
-                      {children}
-                    </code>
-                  );
-                }
+              // Skip code block rendering for "text" language blocks
+              if (!inline && isTextLanguage) {
+                // For "text" language blocks, render as a formatted text block
+                // with math formula styling for better visibility
                 return (
-                  <span className="whitespace-pre-wrap break-words leading-relaxed">
+                  <div className="p-3 rounded my-3 font-mono text-sm whitespace-pre-wrap">
                     {children}
-                  </span>
+                  </div>
                 );
               }
               
-              // Always catch inline code
+              // First, determine if this is explicitly marked as a language code block
+              const isExplicitCodeBlock = match && match[1] && match[1].toLowerCase() !== 'text';
+              
+              // Check if this is a math formula - Priority #2
+              if (!inline && isMathFormula(content)) {
+                return (
+                  <code className="px-1.5 py-0.5 rounded font-mono text-sm">
+                    {children}
+                  </code>
+                );
+              }
+              
+              // For code blocks (with explicit language or multiline) - Priority #3
               if (!inline && (isExplicitCodeBlock || content.includes('\n') || content.includes(';'))) {
-                // Block code with syntax highlighting: use our EnhancedCodeBlock component
                 return (
                   <EnhancedCodeBlock className={className} isStreaming={isStreaming}>
                     {children}
                   </EnhancedCodeBlock>
                 );
-              } else {
-                // All inline code - check if it's math formula first
-                if (isMathFormula(content)) {
-                  return (
-                    <code className="bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded font-mono text-sm">
-                      {children}
-                    </code>
-                  );
-                }
-                // Regular inline code
+              }
+              
+              // Special case for filenames or module references
+              const isFilenameOrModule = !inline && content.indexOf('\n') === -1 && 
+                                  content.indexOf(' ') === -1 && 
+                                  (
+                                    // Traditional file extensions
+                                    /\.\w{1,4}$/.test(content) ||
+                                    // Module.function patterns (like numpy.polyfit)
+                                    /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(content)
+                                  );
+              
+              if (isFilenameOrModule) {
                 return (
-                  <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                  <code className="px-2 py-1 rounded text-xs font-mono inline-block">
                     {children}
                   </code>
                 );
               }
+              
+              // For inline math formulas - Priority #4
+              if (inline && isMathFormula(content)) {
+                return (
+                  <code className="px-1.5 py-0.5 rounded font-mono text-sm">
+                    {children}
+                  </code>
+                );
+              }
+              
+              // Default: Regular inline code - Priority #5
+              return (
+                <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                  {children}
+                </code>
+              );
             },
+            
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
             pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
