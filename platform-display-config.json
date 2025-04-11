@@ -43,7 +43,7 @@
       "docApiLink": "https://ai.google.dev/docs",
       "modelApiLink": "https://ai.google.dev/gemini-api/docs/models/",
       "consoleApiLink": "https://aistudio.google.com/",
-      "keyApiLink": "https://ai.google.dev/gemini-api/docs/api-key"
+      "keyApiLink": "https://aistudio.google.com/app/apikey"
     },
     "grok": {
       "name": "Grok",
