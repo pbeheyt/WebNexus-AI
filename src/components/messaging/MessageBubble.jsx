@@ -649,12 +649,14 @@ const MessageBubbleComponent = ({
               
               // Check for LaTeX environments directly (highest priority)
               if (hasLatexEnvironments(content)) {
-                return <MathFormulaBlock content={content} />;
+                return <MathFormulaBlock content={content} inline={false} />;
               }
               
               // Check for LaTeX commands that indicate math content
               if (hasLatexCommands(content)) {
-                return <MathFormulaBlock content={content} />;
+                // Determine if this should be inline based on content length and complexity
+                const shouldBeInline = inline || (content.length < 30 && !content.includes('\n'));
+                return <MathFormulaBlock content={content} inline={shouldBeInline} />;
               }
               
               // Check if this is marked as "text" language but contains LaTeX markers
@@ -684,10 +686,14 @@ const MessageBubbleComponent = ({
               // First, determine if this is explicitly marked as a language code block
               const isExplicitCodeBlock = match && match[1] && match[1].toLowerCase() !== 'text';
               
-              // Check if this is a standard math formula - Priority #2
-              if (!inline && isMathFormula(content)) {
+              // Check if this is a math formula
+              if (isMathFormula(content)) {
+                // MODIFIED LOGIC: Short expressions should be inline
+                const isShortExpression = content.length < 30 && !content.includes('\n');
+                const shouldRenderInline = inline || isShortExpression;
+                
                 // Use KaTeX to render the formula
-                return <MathFormulaBlock content={content} />;
+                return <MathFormulaBlock content={content} inline={shouldRenderInline} />;
               }
               
               // For code blocks (with explicit language or multiline) - Priority #3
@@ -715,12 +721,6 @@ const MessageBubbleComponent = ({
                     {children}
                   </code>
                 );
-              }
-              
-              // For inline math formulas - Priority #4
-              if (inline && isMathFormula(content)) {
-                // Use KaTeX to render the formula
-                return <MathFormulaBlock content={content} inline={true} />;
               }
               
               // Default: Regular inline code - Priority #5
