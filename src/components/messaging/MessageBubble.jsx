@@ -21,7 +21,7 @@ import { detectContentType, ContentType } from './services/ContentTypeDetector';
  * @param {string} props.className - Additional CSS classes (optional)
  * @returns {JSX.Element} - The rendered message bubble
  */
-export const MessageBubble = memo(({ // Changed to named export and added memo here
+export const MessageBubble = memo(({
   content,
   role = 'assistant',
   isStreaming = false,
@@ -78,21 +78,15 @@ export const MessageBubble = memo(({ // Changed to named export and added memo h
       {/* Main content - Render Markdown for assistant messages */}
       <div className={`prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}>
         <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkMath]} // Added remarkMath plugin
+          remarkPlugins={[remarkGfm, remarkMath]}
           components={{
             // Math components for LaTeX-style math rendering
-            math: ({value}) => <MathFormulaBlock content={value} />,
-            inlineMath: ({value}) => <MathFormulaBlock content={value} inline={true} />,
-
-            // Headings with consistent spacing hierarchy (more compact)
+            // math: ({value}) => <MathFormulaBlock content={value} />,
+            // inlineMath: ({value}) => <MathFormulaBlock content={value} inline={true} />,
             h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-5 mb-3" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mt-3 mb-2" {...props} />,
-
-            // Paragraph with improved spacing (more compact)
             p: ({node, ...props}) => <p className="mb-3 leading-relaxed text-sm" {...props} />,
-
-            // Lists with better spacing between items and surrounding elements (more compact)
             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
             li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
@@ -142,7 +136,6 @@ export const MessageBubble = memo(({ // Changed to named export and added memo h
                   );
               }
             },
-
             pre: ({node, children, ...props}) => <>{children}</>,
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
             blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props} />,
