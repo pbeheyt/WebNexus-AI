@@ -1,8 +1,6 @@
 # Nexus AI: Web Content Assistant (ChatGPT, Claude, Gemini & More)
 
-**Interact directly with web pages, YouTube videos, PDFs, and Reddit posts using popular AI models like ChatGPT, Claude, Gemini, and others.**
-
-Nexus AI transforms how you interact with online content. Go beyond simple copy-pasting and engage directly with web pages, YouTube videos, PDFs, and Reddit posts using various AI models.
+**Interact with, analyze, and summarize web pages, YouTube videos, PDFs, and Reddit posts using ChatGPT, Claude, Gemini and other AI platforms. Choose between direct API integration via side panel or seamless transfer to web UIs without copying and pasting**
 
 ---
 
