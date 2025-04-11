@@ -7,6 +7,11 @@ import EnhancedCodeBlock from './components/EnhancedCodeBlock';
 import MathFormulaBlock from './components/MathFormulaBlock';
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { detectContentType, ContentType } from './services/ContentTypeDetector';
+import {
+  isMathematicalFunction,
+  hasLatexCommands,
+  hasHighConfidenceMathIndicators
+} from './utils/mathDetection';
 
 /**
  * A versatile message bubble component that supports different roles and states
@@ -33,6 +38,19 @@ export const MessageBubble = memo(({
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
+
+  // Helper to extract text content from ReactMarkdown node
+  const getNodeText = (node) => {
+    let text = '';
+    if (node && node.children && Array.isArray(node.children)) {
+      node.children.forEach(child => {
+        if (child.type === 'text') {
+          text += child.value;
+        }
+      });
+    }
+    return text;
+  };
 
   // Copy assistant message to clipboard
   const handleCopyToClipboard = () => { 
@@ -86,7 +104,20 @@ export const MessageBubble = memo(({
             h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-5 mb-3" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mt-3 mb-2" {...props} />,
-            p: ({node, ...props}) => <p className="mb-3 leading-relaxed text-sm" {...props} />,
+            p: ({node, children, ...props}) => {
+              const textContent = getNodeText(node).trim();
+              const isLikelyStandaloneMath = textContent && (
+                isMathematicalFunction(textContent) ||
+                hasLatexCommands(textContent) ||
+                hasHighConfidenceMathIndicators(textContent)
+              );
+              
+              return isLikelyStandaloneMath ? (
+                <MathFormulaBlock content={textContent} inline={false} />
+              ) : (
+                <p className="mb-3 leading-relaxed text-sm" {...props}>{children}</p>
+              );
+            },
             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
             li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
@@ -207,4 +238,3 @@ export const MessageBubble = memo(({
     </div>
   );
 });
-
