@@ -2,13 +2,10 @@ import React, { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-// Adjust import paths for utils and components since this file is moving up one level
-import { looksLikeCode } from './utils/codeDetection';
-import { isMathFormula, isMathVariable, hasLatexEnvironments, hasLatexCommands, hasLatexDelimiters } from './utils/mathDetection';
-import CopyButtonIcon from './icons/CopyButtonIcon'; // Path needs adjustment
-import EnhancedCodeBlock from './components/EnhancedCodeBlock'; // Path needs adjustment
-import MathFormulaBlock from './components/MathFormulaBlock'; // Path needs adjustment
-import { copyToClipboard as copyUtil } from './utils/clipboard'; // Renamed import to avoid conflict
+import CopyButtonIcon from './icons/CopyButtonIcon';
+import EnhancedCodeBlock from './components/EnhancedCodeBlock';
+import MathFormulaBlock from './components/MathFormulaBlock';
+import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { detectContentType, ContentType } from './services/ContentTypeDetector';
 
 /**
@@ -38,10 +35,10 @@ export const MessageBubble = memo(({ // Changed to named export and added memo h
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
 
   // Copy assistant message to clipboard
-  const handleCopyToClipboard = () => { // Renamed function to avoid conflict with import
+  const handleCopyToClipboard = () => { 
     if (!content || isStreaming) return;
 
-    copyUtil(content) // Use the imported utility
+    copyUtil(content)
       .then(() => {
         setCopyState('copied');
         setTimeout(() => setCopyState('idle'), 2000);
@@ -146,20 +143,12 @@ export const MessageBubble = memo(({ // Changed to named export and added memo h
               }
             },
 
-            // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
-            pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
+            pre: ({node, children, ...props}) => <>{children}</>,
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-
-            // Better spacing for blockquotes (more compact)
             blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props} />,
-
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
             em: ({node, ...props}) => <em className="italic" {...props} />,
-
-            // Improved horizontal rule spacing (more compact)
             hr: ({node, ...props}) => <hr className="my-4 border-t border-gray-300 dark:border-gray-600" {...props} />,
-
-            // Table handling with consistent spacing (more compact)
             table: ({node, ...props}) => <div className="overflow-x-auto my-3"><table className="border-collapse w-full text-xs" {...props} /></div>,
             thead: ({node, ...props}) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
             tbody: ({node, ...props}) => <tbody {...props} />,
@@ -197,7 +186,7 @@ export const MessageBubble = memo(({ // Changed to named export and added memo h
         <div className="w-7 h-7 flex items-center justify-center">
           {!isStreaming && content && (
             <button
-              onClick={handleCopyToClipboard} // Use renamed handler
+              onClick={handleCopyToClipboard}
               className={`p-1 rounded-md transition-opacity duration-200 z-50
                         ${copyState === 'idle' ? 'opacity-0 message-group-hover:opacity-100' : 'opacity-100'}
                         ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' :
@@ -226,4 +215,3 @@ export const MessageBubble = memo(({ // Changed to named export and added memo h
   );
 });
 
-// Removed default export

@@ -1,6 +1,3 @@
-// src/components/messaging/utils/mathDetection.js
-import { looksLikeCode } from './codeDetection';
-
 /**
  * Detects LaTeX environments like \begin{cases}, \begin{align}, etc.
  */
@@ -44,27 +41,6 @@ export const hasLatexDelimiters = (content) => {
   const hasInlineMath = /\$.+?\$/s.test(content) || /\\\(.+?\\\)/s.test(content);
   const hasBlockMath = /\$\$.+?\$\$/s.test(content) || /\\\[.+?\\\]/s.test(content);
   return hasInlineMath || hasBlockMath;
-};
-
-/**
- * Math variable detection with code protection.
- * @deprecated This function can be ambiguous. Prefer context-driven detection and `hasHighConfidenceMathIndicators`.
- */
-export const isMathVariable = (content) => {
-  // Note: This function's role is likely reduced due to the new context-driven approach.
-  content = content.trim();
-
-  if (looksLikeCode(content)) {
-    return false;
-  }
-  
-  return (
-    (/^[a-zA-Z]$/.test(content) && 'ijkmnpqrstxyzαβγδθλμπσφω'.includes(content.toLowerCase())) ||
-    /^[a-zA-Z]_[a-zA-Z0-9]$/.test(content) ||
-    /^[a-zA-Z]_\{[a-zA-Z0-9]+\}$/.test(content) ||
-    /^[a-zA-Z]\^[a-zA-Z0-9]$/.test(content) ||
-    /^[a-zA-Z]\^\{[a-zA-Z0-9\+\-]+\}$/.test(content)
-  );
 };
 
 /**
@@ -137,85 +113,6 @@ export const isMathematicalFunction = (content) => {
 };
 
 /**
- * Comprehensive mathematical formula detection.
- * @deprecated Much of this complexity might be unnecessary with the new context-driven approach and `hasHighConfidenceMathIndicators`.
- */
-export const isMathFormula = (content) => {
-  // Note: This function's role is significantly reduced. The primary logic now relies on
-  // ContentContextManager and the more specific helper functions.
-  content = content.trim();
-
-  // Early exclusion of obvious code
-  if (looksLikeCode(content)) {
-    return false;
-  }
-  
-  // Check binomial coefficients and mathematical functions first
-  if (isBinomialCoefficient(content) || isMathematicalFunction(content)) {
-    return true;
-  }
-  
-  // For multiline content, it's likely code rather than math
-  if (content.includes('\n') && content.length > 50 && 
-      !hasLatexEnvironments(content) && !hasLatexCommands(content)) {
-    return false;
-  }
-  
-  // Quick check for common mathematical variables
-  if (/^[a-zA-Z]$/.test(content) && 'ijkmnpqrstxyzαβγδθλμπσφω'.includes(content.toLowerCase())) {
-    return true;
-  }
-  
-  // Check for LaTeX subscript and superscript notation
-  if (/\_\{[^}]+\}/.test(content) || /\_[0-9a-zA-Z]/.test(content) || 
-      /\^[0-9a-zA-Z]/.test(content) || /\^\{[^}]+\}/.test(content)) {
-    return true;
-  }
-  
-  // Skip explicit code blocks or multiline programming features
-  if ((content.includes('\n') && 
-       (content.includes('if (') || content.includes('for (') || 
-        content.includes('function(') || content.includes('import ') || 
-        content.includes('class ') || content.includes('const ') ||
-        content.includes('return ') || content.includes('console.log'))) ||
-      content.includes('===') || content.includes('!==') ||
-      content.startsWith('function ') || content.startsWith('const ') || 
-      content.startsWith('let ') || content.startsWith('var ')) {
-    return false;
-  }
-  
-  // MATHEMATICAL DOMAIN PATTERNS
-  return (
-    // ARITHMETIC & ALGEBRA
-    /^[a-zA-Z][a-zA-Z\d]*\s*=\s*[^;{}]*[\+\-\*\/\[\]\(\)∑∫^]/.test(content) ||
-    /\b[a-z]\s*[a-z]\s*[\+\-]\s*[a-z]\s*[a-z]\s*=\s*[a-z]/.test(content) ||
-    /[a-zA-Z\d\)]\s*[<>≤≥≠]\s*[a-zA-Z\d\(]/.test(content) ||
-    /^[a-z]\s*[\+\-\*\/÷]\s*[a-z]\s*=\s*[a-z]/.test(content) ||
-    /\|[a-zA-Z0-9\+\-\*\/\(\)]+\|/.test(content) ||
-    /[a-zA-Z0-9\)!]\s*!/.test(content) ||
-    
-    // NUMBER THEORY
-    /≡\s*\([mod|mod]\s*[a-zA-Z0-9]+\)/.test(content) ||
-    /\bgcd\s*\(/.test(content) ||
-    
-    // SEQUENCES & SERIES
-    /\b∑\s*[\_\^]/.test(content) ||
-    /\b∏\s*[\_\^]/.test(content) ||
-    /\blim\s*[\_\^]/.test(content) ||
-    
-    // CALCULUS
-    /\b(d\/dx|d\/dy|d\/dt|∂\/∂x|∂\/∂y|∂\/∂t)/.test(content) ||
-    /\bf\'|\bf\'\'/.test(content) ||
-    /[∫∬∭]\s*[\(\{\[]/.test(content) ||
-    
-    // SYMBOLS & OPERATORS
-    /[α-ωΑ-Ω]/.test(content) ||
-    /[±√∫∑∏∞∂∇≈≠≤≥⊂⊃⊆⊇⊥∠∧∨∩∪]/.test(content) ||
-    /\b[a-zA-Z0-9]\s*\^\s*[a-zA-Z0-9\(\)\-\+]/.test(content)
-  );
-};
-
-/**
  * Checks for unambiguous math signals suitable for overriding a "code/text" context suggestion.
  * @param {string} content - The text content to analyze.
  * @returns {boolean} - True if high-confidence math indicators are found.
@@ -250,9 +147,7 @@ export const hasHighConfidenceMathIndicators = (content) => {
   }
 
 
-  // Explicit subscript/superscript syntax (avoiding markdown emphasis)
-  // Need to be careful with _ followed by word characters (markdown italic)
-  // Match _{...} or ^^{...}
+  // Explicit subscript/superscript syntax
   if (/(_|\^)\{[^}]+\}/.test(content)) {
     return true;
   }
@@ -266,7 +161,7 @@ export const hasHighConfidenceMathIndicators = (content) => {
 
 
   // Unique mathematical symbols (Unicode)
-  const uniqueMathSymbols = /[∑∫∈∀∃≠≤≥⊂⊃∩∪∂∇∞≡]/; // Added ≡
+  const uniqueMathSymbols = /[∑∫∈∀∃≠≤≥⊂⊃∩∪∂∇∞≡]/;
   if (uniqueMathSymbols.test(content)) {
     return true;
   }

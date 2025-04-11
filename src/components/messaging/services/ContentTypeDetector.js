@@ -1,19 +1,18 @@
 // src/components/messaging/services/ContentTypeDetector.js
+
 import {
   isMathematicalFunction,
   hasLatexEnvironments,
   hasLatexCommands,
   hasLatexDelimiters,
   isBinomialCoefficient,
-  hasHighConfidenceMathIndicators // New import
+  hasHighConfidenceMathIndicators
 } from '../utils/mathDetection';
 import {
-  looksLikeCode, // Keep for now, though role reduced
-  hasHighConfidenceCodeIndicators, // New import
-  looksLikeSimpleCodeBlock // New import
+  hasHighConfidenceCodeIndicators,
+  looksLikeSimpleCodeBlock
 } from '../utils/codeDetection';
 import { contentContext } from './ContentContextManager';
-// Removed isMathFormula, isMathVariable imports
 
 /**
  * Content type classification taxonomy for rendering decisions
@@ -96,8 +95,6 @@ export function detectContentType(content, isInline, explicitLanguage = null) {
     return resultType;
   }
   
-  // --- OLD STAGES 3, 4, 5 REMOVED ---
-
   // STAGE 3: CONTEXT-DRIVEN CLASSIFICATION (NEW)
   // ------------------------------------------
   const classifyAsMath = contentContext.shouldClassifyAsMath(content, hasStrongMathIndicators);
@@ -135,27 +132,4 @@ export function detectContentType(content, isInline, explicitLanguage = null) {
   // Record and return the classification from this stage
   contentContext.recordClassification(resultType, content);
   return resultType;
-
-  // STAGE 4: SPECIAL CASES (Renumbered from 6)
-  // ---------------------
-  // File/module references
-  const isFilenameOrModule = !isInline && content.indexOf('\n') === -1 &&
-                           content.indexOf(' ') === -1 &&
-                           (/\.\w{1,4}$/.test(content) ||
-                            /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(content));
-  
-  if (isFilenameOrModule) {
-    const resultType = ContentType.CODE_INLINE;
-    contentContext.recordClassification(resultType, content);
-    return resultType;
-  }
-  
-  // STAGE 5: DEFAULT CLASSIFICATION (Renumbered from 7)
-  // -----------------------------
-  // This should ideally be unreachable if Stage 3 covers all cases,
-  // but kept as a safety net.
-  const fallbackType = isInline ? ContentType.CODE_INLINE : ContentType.TEXT;
-  console.warn('ContentTypeDetector reached fallback classification for:', content); // Added warning
-  contentContext.recordClassification(fallbackType, content);
-  return fallbackType;
 }
