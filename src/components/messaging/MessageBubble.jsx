@@ -81,8 +81,8 @@ export const MessageBubble = memo(({
           remarkPlugins={[remarkGfm, remarkMath]}
           components={{
             // Math components for LaTeX-style math rendering
-            // math: ({value}) => <MathFormulaBlock content={value} />,
-            // inlineMath: ({value}) => <MathFormulaBlock content={value} inline={true} />,
+            math: ({value}) => <MathFormulaBlock content={value} />,
+            inlineMath: ({value}) => <MathFormulaBlock content={value} inline={true} />,
             h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-5 mb-3" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mt-3 mb-2" {...props} />,
