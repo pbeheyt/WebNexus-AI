@@ -47,11 +47,13 @@ export const hasLatexDelimiters = (content) => {
 };
 
 /**
- * Math variable detection with code protection
+ * Math variable detection with code protection.
+ * @deprecated This function can be ambiguous. Prefer context-driven detection and `hasHighConfidenceMathIndicators`.
  */
 export const isMathVariable = (content) => {
+  // Note: This function's role is likely reduced due to the new context-driven approach.
   content = content.trim();
-  
+
   if (looksLikeCode(content)) {
     return false;
   }
@@ -131,35 +133,18 @@ export const isMathematicalFunction = (content) => {
     /^[a-zA-Z0-9]+\s*≡\s*[a-zA-Z0-9]+\s*\(\s*mod\s*[a-zA-Z0-9]+\s*\)$/
   ];
 
-  // Special exact matches for known problematic expressions
-  const exactPatterns = [
-    'e^(-z*t)',
-    'A(x), B(x), C(x)',
-    'y(x)',
-    'f(z)',
-    'Res(f, z₀)',
-    'q ≡ 1 (mod 4)',
-    'cos(x + i*y)',
-    'cos(x), sin(x)',
-    'cosh(y), sinh(y)',
-    'sin(x) / x',
-    'e^(ax)'
-  ];
-  
-  // Check for exact matches (highest confidence)
-  if (exactPatterns.includes(content)) {
-    return true;
-  }
-  
   return mathFunctionPatterns.some(pattern => pattern.test(content));
 };
 
 /**
- * Comprehensive mathematical formula detection
+ * Comprehensive mathematical formula detection.
+ * @deprecated Much of this complexity might be unnecessary with the new context-driven approach and `hasHighConfidenceMathIndicators`.
  */
 export const isMathFormula = (content) => {
+  // Note: This function's role is significantly reduced. The primary logic now relies on
+  // ContentContextManager and the more specific helper functions.
   content = content.trim();
-  
+
   // Early exclusion of obvious code
   if (looksLikeCode(content)) {
     return false;
@@ -228,4 +213,63 @@ export const isMathFormula = (content) => {
     /[±√∫∑∏∞∂∇≈≠≤≥⊂⊃⊆⊇⊥∠∧∨∩∪]/.test(content) ||
     /\b[a-zA-Z0-9]\s*\^\s*[a-zA-Z0-9\(\)\-\+]/.test(content)
   );
+};
+
+/**
+ * Checks for unambiguous math signals suitable for overriding a "code/text" context suggestion.
+ * @param {string} content - The text content to analyze.
+ * @returns {boolean} - True if high-confidence math indicators are found.
+ */
+export const hasHighConfidenceMathIndicators = (content) => {
+  // Specific LaTeX commands strongly indicative of math
+  const strongLatexCommands = [
+    '\\frac', '\\sqrt', '\\sum', '\\int', '\\lim', '\\binom',
+    '\\mathbb', '\\mathcal', '\\mathbf', '\\mathrm'
+    // Note: \vec, \hat, \dot are common but can sometimes appear in text/code comments
+  ];
+  if (strongLatexCommands.some(cmd => content.includes(cmd))) {
+    return true;
+  }
+
+  // Presence of Greek letters (using common LaTeX commands)
+  const greekLetters = [
+    '\\alpha', '\\beta', '\\gamma', '\\delta', '\\epsilon', '\\zeta', '\\eta', '\\theta',
+    '\\iota', '\\kappa', '\\lambda', '\\mu', '\\nu', '\\xi', '\\pi', '\\rho',
+    '\\sigma', '\\tau', '\\upsilon', '\\phi', '\\chi', '\\psi', '\\omega'
+    // Uppercase Greek letters are less common as standalone indicators
+  ];
+  if (greekLetters.some(letter => content.includes(letter))) {
+    return true;
+  }
+  // Check for common Unicode Greek letters as well
+  if (/[α-ωΑ-Ω]/.test(content)) {
+      // Exclude common English words that contain Greek letters like 'omega'
+      if (!/\b(alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)\b/i.test(content)) {
+          return true;
+      }
+  }
+
+
+  // Explicit subscript/superscript syntax (avoiding markdown emphasis)
+  // Need to be careful with _ followed by word characters (markdown italic)
+  // Match _{...} or ^^{...}
+  if (/(_|\^)\{[^}]+\}/.test(content)) {
+    return true;
+  }
+  // Match _ or ^ followed by a single digit or specific math chars, but not a plain letter immediately after _
+  if (/\^([0-9+\-*/\(\)]|[a-zA-Z]\{)/.test(content) || /_([0-9+\-*/\(\)]|[a-zA-Z]\{)/.test(content)) {
+     // Avoid matching things like variable_name
+     if (!/_[a-zA-Z]/.test(content) || /_\{\w+\}/.test(content)) {
+        return true;
+     }
+  }
+
+
+  // Unique mathematical symbols (Unicode)
+  const uniqueMathSymbols = /[∑∫∈∀∃≠≤≥⊂⊃∩∪∂∇∞≡]/; // Added ≡
+  if (uniqueMathSymbols.test(content)) {
+    return true;
+  }
+
+  return false;
 };

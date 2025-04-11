@@ -10,7 +10,7 @@ export class ContentContextManager {
     this.windowSize = 10;                 // Maximum history entries
     this.mathProbability = 0.5;          // Initial classification probability
     this.lastExplicitCodeBlock = null;   // Tracks recent code block encounters
-    this.codeToMathThreshold = 0.3;      // Lower threshold to transition back to math
+    this.codeToMathThreshold = 0.1;      // Lower threshold to transition back to math
     this.mathToCodeThreshold = 0.3;      // Higher threshold to transition to code
   }
   
@@ -186,7 +186,7 @@ export class ContentContextManager {
       // Apply asymmetric smoothing based on current state
       if (this.mathProbability < 0.5) {
         // In code context - use more aggressive transition to math
-        this.mathProbability = 0.15 + (rawProbability * 0.7);
+        this.mathProbability = 0.15 + (rawProbability * 0.9);
       } else {
         // In math context - more conservative transition to code
         this.mathProbability = 0.25 + (rawProbability * 0.5);

@@ -1,15 +1,19 @@
 // src/components/messaging/services/ContentTypeDetector.js
-import { 
-  isMathFormula, 
-  isMathVariable, 
+import {
   isMathematicalFunction,
-  hasLatexEnvironments, 
-  hasLatexCommands, 
+  hasLatexEnvironments,
+  hasLatexCommands,
   hasLatexDelimiters,
-  isBinomialCoefficient
+  isBinomialCoefficient,
+  hasHighConfidenceMathIndicators // New import
 } from '../utils/mathDetection';
-import { looksLikeCode } from '../utils/codeDetection';
+import {
+  looksLikeCode, // Keep for now, though role reduced
+  hasHighConfidenceCodeIndicators, // New import
+  looksLikeSimpleCodeBlock // New import
+} from '../utils/codeDetection';
 import { contentContext } from './ContentContextManager';
+// Removed isMathFormula, isMathVariable imports
 
 /**
  * Content type classification taxonomy for rendering decisions
@@ -92,36 +96,47 @@ export function detectContentType(content, isInline, explicitLanguage = null) {
     return resultType;
   }
   
-  // STAGE 3: MATH VARIABLES AND FORMULAS
-  // -----------------------------------
-  if ((isInline && isMathVariable(content)) || isMathFormula(content)) {
-    const resultType = isInline || content.length < 30 ? 
-                      ContentType.MATH_INLINE : ContentType.MATH_BLOCK;
-    contentContext.recordClassification(resultType, content);
-    return resultType;
-  }
-  
-  // STAGE 4: AMBIGUOUS CASES
-  // -----------------------
-  // Check for function-like patterns that could be either math or code
-  if (!isInline && /^[a-zA-Z]+\s*\([a-zA-Z0-9\s,]+\)/.test(content)) {
-    // Use enhanced asymmetric transition logic
-    if (contentContext.shouldClassifyAsMath(content, hasStrongMathIndicators)) {
-      const resultType = ContentType.MATH_BLOCK;
-      contentContext.recordClassification(resultType, content);
-      return resultType;
+  // --- OLD STAGES 3, 4, 5 REMOVED ---
+
+  // STAGE 3: CONTEXT-DRIVEN CLASSIFICATION (NEW)
+  // ------------------------------------------
+  const classifyAsMath = contentContext.shouldClassifyAsMath(content, hasStrongMathIndicators);
+  let resultType;
+
+  if (classifyAsMath) {
+    // Context suggests Math. Check for strong Code overrides.
+    if (hasHighConfidenceCodeIndicators(content)) {
+      resultType = isInline ? ContentType.CODE_INLINE : ContentType.CODE_BLOCK;
+    } else {
+      // Default to Math based on context
+      resultType = (isInline || content.length < 40) ? // Adjusted length threshold slightly
+                     ContentType.MATH_INLINE : ContentType.MATH_BLOCK;
+    }
+  } else {
+    // Context suggests Code/Text. Check for strong Math overrides.
+    if (hasHighConfidenceMathIndicators(content)) {
+      resultType = (isInline || content.length < 40) ?
+                     ContentType.MATH_INLINE : ContentType.MATH_BLOCK;
+    } else {
+      // Default to Code/Text based on context
+      if (isInline) {
+        resultType = ContentType.CODE_INLINE;
+      } else {
+        // For blocks, check basic code structure
+        if (looksLikeSimpleCodeBlock(content)) {
+          resultType = ContentType.CODE_BLOCK;
+        } else {
+          resultType = ContentType.TEXT; // Fallback for non-structured blocks
+        }
+      }
     }
   }
   
-  // STAGE 5: CODE DETECTION
-  // ---------------------
-  if (!isInline && looksLikeCode(content)) {
-    const resultType = ContentType.CODE_BLOCK;
-    contentContext.recordClassification(resultType, content);
-    return resultType;
-  }
-  
-  // STAGE 6: SPECIAL CASES
+  // Record and return the classification from this stage
+  contentContext.recordClassification(resultType, content);
+  return resultType;
+
+  // STAGE 4: SPECIAL CASES (Renumbered from 6)
   // ---------------------
   // File/module references
   const isFilenameOrModule = !isInline && content.indexOf('\n') === -1 &&
@@ -135,9 +150,12 @@ export function detectContentType(content, isInline, explicitLanguage = null) {
     return resultType;
   }
   
-  // STAGE 7: DEFAULT CLASSIFICATION
+  // STAGE 5: DEFAULT CLASSIFICATION (Renumbered from 7)
   // -----------------------------
-  const defaultType = isInline ? ContentType.CODE_INLINE : ContentType.TEXT;
-  contentContext.recordClassification(defaultType, content);
-  return defaultType;
+  // This should ideally be unreachable if Stage 3 covers all cases,
+  // but kept as a safety net.
+  const fallbackType = isInline ? ContentType.CODE_INLINE : ContentType.TEXT;
+  console.warn('ContentTypeDetector reached fallback classification for:', content); // Added warning
+  contentContext.recordClassification(fallbackType, content);
+  return fallbackType;
 }
