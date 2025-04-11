@@ -6,7 +6,7 @@
 
 ## Your AI Hub
 
-Nexus AI connects you to leading AI platforms via their Web UIs or APIs (all available models, including the newest releases):
+Nexus AI connects you to AI platforms via their Web UIs or APIs (all available models, including the newest releases):
 
 *   ChatGPT (OpenAI)
 *   Claude (Anthropic)
