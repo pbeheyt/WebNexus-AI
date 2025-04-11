@@ -32,6 +32,7 @@ const PlatformDetails = ({
       setOriginalApiKey('');
     }
     setHasApiKeyChanges(false);
+    console.log('Platfom:', platform);
   }, [platform.id, credentials]);
   
   // Check for API key changes
@@ -280,7 +281,15 @@ const PlatformDetails = ({
           <h3 className="platform-title text-xl font-medium mb-2">{platform.name}</h3>
           <div className="platform-actions flex gap-3">
             <a 
-              href={platform.docUrl} 
+              href={platform.consoleApiLink} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="platform-link text-primary hover:underline text-sm"
+            >
+              API Console
+            </a>
+            <a 
+              href={platform.docApiLink} 
               target="_blank" 
               rel="noopener noreferrer"
               className="platform-link text-primary hover:underline text-sm"
@@ -296,12 +305,12 @@ const PlatformDetails = ({
               Model Documentation
             </a>
             <a 
-              href={platform.consoleApiLink || '#'} 
+              href={platform.keyApiLink} 
               target="_blank" 
               rel="noopener noreferrer"
               className="platform-link text-primary hover:underline text-sm"
             >
-              API Console
+              API Keys
             </a>
           </div>
         </div>

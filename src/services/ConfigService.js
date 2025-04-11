@@ -115,9 +115,10 @@ async function getAllPlatformConfigs() {
         name: displayInfo.name,
         url: displayInfo.url,
         iconUrl: chrome.runtime.getURL(displayInfo.icon),
-        docUrl: displayInfo.docLink || '#',
+        docApiLink: displayInfo.docApiLink || '#',
         modelApiLink: displayInfo.modelApiLink || '#',
         consoleApiLink: displayInfo.consoleApiLink || '#',
+        keyApiLink: displayInfo.keyApiLink || '#',
         apiConfig: apiInfo // Attach the whole API config object
       };
     }).filter(p => p !== null); // Filter out any null entries
