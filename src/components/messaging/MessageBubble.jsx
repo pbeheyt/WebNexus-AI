@@ -65,6 +65,226 @@ const copyToClipboardUtil = (text) => {
 };
 
 /**
+ * Utility function to determine if content is a mathematical formula
+ * Extracted as separate function for better organization and reusability
+ */
+/**
+ * Comprehensive utility function to determine if content is a mathematical formula
+ * Covers notation from various mathematical domains
+ */
+const isMathFormula = (content) => {
+  // Skip check for explicit code blocks or multiline content
+  if (content.includes('\n') || content.includes(';') || 
+      content.includes('{') || content.includes('}') ||
+      content.includes('===') || content.includes('!==')) {
+    return false;
+  }
+  
+  // Check various mathematical patterns
+  return (
+    // BASIC ARITHMETIC & ALGEBRA
+    // ---------------------------
+    // Variable assignments and equations
+    (/^[a-zA-Z][a-zA-Z\d]*\s*=\s*[^;{}]*[\+\-\*\/\[\]\(\)∑∫^]/.test(content)) ||
+    // Equations with multiple variables (ax + by = c)
+    (/\b[a-z]\s*[a-z]\s*[\+\-]\s*[a-z]\s*[a-z]\s*=\s*[a-z]/.test(content)) ||
+    // Inequalities
+    (/[a-zA-Z\d\)]\s*[<>≤≥≠]\s*[a-zA-Z\d\(]/.test(content)) ||
+    // Basic arithmetic with variables (a + b = c)
+    (/^[a-z]\s*[\+\-\*\/÷]\s*[a-z]\s*=\s*[a-z]/.test(content)) ||
+    // Absolute values |x|
+    (/\|[a-zA-Z0-9\+\-\*\/\(\)]+\|/.test(content)) ||
+    // Factorial notation
+    (/[a-zA-Z0-9\)!]\s*!/.test(content)) ||
+    // Floor and ceiling functions
+    (/⌊.*⌋/.test(content) || /⌈.*⌉/.test(content)) ||
+    
+    // NUMBER THEORY
+    // -------------
+    // Modular arithmetic
+    (/≡\s*\([mod|mod]\s*[a-zA-Z0-9]+\)/.test(content) || /\bmod\s+\d+/.test(content)) ||
+    // GCD/LCM notation
+    (/\bgcd\s*\(/.test(content) || /\blcm\s*\(/.test(content)) ||
+    // Divisibility
+    (/[a-zA-Z0-9]\s*\|\s*[a-zA-Z0-9]/.test(content)) ||
+    
+    // SEQUENCES & SERIES
+    // -----------------
+    // Summation notation
+    (/\b∑\s*[\_\^]/.test(content) || /\bsum\s*[\_\^]/.test(content)) ||
+    // Product notation
+    (/\b∏\s*[\_\^]/.test(content) || /\bprod\s*[\_\^]/.test(content)) ||
+    // Limits of sequences
+    (/\blim\s*[\_\^]/.test(content) || /\blim\s*\_\{[^\}]*\}/.test(content)) ||
+    // Indexed variables (a_n, x_i)
+    (/\b[a-zA-Z]\_[a-zA-Z0-9]/.test(content)) ||
+    // Recurrence relations
+    (/[a-zA-Z]\_\{[^\}]*\}\s*=\s*[a-zA-Z]\_\{[^\}]*\}/.test(content)) ||
+    // Big-O notation
+    (/\bO\s*\(/.test(content) || /\bΘ\s*\(/.test(content) || /\bΩ\s*\(/.test(content)) ||
+    // Common sequence notations
+    (/^(Sn|an|xn|yn|fn|S_n|a_n|x_n|y_n|f_n)/.test(content)) ||
+    
+    // CALCULUS
+    // --------
+    // Derivatives
+    (/\b(d\/dx|d\/dy|d\/dt|d[2-9]\/dx[2-9]|∂\/∂x|∂\/∂y|∂\/∂t|∂[2-9]\/∂x[2-9])/.test(content)) ||
+    (/\bf\'|\bf\'\'|\bf\^[\(\{\[]n[\)\}\]]/.test(content)) ||
+    // Integrals
+    (/[∫∬∭]\s*[\(\{\[]/.test(content) || /\bint\s*[\(\{\[]/.test(content)) ||
+    (/[∫∬∭]\_\{[^\}]*\}\^/.test(content)) ||
+    // Contour integrals
+    (/\b∮\s*[\_\^]/.test(content) || /\boint\s*[\_\^]/.test(content)) ||
+    // Vector calculus operators
+    (/\b∇\s*[\·\×\^]|\b∇\s*[^a-zA-Z]|\bdiv\s*\(|\bcurl\s*\(|\bgrad\s*\(/.test(content)) ||
+    // Limits in calculus
+    (/\blim\_\{[a-zA-Z]\s*→\s*[^\}]+\}/.test(content)) ||
+    
+    // LINEAR ALGEBRA
+    // -------------
+    // Matrix notation
+    (/\b[A-Z]\s*\[\s*[a-zA-Z0-9],[a-zA-Z0-9]\s*\]/.test(content)) ||
+    // Matrix operations
+    (/\bdet\s*\(|\btr\s*\(/.test(content)) ||
+    (/[A-Z]\s*^{-1}|[A-Z]\s*^{T}|[A-Z]\s*^{*}/.test(content)) ||
+    // Vector notation
+    (/\bvec\{[a-zA-Z]\}|\bhat\{[a-zA-Z]\}/.test(content)) ||
+    // Eigenvalue equation
+    (/[A-Z][a-zA-Z0-9]*\s*=\s*λ\s*[a-zA-Z]/.test(content)) ||
+    // Inner products
+    (/\langle[^\rangle]*\rangle|\⟨[^\⟩]*\⟩/.test(content)) ||
+    (/[a-zA-Z]\s*\·\s*[a-zA-Z]/.test(content)) ||
+    
+    // SET THEORY & LOGIC
+    // -----------------
+    // Set operations
+    (/[A-Z]\s*[∪∩\\\⊕]\s*[A-Z]/.test(content)) ||
+    (/\b[A-Z]\s*^c\b/.test(content)) ||
+    // Set membership
+    (/[a-zA-Z0-9]\s*[∈∉]\s*[A-Z]/.test(content)) ||
+    // Set relations
+    (/[A-Z]\s*[⊂⊃⊆⊇=]\s*[A-Z]/.test(content)) ||
+    // Logical operations
+    (/[a-zA-Z]\s*[∧∨¬→↔]\s*[a-zA-Z]/.test(content)) ||
+    // Quantifiers
+    (/[∀∃]\s*[a-zA-Z]\s*[:\(\[]/.test(content)) ||
+    
+    // PROBABILITY & STATISTICS
+    // -----------------------
+    // Probability notation
+    (/\bP\s*\(\s*[A-Z][^\)]*\)/.test(content)) ||
+    (/\bP\s*\(\s*[A-Z]\s*\|\s*[A-Z]\s*\)/.test(content)) ||
+    // Random variables
+    (/\b[X-Z]\s*∼\s*[A-Z]\s*\(/.test(content)) ||
+    (/\bE\s*\[|\bVar\s*\(|\bCov\s*\(/.test(content)) ||
+    // Probability distributions
+    (/\bf\_[A-Za-z]\s*\(|\bF\_[A-Za-z]\s*\(|\bΦ\s*\(/.test(content)) ||
+    // Statistical measures
+    (/\bar{[a-zA-Z]}|[a-zA-Z]\s*^2|r\_{[a-zA-Z][a-zA-Z]}|\bχ\s*^2/.test(content)) ||
+    // Binomial coefficients
+    (/\bC\s*\(\s*n\s*,\s*k\s*\)|\bP\s*\(\s*n\s*,\s*r\s*\)|\bC\_\{n\}\^\{k\}/.test(content)) ||
+    
+    // GEOMETRY & TRIGONOMETRY
+    // ----------------------
+    // Trigonometric functions
+    (/\b(sin|cos|tan|csc|sec|cot|arcsin|arccos|arctan)\s*\(/.test(content)) ||
+    // Angles
+    (/\b[∠]\s*[A-Z]{3}|\bθ\s*=\s*\d+[°]/.test(content)) ||
+    // Triangles
+    (/\b[△]\s*[A-Z]{3}/.test(content)) ||
+    // Geometric vectors
+    (/\|\|\s*\vec\{[a-zA-Z]\}\s*\|\|/.test(content)) ||
+    // Trigonometric identities
+    (/\bsin\s*^2\s*θ\s*\+\s*cos\s*^2\s*θ/.test(content)) ||
+    
+    // COMPLEX ANALYSIS
+    // ---------------
+    // Complex numbers
+    (/\b[a-zA-Z]\s*=\s*[^;]*\s*\+\s*[^;]*i\b/.test(content)) ||
+    (/\b\|z\||\barg\s*z/.test(content)) ||
+    // Complex functions
+    (/\bf\s*\(\s*z\s*\)\s*=\s*[^;]*\s*\+\s*[^;]*i\b/.test(content)) ||
+    // Complex exponentials
+    (/\be\s*\^\s*\{\s*i\s*θ\s*\}/.test(content)) ||
+    (/\bz\s*\^\s*n/.test(content)) ||
+    // Special case for specific formulas from the examples
+    (/e\^(\(.*θ.*\)|.*θ.*)/.test(content)) ||
+    
+    // DIFFERENTIAL EQUATIONS
+    // ---------------------
+    // Differential equations
+    (/\bdy\/dx\s*[\+\-=]/.test(content)) ||
+    (/\b[a-zA-Z]\s*\'\s*[\+\-=]|\b[a-zA-Z]\s*\'\'\s*[\+\-=]/.test(content)) ||
+    (/\b\dot\{[a-zA-Z]\}\s*=/.test(content)) ||
+    // Boundary conditions
+    (/\b[a-zA-Z]\s*\(\s*[0aL]\s*\)\s*=/.test(content)) ||
+    
+    // COMMON MATHEMATICAL FUNCTIONS
+    // ----------------------------
+    (/\b(log|ln|exp|sqrt|abs|max|min|lim|sup|inf)\s*\(/.test(content)) ||
+    
+    // NUMBER SYSTEMS & SPECIAL FUNCTIONS
+    // ---------------------------------
+    // Number sets
+    (/\b[ℕℤℚℝℂ]/.test(content)) ||
+    // Special constants
+    (/\b[πγφ]\b/.test(content)) ||
+    // Special functions
+    (/\bΓ\s*\(|\bζ\s*\(|\bJ\_n\s*\(|\berf\s*\(/.test(content)) ||
+    
+    // MATHEMATICAL OPERATORS & SYMBOLS
+    // ------------------------------
+    // Greek letters
+    (/[α-ωΑ-Ω]/.test(content)) ||
+    (/\b(alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)\b/.test(content)) ||
+    // Mathematical operators
+    (/[±√∫∑∏∞∂∇≈≠≤≥⊂⊃⊆⊇⊥∠∧∨∩∪]/.test(content)) ||
+    // Subscripts and superscripts
+    (/[⁰¹²³⁴⁵⁶⁷⁸⁹ⁿ₀₁₂₃₄₅₆₇₈₉]/.test(content)) ||
+    // Exponents with ^ notation
+    (/\b[a-zA-Z0-9]\s*\^\s*[a-zA-Z0-9\(\)\-\+]/.test(content)) ||
+    
+    // FRACTIONS & EXPRESSIONS
+    // ----------------------
+    // Fractions and expressions with parentheses and brackets
+    ((/\/\(/.test(content) && /\)/.test(content)) ||
+    (/\[/.test(content) && /\]/.test(content) && /=/.test(content))) ||
+    
+    // INFORMATION THEORY
+    // -----------------
+    // Entropy & information theory notation
+    (/\bH\s*\(\s*[A-Z]\s*\)|\bH\s*\(\s*[A-Z]\s*\|\s*[A-Z]\s*\)/.test(content)) ||
+    (/\bI\s*\(\s*[A-Z]\s*;\s*[A-Z]\s*\)/.test(content)) ||
+    (/\bD\_\{KL\}\s*\(/.test(content)) ||
+    
+    // GRAPH THEORY
+    // -----------
+    // Graph notation
+    (/\bG\s*=\s*\(\s*V\s*,\s*E\s*\)|\bK\_n|\bC\_n/.test(content)) ||
+    // Graph parameters
+    (/\bdeg\s*\(|\bδ\s*\(|\bΔ\s*\(|\bχ\s*\(|\bω\s*\(|\bα\s*\(/.test(content)) ||
+    
+    // PHYSICS NOTATION
+    // ---------------
+    // Common physics equations
+    (/\bF\s*=\s*m\s*a|\bE\s*=\s*m\s*c\s*\^2/.test(content)) ||
+    (/\b[Δ]\s*G\s*=\s*[Δ]\s*H\s*\-\s*T\s*[Δ]\s*S/.test(content)) ||
+    
+    // SPECIAL CASES FOR COMMON FORMULAS
+    // --------------------------------
+    // Specific formula patterns from examples
+    (content.includes("cos(A - B)") ||
+    content.includes("d/dx [x^n]") ||
+    content.includes("P(A|B)") ||
+    content.includes("P(X = k)") ||
+    content.includes("C[i,j]") ||
+    content.includes("e^(iθ)") ||
+    content.includes("dy/dx + P(x)y") ||
+    content.includes("(a + bi) + (c + di)"))
+  );
+};
+
+/**
  * Enhanced CodeBlock with syntax highlighting
  */
 const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) => {
@@ -240,15 +460,18 @@ const MessageBubbleComponent = ({
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({node, ...props}) => <h1 className="text-xl font-semibold mb-3" {...props} />,
-            h2: ({node, ...props}) => <h2 className="text-lg font-medium mb-2" {...props} />,
-            h3: ({node, ...props}) => <h3 className="text-base font-medium mb-2" {...props} />,
-            p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed text-sm" {...props} />,
+            // Headings with consistent spacing hierarchy (more compact)
+            h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-5 mb-3" {...props} />,
+            h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
+            h3: ({node, ...props}) => <h3 className="text-base font-medium mt-3 mb-2" {...props} />,
+            
+            // Paragraph with improved spacing (more compact)
+            p: ({node, ...props}) => <p className="mb-3 leading-relaxed text-sm" {...props} />,
 
-            // Fixed list rendering to prevent marker line breaks
-            ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
-            ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-            li: ({node, ...props}) => <li className="leading-relaxed text-sm space-y-1" {...props} />,
+            // Lists with better spacing between items and surrounding elements (more compact)
+            ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
+            li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
 
             code: ({node, inline, className, children, ...props}) => {
               // Check if it's a block code (has language class) or inline
@@ -291,37 +514,17 @@ const MessageBubbleComponent = ({
               };
               
               // Enhanced detection for mathematical expressions and formulas
-              const isUnintendedCodeBlock = !isExplicitCodeBlock && 
-                                          !inline && 
-                                          (
-                                            // Greek letters with numbers (θ0, θ1)
-                                            /^(θ|theta|alpha|beta|gamma|delta)\d+/.test(content) ||
-                                            // Standalone numbers
-                                            /^[0-9]+$/.test(content) ||
-                                            // Mathematical expressions with operators and Greek letters
-                                            /^[\d\s+\-*/()=θ]+$/.test(content) ||
-                                            // Mathematical functions with parameters
-                                            /^[a-zA-Z]+(\[[a-zA-Z\[\]]+\]|\([a-zA-Z\[\]]+\))\s*=/.test(content) ||
-                                            // Specific formula patterns from linear regression
-                                            /estimatePrice/.test(content) ||
-                                            /tmpθ\d+/.test(content) ||
-                                            // Sum notation
-                                            /\s*∑\s*/.test(content) ||
-                                            // Handle m-1 notation from formulas
-                                            /^m\s*-\s*1$/.test(content) ||
-                                            // Single variable names
-                                            /^[a-zA-Z]$/.test(content) ||
-                                            // Simple variable names with length < 3
-                                            /^[a-zA-Z_][a-zA-Z0-9_]{0,2}$/.test(content)
-                                          ) &&
-                                          // Only apply to content without code-like syntax
-                                          !content.includes('\n') && 
-                                          !content.includes(';') && 
-                                          !content.includes('{') && 
-                                          !content.includes('}');
+              const isMathematicalFormula = !isExplicitCodeBlock && 
+                                       !inline && 
+                                       isMathFormula(content);
+              
+              // Special explicit check for mutual information and similar formulas
+              const isSpecialMathFormula = 
+                /I\(X;Y\)\s*=\s*Σ\s*P\(x,y\)\s*\*\s*log₂/.test(content) || 
+                /det\(\[.*\]\)/.test(content);
               
               // If it's a simple variable or in a list, render as inline code
-              if (isSimpleVariable || (!inline && (isInListItem() || isUnintendedCodeBlock))) {
+              if (isSimpleVariable || (!inline && (isInListItem() || isMathematicalFormula || isSpecialMathFormula))) {
                 // For single-letter variables like 'n', render as inline code
                 if (/^[a-zA-Z]$/.test(content) || /^[a-zA-Z_][a-zA-Z0-9_]{0,2}$/.test(content)) {
                   return (
@@ -331,12 +534,12 @@ const MessageBubbleComponent = ({
                   );
                 }
                 
-                // Special treatment for mathematical notations
-                if (isUnintendedCodeBlock && /[=θ()]/.test(content)) {
+                // For mathematical formulas, use consistent math formula styling
+                if (isMathematicalFormula || isSpecialMathFormula) {
                   return (
-                    <span className= "px-2 py-1 rounded border-b font-mono text-sm whitespace-pre-wrap break-words leading-relaxed">
+                    <code className="bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded font-mono text-sm">
                       {children}
-                    </span>
+                    </code>
                   );
                 } else if (isFilenameOrModule) {
                   // For module.function patterns, render inline as code
@@ -353,7 +556,7 @@ const MessageBubbleComponent = ({
                 );
               }
               
-              // Only apply code block rendering for explicit language code blocks or complex content
+              // Always catch inline code
               if (!inline && (isExplicitCodeBlock || content.includes('\n') || content.includes(';'))) {
                 // Block code with syntax highlighting: use our EnhancedCodeBlock component
                 return (
@@ -362,7 +565,15 @@ const MessageBubbleComponent = ({
                   </EnhancedCodeBlock>
                 );
               } else {
-                // Inline code
+                // All inline code - check if it's math formula first
+                if (isMathFormula(content)) {
+                  return (
+                    <code className="bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded font-mono text-sm">
+                      {children}
+                    </code>
+                  );
+                }
+                // Regular inline code
                 return (
                   <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
                     {children}
@@ -373,12 +584,18 @@ const MessageBubbleComponent = ({
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
             pre: ({node, children, ...props}) => <>{children}</>, // Render children directly as `code` handles the styling
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary mb-3 py-0.5 text-xs" {...props} />,
+            
+            // Better spacing for blockquotes (more compact)
+            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props} />,
+            
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
             em: ({node, ...props}) => <em className="italic" {...props} />,
+            
+            // Improved horizontal rule spacing (more compact)
             hr: ({node, ...props}) => <hr className="my-4 border-t border-gray-300 dark:border-gray-600" {...props} />,
-            // Table handling
-            table: ({node, ...props}) => <div className="overflow-x-auto mb-4"><table className="border-collapse w-full text-xs" {...props} /></div>,
+            
+            // Table handling with consistent spacing (more compact)
+            table: ({node, ...props}) => <div className="overflow-x-auto my-3"><table className="border-collapse w-full text-xs" {...props} /></div>,
             thead: ({node, ...props}) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
             tbody: ({node, ...props}) => <tbody {...props} />,
             tr: ({node, ...props}) => <tr className="border-b border-gray-200 dark:border-gray-700" {...props} />,
