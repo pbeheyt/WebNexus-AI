@@ -1,8 +1,11 @@
 import React, { useState, memo, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';  // For LaTeX-style math delimiters
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { InlineMath, BlockMath } from 'react-katex';  // For rendering math with KaTeX
+import 'katex/dist/katex.min.css';  // Import KaTeX CSS for styling
 
 /**
  * Reusable Copy Button Icon component
@@ -65,23 +68,94 @@ const copyToClipboardUtil = (text) => {
 };
 
 /**
+ * Detects LaTeX environments like \begin{cases}, \begin{align}, etc.
+ * @param {string} content - The text content to check
+ * @returns {boolean} - Returns true if content contains LaTeX environments
+ */
+const hasLatexEnvironments = (content) => {
+  // Full list of common LaTeX environments to detect
+  const environments = [
+    'cases', 'equation', 'align', 'gather', 'matrix', 'pmatrix', 
+    'bmatrix', 'vmatrix', 'Bmatrix', 'array', 'eqnarray', 
+    'multline', 'split', 'subequations', 'aligned', 'gathered',
+    'smallmatrix', 'flalign'
+  ];
+  
+  // Create regex pattern to match any of these environments
+  const pattern = new RegExp(`\\\\begin\\{(${environments.join('|')})\\}`, 'i');
+  
+  return pattern.test(content);
+};
+
+/**
+ * Detects LaTeX commands like \cdot, \frac{}{}, etc. that indicate math content
+ * @param {string} content - The text content to check
+ * @returns {boolean} - Returns true if content contains LaTeX commands
+ */
+const hasLatexCommands = (content) => {
+  // Common LaTeX commands that indicate math content
+  const commands = [
+    '\\\\cdot', '\\\\frac', '\\\\sqrt', '\\\\sum', '\\\\int', 
+    '\\\\prod', '\\\\infty', '\\\\partial', '\\\\nabla', 
+    '\\\\overrightarrow', '\\\\dot', '\\\\vec', '\\\\hat',
+    '\\\\mathbb', '\\\\mathcal', '\\\\mathfrak', '\\\\mathscr',
+    '\\\\mathrm', '\\\\alpha', '\\\\beta', '\\\\gamma', '\\\\delta',
+    '\\\\epsilon', '\\\\varepsilon', '\\\\zeta', '\\\\eta', '\\\\theta',
+    '\\\\iota', '\\\\kappa', '\\\\lambda', '\\\\mu', '\\\\nu', '\\\\xi',
+    '\\\\pi', '\\\\rho', '\\\\sigma', '\\\\tau', '\\\\upsilon', '\\\\phi',
+    '\\\\chi', '\\\\psi', '\\\\omega', '\\\\Gamma', '\\\\Delta', '\\\\Theta',
+    '\\\\Lambda', '\\\\Xi', '\\\\Pi', '\\\\Sigma', '\\\\Phi', '\\\\Psi', '\\\\Omega'
+  ];
+  
+  // Look for any LaTeX command indicators
+  return commands.some(cmd => new RegExp(cmd).test(content));
+};
+
+/**
+ * Helper function to detect LaTeX-style math delimiters
+ * @param {string} content - The text content to check
+ * @returns {boolean} - Returns true if content contains LaTeX-style math delimiters
+ */
+const hasLatexDelimiters = (content) => {
+  // Check for inline math: $...$, \(...\)
+  const hasInlineMath = /\$.+?\$/s.test(content) || /\\\(.+?\\\)/s.test(content);
+  
+  // Check for block math: $$...$$, \[...\]
+  const hasBlockMath = /\$\$.+?\$\$/s.test(content) || /\\\[.+?\\\]/s.test(content);
+  
+  return hasInlineMath || hasBlockMath;
+};
+
+/**
  * Comprehensive utility function to determine if content is a mathematical formula
  * Covers notation from various mathematical domains
  */
 const isMathFormula = (content) => {
-  // Skip check for explicit code blocks or multiline content
-  if (content.includes('\n') || content.includes(';') || 
-      content.includes('{') || content.includes('}') ||
+  // First, check for LaTeX environments like \begin{cases} - highest priority
+  if (hasLatexEnvironments(content)) {
+    return true;
+  }
+  
+  // Then check for LaTeX commands like \cdot, \frac, etc.
+  if (hasLatexCommands(content)) {
+    return true;
+  }
+  
+  // Skip check for explicit code blocks or multiline content with programming features
+  if ((content.includes('\n') && 
+       (content.includes('if (') || content.includes('for (') || 
+        content.includes('function(') || content.includes('import ') || 
+        content.includes('class ') || content.includes('const ') ||
+        content.includes('return ') || content.includes('console.log'))) ||
       content.includes('===') || content.includes('!==')) {
     return false;
   }
   
-  // Check various mathematical patterns
-  return (
-    // BASIC ARITHMETIC & ALGEBRA
-    // ---------------------------
-    // Variable assignments and equations
-    (/^[a-zA-Z][a-zA-Z\d]*\s*=\s*[^;{}]*[\+\-\*\/\[\]\(\)∑∫^]/.test(content)) ||
+  // The rest of the existing isMathFormula logic
+  // BASIC ARITHMETIC & ALGEBRA
+  // ---------------------------
+  // Variable assignments and equations
+  return ((/^[a-zA-Z][a-zA-Z\d]*\s*=\s*[^;{}]*[\+\-\*\/\[\]\(\)∑∫^]/.test(content)) ||
     // Equations with multiple variables (ax + by = c)
     (/\b[a-z]\s*[a-z]\s*[\+\-]\s*[a-z]\s*[a-z]\s*=\s*[a-z]/.test(content)) ||
     // Inequalities
@@ -276,8 +350,53 @@ const isMathFormula = (content) => {
     content.includes("C[i,j]") ||
     content.includes("e^(iθ)") ||
     content.includes("dy/dx + P(x)y") ||
-    content.includes("(a + bi) + (c + di)"))
-  );
+    content.includes("(a + bi) + (c + di)")));
+};
+
+/**
+ * Pre-processes math content to ensure proper LaTeX formatting
+ * @param {string} content - The math content to process
+ * @param {boolean} inline - Whether this is inline math
+ * @returns {string} - Processed content ready for KaTeX
+ */
+const preprocessMathContent = (content, inline = false) => {
+  // Don't add delimiters if they already exist
+  if (hasLatexDelimiters(content)) {
+    // Strip existing delimiters to avoid duplicates
+    if (content.startsWith('$') && content.endsWith('$')) {
+      content = content.slice(1, -1);
+    } else if (content.startsWith('$$') && content.endsWith('$$')) {
+      content = content.slice(2, -2);
+    } else if (content.startsWith('\\(') && content.endsWith('\\)')) {
+      content = content.slice(2, -2);
+    } else if (content.startsWith('\\[') && content.endsWith('\\]')) {
+      content = content.slice(2, -2);
+    }
+  }
+
+  // Ensure LaTeX environments don't have extra delimiters
+  if (hasLatexEnvironments(content)) {
+    // For multiline content, add proper spacing around backslashes
+    content = content.replace(/\\\\(?!\]|\)|\})/g, '\\\\ ');
+    
+    // Remove any existing math delimiters
+    if (content.startsWith('$') || content.startsWith('\\(')) {
+      content = content.replace(/^\$|\\\(/g, '').replace(/\$|\\\)$/g, '');
+    } else if (content.startsWith('$$') || content.startsWith('\\[')) {
+      content = content.replace(/^\$\$|\\\[/g, '').replace(/\$\$|\\\]$/g, '');
+    }
+    
+    return content; // Return without adding delimiters to let KaTeX handle the environment
+  }
+  
+  // Process line breaks in math mode
+  content = content.replace(/\\\\$/mg, '\\\\');
+  
+  // Replace common special character sequences
+  content = content.replace(/\\cdot/g, '\\cdot ');
+  content = content.replace(/\_\{([^}]+)\}/g, '_{$1}');
+  
+  return content;
 };
 
 /**
@@ -395,6 +514,56 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
 });
 
 /**
+ * Enhanced math formula block component
+ * Safely renders math expressions with error handling
+ */
+const MathFormulaBlock = memo(({ content, inline = false }) => {
+  // Use state to track if rendering fails
+  const [renderError, setRenderError] = useState(false);
+  
+  // Enhanced processing for math content
+  const processedContent = preprocessMathContent(content, inline);
+  
+  // Safely render math with error boundary
+  const renderMathSafely = () => {
+    try {
+      return inline ? 
+        <InlineMath math={processedContent} /> : 
+        <BlockMath math={processedContent} />;
+    } catch (error) {
+      console.error('Math rendering error:', error);
+      setRenderError(true);
+      return (
+        <code className="bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-2 py-1 rounded font-mono text-xs">
+          {content} (Error: Invalid math syntax)
+        </code>
+      );
+    }
+  };
+  
+  // If there was an error, show original content with error styling
+  if (renderError) {
+    return (
+      <div className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded my-3 font-mono text-sm whitespace-pre-wrap">
+        <div className="mb-2 text-xs text-red-500">Unable to render formula - showing LaTeX source:</div>
+        {content}
+      </div>
+    );
+  }
+  
+  // Normal rendering with appropriate KaTeX component
+  return inline ? (
+    <span className="inline-flex items-center">
+      {renderMathSafely()}
+    </span>
+  ) : (
+    <div className="flex justify-center my-4 overflow-x-auto max-w-full">
+      {renderMathSafely()}
+    </div>
+  );
+});
+
+/**
  * A versatile message bubble component that supports different roles and states
  * with copy-to-clipboard functionality for assistant messages
  */
@@ -454,8 +623,12 @@ const MessageBubbleComponent = ({
       {/* Main content - Render Markdown for assistant messages */}
       <div className={`prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}>
         <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
+          remarkPlugins={[remarkGfm, remarkMath]} // Added remarkMath plugin
           components={{
+            // Math components for LaTeX-style math rendering
+            math: ({value}) => <MathFormulaBlock content={value} />,
+            inlineMath: ({value}) => <MathFormulaBlock content={value} inline={true} />,
+            
             // Headings with consistent spacing hierarchy (more compact)
             h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-5 mb-3" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
@@ -474,13 +647,33 @@ const MessageBubbleComponent = ({
               const match = /language-(\w+)/.exec(className || '');
               const content = String(children).trim();
               
-              // Check if this is marked as "text" language - Priority #1
-              const isTextLanguage = match && match[1]?.toLowerCase() === 'text';
+              // Check for LaTeX environments directly (highest priority)
+              if (hasLatexEnvironments(content)) {
+                return <MathFormulaBlock content={content} />;
+              }
               
-              // Skip code block rendering for "text" language blocks
-              if (!inline && isTextLanguage) {
+              // Check for LaTeX commands that indicate math content
+              if (hasLatexCommands(content)) {
+                return <MathFormulaBlock content={content} />;
+              }
+              
+              // Check if this is marked as "text" language but contains LaTeX markers
+              const isTextLanguage = match && match[1]?.toLowerCase() === 'text';
+              if (!inline && isTextLanguage && 
+                  (content.includes('\\begin') || content.includes('\\end') || 
+                   content.includes('\\cdot') || content.includes('\\_{'))) {
+                return <MathFormulaBlock content={content} />;
+              }
+              
+              // Check for LaTeX-style math delimiters
+              if (hasLatexDelimiters(content)) {
+                // Let the remark-math plugin handle this
+                return props.children;
+              }
+              
+              // Skip code block rendering for "text" language blocks that aren't math
+              if (!inline && isTextLanguage && !isMathFormula(content)) {
                 // For "text" language blocks, render as a formatted text block
-                // with math formula styling for better visibility
                 return (
                   <div className="p-3 rounded my-3 font-mono text-sm whitespace-pre-wrap">
                     {children}
@@ -491,13 +684,10 @@ const MessageBubbleComponent = ({
               // First, determine if this is explicitly marked as a language code block
               const isExplicitCodeBlock = match && match[1] && match[1].toLowerCase() !== 'text';
               
-              // Check if this is a math formula - Priority #2
+              // Check if this is a standard math formula - Priority #2
               if (!inline && isMathFormula(content)) {
-                return (
-                  <code className="px-1.5 py-0.5 rounded font-mono text-sm">
-                    {children}
-                  </code>
-                );
+                // Use KaTeX to render the formula
+                return <MathFormulaBlock content={content} />;
               }
               
               // For code blocks (with explicit language or multiline) - Priority #3
@@ -529,11 +719,8 @@ const MessageBubbleComponent = ({
               
               // For inline math formulas - Priority #4
               if (inline && isMathFormula(content)) {
-                return (
-                  <code className="px-1.5 py-0.5 rounded font-mono text-sm">
-                    {children}
-                  </code>
-                );
+                // Use KaTeX to render the formula
+                return <MathFormulaBlock content={content} inline={true} />;
               }
               
               // Default: Regular inline code - Priority #5
