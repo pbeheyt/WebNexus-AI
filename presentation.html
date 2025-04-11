@@ -20,8 +20,7 @@
         .promo-container {
             width: 1280px;
             height: 720px;
-            background: linear-gradient(145deg, #ffffff, #f9fafb);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05), 0 5px 10px rgba(0,0,0,0.03);
+            background: #fff9f9; /* Changed to solid white background */
             display: flex;
             position: relative;
             overflow: hidden;
@@ -251,31 +250,28 @@
             display: block;
         }
         
-        /* MODIFIED: Fixed chat-image-area to remove grey background and left border */
+        /* Completely redefined chat-image-area to eliminate any possible source of vertical line */
         .chat-image-area {
             width: 40%;
-            background: linear-gradient(145deg, #ffffff, #f9fafb); /* Match main container background */
+            background: #fff9f9;
             display: flex;
-            justify-content: flex-start; /* Changed from center to align image to the left */
+            justify-content: flex-start;
             align-items: center;
             position: relative;
-            /* Removed border-left property that was causing the vertical line */
+            border: none;
+            outline: none;
+            padding: 20px;
+            margin: 0;
         }
         
         .chat-image {
-            width: 100%; /* Changed from 90% */
-            height: 100%; /* Changed from 90% */
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
             z-index: 1;
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
-            transition: transform 0.5s ease;
-        }
-        
-        .chat-image:hover {
-            transform: scale(1.02);
         }
         
         .chat-image img {
@@ -283,6 +279,7 @@
             max-height: 100%;
             object-fit: contain;
             border-radius: 6px;
+            box-shadow: -8px 0 15px rgba(0,0,0,0.1);
         }
         
         .decorative-circle {
@@ -312,11 +309,11 @@
             margin-top: 15px;
         }
         
-        /* MODIFIED: Added z-index to Chrome extension badge and made it fully opaque */
+        /* MODIFIED: Repositioned Chrome extension badge to top left */
         .chrome-badge {
             position: absolute;
-            bottom: 10px;
-            right: 15px;
+            top: 10px;
+            left: 15px;
             font-size: 12px;
             color: #718096;
             display: flex;
@@ -368,7 +365,7 @@
                     <div class="feature-icon"></div>
                     <div class="feature-content">
                         <h3>Flexible Interaction</h3>
-                        <p>Quick Popup actions or in-depth Side Panel conversations</p>
+                        <p>Quick Popup actions or Side Panel conversations</p>
                     </div>
                 </div>
                 
@@ -423,10 +420,10 @@
                         <div class="platform-name">Claude</div>
                     </div>
                     <div class="platform-logo">
-                        <div class="platform-logo-img">
-                            <img src="images/gemini_logo.png" alt="Gemini">
-                        </div>
-                        <div class="platform-name">Gemini</div>
+                      <div class="platform-logo-img">
+                          <img src="images/deepseek_logo.png" alt="DeepSeek">
+                      </div>
+                      <div class="platform-name">DeepSeek</div>
                     </div>
                     <div class="platform-logo">
                         <div class="platform-logo-img">
@@ -435,10 +432,10 @@
                         <div class="platform-name">Mistral AI</div>
                     </div>
                     <div class="platform-logo">
-                        <div class="platform-logo-img">
-                            <img src="images/deepseek_logo.png" alt="DeepSeek">
-                        </div>
-                        <div class="platform-name">DeepSeek</div>
+                      <div class="platform-logo-img">
+                          <img src="images/gemini_logo.png" alt="Gemini">
+                      </div>
+                      <div class="platform-name">Gemini</div>
                     </div>
                     <div class="platform-logo">
                         <div class="platform-logo-img">
@@ -457,7 +454,7 @@
             </div>
         </div>
         
-        <!-- Chrome extension badge -->
+        <!-- Chrome extension badge - moved to top left -->
         <div class="chrome-badge">Chrome Extension</div>
     </div>
 </body>
