@@ -9,6 +9,7 @@ import CopyButtonIcon from './icons/CopyButtonIcon'; // Path needs adjustment
 import EnhancedCodeBlock from './components/EnhancedCodeBlock'; // Path needs adjustment
 import MathFormulaBlock from './components/MathFormulaBlock'; // Path needs adjustment
 import { copyToClipboard as copyUtil } from './utils/clipboard'; // Renamed import to avoid conflict
+import { detectContentType, ContentType } from './services/ContentTypeDetector';
 
 /**
  * A versatile message bubble component that supports different roles and states
@@ -100,117 +101,49 @@ export const MessageBubble = memo(({ // Changed to named export and added memo h
             li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
 
             code: ({node, inline, className, children, ...props}) => {
-              // Check if it's a block code (has language class) or inline
-              const match = /language-(\w+)/.exec(className || '');
               const content = String(children).trim();
-
-              // First check for explicit language code blocks
-              const isExplicitCodeBlock = match && match[1] &&
-                                        ['python', 'javascript', 'java', 'c', 'cpp', 'csharp', 'ruby',
-                                        'go', 'rust', 'swift', 'kotlin', 'typescript', 'php'].includes(match[1].toLowerCase());
-
-              // If this is explicitly marked as code, render it as code
-              if (!inline && isExplicitCodeBlock) {
-                return (
-                  <EnhancedCodeBlock className={className} isStreaming={isStreaming}>
-                    {children}
-                  </EnhancedCodeBlock>
-                );
+              const match = /language-(\w+)/.exec(className || '');
+              const language = match ? match[1] : null;
+              
+              // Leverage the context-aware detector for content classification
+              const contentType = detectContentType(content, inline, language);
+              
+              // Apply rendering strategy based on determined content type
+              switch (contentType) {
+                case ContentType.MATH_INLINE:
+                  return <MathFormulaBlock content={content} inline={true} />;
+                
+                case ContentType.MATH_BLOCK:
+                  return <MathFormulaBlock content={content} inline={false} />;
+                
+                case ContentType.CODE_BLOCK:
+                  return <EnhancedCodeBlock className={className} isStreaming={isStreaming}>{children}</EnhancedCodeBlock>;
+                
+                case ContentType.CODE_INLINE:
+                  return (
+                    <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                      {children}
+                    </code>
+                  );
+                  
+                case ContentType.TEXT:
+                default:
+                  // Plain text blocks get minimal formatting
+                  if (!inline && !language) {
+                    return (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded my-3 font-mono text-sm whitespace-pre-wrap">
+                        {children}
+                      </div>
+                    );
+                  }
+                  
+                  // Fallback to basic code formatting
+                  return (
+                    <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                      {children}
+                    </code>
+                  );
               }
-
-              // Check if this is obviously code
-              if (!inline && looksLikeCode(content)) {
-                return (
-                  <EnhancedCodeBlock className={className} isStreaming={isStreaming}>
-                    {children}
-                  </EnhancedCodeBlock>
-                );
-              }
-
-              // Check for math variables (but only if not code)
-              if (inline && isMathVariable(content)) {
-                return <MathFormulaBlock content={content} inline={true} />;
-              }
-
-              // Check for LaTeX environments directly
-              if (hasLatexEnvironments(content)) {
-                return <MathFormulaBlock content={content} inline={false} />;
-              }
-
-              // Check for LaTeX commands that indicate math content
-              if (hasLatexCommands(content)) {
-                // Determine if this should be inline based on content length and complexity
-                const shouldBeInline = inline || (content.length < 30 && !content.includes('\n'));
-                return <MathFormulaBlock content={content} inline={shouldBeInline} />;
-              }
-
-              // Check if this is marked as "text" language but contains LaTeX markers
-              const isTextLanguage = match && match[1]?.toLowerCase() === 'text';
-              if (!inline && isTextLanguage &&
-                  (content.includes('\\begin') || content.includes('\\end') ||
-                  content.includes('\\cdot') || content.includes('\\_{'))) {
-                return <MathFormulaBlock content={content} />;
-              }
-
-              // Check for LaTeX-style math delimiters
-              if (hasLatexDelimiters(content)) {
-                // Let the remark-math plugin handle this
-                return props.children;
-              }
-
-              // Skip code block rendering for "text" language blocks that aren't math
-              if (!inline && isTextLanguage && !isMathFormula(content)) {
-                // For "text" language blocks, render as a formatted text block
-                return (
-                  <div className="p-3 rounded my-3 font-mono text-sm whitespace-pre-wrap">
-                    {children}
-                  </div>
-                );
-              }
-
-              // Check if this is a math formula
-              if (isMathFormula(content)) {
-                // Short expressions should be inline
-                const isShortExpression = content.length < 30 && !content.includes('\n');
-                const shouldRenderInline = inline || isShortExpression;
-
-                // Use KaTeX to render the formula
-                return <MathFormulaBlock content={content} inline={shouldRenderInline} />;
-              }
-
-              // If multi-line and not explicitly marked as a language, treat as code
-              if (!inline && content.includes('\n')) {
-                return (
-                  <EnhancedCodeBlock className={className} isStreaming={isStreaming}>
-                    {children}
-                  </EnhancedCodeBlock>
-                );
-              }
-
-              // Special case for filenames or module references
-              const isFilenameOrModule = !inline && content.indexOf('\n') === -1 &&
-                                content.indexOf(' ') === -1 &&
-                                (
-                                  // Traditional file extensions
-                                  /\.\w{1,4}$/.test(content) ||
-                                  // Module.function patterns (like numpy.polyfit)
-                                  /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(content)
-                                );
-
-              if (isFilenameOrModule) {
-                return (
-                  <code className="px-2 py-1 rounded text-xs font-mono inline-block">
-                    {children}
-                  </code>
-                );
-              }
-
-              // Default: Regular inline code
-              return (
-                <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
-                  {children}
-                </code>
-              );
             },
 
             // Ensure `pre` itself doesn't get default Prose styling if `code` handles it
