@@ -1,7 +1,7 @@
 import React, { useState, memo, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import CopyButtonIcon from './icons/CopyButtonIcon';
+import CopyButtonIcon from '../icons/CopyButtonIcon';
 import { copyToClipboard } from '../utils/clipboard';
 
 /**
