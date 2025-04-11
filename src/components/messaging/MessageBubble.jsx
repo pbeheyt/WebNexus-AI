@@ -52,6 +52,19 @@ export const MessageBubble = memo(({
     return text;
   };
 
+  // Helper to detect if node contains standalone math content
+  const isNodeLikelyStandaloneMath = (node) => {
+    const textContent = getNodeText(node).trim();
+    if (!textContent) {
+      return false;
+    }
+    return (
+      isMathematicalFunction(textContent) ||
+      hasLatexCommands(textContent) || 
+      hasHighConfidenceMathIndicators(textContent)
+    );
+  };
+
   // Copy assistant message to clipboard
   const handleCopyToClipboard = () => { 
     if (!content || isStreaming) return;
@@ -105,18 +118,10 @@ export const MessageBubble = memo(({
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mt-3 mb-2" {...props} />,
             p: ({node, children, ...props}) => {
-              const textContent = getNodeText(node).trim();
-              const isLikelyStandaloneMath = textContent && (
-                isMathematicalFunction(textContent) ||
-                hasLatexCommands(textContent) ||
-                hasHighConfidenceMathIndicators(textContent)
-              );
-              
-              return isLikelyStandaloneMath ? (
-                <MathFormulaBlock content={textContent} inline={false} />
-              ) : (
-                <p className="mb-3 leading-relaxed text-sm" {...props}>{children}</p>
-              );
+              if (isNodeLikelyStandaloneMath(node)) {
+                return <MathFormulaBlock content={getNodeText(node).trim()} inline={false} />;
+              }
+              return <p className="mb-3 leading-relaxed text-sm" {...props}>{children}</p>;
             },
             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
@@ -169,7 +174,12 @@ export const MessageBubble = memo(({
             },
             pre: ({node, children, ...props}) => <>{children}</>,
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props} />,
+            blockquote: ({node, children, ...props}) => {
+              if (isNodeLikelyStandaloneMath(node)) {
+                return <MathFormulaBlock content={getNodeText(node).trim()} inline={false} />;
+              }
+              return <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props}>{children}</blockquote>;
+            },
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
             em: ({node, ...props}) => <em className="italic" {...props} />,
             hr: ({node, ...props}) => <hr className="my-4 border-t border-gray-300 dark:border-gray-600" {...props} />,
@@ -177,8 +187,18 @@ export const MessageBubble = memo(({
             thead: ({node, ...props}) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
             tbody: ({node, ...props}) => <tbody {...props} />,
             tr: ({node, ...props}) => <tr className="border-b border-gray-200 dark:border-gray-700" {...props} />,
-            th: ({node, ...props}) => <th className="p-2 text-left font-medium text-xs" {...props} />,
-            td: ({node, ...props}) => <td className="p-2 border-gray-200 dark:border-gray-700 text-xs" {...props} />,
+            th: ({node, children, ...props}) => {
+              if (isNodeLikelyStandaloneMath(node)) {
+                return <MathFormulaBlock content={getNodeText(node).trim()} inline={false} />;
+              }
+              return <th className="p-2 text-left font-medium text-xs" {...props}>{children}</th>;
+            },
+            td: ({node, children, ...props}) => {
+              if (isNodeLikelyStandaloneMath(node)) {
+                return <MathFormulaBlock content={getNodeText(node).trim()} inline={false} />;
+              }
+              return <td className="p-2 border-gray-200 dark:border-gray-700 text-xs" {...props}>{children}</td>;
+            },
           }}
         >
           {content}
