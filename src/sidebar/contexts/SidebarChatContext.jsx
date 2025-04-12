@@ -198,14 +198,9 @@ export function SidebarChatProvider({ children }) {
                 // Mark as added to prevent duplicate additions
                 setExtractedContentAdded(true);
 
-                // Track tokens for extracted content using the service
-                await trackTokens({
-                  messageId: contentMessage.id,
-                  role: contentMessage.role,
-                  content: contentMessage.content,
-                  input: contentMessage.inputTokens,
-                  output: 0
-                }, modelConfigData);
+                // Token tracking for extracted content is now handled by calculateAndUpdateStatistics
+                // triggered by the subsequent saveHistory call.
+                // await trackTokens(...) // REMOVED
               }
             }
           } catch (extractError) {
@@ -217,14 +212,9 @@ export function SidebarChatProvider({ children }) {
         setMessages(updatedMessages);
         setStreamingContent('');
 
-        // Track tokens for assistant message
-        await trackTokens({
-          messageId: messageId,
-          role: isError ? MESSAGE_ROLES.SYSTEM : MESSAGE_ROLES.ASSISTANT,
-          content: finalContent,
-          input: 0,
-          output: outputTokens
-        }, modelConfigData);
+        // Token tracking for the assistant message is now handled by calculateAndUpdateStatistics
+        // triggered by the subsequent saveHistory call.
+        // await trackTokens(...) // REMOVED
 
         // Save history (this now implicitly triggers calculateAndUpdateStatistics which handles cost)
         if (tabId) {
@@ -405,16 +395,11 @@ export function SidebarChatProvider({ children }) {
     // Determine if this is the first message (before adding the current user message)
     const isFirstMessage = messages.length === 0;
 
-    // Track tokens for user message
-    await trackTokens({
-      messageId: userMessageId,
-      role: MESSAGE_ROLES.USER,
-      content: userMessage.content,
-      input: inputTokens,
-      output: 0
-    }, modelConfigData);
+    // Token tracking for the user message is now handled by calculateAndUpdateStatistics
+    // triggered by the subsequent saveHistory call.
+    // await trackTokens(...) // REMOVED
 
-    // Save interim state to chat history
+    // Save interim state to chat history (this will trigger token calculation)
     if (tabId) {
       await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
     }
@@ -574,14 +559,9 @@ export function SidebarChatProvider({ children }) {
                 setMessages(messagesAfterCancel);
                 setExtractedContentAdded(true);
 
-                // Track tokens for the added content
-                await trackTokens({
-                  messageId: contentMessage.id,
-                  role: contentMessage.role,
-                  content: contentMessage.content,
-                  input: contentMessage.inputTokens,
-                  output: 0
-                }, modelConfigData);
+                // Token tracking for extracted content is now handled by calculateAndUpdateStatistics
+                // triggered by the subsequent saveHistory call.
+                // await trackTokens(...) // REMOVED
               } else {
                  console.warn('Cancelled message not found, cannot insert extracted content correctly.');
               }
@@ -607,14 +587,9 @@ export function SidebarChatProvider({ children }) {
       // Update state with the final message list
       setMessages(finalMessages);
 
-      // Track tokens for the cancelled message
-      await trackTokens({
-        messageId: streamingMessageId,
-        role: MESSAGE_ROLES.ASSISTANT,
-        content: cancelledContent,
-        input: 0,
-        output: outputTokens
-      }, modelConfigData);
+      // Token tracking for the cancelled message is now handled by calculateAndUpdateStatistics
+      // triggered by the subsequent saveHistory call.
+      // await trackTokens(...) // REMOVED
 
       // Save the final state to history (this now implicitly triggers calculateAndUpdateStatistics which handles cost)
       if (tabId) {

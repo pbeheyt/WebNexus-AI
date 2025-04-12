@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import TokenManagementService from '../services/TokenManagementService';
+import { STORAGE_KEYS } from "../../shared/constants";
 
 /**
  * Hook for tracking token usage and providing token statistics in React components
@@ -11,20 +12,8 @@ import TokenManagementService from '../services/TokenManagementService';
  * @returns {Object} - Token tracking capabilities and statistics
  */
 export function useTokenTracking(tabId) {
-  const [tokenStats, setTokenStats] = useState({
-    inputTokens: 0,
-    outputTokens: 0,
-    totalCost: 0, // Note: This might become less relevant, consider accumulatedCost
-    accumulatedCost: 0, // Add accumulated cost
-    promptTokens: 0,
-    historyTokens: 0,
-    historyTokensSentInLastCall: 0,
-    inputTokensInLastCall: 0,
-    outputTokensInLastCall: 0, // Add output tokens for last call
-    lastCallCost: 0, // Add cost for last call
-    systemTokens: 0,
-    isCalculated: false
-  });
+  // Initialize state using the updated structure from TokenManagementService
+  const [tokenStats, setTokenStats] = useState(TokenManagementService._getEmptyStats());
   const [isLoading, setIsLoading] = useState(true);
 
   // Load token data for the tab on mount and when tab changes
@@ -99,37 +88,8 @@ export function useTokenTracking(tabId) {
     return TokenManagementService.calculateContextStatus(tokenStats, modelConfig);
   }, [tabId, tokenStats]);
 
-  /**
-   * Track token consumption for a message
-   * @param {Object} messageData - Message data to track
-   * @param {Object} modelConfig - Model configuration with pricing
-   * @returns {Promise<boolean>} - Success indicator
-   */
-  const trackTokens = useCallback(async (messageData, modelConfig = null) => {
-    if (!tabId) return false;
-    
-    try {
-      // Use the service to track the message
-      const success = await TokenManagementService.trackMessage(tabId, {
-        messageId: messageData.messageId,
-        role: messageData.role || 'user',
-        content: messageData.content || '',
-        inputTokens: messageData.input || 0,
-        outputTokens: messageData.output || 0
-      }, modelConfig);
-      
-      if (success) {
-        // Refresh state with latest stats
-        const updatedStats = await TokenManagementService.getTokenStatistics(tabId);
-        setTokenStats(updatedStats);
-      }
-      
-      return success;
-    } catch (error) {
-      console.error('Error tracking tokens:', error);
-      return false;
-    }
-  }, [tabId]);
+  // The trackTokens function is removed as tracking is now handled by calculateAndUpdateStatistics
+  // which is called elsewhere (likely within SidebarChatContext after API calls).
 
   /**
    * Clear all token data for the current tab
@@ -183,7 +143,7 @@ export function useTokenTracking(tabId) {
       setTokenStats,
       isLoading,
       calculateContextStatus,
-      trackTokens,
+      // trackTokens, // Removed from returned object
       clearTokenData,
       calculateStats,
       estimateTokens: TokenManagementService.estimateTokens,

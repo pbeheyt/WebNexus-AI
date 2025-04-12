@@ -2,17 +2,20 @@ import React, { useState, useRef } from 'react';
 import { Tooltip } from '../../components/layout/Tooltip';
 
 function TokenCounter({ tokenStats, contextStatus, className = '' }) {
+  // Destructure using the new field names and remove unused ones
   const {
-    inputTokens = 0,
-    outputTokens = 0,
-    accumulatedCost = 0,
-    promptTokens = 0,
-    historyTokens = 0,
-    historyTokensSentInLastCall = 0,
-    inputTokensInLastCall = 0,
-    outputTokensInLastCall = 0, // Added field
-    lastCallCost = 0, // Added field
-    systemTokens = 0
+    // inputTokens = 0, // REMOVED (cumulative)
+    outputTokens = 0, // KEEP (cumulative)
+    accumulatedCost = 0, // KEEP (cumulative)
+    // promptTokens = 0, // REMOVED (old name)
+    // historyTokens = 0, // REMOVED (cumulative)
+    historyTokensSentInLastApiCall = 0, // KEEP
+    inputTokensInLastApiCall = 0, // KEEP
+    outputTokensInApiLastCall = 0, // KEEP
+    lastApiCallCost = 0, // KEEP
+    // systemTokens = 0, // REMOVED (old name)
+    promptTokensInLastApiCall = 0, // ADDED (new name)
+    systemTokensInLastApiCall = 0 // ADDED (new name)
   } = tokenStats || {};
 
   // Toggle for expanded details view
@@ -26,9 +29,11 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   const outputTokensRef = useRef(null);
   const costRef = useRef(null); // For accumulated cost
   const lastCostRef = useRef(null); // For last call cost
-  const promptRef = useRef(null);
-  const historyRef = useRef(null);
-  const systemRef = useRef(null);
+  const promptRef = useRef(null); // Will be "Last Prompt"
+  // const historyRef = useRef(null); // REMOVED (cumulative history display)
+  const historySentRef = useRef(null); // ADDED (for history sent in last call)
+  const systemRef = useRef(null); // Will be "System Sent"
+  const lastOutputRef = useRef(null); // ADDED (for last output tokens)
   const contextWindowRef = useRef(null);
 
   // Format cost with appropriate decimal places
@@ -64,16 +69,17 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   // Ensure tokensRemaining is always defined with a safe default
   const tokensRemaining = contextData.tokensRemaining || 0;
 
-  // Tooltip content definitions
+  // Tooltip content definitions (updated)
   const tooltipContent = {
-    inputTokens: "Input tokens sent in the last API request",
-    outputTokens: "Total output tokens generated in this chat session", // Updated tooltip
-    cost: "Total estimated accumulated cost for this chat session", // Updated tooltip
-    lastCost: "Estimated cost of the last API call", // New tooltip
-    prompt: "Tokens in your most recent message",
-    history: "Tokens from conversation history sent in the last API request",
-    system: "Tokens from system instructions and settings",
-    contextWindow: `${tokensRemaining.toLocaleString()} tokens remaining in the context window`
+    inputTokens: "Total input tokens (system + history + prompt) sent in the last API request", // Updated tooltip
+    outputTokens: "Total output tokens generated in this chat session", // Keep tooltip
+    cost: "Total estimated accumulated cost for this chat session", // Keep tooltip
+    lastCost: "Estimated cost of the last API call", // Keep tooltip
+    prompt: "Tokens in the user prompt sent in the last API request", // Updated tooltip for Last Prompt
+    historySent: "Tokens from conversation history sent in the last API request", // Tooltip for History Sent
+    system: "Tokens from system instructions sent in the last API request", // Updated tooltip for System Sent
+    lastOutput: "Output tokens received in the last API response", // New tooltip for Last Output
+    contextWindow: `${tokensRemaining.toLocaleString()} tokens remaining in the context window (${contextData.totalTokens?.toLocaleString()} used)` // Updated tooltip
   };
 
   return (
@@ -91,14 +97,16 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             tabIndex="0"
           >
             <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              {/* Icon representing Input */}
+              <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {/* Display input tokens from the last call */}
-            <span>{inputTokensInLastCall.toLocaleString()}</span>
+            <span>{inputTokensInLastApiCall.toLocaleString()}</span>
             <Tooltip show={hoveredElement === 'inputTokens'} message={tooltipContent.inputTokens} targetRef={inputTokensRef} />
           </div>
 
-          {/* Output tokens with tooltip */}
+          {/* Output tokens (Cumulative) with tooltip */}
           <div
             ref={outputTokensRef}
             className="flex items-center relative cursor-help"
@@ -109,7 +117,9 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             tabIndex="0"
           >
             <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" transform="rotate(45, 12, 12)"/>
+              {/* Icon representing Output */}
+              <path d="M13 5L18 9H22v6h-4l-5 4V5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8.46 8.46a5 5 0 000 7.07" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {/* Display TOTAL output tokens */}
             <span>{outputTokens.toLocaleString()}</span>
@@ -142,7 +152,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
             tabIndex="0"
           >
-            <span>(Last: {formatCost(lastCallCost)})</span>
+            <span>(Last: {formatCost(lastApiCallCost)})</span>
             <Tooltip show={hoveredElement === 'lastCost'} message={tooltipContent.lastCost} targetRef={lastCostRef} />
           </div>
 
@@ -172,39 +182,42 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onBlur={() => setHoveredElement(null)}
               tabIndex="0"
             >
-              <span className="text-xs font-medium">Prompt</span>
-              <span>{promptTokens.toLocaleString()}</span>
+              <span className="text-xs font-medium">Last Prompt</span> {/* Updated Label */}
+              <span>{promptTokensInLastApiCall.toLocaleString()}</span> {/* Updated Value */}
               <Tooltip show={hoveredElement === 'prompt'} message={tooltipContent.prompt} targetRef={promptRef} />
             </div>
 
-            {/* Last Output tokens (Optional but recommended) */}
+            {/* Last Output tokens with tooltip */}
             <div
-              // ref={lastOutputRef} // Add ref if tooltip needed
-              className="flex flex-col items-center relative"
-              // Add hover/focus handlers if tooltip needed
+              ref={lastOutputRef} // Added ref
+              className="flex flex-col items-center relative cursor-help" // Added cursor-help
+              onMouseEnter={() => setHoveredElement('lastOutput')} // Added handler
+              onMouseLeave={() => setHoveredElement(null)} // Added handler
+              onFocus={() => setHoveredElement('lastOutput')} // Added handler
+              onBlur={() => setHoveredElement(null)} // Added handler
+              tabIndex="0" // Added tabIndex
             >
               <span className="text-xs font-medium">Last Output</span>
-              <span>{outputTokensInLastCall.toLocaleString()}</span>
-              {/* Add Tooltip if needed */}
+              <span>{outputTokensInApiLastCall.toLocaleString()}</span>
+              <Tooltip show={hoveredElement === 'lastOutput'} message={tooltipContent.lastOutput} targetRef={lastOutputRef} /> {/* Added Tooltip */}
             </div>
 
-            {/* History tokens with tooltip */}
+            {/* History Sent tokens with tooltip */}
             <div
-              ref={historyRef}
+              ref={historySentRef} // Use new ref
               className="flex flex-col items-center relative cursor-help"
-              onMouseEnter={() => setHoveredElement('history')}
+              onMouseEnter={() => setHoveredElement('historySent')} // Use new key
               onMouseLeave={() => setHoveredElement(null)}
-              onFocus={() => setHoveredElement('history')}
+              onFocus={() => setHoveredElement('historySent')} // Use new key
               onBlur={() => setHoveredElement(null)}
               tabIndex="0"
             >
-              <span className="text-xs font-medium">History Sent</span> {/* Clarified label */}
-              {/* Display the history tokens sent in the last call */}
-              <span>{historyTokensSentInLastCall.toLocaleString()}</span>
-              <Tooltip show={hoveredElement === 'history'} message={tooltipContent.history} targetRef={historyRef} />
+              <span className="text-xs font-medium">History Sent</span> {/* Label remains */}
+              <span>{historyTokensSentInLastApiCall.toLocaleString()}</span> {/* Value remains */}
+              <Tooltip show={hoveredElement === 'historySent'} message={tooltipContent.historySent} targetRef={historySentRef} /> {/* Use new key/ref */}
             </div>
 
-            {/* System tokens with tooltip */}
+            {/* System Sent tokens with tooltip */}
             <div
               ref={systemRef}
               className="flex flex-col items-center relative cursor-help"
@@ -214,13 +227,16 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onBlur={() => setHoveredElement(null)}
               tabIndex="0"
             >
-              <span className="text-xs font-medium">System</span>
-              <span>{systemTokens.toLocaleString()}</span>
+              <span className="text-xs font-medium">System Sent</span> {/* Updated Label */}
+              <span>{systemTokensInLastApiCall.toLocaleString()}</span> {/* Updated Value */}
               <Tooltip show={hoveredElement === 'system'} message={tooltipContent.system} targetRef={systemRef} />
             </div>
+
+            {/* REMOVED cumulative inputTokens display */}
+            {/* REMOVED cumulative historyTokens display */}
           </div>
 
-          {/* Context window progress bar with tooltip */}
+          {/* Context window progress bar with tooltip (verify calculation) */}
           <div className="mt-3">
             <div
               ref={contextWindowRef}

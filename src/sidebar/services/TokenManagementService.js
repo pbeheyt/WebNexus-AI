@@ -66,15 +66,15 @@ class TokenManagementService {
    * Calculate token statistics from chat history
    * @param {Array} messages - Chat messages
    * @param {string} systemPrompt - System prompt text (optional)
-   * @returns {Object} - Token statistics
+   * @returns {Object} - Token statistics focused on the last API call.
    */
   static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') {
-    let inputTokens = 0;
-    let outputTokens = 0;
-    let promptTokens = 0;
-    let historyTokensTotal = 0; // Renamed for clarity
-    let historyTokensSentInLastCall = 0; // Initialize counter for history EXCLUDING system prompt/messages
-    let systemTokens = 0; // Initialize systemTokens
+    // let inputTokens = 0; // REMOVED cumulative input tracking
+    let outputTokens = 0; // Cumulative output is still needed
+    let promptTokensInLastApiCall = 0; // RENAMED from promptTokens
+    // let historyTokensTotal = 0; // REMOVED cumulative history tracking
+    let historyTokensSentInLastApiCall = 0; // Keep as is
+    let systemTokensInLastApiCall = 0; // RENAMED from systemTokens
 
     // Find indices of the last user and assistant messages
     let lastUserMsgIndex = -1;
@@ -95,143 +95,104 @@ class TokenManagementService {
     // Process system prompt if present
     if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
       const systemPromptTokensCount = this.estimateTokens(systemPrompt);
-      inputTokens += systemPromptTokensCount; // System prompt contributes to input
-      systemTokens = systemPromptTokensCount; // Assign to the specific systemTokens field
-      historyTokensTotal += systemPromptTokensCount; // System prompt is part of the total history context
-      // DO NOT add systemPromptTokensCount to historyTokensSentInLastCall here
+      // inputTokens += systemPromptTokensCount; // REMOVED cumulative input
+      systemTokensInLastApiCall = systemPromptTokensCount; // Assign to the specific RENAMED field
+      // historyTokensTotal += systemPromptTokensCount; // REMOVED cumulative history
+      // DO NOT add systemPromptTokensCount to historyTokensSentInLastApiCall here
     }
 
     // Process each message
     messages.forEach((msg, index) => {
-      // --- Refactored inputTokens calculation ---
-      // Calculate tokens for the current message, regardless of role
-      const msgTokens = msg.inputTokens || msg.outputTokens || this.estimateTokens(msg.content);
-      // Add these tokens to the main inputTokens accumulator
-      inputTokens += msgTokens;
-      // --- End of refactored inputTokens calculation ---
+      // --- Removed cumulative inputTokens calculation ---
+      // const msgTokens = msg.inputTokens || msg.outputTokens || this.estimateTokens(msg.content);
+      // inputTokens += msgTokens;
+      // --- End of removal ---
 
-      // --- Keep original logic for other specific counters ---
+      // --- Keep logic for specific counters, renaming where needed ---
       if (msg.role === 'user') {
         const msgInputTokens = msg.inputTokens || this.estimateTokens(msg.content);
-        // (inputTokens already handled above)
+        // (cumulative inputTokens removed)
 
         // Determine if this is the most recent prompt or part of history
         // Check if it's the last message OR the second-to-last if the last is assistant
-        const isLastMessage = index === messages.length - 1;
-        const isSecondLastBeforeAssistant = index === messages.length - 2 && messages[messages.length - 1]?.role === 'assistant';
+        // const isLastMessage = index === messages.length - 1;
+        // const isSecondLastBeforeAssistant = index === messages.length - 2 && messages[messages.length - 1]?.role === 'assistant';
 
         // Determine if this is the most recent user prompt
         const isLastUserPrompt = index === lastUserMsgIndex;
 
         if (isLastUserPrompt) {
-          promptTokens = msgInputTokens;
+          promptTokensInLastApiCall = msgInputTokens; // Use RENAMED variable
           // Add to total history but NOT to history sent in last call
-          historyTokensTotal += msgInputTokens;
+          // historyTokensTotal += msgInputTokens; // REMOVED cumulative history
         } else {
           // This is a past user message, add its tokens to total history
-          historyTokensTotal += msgInputTokens;
+          // historyTokensTotal += msgInputTokens; // REMOVED cumulative history
           // Also add to history sent in last call if it's a USER message and not excluded
           if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
-            historyTokensSentInLastCall += msgInputTokens;
+            historyTokensSentInLastApiCall += msgInputTokens; // Keep this calculation
           }
         }
       } else if (msg.role === 'assistant') {
         const msgOutputTokens = msg.outputTokens || this.estimateTokens(msg.content);
-        // Calculate outputTokens (only for assistant messages)
-        outputTokens += msgOutputTokens;
-        // (inputTokens already handled above)
+        // Calculate cumulative outputTokens (only for assistant messages)
+        outputTokens += msgOutputTokens; // Keep cumulative output
+        // (cumulative inputTokens removed)
         // Add assistant tokens to total history
-        historyTokensTotal += msgOutputTokens;
+        // historyTokensTotal += msgOutputTokens; // REMOVED cumulative history
         // Add to history sent in last call if it's an ASSISTANT message and not excluded
         if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
-          historyTokensSentInLastCall += msgOutputTokens;
+          historyTokensSentInLastApiCall += msgOutputTokens; // Keep this calculation
         }
       } else if (msg.role === 'system') {
         // System messages (like errors)
         // Note: The initial system prompt is handled separately above
         const msgSystemTokens = this.estimateTokens(msg.content);
-        // (inputTokens already handled above)
+        // (cumulative inputTokens removed)
         // Add to specific system token count (excluding initial prompt)
-        systemTokens += msgSystemTokens;
+        // systemTokens += msgSystemTokens; // System messages (like errors) don't contribute to systemTokensInLastApiCall which is only the initial prompt
         // Add to total history context
-        historyTokensTotal += msgSystemTokens;
-        // DO NOT add system message tokens (like errors) to historyTokensSentInLastCall
+        // historyTokensTotal += msgSystemTokens; // REMOVED cumulative history
+        // DO NOT add system message tokens (like errors) to historyTokensSentInLastApiCall
         // if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
-        //    historyTokensSentInLastCall += msgSystemTokens; // This line is removed/commented out
+        //    historyTokensSentInLastApiCall += msgSystemTokens; // This line is removed/commented out
         // }
       }
     });
 
-    // Calculate the input tokens specifically for the last API call
-    const inputTokensInLastCall = (systemTokens || 0) + (historyTokensSentInLastCall || 0) + (promptTokens || 0);
+    // Calculate the input tokens specifically for the last API call (using RENAMED variables)
+    const inputTokensInLastApiCall = (systemTokensInLastApiCall || 0) + (historyTokensSentInLastApiCall || 0) + (promptTokensInLastApiCall || 0);
 
-    // Calculate output tokens for the last assistant message
-    let calculatedOutputTokensInLastCall = 0;
+    // Calculate output tokens for the last assistant message (calculation remains the same)
+    let outputTokensInLastApiCall = 0; // Renamed for consistency
     if (lastAssistantMsgIndex !== -1) {
       const lastAssistantMsg = messages[lastAssistantMsgIndex];
-      calculatedOutputTokensInLastCall = lastAssistantMsg.outputTokens || this.estimateTokens(lastAssistantMsg.content);
+      outputTokensInLastApiCall = lastAssistantMsg.outputTokens || this.estimateTokens(lastAssistantMsg.content);
     }
 
+    // Return object matching the new structure defined in _getEmptyStats
     return {
-      inputTokens, // Cumulative input for cost calculation (includes all messages + system prompt)
-      outputTokens, // Cumulative output tokens (all assistant messages)
-      promptTokens,
-      historyTokens: historyTokensTotal, // Total tokens in history (user + assistant + system)
-      historyTokensSentInLastCall, // History tokens excluding last user/assistant pair and system prompt
-      inputTokensInLastCall, // Input tokens for the last API call (system + historySent + prompt)
-      outputTokensInLastCall: calculatedOutputTokensInLastCall, // Output tokens from the last assistant message
-      systemTokens, // Tokens from system prompt + system messages (like errors)
-      promptTokens, // Tokens from the last user message
-      // Costs are calculated later
+      // Cumulative stats
+      outputTokens, // Cumulative output tokens (KEEP)
+      // accumulatedCost is calculated later
+
+      // Last API call stats
+      promptTokensInLastApiCall, // RENAMED
+      historyTokensSentInLastApiCall, // Keep as is
+      systemTokensInLastApiCall, // RENAMED
+      inputTokensInLastApiCall, // Keep as is (represents total input sent)
+      outputTokensInLastApiCall, // Keep as is (calculated above)
+      // lastApiCallCost is calculated later
+
+      // isCalculated is set later
     };
   }
 
-  /**
-   * Track tokens for a message
-   * @param {number} tabId - Tab identifier
-   * @param {Object} message - Message to track
-   * @param {Object} modelConfig - Model configuration
-   * @returns {Promise<boolean>} - Success status
-   */
-  static async trackMessage(tabId, message, modelConfig) {
-    if (!tabId || !message) return false;
+  // The trackMessage function is removed as token tracking is now centralized
+  // within calculateAndUpdateStatistics, called after each API interaction.
 
-    try {
-      // Get current token statistics
-      const stats = await this.getTokenStatistics(tabId);
-
-      // Update token counts based on message role
-      if (message.role === 'user') {
-        const inputTokens = message.inputTokens || this.estimateTokens(message.content);
-        stats.inputTokens += inputTokens;
-        stats.promptTokens = inputTokens;  // Latest prompt
-      } else if (message.role === 'assistant') {
-        const outputTokens = message.outputTokens || this.estimateTokens(message.content);
-        stats.outputTokens += outputTokens;
-      } else if (message.role === 'system') {
-        const systemTokens = this.estimateTokens(message.content);
-        stats.inputTokens += systemTokens;
-        stats.systemTokens += systemTokens;
-      }
-
-      // Cost calculation is now handled centrally in calculateAndUpdateStatistics.
-      // The cost calculation block previously here has been removed.
-
-      // Save updated stats (without recalculating cost here)
-      return this.updateTokenStatistics(tabId, stats);
-    } catch (error) {
-      console.error('TokenManagementService: Error tracking message:', error);
-      return false;
-    }
-  }
-
-  // This function is no longer needed as cost accumulation is handled in calculateAndUpdateStatistics
-  /**
-   * DEPRECATED: Update accumulated cost by adding a new cost value
-   * @param {number} tabId - Tab identifier
-   * @returns {Promise<boolean>} - Success status
-   */
-  // static async updateAccumulatedCost(tabId) { ... } // Function removed
+  // The updateAccumulatedCost function is removed as cost accumulation is handled
+  // centrally within calculateAndUpdateStatistics.
 
   /**
    * Clear token statistics for a tab
@@ -284,8 +245,8 @@ class TokenManagementService {
       if (modelConfig) {
         // Use the specific input/output tokens for the *last call*
         const costInfo = this.calculateCost(
-          baseStats.inputTokensInLastCall,
-          baseStats.outputTokensInLastCall, // Use the newly calculated field
+          baseStats.inputTokensInLastApiCall,
+          baseStats.outputTokensInLastApiCall, // Use the newly calculated field
           modelConfig
         );
         currentCallCost = costInfo.totalCost || 0;
@@ -294,14 +255,30 @@ class TokenManagementService {
       // 5. Calculate New Accumulated Cost
       const newAccumulatedCost = existingAccumulatedCost + currentCallCost;
 
-      // 6. Prepare Final Stats Object to Save
+      console.log('TokenManagementService: New accumulated cost:', newAccumulatedCost);
+      console.log('TokenManagementService: Existing accumulated cost:', existingAccumulatedCost);
+      console.log('TokenManagementService: Current call cost:', currentCallCost);
+
+      // 6. Prepare Final Stats Object to Save (Explicitly matching _getEmptyStats structure)
       const finalStatsObject = {
-        ...baseStats, // Includes all calculated token counts (input, output, prompt, history, system, last call input/output)
-        lastCallCost: currentCallCost, // Store the cost of this specific call
-        accumulatedCost: newAccumulatedCost, // Store the new total accumulated cost
-        // Remove totalCost if it exists in baseStats, as it's superseded by lastCallCost and accumulatedCost
+        // Cumulative stats (take latest calculated/updated values)
+        outputTokens: baseStats.outputTokens || 0, // Cumulative output from base calculation
+        accumulatedCost: newAccumulatedCost, // Newly calculated cumulative cost
+
+        // Last API call stats (from base calculation)
+        promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
+        historyTokensSentInLastApiCall: baseStats.historyTokensSentInLastApiCall || 0,
+        systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,
+        inputTokensInLastApiCall: baseStats.inputTokensInLastApiCall || 0,
+        outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0,
+        lastApiCallCost: currentCallCost, // Newly calculated cost for this call
+
+        // Status
+        isCalculated: true // Mark as calculated
       };
-      delete finalStatsObject.totalCost; // Clean up potentially confusing old field if present
+      // No need to delete totalCost as we construct the object explicitly
+
+      console.log('TokenManagementService: Final stats object:', finalStatsObject);
 
       // 7. Save the complete, updated statistics
       await this.updateTokenStatistics(tabId, finalStatsObject);
@@ -381,11 +358,10 @@ class TokenManagementService {
       };
     }
 
-    // Context window usage should be based on history + system + current prompt
-    // The totalTokens calculation should reflect what's sent to the API
-    // historyTokens now correctly includes past user AND assistant messages + initial system prompt
-    // promptTokens is the current user prompt
-    const totalTokensInContext = tokenStats.historyTokens + tokenStats.promptTokens;
+    // Context window usage should be based on the total input tokens sent in the *last* API call,
+    // as this represents the context the *next* call will potentially build upon.
+    // Use inputTokensInLastApiCall which already includes system, history sent, and the last prompt.
+    const totalTokensInContext = tokenStats.inputTokensInLastApiCall || 0;
     const contextWindow = modelConfig.contextWindow;
     const tokensRemaining = Math.max(0, contextWindow - totalTokensInContext);
     const percentage = contextWindow > 0 ? (totalTokensInContext / contextWindow) * 100 : 0;
@@ -413,22 +389,28 @@ class TokenManagementService {
   /**
    * Create empty token statistics object
    * @private
-   * @returns {Object} - Empty token statistics
+   * @returns {Object} - Empty token statistics, focusing on last call details.
    */
   static _getEmptyStats() {
     return {
-      inputTokens: 0,
-      outputTokens: 0,
-      totalCost: 0,
-      accumulatedCost: 0,
-      promptTokens: 0,
-      historyTokens: 0,
-      systemTokens: 0,
-      historyTokensSentInLastCall: 0,
-      inputTokensInLastCall: 0,
-      outputTokensInLastCall: 0, // Added field
-      lastCallCost: 0,          // Added field
-      isCalculated: false
+      // Cumulative stats
+      outputTokens: 0, // Cumulative output tokens (KEEP)
+      accumulatedCost: 0, // Cumulative cost (KEEP)
+
+      // Last API call stats
+      promptTokensInLastApiCall: 0, // RENAMED from promptTokens
+      historyTokensSentInLastApiCall: 0, // Keep as is
+      systemTokensInLastApiCall: 0, // RENAMED from systemTokens
+      inputTokensInLastApiCall: 0, // Keep as is (represents total input sent)
+      outputTokensInLastApiCall: 0, // Keep as is
+      lastApiCallCost: 0, // Keep as is
+
+      // Status
+      isCalculated: false // Keep as is
+
+      // REMOVED: inputTokens (cumulative)
+      // REMOVED: historyTokens (cumulative)
+      // REMOVED: totalCost (redundant with lastApiCallCost/accumulatedCost)
     };
   }
 }
