@@ -14,11 +14,14 @@ export function useTokenTracking(tabId) {
   const [tokenStats, setTokenStats] = useState({
     inputTokens: 0,
     outputTokens: 0,
-    totalCost: 0,
+    totalCost: 0, // Note: This might become less relevant, consider accumulatedCost
+    accumulatedCost: 0, // Add accumulated cost
     promptTokens: 0,
     historyTokens: 0,
     historyTokensSentInLastCall: 0,
-    inputTokensInLastCall: 0, // Added field
+    inputTokensInLastCall: 0,
+    outputTokensInLastCall: 0, // Add output tokens for last call
+    lastCallCost: 0, // Add cost for last call
     systemTokens: 0,
     isCalculated: false
   });
@@ -51,14 +54,19 @@ export function useTokenTracking(tabId) {
       if (area !== 'local' || !tabId) return;
       
       // Check if token statistics were updated directly
-      if (changes[TokenManagementService.TOKEN_STATS_KEY] && 
-          changes[TokenManagementService.TOKEN_STATS_KEY].newValue) {
-        const tabStats = changes[TokenManagementService.TOKEN_STATS_KEY].newValue[tabId];
+      // Check if token statistics were updated directly in storage
+      // Use STORAGE_KEYS.TAB_TOKEN_STATISTICS instead of TokenManagementService.TOKEN_STATS_KEY
+      if (changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS] &&
+          changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue) {
+        const allTokenStats = changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue;
+        const tabStats = allTokenStats[tabId];
         if (tabStats) {
-          setTokenStats({
-            ...tabStats,
-            isCalculated: true
-          });
+          // Ensure all fields, including new ones, are updated
+          setTokenStats(prevStats => ({
+            ...TokenManagementService._getEmptyStats(), // Start with default empty stats
+            ...tabStats, // Overwrite with values from storage
+            isCalculated: true // Mark as calculated
+          }));
         }
       }
     };
@@ -135,17 +143,8 @@ export function useTokenTracking(tabId) {
       
       if (success) {
         // Reset state to empty stats
-        setTokenStats({
-          inputTokens: 0,
-          outputTokens: 0,
-          totalCost: 0,
-          promptTokens: 0,
-          historyTokens: 0,
-          historyTokensSentInLastCall: 0,
-          inputTokensInLastCall: 0, // Added field
-          systemTokens: 0,
-          isCalculated: true
-        });
+        // Reset state to empty stats, including new fields
+        setTokenStats(TokenManagementService._getEmptyStats());
       }
       
       return success;

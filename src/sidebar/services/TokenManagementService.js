@@ -165,16 +165,24 @@ class TokenManagementService {
     // Calculate the input tokens specifically for the last API call
     const inputTokensInLastCall = (systemTokens || 0) + (historyTokensSentInLastCall || 0) + (promptTokens || 0);
 
+    // Calculate output tokens for the last assistant message
+    let calculatedOutputTokensInLastCall = 0;
+    if (lastAssistantMsgIndex !== -1) {
+      const lastAssistantMsg = messages[lastAssistantMsgIndex];
+      calculatedOutputTokensInLastCall = lastAssistantMsg.outputTokens || this.estimateTokens(lastAssistantMsg.content);
+    }
+
     return {
-      inputTokens, // Cumulative input for cost calculation
-      outputTokens,
+      inputTokens, // Cumulative input for cost calculation (includes all messages + system prompt)
+      outputTokens, // Cumulative output tokens (all assistant messages)
       promptTokens,
-      historyTokens: historyTokensTotal, // Keep original name for external consistency (total history)
-      historyTokensSentInLastCall,
-      inputTokensInLastCall, // Add the new field for last call input
-      systemTokens,
-      totalCost: 0,  // Calculated separately with model info
-      accumulatedCost: 0  // Will be set from stored value
+      historyTokens: historyTokensTotal, // Total tokens in history (user + assistant + system)
+      historyTokensSentInLastCall, // History tokens excluding last user/assistant pair and system prompt
+      inputTokensInLastCall, // Input tokens for the last API call (system + historySent + prompt)
+      outputTokensInLastCall: calculatedOutputTokensInLastCall, // Output tokens from the last assistant message
+      systemTokens, // Tokens from system prompt + system messages (like errors)
+      promptTokens, // Tokens from the last user message
+      // Costs are calculated later
     };
   }
 
@@ -206,14 +214,10 @@ class TokenManagementService {
         stats.systemTokens += systemTokens;
       }
 
-      // Calculate cost if model config is provided
-      if (modelConfig) {
-        const costInfo = this.calculateCost(stats.inputTokensInLastCall
-          , stats.outputTokens, modelConfig);
-        stats.totalCost = costInfo.totalCost;
-      }
+      // Cost calculation is now handled centrally in calculateAndUpdateStatistics.
+      // The cost calculation block previously here has been removed.
 
-      // Save updated stats
+      // Save updated stats (without recalculating cost here)
       return this.updateTokenStatistics(tabId, stats);
     } catch (error) {
       console.error('TokenManagementService: Error tracking message:', error);
@@ -221,27 +225,13 @@ class TokenManagementService {
     }
   }
 
+  // This function is no longer needed as cost accumulation is handled in calculateAndUpdateStatistics
   /**
-   * Update accumulated cost by adding a new cost value
+   * DEPRECATED: Update accumulated cost by adding a new cost value
    * @param {number} tabId - Tab identifier
-   * @param {number} additionalCost - Cost to add to accumulated total
    * @returns {Promise<boolean>} - Success status
    */
-  static async updateAccumulatedCost(tabId) {
-    if (!tabId) return false;
-
-    try {
-      // Get current token statistics
-      const stats = await this.getTokenStatistics(tabId);
-      const totalCost = stats.totalCost || 0;
-      stats.accumulatedCost = (stats.accumulatedCost || 0) + totalCost;
-      // Save updated stats
-      return this.updateTokenStatistics(tabId, stats);
-    } catch (error) {
-      console.error('TokenManagementService: Error updating accumulated cost:', error);
-      return false;
-    }
-  }
+  // static async updateAccumulatedCost(tabId) { ... } // Function removed
 
   /**
    * Clear token statistics for a tab
@@ -279,27 +269,45 @@ class TokenManagementService {
     if (!tabId) return this._getEmptyStats();
 
     try {
-      // Get the actual system prompt string
-      const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId); // Use ChatHistoryService
+      // 1. Get existing accumulated cost BEFORE calculating new stats
+      const currentStats = await this.getTokenStatistics(tabId);
+      const existingAccumulatedCost = currentStats.accumulatedCost || 0;
 
-      // Calculate token statistics from messages, passing the system prompt
-      const stats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt); // Pass systemPrompt
+      // 2. Get the actual system prompt string
+      const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId);
 
-      // Calculate cost if model config is provided
+      // 3. Calculate base token statistics from messages (includes input/output tokens for last call)
+      const baseStats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt);
+
+      // 4. Calculate Cost of the Last Call
+      let currentCallCost = 0;
       if (modelConfig) {
-        const costInfo = this.calculateCost(stats.inputTokensInLastCall
-          , stats.outputTokens, modelConfig);
-        stats.totalCost = costInfo.totalCost;
+        // Use the specific input/output tokens for the *last call*
+        const costInfo = this.calculateCost(
+          baseStats.inputTokensInLastCall,
+          baseStats.outputTokensInLastCall, // Use the newly calculated field
+          modelConfig
+        );
+        currentCallCost = costInfo.totalCost || 0;
       }
 
-      // Retrieve existing accumulated cost to preserve it
-      const currentStats = await this.getTokenStatistics(tabId);
-      stats.accumulatedCost = currentStats.accumulatedCost || 0;
+      // 5. Calculate New Accumulated Cost
+      const newAccumulatedCost = existingAccumulatedCost + currentCallCost;
 
-      // Save updated stats
-      await this.updateTokenStatistics(tabId, stats);
+      // 6. Prepare Final Stats Object to Save
+      const finalStatsObject = {
+        ...baseStats, // Includes all calculated token counts (input, output, prompt, history, system, last call input/output)
+        lastCallCost: currentCallCost, // Store the cost of this specific call
+        accumulatedCost: newAccumulatedCost, // Store the new total accumulated cost
+        // Remove totalCost if it exists in baseStats, as it's superseded by lastCallCost and accumulatedCost
+      };
+      delete finalStatsObject.totalCost; // Clean up potentially confusing old field if present
 
-      return stats;
+      // 7. Save the complete, updated statistics
+      await this.updateTokenStatistics(tabId, finalStatsObject);
+
+      // 8. Return the final statistics object
+      return finalStatsObject;
     } catch (error) {
       console.error('TokenManagementService: Error calculating token statistics:', error);
       return this._getEmptyStats();
@@ -417,7 +425,9 @@ class TokenManagementService {
       historyTokens: 0,
       systemTokens: 0,
       historyTokensSentInLastCall: 0,
-      inputTokensInLastCall: 0, // Added field for input tokens in the last call
+      inputTokensInLastCall: 0,
+      outputTokensInLastCall: 0, // Added field
+      lastCallCost: 0,          // Added field
       isCalculated: false
     };
   }

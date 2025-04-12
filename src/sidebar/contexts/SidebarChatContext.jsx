@@ -226,10 +226,10 @@ export function SidebarChatProvider({ children }) {
           output: outputTokens
         }, modelConfigData);
 
-        // Save history and update accumulated cost
+        // Save history (this now implicitly triggers calculateAndUpdateStatistics which handles cost)
         if (tabId) {
           await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
-          await TokenManagementService.updateAccumulatedCost(tabId);
+          // The call to updateAccumulatedCost is removed as it's handled by saveHistory -> calculateAndUpdateStatistics
         }
       } catch (error) {
         console.error('Error handling stream completion:', error);
@@ -616,11 +616,10 @@ export function SidebarChatProvider({ children }) {
         output: outputTokens
       }, modelConfigData);
 
-      // Save the final state to history
+      // Save the final state to history (this now implicitly triggers calculateAndUpdateStatistics which handles cost)
       if (tabId) {
         await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
-        // Update accumulated cost with the new token count
-        await TokenManagementService.updateAccumulatedCost(tabId);
+        // The call to updateAccumulatedCost is removed as it's handled by saveHistory -> calculateAndUpdateStatistics
       }
 
       // Reset streaming state
