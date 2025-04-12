@@ -264,14 +264,6 @@ export function SidebarChatProvider({ children }) {
             // Use partial content received so far, mark as cancelled but not an error
             await handleStreamComplete(streamingMessageId, chunkData.fullContent || streamingContent, chunkData.model, false, true); // isError=false, isCancelled=true
 
-            try {
-                console.log(`[handleStreamChunk - Cancelled] Explicitly fetching and setting token stats for tab ${tabId}...`);
-                const latestStats = await TokenManagementService.getTokenStatistics(tabId);
-                setTokenStats(latestStats); // Update the hook's state directly
-                console.log(`[handleStreamChunk - Cancelled] Explicit token stats update complete.`);
-            } catch (refreshError) {
-                console.error('[handleStreamChunk - Cancelled] Error explicitly refreshing token stats:', refreshError);
-            }
           } else if (chunkData.error) {
             // Handle Error: Stream ended with an error (other than user cancellation)
             // chunkData.error should now be the pre-formatted string
@@ -280,14 +272,6 @@ export function SidebarChatProvider({ children }) {
             // Update the message with the error, mark as error, not cancelled
             await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true, false); // isError=true, isCancelled=false
 
-            try {
-                console.log(`[handleStreamChunk - Error] Explicitly fetching and setting token stats for tab ${tabId}...`);
-                const latestStats = await TokenManagementService.getTokenStatistics(tabId);
-                setTokenStats(latestStats); // Update the hook's state directly
-                console.log(`[handleStreamChunk - Error] Explicit token stats update complete.`);
-            } catch (refreshError) {
-                console.error('[handleStreamChunk - Error] Error explicitly refreshing token stats:', refreshError);
-            }
           } else {
             // Handle Success: Stream completed normally
             const finalContent = chunkData.fullContent || streamingContent;
@@ -295,14 +279,6 @@ export function SidebarChatProvider({ children }) {
             // Update message with final content, mark as success (not error, not cancelled)
             await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false, false); // isError=false, isCancelled=false
 
-            try {
-                console.log(`[handleStreamChunk - Success] Explicitly fetching and setting token stats for tab ${tabId}...`);
-                const latestStats = await TokenManagementService.getTokenStatistics(tabId);
-                setTokenStats(latestStats); // Update the hook's state directly
-                console.log(`[handleStreamChunk - Success] Explicit token stats update complete.`);
-            } catch (refreshError) {
-                console.error('[handleStreamChunk - Success] Error explicitly refreshing token stats:', refreshError);
-            }
           }
           // Reset state regardless of outcome (completion, cancellation, error)
           setStreamingMessageId(null);
@@ -398,11 +374,6 @@ export function SidebarChatProvider({ children }) {
     // Token tracking for the user message is now handled by calculateAndUpdateStatistics
     // triggered by the subsequent saveHistory call.
     // await trackTokens(...) // REMOVED
-
-    // Save interim state to chat history (this will trigger token calculation)
-    if (tabId) {
-      await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
-    }
 
     try {
       // Format conversation history for the API - Filter out streaming messages and extracted content messages
