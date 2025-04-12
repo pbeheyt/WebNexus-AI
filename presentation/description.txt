@@ -78,6 +78,8 @@ Choose the interaction mode that best suits your needs:
 
 *   **Inputting Prompts:** When typing in the prompt input box (in either Popup or Side Panel), press **Enter** to send your message. To add a new line without sending, use **Shift+Enter**.
 *   **YouTube/Reddit Comments:** If you want comments from YouTube videos or Reddit posts to be included in the extracted content, make sure you scroll down the page first to load the comments in your browser.
+*   **Token Estimation:** The Side Panel displays *estimated* token counts and costs. These are calculated using the `gpt-tokenizer` library (`cl100k_base` encoding). While accurate for ChatGPT models, counts for other platforms like Claude may differ from actual usage by ~±20%. Always refer to the official platform dashboard for definitive usage and billing. The estimates are provided for guidance only. Expand the token counter section in the Side Panel for a detailed note.
+
 
 ---
 
