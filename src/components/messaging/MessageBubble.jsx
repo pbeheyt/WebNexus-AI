@@ -8,9 +8,10 @@ import MathFormulaBlock from './components/MathFormulaBlock';
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { detectContentType, ContentType } from './services/ContentTypeDetector';
 import {
-  isMathematicalFunction,
+  isMathematicalFunction, // Keep if used elsewhere, otherwise can be removed if only used by isNodeLikelyStandaloneMath
   hasLatexCommands,
-  hasHighConfidenceMathIndicators
+  hasHighConfidenceMathIndicators,
+  hasLatexEnvironments // Added import
 } from './utils/mathDetection';
 
 /**
@@ -39,34 +40,10 @@ export const MessageBubble = memo(({
   const isSystem = role === 'system';
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
 
-  // Helper to extract text content from ReactMarkdown node
-  const getNodeText = (node) => {
-    let text = '';
-    if (node && node.children && Array.isArray(node.children)) {
-      node.children.forEach(child => {
-        if (child.type === 'text') {
-          text += child.value;
-        }
-      });
-    }
-    return text;
-  };
-
-  // Helper to detect if node contains standalone math content
-  const isNodeLikelyStandaloneMath = (node) => {
-    const textContent = getNodeText(node).trim();
-    if (!textContent) {
-      return false;
-    }
-    return (
-      isMathematicalFunction(textContent) ||
-      hasLatexCommands(textContent) || 
-      hasHighConfidenceMathIndicators(textContent)
-    );
-  };
+  // Removed getNodeText and isNodeLikelyStandaloneMath helper functions
 
   // Copy assistant message to clipboard
-  const handleCopyToClipboard = () => { 
+  const handleCopyToClipboard = () => {
     if (!content || isStreaming) return;
 
     copyUtil(content)
@@ -117,11 +94,43 @@ export const MessageBubble = memo(({
             h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-5 mb-3" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
             h3: ({node, ...props}) => <h3 className="text-base font-medium mt-3 mb-2" {...props} />,
-            p: ({node, children, ...props}) => {
-              if (isNodeLikelyStandaloneMath(node)) {
-                return <MathFormulaBlock content={getNodeText(node).trim()} inline={false} />;
-              }
-              return <p className="mb-3 leading-relaxed text-sm" {...props}>{children}</p>;
+            p: ({ node, children, ...props }) => {
+              // NOTE: Removed the old isNodeLikelyStandaloneMath check completely.
+
+              const processedChildren = [];
+              let keyIndex = 0; // Simple key generation
+
+              React.Children.forEach(children, (child) => {
+                if (typeof child === 'string') {
+                  const parts = child.split(/(\[.*?\])/s); // Split by [...], capturing the brackets
+                  parts.forEach((part, index) => {
+                    if (part.startsWith('[') && part.endsWith(']')) {
+                      const extractedContent = part.slice(1, -1);
+                      // Check if the content inside brackets looks like math
+                      const isMath = hasLatexCommands(extractedContent) ||
+                                     hasHighConfidenceMathIndicators(extractedContent) ||
+                                     hasLatexEnvironments(extractedContent);
+
+                      if (isMath && extractedContent.trim()) {
+                        processedChildren.push(
+                          <MathFormulaBlock key={`math-${keyIndex++}-${index}`} content={extractedContent} inline={false} />
+                        );
+                      } else if (part) { // Render non-math bracketed content or empty brackets as text
+                         processedChildren.push(<React.Fragment key={`text-${keyIndex++}-${index}`}>{part}</React.Fragment>);
+                      }
+                    } else if (part) { // Render text parts between/outside brackets
+                      processedChildren.push(<React.Fragment key={`text-${keyIndex++}-${index}`}>{part}</React.Fragment>);
+                    }
+                  });
+                } else {
+                  // Pass through non-string children (React elements)
+                  // Need to ensure they have keys if they don't already
+                   processedChildren.push(React.isValidElement(child) ? React.cloneElement(child, { key: `child-${keyIndex++}` }) : child);
+                }
+              });
+
+              // Render the paragraph with processed children
+              return <p className="mb-3 leading-relaxed text-sm" {...props}>{processedChildren}</p>;
             },
             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
@@ -166,9 +175,13 @@ export const MessageBubble = memo(({
             pre: ({node, children, ...props}) => <>{children}</>,
             a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
             blockquote: ({node, children, ...props}) => {
-              if (isNodeLikelyStandaloneMath(node)) {
-                return <MathFormulaBlock content={getNodeText(node).trim()} inline={false} />;
-              }
+              // Consider if blockquote needs similar [...] handling or if isNodeLikelyStandaloneMath check was sufficient/correct here.
+              // For now, keeping original logic minus the removed helper. If blockquotes can contain mixed content, this might need adjustment.
+              // const textContent = React.Children.toArray(children).filter(c => typeof c === 'string').join('');
+              // const isMath = hasLatexCommands(textContent) || hasHighConfidenceMathIndicators(textContent) || hasLatexEnvironments(textContent);
+              // if (isMath) {
+              //   return <MathFormulaBlock content={textContent.trim()} inline={false} />;
+              // }
               return <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props}>{children}</blockquote>;
             },
             strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
@@ -179,15 +192,21 @@ export const MessageBubble = memo(({
             tbody: ({node, ...props}) => <tbody {...props} />,
             tr: ({node, ...props}) => <tr className="border-b border-gray-200 dark:border-gray-700" {...props} />,
             th: ({node, children, ...props}) => {
-              if (isNodeLikelyStandaloneMath(node)) {
-                return <MathFormulaBlock content={getNodeText(node).trim()} inline={false} />;
-              }
+              // Consider if table headers need similar [...] handling. Keeping original logic minus helper for now.
+              // const textContent = React.Children.toArray(children).filter(c => typeof c === 'string').join('');
+              // const isMath = hasLatexCommands(textContent) || hasHighConfidenceMathIndicators(textContent) || hasLatexEnvironments(textContent);
+              // if (isMath) {
+              //   return <MathFormulaBlock content={textContent.trim()} inline={false} />;
+              // }
               return <th className="p-2 text-left font-medium text-xs" {...props}>{children}</th>;
             },
             td: ({node, children, ...props}) => {
-              if (isNodeLikelyStandaloneMath(node)) {
-                return <MathFormulaBlock content={getNodeText(node).trim()} inline={false} />;
-              }
+              // Consider if table cells need similar [...] handling. Keeping original logic minus helper for now.
+              // const textContent = React.Children.toArray(children).filter(c => typeof c === 'string').join('');
+              // const isMath = hasLatexCommands(textContent) || hasHighConfidenceMathIndicators(textContent) || hasLatexEnvironments(textContent);
+              // if (isMath) {
+              //   return <MathFormulaBlock content={textContent.trim()} inline={false} />;
+              // }
               return <td className="p-2 border-gray-200 dark:border-gray-700 text-xs" {...props}>{children}</td>;
             },
           }}
