@@ -3,6 +3,7 @@
 import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
+// Import the specific cleanup function and the listener setup
 import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-state-listener.js';
 import SidebarStateManager from '../services/SidebarStateManager.js';
 import logger from '../shared/logger.js';
