@@ -11,7 +11,7 @@ import { isInjectablePage } from '../../shared/utils/content-utils';
 
 function ChatArea({ className = '' }) {
   const { messages, isProcessing, isContentExtractionEnabled, setIsContentExtractionEnabled } = useSidebarChat();
-  const { contentType, currentTab } = useContent(); // Added currentTab
+  const { contentType, currentTab } = useContent();
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
@@ -166,15 +166,15 @@ function ChatArea({ className = '' }) {
               )}
               
               {/* Content Extraction Toggle */}
-              <div className="flex flex-col items-center gap-1 text-sm text-theme-secondary"> {/* Changed layout to flex-col */}
+              <div className="flex flex-col items-center gap-1 text-sm text-theme-secondary"> 
                 <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
                 <Toggle
                   id="content-extract-toggle"
-                  checked={isPageInjectable ? isContentExtractionEnabled : false} // Updated checked prop
-                  onChange={isPageInjectable ? () => setIsContentExtractionEnabled(prev => !prev) : undefined} // Updated onChange prop
-                  disabled={!isPageInjectable || !hasAnyPlatformCredentials} // Updated disabled prop
+                  checked={isPageInjectable ? isContentExtractionEnabled : false}
+                  onChange={isPageInjectable ? () => setIsContentExtractionEnabled(prev => !prev) : undefined}
+                  disabled={!isPageInjectable || !hasAnyPlatformCredentials}
                 />
-                {!isPageInjectable && ( // Added conditional text
+                {!isPageInjectable && (
                   <p className="text-xs text-theme-secondary mt-1">
                     Extraction not available for this page type.
                   </p>
@@ -188,7 +188,7 @@ function ChatArea({ className = '' }) {
   }
 
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col my-2">
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col mb-1">
       {messages.map((message) => (
         <MessageBubble
           key={message.id}

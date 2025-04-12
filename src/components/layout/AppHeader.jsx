@@ -31,7 +31,7 @@ export function AppHeader({
         </span>
       </h1>
 
-      <div className="flex items-center gap-1"> {/* Use gap for spacing */}
+      <div className="flex items-center gap-1">
         {/* Text size toggle button */}
         <button
           onClick={toggleTextSize}
