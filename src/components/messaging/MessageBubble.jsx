@@ -107,7 +107,7 @@ export const MessageBubble = memo(({
   return (
     <div className={`px-5 py-2 w-full message-group relative ${className}`}>
       {/* Main content - Render Markdown for assistant messages */}
-      <div className={`prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}>
+      <div className={`prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-0`}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
           components={{
@@ -205,7 +205,7 @@ export const MessageBubble = memo(({
         </ReactMarkdown>
       </div>
 
-      <div className="flex justify-between items-center mt-1">
+      <div className="flex justify-between items-center -mt-1">
         {/* Model info with platform icon and streaming indicator */}
         <div className="text-xs opacity-70 flex items-center">
           {platformIconUrl && !isUser && (
