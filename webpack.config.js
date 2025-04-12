@@ -17,6 +17,11 @@ module.exports = {
   },
   mode: isProduction ? 'production' : 'development',
   devtool: isProduction ? false : 'source-map', // Disable source maps for production
+
+  experiments: {
+    asyncWebAssembly: true, // Enable asynchronous WebAssembly loading
+  },
+
   module: {
     rules: [
       {
@@ -28,7 +33,7 @@ module.exports = {
             presets: [
               ['@babel/preset-env', {
                 targets: {
-                  chrome: "123"
+                  chrome: "135" // Make sure this targets a version supporting required WASM features
                 },
                 useBuiltIns: "usage",
                 corejs: 3
@@ -42,6 +47,8 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader', 'postcss-loader']
       }
+      // You generally DON'T need a specific rule for .wasm files
+      // when using experiments.asyncWebAssembly: true
     ]
   },
   resolve: {
@@ -56,9 +63,9 @@ module.exports = {
     }
   },
   optimization: {
-    minimize: true
+    minimize: isProduction, // Only minimize in production
   },
   performance: {
-    hints: false
+    hints: isProduction ? 'warning' : false // Show hints only in production
   }
 };

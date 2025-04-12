@@ -1,7 +1,50 @@
 // src/sidebar/services/TokenManagementService.js
 
+import { get_encoding } from "tiktoken"; // Added tiktoken import
 import { STORAGE_KEYS } from "../../shared/constants";
 import ChatHistoryService from "./ChatHistoryService";
+
+// Tiktoken encoder instance and loading state
+let cl100k_base_encoding = null;
+let isEncodingLoading = false;
+let encodingPromise = null;
+
+/**
+ * Asynchronously gets the cl100k_base encoding instance.
+ * Handles initialization and prevents multiple concurrent loads.
+ * @private
+ * @returns {Promise<object>} - A promise that resolves with the encoding instance.
+ */
+async function _getEncoder() {
+  if (cl100k_base_encoding) {
+    return cl100k_base_encoding;
+  }
+  if (isEncodingLoading) {
+    return encodingPromise;
+  }
+
+  isEncodingLoading = true;
+  encodingPromise = new Promise((resolve, reject) => {
+    try {
+      // Asynchronously initialize the encoder
+      // Note: Depending on the tiktoken library's browser/WASM setup,
+      // this might involve fetching WASM files.
+      const encoding = get_encoding("cl100k_base");
+      cl100k_base_encoding = encoding;
+      isEncodingLoading = false;
+      console.log("TokenManagementService: cl100k_base encoder loaded.");
+      resolve(encoding);
+    } catch (error) {
+      console.error("TokenManagementService: Failed to load cl100k_base encoding:", error);
+      isEncodingLoading = false;
+      // Reject the promise so callers can handle the error
+      reject(new Error("Failed to initialize tokenizer."));
+    }
+  });
+
+  return encodingPromise;
+}
+
 
 /**
  * Service for token estimation, cost calculation, storage, and context window monitoring
@@ -66,9 +109,9 @@ class TokenManagementService {
    * Calculate token statistics from chat history
    * @param {Array} messages - Chat messages
    * @param {string} systemPrompt - System prompt text (optional)
-   * @returns {Object} - Token statistics focused on the last API call.
+   * @returns {Promise<Object>} - Token statistics focused on the last API call. (Now async)
    */
-  static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') {
+  static async calculateTokenStatisticsFromMessages(messages, systemPrompt = '') { // Made async
 
     let outputTokens = 0;
     let promptTokensInLastApiCall = 0;
@@ -94,17 +137,20 @@ class TokenManagementService {
 
     // Process system prompt if present
     if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
-      const systemPromptTokensCount = this.estimateTokens(systemPrompt);
+      // Use await as estimateTokens is now async
+      const systemPromptTokensCount = await this.estimateTokens(systemPrompt);
 
       // Assign tokens *only* from the initial system prompt provided.
       systemTokensInLastApiCall = systemPromptTokensCount;
       // DO NOT add systemPromptTokensCount to historyTokensSentInLastApiCall here
     }
 
-    // Process each message
-    messages.forEach((msg, index) => {
+    // Process each message - needs await inside, so can't use forEach directly with async/await
+    // Use a standard for...of loop or Promise.all if parallelization is desired (not needed here)
+    for (const [index, msg] of messages.entries()) {
       if (msg.role === 'user') {
-        const msgInputTokens = msg.inputTokens || this.estimateTokens(msg.content);
+        // Use await as estimateTokens is now async
+        const msgInputTokens = msg.inputTokens || await this.estimateTokens(msg.content);
 
         // Determine if this is the most recent user prompt
         const isLastUserPrompt = index === lastUserMsgIndex;
@@ -122,9 +168,10 @@ class TokenManagementService {
           }
         }
       } else if (msg.role === 'assistant') {
+        // Use await as estimateTokens is now async
         const msgOutputTokens = typeof msg.outputTokens === 'number'
             ? msg.outputTokens
-            : this.estimateTokens(msg.content);
+            : await this.estimateTokens(msg.content);
         // Calculate cumulative output tokens by summing output from all assistant messages.
         outputTokens += msgOutputTokens;
 
@@ -136,7 +183,7 @@ class TokenManagementService {
         // System messages (like errors) are not counted towards API call tokens.
         // Note: The initial system prompt is handled separately above.
       }
-    });
+    } // End of for loop replacing forEach
 
     // Calculate total input tokens for the last API call by summing system, history sent, and last prompt tokens.
     const inputTokensInLastApiCall = (systemTokensInLastApiCall || 0) + (historyTokensSentInLastApiCall || 0) + (promptTokensInLastApiCall || 0);
@@ -145,7 +192,8 @@ class TokenManagementService {
     let outputTokensInLastApiCall = 0;
     if (lastAssistantMsgIndex !== -1) {
       const lastAssistantMsg = messages[lastAssistantMsgIndex];
-      outputTokensInLastApiCall = lastAssistantMsg.outputTokens || this.estimateTokens(lastAssistantMsg.content);
+      // Use await as estimateTokens is now async
+      outputTokensInLastApiCall = lastAssistantMsg.outputTokens || await this.estimateTokens(lastAssistantMsg.content);
     }
 
     return {
@@ -202,7 +250,8 @@ class TokenManagementService {
       const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId);
 
       // 3. Calculate base token statistics from messages (includes input/output tokens for last call)
-      const baseStats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt);
+      // Use await as calculateTokenStatisticsFromMessages is now async
+      const baseStats = await this.calculateTokenStatisticsFromMessages(messages, systemPrompt);
 
       // 4. Calculate Cost of the Last Call
       let currentCallCost = 0;
@@ -247,13 +296,31 @@ class TokenManagementService {
   }
 
   /**
-   * Estimate tokens for a string using character-based approximation
+   * Estimate tokens for a string using the tiktoken cl100k_base encoder.
    * @param {string} text - Input text
-   * @returns {number} - Estimated token count
+   * @returns {Promise<number>} - Estimated token count
    */
-  static estimateTokens(text) {
-    if (!text) return 0;
-    return Math.ceil(text.length / 4); // Approx 4 chars per token
+  static async estimateTokens(text) { // Made async
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      return 0;
+    }
+
+    try {
+      const encoder = await _getEncoder(); // Get the initialized encoder
+      if (!encoder) {
+        // Fallback if encoder failed to load
+        console.warn("TokenManagementService: Encoder not available, falling back to char count.");
+        return Math.ceil(text.length / 4);
+      }
+      const tokens = encoder.encode(text);
+      // console.log(`Encoded "${text.substring(0, 30)}..." into ${tokens.length} tokens`);
+      return tokens.length;
+    } catch (error) {
+      console.error("TokenManagementService: Error encoding text with tiktoken:", error);
+      // Fallback on encoding error
+      console.warn("TokenManagementService: Tiktoken encoding failed, falling back to char count.");
+      return Math.ceil(text.length / 4);
+    }
   }
 
   /**
