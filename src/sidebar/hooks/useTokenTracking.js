@@ -42,9 +42,7 @@ export function useTokenTracking(tabId) {
     const handleStorageChange = (changes, area) => {
       if (area !== 'local' || !tabId) return;
       
-      // Check if token statistics were updated directly
       // Check if token statistics were updated directly in storage
-      // Use STORAGE_KEYS.TAB_TOKEN_STATISTICS instead of TokenManagementService.TOKEN_STATS_KEY
       if (changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS] &&
           changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue) {
         const allTokenStats = changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue;
@@ -88,9 +86,6 @@ export function useTokenTracking(tabId) {
     return TokenManagementService.calculateContextStatus(tokenStats, modelConfig);
   }, [tabId, tokenStats]);
 
-  // The trackTokens function is removed as tracking is now handled by calculateAndUpdateStatistics
-  // which is called elsewhere (likely within SidebarChatContext after API calls).
-
   /**
    * Clear all token data for the current tab
    * @returns {Promise<boolean>} - Success indicator
@@ -103,7 +98,6 @@ export function useTokenTracking(tabId) {
       
       if (success) {
         // Reset state to empty stats
-        // Reset state to empty stats, including new fields
         setTokenStats(TokenManagementService._getEmptyStats());
       }
       
@@ -143,7 +137,6 @@ export function useTokenTracking(tabId) {
       setTokenStats,
       isLoading,
       calculateContextStatus,
-      // trackTokens, // Removed from returned object
       clearTokenData,
       calculateStats,
       estimateTokens: TokenManagementService.estimateTokens,

@@ -174,55 +174,6 @@ class ChatHistoryService {
   }
   
   /**
-   * Update a message with token information
-   * @param {number} tabId - Tab ID
-   * @param {string} messageId - Message ID
-   * @param {Object} tokenInfo - Token information
-   * @param {Object} metadata - Additional metadata
-   * @param {Object} modelConfig - Model configuration
-   * @returns {Promise<boolean>} - Success status
-   */
-  static async updateMessageTokens(tabId, messageId, tokenInfo, metadata = {}, modelConfig = null) {
-    try {
-      if (!tabId || !messageId) {
-        console.error('No tabId or messageId provided for updateMessageTokens');
-        return false;
-      }
-      
-      // Get chat history
-      const history = await this.getHistory(tabId);
-      
-      // Find and update the message
-      let updated = false;
-      const updatedHistory = history.map(msg => {
-        if (msg.id === messageId) {
-          updated = true;
-          return {
-            ...msg,
-            inputTokens: tokenInfo.input || msg.inputTokens || 0,
-            outputTokens: tokenInfo.output || msg.outputTokens || 0,
-            platformId: metadata.platformId || msg.platformId,
-            modelId: metadata.modelId || msg.modelId
-          };
-        }
-        return msg;
-      });
-      
-      if (!updated) {
-        return false;
-      }
-      
-      // Save updated history
-      await this.saveHistory(tabId, updatedHistory, modelConfig);
-      
-      return true;
-    } catch (error) {
-      console.error('Error updating message tokens:', error);
-      return false;
-    }
-  }
-  
-  /**
    * Get token statistics for a specific tab
    * Delegates to TokenManagementService
    * @param {number} tabId - Tab identifier
