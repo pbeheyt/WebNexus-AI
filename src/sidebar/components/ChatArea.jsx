@@ -7,10 +7,11 @@ import { Toggle } from '../../components/core/Toggle';
 import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
+import { isInjectablePage } from '../../shared/utils/content-utils';
 
 function ChatArea({ className = '' }) {
   const { messages, isProcessing, isContentExtractionEnabled, setIsContentExtractionEnabled } = useSidebarChat();
-  const { contentType } = useContent();
+  const { contentType, currentTab } = useContent(); // Added currentTab
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
@@ -92,6 +93,8 @@ function ChatArea({ className = '' }) {
     }
   };
 
+  const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false; // Added injectability check
+
   if (messages.length === 0) {
     return (
       <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5`}>
@@ -163,14 +166,19 @@ function ChatArea({ className = '' }) {
               )}
               
               {/* Content Extraction Toggle */}
-              <div className="flex items-center justify-center gap-3 text-sm text-theme-secondary">
+              <div className="flex flex-col items-center gap-1 text-sm text-theme-secondary"> {/* Changed layout to flex-col */}
                 <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
                 <Toggle
                   id="content-extract-toggle"
-                  checked={isContentExtractionEnabled}
-                  onChange={() => setIsContentExtractionEnabled(prev => !prev)}
-                  disabled={!hasAnyPlatformCredentials}
+                  checked={isPageInjectable ? isContentExtractionEnabled : false} // Updated checked prop
+                  onChange={isPageInjectable ? () => setIsContentExtractionEnabled(prev => !prev) : undefined} // Updated onChange prop
+                  disabled={!isPageInjectable || !hasAnyPlatformCredentials} // Updated disabled prop
                 />
+                {!isPageInjectable && ( // Added conditional text
+                  <p className="text-xs text-theme-secondary mt-1">
+                    Extraction not available for this page type.
+                  </p>
+                )}
               </div>
             </div>
           </>
