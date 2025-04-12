@@ -193,7 +193,7 @@ export function SidebarChatProvider({ children }) {
                 const contentMessage = {
                   id: `extracted_${Date.now()}`,
                   role: MESSAGE_ROLES.USER,
-                  content: `Content extract:\n${extractedContent}`,
+                  content: extractedContent,
                   timestamp: new Date().toISOString(),
                   inputTokens: TokenManagementService.estimateTokens(extractedContent),
                   outputTokens: 0,
@@ -518,7 +518,7 @@ export function SidebarChatProvider({ children }) {
               const contentMessage = {
                 id: `extracted_${Date.now()}`,
                 role: MESSAGE_ROLES.USER,
-                content: `Content extract:\n${extractedContent}`,
+                content: extractedContent,
                 timestamp: new Date().toISOString(),
                 inputTokens: TokenManagementService.estimateTokens(extractedContent),
                 outputTokens: 0,

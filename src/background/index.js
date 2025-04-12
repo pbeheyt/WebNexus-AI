@@ -3,7 +3,6 @@
 import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
-// Import the specific cleanup function and the listener setup
 import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-state-listener.js';
 import SidebarStateManager from '../services/SidebarStateManager.js';
 import logger from '../shared/logger.js';
@@ -15,8 +14,6 @@ async function startBackgroundService() {
   try {
     logger.background.info('Starting background service...');
     // 1. Initialize extension configuration and state
-    // Note: initializeExtension is also called within onInstalled listener
-    //       but it's safe to run multiple times as it primarily resets state.
     await initializeExtension();
 
     // 2. Set up message router to handle communication
@@ -27,7 +24,17 @@ async function startBackgroundService() {
     setupTabStateListener(); // Sets up onRemoved listener
     setupConnectionListener(); // Add connection listener setup
 
-    // 4. Add the onStartup listener for cleanup
+    // This runs every time the service worker starts (initial load, wake-up, after browser start)
+    // It complements the onStartup listener.
+    logger.background.info('Running stale tab cleanup on service worker start...');
+    try {
+      await performStaleTabCleanup(); // Call the cleanup function
+      logger.background.info('Service worker start stale tab cleanup completed.');
+    } catch (cleanupError) {
+      logger.background.error('Error during service worker start stale tab cleanup:', cleanupError);
+    }
+
+    // 4. Add the onStartup listener for cleanup (Keep this!)
     // This listener persists across service worker restarts.
     chrome.runtime.onStartup.addListener(async () => {
       logger.background.info('Browser startup detected via onStartup listener. Running stale tab cleanup...');

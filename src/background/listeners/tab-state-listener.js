@@ -1,4 +1,5 @@
 // src/background/listeners/tab-state-listener.js
+
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import SidebarStateManager from '../../services/SidebarStateManager.js';
 import logger from '../../shared/logger.js';
@@ -187,7 +188,6 @@ export function setupTabStateListener() {
       });
   });
 
-  // HOURLY CLEANUP REMOVED
   logger.background.info('Tab state listener initialized (cleanup onRemoved only).');
 }
 
