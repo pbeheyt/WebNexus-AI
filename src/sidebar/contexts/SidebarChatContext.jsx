@@ -154,8 +154,8 @@ export function SidebarChatProvider({ children }) {
      */
     const handleStreamComplete = async (messageId, finalContentInput, model, isError = false, isCancelled = false) => {
       try {
-        // Calculate output tokens using the potentially modified finalContent - NOW AWAITED
-        const outputTokens = await TokenManagementService.estimateTokens(finalContentInput);
+        // Calculate output tokens using the potentially modified finalContent - Removed await
+        const outputTokens = TokenManagementService.estimateTokens(finalContentInput);
         let finalContent = finalContentInput; // Use a mutable variable
         if (isCancelled) {
           // Append cancellation notice if the stream was cancelled
@@ -195,7 +195,7 @@ export function SidebarChatProvider({ children }) {
                   role: MESSAGE_ROLES.USER,
                   content: extractedContent,
                   timestamp: new Date().toISOString(),
-                  inputTokens: await TokenManagementService.estimateTokens(extractedContent), // NOW AWAITED
+                  inputTokens: TokenManagementService.estimateTokens(extractedContent), // Removed await
                   outputTokens: 0,
                   isExtractedContent: true
                 };
@@ -345,8 +345,8 @@ export function SidebarChatProvider({ children }) {
     // Original checks remain
     if (!text.trim() || isProcessing || !tabId) return;
 
-    // Estimate tokens for the user message - NOW AWAITED
-    const inputTokens = await TokenManagementService.estimateTokens(text.trim());
+    // Estimate tokens for the user message - Removed await
+    const inputTokens = TokenManagementService.estimateTokens(text.trim());
     const userMessageId = `msg_${Date.now()}`;
 
     const userMessage = {
@@ -500,8 +500,8 @@ export function SidebarChatProvider({ children }) {
       // Update the streaming message content to indicate cancellation
       const cancelledContent = streamingContent + '\n\n_Stream cancelled by user._';
 
-      // Calculate output tokens for the cancelled content - NOW AWAITED
-      const outputTokens = await TokenManagementService.estimateTokens(cancelledContent);
+      // Calculate output tokens for the cancelled content - Removed await
+      const outputTokens = TokenManagementService.estimateTokens(cancelledContent);
 
       let messagesAfterCancel = messages; // Start with current messages
 
@@ -520,7 +520,7 @@ export function SidebarChatProvider({ children }) {
                   role: MESSAGE_ROLES.USER,
                   content: extractedContent,
                   timestamp: new Date().toISOString(),
-                  inputTokens: await TokenManagementService.estimateTokens(extractedContent), // NOW AWAITED
+                  inputTokens: TokenManagementService.estimateTokens(extractedContent), // Removed await
                   outputTokens: 0,
                   isExtractedContent: true
                 };

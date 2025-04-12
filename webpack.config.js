@@ -18,10 +18,6 @@ module.exports = {
   mode: isProduction ? 'production' : 'development',
   devtool: isProduction ? false : 'source-map', // Disable source maps for production
 
-  experiments: {
-    asyncWebAssembly: true, // Enable asynchronous WebAssembly loading
-  },
-
   module: {
     rules: [
       {
