@@ -7,7 +7,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
     outputTokens = 0,
     accumulatedCost = 0,
     promptTokens = 0,
-    historyTokens = 0,
+    historyTokens = 0, // Keep total history for potential future use or context calculation
+    historyTokensSentInLastCall = 0, // Add new field
     systemTokens = 0
   } = tokenStats || {};
 
@@ -65,7 +66,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
     outputTokens: "Output tokens",
     cost: "Total estimated accumulated cost",
     prompt: "Tokens in your most recent message",
-    history: "Tokens from previous conversation messages",
+    history: "Tokens from conversation history sent in the last API request", // Updated tooltip
     system: "Tokens from system instructions and settings",
     contextWindow: `${tokensRemaining.toLocaleString()} tokens remaining in the context window`
   };
@@ -165,7 +166,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               tabIndex="0"
             >
               <span className="text-xs font-medium">History</span>
-              <span>{historyTokens.toLocaleString()}</span>
+              {/* Display the history tokens sent in the last call */}
+              <span>{historyTokensSentInLastCall.toLocaleString()}</span>
               <Tooltip show={hoveredElement === 'history'} message={tooltipContent.history} targetRef={historyRef} />
             </div>
 

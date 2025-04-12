@@ -23,9 +23,10 @@ class TokenManagementService {
       // Get all tab token statistics
       const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
       const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
+      const tabStats = allTokenStats[tabId] || {};
 
-      // Return stats for this tab or empty object
-      return allTokenStats[tabId] || this._getEmptyStats();
+      // Return merged stats, ensuring all default fields are present
+      return { ...this._getEmptyStats(), ...tabStats };
     } catch (error) {
       console.error('TokenManagementService: Error getting token statistics:', error);
       return this._getEmptyStats();
@@ -71,50 +72,83 @@ class TokenManagementService {
     let inputTokens = 0;
     let outputTokens = 0;
     let promptTokens = 0;
-    let historyTokens = 0;
+    let historyTokensTotal = 0; // Renamed for clarity
+    let historyTokensSentInLastCall = 0; // New counter
     let systemTokens = 0; // Initialize systemTokens
+
+    // Find indices of the last user and assistant messages
+    let lastUserMsgIndex = -1;
+    let lastAssistantMsgIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user' && lastUserMsgIndex === -1) {
+        lastUserMsgIndex = i;
+      }
+      if (messages[i].role === 'assistant' && lastAssistantMsgIndex === -1) {
+        lastAssistantMsgIndex = i;
+      }
+      // Optimization: Stop if both are found
+      if (lastUserMsgIndex !== -1 && lastAssistantMsgIndex !== -1) {
+        break;
+      }
+    }
 
     // Process system prompt if present
     if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
-      const systemPromptTokens = this.estimateTokens(systemPrompt);
-      inputTokens += systemPromptTokens; // System prompt contributes to input
-      systemTokens = systemPromptTokens; // Assign to the specific systemTokens field
-      historyTokens += systemPromptTokens; // System prompt is part of the history context
+      const systemPromptTokensCount = this.estimateTokens(systemPrompt);
+      inputTokens += systemPromptTokensCount; // System prompt contributes to input
+      systemTokens = systemPromptTokensCount; // Assign to the specific systemTokens field
+      historyTokensTotal += systemPromptTokensCount; // System prompt is part of the total history context
+      historyTokensSentInLastCall += systemPromptTokensCount; // System prompt is always sent
     }
 
     // Process each message
     messages.forEach((msg, index) => {
       if (msg.role === 'user') {
         // Use stored token count or estimate
-        const msgTokens = msg.inputTokens || this.estimateTokens(msg.content);
-        inputTokens += msgTokens; // Add to total session input
+        const msgInputTokens = msg.inputTokens || this.estimateTokens(msg.content);
+        inputTokens += msgInputTokens; // Add to total session input
 
         // Determine if this is the most recent prompt or part of history
         // Check if it's the last message OR the second-to-last if the last is assistant
         const isLastMessage = index === messages.length - 1;
         const isSecondLastBeforeAssistant = index === messages.length - 2 && messages[messages.length - 1]?.role === 'assistant';
 
-        if (isLastMessage || isSecondLastBeforeAssistant) {
-          // Most recent user message (potentially waiting for response, or the one before the last response)
-          promptTokens = msgTokens;
-          // Do NOT add the current prompt tokens to historyTokens
+        // Determine if this is the most recent user prompt
+        const isLastUserPrompt = index === lastUserMsgIndex;
+
+        if (isLastUserPrompt) {
+          promptTokens = msgInputTokens;
+          // Add to total history but NOT to history sent in last call
+          historyTokensTotal += msgInputTokens;
         } else {
-          // This is a past user message, add its tokens to history
-          historyTokens += msgTokens;
+          // This is a past user message, add its tokens to total history
+          historyTokensTotal += msgInputTokens;
+          // Also add to history sent in last call if it's not the excluded last user/assistant message
+          if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
+            historyTokensSentInLastCall += msgInputTokens;
+          }
         }
       } else if (msg.role === 'assistant') {
         // Use stored token count or estimate
-        const assistantTokens = msg.outputTokens || this.estimateTokens(msg.content);
-        outputTokens += assistantTokens; // Add to total session output
-        // *** CORRECTED LOGIC: Add assistant tokens to historyTokens ***
-        historyTokens += assistantTokens;
+        const msgOutputTokens = msg.outputTokens || this.estimateTokens(msg.content);
+        outputTokens += msgOutputTokens; // Add to total session output
+        // Add assistant tokens to total history
+        historyTokensTotal += msgOutputTokens;
+        // Add to history sent in last call if it's not the excluded last user/assistant message
+        if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
+          historyTokensSentInLastCall += msgOutputTokens;
+        }
       } else if (msg.role === 'system') {
         // System messages (like errors) contribute to input tokens and history
         // Note: The initial system prompt is handled above
-        const msgTokens = this.estimateTokens(msg.content);
-        inputTokens += msgTokens; // Add to total session input
-        systemTokens += msgTokens; // Add to specific system token count
-        historyTokens += msgTokens; // Add to history context
+        const msgSystemTokens = this.estimateTokens(msg.content);
+        inputTokens += msgSystemTokens; // Add to total session input
+        systemTokens += msgSystemTokens; // Add to specific system token count
+        historyTokensTotal += msgSystemTokens; // Add to total history context
+        // Add to history sent in last call if it's not the excluded last user/assistant message
+        if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
+           historyTokensSentInLastCall += msgSystemTokens;
+        }
       }
     });
 
@@ -122,7 +156,8 @@ class TokenManagementService {
       inputTokens,
       outputTokens,
       promptTokens,
-      historyTokens,
+      historyTokens: historyTokensTotal, // Keep original name for external consistency
+      historyTokensSentInLastCall, // Add the new field
       systemTokens,
       totalCost: 0,  // Calculated separately with model info
       accumulatedCost: 0  // Will be set from stored value
@@ -365,6 +400,7 @@ class TokenManagementService {
       promptTokens: 0,
       historyTokens: 0,
       systemTokens: 0,
+      historyTokensSentInLastCall: 0, // Added field for history tokens in the last call
       isCalculated: false
     };
   }
