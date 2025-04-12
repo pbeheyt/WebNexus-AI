@@ -9,6 +9,7 @@ import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
+import { isInjectablePage } from '../../shared/utils/content-utils'; // Added import
 
 const SidebarChatContext = createContext(null);
 
@@ -22,7 +23,7 @@ export function SidebarChatProvider({ children }) {
     getPlatformApiConfig
   } = useSidebarPlatform();
 
-  const { contentType } = useContent();
+  const { contentType, currentTab } = useContent(); // Added currentTab
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState(null);
@@ -380,6 +381,8 @@ export function SidebarChatProvider({ children }) {
 
     // Determine if this is the first message (before adding the current user message)
     const isFirstMessage = messages.length === 0;
+    // Determine if the current page is injectable
+    const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false; // Added injectability check
 
     try {
       // Format conversation history for the API - Filter out streaming messages and extracted content messages
@@ -398,7 +401,8 @@ export function SidebarChatProvider({ children }) {
         promptContent: text.trim(),
         conversationHistory,
         streaming: true,
-        skipInitialExtraction: isFirstMessage ? !isContentExtractionEnabled : false,
+        // Determine if extraction should be skipped for the first message
+        skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true, // Updated logic
         // Pass tabId and source explicitly if needed by the hook/API
         options: { tabId, source: INTERFACE_SOURCES.SIDEBAR }
       });
