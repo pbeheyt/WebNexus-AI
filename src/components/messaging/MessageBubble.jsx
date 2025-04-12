@@ -155,16 +155,7 @@ export const MessageBubble = memo(({
                   
                 case ContentType.TEXT:
                 default:
-                  // Plain text blocks get minimal formatting
-                  if (!inline && !language) {
-                    return (
-                      <div className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded my-3 font-mono text-sm whitespace-pre-wrap">
-                        {children}
-                      </div>
-                    );
-                  }
-                  
-                  // Fallback to basic code formatting
+                  // Fallback to basic code formatting for TEXT or unknown types within a code context
                   return (
                     <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>
                       {children}
