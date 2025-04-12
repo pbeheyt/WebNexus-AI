@@ -36,9 +36,7 @@ export function SidebarChatProvider({ children }) {
   // Use the token tracking hook
   const {
     tokenStats,
-    setTokenStats,
     calculateContextStatus,
-    trackTokens,
     clearTokenData,
     calculateStats
   } = useTokenTracking(tabId);
@@ -142,17 +140,26 @@ export function SidebarChatProvider({ children }) {
 
   // Handle streaming response chunks
   useEffect(() => {
-    // Utility function to handle all post-streaming operations in one place
+    /**
+     * Finalizes the state of a message after its stream completes, errors out, or is cancelled.
+     * Calculates output tokens for the final content, updates the message in the state array,
+     * potentially prepends extracted content, saves history, and triggers token recalculation.
+     *
+     * @param {string} messageId - ID of the message being finalized.
+     * @param {string} finalContentInput - The complete content string received.
+     * @param {string|null} model - The model used for the response.
+     * @param {boolean} [isError=false] - Flag indicating if the stream ended due to an error.
+     * @param {boolean} [isCancelled=false] - Flag indicating if the stream was cancelled by the user.
+     */
     const handleStreamComplete = async (messageId, finalContentInput, model, isError = false, isCancelled = false) => {
       try {
+        // Calculate output tokens using the potentially modified finalContent
+        const outputTokens = TokenManagementService.estimateTokens(finalContentInput);
         let finalContent = finalContentInput; // Use a mutable variable
         if (isCancelled) {
           // Append cancellation notice if the stream was cancelled
           finalContent += '\n\n_Stream cancelled by user._';
         }
-
-        // Calculate output tokens using the potentially modified finalContent
-        const outputTokens = TokenManagementService.estimateTokens(finalContent);
 
         // Update message with final content (using the potentially modified finalContent)
         let updatedMessages = messages.map(msg =>
@@ -197,15 +204,6 @@ export function SidebarChatProvider({ children }) {
 
                 // Mark as added to prevent duplicate additions
                 setExtractedContentAdded(true);
-
-                // Track tokens for extracted content using the service
-                await trackTokens({
-                  messageId: contentMessage.id,
-                  role: contentMessage.role,
-                  content: contentMessage.content,
-                  input: contentMessage.inputTokens,
-                  output: 0
-                }, modelConfigData);
               }
             }
           } catch (extractError) {
@@ -217,25 +215,25 @@ export function SidebarChatProvider({ children }) {
         setMessages(updatedMessages);
         setStreamingContent('');
 
-        // Track tokens for assistant message
-        await trackTokens({
-          messageId: messageId,
-          role: isError ? MESSAGE_ROLES.SYSTEM : MESSAGE_ROLES.ASSISTANT,
-          content: finalContent,
-          input: 0,
-          output: outputTokens
-        }, modelConfigData);
-
-        // Save history and update accumulated cost
+        // Save history
         if (tabId) {
           await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
-          await TokenManagementService.updateAccumulatedCost(tabId);
         }
       } catch (error) {
         console.error('Error handling stream completion:', error);
       }
     };
 
+    /**
+     * Processes incoming message chunks from the background script during an active stream.
+     * Handles error chunks, completion chunks (including cancellation), and intermediate content chunks.
+     * Updates the UI live and calls `handleStreamComplete` to finalize the message state.
+     * Resets streaming-related state variables upon stream completion, error, or cancellation.
+     *
+     * @param {object} message - The message object received from `chrome.runtime.onMessage`.
+     *                           Expected structure: `{ action: 'streamChunk', chunkData: {...}, streamId: '...' }`
+     *                           `chunkData` contains `chunk`, `done`, `error`, `cancelled`, `fullContent`, `model`.
+     */
     const handleStreamChunk = async (message) => {
       if (message.action === 'streamChunk' && streamingMessageId) {
         const { chunkData } = message;
@@ -248,7 +246,6 @@ export function SidebarChatProvider({ children }) {
 
         // Handle stream error
         if (chunkData.error) {
-          // chunkData.error should now be the pre-formatted string
           const errorMessage = chunkData.error;
           console.error('Stream error:', errorMessage);
 
@@ -274,30 +271,13 @@ export function SidebarChatProvider({ children }) {
             // Use partial content received so far, mark as cancelled but not an error
             await handleStreamComplete(streamingMessageId, chunkData.fullContent || streamingContent, chunkData.model, false, true); // isError=false, isCancelled=true
 
-            try {
-                console.log(`[handleStreamChunk - Cancelled] Explicitly fetching and setting token stats for tab ${tabId}...`);
-                const latestStats = await TokenManagementService.getTokenStatistics(tabId);
-                setTokenStats(latestStats); // Update the hook's state directly
-                console.log(`[handleStreamChunk - Cancelled] Explicit token stats update complete.`);
-            } catch (refreshError) {
-                console.error('[handleStreamChunk - Cancelled] Error explicitly refreshing token stats:', refreshError);
-            }
           } else if (chunkData.error) {
             // Handle Error: Stream ended with an error (other than user cancellation)
-            // chunkData.error should now be the pre-formatted string
             const errorMessage = chunkData.error;
             console.error(`Stream ${message.streamId} error:`, errorMessage);
             // Update the message with the error, mark as error, not cancelled
             await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true, false); // isError=true, isCancelled=false
 
-            try {
-                console.log(`[handleStreamChunk - Error] Explicitly fetching and setting token stats for tab ${tabId}...`);
-                const latestStats = await TokenManagementService.getTokenStatistics(tabId);
-                setTokenStats(latestStats); // Update the hook's state directly
-                console.log(`[handleStreamChunk - Error] Explicit token stats update complete.`);
-            } catch (refreshError) {
-                console.error('[handleStreamChunk - Error] Error explicitly refreshing token stats:', refreshError);
-            }
           } else {
             // Handle Success: Stream completed normally
             const finalContent = chunkData.fullContent || streamingContent;
@@ -305,14 +285,6 @@ export function SidebarChatProvider({ children }) {
             // Update message with final content, mark as success (not error, not cancelled)
             await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false, false); // isError=false, isCancelled=false
 
-            try {
-                console.log(`[handleStreamChunk - Success] Explicitly fetching and setting token stats for tab ${tabId}...`);
-                const latestStats = await TokenManagementService.getTokenStatistics(tabId);
-                setTokenStats(latestStats); // Update the hook's state directly
-                console.log(`[handleStreamChunk - Success] Explicit token stats update complete.`);
-            } catch (refreshError) {
-                console.error('[handleStreamChunk - Success] Error explicitly refreshing token stats:', refreshError);
-            }
           }
           // Reset state regardless of outcome (completion, cancellation, error)
           setStreamingMessageId(null);
@@ -339,9 +311,13 @@ export function SidebarChatProvider({ children }) {
       chrome.runtime.onMessage.removeListener(handleStreamChunk);
     };
   }, [streamingMessageId, streamingContent, messages, visibleMessages, tabId, selectedModel,
-      selectedPlatformId, modelConfigData, trackTokens, extractedContentAdded]);
+      selectedPlatformId, modelConfigData, extractedContentAdded]);
 
-  // Send a message and get a response
+  /**
+   * Sends a user message, triggers the API call via processContentViaApi,
+   * handles the streaming response (via handleStreamChunk/handleStreamComplete),
+   * updates message state, and saves history.
+   */
   const sendMessage = async (text = inputValue) => {
     // Retrieve platform/model state from context *inside* the function
     // This ensures we get the latest values when the function is called
@@ -404,20 +380,6 @@ export function SidebarChatProvider({ children }) {
 
     // Determine if this is the first message (before adding the current user message)
     const isFirstMessage = messages.length === 0;
-
-    // Track tokens for user message
-    await trackTokens({
-      messageId: userMessageId,
-      role: MESSAGE_ROLES.USER,
-      content: userMessage.content,
-      input: inputTokens,
-      output: 0
-    }, modelConfigData);
-
-    // Save interim state to chat history
-    if (tabId) {
-      await ChatHistoryService.saveHistory(tabId, updatedMessages, modelConfigData);
-    }
 
     try {
       // Format conversation history for the API - Filter out streaming messages and extracted content messages
@@ -512,7 +474,10 @@ export function SidebarChatProvider({ children }) {
     }
   };
 
-  // Cancel the current stream
+  /**
+   * Sends a cancellation request to the background script for the currently active stream,
+   * updates the UI state to reflect cancellation, and saves the final state.
+   */
   const cancelStream = async () => {
     if (!streamingMessageId || !isProcessing || isCanceling) return;
 
@@ -574,14 +539,6 @@ export function SidebarChatProvider({ children }) {
                 setMessages(messagesAfterCancel);
                 setExtractedContentAdded(true);
 
-                // Track tokens for the added content
-                await trackTokens({
-                  messageId: contentMessage.id,
-                  role: contentMessage.role,
-                  content: contentMessage.content,
-                  input: contentMessage.inputTokens,
-                  output: 0
-                }, modelConfigData);
               } else {
                  console.warn('Cancelled message not found, cannot insert extracted content correctly.');
               }
@@ -607,20 +564,10 @@ export function SidebarChatProvider({ children }) {
       // Update state with the final message list
       setMessages(finalMessages);
 
-      // Track tokens for the cancelled message
-      await trackTokens({
-        messageId: streamingMessageId,
-        role: MESSAGE_ROLES.ASSISTANT,
-        content: cancelledContent,
-        input: 0,
-        output: outputTokens
-      }, modelConfigData);
-
-      // Save the final state to history
+      // Save the final state to history (this now implicitly triggers calculateAndUpdateStatistics which handles cost)
       if (tabId) {
         await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
-        // Update accumulated cost with the new token count
-        await TokenManagementService.updateAccumulatedCost(tabId);
+        // The call to updateAccumulatedCost is removed as it's handled by saveHistory -> calculateAndUpdateStatistics
       }
 
       // Reset streaming state
@@ -647,7 +594,11 @@ export function SidebarChatProvider({ children }) {
     await clearTokenData();
   };
 
-  // Reset current tab data (chat history, tokens, etc.)
+  /**
+   * Clears all chat history, token data, and formatted content stored
+   * for the current tab by sending a message to the background script.
+   * Prompts the user for confirmation before proceeding.
+   */
   const resetCurrentTabData = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
       console.warn('resetCurrentTabData called without a valid tabId.');
@@ -690,7 +641,10 @@ export function SidebarChatProvider({ children }) {
     setIsCanceling
   ]);
 
-  // Function to clear the stored formatted content for the current tab
+  /**
+   * Clears only the stored formatted page content (extracted content)
+   * for the current tab from local storage. Also resets the `extractedContentAdded` flag.
+   */
   const clearFormattedContentForTab = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
       console.warn('clearFormattedContentForTab called without a valid tabId.');

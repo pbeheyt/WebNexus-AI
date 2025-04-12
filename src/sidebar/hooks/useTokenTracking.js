@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import TokenManagementService from '../services/TokenManagementService';
+import { STORAGE_KEYS } from "../../shared/constants";
 
 /**
  * Hook for tracking token usage and providing token statistics in React components
@@ -11,15 +12,8 @@ import TokenManagementService from '../services/TokenManagementService';
  * @returns {Object} - Token tracking capabilities and statistics
  */
 export function useTokenTracking(tabId) {
-  const [tokenStats, setTokenStats] = useState({
-    inputTokens: 0,
-    outputTokens: 0,
-    totalCost: 0,
-    promptTokens: 0,
-    historyTokens: 0,
-    systemTokens: 0,
-    isCalculated: false
-  });
+  // Initialize state using the updated structure from TokenManagementService
+  const [tokenStats, setTokenStats] = useState(TokenManagementService._getEmptyStats());
   const [isLoading, setIsLoading] = useState(true);
 
   // Load token data for the tab on mount and when tab changes
@@ -48,15 +42,18 @@ export function useTokenTracking(tabId) {
     const handleStorageChange = (changes, area) => {
       if (area !== 'local' || !tabId) return;
       
-      // Check if token statistics were updated directly
-      if (changes[TokenManagementService.TOKEN_STATS_KEY] && 
-          changes[TokenManagementService.TOKEN_STATS_KEY].newValue) {
-        const tabStats = changes[TokenManagementService.TOKEN_STATS_KEY].newValue[tabId];
+      // Check if token statistics were updated directly in storage
+      if (changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS] &&
+          changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue) {
+        const allTokenStats = changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue;
+        const tabStats = allTokenStats[tabId];
         if (tabStats) {
-          setTokenStats({
-            ...tabStats,
-            isCalculated: true
-          });
+          // Ensure all fields, including new ones, are updated
+          setTokenStats(prevStats => ({
+            ...TokenManagementService._getEmptyStats(), // Start with default empty stats
+            ...tabStats, // Overwrite with values from storage
+            isCalculated: true // Mark as calculated
+          }));
         }
       }
     };
@@ -90,38 +87,6 @@ export function useTokenTracking(tabId) {
   }, [tabId, tokenStats]);
 
   /**
-   * Track token consumption for a message
-   * @param {Object} messageData - Message data to track
-   * @param {Object} modelConfig - Model configuration with pricing
-   * @returns {Promise<boolean>} - Success indicator
-   */
-  const trackTokens = useCallback(async (messageData, modelConfig = null) => {
-    if (!tabId) return false;
-    
-    try {
-      // Use the service to track the message
-      const success = await TokenManagementService.trackMessage(tabId, {
-        messageId: messageData.messageId,
-        role: messageData.role || 'user',
-        content: messageData.content || '',
-        inputTokens: messageData.input || 0,
-        outputTokens: messageData.output || 0
-      }, modelConfig);
-      
-      if (success) {
-        // Refresh state with latest stats
-        const updatedStats = await TokenManagementService.getTokenStatistics(tabId);
-        setTokenStats(updatedStats);
-      }
-      
-      return success;
-    } catch (error) {
-      console.error('Error tracking tokens:', error);
-      return false;
-    }
-  }, [tabId]);
-
-  /**
    * Clear all token data for the current tab
    * @returns {Promise<boolean>} - Success indicator
    */
@@ -133,15 +98,7 @@ export function useTokenTracking(tabId) {
       
       if (success) {
         // Reset state to empty stats
-        setTokenStats({
-          inputTokens: 0,
-          outputTokens: 0,
-          totalCost: 0,
-          promptTokens: 0,
-          historyTokens: 0,
-          systemTokens: 0,
-          isCalculated: true
-        });
+        setTokenStats(TokenManagementService._getEmptyStats());
       }
       
       return success;
@@ -180,7 +137,6 @@ export function useTokenTracking(tabId) {
       setTokenStats,
       isLoading,
       calculateContextStatus,
-      trackTokens,
       clearTokenData,
       calculateStats,
       estimateTokens: TokenManagementService.estimateTokens,

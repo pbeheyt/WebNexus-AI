@@ -1,14 +1,14 @@
 // src/sidebar/services/TokenManagementService.js
 
 import { STORAGE_KEYS } from "../../shared/constants";
-import ChatHistoryService from "./ChatHistoryService"; // Added import
+import ChatHistoryService from "./ChatHistoryService";
 
 /**
  * Service for token estimation, cost calculation, storage, and context window monitoring
  * Central authority for all token-related operations
  */
 class TokenManagementService {
-  
+
   /**
    * Get token statistics for a specific tab
    * @param {number} tabId - Tab identifier
@@ -18,20 +18,21 @@ class TokenManagementService {
     if (!tabId) {
       return this._getEmptyStats();
     }
-    
+
     try {
       // Get all tab token statistics
       const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
       const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
-      
-      // Return stats for this tab or empty object
-      return allTokenStats[tabId] || this._getEmptyStats();
+      const tabStats = allTokenStats[tabId] || {};
+
+      // Return merged stats, ensuring all default fields are present
+      return { ...this._getEmptyStats(), ...tabStats };
     } catch (error) {
       console.error('TokenManagementService: Error getting token statistics:', error);
       return this._getEmptyStats();
     }
   }
-  
+
   /**
    * Update token statistics for a specific tab
    * @param {number} tabId - Tab identifier
@@ -40,18 +41,18 @@ class TokenManagementService {
    */
   static async updateTokenStatistics(tabId, stats) {
     if (!tabId) return false;
-    
+
     try {
       // Get all tab token statistics
       const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
       const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
-      
+
       // Update stats for this tab
       allTokenStats[tabId] = {
         ...stats,
         lastUpdated: Date.now()
       };
-      
+
       // Save all token statistics
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats });
       return true;
@@ -60,127 +61,103 @@ class TokenManagementService {
       return false;
     }
   }
-  
+
   /**
    * Calculate token statistics from chat history
    * @param {Array} messages - Chat messages
    * @param {string} systemPrompt - System prompt text (optional)
-   * @returns {Object} - Token statistics
+   * @returns {Object} - Token statistics focused on the last API call.
    */
   static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') {
-    let inputTokens = 0;
+
     let outputTokens = 0;
-    let promptTokens = 0;
-    let historyTokens = 0;
-    let systemTokens = 0; // Initialize systemTokens
-    
+    let promptTokensInLastApiCall = 0;
+
+    let historyTokensSentInLastApiCall = 0;
+    let systemTokensInLastApiCall = 0;
+
+    // Find indices of the last user and assistant messages
+    let lastUserMsgIndex = -1;
+    let lastAssistantMsgIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user' && lastUserMsgIndex === -1) {
+        lastUserMsgIndex = i;
+      }
+      if (messages[i].role === 'assistant' && lastAssistantMsgIndex === -1) {
+        lastAssistantMsgIndex = i;
+      }
+      // Optimization: Stop if both are found
+      if (lastUserMsgIndex !== -1 && lastAssistantMsgIndex !== -1) {
+        break;
+      }
+    }
+
     // Process system prompt if present
     if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
-      const systemPromptTokens = this.estimateTokens(systemPrompt);
-      inputTokens += systemPromptTokens; // System prompt contributes to input
-      systemTokens = systemPromptTokens; // Assign to the specific systemTokens field
+      const systemPromptTokensCount = this.estimateTokens(systemPrompt);
+
+      // Assign tokens *only* from the initial system prompt provided.
+      systemTokensInLastApiCall = systemPromptTokensCount;
+      // DO NOT add systemPromptTokensCount to historyTokensSentInLastApiCall here
     }
-    
+
     // Process each message
     messages.forEach((msg, index) => {
       if (msg.role === 'user') {
-        // Use stored token count or estimate
-        const msgTokens = msg.inputTokens || this.estimateTokens(msg.content);
-        inputTokens += msgTokens;
-        
-        // Determine if this is the most recent prompt or part of history
-        if (index === messages.length - 2 && messages.length > 1) {
-          // Most recent user message before assistant response
-          promptTokens = msgTokens;
+        const msgInputTokens = msg.inputTokens || this.estimateTokens(msg.content);
+
+        // Determine if this is the most recent user prompt
+        const isLastUserPrompt = index === lastUserMsgIndex;
+
+        if (isLastUserPrompt) {
+          // Assign tokens only for the message identified as the last user prompt.
+          promptTokensInLastApiCall = msgInputTokens;
+
         } else {
-          historyTokens += msgTokens;
+
+          // Also add to history sent in last call if it's a USER message and not excluded
+          if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
+            // Add tokens from past user messages to history sent in the last call.
+            historyTokensSentInLastApiCall += msgInputTokens;
+          }
         }
       } else if (msg.role === 'assistant') {
-        // Use stored token count or estimate
-        outputTokens += msg.outputTokens || this.estimateTokens(msg.content);
-      } else if (msg.role === 'system') {
-        // System messages contribute to input tokens
-        const msgTokens = this.estimateTokens(msg.content);
-        inputTokens += msgTokens;
-        systemTokens += msgTokens;
+        const msgOutputTokens = typeof msg.outputTokens === 'number'
+            ? msg.outputTokens
+            : this.estimateTokens(msg.content);
+        // Calculate cumulative output tokens by summing output from all assistant messages.
+        outputTokens += msgOutputTokens;
+
+        // Add to history sent in last call if it's an ASSISTANT message and not excluded
+        if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
+          // Add tokens from past assistant messages to history sent in the last call.
+          historyTokensSentInLastApiCall += msgOutputTokens;
+        }
+        // System messages (like errors) are not counted towards API call tokens.
+        // Note: The initial system prompt is handled separately above.
       }
     });
-    
+
+    // Calculate total input tokens for the last API call by summing system, history sent, and last prompt tokens.
+    const inputTokensInLastApiCall = (systemTokensInLastApiCall || 0) + (historyTokensSentInLastApiCall || 0) + (promptTokensInLastApiCall || 0);
+
+    // Calculate output tokens for the last assistant message
+    let outputTokensInLastApiCall = 0;
+    if (lastAssistantMsgIndex !== -1) {
+      const lastAssistantMsg = messages[lastAssistantMsgIndex];
+      outputTokensInLastApiCall = lastAssistantMsg.outputTokens || this.estimateTokens(lastAssistantMsg.content);
+    }
+
     return {
-      inputTokens,
       outputTokens,
-      promptTokens,
-      historyTokens,
-      systemTokens,
-      totalCost: 0,  // Calculated separately with model info
-      accumulatedCost: 0  // Will be set from stored value
+      promptTokensInLastApiCall,
+      historyTokensSentInLastApiCall,
+      systemTokensInLastApiCall,
+      inputTokensInLastApiCall,
+      outputTokensInLastApiCall,
     };
   }
-  
-  /**
-   * Track tokens for a message
-   * @param {number} tabId - Tab identifier
-   * @param {Object} message - Message to track
-   * @param {Object} modelConfig - Model configuration
-   * @returns {Promise<boolean>} - Success status
-   */
-  static async trackMessage(tabId, message, modelConfig) {
-    if (!tabId || !message) return false;
-    
-    try {
-      // Get current token statistics
-      const stats = await this.getTokenStatistics(tabId);
-      
-      // Update token counts based on message role
-      if (message.role === 'user') {
-        const inputTokens = message.inputTokens || this.estimateTokens(message.content);
-        stats.inputTokens += inputTokens;
-        stats.promptTokens = inputTokens;  // Latest prompt
-      } else if (message.role === 'assistant') {
-        const outputTokens = message.outputTokens || this.estimateTokens(message.content);
-        stats.outputTokens += outputTokens;
-      } else if (message.role === 'system') {
-        const systemTokens = this.estimateTokens(message.content);
-        stats.inputTokens += systemTokens;
-        stats.systemTokens += systemTokens;
-      }
-      
-      // Calculate cost if model config is provided
-      if (modelConfig) {
-        const costInfo = this.calculateCost(stats.inputTokens, stats.outputTokens, modelConfig);
-        stats.totalCost = costInfo.totalCost;
-      }
-      
-      // Save updated stats
-      return this.updateTokenStatistics(tabId, stats);
-    } catch (error) {
-      console.error('TokenManagementService: Error tracking message:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Update accumulated cost by adding a new cost value
-   * @param {number} tabId - Tab identifier
-   * @param {number} additionalCost - Cost to add to accumulated total
-   * @returns {Promise<boolean>} - Success status
-   */
-  static async updateAccumulatedCost(tabId) {
-    if (!tabId) return false;
-    
-    try {
-      // Get current token statistics
-      const stats = await this.getTokenStatistics(tabId);
-      const totalCost = stats.totalCost || 0;
-      stats.accumulatedCost = (stats.accumulatedCost || 0) + totalCost;
-      // Save updated stats
-      return this.updateTokenStatistics(tabId, stats);
-    } catch (error) {
-      console.error('TokenManagementService: Error updating accumulated cost:', error);
-      return false;
-    }
-  }
-  
+
   /**
    * Clear token statistics for a tab
    * @param {number} tabId - Tab identifier
@@ -188,15 +165,15 @@ class TokenManagementService {
    */
   static async clearTokenStatistics(tabId) {
     if (!tabId) return false;
-    
+
     try {
       // Get all tab token statistics
       const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
       const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
-      
+
       // Remove stats for this tab
       delete allTokenStats[tabId];
-      
+
       // Save updated stats
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats });
       return true;
@@ -205,7 +182,7 @@ class TokenManagementService {
       return false;
     }
   }
-  
+
   /**
    * Calculate token statistics for a specific chat history
    * @param {number} tabId - Tab identifier
@@ -215,34 +192,60 @@ class TokenManagementService {
    */
   static async calculateAndUpdateStatistics(tabId, messages, modelConfig = null) {
     if (!tabId) return this._getEmptyStats();
-    
+
     try {
-      // Get the actual system prompt string
-      const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId); // Use ChatHistoryService
-      
-      // Calculate token statistics from messages, passing the system prompt
-      const stats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt); // Pass systemPrompt
-      
-      // Calculate cost if model config is provided
-      if (modelConfig) {
-        const costInfo = this.calculateCost(stats.inputTokens, stats.outputTokens, modelConfig);
-        stats.totalCost = costInfo.totalCost;
-      }
-      
-      // Retrieve existing accumulated cost to preserve it
+      // 1. Get existing accumulated cost BEFORE calculating new stats
       const currentStats = await this.getTokenStatistics(tabId);
-      stats.accumulatedCost = currentStats.accumulatedCost || 0;
-      
-      // Save updated stats
-      await this.updateTokenStatistics(tabId, stats);
-      
-      return stats;
+      const existingAccumulatedCost = currentStats.accumulatedCost || 0;
+
+      // 2. Get the actual system prompt string
+      const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId);
+
+      // 3. Calculate base token statistics from messages (includes input/output tokens for last call)
+      const baseStats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt);
+
+      // 4. Calculate Cost of the Last Call
+      let currentCallCost = 0;
+      if (modelConfig) {
+        // Use the specific input/output tokens for the *last call*
+        const costInfo = this.calculateCost(
+          baseStats.inputTokensInLastApiCall,
+          baseStats.outputTokensInLastApiCall,
+          modelConfig
+        );
+        currentCallCost = costInfo.totalCost || 0;
+      }
+
+      // 5. Calculate New Accumulated Cost
+      const newAccumulatedCost = existingAccumulatedCost + currentCallCost;
+
+      // 6. Prepare Final Stats Object to Save (Explicitly matching _getEmptyStats structure)
+      const finalStatsObject = {
+        // Cumulative stats (take latest calculated/updated values)
+        outputTokens: baseStats.outputTokens || 0,
+        accumulatedCost: newAccumulatedCost,
+
+        // Last API call stats (from base calculation)
+        promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
+        historyTokensSentInLastApiCall: baseStats.historyTokensSentInLastApiCall || 0,
+        systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,
+        inputTokensInLastApiCall: baseStats.inputTokensInLastApiCall || 0,
+        outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0,
+        lastApiCallCost: currentCallCost,
+        isCalculated: true
+      };
+
+      // 7. Save the complete, updated statistics
+      await this.updateTokenStatistics(tabId, finalStatsObject);
+
+      // 8. Return the final statistics object
+      return finalStatsObject;
     } catch (error) {
       console.error('TokenManagementService: Error calculating token statistics:', error);
       return this._getEmptyStats();
     }
   }
-  
+
   /**
    * Estimate tokens for a string using character-based approximation
    * @param {string} text - Input text
@@ -252,7 +255,7 @@ class TokenManagementService {
     if (!text) return 0;
     return Math.ceil(text.length / 4); // Approx 4 chars per token
   }
-  
+
   /**
    * Calculate pricing for token usage
    * @param {number} inputTokens - Number of input tokens
@@ -262,15 +265,15 @@ class TokenManagementService {
    */
   static calculateCost(inputTokens, outputTokens, modelConfig) {
     if (!modelConfig) return { totalCost: 0 };
-    
+
     const inputPrice = modelConfig.inputTokenPrice || 0;
     const outputPrice = modelConfig.outputTokenPrice || 0;
-    
+
     // Convert from price per million tokens
     const inputCost = (inputTokens / 1000000) * inputPrice;
     const outputCost = (outputTokens / 1000000) * outputPrice;
     const totalCost = inputCost + outputCost;
-    
+
     return {
       inputCost,
       outputCost,
@@ -279,21 +282,21 @@ class TokenManagementService {
       outputTokenPrice: outputPrice
     };
   }
-  
+
   /**
    * Extract pricing information from model configuration
-   * @param {Object} modelConfig - Model configuration 
+   * @param {Object} modelConfig - Model configuration
    * @returns {Object|null} - Pricing information object or null
    */
   static getPricingInfo(modelConfig) {
     if (!modelConfig) return null;
-    
+
     return {
       inputTokenPrice: modelConfig.inputTokenPrice,
       outputTokenPrice: modelConfig.outputTokenPrice
     };
   }
-  
+
   /**
    * Calculate context window usage status
    * @param {Object} tokenStats - Token usage statistics
@@ -302,20 +305,23 @@ class TokenManagementService {
    */
   static calculateContextStatus(tokenStats, modelConfig) {
     if (!tokenStats || !modelConfig || !modelConfig.contextWindow) {
-      return { 
+      return {
         warningLevel: 'none',
         percentage: 0,
         tokensRemaining: 0,
         exceeds: false
       };
     }
-    
-    const totalTokens = tokenStats.inputTokens + tokenStats.outputTokens;
+
+    // Context window usage should be based on the total input tokens sent in the *last* API call,
+    // as this represents the context the *next* call will potentially build upon.
+    // Use inputTokensInLastApiCall which already includes system, history sent, and the last prompt.
+    const totalTokensInContext = tokenStats.inputTokensInLastApiCall || 0;
     const contextWindow = modelConfig.contextWindow;
-    const tokensRemaining = Math.max(0, contextWindow - totalTokens);
-    const percentage = (totalTokens / contextWindow) * 100;
-    const exceeds = totalTokens > contextWindow;
-    
+    const tokensRemaining = Math.max(0, contextWindow - totalTokensInContext);
+    const percentage = contextWindow > 0 ? (totalTokensInContext / contextWindow) * 100 : 0;
+    const exceeds = totalTokensInContext > contextWindow;
+
     // Determine warning level
     let warningLevel = 'none';
     if (percentage > 90) {
@@ -325,30 +331,34 @@ class TokenManagementService {
     } else if (percentage > 50) {
       warningLevel = 'notice';
     }
-    
+
     return {
       warningLevel,
       percentage,
       tokensRemaining,
       exceeds,
-      totalTokens
+      totalTokens: totalTokensInContext // Return the context usage total
     };
   }
-  
+
   /**
    * Create empty token statistics object
    * @private
-   * @returns {Object} - Empty token statistics
+   * @returns {Object} - Empty token statistics, focusing on last call details.
    */
   static _getEmptyStats() {
     return {
-      inputTokens: 0,
+      // Cumulative stats
       outputTokens: 0,
-      totalCost: 0,
       accumulatedCost: 0,
-      promptTokens: 0,
-      historyTokens: 0,
-      systemTokens: 0,
+
+      // Last API call stats
+      promptTokensInLastApiCall: 0,
+      historyTokensSentInLastApiCall: 0,
+      systemTokensInLastApiCall: 0,
+      inputTokensInLastApiCall: 0,
+      outputTokensInLastApiCall: 0,
+      lastApiCallCost: 0,
       isCalculated: false
     };
   }
