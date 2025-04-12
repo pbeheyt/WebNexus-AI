@@ -73,7 +73,7 @@ class TokenManagementService {
     let outputTokens = 0;
     let promptTokens = 0;
     let historyTokensTotal = 0; // Renamed for clarity
-    let historyTokensSentInLastCall = 0; // Initialize counter for history EXCLUDING system prompt
+    let historyTokensSentInLastCall = 0; // Initialize counter for history EXCLUDING system prompt/messages
     let systemTokens = 0; // Initialize systemTokens
 
     // Find indices of the last user and assistant messages
@@ -208,7 +208,8 @@ class TokenManagementService {
 
       // Calculate cost if model config is provided
       if (modelConfig) {
-        const costInfo = this.calculateCost(stats.inputTokens, stats.outputTokens, modelConfig);
+        const costInfo = this.calculateCost(stats.inputTokensInLastCall
+          , stats.outputTokens, modelConfig);
         stats.totalCost = costInfo.totalCost;
       }
 
@@ -286,7 +287,8 @@ class TokenManagementService {
 
       // Calculate cost if model config is provided
       if (modelConfig) {
-        const costInfo = this.calculateCost(stats.inputTokens, stats.outputTokens, modelConfig);
+        const costInfo = this.calculateCost(stats.inputTokensInLastCall
+          , stats.outputTokens, modelConfig);
         stats.totalCost = costInfo.totalCost;
       }
 
