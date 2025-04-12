@@ -7,8 +7,9 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
     outputTokens = 0,
     accumulatedCost = 0,
     promptTokens = 0,
-    historyTokens = 0, // Keep total history for potential future use or context calculation
-    historyTokensSentInLastCall = 0, // Add new field
+    historyTokens = 0,
+    historyTokensSentInLastCall = 0,
+    inputTokensInLastCall = 0, // Add this line
     systemTokens = 0
   } = tokenStats || {};
 
@@ -62,7 +63,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
 
   // Tooltip content definitions
   const tooltipContent = {
-    inputTokens: "Input tokens",
+    inputTokens: "Input tokens sent in the last API request", // Updated tooltip
     outputTokens: "Output tokens",
     cost: "Total estimated accumulated cost",
     prompt: "Tokens in your most recent message",
@@ -88,7 +89,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
-            <span>{inputTokens.toLocaleString()}</span>
+            {/* Display input tokens from the last call */}
+            <span>{inputTokensInLastCall.toLocaleString()}</span>
             <Tooltip show={hoveredElement === 'inputTokens'} message={tooltipContent.inputTokens} targetRef={inputTokensRef} />
           </div>
 

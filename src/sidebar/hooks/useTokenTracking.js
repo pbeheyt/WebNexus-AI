@@ -17,7 +17,8 @@ export function useTokenTracking(tabId) {
     totalCost: 0,
     promptTokens: 0,
     historyTokens: 0,
-    historyTokensSentInLastCall: 0, // Added field
+    historyTokensSentInLastCall: 0,
+    inputTokensInLastCall: 0, // Added field
     systemTokens: 0,
     isCalculated: false
   });
@@ -140,7 +141,8 @@ export function useTokenTracking(tabId) {
           totalCost: 0,
           promptTokens: 0,
           historyTokens: 0,
-          historyTokensSentInLastCall: 0, // Added field
+          historyTokensSentInLastCall: 0,
+          inputTokensInLastCall: 0, // Added field
           systemTokens: 0,
           isCalculated: true
         });
