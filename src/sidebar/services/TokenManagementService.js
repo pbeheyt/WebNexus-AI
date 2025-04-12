@@ -134,7 +134,9 @@ class TokenManagementService {
           }
         }
       } else if (msg.role === 'assistant') {
-        const msgOutputTokens = msg.outputTokens || this.estimateTokens(msg.content);
+        const msgOutputTokens = typeof msg.outputTokens === 'number'
+            ? msg.outputTokens
+            : this.estimateTokens(msg.content);
         // Calculate cumulative outputTokens (only for assistant messages)
         outputTokens += msgOutputTokens; // Keep cumulative output
         // (cumulative inputTokens removed)

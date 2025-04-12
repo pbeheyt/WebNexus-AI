@@ -145,14 +145,14 @@ export function SidebarChatProvider({ children }) {
     // Utility function to handle all post-streaming operations in one place
     const handleStreamComplete = async (messageId, finalContentInput, model, isError = false, isCancelled = false) => {
       try {
+        // Calculate output tokens using the potentially modified finalContent
+        const outputTokens = TokenManagementService.estimateTokens(finalContentInput);
+        console.info(`Final content length: ${finalContentInput}, Output tokens: ${outputTokens}`);
         let finalContent = finalContentInput; // Use a mutable variable
         if (isCancelled) {
           // Append cancellation notice if the stream was cancelled
           finalContent += '\n\n_Stream cancelled by user._';
         }
-
-        // Calculate output tokens using the potentially modified finalContent
-        const outputTokens = TokenManagementService.estimateTokens(finalContent);
 
         // Update message with final content (using the potentially modified finalContent)
         let updatedMessages = messages.map(msg =>
