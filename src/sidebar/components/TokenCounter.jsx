@@ -136,7 +136,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
             tabIndex="0"
           >
-            <span>(Last: {formatCost(lastApiCallCost)})</span>
+            <span>({formatCost(lastApiCallCost)})</span>
             <Tooltip show={hoveredElement === 'lastCost'} message={tooltipContent.lastCost} targetRef={lastCostRef} />
           </div>
           
