@@ -1,13 +1,12 @@
 // src/components/messaging/MessageBubble.jsx
 import React, { useState, memo, Fragment } from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm'; // Keep GFM for non-math parts
-// Math plugins are removed as we handle math manually
-import 'katex/dist/katex.min.css'; // Keep KaTeX CSS for MathFormulaBlock
+import remarkGfm from 'remark-gfm';
+import 'katex/dist/katex.min.css';
 
 import CopyButtonIcon from './icons/CopyButtonIcon';
 import EnhancedCodeBlock from './components/EnhancedCodeBlock';
-import MathFormulaBlock from './components/MathFormulaBlock'; // We will use this directly
+import MathFormulaBlock from './components/MathFormulaBlock'; // Assuming this renders math correctly
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 
 // --- Console Logging Configuration ---
@@ -22,7 +21,7 @@ const logDebug = (...args) => {
 
 /**
  * Helper function to parse text and math segments using Regex.
- * Splits the string by math delimiters, preserving the delimiters for type checking.
+ * (No changes needed in this function from the previous version)
  * @param {string} text - The raw content string
  * @returns {Array<{type: 'text'|'math', value: string, inline: boolean}>}
  */
@@ -32,34 +31,22 @@ const parseTextAndMath = (text) => {
     logDebug('Input text is empty, returning empty array.');
     return [];
   }
-
-  // Regex to find block math ($$..$$, \[..\]) and inline math ($..$, \(..\))
-  // Made inline $..$ non-greedy and require at least one char to avoid matching lone $
-  // Made inline \(..\) non-greedy
   const regex = /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\]|\$.+?\$|\\\(.+?\\\))/g;
   const result = [];
   let lastIndex = 0;
   let match;
-
   logDebug('Using regex:', regex);
-
   while ((match = regex.exec(text)) !== null) {
     logDebug(`Regex match found:`, match[0], `at index:`, match.index);
-
-    // 1. Add the text segment before the match
     if (match.index > lastIndex) {
       const textValue = text.slice(lastIndex, match.index);
       logDebug(`Adding text segment: "${textValue}"`);
-      result.push({ type: 'text', value: textValue, inline: false }); // inline: false here is just a placeholder for text type
+      result.push({ type: 'text', value: textValue, inline: false });
     }
-
-    // 2. Process the matched math segment
-    const part = match[0]; // The entire matched math string e.g., "$p$", "\[...\]"
+    const part = match[0];
     let mathContent = '';
-    let inline = true; // Default to inline
-
+    let inline = true;
     logDebug(`Processing math part: "${part}"`);
-
     if (part.startsWith('$$') && part.endsWith('$$')) {
       mathContent = part.slice(2, -2);
       inline = false;
@@ -77,51 +64,35 @@ const parseTextAndMath = (text) => {
       inline = true;
       logDebug(`Detected inline math (\\(): "${mathContent}"`);
     } else {
-       // Should not happen with this regex, but as fallback treat as text
        logDebug(`Regex match "${part}" didn't fit expected math patterns. Treating as text.`);
        result.push({ type: 'text', value: part, inline: false });
        lastIndex = regex.lastIndex;
-       continue; // Skip adding as math
+       continue;
     }
-
-    // Push the identified math segment (only if content found)
     const trimmedMathContent = mathContent.trim();
     if (trimmedMathContent) {
        logDebug(`Adding math segment: value="${trimmedMathContent}", inline=${inline}`);
        result.push({ type: 'math', value: trimmedMathContent, inline });
     } else {
-       // If math content is empty (e.g. "$$" or "\( \)" ), treat as text
        logDebug(`Math content was empty or whitespace only ("${mathContent}"). Treating original part "${part}" as text.`);
        result.push({ type: 'text', value: part, inline: false });
     }
-
-    // Update the index for the next search
     lastIndex = regex.lastIndex;
     logDebug(`Updated lastIndex to: ${lastIndex}`);
   }
-
-  // 3. Add any remaining text after the last match
   if (lastIndex < text.length) {
     const remainingText = text.slice(lastIndex);
     logDebug(`Adding final text segment: "${remainingText}"`);
     result.push({ type: 'text', value: remainingText, inline: false });
   }
-
   logDebug('Finished parseTextAndMath. Segments:', result);
   return result;
 };
 
+
 /**
  * Message bubble component using manual regex parsing for math rendering.
- * @param {Object} props - Component props
- * @param {string} props.content - The message content
- * @param {string} props.role - The role of the message sender ('user', 'assistant', or 'system')
- * @param {boolean} props.isStreaming - Whether the content is still streaming
- * @param {string|null} props.model - The AI model information (optional)
- * @param {string|null} props.platformIconUrl - URL to platform icon (optional)
- * @param {Object} props.metadata - Additional metadata to display (optional)
- * @param {string} props.className - Additional CSS classes (optional)
- * @returns {JSX.Element | null} - The rendered message bubble or null
+ * (Props definition remains the same)
  */
 export const MessageBubble = memo(({
   content,
@@ -138,8 +109,8 @@ export const MessageBubble = memo(({
 
   logDebug(`Rendering MessageBubble. Role: ${role}, Content length: ${content?.length || 0}`);
 
-  // Copy assistant message to clipboard
   const handleCopyToClipboard = () => {
+    // (Clipboard logic remains the same)
     if (!content || isStreaming) return;
     logDebug('Attempting to copy content to clipboard.');
     copyUtil(content)
@@ -156,8 +127,9 @@ export const MessageBubble = memo(({
       });
   };
 
-  // System messages (typically errors) with special styling
+  // System messages
   if (isSystem) {
+    // (System message rendering remains the same)
     logDebug('Rendering as system message.');
     return (
       <div className={`px-5 py-2 my-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 ${className}`}>
@@ -166,8 +138,9 @@ export const MessageBubble = memo(({
     );
   }
 
-  // User messages with grey color scheme
+  // User messages
   if (isUser) {
+    // (User message rendering remains the same)
     logDebug('Rendering as user message.');
     return (
       <div className={`px-5 py-2 w-full flex justify-end ${className}`}>
@@ -181,57 +154,42 @@ export const MessageBubble = memo(({
   // --- Assistant Message Rendering ---
   if (role === 'assistant') {
     logDebug('Rendering as assistant message. Parsing content...');
-    // Parse the content into text and math segments using our helper
-    const segments = parseTextAndMath(content || ''); // Ensure content is not null/undefined
-
+    const segments = parseTextAndMath(content || '');
     logDebug(`Parsed ${segments.length} segments. Rendering...`);
 
     return (
       <div className={`px-5 py-2 w-full message-group relative ${className}`}>
-        {/* Container for rendering segments */}
-        {/* Apply prose styles for overall text formatting */}
         <div className={`prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-0`}>
           {segments.map((segment, index) => {
             logDebug(`Rendering segment ${index}: type=${segment.type}, inline=${segment.inline}, value="${segment.value.substring(0, 50)}..."`);
             return (
               <Fragment key={index}>
                 {segment.type === 'text' ? (
-                  // Render text segments using ReactMarkdown (with GFM, without math plugins)
-                  // Wrap in a span to keep it conceptually inline within the flow
-                  // Use unwrapDisallowed to prevent ReactMarkdown from adding <p> around simple text runs
                   <span className="text-segment">
                     <ReactMarkdown
-                      remarkPlugins={[remarkGfm]} // Use GFM for text parts (tables, lists, etc.)
-                      rehypePlugins={[]} // No rehype plugins needed here
-                      // *** CHANGE HERE: Attempt to prevent <p> wrapping for simple text ***
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[]}
                       disallowedElements={['p']}
                       unwrapDisallowed={true}
-                      // --------------------------------------------------------------------
                       components={{
-                        // Keep necessary components for text rendering
+                         // (Components for ReactMarkdown remain the same)
                          h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-5 mb-3" {...props} />,
                          h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
                          h3: ({node, ...props}) => <h3 className="text-base font-medium mt-3 mb-2" {...props} />,
-                         // If unwrapDisallowed works, this 'p' might not be used often for simple text,
-                         // but it's needed if the text segment itself contains paragraph breaks.
                          p: ({node, children, ...props}) => <p className="mb-3 leading-relaxed text-sm" {...props}>{children}</p>,
                          ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
                          ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
                          li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
                          code: ({node, inline, className, children, ...props}) => {
-                            // Handle code blocks/inline code found within text segments
                             if (inline) {
                                return <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>{children}</code>;
                             }
-                            // Use EnhancedCodeBlock for fenced code blocks parsed by remarkGfm
-                            // Ensure children are passed correctly, might need processing
                             const codeContent = React.Children.toArray(children).map(child =>
                               typeof child === 'string' ? child : ''
-                            ).join('').replace(/\n$/, ''); // Remove trailing newline often added
+                            ).join('').replace(/\n$/, '');
                             return <EnhancedCodeBlock language={className?.replace('language-', '')} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
                          },
-                         // Pass 'pre' through, EnhancedCodeBlock likely handles it
-                         pre: ({node, children, ...props}) => <>{children}</>, // Let `code` handle the block rendering
+                         pre: ({node, children, ...props}) => <>{children}</>,
                          a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
                          blockquote: ({node, children, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props}>{children}</blockquote>,
                          strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
@@ -244,15 +202,20 @@ export const MessageBubble = memo(({
                          th: ({node, children, ...props}) => <th className="p-2 text-left font-medium text-xs" {...props}>{children}</th>,
                          td: ({node, children, ...props}) => <td className="p-2 border-gray-200 dark:border-gray-700 text-xs" {...props}>{children}</td>,
                       }}
-                      // Render only this specific text segment
                       children={segment.value}
                      />
                    </span>
                 ) : (
-                  // Render math segments using MathFormulaBlock directly
-                  // Assuming MathFormulaBlock renders an inline element (e.g., span) when inline={true}
-                  // and a block element (e.g., div) when inline={false}
-                  <MathFormulaBlock content={segment.value} inline={segment.inline} />
+                  // *** CHANGE HERE: Add wrapper span with padding for inline math ***
+                  segment.inline ? (
+                    <span className="inline-math-wrapper px-1"> {/* Adjust px-1 (padding) or use mx-1 (margin) as needed */}
+                      <MathFormulaBlock content={segment.value} inline={segment.inline} />
+                    </span>
+                  ) : (
+                    // Block math doesn't need the wrapper/spacing
+                    <MathFormulaBlock content={segment.value} inline={segment.inline} />
+                  )
+                  // *********************************************************************
                 )}
               </Fragment>
             );
@@ -260,8 +223,8 @@ export const MessageBubble = memo(({
         </div>
 
         {/* Footer section: Model info, streaming indicator, copy button */}
+        {/* (Footer remains the same) */}
         <div className="flex justify-between items-center -mt-1">
-          {/* Model info */}
           <div className="text-xs opacity-70 flex items-center">
             {platformIconUrl && !isUser && (
               <img src={platformIconUrl} alt="AI Platform" className="w-3 h-3 mr-2 object-contain" />
@@ -275,8 +238,6 @@ export const MessageBubble = memo(({
               </div>
             )}
           </div>
-
-          {/* Copy Button */}
           <div className="w-7 h-7 flex items-center justify-center">
             {!isStreaming && content && (
               <button
@@ -291,6 +252,7 @@ export const MessageBubble = memo(({
         </div>
 
         {/* Metadata */}
+        {/* (Metadata remains the same) */}
         {Object.keys(metadata).length > 0 && (
           <div className="text-xs mt-2 opacity-70 overflow-hidden text-ellipsis">
             {Object.entries(metadata).map(([key, value]) => (
@@ -308,24 +270,5 @@ export const MessageBubble = memo(({
   return null; // Fallback return
 });
 
-// Make sure MathFormulaBlock is imported correctly
-// Example minimal stub for MathFormulaBlock if you don't have it,
-// replace with your actual component.
-/*
-const MathFormulaBlock = ({ content, inline }) => {
-  const Tag = inline ? 'span' : 'div';
-  // In a real component, you'd use KaTeX here
-  // For debugging, just show the content and inline status
-  return (
-    <Tag style={{
-      display: inline ? 'inline' : 'block',
-      padding: '0 2px',
-      margin: inline ? '0' : '1em 0',
-      border: '1px dashed lightgray', // For visualization
-      fontFamily: 'monospace'
-    }}>
-      {`MATH(${inline ? 'inline' : 'block'}): ${content}`}
-    </Tag>
-  );
-};
-*/
+// Reminder: Ensure MathFormulaBlock renders an inline element (like <span>)
+// when inline={true} and a block element (like <div>) when inline={false}.
