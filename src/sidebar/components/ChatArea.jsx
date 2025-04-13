@@ -180,8 +180,7 @@ function ChatArea({ className = '' }) {
 
               {/* Conditional Rendering for Extraction */}
               {isPageInjectable ? (
-                // Show Toggle and Label if page is injectable
-                <div className="flex flex-col items-center gap-1 text-sm text-theme-secondary">
+                <div className="flex items-center gap-3 text-sm text-theme-secondary">
                   <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
                   <Toggle
                     id="content-extract-toggle"
@@ -205,7 +204,7 @@ function ChatArea({ className = '' }) {
 
   // --- Chat Message Display Logic (when messages exist) ---
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col my-1">
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col my-1"> {/* Adjusted margin */}
       {messages.map((message) => (
         <MessageBubble
           key={message.id}
