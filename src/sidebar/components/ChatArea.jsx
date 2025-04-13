@@ -15,7 +15,7 @@ function ChatArea({ className = '' }) {
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
-  const { platforms, selectedPlatformId, selectedModel, hasAnyPlatformCredentials } = useSidebarPlatform();
+  const { platforms, selectedPlatformId, selectedModel, hasAnyPlatformCredentials, isLoading } = useSidebarPlatform();
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
 
   const getContentTypeName = (type) => {
@@ -39,9 +39,9 @@ function ChatArea({ className = '' }) {
 
     if (isProcessing) {
       // Calculate dynamic threshold (5% of height, min 10px)
-      const threshold = Math.max(10, scrollContainer.clientHeight * 0.05); 
+      const threshold = Math.max(10, scrollContainer.clientHeight * 0.05);
       const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= threshold;
-      
+
       if (!isAtBottom) {
         setUserInteractedWithScroll(true);
       } else {
@@ -93,15 +93,27 @@ function ChatArea({ className = '' }) {
     }
   };
 
-  const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false; // Added injectability check
+  const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
+  // --- Initial View Logic (when no messages) ---
   if (messages.length === 0) {
+    // 1. Loading State Check
+    if (isLoading) {
+      return (
+        <div className={`${className} flex items-center justify-center h-full`}>
+          {/* Tailwind CSS Spinner */}
+          <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      );
+    }
+
+    // 2. Render Credentials Message or Welcome Message (only if not loading)
     return (
       <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5`}>
         {!hasAnyPlatformCredentials ? (
           // Display message if no credentials are set up
-          <button 
-            onClick={openApiSettings} 
+          <button
+            onClick={openApiSettings}
             className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -114,6 +126,7 @@ function ChatArea({ className = '' }) {
             </p>
           </button>
         ) : (
+          // Standard welcome message content
           <>
             {/* Platform Logo and Model */}
             <div className="flex flex-col items-center">
@@ -131,7 +144,7 @@ function ChatArea({ className = '' }) {
                   )}
                 </>
               ) : (
-                <div></div>
+                <div></div> /* Placeholder if no platform selected */
               )}
             </div>
 
@@ -142,15 +155,14 @@ function ChatArea({ className = '' }) {
                 {getWelcomeMessage(contentType)}
               </p>
             </div>
-            
+
             {/* Content Type Badge and Toggle */}
-            <div className="flex flex-col items-center"> 
+            <div className="flex flex-col items-center">
               {/* Content Type Badge Display */}
               {getContentTypeIconSvg(contentType) && (
                 <div className="mb-4">
-                  {/* Content Type Badge */}
-                  <div 
-                    className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm 
+                  <div
+                    className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm
                       bg-gray-100 dark:bg-gray-800
                       text-theme-primary dark:text-theme-primary-dark"
                   >
@@ -164,9 +176,9 @@ function ChatArea({ className = '' }) {
                   </div>
                 </div>
               )}
-              
+
               {/* Content Extraction Toggle */}
-              <div className="flex flex-col items-center gap-1 text-sm text-theme-secondary"> 
+              <div className="flex flex-col items-center gap-1 text-sm text-theme-secondary">
                 <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
                 <Toggle
                   id="content-extract-toggle"
@@ -187,6 +199,7 @@ function ChatArea({ className = '' }) {
     );
   }
 
+  // --- Chat Message Display Logic (when messages exist) ---
   return (
     <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col mb-1">
       {messages.map((message) => (
@@ -199,8 +212,7 @@ function ChatArea({ className = '' }) {
           platformIconUrl={message.platformIconUrl}
         />
       ))}
-
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} /> {/* Scroll anchor */}
     </div>
   );
 }

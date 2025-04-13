@@ -64,7 +64,6 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
       role="listbox"
       aria-label="Select a prompt"
     >
-      {isLoading && <div className="px-3 py-1.5 text-sm text-theme-muted">Loading...</div>}
       {error && <div className="px-3 py-1.5 text-sm text-red-500">{error}</div>}
       {!isLoading && !error && prompts.length === 0 && (
         <div className="px-3 py-1.5 text-sm text-theme-muted">No prompts available.</div>
