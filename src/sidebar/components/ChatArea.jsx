@@ -40,8 +40,6 @@ const FreeTierIcon = () => (
 const ScrollDownIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-        {/* Added another path for a stronger down arrow visual */}
-        <path fillRule="evenodd" d="M10 18a.75.75 0 01-.75-.75V4.56l-2.22 2.22a.75.75 0 11-1.06-1.06l3.5-3.5a.75.75 0 011.06 0l3.5 3.5a.75.75 0 01-1.06 1.06L10.75 4.56v12.69a.75.75 0 01-.75.75z" clipRule="evenodd" transform="rotate(180 10 10)" />
     </svg>
 );
 // --- End Icon Definitions ---
@@ -461,34 +459,30 @@ function ChatArea({ className = '' }) {
 
       {/* --- Scroll Down Button (Improved Styling & Logic) --- */}
       <button
-        // Click handler uses 'smooth' scroll and resets state via scrollToBottom
         onClick={() => scrollToBottom('smooth')}
         className={`
-            absolute bottom-4 right-4 z-10 /* Example: Position bottom-right */
-            /* Or keep centered: bottom-2 left-1/2 transform -translate-x-1/2 */
-            p-1.5 rounded-full shadow-lg /* Enhanced shadow */
+            absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10
+            p-1.5 rounded-full shadow-md
             bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700
             text-theme-primary dark:text-theme-primary-dark
-            transition-opacity duration-200 ease-in-out /* Slightly faster fade */
+            transition-opacity duration-300 ease-in-out
             focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark focus-visible:ring-offset-background dark:focus-visible:ring-offset-background-dark
-            ${/* Conditional visibility and interaction based on state */''}
             ${showScrollDownButton ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}
         aria-label="Scroll to bottom"
         title="Scroll to bottom"
-        // Hide from accessibility tree when not visible
+        // Disable button if it's not supposed to be shown (for accessibility)
         aria-hidden={!showScrollDownButton}
-        // Remove from tab order when not visible
         tabIndex={showScrollDownButton ? 0 : -1}
       >
-        <ScrollDownIcon /> {/* Use the Icon component */}
+        <ScrollDownIcon />
       </button>
       {/* --- End Scroll Down Button --- */}
     </div>
   );
 }
 
-// Helper function for welcome message (extracted for clarity)
+// Helper function for welcome message
 function getWelcomeMessage(contentType, isPageInjectable) {
   if (!isPageInjectable) {
     return "Ask me anything! Type your question or prompt below.";

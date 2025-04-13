@@ -1,7 +1,6 @@
 // src/sidebar/contexts/SidebarChatContext.jsx
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
-// Removed debounce import
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';
@@ -11,8 +10,6 @@ import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 import { isInjectablePage } from '../../shared/utils/content-utils';
-
-const STREAMING_RENDER_DEBOUNCE_MS = 20; // Added constant
 
 const SidebarChatContext = createContext(null);
 
@@ -30,7 +27,6 @@ export function SidebarChatProvider({ children }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState(null);
-  const [streamingContent, setStreamingContent] = useState('');
   const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
@@ -165,9 +161,6 @@ export function SidebarChatProvider({ children }) {
     );
   }, [streamingMessageId]); // Dependency: streamingMessageId state
 
-  // Removed debouncedStateUpdate useMemo block
-  // --- End Debounced State Update Logic ---
-
   // Handle streaming response chunks
   useEffect(() => {
     /**
@@ -243,7 +236,6 @@ export function SidebarChatProvider({ children }) {
 
         // Set messages with all updates at once
         setMessages(updatedMessages);
-        setStreamingContent('');
         batchedStreamingContentRef.current = ''; // Clear buffer on completion
 
         // Save history
@@ -419,7 +411,6 @@ export function SidebarChatProvider({ children }) {
     setMessages(updatedMessages);
     setInputValue('');
     setStreamingMessageId(assistantMessageId);
-    setStreamingContent('');
     batchedStreamingContentRef.current = ''; // Reset buffer
 
     // Determine if this is the first message (before adding the current user message)
@@ -475,7 +466,6 @@ export function SidebarChatProvider({ children }) {
 
         // Reset streaming state as no stream was initiated
         setStreamingMessageId(null);
-        setStreamingContent('');
         resetContentProcessing(); // Reset the hook's processing state
 
         return; // Stop further processing for this message send
@@ -516,7 +506,6 @@ export function SidebarChatProvider({ children }) {
       }
 
       setStreamingMessageId(null);
-      setStreamingContent(''); // Also clear any potentially leftover streaming content
       resetContentProcessing(); // Ensure hook state is reset on error too
     }
   };
@@ -546,7 +535,7 @@ export function SidebarChatProvider({ children }) {
       });
 
       // Update the streaming message content to indicate cancellation
-      const cancelledContent = streamingContent + '\n\n_Stream cancelled by user._';
+      const cancelledContent = batchedStreamingContentRef.current + '\n\n_Stream cancelled by user._';
 
       // Calculate output tokens for the cancelled content - Removed await
       const outputTokens = TokenManagementService.estimateTokens(cancelledContent);
@@ -624,7 +613,6 @@ export function SidebarChatProvider({ children }) {
 
       // Reset streaming state
       setStreamingMessageId(null);
-      setStreamingContent('');
       batchedStreamingContentRef.current = ''; // Clear buffer on cancellation
 
     } catch (error) {
@@ -669,7 +657,6 @@ export function SidebarChatProvider({ children }) {
           setMessages([]);
           setInputValue('');
           setStreamingMessageId(null);
-          setStreamingContent('');
           setExtractedContentAdded(false); // Allow extracted content to be added again
           setIsCanceling(false);
 
@@ -689,7 +676,6 @@ export function SidebarChatProvider({ children }) {
     setMessages,
     setInputValue,
     setStreamingMessageId,
-    setStreamingContent,
     setExtractedContentAdded,
     setIsCanceling
   ]);
