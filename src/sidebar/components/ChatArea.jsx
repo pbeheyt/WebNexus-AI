@@ -4,28 +4,23 @@ import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle';
-import { Tooltip } from '../../components/layout/Tooltip'; // Ensured Tooltip import
+import { Tooltip } from '../../components/layout/Tooltip';
 import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 
 // --- Icon Definitions ---
-// Input Token Icon SVG
 const InputTokenIcon = () => (
   <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M12 18V6M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
-
-// Output Token Icon SVG
 const OutputTokenIcon = () => (
   <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M12 6v12M7 13l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
-
-// Context Window Icon SVG
 const ContextWindowIcon = () => (
   <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M15 3H21V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -34,8 +29,6 @@ const ContextWindowIcon = () => (
     <path d="M3 21L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
-
-// Free Tier Icon SVG (Tag Icon)
 const FreeTierIcon = () => (
     <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -47,13 +40,13 @@ const FreeTierIcon = () => (
 // --- Helper Function ---
 const formatContextWindow = (value) => {
   if (typeof value !== 'number') return '';
-  if (value >= 1000000) { // For millions
+  if (value >= 1000000) {
     return (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
   }
-  if (value >= 1000) { // For thousands
+  if (value >= 1000) {
     return (value / 1000).toFixed(0) + 'K';
   }
-  return value.toString(); // For values less than 1000
+  return value.toString();
 };
 // --- End Helper Function ---
 
@@ -80,8 +73,25 @@ function ChatArea({ className = '' }) {
     selectedPlatformId,
     selectedModel,
     hasAnyPlatformCredentials,
-    isLoading // This indicates if *any* platform data fetching is happening
+    isLoading
   } = useSidebarPlatform();
+
+  // --- Local State for Stable Display ---
+  const [displayModelConfig, setDisplayModelConfig] = useState(null);
+
+  // Effect to update displayModelConfig smoothly
+  useEffect(() => {
+    // Only update the display config if the incoming config is valid
+    // and its ID matches the currently selected model ID.
+    if (modelConfigData && selectedModel && modelConfigData.id === selectedModel) {
+      setDisplayModelConfig(modelConfigData);
+    }
+    // If they don't match, we *don't* update displayModelConfig,
+    // effectively keeping the previous model's details displayed until
+    // the new, correct data arrives.
+  }, [modelConfigData, selectedModel]); // Dependencies: Run when context data or selected model changes
+  // --- End Local State ---
+
 
   // Find the details of the selected platform
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
@@ -155,7 +165,9 @@ function ChatArea({ className = '' }) {
   // --- Initial View Logic (when no messages) ---
   if (messages.length === 0) {
     // Show spinner ONLY if loading AND essential platform/model info is missing.
-    const showInitialLoadingSpinner = isLoading && (!selectedPlatformId || !selectedModel);
+    // OR if the displayModelConfig hasn't been set yet for the selected model
+    const showInitialLoadingSpinner = isLoading || (hasAnyPlatformCredentials && !displayModelConfig && selectedModel);
+
 
     if (showInitialLoadingSpinner) {
       return (
@@ -198,16 +210,17 @@ function ChatArea({ className = '' }) {
                     alt={selectedPlatform.name || 'Platform'}
                     className="w-12 h-12 mb-3"
                   />
-                  {selectedModel && (
+                  {/* Display model name from the stable display config */}
+                  {displayModelConfig && (
                     <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium">
-                      {selectedModel}
+                      {displayModelConfig.name || displayModelConfig.id}
                     </div>
                   )}
-                  {/* Model Details Section */}
-                  {modelConfigData && (
+                  {/* Model Details Section- RENDER BASED ON displayModelConfig */}
+                  {displayModelConfig && ( // Use local state for rendering
                     <div className="flex flex-row items-center justify-center gap-3 text-xs text-theme-secondary mt-2">
                       {/* Price Section: Show "Free" or individual prices */}
-                      {modelConfigData.inputTokenPrice === 0 && modelConfigData.outputTokenPrice === 0 ? (
+                      {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
                         // Render "Free" indicator
                         <div
                           ref={freeTierRef}
@@ -231,7 +244,7 @@ function ChatArea({ className = '' }) {
                         // Render individual prices (if > 0)
                         <>
                           {/* Input Price */}
-                          {typeof modelConfigData.inputTokenPrice === 'number' && modelConfigData.inputTokenPrice > 0 && (
+                          {typeof displayModelConfig.inputTokenPrice === 'number' && displayModelConfig.inputTokenPrice > 0 && (
                             <div
                               ref={inputPriceRef}
                               className="flex items-center relative cursor-help"
@@ -242,7 +255,7 @@ function ChatArea({ className = '' }) {
                               tabIndex="0"
                             >
                               <InputTokenIcon />
-                              <span>{`$${modelConfigData.inputTokenPrice.toFixed(2)}`}</span>
+                              <span>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
                               <Tooltip
                                 show={hoveredElement === 'inputPrice'}
                                 message={`Est. cost per 1 million input tokens.`}
@@ -252,7 +265,7 @@ function ChatArea({ className = '' }) {
                             </div>
                           )}
                           {/* Output Price */}
-                          {typeof modelConfigData.outputTokenPrice === 'number' && modelConfigData.outputTokenPrice > 0 && (
+                          {typeof displayModelConfig.outputTokenPrice === 'number' && displayModelConfig.outputTokenPrice > 0 && (
                             <div
                               ref={outputPriceRef}
                               className="flex items-center relative cursor-help"
@@ -263,7 +276,7 @@ function ChatArea({ className = '' }) {
                               tabIndex="0"
                             >
                               <OutputTokenIcon />
-                              <span>{`$${modelConfigData.outputTokenPrice.toFixed(2)}`}</span>
+                              <span>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
                               <Tooltip
                                 show={hoveredElement === 'outputPrice'}
                                 message={`Est. cost per 1 million output tokens.`}
@@ -276,7 +289,7 @@ function ChatArea({ className = '' }) {
                       )}
 
                       {/* Context Window (Rendered independently of price) */}
-                      {typeof modelConfigData.contextWindow === 'number' && modelConfigData.contextWindow > 0 && (
+                      {typeof displayModelConfig.contextWindow === 'number' && displayModelConfig.contextWindow > 0 && (
                         <div
                           ref={contextWindowRef}
                           className="flex items-center relative cursor-help"
@@ -287,10 +300,10 @@ function ChatArea({ className = '' }) {
                           tabIndex="0"
                         >
                           <ContextWindowIcon />
-                          <span>{formatContextWindow(modelConfigData.contextWindow)}</span>
+                          <span>{formatContextWindow(displayModelConfig.contextWindow)}</span>
                           <Tooltip
                             show={hoveredElement === 'contextWindow'}
-                            message={`Max context window: ${modelConfigData.contextWindow.toLocaleString()} tokens.`}
+                            message={`Max context window: ${displayModelConfig.contextWindow.toLocaleString()} tokens.`}
                             targetRef={contextWindowRef}
                             position="bottom"
                           />
@@ -346,7 +359,7 @@ function ChatArea({ className = '' }) {
                 </div>
               ) : (
                 // Show Message if page is not injectable
-                <p className="text-xs text-theme-secondary mt-1">
+                <p className="text-sm text-theme-secondary mt-1">
                   Extraction not available for this page type.
                 </p>
               )}
