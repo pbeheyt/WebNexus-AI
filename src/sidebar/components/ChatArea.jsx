@@ -1,5 +1,6 @@
 // src/sidebar/components/ChatArea.jsx
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { debounce } from '../../shared/utils/debounce'; // Added import
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
@@ -10,27 +11,6 @@ import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 
-// --- Debounce Utility ---
-function debounce(func, wait) {
-  let timeout;
-
-  const debouncedFunction = function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-
-  // Add a cancel method to the debounced function
-  debouncedFunction.cancel = () => {
-    clearTimeout(timeout);
-  };
-
-  return debouncedFunction;
-}
-// --- End Debounce Utility ---
 
 // --- Icon Definitions --- (Keep exactly as they were)
 const InputTokenIcon = () => (
@@ -204,9 +184,10 @@ function ChatArea({ className = '' }) {
   }, [userHasScrolledUp, SCROLL_THRESHOLD]); // Depends on userHasScrolledUp to decide the next state
 
   // Create the debounced version of the scroll check function
+  // Uses the imported debounce now
   const debouncedCheckScrollPosition = useMemo(
     () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
-    [checkScrollPosition] // Recreate if checkScrollPosition function identity changes
+    [checkScrollPosition, DEBOUNCE_DELAY] // Ensure dependencies are correct
   );
 
   // Effect to attach and clean up the scroll event listener
@@ -222,6 +203,7 @@ function ChatArea({ className = '' }) {
       return () => {
         scrollContainer.removeEventListener('scroll', debouncedCheckScrollPosition);
         // Cancel any pending debounced calls on unmount
+        // The check for .cancel() is already here from the original code
         if (debouncedCheckScrollPosition && typeof debouncedCheckScrollPosition.cancel === 'function') {
              debouncedCheckScrollPosition.cancel();
         }
@@ -505,5 +487,24 @@ function ChatArea({ className = '' }) {
     </div>
   );
 }
+
+// Helper function for welcome message (extracted for clarity)
+function getWelcomeMessage(contentType, isPageInjectable) {
+  if (!isPageInjectable) {
+    return "Ask me anything! Type your question or prompt below.";
+  }
+  switch (contentType) {
+    case CONTENT_TYPES.YOUTUBE:
+      return "Ask about this YouTube video, or type a general question.";
+    case CONTENT_TYPES.REDDIT:
+      return "Ask about this Reddit post, or type a general question.";
+    case CONTENT_TYPES.PDF:
+      return "Ask about this PDF document, or type a general question.";
+    case CONTENT_TYPES.GENERAL:
+    default:
+      return "Ask about this page's content, or type a general question.";
+  }
+}
+
 
 export default ChatArea;

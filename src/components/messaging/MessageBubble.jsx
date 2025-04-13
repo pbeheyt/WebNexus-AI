@@ -124,7 +124,34 @@ export const MessageBubble = memo(({
           })}
         </div>
 
-
+        {/* Footer section */}
+        <div className="flex justify-between items-center -mt-1">
+          <div className="text-xs opacity-70 flex items-center space-x-2">
+            {platformIconUrl && !isUser && (
+              <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" /> 
+            )}
+            {model && !isUser && <span>{model}</span>}
+            {isStreaming && (
+              <div className="flex gap-1 items-center">
+                <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce"></div>
+                <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+            )}
+          </div>
+          {/* Copy button container */}
+          <div className="w-7 h-7 flex items-center justify-center">
+            {!isStreaming && content && (
+              <button
+                onClick={handleCopyToClipboard}
+                className={`p-1 rounded-md transition-opacity duration-200 z-10 ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                aria-label="Copy to clipboard" title="Copy to clipboard"
+              >
+                <CopyButtonIcon state={copyState} />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Metadata */}
         {Object.keys(metadata).length > 0 && (

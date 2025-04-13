@@ -1,6 +1,7 @@
 // src/sidebar/contexts/SidebarChatContext.jsx
 
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react'; // Added useRef
+import { debounce } from '../../shared/utils/debounce'; // Added debounce import
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';
@@ -10,6 +11,8 @@ import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 import { isInjectablePage } from '../../shared/utils/content-utils'; // Added import
+
+const STREAMING_RENDER_DEBOUNCE_MS = 20; // Added constant
 
 const SidebarChatContext = createContext(null);
 
@@ -33,6 +36,7 @@ export function SidebarChatProvider({ children }) {
   const [isCanceling, setIsCanceling] = useState(false);
   const [isContentExtractionEnabled, setIsContentExtractionEnabled] = useState(true);
   const [modelConfigData, setModelConfigData] = useState(null);
+  const batchedStreamingContentRef = useRef(''); // Added Ref for buffering
 
   // Use the token tracking hook
   const {
@@ -139,6 +143,32 @@ export function SidebarChatProvider({ children }) {
     }
   }, [tabId, resetContentProcessing]);
 
+  // --- Debounced State Update Logic ---
+  const performStreamingStateUpdate = useCallback(() => {
+    const messageId = streamingMessageId; // Read current streaming ID from state
+    const accumulatedContent = batchedStreamingContentRef.current; // Read buffered content
+
+    if (!messageId) return; // Safety check
+
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              content: accumulatedContent, // Update with the full batched content
+              isStreaming: true, // Keep streaming flag true during debounced updates
+            }
+          : msg
+      )
+    );
+  }, [streamingMessageId]); // Dependency: streamingMessageId state
+
+  const debouncedStateUpdate = useMemo(
+    () => debounce(performStreamingStateUpdate, STREAMING_RENDER_DEBOUNCE_MS),
+    [performStreamingStateUpdate] // Recreate if the base function changes
+  );
+  // --- End Debounced State Update Logic ---
+
   // Handle streaming response chunks
   useEffect(() => {
     /**
@@ -215,6 +245,7 @@ export function SidebarChatProvider({ children }) {
         // Set messages with all updates at once
         setMessages(updatedMessages);
         setStreamingContent('');
+        batchedStreamingContentRef.current = ''; // Clear buffer on completion
 
         // Save history
         if (tabId) {
@@ -266,22 +297,27 @@ export function SidebarChatProvider({ children }) {
 
         // Handle stream completion, cancellation, or error
         if (chunkData.done) {
+          debouncedStateUpdate.cancel(); // Cancel any pending debounced update
+
           if (chunkData.cancelled === true) {
             // Handle Cancellation: Stream was cancelled by the user (via background script signal)
             console.info(`Stream ${message.streamId} received cancellation signal.`);
             // Use partial content received so far, mark as cancelled but not an error
-            await handleStreamComplete(streamingMessageId, chunkData.fullContent || streamingContent, chunkData.model, false, true); // isError=false, isCancelled=true
+            const finalContent = chunkData.fullContent || batchedStreamingContentRef.current; // Use buffered ref
+            await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false, true); // isError=false, isCancelled=true
 
           } else if (chunkData.error) {
             // Handle Error: Stream ended with an error (other than user cancellation)
             const errorMessage = chunkData.error;
             console.error(`Stream ${message.streamId} error:`, errorMessage);
             // Update the message with the error, mark as error, not cancelled
+            // Use buffered ref as fallback for error message context if needed, though error message itself is primary
+            const finalContentOnError = chunkData.fullContent || batchedStreamingContentRef.current;
             await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true, false); // isError=true, isCancelled=false
 
           } else {
             // Handle Success: Stream completed normally
-            const finalContent = chunkData.fullContent || streamingContent;
+            const finalContent = chunkData.fullContent || batchedStreamingContentRef.current; // Use buffered ref
             console.info(`Stream ${message.streamId} completed successfully. Final length: ${finalContent.length}`);
             // Update message with final content, mark as success (not error, not cancelled)
             await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false, false); // isError=false, isCancelled=false
@@ -289,18 +325,13 @@ export function SidebarChatProvider({ children }) {
           }
           // Reset state regardless of outcome (completion, cancellation, error)
           setStreamingMessageId(null);
-          setStreamingContent('');
+          // setStreamingContent(''); // Keep this commented or remove, buffer cleared elsewhere
           setIsCanceling(false); // Reset canceling state
         } else if (chunkContent) {
-          // Process Intermediate Chunk: Append chunk to streaming content
-          setStreamingContent(prev => prev + chunkContent);
-
-          // Update message with current accumulated content
-          setMessages(prev => prev.map(msg =>
-            msg.id === streamingMessageId
-              ? { ...msg, content: streamingContent + chunkContent }
-              : msg
-          ));
+          // Process Intermediate Chunk: Append chunk to the ref buffer
+          batchedStreamingContentRef.current += chunkContent;
+          // Schedule a debounced UI update
+          debouncedStateUpdate();
         }
       }
     };
@@ -378,6 +409,7 @@ export function SidebarChatProvider({ children }) {
     setInputValue('');
     setStreamingMessageId(assistantMessageId);
     setStreamingContent('');
+    batchedStreamingContentRef.current = ''; // Reset buffer
 
     // Determine if this is the first message (before adding the current user message)
     const isFirstMessage = messages.length === 0;
@@ -577,6 +609,7 @@ export function SidebarChatProvider({ children }) {
       // Reset streaming state
       setStreamingMessageId(null);
       setStreamingContent('');
+      batchedStreamingContentRef.current = ''; // Clear buffer on cancellation
 
     } catch (error) {
       console.error('Error cancelling stream:', error);
