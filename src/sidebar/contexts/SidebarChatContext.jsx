@@ -705,7 +705,8 @@ export function SidebarChatProvider({ children }) {
       resetCurrentTabData,
       clearFormattedContentForTab,
       isContentExtractionEnabled,
-      setIsContentExtractionEnabled
+      setIsContentExtractionEnabled,
+      modelConfigData
     }}>
       {children}
     </SidebarChatContext.Provider>

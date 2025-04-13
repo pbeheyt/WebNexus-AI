@@ -4,16 +4,76 @@ import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle';
+import { Tooltip } from '../../components/layout/Tooltip'; // Ensured Tooltip import
 import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 
+// --- Icon Definitions ---
+// Input Token Icon SVG
+const InputTokenIcon = () => (
+  <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 18V6M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+// Output Token Icon SVG
+const OutputTokenIcon = () => (
+  <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 6v12M7 13l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+// Context Window Icon SVG
+const ContextWindowIcon = () => (
+  <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M15 3H21V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M9 21H3V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M21 3L14 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M3 21L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// Free Tier Icon SVG (Tag Icon)
+const FreeTierIcon = () => (
+    <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+// --- End Icon Definitions ---
+
+// --- Helper Function ---
+const formatContextWindow = (value) => {
+  if (typeof value !== 'number') return '';
+  if (value >= 1000000) { // For millions
+    return (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+  if (value >= 1000) { // For thousands
+    return (value / 1000).toFixed(0) + 'K';
+  }
+  return value.toString(); // For values less than 1000
+};
+// --- End Helper Function ---
+
+
 function ChatArea({ className = '' }) {
-  const { messages, isProcessing, isContentExtractionEnabled, setIsContentExtractionEnabled } = useSidebarChat();
+  const {
+    messages,
+    isProcessing,
+    isContentExtractionEnabled,
+    setIsContentExtractionEnabled,
+    modelConfigData
+  } = useSidebarChat();
   const { contentType, currentTab } = useContent();
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const [hoveredElement, setHoveredElement] = useState(null);
+  const inputPriceRef = useRef(null);
+  const outputPriceRef = useRef(null);
+  const contextWindowRef = useRef(null);
+  const freeTierRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
   const {
     platforms,
@@ -128,7 +188,7 @@ function ChatArea({ className = '' }) {
         ) : (
           // Standard welcome message content (shown if credentials exist and not initial loading)
           <>
-            {/* Platform Logo and Model */}
+            {/* Platform Logo, Model Name, and Details */}
             <div className="flex flex-col items-center">
               {/* Use selectedPlatformId and selectedPlatform safely */}
               {selectedPlatformId && selectedPlatform.iconUrl ? (
@@ -139,8 +199,103 @@ function ChatArea({ className = '' }) {
                     className="w-12 h-12 mb-3"
                   />
                   {selectedModel && (
-                    <div className="text-sm text-theme-secondary">
+                    <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium">
                       {selectedModel}
+                    </div>
+                  )}
+                  {/* Model Details Section */}
+                  {modelConfigData && (
+                    <div className="flex flex-row items-center justify-center gap-3 text-xs text-theme-secondary mt-2">
+                      {/* Price Section: Show "Free" or individual prices */}
+                      {modelConfigData.inputTokenPrice === 0 && modelConfigData.outputTokenPrice === 0 ? (
+                        // Render "Free" indicator
+                        <div
+                          ref={freeTierRef}
+                          className="flex items-center relative cursor-help"
+                          onMouseEnter={() => setHoveredElement('freeTier')}
+                          onMouseLeave={() => setHoveredElement(null)}
+                          onFocus={() => setHoveredElement('freeTier')}
+                          onBlur={() => setHoveredElement(null)}
+                          tabIndex="0"
+                        >
+                          <FreeTierIcon />
+                          <span>Free</span>
+                          <Tooltip
+                            show={hoveredElement === 'freeTier'}
+                            message="This model is currently free to use via API."
+                            targetRef={freeTierRef}
+                            position="bottom"
+                          />
+                        </div>
+                      ) : (
+                        // Render individual prices (if > 0)
+                        <>
+                          {/* Input Price */}
+                          {typeof modelConfigData.inputTokenPrice === 'number' && modelConfigData.inputTokenPrice > 0 && (
+                            <div
+                              ref={inputPriceRef}
+                              className="flex items-center relative cursor-help"
+                              onMouseEnter={() => setHoveredElement('inputPrice')}
+                              onMouseLeave={() => setHoveredElement(null)}
+                              onFocus={() => setHoveredElement('inputPrice')}
+                              onBlur={() => setHoveredElement(null)}
+                              tabIndex="0"
+                            >
+                              <InputTokenIcon />
+                              <span>{`$${modelConfigData.inputTokenPrice.toFixed(2)}`}</span>
+                              <Tooltip
+                                show={hoveredElement === 'inputPrice'}
+                                message={`Est. cost per 1 million input tokens.`}
+                                targetRef={inputPriceRef}
+                                position="bottom"
+                              />
+                            </div>
+                          )}
+                          {/* Output Price */}
+                          {typeof modelConfigData.outputTokenPrice === 'number' && modelConfigData.outputTokenPrice > 0 && (
+                            <div
+                              ref={outputPriceRef}
+                              className="flex items-center relative cursor-help"
+                              onMouseEnter={() => setHoveredElement('outputPrice')}
+                              onMouseLeave={() => setHoveredElement(null)}
+                              onFocus={() => setHoveredElement('outputPrice')}
+                              onBlur={() => setHoveredElement(null)}
+                              tabIndex="0"
+                            >
+                              <OutputTokenIcon />
+                              <span>{`$${modelConfigData.outputTokenPrice.toFixed(2)}`}</span>
+                              <Tooltip
+                                show={hoveredElement === 'outputPrice'}
+                                message={`Est. cost per 1 million output tokens.`}
+                                targetRef={outputPriceRef}
+                                position="bottom"
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Context Window (Rendered independently of price) */}
+                      {typeof modelConfigData.contextWindow === 'number' && modelConfigData.contextWindow > 0 && (
+                        <div
+                          ref={contextWindowRef}
+                          className="flex items-center relative cursor-help"
+                          onMouseEnter={() => setHoveredElement('contextWindow')}
+                          onMouseLeave={() => setHoveredElement(null)}
+                          onFocus={() => setHoveredElement('contextWindow')}
+                          onBlur={() => setHoveredElement(null)}
+                          tabIndex="0"
+                        >
+                          <ContextWindowIcon />
+                          <span>{formatContextWindow(modelConfigData.contextWindow)}</span>
+                          <Tooltip
+                            show={hoveredElement === 'contextWindow'}
+                            message={`Max context window: ${modelConfigData.contextWindow.toLocaleString()} tokens.`}
+                            targetRef={contextWindowRef}
+                            position="bottom"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
@@ -191,7 +346,7 @@ function ChatArea({ className = '' }) {
                 </div>
               ) : (
                 // Show Message if page is not injectable
-                <p className="text-sm text-theme-secondary mt-1">
+                <p className="text-xs text-theme-secondary mt-1">
                   Extraction not available for this page type.
                 </p>
               )}
