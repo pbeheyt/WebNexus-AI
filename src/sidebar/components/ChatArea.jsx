@@ -332,7 +332,7 @@ function ChatArea({ className = '' }) {
 
   // --- Chat Message Display Logic (when messages exist) ---
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col">
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col pt-2">
       {messages.map((message) => (
         <MessageBubble
           key={message.id}
