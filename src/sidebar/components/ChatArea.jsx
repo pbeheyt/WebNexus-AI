@@ -5,7 +5,7 @@ import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle';
 import { Tooltip } from '../../components/layout/Tooltip';
-import { useContent } from '../../contexts/ContentContext';
+import { useContent } from '../../contexts/ContentContext'; 
 import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
@@ -69,29 +69,31 @@ function ChatArea({ className = '' }) {
   const freeTierRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
   const {
-    platforms, // Need platforms array from context
+    platforms,
     selectedPlatformId,
     selectedModel,
     hasAnyPlatformCredentials,
-    isLoading // General loading state from platform context
+    // No longer need isLoading for this specific spinner logic
   } = useSidebarPlatform();
 
   // --- Local State for Stable Display ---
-  const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null)
+  // These hold the currently *displayed* platform and model info.
+  // They only update when BOTH the selected platform and the corresponding modelConfigData are ready.
+  const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
 
   // Effect to update display configs smoothly and synchronously
   useEffect(() => {
-    // 1. Find the target platform config based on selectedPlatformId
+    // Find the target platform config based on selectedPlatformId
     const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
 
-    // 2. Check if the model config data is valid and matches the selected model
+    // Check if the model config data is loaded and matches the selected model
     const isModelConfigReady = modelConfigData && selectedModel && modelConfigData.id === selectedModel;
 
-    // 3. Check if the target platform was found
+    // Check if the target platform was found
     const isPlatformReady = !!targetPlatform;
 
-    // 4. Only update BOTH display states if BOTH platform and model data are ready for the current selection
+    // Only update BOTH display states if BOTH platform and model data are ready for the current selection
     if (isPlatformReady && isModelConfigReady) {
       // Update platform display state
       setDisplayPlatformConfig({
@@ -102,14 +104,11 @@ function ChatArea({ className = '' }) {
       // Update model display state
       setDisplayModelConfig(modelConfigData);
     }
-    // If not both ready, do nothing - keep displaying the previous stable state.
+    // If not both ready (e.g., modelConfigData is still loading for the new selection),
+    // do nothing - keep displaying the previous stable state to avoid flickering.
 
-  }, [platforms, selectedPlatformId, modelConfigData, selectedModel]); // Dependencies updated
+  }, [platforms, selectedPlatformId, modelConfigData, selectedModel]);
   // --- End Local State ---
-
-
-  // Find the details of the selected platform (still needed for other logic potentially)
-  const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
 
   // Helper function to get user-friendly content type names
   const getContentTypeName = (type) => {
@@ -128,28 +127,54 @@ function ChatArea({ className = '' }) {
     if (!scrollContainer) return;
 
     if (isProcessing) {
-      const threshold = Math.max(10, scrollContainer.clientHeight * 0.05);
+      // Check if user scrolled up while processing
+      const threshold = Math.max(10, scrollContainer.clientHeight * 0.05); // 5% or 10px threshold
       const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= threshold;
-      setUserInteractedWithScroll(!isAtBottom);
+      if (!isAtBottom) {
+        setUserInteractedWithScroll(true);
+      }
+    } else {
+      // Check if user scrolled up when not processing (to prevent auto-scroll later)
+       const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop === scrollContainer.clientHeight;
+       const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 10; // Small tolerance
+       if (!isAtBottom && !isNearBottom) {
+          setUserInteractedWithScroll(true);
+       } else {
+          // Allow auto-scroll if user scrolls back to the very bottom
+          setUserInteractedWithScroll(false);
+       }
     }
-  }, [isProcessing]);
+  }, [isProcessing]); // Added isProcessing dependency
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
       return () => scrollContainer.removeEventListener('scroll', handleScroll);
     }
-  }, [handleScroll]);
+  }, [handleScroll]); // handleScroll is stable due to useCallback
 
   useEffect(() => {
-    if (!userInteractedWithScroll && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    // Auto-scroll to bottom if user hasn't scrolled up manually
+    if (!userInteractedWithScroll && messagesEndRef.current && scrollContainerRef.current) {
+        // Only scroll if near the bottom or initial load
+        const scrollContainer = scrollContainerRef.current;
+        const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= scrollContainer.clientHeight * 0.5; // e.g., within half viewport height from bottom
+
+        // Use smooth scroll for new messages, instant for initial loads might be better?
+        // For simplicity, using smooth always when auto-scrolling.
+        if (isNearBottom || messages.length <= 1) { // Scroll on first message too
+             messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
     }
-  }, [messages, userInteractedWithScroll]);
+  }, [messages, userInteractedWithScroll]); // Rerun when messages update
 
   useEffect(() => {
-    setUserInteractedWithScroll(false);
+    // Reset scroll interaction flag when processing starts,
+    // allowing auto-scroll for the new response unless user scrolls up again.
+    if (isProcessing) {
+        setUserInteractedWithScroll(false);
+    }
   }, [isProcessing]);
   // --- End Scroll Handling ---
 
@@ -168,7 +193,13 @@ function ChatArea({ className = '' }) {
   // Helper function to open settings
   const openApiSettings = () => {
     try {
-      chrome.tabs.create({ url: chrome.runtime.getURL('settings.html#api-settings') });
+      // Make sure 'chrome' is available (usually is in extension contexts)
+      if (chrome && chrome.tabs && chrome.runtime) {
+        chrome.tabs.create({ url: chrome.runtime.getURL('settings.html#api-settings') });
+      } else {
+         console.warn("Chrome APIs not available. Cannot open settings tab.");
+         // Potentially provide alternative feedback to the user
+      }
     } catch (error) {
       console.error('Could not open API options page:', error);
     }
@@ -179,29 +210,18 @@ function ChatArea({ className = '' }) {
 
   // --- Initial View Logic (when no messages) ---
   if (messages.length === 0) {
-    // Show spinner if general loading OR if display states aren't ready for the current selection
-    const isDisplayReadyForSelection = displayPlatformConfig?.id === selectedPlatformId && displayModelConfig?.id === selectedModel;
-    const showInitialLoadingSpinner = isLoading || (hasAnyPlatformCredentials && (selectedPlatformId || selectedModel) && !isDisplayReadyForSelection);
 
-    if (showInitialLoadingSpinner) {
+    // --- No Credentials View ---
+    // Show this immediately if no credentials are configured.
+    if (!hasAnyPlatformCredentials) {
       return (
-        <div className={`${className} flex items-center justify-center h-full`}>
-          {/* Tailwind CSS Spinner */}
-          <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      );
-    }
-
-    // Render Credentials Message or Welcome Message
-    return (
-      <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5`}>
-        {/* Check for credentials */}
-        {!hasAnyPlatformCredentials ? (
-          // No Credentials Message
+        <div className={`${className} flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}>
           <button
             onClick={openApiSettings}
             className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="Configure API Credentials in Settings"
           >
+            {/* Settings Icon SVG */}
             <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1.51-1V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               <circle cx="12" cy="12" r="3"></circle>
@@ -211,139 +231,169 @@ function ChatArea({ className = '' }) {
               Click here to configure API keys in settings.
             </p>
           </button>
-        ) : (
-          // Welcome Message (Credentials Exist)
-          <>
-            {/* Platform Logo, Model Name, and Details */}
-            <div className="flex flex-col items-center py-2"> 
-              {/* RENDER BASED ON displayPlatformConfig */}
-              {displayPlatformConfig ? ( // Use local state for platform
-                <>
-                  <img
-                    src={displayPlatformConfig.iconUrl} // Use local state
-                    alt={displayPlatformConfig.name || 'Platform'} // Use local state
-                    className="w-12 h-12 mb-3"
-                  />
-                  {/* Display model name from the stable display config */}
-                  {displayModelConfig && ( // Use local state for model
-                    <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium">
-                      {displayModelConfig.name || displayModelConfig.id}
-                    </div>
-                  )}
-                  {/* Model Description */}
-                  {displayModelConfig.description && (
-                    <p className="text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto">
-                      {displayModelConfig.description}
-                    </p>
-                  )}
-                  {/* Model Details Section - RENDER BASED ON displayModelConfig */}
-                  {displayModelConfig && ( // Use local state for model details
-                    <div className="flex flex-row items-center justify-center gap-3 text-xs text-theme-secondary">
-                      {/* Price Section */}
-                      {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
-                        <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
-                          <FreeTierIcon /> <span>Free</span>
-                          <Tooltip show={hoveredElement === 'freeTier'} message="This model is currently free to use via API." targetRef={freeTierRef} position="bottom" />
-                        </div>
-                      ) : (
-                        <>
-                          {typeof displayModelConfig.inputTokenPrice === 'number' && displayModelConfig.inputTokenPrice > 0 && (
-                            <div ref={inputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('inputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('inputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
-                              <InputTokenIcon /> <span>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
-                              <Tooltip show={hoveredElement === 'inputPrice'} message={`Cost per 1 million input tokens.`} targetRef={inputPriceRef} position="bottom" />
-                            </div>
-                          )}
-                          {typeof displayModelConfig.outputTokenPrice === 'number' && displayModelConfig.outputTokenPrice > 0 && (
-                            <div ref={outputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('outputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('outputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
-                              <OutputTokenIcon /> <span>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
-                              <Tooltip show={hoveredElement === 'outputPrice'} message={`Cost per 1 million output tokens.`} targetRef={outputPriceRef} position="bottom" />
-                            </div>
-                          )}
-                        </>
-                      )}
-                      {/* Context Window */}
-                      {typeof displayModelConfig.contextWindow === 'number' && displayModelConfig.contextWindow > 0 && (
-                        <div ref={contextWindowRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('contextWindow')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('contextWindow')} onBlur={() => setHoveredElement(null)} tabIndex="0">
-                          <ContextWindowIcon /> <span>{formatContextWindow(displayModelConfig.contextWindow)}</span>
-                          <Tooltip show={hoveredElement === 'contextWindow'} message={`Max context window: ${displayModelConfig.contextWindow.toLocaleString()} tokens.`} targetRef={contextWindowRef} position="bottom" />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                // Placeholder if displayPlatformConfig is not ready
-                <div className="w-12 h-12 mb-3"></div>
-              )}
-            </div>
+        </div>
+      );
+    }
 
-            {/* Start a conversation message */}
-            <div className="flex flex-col items-center py-2">
-              <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
-              <p className="text-sm">
-                {getWelcomeMessage(contentType)}
-              </p>
-            </div>
+    // --- Initial Loading Spinner View ---
+    // Show spinner ONLY if credentials exist BUT we haven't successfully loaded
+    // and set the *initial* displayPlatformConfig yet (it's still null).
+    // This happens only on the very first load after credentials are set.
+    if (hasAnyPlatformCredentials && displayPlatformConfig === null) {
+      return (
+        <div className={`${className} flex items-center justify-center h-full`}>
+          {/* Tailwind CSS Spinner */}
+          <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status" aria-label="Loading model information"></div>
+        </div>
+      );
+    }
 
-            {/* Content Type Badge and Extraction Info/Toggle */}
-            <div className="flex flex-col items-center py-2">
-              {/* Content Type Badge Display */}
-              {getContentTypeIconSvg(contentType) && (
-                <div className="mb-4">
+    // --- Welcome Message View ---
+    // Show this if credentials exist AND the initial platform/model info has been loaded
+    // and set into displayPlatformConfig at least once. This avoids the spinner on subsequent
+    // platform/model switches when messages are still empty.
+    if (hasAnyPlatformCredentials && displayPlatformConfig !== null) {
+      return (
+        <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-4 overflow-y-auto`}> {/* Added overflow-y-auto */}
+
+          {/* Platform Logo, Model Name, and Details Section */}
+          <div className="flex flex-col items-center py-2 w-full">
+             {/* Display platform logo from stable local state */}
+            <img
+              src={displayPlatformConfig.iconUrl}
+              alt={`${displayPlatformConfig.name || 'Platform'} logo`}
+              className="w-12 h-12 mb-3 object-contain"
+            />
+            {/* Display model details from stable local state */}
+            {displayModelConfig ? (
+              <>
+                {/* Model Name */}
+                <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium" title={displayModelConfig.id}>
+                  {displayModelConfig.name || displayModelConfig.id}
+                </div>
+                {/* Model Description */}
+                {displayModelConfig.description && (
+                  <p className="text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto">
+                    {displayModelConfig.description}
+                  </p>
+                )}
+                {/* Model Specific Details (Price, Context Window) */}
+                <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-2">
+                  {/* Price Section */}
+                  {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
+                     // Free Tier Indicator
+                     <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
+                       <FreeTierIcon /> <span>Free</span>
+                       <Tooltip show={hoveredElement === 'freeTier'} message="This model is currently free to use via API." targetRef={freeTierRef} position="bottom" />
+                     </div>
+                   ) : (
+                     // Paid Tier Indicators
+                     <>
+                       {typeof displayModelConfig.inputTokenPrice === 'number' && displayModelConfig.inputTokenPrice >= 0 && ( // Show even if 0 for clarity if output is paid
+                         <div ref={inputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('inputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('inputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
+                           <InputTokenIcon /> <span>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
+                           <Tooltip show={hoveredElement === 'inputPrice'} message={`$${displayModelConfig.inputTokenPrice.toFixed(2)} / 1M input tokens.`} targetRef={inputPriceRef} position="bottom" />
+                         </div>
+                       )}
+                       {typeof displayModelConfig.outputTokenPrice === 'number' && displayModelConfig.outputTokenPrice > 0 && ( // Only show output if > 0 usually
+                         <div ref={outputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('outputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('outputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
+                           <OutputTokenIcon /> <span>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
+                           <Tooltip show={hoveredElement === 'outputPrice'} message={`$${displayModelConfig.outputTokenPrice.toFixed(2)} / 1M output tokens.`} targetRef={outputPriceRef} position="bottom" />
+                         </div>
+                       )}
+                     </>
+                   )}
+                   {/* Context Window Indicator */}
+                   {typeof displayModelConfig.contextWindow === 'number' && displayModelConfig.contextWindow > 0 && (
+                     <div ref={contextWindowRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('contextWindow')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('contextWindow')} onBlur={() => setHoveredElement(null)} tabIndex="0">
+                       <ContextWindowIcon /> <span>{formatContextWindow(displayModelConfig.contextWindow)}</span>
+                       <Tooltip show={hoveredElement === 'contextWindow'} message={`Max context window: ${displayModelConfig.contextWindow.toLocaleString()} tokens.`} targetRef={contextWindowRef} position="bottom" />
+                     </div>
+                   )}
+                </div>
+              </>
+            ) : (
+              // Optional: Placeholder if model config somehow isn't ready yet, though useEffect should prevent this state often
+               <div className="h-5 mt-1 mb-2"></div> // Placeholder height to prevent layout jump
+            )}
+          </div>
+
+          {/* Start a conversation message Section */}
+          <div className="flex flex-col items-center py-2 w-full">
+            <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
+            <p className="text-sm max-w-xs mx-auto">
+              {getWelcomeMessage(contentType)}
+            </p>
+          </div>
+
+          {/* Content Type Badge and Extraction Toggle Section */}
+          <div className="flex flex-col items-center py-2 w-full">
+            {/* Content Type Badge Display */}
+            {getContentTypeIconSvg(contentType) && (
+              <div className="mb-4">
+                <div
+                  className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm
+                    bg-gray-100 dark:bg-gray-800
+                    text-theme-primary dark:text-theme-primary-dark"
+                  aria-label={`Current content type: ${getContentTypeName(contentType)}`}
+                >
                   <div
-                    className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm
-                      bg-gray-100 dark:bg-gray-800
-                      text-theme-primary dark:text-theme-primary-dark"
-                  >
-                    <div
-                      className="mr-3"
-                      dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
-                    />
-                    <span className="text-sm font-medium">
-                      {getContentTypeName(contentType)}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Conditional Rendering for Extraction */}
-              {isPageInjectable ? (
-                <div className="flex items-center gap-3 text-sm text-theme-secondary">
-                  <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
-                  <Toggle
-                    id="content-extract-toggle"
-                    checked={isContentExtractionEnabled}
-                    onChange={() => setIsContentExtractionEnabled(prev => !prev)}
-                    disabled={!hasAnyPlatformCredentials}
+                    className="mr-3 flex-shrink-0 w-5 h-5" // Ensure icon size consistency
+                    dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
+                    aria-hidden="true" // Icon is decorative
                   />
+                  <span className="text-sm font-medium">
+                    {getContentTypeName(contentType)}
+                  </span>
                 </div>
-              ) : (
-                // Show Message if page is not injectable
-                <p className="text-xs text-theme-secondary">
+              </div>
+            )}
+
+            {/* Conditional Rendering for Content Extraction Toggle */}
+            {isPageInjectable ? (
+              // Show Toggle if page is injectable
+              <div className="flex items-center gap-3 text-sm text-theme-secondary">
+                <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
+                <Toggle
+                  id="content-extract-toggle"
+                  checked={isContentExtractionEnabled}
+                  onChange={() => setIsContentExtractionEnabled(prev => !prev)}
+                  disabled={!hasAnyPlatformCredentials} // Should always be enabled here based on logic flow, but keep for safety
+                />
+              </div>
+            ) : (
+              // Show Message if page is not injectable
+              contentType !== CONTENT_TYPES.GENERAL && (
+                <p className="text-sm text-theme-secondary">
                   Extraction not available for this page type.
                 </p>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-    );
+              )
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   }
 
+
   // --- Chat Message Display Logic (when messages exist) ---
+  // This part remains the same, renders when messages.length > 0
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col pt-2">
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col pt-2 pb-4 px-3 space-y-3"> {/* Added padding/spacing */}
       {messages.map((message) => (
         <MessageBubble
           key={message.id}
           content={message.content}
           role={message.role}
           isStreaming={message.isStreaming}
-          model={message.model}
-          platformIconUrl={message.platformIconUrl}
+          model={message.model} // Pass model info if available
+          platformIconUrl={message.platformIconUrl} // Pass platform icon if available
         />
       ))}
-      <div ref={messagesEndRef} /> {/* Scroll anchor */}
+      {/* Invisible element to scroll to */}
+      <div ref={messagesEndRef} style={{ height: '1px' }} />
     </div>
   );
 }
