@@ -125,7 +125,7 @@ function ChatArea({ className = '' }) {
 
 
   // --- Scroll Handling Logic with user intent detection ---
-  const SCROLL_THRESHOLD = 50; // Pixels from bottom to consider "near"
+  const SCROLL_THRESHOLD = 5; // Pixels from bottom to consider "near"
   const DEBOUNCE_DELAY = 50; // Milliseconds for scroll event debounce
 
   // Function to scroll reliably to the very bottom
