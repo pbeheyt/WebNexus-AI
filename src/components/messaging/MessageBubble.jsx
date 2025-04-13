@@ -133,9 +133,9 @@ export const MessageBubble = memo(({
             {model && !isUser && <span>{model}</span>}
             {isStreaming && (
               <div className="flex gap-1 items-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce"></div>
+                <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
               </div>
             )}
           </div>
