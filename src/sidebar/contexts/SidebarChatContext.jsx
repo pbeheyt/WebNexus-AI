@@ -1,7 +1,7 @@
 // src/sidebar/contexts/SidebarChatContext.jsx
 
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react'; // Added useRef
-import { debounce } from '../../shared/utils/debounce'; // Added debounce import
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
+// Removed debounce import
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';
@@ -10,7 +10,7 @@ import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
-import { isInjectablePage } from '../../shared/utils/content-utils'; // Added import
+import { isInjectablePage } from '../../shared/utils/content-utils';
 
 const STREAMING_RENDER_DEBOUNCE_MS = 20; // Added constant
 
@@ -37,6 +37,7 @@ export function SidebarChatProvider({ children }) {
   const [isContentExtractionEnabled, setIsContentExtractionEnabled] = useState(true);
   const [modelConfigData, setModelConfigData] = useState(null);
   const batchedStreamingContentRef = useRef(''); // Added Ref for buffering
+  const rafIdRef = useRef(null); // Added Ref for requestAnimationFrame ID
 
   // Use the token tracking hook
   const {
@@ -143,8 +144,9 @@ export function SidebarChatProvider({ children }) {
     }
   }, [tabId, resetContentProcessing]);
 
-  // --- Debounced State Update Logic ---
+  // --- State Update Logic (using requestAnimationFrame) ---
   const performStreamingStateUpdate = useCallback(() => {
+    rafIdRef.current = null; // Reset the ref after the frame executes
     const messageId = streamingMessageId; // Read current streaming ID from state
     const accumulatedContent = batchedStreamingContentRef.current; // Read buffered content
 
@@ -163,10 +165,7 @@ export function SidebarChatProvider({ children }) {
     );
   }, [streamingMessageId]); // Dependency: streamingMessageId state
 
-  const debouncedStateUpdate = useMemo(
-    () => debounce(performStreamingStateUpdate, STREAMING_RENDER_DEBOUNCE_MS),
-    [performStreamingStateUpdate] // Recreate if the base function changes
-  );
+  // Removed debouncedStateUpdate useMemo block
   // --- End Debounced State Update Logic ---
 
   // Handle streaming response chunks
@@ -297,7 +296,12 @@ export function SidebarChatProvider({ children }) {
 
         // Handle stream completion, cancellation, or error
         if (chunkData.done) {
-          debouncedStateUpdate.cancel(); // Cancel any pending debounced update
+          // Cancel any pending animation frame before completing
+          if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+          }
+          // debouncedStateUpdate.cancel(); // Original line removed
 
           if (chunkData.cancelled === true) {
             // Handle Cancellation: Stream was cancelled by the user (via background script signal)
@@ -330,8 +334,10 @@ export function SidebarChatProvider({ children }) {
         } else if (chunkContent) {
           // Process Intermediate Chunk: Append chunk to the ref buffer
           batchedStreamingContentRef.current += chunkContent;
-          // Schedule a debounced UI update
-          debouncedStateUpdate();
+          // Schedule UI update using requestAnimationFrame if not already scheduled
+          if (rafIdRef.current === null) {
+            rafIdRef.current = requestAnimationFrame(performStreamingStateUpdate);
+          }
         }
       }
     };
@@ -341,8 +347,13 @@ export function SidebarChatProvider({ children }) {
 
     return () => {
       chrome.runtime.onMessage.removeListener(handleStreamChunk);
+      // Cancel any pending animation frame on cleanup
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null; // Also reset the ref here
+      }
     };
-  }, [streamingMessageId, streamingContent, messages, visibleMessages, tabId, selectedModel,
+  }, [streamingMessageId, messages, visibleMessages, tabId, selectedModel, // Removed streamingContent dependency
       selectedPlatformId, modelConfigData, extractedContentAdded]);
 
   /**
@@ -521,6 +532,11 @@ export function SidebarChatProvider({ children }) {
     // Extract the actual string ID from the object
     const streamId = result[STORAGE_KEYS.STREAM_ID];
     setIsCanceling(true);
+    // Cancel any pending animation frame immediately on cancellation request
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
 
     try {
       // Send cancellation message to background script
