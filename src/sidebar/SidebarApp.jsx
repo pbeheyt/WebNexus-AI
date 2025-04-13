@@ -28,11 +28,10 @@ export default function SidebarApp() {
         setIsReady(true);
       } else {
         // Log critical error if tabId is missing or invalid in the URL
-        console.error('FATAL: Sidebar loaded without a valid tabId in URL. Cannot initialize.'); // Updated log message
+        console.error('FATAL: Sidebar loaded without a valid tabId in URL. Cannot initialize.');
         setIsReady(false);
       }
     } catch (error) {
-      // Log errors during URL parsing or other synchronous issues in the try block
       console.error('Error during initial tabId processing:', error);
       setIsReady(false);
     }
