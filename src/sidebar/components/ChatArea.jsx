@@ -1,5 +1,5 @@
 // src/sidebar/components/ChatArea.jsx
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
@@ -10,7 +10,21 @@ import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 
-// --- Icon Definitions ---
+// --- Debounce Utility ---
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+// --- End Debounce Utility ---
+
+// --- Icon Definitions --- (Keep these exactly as they were)
 const InputTokenIcon = () => (
   <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M12 18V6M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -35,9 +49,15 @@ const FreeTierIcon = () => (
         <line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
+const ScrollDownIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+    </svg>
+);
 // --- End Icon Definitions ---
 
-// --- Helper Function ---
+
+// --- Helper Function --- (Keep this exactly as it was)
 const formatContextWindow = (value) => {
   if (typeof value !== 'number') return '';
   if (value >= 1000000) {
@@ -68,6 +88,8 @@ function ChatArea({ className = '' }) {
   const contextWindowRef = useRef(null);
   const freeTierRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
+  const [showScrollDownButton, setShowScrollDownButton] = useState(false);
+  const isNearBottomRef = useRef(true); // Ref to track if near bottom reliably
   const {
     platforms,
     selectedPlatformId,
@@ -75,41 +97,31 @@ function ChatArea({ className = '' }) {
     hasAnyPlatformCredentials,
   } = useSidebarPlatform();
 
-  // --- Local State for Stable Display ---
-  // These hold the currently *displayed* platform and model info.
-  // They only update when BOTH the selected platform and the corresponding modelConfigData are ready.
+  // --- Local State for Stable Display --- (Keep this block)
   const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
 
-  // Effect to update display configs smoothly and synchronously
   useEffect(() => {
-    // Find the target platform config based on selectedPlatformId
     const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
-
-    // Check if the model config data is loaded and matches the selected model
     const isModelConfigReady = modelConfigData && selectedModel && modelConfigData.id === selectedModel;
-
-    // Check if the target platform was found
     const isPlatformReady = !!targetPlatform;
 
-    // Only update BOTH display states if BOTH platform and model data are ready for the current selection
     if (isPlatformReady && isModelConfigReady) {
-      // Update platform display state
       setDisplayPlatformConfig({
           id: targetPlatform.id,
           name: targetPlatform.name,
           iconUrl: targetPlatform.iconUrl
       });
-      // Update model display state
       setDisplayModelConfig(modelConfigData);
+    } else if (!isPlatformReady || !isModelConfigReady) {
+        // Reset if platform/model changes and data isn't ready yet
+        setDisplayPlatformConfig(null);
+        setDisplayModelConfig(null);
     }
-    // If not both ready (e.g., modelConfigData is still loading for the new selection),
-    // do nothing - keep displaying the previous stable state to avoid flickering.
-
   }, [platforms, selectedPlatformId, modelConfigData, selectedModel]);
   // --- End Local State ---
 
-  // Helper function to get user-friendly content type names
+  // --- Get Content Type Name --- (Keep this block)
   const getContentTypeName = (type) => {
     switch (type) {
       case CONTENT_TYPES.YOUTUBE: return "YouTube Video";
@@ -119,68 +131,133 @@ function ChatArea({ className = '' }) {
       default: return "Content";
     }
   };
+  // --- End Get Content Type Name ---
 
-  // --- Scroll Handling Logic ---
-  const handleScroll = useCallback(() => {
+  // --- Scroll Handling Logic (Improved Again) ---
+  const SCROLL_THRESHOLD = 50; // Pixels from bottom threshold
+  const DEBOUNCE_DELAY = 150; // Milliseconds for debounce
+
+  // Function to check scroll position and update state (REVISED)
+  const checkScrollPosition = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    if (isProcessing) {
-      // Check if user scrolled up while processing
-      const threshold = Math.max(10, scrollContainer.clientHeight * 0.05); // 5% or 10px threshold
-      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= threshold;
-      if (!isAtBottom) {
-        setUserInteractedWithScroll(true);
-      }
-    } else {
-      // Check if user scrolled up when not processing (to prevent auto-scroll later)
-       const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop === scrollContainer.clientHeight;
-       const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= 10; // Small tolerance
-       if (!isAtBottom && !isNearBottom) {
-          setUserInteractedWithScroll(true);
-       } else {
-          // Allow auto-scroll if user scrolls back to the very bottom
-          setUserInteractedWithScroll(false);
-       }
+    if (!scrollContainer || messages.length === 0) {
+      setShowScrollDownButton(false);
+      isNearBottomRef.current = true;
+      // If no content or container, ensure interaction flag is false
+      if (userInteractedWithScroll) setUserInteractedWithScroll(false);
+      return;
     }
-  }, [isProcessing]); // Added isProcessing dependency
 
+    const currentScrollTop = scrollContainer.scrollTop;
+    const scrollHeight = scrollContainer.scrollHeight;
+    const clientHeight = scrollContainer.clientHeight;
+
+    const isCurrentlyNearBottom = scrollHeight - currentScrollTop - clientHeight <= SCROLL_THRESHOLD;
+    isNearBottomRef.current = isCurrentlyNearBottom; // Update ref immediately
+
+    // Show button only if *not* near bottom
+    setShowScrollDownButton(!isCurrentlyNearBottom);
+
+    // Detect if user scrolled up significantly (interaction)
+    // Use a slightly larger threshold here to avoid triggering on minor bounces
+    const interactionThreshold = SCROLL_THRESHOLD * 1.5;
+    if (!isCurrentlyNearBottom && (scrollHeight - currentScrollTop - clientHeight > interactionThreshold)) {
+        if (!userInteractedWithScroll) {
+            // Only set state if it's changing
+             setUserInteractedWithScroll(true);
+        }
+    }
+    // Detect if user scrolled back to the bottom area
+    else if (isCurrentlyNearBottom) {
+        if (userInteractedWithScroll) {
+            // Only set state if it's changing
+            setUserInteractedWithScroll(false);
+        }
+    }
+    // Note: We don't explicitly handle the case where the user is scrolled up but *not* past the interactionThreshold.
+    // In this scenario, userInteractedWithScroll remains false, allowing auto-scroll, which is usually desired
+    // for small upward drifts.
+
+  }, [userInteractedWithScroll, messages.length, SCROLL_THRESHOLD]); // Added SCROLL_THRESHOLD to deps
+
+  // Create the debounced version of the scroll check
+  const debouncedCheckScrollPosition = useMemo(
+    () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
+    [checkScrollPosition] // Recreate debounce if checkScrollPosition changes
+  );
+
+  // Scroll to bottom function
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
+    // Reset flags immediately when explicitly scrolling to bottom
+    setShowScrollDownButton(false);
+    setUserInteractedWithScroll(false);
+    isNearBottomRef.current = true;
+  }, []); // No dependencies needed here
+
+  // Effect to attach scroll listener
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+      // Use the debounced handler
+      scrollContainer.addEventListener('scroll', debouncedCheckScrollPosition, { passive: true });
+      checkScrollPosition(); // Initial check (non-debounced)
+
+      // Cleanup function
+      return () => {
+        scrollContainer.removeEventListener('scroll', debouncedCheckScrollPosition);
+      };
     }
-  }, [handleScroll]); // handleScroll is stable due to useCallback
+  }, [debouncedCheckScrollPosition, checkScrollPosition]); // Add checkScrollPosition for initial check dependency
 
+  // Effect to handle automatic scrolling on new messages (REVISED)
   useEffect(() => {
-    // Auto-scroll to bottom if user hasn't scrolled up manually
-    if (!userInteractedWithScroll && messagesEndRef.current && scrollContainerRef.current) {
-        // Only scroll if near the bottom or initial load
-        const scrollContainer = scrollContainerRef.current;
-        const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= scrollContainer.clientHeight * 0.5; // e.g., within half viewport height from bottom
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
 
-        // Use smooth scroll for new messages, instant for initial loads might be better?
-        // For simplicity, using smooth always when auto-scrolling.
-        if (isNearBottom || messages.length <= 1) { // Scroll on first message too
-             messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
+    // Determine if we SHOULD auto-scroll:
+    // - Only if the user hasn't manually scrolled up significantly.
+    const shouldAutoScroll = !userInteractedWithScroll;
+
+    if (shouldAutoScroll && messagesEndRef.current && messages.length > 0) { // Ensure messages exist
+        // Use 'auto' behavior during processing for instant jump, 'smooth' otherwise
+        const behavior = isProcessing ? 'auto' : 'smooth';
+
+        // Scroll down
+        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+
+        // Since we just auto-scrolled, ensure flags are consistent
+        isNearBottomRef.current = true;
+        setShowScrollDownButton(false); // Hide button after auto-scroll
+
+    } else if (userInteractedWithScroll && messages.length > 0) {
+        // If user *has* scrolled up, simply re-check the position
+        // in case new content makes the button necessary again.
+        // Use the non-debounced version for immediate feedback after message add.
+        checkScrollPosition();
     }
-  }, [messages, userInteractedWithScroll]); // Rerun when messages update
 
+  }, [messages, isProcessing, userInteractedWithScroll, checkScrollPosition]); // Dependencies
+
+
+  // Reset user interaction flag when processing starts (user likely wants to see new output)
   useEffect(() => {
-    // Reset scroll interaction flag when processing starts,
-    // allowing auto-scroll for the new response unless user scrolls up again.
     if (isProcessing) {
+        // We want to allow auto-scroll when processing starts
         setUserInteractedWithScroll(false);
+        // Optional: Force scroll down immediately when processing starts
+        // if (messagesEndRef.current) {
+        //     messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+        //     isNearBottomRef.current = true;
+        //     setShowScrollDownButton(false);
+        // }
     }
-  }, [isProcessing]);
+  }, [isProcessing]); // Removed scrollToBottom dependency
   // --- End Scroll Handling ---
 
 
-  // Helper function for welcome message
+  // --- Get Welcome Message --- (Keep this block)
   const getWelcomeMessage = (type, isInjectable) => {
-    // Adjust welcome message slightly if extraction isn't possible
     if (!isInjectable) {
       return "Ask a general question or start a new conversation.";
     }
@@ -192,39 +269,35 @@ function ChatArea({ className = '' }) {
       default: return "Ask a question to get started.";
     }
   };
+  // --- End Get Welcome Message ---
 
-  // Helper function to open settings
+  // --- Open API Settings --- (Keep this block)
   const openApiSettings = () => {
     try {
-      // Make sure 'chrome' is available (usually is in extension contexts)
       if (chrome && chrome.tabs && chrome.runtime) {
         chrome.tabs.create({ url: chrome.runtime.getURL('settings.html#api-settings') });
       } else {
          console.warn("Chrome APIs not available. Cannot open settings tab.");
-         // Potentially provide alternative feedback to the user
       }
     } catch (error) {
       console.error('Could not open API options page:', error);
     }
   };
+  // --- End Open API Settings ---
 
-  // Determine if the current page allows content extraction
   const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
-  // --- Initial View Logic (when no messages) ---
+  // --- Initial View Logic (when no messages) --- (Keep this block, no changes needed here)
   if (messages.length === 0) {
-
     // --- No Credentials View ---
-    // Show this immediately if no credentials are configured.
     if (!hasAnyPlatformCredentials) {
       return (
         <div className={`${className} flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}>
           <button
             onClick={openApiSettings}
-            className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark"
             aria-label="Configure API Credentials in Settings"
           >
-            {/* Settings Icon SVG */}
             <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1.51-1V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               <circle cx="12" cy="12" r="3"></circle>
@@ -239,66 +312,50 @@ function ChatArea({ className = '' }) {
     }
 
     // --- Initial Loading Spinner View ---
-    // Show spinner ONLY if credentials exist BUT we haven't successfully loaded
-    // and set the *initial* displayPlatformConfig yet (it's still null).
-    // This happens only on the very first load after credentials are set.
     if (hasAnyPlatformCredentials && displayPlatformConfig === null) {
       return (
         <div className={`${className} flex items-center justify-center h-full`}>
-          {/* Tailwind CSS Spinner */}
           <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status" aria-label="Loading model information"></div>
         </div>
       );
     }
 
     // --- Welcome Message View ---
-    // Show this if credentials exist AND the initial platform/model info has been loaded
-    // and set into displayPlatformConfig at least once. This avoids the spinner on subsequent
-    // platform/model switches when messages are still empty.
     if (hasAnyPlatformCredentials && displayPlatformConfig !== null) {
       return (
         <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-4 overflow-y-auto`}>
-
           {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
           <div className="flex flex-col items-center py-5 w-full">
-             {/* Display platform logo from stable local state */}
             <img
               src={displayPlatformConfig.iconUrl}
               alt={`${displayPlatformConfig.name || 'Platform'} logo`}
               className="w-12 h-12 mb-3 object-contain"
             />
-            {/* Display model details from stable local state */}
             {displayModelConfig ? (
               <>
-                {/* Model Name */}
                 <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium" title={displayModelConfig.id}>
                   {displayModelConfig.name || displayModelConfig.id}
                 </div>
-                {/* Model Description */}
                 {displayModelConfig.description && (
                   <p className="text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto">
                     {displayModelConfig.description}
                   </p>
                 )}
-                {/* Model Specific Details (Price, Context Window) */}
                 <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-2">
-                  {/* Price Section */}
                   {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
-                     // Free Tier Indicator
                      <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                        <FreeTierIcon /> <span>Free</span>
                        <Tooltip show={hoveredElement === 'freeTier'} message="This model is currently free to use via API." targetRef={freeTierRef} position="bottom" />
                      </div>
                    ) : (
-                     // Paid Tier Indicators
                      <>
-                       {typeof displayModelConfig.inputTokenPrice === 'number' && displayModelConfig.inputTokenPrice >= 0 && ( // Show even if 0 for clarity if output is paid
+                       {typeof displayModelConfig.inputTokenPrice === 'number' && displayModelConfig.inputTokenPrice >= 0 && (
                          <div ref={inputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('inputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('inputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                            <InputTokenIcon /> <span>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
                            <Tooltip show={hoveredElement === 'inputPrice'} message={`$${displayModelConfig.inputTokenPrice.toFixed(2)} / 1M input tokens.`} targetRef={inputPriceRef} position="bottom" />
                          </div>
                        )}
-                       {typeof displayModelConfig.outputTokenPrice === 'number' && displayModelConfig.outputTokenPrice > 0 && ( // Only show output if > 0 usually
+                       {typeof displayModelConfig.outputTokenPrice === 'number' && displayModelConfig.outputTokenPrice > 0 && (
                          <div ref={outputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('outputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('outputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                            <OutputTokenIcon /> <span>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
                            <Tooltip show={hoveredElement === 'outputPrice'} message={`$${displayModelConfig.outputTokenPrice.toFixed(2)} / 1M output tokens.`} targetRef={outputPriceRef} position="bottom" />
@@ -306,7 +363,6 @@ function ChatArea({ className = '' }) {
                        )}
                      </>
                    )}
-                   {/* Context Window Indicator */}
                    {typeof displayModelConfig.contextWindow === 'number' && displayModelConfig.contextWindow > 0 && (
                      <div ref={contextWindowRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('contextWindow')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('contextWindow')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                        <ContextWindowIcon /> <span>{formatContextWindow(displayModelConfig.contextWindow)}</span>
@@ -316,8 +372,7 @@ function ChatArea({ className = '' }) {
                 </div>
               </>
             ) : (
-              // Optional: Placeholder if model config somehow isn't ready yet, though useEffect should prevent this state often
-               <div className="h-5 mt-1 mb-2"></div> // Placeholder height to prevent layout jump
+               <div className="h-5 mt-1 mb-2"></div> // Placeholder for spacing if model config is loading
             )}
           </div>
 
@@ -325,7 +380,6 @@ function ChatArea({ className = '' }) {
           <div className="flex flex-col items-center py-5 w-full">
             <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
             <p className="text-sm max-w-xs mx-auto">
-              {/* Pass isPageInjectable to adjust the welcome message */}
               {getWelcomeMessage(contentType, isPageInjectable)}
             </p>
           </div>
@@ -333,21 +387,17 @@ function ChatArea({ className = '' }) {
           {/* SECTION 3: Content Type / Extraction Info Section */}
           <div className="flex flex-col items-center py-5 w-full">
             {isPageInjectable ? (
-              // --- Case: Page IS Injectable ---
               <>
-                {/* Content Type Badge Display */}
                 {getContentTypeIconSvg(contentType) && (
                   <div className="mb-4">
                     <div
-                      className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm
-                        bg-gray-100 dark:bg-gray-800
-                        text-theme-primary dark:text-theme-primary-dark"
+                      className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
                       aria-label={`Current content type: ${getContentTypeName(contentType)}`}
                     >
                       <div
-                        className="mr-3 flex-shrink-0 w-5 h-5" // Ensure icon size consistency
+                        className="mr-3 flex-shrink-0 w-5 h-5"
                         dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
-                        aria-hidden="true" // Icon is decorative
+                        aria-hidden="true"
                       />
                       <span className="text-sm font-medium">
                         {getContentTypeName(contentType)}
@@ -355,26 +405,20 @@ function ChatArea({ className = '' }) {
                     </div>
                   </div>
                 )}
-
-                {/* Content Extraction Toggle */}
                 <div className="flex items-center gap-3 text-sm text-theme-secondary">
                   <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
                   <Toggle
                     id="content-extract-toggle"
                     checked={isContentExtractionEnabled}
                     onChange={() => setIsContentExtractionEnabled(prev => !prev)}
-                    disabled={!hasAnyPlatformCredentials} // Should always be enabled here based on logic flow, but keep for safety
+                    disabled={!hasAnyPlatformCredentials}
                   />
                 </div>
               </>
             ) : (
-              // --- Case: Page IS NOT Injectable ---
-              // Display the new badge indicating extraction is not possible
-              <div className="mb-4"> 
+              <div className="mb-4">
                 <div
-                  className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm
-                    bg-gray-100 dark:bg-gray-800
-                    text-theme-primary dark:text-theme-primary-dark"
+                  className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
                   aria-label="Content extraction not available for this page"
                 >
                 <span className="text-sm font-medium">
@@ -387,28 +431,55 @@ function ChatArea({ className = '' }) {
         </div>
       );
     }
-
-    // Fallback if none of the above conditions are met (shouldn't normally happen)
-    return null;
+    return null; // Should not happen if logic is correct, but good practice
   }
+  // --- End Initial View Logic ---
 
 
   // --- Chat Message Display Logic (when messages exist) ---
-  // This part remains the same, renders when messages.length > 0
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col pt-2">
-      {messages.map((message) => (
-        <MessageBubble
-          key={message.id}
-          content={message.content}
-          role={message.role}
-          isStreaming={message.isStreaming}
-          model={message.model}
-          platformIconUrl={message.platformIconUrl}
-        />
-      ))}
-      {/* Invisible element to scroll to */}
-      <div ref={messagesEndRef} style={{ height: '1px' }} />
+    <div className={`flex-1 flex flex-col relative ${className}`}>
+      {/* Scrollable container */}
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto flex flex-col pt-2 scroll-smooth" // scroll-smooth might interfere slightly, test removing if needed
+        style={{ scrollBehavior: 'smooth' }} // Ensure smooth behavior
+      >
+        {messages.map((message) => (
+          <MessageBubble
+            key={message.id}
+            content={message.content}
+            role={message.role}
+            isStreaming={message.isStreaming}
+            model={message.model}
+            platformIconUrl={message.platformIconUrl}
+          />
+        ))}
+        {/* Invisible element to target for scrolling */}
+        <div ref={messagesEndRef} style={{ height: '1px' }} />
+      </div>
+
+      {/* --- Scroll Down Button (Improved Styling & Transition) --- */}
+      <button
+        onClick={() => scrollToBottom('smooth')} // Ensure smooth scroll on click
+        className={`
+            absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10
+            p-1.5 rounded-full shadow-md
+            bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700
+            text-theme-primary dark:text-theme-primary-dark
+            transition-opacity duration-300 ease-in-out
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark focus-visible:ring-offset-background dark:focus-visible:ring-offset-background-dark
+            ${showScrollDownButton ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+          `}
+        aria-label="Scroll to bottom"
+        title="Scroll to bottom"
+        // Disable button if it's not supposed to be shown (for accessibility)
+        aria-hidden={!showScrollDownButton}
+        tabIndex={showScrollDownButton ? 0 : -1}
+      >
+        <ScrollDownIcon /> {/* Icon component */}
+      </button>
+      {/* --- End Scroll Down Button --- */}
     </div>
   );
 }
