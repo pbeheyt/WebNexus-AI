@@ -1,47 +1,29 @@
-import { hasLatexEnvironments, hasLatexDelimiters } from './mathDetection';
+import { hasLatexEnvironments /* keep this */ } from './mathDetection';
 
 /**
- * Pre-processes math content to ensure proper LaTeX formatting
- * @param {string} content - The math content to process
+ * Pre-processes math content (Simplified for debugging)
+ * @param {string} content - The math content passed by remark-math
  * @param {boolean} inline - Whether this is inline math
  * @returns {string} - Processed content ready for KaTeX
  */
 export const preprocessMathContent = (content, inline = false) => {
-  // Don't add delimiters if they already exist
-  if (hasLatexDelimiters(content)) {
-    // Strip existing delimiters to avoid duplicates
-    if (content.startsWith('$') && content.endsWith('$')) {
-      content = content.slice(1, -1);
-    } else if (content.startsWith('$$') && content.endsWith('$$')) {
-      content = content.slice(2, -2);
-    } else if (content.startsWith('\\(') && content.endsWith('\\)')) {
-      content = content.slice(2, -2);
-    } else if (content.startsWith('\\[') && content.endsWith('\\]')) {
-      content = content.slice(2, -2);
-    }
-  }
+  // --- SIMPLIFIED ---
+  // Directly return the content received from remark-math.
+  // react-katex should be able to handle raw LaTeX content passed this way.
+  // We might re-introduce specific cleaning steps later if needed.
 
-  // Ensure LaTeX environments don't have extra delimiters
+  // console.log(`Preprocessing Math (${inline ? 'Inline' : 'Block'}): Original Content:`, content); // Optional: Add for debugging
+
+  // Exception: Still handle LaTeX environments specifically if needed,
+  // although react-katex might handle them fine on its own.
+  // Let's comment this out initially for maximum simplicity.
+  /*
   if (hasLatexEnvironments(content)) {
-    // For multiline content, add proper spacing around backslashes
-    content = content.replace(/\\\\(?!\]|\)|\})/g, '\\\\ ');
-    
-    // Remove any existing math delimiters
-    if (content.startsWith('$') || content.startsWith('\\(')) {
-      content = content.replace(/^\$|\\\(/g, '').replace(/\$|\\\)$/g, '');
-    } else if (content.startsWith('$$') || content.startsWith('\\[')) {
-      content = content.replace(/^\$\$|\\\[/g, '').replace(/\$\$|\\\]$/g, '');
-    }
-    
-    return content; // Return without adding delimiters to let KaTeX handle the environment
+    // Minimal processing for environments if absolutely necessary
+    content = content.replace(/\\\\(?!\]|\)|\})/g, '\\\\ '); // Spacing for multiline
+    return content;
   }
-  
-  // Process line breaks in math mode
-  content = content.replace(/\\\\$/mg, '\\\\');
-  
-  // Replace common special character sequences
-  content = content.replace(/\\cdot/g, '\\cdot ');
-  content = content.replace(/\_\{([^}]+)\}/g, '_{$1}');
-  
+  */
+
   return content;
 };
