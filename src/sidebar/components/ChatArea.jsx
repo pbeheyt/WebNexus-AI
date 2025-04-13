@@ -1,6 +1,6 @@
 // src/sidebar/components/ChatArea.jsx
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { debounce } from '../../shared/utils/debounce'; // Added import
+import { debounce } from '../../shared/utils/debounce';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
@@ -10,7 +10,6 @@ import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
-
 
 // --- Icon Definitions --- (Keep exactly as they were)
 const InputTokenIcon = () => (
@@ -83,14 +82,10 @@ function ChatArea({ className = '' }) {
   } = useSidebarPlatform();
 
   // --- State for Scroll Logic ---
-  // Tracks if the user has *manually* scrolled up away from the bottom
   const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
-  // Controls the visibility of the scroll-to-bottom button
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
-  // Ref to track if we are *currently* near the bottom, avoids state updates on every pixel scrolled
-  const isNearBottomRef = useRef(true);
-  // Ref to manage the timeout for scrolling after message updates
-  const scrollTimeoutRef = useRef(null);
+  const isNearBottomRef = useRef(true); // Ref tracks if *currently* near bottom
+  const scrollTimeoutRef = useRef(null); // Ref for scrollIntoView timeout
   // --- End State for Scroll Logic ---
 
 
@@ -116,7 +111,7 @@ function ChatArea({ className = '' }) {
   }, [platforms, selectedPlatformId, modelConfigData, selectedModel]);
   // --- End Local State ---
 
-  // --- Get Content Type Name --- (Keep as is)
+  // --- Get Content Type Name ---
   const getContentTypeName = (type) => {
     switch (type) {
       case CONTENT_TYPES.YOUTUBE: return "YouTube Video";
@@ -129,146 +124,136 @@ function ChatArea({ className = '' }) {
   // --- End Get Content Type Name ---
 
 
-  // --- Scroll Handling Logic (REVISED based on discussion) ---
+  // --- Scroll Handling Logic with user intent detection ---
   const SCROLL_THRESHOLD = 50; // Pixels from bottom to consider "near"
-  const DEBOUNCE_DELAY = 100; // Milliseconds for scroll event debounce
+  const DEBOUNCE_DELAY = 50; // Milliseconds for scroll event debounce
 
   // Function to scroll reliably to the very bottom
   const scrollToBottom = useCallback((behavior = 'smooth') => {
-    // Clear any pending scroll checks triggered by message updates
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
-    // Perform the scroll
     messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
 
-    // --- IMMEDIATE STATE/REF RESET ---
-    // We assume scrolling worked, so we are now near the bottom
+    // --- IMMEDIATE STATE/REF RESET on programmatic scroll ---
     isNearBottomRef.current = true;
-    // Re-enable auto-scroll by resetting the user interaction flag
-    setUserHasScrolledUp(false);
-    // Hide the button as we are scrolling down
-    setShowScrollDownButton(false);
-    // --- END IMMEDIATE STATE/REF RESET ---
-  }, []); // No dependencies needed
+    setUserHasScrolledUp(false); // Re-enable auto-scroll
+    setShowScrollDownButton(false); // Hide button
+  }, []);
 
-  // Function to check the current scroll position and update states
+  // Function to check scroll position and update button/state
+  // This is now primarily for the debounced listener and manual checks
   const checkScrollPosition = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
 
     const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-    // Check if scroll position is within the threshold of the bottom
     const isScrolledToBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
 
-    // Update the ref immediately for other effects to read
+    // Update ref immediately
     isNearBottomRef.current = isScrolledToBottom;
 
-    // Show the button only if the user is scrolled up (not near the bottom)
+    // Update button visibility based *only* on position
     setShowScrollDownButton(!isScrolledToBottom);
 
-    // Update the state tracking user's manual scroll intention
-    if (!isScrolledToBottom) {
-      // User has scrolled up away from the bottom
-      if (!userHasScrolledUp) { // Prevent unnecessary state updates
-          setUserHasScrolledUp(true); // Disable auto-scroll
-      }
-    } else {
-      // User is back near the bottom (scrolled down manually or via button)
-      if (userHasScrolledUp) { // Prevent unnecessary state updates
-          setUserHasScrolledUp(false); // Re-enable auto-scroll
-      }
+    // If the user manually scrolls back to the bottom, re-enable auto-scroll
+    if (isScrolledToBottom) {
+        if (userHasScrolledUp) { // Only update state if it changes
+            setUserHasScrolledUp(false);
+        }
     }
-  }, [userHasScrolledUp, SCROLL_THRESHOLD]); // Depends on userHasScrolledUp to decide the next state
+  }, [userHasScrolledUp, SCROLL_THRESHOLD]); // Depends on userHasScrolledUp to decide if reset is needed
 
-  // Create the debounced version of the scroll check function
-  // Uses the imported debounce now
+  // Create the debounced version for the 'scroll' event
   const debouncedCheckScrollPosition = useMemo(
     () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
-    [checkScrollPosition, DEBOUNCE_DELAY] // Ensure dependencies are correct
+    [checkScrollPosition, DEBOUNCE_DELAY]
   );
 
-  // Effect to attach and clean up the scroll event listener
+  // Listener for direct user scroll input (mouse wheel)
+  const handleWheelScroll = useCallback((event) => {
+    // If scrolling up (negative deltaY), explicitly disable auto-scroll
+    if (event.deltaY < 0) {
+        setUserHasScrolledUp(true);
+    }
+    // We still let the debounced 'scroll' event handler manage the button
+    // and re-enable auto-scroll if the user scrolls back down.
+  }, [setUserHasScrolledUp]); // Dependency on state setter
+
+  // Listener for direct user scroll input (touch)
+  const handleTouchStart = useCallback(() => {
+    // If the user touches the screen *while not near the bottom*,
+    // assume they intend to take control of scrolling.
+    if (!isNearBottomRef.current) {
+        setUserHasScrolledUp(true);
+    }
+  }, [setUserHasScrolledUp]); // Dependency on state setter
+
+  // Effect to attach/detach scroll-related listeners
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      // Attach the debounced listener
+      // Debounced listener for general scroll events (updates button, resets flag if user reaches bottom)
       scrollContainer.addEventListener('scroll', debouncedCheckScrollPosition, { passive: true });
-      // Perform an initial check in case content loads taller than viewport
+      // Direct listener for mouse wheel (disables auto-scroll on upward scroll)
+      scrollContainer.addEventListener('wheel', handleWheelScroll, { passive: true });
+      // Direct listener for touch start (disables auto-scroll if touch starts while scrolled up)
+      scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+
+      // Initial check
       checkScrollPosition();
 
-      // Cleanup function
+      // Cleanup
       return () => {
         scrollContainer.removeEventListener('scroll', debouncedCheckScrollPosition);
-        // Cancel any pending debounced calls on unmount
-        // The check for .cancel() is already here from the original code
+        scrollContainer.removeEventListener('wheel', handleWheelScroll);
+        scrollContainer.removeEventListener('touchstart', handleTouchStart);
         if (debouncedCheckScrollPosition && typeof debouncedCheckScrollPosition.cancel === 'function') {
-             debouncedCheckScrollPosition.cancel();
+          debouncedCheckScrollPosition.cancel();
         }
-        // Clear any pending scroll timeouts
         if (scrollTimeoutRef.current) {
-            clearTimeout(scrollTimeoutRef.current);
+          clearTimeout(scrollTimeoutRef.current);
         }
       };
     }
-  }, [debouncedCheckScrollPosition, checkScrollPosition]); // Add checkScrollPosition for initial check dependency
+  }, [debouncedCheckScrollPosition, handleWheelScroll, handleTouchStart, checkScrollPosition]);
 
-  // Effect to handle automatic scrolling when new messages arrive or processing state changes
+  // Effect for automatic scrolling on new messages/processing state change
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    // Don't run if container isn't mounted or there are no messages
     if (!scrollContainer || messages.length === 0) return;
 
-    // Determine if we should auto-scroll: only if user hasn't manually scrolled up
-    const shouldAutoScroll = !userHasScrolledUp;
-
-    if (shouldAutoScroll) {
-      // Use 'auto' for instant jump during streaming/rapid updates, 'smooth' otherwise
+    // Auto-scroll ONLY if the userHasScrolledUp flag is false
+    if (!userHasScrolledUp) {
       const behavior = isProcessing ? 'auto' : 'smooth';
-
-      // Clear any existing scroll timeout to prevent conflicts
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-
-      // Use a minimal timeout (0ms) to ensure scrolling happens *after*
-      // the DOM has updated with the new message height. Crucial for reliability.
+      // Schedule scroll after DOM update
       scrollTimeoutRef.current = setTimeout(() => {
-           scrollToBottom(behavior);
-      }, 0); // Schedule scroll after current execution context
-
-    } else {
-      // If user HAS scrolled up, auto-scroll is disabled.
-      // BUT, new messages increase scrollHeight. We need to re-check if the
-      // button should now be visible because the relative scroll position changed.
-      // Use the non-debounced check for immediate feedback.
-      checkScrollPosition();
+        scrollToBottom(behavior);
+      }, 0);
     }
 
-    // Cleanup the timeout if the effect re-runs or component unmounts
+    // Cleanup timeout
     return () => {
-       if (scrollTimeoutRef.current) {
-           clearTimeout(scrollTimeoutRef.current);
-       }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
     };
-    // Dependencies: Run when messages change, processing status changes,
-    // or the user's scrolled-up status changes. Also include functions called inside.
-  }, [messages, isProcessing, userHasScrolledUp, scrollToBottom, checkScrollPosition]);
+  }, [messages, isProcessing, userHasScrolledUp, scrollToBottom]); // Dependencies remain the same
 
-
-  // Effect to reset user interaction flag when processing starts (good UX)
-  // This allows auto-scroll to resume when the *next* message chunk arrives.
+  // Effect to reset user interaction flag when processing starts
   useEffect(() => {
     if (isProcessing) {
-      // Assume user wants to see new output, reset the flag that disables auto-scroll.
-      // The actual scrolling will be triggered by the message useEffect above.
-       setUserHasScrolledUp(false);
+      // When new processing starts, assume user wants to see the output
+      setUserHasScrolledUp(false);
     }
-  }, [isProcessing]); // Only depends on processing state
+  }, [isProcessing]);
   // --- End Scroll Handling ---
 
 
-  // --- Open API Settings --- (Keep as is)
+  // --- Open API Settings ---
   const openApiSettings = () => {
     try {
       if (chrome && chrome.tabs && chrome.runtime) {
@@ -284,7 +269,7 @@ function ChatArea({ className = '' }) {
 
   const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
-  // --- Initial View Logic (when no messages) --- (Keep this block exactly as it was)
+  // --- Initial View Logic (when no messages) ---
   if (messages.length === 0) {
     // --- No Credentials View ---
     if (!hasAnyPlatformCredentials) {
@@ -438,7 +423,7 @@ function ChatArea({ className = '' }) {
   // --- Chat Message Display Logic (when messages exist) ---
   return (
     <div className={`flex-1 flex flex-col relative ${className}`}>
-      {/* Scrollable container - remove scroll-smooth class/style, handled by JS */}
+      {/* Scrollable container */}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto flex flex-col pt-2"
@@ -457,7 +442,7 @@ function ChatArea({ className = '' }) {
         <div ref={messagesEndRef} style={{ height: '1px' }} />
       </div>
 
-      {/* --- Scroll Down Button (Improved Styling & Logic) --- */}
+      {/* Scroll Down Button */}
       <button
         onClick={() => scrollToBottom('smooth')}
         className={`
@@ -471,7 +456,6 @@ function ChatArea({ className = '' }) {
           `}
         aria-label="Scroll to bottom"
         title="Scroll to bottom"
-        // Disable button if it's not supposed to be shown (for accessibility)
         aria-hidden={!showScrollDownButton}
         tabIndex={showScrollDownButton ? 0 : -1}
       >
@@ -499,6 +483,5 @@ function getWelcomeMessage(contentType, isPageInjectable) {
       return "Ask about this page's content, or type a general question.";
   }
 }
-
 
 export default ChatArea;
