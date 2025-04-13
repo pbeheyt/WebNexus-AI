@@ -104,9 +104,8 @@ export const MessageBubble = memo(({
                             } else {
                                // It's definitely a block
                                const codeContent = codeString.replace(/\n$/, '');
-                               const language = className?.replace('language-', '');
                                // Use EnhancedCodeBlock for fenced code blocks parsed by remarkGfm
-                               return <EnhancedCodeBlock language={language} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
+                               return <EnhancedCodeBlock className={className} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
                             }
                          },
                          pre: ({node, children, ...props}) => <>{children}</>,

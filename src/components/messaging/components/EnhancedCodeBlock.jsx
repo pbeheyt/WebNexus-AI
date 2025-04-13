@@ -38,15 +38,6 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
   const languageMatch = /language-(\w+)/.exec(className || '');
   const language = languageMatch ? languageMatch[1] : 'text';
   
-  // Check if this is just a filename (single line, no spaces, has extension)
-  const isFilenameOrModule = codeContent.trim().indexOf('\n') === -1 && 
-                          codeContent.trim().indexOf(' ') === -1 && 
-                          (
-                            // Traditional file extensions
-                            /\.\w{1,4}$/.test(codeContent.trim()) ||
-                            // Module.function patterns (like numpy.polyfit)
-                            /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(codeContent.trim())
-                          );
   
   // Format the raw language name - just capitalize first letter
   const displayLanguage = language.charAt(0).toUpperCase() + language.slice(1);
@@ -63,14 +54,6 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
     }
   };
   
-  // For filenames or module references, render a simpler component
-  if (isFilenameOrModule) {
-    return (
-      <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs font-mono inline-block">
-        {codeContent}
-      </code>
-    );
-  }
   
   // Define the syntax highlighter theme based on current app theme
   const syntaxTheme = isDarkMode ? oneDark : oneLight;
