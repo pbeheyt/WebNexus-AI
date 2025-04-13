@@ -5,7 +5,7 @@ import { useSidebarPlatform } from '../../contexts/platform';
 import { MessageBubble } from '../../components/messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle';
 import { Tooltip } from '../../components/layout/Tooltip';
-import { useContent } from '../../contexts/ContentContext'; 
+import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
@@ -73,7 +73,6 @@ function ChatArea({ className = '' }) {
     selectedPlatformId,
     selectedModel,
     hasAnyPlatformCredentials,
-    // No longer need isLoading for this specific spinner logic
   } = useSidebarPlatform();
 
   // --- Local State for Stable Display ---
@@ -180,13 +179,17 @@ function ChatArea({ className = '' }) {
 
 
   // Helper function for welcome message
-  const getWelcomeMessage = (type) => {
+  const getWelcomeMessage = (type, isInjectable) => {
+    // Adjust welcome message slightly if extraction isn't possible
+    if (!isInjectable) {
+      return "Ask a general question or start a new conversation.";
+    }
     switch (type) {
       case CONTENT_TYPES.YOUTUBE: return "Ask a question about this YouTube video or request a summary.";
       case CONTENT_TYPES.REDDIT: return "Ask a question about this Reddit post or request a summary.";
       case CONTENT_TYPES.PDF: return "Ask a question about this PDF document or request a summary.";
       case CONTENT_TYPES.GENERAL: return "Ask a question about this web page or request a summary.";
-      default: return "Ask a question or request a summary to get started.";
+      default: return "Ask a question to get started.";
     }
   };
 
@@ -254,10 +257,10 @@ function ChatArea({ className = '' }) {
     // platform/model switches when messages are still empty.
     if (hasAnyPlatformCredentials && displayPlatformConfig !== null) {
       return (
-        <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-4 overflow-y-auto`}> {/* Added overflow-y-auto */}
+        <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-4 overflow-y-auto`}>
 
-          {/* Platform Logo, Model Name, and Details Section */}
-          <div className="flex flex-col items-center py-2 w-full">
+          {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
+          <div className="flex flex-col items-center py-5 w-full">
              {/* Display platform logo from stable local state */}
             <img
               src={displayPlatformConfig.iconUrl}
@@ -318,62 +321,74 @@ function ChatArea({ className = '' }) {
             )}
           </div>
 
-          {/* Start a conversation message Section */}
-          <div className="flex flex-col items-center py-2 w-full">
+          {/* SECTION 2: Start a conversation message Section */}
+          <div className="flex flex-col items-center py-5 w-full">
             <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
             <p className="text-sm max-w-xs mx-auto">
-              {getWelcomeMessage(contentType)}
+              {/* Pass isPageInjectable to adjust the welcome message */}
+              {getWelcomeMessage(contentType, isPageInjectable)}
             </p>
           </div>
 
-          {/* Content Type Badge and Extraction Toggle Section */}
-          <div className="flex flex-col items-center py-2 w-full">
-            {/* Content Type Badge Display */}
-            {getContentTypeIconSvg(contentType) && (
-              <div className="mb-4">
+          {/* SECTION 3: Content Type / Extraction Info Section */}
+          <div className="flex flex-col items-center py-5 w-full">
+            {isPageInjectable ? (
+              // --- Case: Page IS Injectable ---
+              <>
+                {/* Content Type Badge Display */}
+                {getContentTypeIconSvg(contentType) && (
+                  <div className="mb-4">
+                    <div
+                      className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm
+                        bg-gray-100 dark:bg-gray-800
+                        text-theme-primary dark:text-theme-primary-dark"
+                      aria-label={`Current content type: ${getContentTypeName(contentType)}`}
+                    >
+                      <div
+                        className="mr-3 flex-shrink-0 w-5 h-5" // Ensure icon size consistency
+                        dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
+                        aria-hidden="true" // Icon is decorative
+                      />
+                      <span className="text-sm font-medium">
+                        {getContentTypeName(contentType)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Content Extraction Toggle */}
+                <div className="flex items-center gap-3 text-sm text-theme-secondary">
+                  <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
+                  <Toggle
+                    id="content-extract-toggle"
+                    checked={isContentExtractionEnabled}
+                    onChange={() => setIsContentExtractionEnabled(prev => !prev)}
+                    disabled={!hasAnyPlatformCredentials} // Should always be enabled here based on logic flow, but keep for safety
+                  />
+                </div>
+              </>
+            ) : (
+              // --- Case: Page IS NOT Injectable ---
+              // Display the new badge indicating extraction is not possible
+              <div className="mb-4"> 
                 <div
                   className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm
                     bg-gray-100 dark:bg-gray-800
                     text-theme-primary dark:text-theme-primary-dark"
-                  aria-label={`Current content type: ${getContentTypeName(contentType)}`}
+                  aria-label="Content extraction not available for this page"
                 >
-                  <div
-                    className="mr-3 flex-shrink-0 w-5 h-5" // Ensure icon size consistency
-                    dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
-                    aria-hidden="true" // Icon is decorative
-                  />
-                  <span className="text-sm font-medium">
-                    {getContentTypeName(contentType)}
-                  </span>
+                <span className="text-sm font-medium">
+                  This page content cannot be extracted
+                </span>
                 </div>
               </div>
-            )}
-
-            {/* Conditional Rendering for Content Extraction Toggle */}
-            {isPageInjectable ? (
-              // Show Toggle if page is injectable
-              <div className="flex items-center gap-3 text-sm text-theme-secondary">
-                <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
-                <Toggle
-                  id="content-extract-toggle"
-                  checked={isContentExtractionEnabled}
-                  onChange={() => setIsContentExtractionEnabled(prev => !prev)}
-                  disabled={!hasAnyPlatformCredentials} // Should always be enabled here based on logic flow, but keep for safety
-                />
-              </div>
-            ) : (
-              // Show Message if page is not injectable
-              contentType !== CONTENT_TYPES.GENERAL && (
-                <p className="text-sm text-theme-secondary">
-                  Extraction not available for this page type.
-                </p>
-              )
             )}
           </div>
         </div>
       );
     }
 
+    // Fallback if none of the above conditions are met (shouldn't normally happen)
     return null;
   }
 
@@ -381,15 +396,15 @@ function ChatArea({ className = '' }) {
   // --- Chat Message Display Logic (when messages exist) ---
   // This part remains the same, renders when messages.length > 0
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col pt-2 pb-4 px-3 space-y-3"> {/* Added padding/spacing */}
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col pt-2">
       {messages.map((message) => (
         <MessageBubble
           key={message.id}
           content={message.content}
           role={message.role}
           isStreaming={message.isStreaming}
-          model={message.model} // Pass model info if available
-          platformIconUrl={message.platformIconUrl} // Pass platform icon if available
+          model={message.model}
+          platformIconUrl={message.platformIconUrl}
         />
       ))}
       {/* Invisible element to scroll to */}
