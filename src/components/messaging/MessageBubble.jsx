@@ -27,18 +27,17 @@ export const MessageBubble = memo(({
   const [copyState, setCopyState] = useState('idle');
 
 
-  const handleCopyToClipboard = () => {
+  const handleCopyToClipboard = async () => {
     if (!content || isStreaming) return;
-    copyUtil(content)
-      .then(() => {
-        setCopyState('copied');
-        setTimeout(() => setCopyState('idle'), 2000);
-      })
-      .catch((error) => {
-        console.error('Failed to copy text: ', error);
-        setCopyState('error');
-        setTimeout(() => setCopyState('idle'), 2000);
-      });
+    try {
+      await copyUtil(content);
+      setCopyState('copied');
+      setTimeout(() => setCopyState('idle'), 2000);
+    } catch (error) {
+      console.error('Failed to copy text: ', error);
+      setCopyState('error');
+      setTimeout(() => setCopyState('idle'), 2000);
+    }
   };
 
   // System messages

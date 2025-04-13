@@ -1,10 +1,22 @@
 /**
  * Utility function for clipboard operations
- * Implements the document.execCommand approach for maximum compatibility
+ * Implements the modern clipboard API with fallback to document.execCommand
  * @param {string} text - The text content to copy to clipboard
- * @returns {boolean} - Returns true if successful, throws error otherwise
+ * @returns {Promise<void>} - Resolves if successful, rejects with error otherwise
  */
-export const copyToClipboard = (text) => {
+export const copyToClipboard = async (text) => {
+  // First try the modern clipboard API if available
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (error) {
+      console.warn('navigator.clipboard.writeText failed, falling back:', error);
+      // Continue to fallback method
+    }
+  }
+
+  // Fallback to document.execCommand
   const textarea = document.createElement('textarea');
   textarea.value = text;
   textarea.setAttribute('readonly', '');
@@ -17,12 +29,12 @@ export const copyToClipboard = (text) => {
     const successful = document.execCommand('copy');
     
     if (!successful) {
-      throw new Error('ExecCommand operation failed');
+      throw new Error('Fallback copy method (execCommand) failed');
     }
-    
-    return true;
+  } catch (error) {
+    console.error('Fallback copy method failed:', error);
+    throw error;
   } finally {
-    // Ensure cleanup happens regardless of success/failure
     document.body.removeChild(textarea);
   }
 };

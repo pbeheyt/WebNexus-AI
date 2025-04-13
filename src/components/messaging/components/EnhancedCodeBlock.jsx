@@ -42,9 +42,9 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
   // Format the raw language name - just capitalize first letter
   const displayLanguage = language.charAt(0).toUpperCase() + language.slice(1);
 
-  const copyCodeToClipboard = () => {
+  const copyCodeToClipboard = async () => {
     try {
-      copyToClipboard(codeContent);
+      await copyToClipboard(codeContent);
       setCopyState('copied');
       setTimeout(() => setCopyState('idle'), 2000);
     } catch (error) {
