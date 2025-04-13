@@ -6,7 +6,7 @@ import 'katex/dist/katex.min.css';
 
 import CopyButtonIcon from './icons/CopyButtonIcon';
 import EnhancedCodeBlock from './components/EnhancedCodeBlock';
-import MathFormulaBlock from './components/MathFormulaBlock'; // Assuming this renders math correctly
+import MathFormulaBlock from './components/MathFormulaBlock';
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 
 // --- Console Logging Configuration ---
@@ -19,12 +19,7 @@ const logDebug = (...args) => {
 };
 // ------------------------------------
 
-/**
- * Helper function to parse text and math segments using Regex.
- * (No changes needed in this function from the previous version)
- * @param {string} text - The raw content string
- * @returns {Array<{type: 'text'|'math', value: string, inline: boolean}>}
- */
+// parseTextAndMath function remains the same as the previous working version
 const parseTextAndMath = (text) => {
   logDebug('Starting parseTextAndMath for text:', text);
   if (!text) {
@@ -91,8 +86,7 @@ const parseTextAndMath = (text) => {
 
 
 /**
- * Message bubble component using manual regex parsing for math rendering.
- * (Props definition remains the same)
+ * Message bubble component
  */
 export const MessageBubble = memo(({
   content,
@@ -110,7 +104,6 @@ export const MessageBubble = memo(({
   logDebug(`Rendering MessageBubble. Role: ${role}, Content length: ${content?.length || 0}`);
 
   const handleCopyToClipboard = () => {
-    // (Clipboard logic remains the same)
     if (!content || isStreaming) return;
     logDebug('Attempting to copy content to clipboard.');
     copyUtil(content)
@@ -129,7 +122,6 @@ export const MessageBubble = memo(({
 
   // System messages
   if (isSystem) {
-    // (System message rendering remains the same)
     logDebug('Rendering as system message.');
     return (
       <div className={`px-5 py-2 my-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 ${className}`}>
@@ -140,7 +132,6 @@ export const MessageBubble = memo(({
 
   // User messages
   if (isUser) {
-    // (User message rendering remains the same)
     logDebug('Rendering as user message.');
     return (
       <div className={`px-5 py-2 w-full flex justify-end ${className}`}>
@@ -172,7 +163,6 @@ export const MessageBubble = memo(({
                       disallowedElements={['p']}
                       unwrapDisallowed={true}
                       components={{
-                         // (Components for ReactMarkdown remain the same)
                          h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-5 mb-3" {...props} />,
                          h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-4 mb-2" {...props} />,
                          h3: ({node, ...props}) => <h3 className="text-base font-medium mt-3 mb-2" {...props} />,
@@ -180,16 +170,36 @@ export const MessageBubble = memo(({
                          ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
                          ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
                          li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
+                         // *** UPDATED CODE COMPONENT LOGIC ***
                          code: ({node, inline, className, children, ...props}) => {
-                            if (inline) {
+                            const rawChildren = React.Children.toArray(children);
+                            // Extract the actual string content from children
+                            const codeString = rawChildren
+                              .map(child => typeof child === 'string' ? child : '')
+                              .join('');
+
+                            logDebug(`[ReactMarkdown code] Received: inline=${inline}, className=${className}, nodeTagName=${node?.tagName}, codeString=${codeString.substring(0, 50)}`);
+
+                            // Determine if it should be treated as inline.
+                            // Treat as inline if the 'inline' prop is true OR if it's likely intended as inline
+                            // (single line, doesn't contain newline characters).
+                            const treatAsInline = inline || !codeString.includes('\n');
+
+                            if (treatAsInline) {
+                               logDebug(`[ReactMarkdown code] Rendering INLINE code for: ${codeString}`);
+                               // Use the standard inline code styling
                                return <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>{children}</code>;
+                            } else {
+                               // It's definitely a block
+                               const codeContent = codeString.replace(/\n$/, ''); // Keep newline removal for blocks
+                               const language = className?.replace('language-', '');
+                               logDebug(`[ReactMarkdown code] Rendering BLOCK code. Language: ${language}, Content: ${codeContent.substring(0, 20)}...`);
+                               // Use EnhancedCodeBlock for fenced code blocks parsed by remarkGfm
+                               return <EnhancedCodeBlock language={language} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
                             }
-                            const codeContent = React.Children.toArray(children).map(child =>
-                              typeof child === 'string' ? child : ''
-                            ).join('').replace(/\n$/, '');
-                            return <EnhancedCodeBlock language={className?.replace('language-', '')} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
                          },
-                         pre: ({node, children, ...props}) => <>{children}</>,
+                         // ************************************
+                         pre: ({node, children, ...props}) => <>{children}</>, // Let `code` handle the block rendering
                          a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
                          blockquote: ({node, children, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props}>{children}</blockquote>,
                          strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
@@ -206,24 +216,21 @@ export const MessageBubble = memo(({
                      />
                    </span>
                 ) : (
-                  // *** CHANGE HERE: Add wrapper span with padding for inline math ***
+                  // Math rendering logic remains the same (with padding wrapper)
                   segment.inline ? (
-                    <span className="inline-math-wrapper px-1"> {/* Adjust px-1 (padding) or use mx-1 (margin) as needed */}
+                    <span className="inline-math-wrapper px-1">
                       <MathFormulaBlock content={segment.value} inline={segment.inline} />
                     </span>
                   ) : (
-                    // Block math doesn't need the wrapper/spacing
                     <MathFormulaBlock content={segment.value} inline={segment.inline} />
                   )
-                  // *********************************************************************
                 )}
               </Fragment>
             );
           })}
         </div>
 
-        {/* Footer section: Model info, streaming indicator, copy button */}
-        {/* (Footer remains the same) */}
+        {/* Footer section */}
         <div className="flex justify-between items-center -mt-1">
           <div className="text-xs opacity-70 flex items-center">
             {platformIconUrl && !isUser && (
@@ -252,7 +259,6 @@ export const MessageBubble = memo(({
         </div>
 
         {/* Metadata */}
-        {/* (Metadata remains the same) */}
         {Object.keys(metadata).length > 0 && (
           <div className="text-xs mt-2 opacity-70 overflow-hidden text-ellipsis">
             {Object.entries(metadata).map(([key, value]) => (
@@ -269,6 +275,3 @@ export const MessageBubble = memo(({
   logDebug('Component rendering fallback (should not happen for user/assistant/system roles).');
   return null; // Fallback return
 });
-
-// Reminder: Ensure MathFormulaBlock renders an inline element (like <span>)
-// when inline={true} and a block element (like <div>) when inline={false}.
