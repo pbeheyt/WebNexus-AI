@@ -156,7 +156,7 @@ function ChatArea({ className = '' }) {
               </p>
             </div>
 
-            {/* Content Type Badge and Toggle */}
+            {/* Content Type Badge and Extraction Info/Toggle */}
             <div className="flex flex-col items-center">
               {/* Content Type Badge Display */}
               {getContentTypeIconSvg(contentType) && (
@@ -177,21 +177,24 @@ function ChatArea({ className = '' }) {
                 </div>
               )}
 
-              {/* Content Extraction Toggle */}
-              <div className="flex flex-col items-center gap-1 text-sm text-theme-secondary">
-                <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
-                <Toggle
-                  id="content-extract-toggle"
-                  checked={isPageInjectable ? isContentExtractionEnabled : false}
-                  onChange={isPageInjectable ? () => setIsContentExtractionEnabled(prev => !prev) : undefined}
-                  disabled={!isPageInjectable || !hasAnyPlatformCredentials}
-                />
-                {!isPageInjectable && (
-                  <p className="text-xs text-theme-secondary mt-1">
-                    Extraction not available for this page type.
-                  </p>
-                )}
-              </div>
+              {/* Conditional Rendering for Extraction */}
+              {isPageInjectable ? (
+                // Show Toggle and Label if page is injectable
+                <div className="flex flex-col items-center gap-1 text-sm text-theme-secondary">
+                  <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
+                  <Toggle
+                    id="content-extract-toggle"
+                    checked={isContentExtractionEnabled}
+                    onChange={() => setIsContentExtractionEnabled(prev => !prev)}
+                    disabled={!hasAnyPlatformCredentials}
+                  />
+                </div>
+              ) : (
+                // Show Message if page is not injectable
+                <p className="text-sm text-theme-secondary mt-1">
+                  Extraction not available for this page type.
+                </p>
+              )}
             </div>
           </>
         )}
