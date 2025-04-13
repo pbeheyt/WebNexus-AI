@@ -29,7 +29,7 @@ module.exports = {
             presets: [
               ['@babel/preset-env', {
                 targets: {
-                  chrome: "135" // Make sure this targets a version supporting required WASM features
+                  chrome: "135"
                 },
                 useBuiltIns: "usage",
                 corejs: 3
@@ -43,8 +43,6 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader', 'postcss-loader']
       }
-      // You generally DON'T need a specific rule for .wasm files
-      // when using experiments.asyncWebAssembly: true
     ]
   },
   resolve: {

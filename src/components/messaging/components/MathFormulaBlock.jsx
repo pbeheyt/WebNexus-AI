@@ -1,7 +1,6 @@
 import React, { memo, useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-import { preprocessMathContent } from '../utils/latexProcessing';
 
 /**
  * Enhanced math formula block component
@@ -15,15 +14,12 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
   // Use state to track if rendering fails
   const [renderError, setRenderError] = useState(false);
   
-  // Enhanced processing for math content
-  const processedContent = preprocessMathContent(content, inline);
-  
   // Safely render math with error boundary
   const renderMathSafely = () => {
     try {
       return inline ? 
-        <InlineMath math={processedContent} /> : 
-        <BlockMath math={processedContent} />;
+        <InlineMath math={content} /> : 
+        <BlockMath math={content} />;
     } catch (error) {
       console.error('Math rendering error:', error);
       setRenderError(true);

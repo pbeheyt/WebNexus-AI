@@ -8,82 +8,7 @@ import CopyButtonIcon from './icons/CopyButtonIcon';
 import EnhancedCodeBlock from './components/EnhancedCodeBlock';
 import MathFormulaBlock from './components/MathFormulaBlock';
 import { copyToClipboard as copyUtil } from './utils/clipboard';
-
-// --- Console Logging Configuration ---
-const DEBUG_MODE = true; // Set to true to enable detailed logs, false for production
-
-const logDebug = (...args) => {
-  if (DEBUG_MODE) {
-    console.log('[MessageBubble]', ...args);
-  }
-};
-// ------------------------------------
-
-// parseTextAndMath function remains the same as the previous working version
-const parseTextAndMath = (text) => {
-  logDebug('Starting parseTextAndMath for text:', text);
-  if (!text) {
-    logDebug('Input text is empty, returning empty array.');
-    return [];
-  }
-  const regex = /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\]|\$.+?\$|\\\(.+?\\\))/g;
-  const result = [];
-  let lastIndex = 0;
-  let match;
-  logDebug('Using regex:', regex);
-  while ((match = regex.exec(text)) !== null) {
-    logDebug(`Regex match found:`, match[0], `at index:`, match.index);
-    if (match.index > lastIndex) {
-      const textValue = text.slice(lastIndex, match.index);
-      logDebug(`Adding text segment: "${textValue}"`);
-      result.push({ type: 'text', value: textValue, inline: false });
-    }
-    const part = match[0];
-    let mathContent = '';
-    let inline = true;
-    logDebug(`Processing math part: "${part}"`);
-    if (part.startsWith('$$') && part.endsWith('$$')) {
-      mathContent = part.slice(2, -2);
-      inline = false;
-      logDebug(`Detected block math ($$): "${mathContent}"`);
-    } else if (part.startsWith('\\[')) {
-      mathContent = part.slice(2, -2);
-      inline = false;
-      logDebug(`Detected block math (\\[): "${mathContent}"`);
-    } else if (part.startsWith('$') && part.endsWith('$')) {
-      mathContent = part.slice(1, -1);
-      inline = true;
-      logDebug(`Detected inline math ($): "${mathContent}"`);
-    } else if (part.startsWith('\\(')) {
-      mathContent = part.slice(2, -2);
-      inline = true;
-      logDebug(`Detected inline math (\\(): "${mathContent}"`);
-    } else {
-       logDebug(`Regex match "${part}" didn't fit expected math patterns. Treating as text.`);
-       result.push({ type: 'text', value: part, inline: false });
-       lastIndex = regex.lastIndex;
-       continue;
-    }
-    const trimmedMathContent = mathContent.trim();
-    if (trimmedMathContent) {
-       logDebug(`Adding math segment: value="${trimmedMathContent}", inline=${inline}`);
-       result.push({ type: 'math', value: trimmedMathContent, inline });
-    } else {
-       logDebug(`Math content was empty or whitespace only ("${mathContent}"). Treating original part "${part}" as text.`);
-       result.push({ type: 'text', value: part, inline: false });
-    }
-    lastIndex = regex.lastIndex;
-    logDebug(`Updated lastIndex to: ${lastIndex}`);
-  }
-  if (lastIndex < text.length) {
-    const remainingText = text.slice(lastIndex);
-    logDebug(`Adding final text segment: "${remainingText}"`);
-    result.push({ type: 'text', value: remainingText, inline: false });
-  }
-  logDebug('Finished parseTextAndMath. Segments:', result);
-  return result;
-};
-
+import { parseTextAndMath } from './utils/parseTextAndMath';
 
 /**
  * Message bubble component
@@ -101,20 +26,16 @@ export const MessageBubble = memo(({
   const isSystem = role === 'system';
   const [copyState, setCopyState] = useState('idle');
 
-  logDebug(`Rendering MessageBubble. Role: ${role}, Content length: ${content?.length || 0}`);
 
   const handleCopyToClipboard = () => {
     if (!content || isStreaming) return;
-    logDebug('Attempting to copy content to clipboard.');
     copyUtil(content)
       .then(() => {
-        logDebug('Copy successful.');
         setCopyState('copied');
         setTimeout(() => setCopyState('idle'), 2000);
       })
       .catch((error) => {
         console.error('Failed to copy text: ', error);
-        logDebug('Copy failed.');
         setCopyState('error');
         setTimeout(() => setCopyState('idle'), 2000);
       });
@@ -122,7 +43,6 @@ export const MessageBubble = memo(({
 
   // System messages
   if (isSystem) {
-    logDebug('Rendering as system message.');
     return (
       <div className={`px-5 py-2 my-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 ${className}`}>
         <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
@@ -132,7 +52,6 @@ export const MessageBubble = memo(({
 
   // User messages
   if (isUser) {
-    logDebug('Rendering as user message.');
     return (
       <div className={`px-5 py-2 w-full flex justify-end ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
@@ -142,17 +61,14 @@ export const MessageBubble = memo(({
     );
   }
 
-  // --- Assistant Message Rendering ---
+  // Assistant Message Rendering
   if (role === 'assistant') {
-    logDebug('Rendering as assistant message. Parsing content...');
     const segments = parseTextAndMath(content || '');
-    logDebug(`Parsed ${segments.length} segments. Rendering...`);
 
     return (
       <div className={`px-5 py-2 w-full message-group relative ${className}`}>
         <div className={`prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-0`}>
           {segments.map((segment, index) => {
-            logDebug(`Rendering segment ${index}: type=${segment.type}, inline=${segment.inline}, value="${segment.value.substring(0, 50)}..."`);
             return (
               <Fragment key={index}>
                 {segment.type === 'text' ? (
@@ -170,7 +86,6 @@ export const MessageBubble = memo(({
                          ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
                          ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 mt-1 space-y-1.5" {...props} />,
                          li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
-                         // *** UPDATED CODE COMPONENT LOGIC ***
                          code: ({node, inline, className, children, ...props}) => {
                             const rawChildren = React.Children.toArray(children);
                             // Extract the actual string content from children
@@ -178,28 +93,23 @@ export const MessageBubble = memo(({
                               .map(child => typeof child === 'string' ? child : '')
                               .join('');
 
-                            logDebug(`[ReactMarkdown code] Received: inline=${inline}, className=${className}, nodeTagName=${node?.tagName}, codeString=${codeString.substring(0, 50)}`);
-
                             // Determine if it should be treated as inline.
                             // Treat as inline if the 'inline' prop is true OR if it's likely intended as inline
                             // (single line, doesn't contain newline characters).
                             const treatAsInline = inline || !codeString.includes('\n');
 
                             if (treatAsInline) {
-                               logDebug(`[ReactMarkdown code] Rendering INLINE code for: ${codeString}`);
                                // Use the standard inline code styling
                                return <code className="bg-theme-hover px-1 py-0.5 rounded text-xs font-mono" {...props}>{children}</code>;
                             } else {
                                // It's definitely a block
-                               const codeContent = codeString.replace(/\n$/, ''); // Keep newline removal for blocks
+                               const codeContent = codeString.replace(/\n$/, '');
                                const language = className?.replace('language-', '');
-                               logDebug(`[ReactMarkdown code] Rendering BLOCK code. Language: ${language}, Content: ${codeContent.substring(0, 20)}...`);
                                // Use EnhancedCodeBlock for fenced code blocks parsed by remarkGfm
                                return <EnhancedCodeBlock language={language} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
                             }
                          },
-                         // ************************************
-                         pre: ({node, children, ...props}) => <>{children}</>, // Let `code` handle the block rendering
+                         pre: ({node, children, ...props}) => <>{children}</>,
                          a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
                          blockquote: ({node, children, ...props}) => <blockquote className="border-l-2 border-theme pl-3 italic text-theme-secondary my-3 py-1 text-xs" {...props}>{children}</blockquote>,
                          strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
@@ -216,7 +126,7 @@ export const MessageBubble = memo(({
                      />
                    </span>
                 ) : (
-                  // Math rendering logic remains the same (with padding wrapper)
+                  // Math rendering logic
                   segment.inline ? (
                     <span className="inline-math-wrapper px-1">
                       <MathFormulaBlock content={segment.value} inline={segment.inline} />
@@ -231,7 +141,7 @@ export const MessageBubble = memo(({
         </div>
 
         {/* Footer section */}
-        <div className="flex justify-between items-center -mt-1">
+        <div className="flex justify-between items-center">
           <div className="text-xs opacity-70 flex items-center">
             {platformIconUrl && !isUser && (
               <img src={platformIconUrl} alt="AI Platform" className="w-3 h-3 mr-2 object-contain" />
@@ -272,6 +182,5 @@ export const MessageBubble = memo(({
     );
   }
 
-  logDebug('Component rendering fallback (should not happen for user/assistant/system roles).');
   return null; // Fallback return
 });
