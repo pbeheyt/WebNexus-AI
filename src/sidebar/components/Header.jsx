@@ -178,22 +178,23 @@ function Header() {
           )}
           
           {/* 4. Refresh Button - updated with rotation animation */}
-          <div className="flex-shrink-0 ml-2">
+          <div className="flex-shrink-0 ml-2 h-9 flex items-center justify-center">
             <button
               ref={refreshButtonRef}
               onClick={refreshPlatformData}
               disabled={isRefreshing || isLoading}
+              // The button's classes remain the same
               className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Refresh platforms and credentials"
               title="Refresh platforms and credentials"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" 
-                className={`w-4 h-4 ${showAnimation ? 'animate-spin' : ''}`} 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
+              <svg xmlns="http://www.w3.org/2000/svg"
+                className={`w-4 h-4 ${showAnimation ? 'animate-spin' : ''}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               >
                 <path d="M23 4v6h-6"></path>

@@ -110,8 +110,8 @@ export default function SidebarApp() {
             isExpanded={headerExpanded}
             onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
             showExpandToggle={true}
-            showBorder={!headerExpanded}
-            className='px-5 py-4'
+            showBorder={true}
+            className='px-5 pt-4 pb-2'
           />
 
           {/* Collapsible header section */}
