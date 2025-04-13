@@ -69,31 +69,46 @@ function ChatArea({ className = '' }) {
   const freeTierRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
   const {
-    platforms,
+    platforms, // Need platforms array from context
     selectedPlatformId,
     selectedModel,
     hasAnyPlatformCredentials,
-    isLoading
+    isLoading // General loading state from platform context
   } = useSidebarPlatform();
 
   // --- Local State for Stable Display ---
+  const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null); // Holds { id, name, iconUrl }
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
 
-  // Effect to update displayModelConfig smoothly
+  // Effect to update display configs smoothly and synchronously
   useEffect(() => {
-    // Only update the display config if the incoming config is valid
-    // and its ID matches the currently selected model ID.
-    if (modelConfigData && selectedModel && modelConfigData.id === selectedModel) {
+    // 1. Find the target platform config based on selectedPlatformId
+    const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
+
+    // 2. Check if the model config data is valid and matches the selected model
+    const isModelConfigReady = modelConfigData && selectedModel && modelConfigData.id === selectedModel;
+
+    // 3. Check if the target platform was found
+    const isPlatformReady = !!targetPlatform;
+
+    // 4. Only update BOTH display states if BOTH platform and model data are ready for the current selection
+    if (isPlatformReady && isModelConfigReady) {
+      // Update platform display state
+      setDisplayPlatformConfig({
+          id: targetPlatform.id,
+          name: targetPlatform.name,
+          iconUrl: targetPlatform.iconUrl
+      });
+      // Update model display state
       setDisplayModelConfig(modelConfigData);
     }
-    // If they don't match, we *don't* update displayModelConfig,
-    // effectively keeping the previous model's details displayed until
-    // the new, correct data arrives.
-  }, [modelConfigData, selectedModel]); // Dependencies: Run when context data or selected model changes
+    // If not both ready, do nothing - keep displaying the previous stable state.
+
+  }, [platforms, selectedPlatformId, modelConfigData, selectedModel]); // Dependencies updated
   // --- End Local State ---
 
 
-  // Find the details of the selected platform
+  // Find the details of the selected platform (still needed for other logic potentially)
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
 
   // Helper function to get user-friendly content type names
@@ -164,10 +179,9 @@ function ChatArea({ className = '' }) {
 
   // --- Initial View Logic (when no messages) ---
   if (messages.length === 0) {
-    // Show spinner ONLY if loading AND essential platform/model info is missing.
-    // OR if the displayModelConfig hasn't been set yet for the selected model
-    const showInitialLoadingSpinner = isLoading || (hasAnyPlatformCredentials && !displayModelConfig && selectedModel);
-
+    // Show spinner if general loading OR if display states aren't ready for the current selection
+    const isDisplayReadyForSelection = displayPlatformConfig?.id === selectedPlatformId && displayModelConfig?.id === selectedModel;
+    const showInitialLoadingSpinner = isLoading || (hasAnyPlatformCredentials && (selectedPlatformId || selectedModel) && !isDisplayReadyForSelection);
 
     if (showInitialLoadingSpinner) {
       return (
@@ -178,12 +192,12 @@ function ChatArea({ className = '' }) {
       );
     }
 
-    // Render Credentials Message or Welcome Message (only if not in the initial loading state)
+    // Render Credentials Message or Welcome Message
     return (
       <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5`}>
-        {/* Check for credentials AFTER initial loading is done */}
+        {/* Check for credentials */}
         {!hasAnyPlatformCredentials ? (
-          // Display message if no credentials are set up
+          // No Credentials Message
           <button
             onClick={openApiSettings}
             className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -198,122 +212,62 @@ function ChatArea({ className = '' }) {
             </p>
           </button>
         ) : (
-          // Standard welcome message content (shown if credentials exist and not initial loading)
+          // Welcome Message (Credentials Exist)
           <>
             {/* Platform Logo, Model Name, and Details */}
             <div className="flex flex-col items-center">
-              {/* Use selectedPlatformId and selectedPlatform safely */}
-              {selectedPlatformId && selectedPlatform.iconUrl ? (
+              {/* RENDER BASED ON displayPlatformConfig */}
+              {displayPlatformConfig ? ( // Use local state for platform
                 <>
                   <img
-                    src={selectedPlatform.iconUrl}
-                    alt={selectedPlatform.name || 'Platform'}
+                    src={displayPlatformConfig.iconUrl} // Use local state
+                    alt={displayPlatformConfig.name || 'Platform'} // Use local state
                     className="w-12 h-12 mb-3"
                   />
                   {/* Display model name from the stable display config */}
-                  {displayModelConfig && (
+                  {displayModelConfig && ( // Use local state for model
                     <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium">
                       {displayModelConfig.name || displayModelConfig.id}
                     </div>
                   )}
-                  {/* Model Details Section- RENDER BASED ON displayModelConfig */}
-                  {displayModelConfig && ( // Use local state for rendering
+                  {/* Model Details Section - RENDER BASED ON displayModelConfig */}
+                  {displayModelConfig && ( // Use local state for model details
                     <div className="flex flex-row items-center justify-center gap-3 text-xs text-theme-secondary mt-2">
-                      {/* Price Section: Show "Free" or individual prices */}
+                      {/* Price Section */}
                       {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
-                        // Render "Free" indicator
-                        <div
-                          ref={freeTierRef}
-                          className="flex items-center relative cursor-help"
-                          onMouseEnter={() => setHoveredElement('freeTier')}
-                          onMouseLeave={() => setHoveredElement(null)}
-                          onFocus={() => setHoveredElement('freeTier')}
-                          onBlur={() => setHoveredElement(null)}
-                          tabIndex="0"
-                        >
-                          <FreeTierIcon />
-                          <span>Free</span>
-                          <Tooltip
-                            show={hoveredElement === 'freeTier'}
-                            message="This model is currently free to use via API."
-                            targetRef={freeTierRef}
-                            position="bottom"
-                          />
+                        <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
+                          <FreeTierIcon /> <span>Free</span>
+                          <Tooltip show={hoveredElement === 'freeTier'} message="This model is currently free to use via API." targetRef={freeTierRef} position="bottom" />
                         </div>
                       ) : (
-                        // Render individual prices (if > 0)
                         <>
-                          {/* Input Price */}
                           {typeof displayModelConfig.inputTokenPrice === 'number' && displayModelConfig.inputTokenPrice > 0 && (
-                            <div
-                              ref={inputPriceRef}
-                              className="flex items-center relative cursor-help"
-                              onMouseEnter={() => setHoveredElement('inputPrice')}
-                              onMouseLeave={() => setHoveredElement(null)}
-                              onFocus={() => setHoveredElement('inputPrice')}
-                              onBlur={() => setHoveredElement(null)}
-                              tabIndex="0"
-                            >
-                              <InputTokenIcon />
-                              <span>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
-                              <Tooltip
-                                show={hoveredElement === 'inputPrice'}
-                                message={`Est. cost per 1 million input tokens.`}
-                                targetRef={inputPriceRef}
-                                position="bottom"
-                              />
+                            <div ref={inputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('inputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('inputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
+                              <InputTokenIcon /> <span>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
+                              <Tooltip show={hoveredElement === 'inputPrice'} message={`Est. cost per 1 million input tokens.`} targetRef={inputPriceRef} position="bottom" />
                             </div>
                           )}
-                          {/* Output Price */}
                           {typeof displayModelConfig.outputTokenPrice === 'number' && displayModelConfig.outputTokenPrice > 0 && (
-                            <div
-                              ref={outputPriceRef}
-                              className="flex items-center relative cursor-help"
-                              onMouseEnter={() => setHoveredElement('outputPrice')}
-                              onMouseLeave={() => setHoveredElement(null)}
-                              onFocus={() => setHoveredElement('outputPrice')}
-                              onBlur={() => setHoveredElement(null)}
-                              tabIndex="0"
-                            >
-                              <OutputTokenIcon />
-                              <span>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
-                              <Tooltip
-                                show={hoveredElement === 'outputPrice'}
-                                message={`Est. cost per 1 million output tokens.`}
-                                targetRef={outputPriceRef}
-                                position="bottom"
-                              />
+                            <div ref={outputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('outputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('outputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
+                              <OutputTokenIcon /> <span>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
+                              <Tooltip show={hoveredElement === 'outputPrice'} message={`Est. cost per 1 million output tokens.`} targetRef={outputPriceRef} position="bottom" />
                             </div>
                           )}
                         </>
                       )}
-
-                      {/* Context Window (Rendered independently of price) */}
+                      {/* Context Window */}
                       {typeof displayModelConfig.contextWindow === 'number' && displayModelConfig.contextWindow > 0 && (
-                        <div
-                          ref={contextWindowRef}
-                          className="flex items-center relative cursor-help"
-                          onMouseEnter={() => setHoveredElement('contextWindow')}
-                          onMouseLeave={() => setHoveredElement(null)}
-                          onFocus={() => setHoveredElement('contextWindow')}
-                          onBlur={() => setHoveredElement(null)}
-                          tabIndex="0"
-                        >
-                          <ContextWindowIcon />
-                          <span>{formatContextWindow(displayModelConfig.contextWindow)}</span>
-                          <Tooltip
-                            show={hoveredElement === 'contextWindow'}
-                            message={`Max context window: ${displayModelConfig.contextWindow.toLocaleString()} tokens.`}
-                            targetRef={contextWindowRef}
-                            position="bottom"
-                          />
+                        <div ref={contextWindowRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('contextWindow')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('contextWindow')} onBlur={() => setHoveredElement(null)} tabIndex="0">
+                          <ContextWindowIcon /> <span>{formatContextWindow(displayModelConfig.contextWindow)}</span>
+                          <Tooltip show={hoveredElement === 'contextWindow'} message={`Max context window: ${displayModelConfig.contextWindow.toLocaleString()} tokens.`} targetRef={contextWindowRef} position="bottom" />
                         </div>
                       )}
                     </div>
                   )}
                 </>
               ) : (
-                <div className="w-12 h-12 mb-3"></div> // Placeholder if no platform/icon selected yet
+                // Placeholder if displayPlatformConfig is not ready
+                <div className="w-12 h-12 mb-3"></div>
               )}
             </div>
 
@@ -359,7 +313,7 @@ function ChatArea({ className = '' }) {
                 </div>
               ) : (
                 // Show Message if page is not injectable
-                <p className="text-sm text-theme-secondary mt-1">
+                <p className="text-xs text-theme-secondary mt-1">
                   Extraction not available for this page type.
                 </p>
               )}
