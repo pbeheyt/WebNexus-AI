@@ -148,7 +148,6 @@ class BaseApiService extends ApiInterface {
   _handleParsedChunk(parsedResult, onChunk, model, accumulatedContent) {
     if (parsedResult.type === 'content') {
       if (Array.isArray(parsedResult.chunks)) {
-        // <<< NEW: Handle array of chunks
         this.logger.info(`Handling ${parsedResult.chunks.length} sub-chunks from parser.`);
         for (const subChunk of parsedResult.chunks) {
           if (subChunk && subChunk.length > 0) {
@@ -200,7 +199,7 @@ class BaseApiService extends ApiInterface {
         const { done, value } = await reader.read();
 
         if (done) {
-          this.logger.info(`Stream finished for model ${model}.`);
+          this.logger.info(`Stream finished naturally for model ${model}.`);
           // Final buffer processing for all platforms
           if (buffer.trim()) {
             this.logger.warn(`Processing remaining buffer content after stream end for model ${model}: "${buffer}"`);
@@ -253,25 +252,35 @@ class BaseApiService extends ApiInterface {
       return true; // Signal successful completion
 
     } catch (error) {
+      // Handle AbortError specifically
       if (error.name === 'AbortError') {
-        this.logger.info(`API request cancelled by user for model ${model}.`);
+        this.logger.info(`API request cancelled by user (AbortError) for model ${model}.`);
+        // Send a specific 'Cancelled by user' message via onChunk
         onChunk({ done: true, error: 'Cancelled by user', model });
+        // No need to re-throw AbortError, it's handled.
       } else {
+        // Handle other errors during fetch or reading
         this.logger.error(`Unhandled streaming error for model ${model}:`, error);
         onChunk({ done: true, error: error.message || 'An unknown streaming error occurred', model });
+        // Re-throw other errors to be caught by the outer try/catch in processRequest
+        throw error;
       }
-      if (error.name !== 'AbortError') {
-          throw error; // Propagate unexpected errors
-      }
-      return false; // Indicate handled error (AbortError)
+      return false; // Indicate handled error (AbortError) or that an error occurred
     } finally {
+      // Cleanup: Attempt to cancel the reader if it exists.
       if (reader) {
         try {
+          // Attempt to cancel the reader. This also releases the lock.
           await reader.cancel();
-          reader.releaseLock();
-        } catch (releaseError) {
-          this.logger.error(`Error releasing stream reader lock for model ${model}:`, releaseError);
+          this.logger.info(`Stream reader cancelled successfully for model ${model}.`);
+        } catch (cancelError) {
+          // Log if cancelling fails. This might happen if the stream was already forcefully closed
+          // due to the AbortSignal or other network issues. Treat as informational.
+          this.logger.warn(`Error cancelling stream reader for model ${model} (potentially expected after abort):`, cancelError);
         }
+        // No need for releaseLock() as cancel() handles it.
+      } else {
+        this.logger.info(`No active reader found in finally block for model ${model}.`);
       }
     }
   }
