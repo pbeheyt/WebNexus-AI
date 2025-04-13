@@ -73,8 +73,8 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     }
   };
 
-  const selectedModelName = formattedModels.find(m => m.id === selectedModel)?.name 
-                           || selectedModel 
+  const selectedModelName = formattedModels.find(m => m.id === selectedModel)?.name
+                           || selectedModel
                            || "Loading...";
 
   const toggleDropdown = (e) => {
@@ -88,6 +88,8 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
         ref={modelTriggerRef}
         onClick={toggleDropdown}
         className="flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
       >
         <span className="truncate mr-1">{selectedModelName}</span>
         <span className="text-theme-secondary flex-shrink-0">
@@ -99,8 +101,10 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto"
+          className="absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
+          role="listbox" // ARIA role
+          aria-labelledby={modelTriggerRef.current?.id || undefined} // Link to button if it has an ID
         >
           {formattedModels.length === 0 ? (
             <div className="px-3 py-2 text-sm text-theme-secondary">
@@ -110,6 +114,8 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
             formattedModels.map((model) => (
               <button
                 key={model.id}
+                role="option" // ARIA role for item
+                aria-selected={selectedModel === model.id}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap ${
                   selectedModel === model.id ? 'font-medium bg-theme-hover' : ''
                 }`}
