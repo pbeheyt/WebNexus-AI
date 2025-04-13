@@ -15,38 +15,37 @@ function ChatArea({ className = '' }) {
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
-  const { platforms, selectedPlatformId, selectedModel, hasAnyPlatformCredentials, isLoading } = useSidebarPlatform();
+  const {
+    platforms,
+    selectedPlatformId,
+    selectedModel,
+    hasAnyPlatformCredentials,
+    isLoading // This indicates if *any* platform data fetching is happening
+  } = useSidebarPlatform();
+
+  // Find the details of the selected platform
   const selectedPlatform = platforms.find(p => p.id === selectedPlatformId) || {};
 
+  // Helper function to get user-friendly content type names
   const getContentTypeName = (type) => {
     switch (type) {
-      case CONTENT_TYPES.YOUTUBE:
-        return "YouTube Video";
-      case CONTENT_TYPES.REDDIT:
-        return "Reddit Post";
-      case CONTENT_TYPES.PDF:
-        return "PDF Document";
-      case CONTENT_TYPES.GENERAL:
-        return "Web Page";
-      default:
-        return "Content";
+      case CONTENT_TYPES.YOUTUBE: return "YouTube Video";
+      case CONTENT_TYPES.REDDIT: return "Reddit Post";
+      case CONTENT_TYPES.PDF: return "PDF Document";
+      case CONTENT_TYPES.GENERAL: return "Web Page";
+      default: return "Content";
     }
   };
 
+  // --- Scroll Handling Logic ---
   const handleScroll = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
 
     if (isProcessing) {
-      // Calculate dynamic threshold (5% of height, min 10px)
       const threshold = Math.max(10, scrollContainer.clientHeight * 0.05);
       const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight <= threshold;
-
-      if (!isAtBottom) {
-        setUserInteractedWithScroll(true);
-      } else {
-        setUserInteractedWithScroll(false);
-      }
+      setUserInteractedWithScroll(!isAtBottom);
     }
   }, [isProcessing]);
 
@@ -54,9 +53,7 @@ function ChatArea({ className = '' }) {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
       scrollContainer.addEventListener('scroll', handleScroll);
-      return () => {
-        scrollContainer.removeEventListener('scroll', handleScroll);
-      };
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
     }
   }, [handleScroll]);
 
@@ -69,22 +66,21 @@ function ChatArea({ className = '' }) {
   useEffect(() => {
     setUserInteractedWithScroll(false);
   }, [isProcessing]);
+  // --- End Scroll Handling ---
 
+
+  // Helper function for welcome message
   const getWelcomeMessage = (type) => {
     switch (type) {
-      case CONTENT_TYPES.YOUTUBE:
-        return "Ask a question about this YouTube video or request a summary.";
-      case CONTENT_TYPES.REDDIT:
-        return "Ask a question about this Reddit post or request a summary.";
-      case CONTENT_TYPES.PDF:
-        return "Ask a question about this PDF document or request a summary.";
-      case CONTENT_TYPES.GENERAL:
-        return "Ask a question about this web page or request a summary.";
-      default:
-        return "Ask a question or request a summary to get started.";
+      case CONTENT_TYPES.YOUTUBE: return "Ask a question about this YouTube video or request a summary.";
+      case CONTENT_TYPES.REDDIT: return "Ask a question about this Reddit post or request a summary.";
+      case CONTENT_TYPES.PDF: return "Ask a question about this PDF document or request a summary.";
+      case CONTENT_TYPES.GENERAL: return "Ask a question about this web page or request a summary.";
+      default: return "Ask a question or request a summary to get started.";
     }
   };
 
+  // Helper function to open settings
   const openApiSettings = () => {
     try {
       chrome.tabs.create({ url: chrome.runtime.getURL('settings.html#api-settings') });
@@ -93,12 +89,15 @@ function ChatArea({ className = '' }) {
     }
   };
 
+  // Determine if the current page allows content extraction
   const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
   // --- Initial View Logic (when no messages) ---
   if (messages.length === 0) {
-    // 1. Loading State Check
-    if (isLoading) {
+    // Show spinner ONLY if loading AND essential platform/model info is missing.
+    const showInitialLoadingSpinner = isLoading && (!selectedPlatformId || !selectedModel);
+
+    if (showInitialLoadingSpinner) {
       return (
         <div className={`${className} flex items-center justify-center h-full`}>
           {/* Tailwind CSS Spinner */}
@@ -107,9 +106,10 @@ function ChatArea({ className = '' }) {
       );
     }
 
-    // 2. Render Credentials Message or Welcome Message (only if not loading)
+    // Render Credentials Message or Welcome Message (only if not in the initial loading state)
     return (
       <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5`}>
+        {/* Check for credentials AFTER initial loading is done */}
         {!hasAnyPlatformCredentials ? (
           // Display message if no credentials are set up
           <button
@@ -126,15 +126,16 @@ function ChatArea({ className = '' }) {
             </p>
           </button>
         ) : (
-          // Standard welcome message content
+          // Standard welcome message content (shown if credentials exist and not initial loading)
           <>
             {/* Platform Logo and Model */}
             <div className="flex flex-col items-center">
+              {/* Use selectedPlatformId and selectedPlatform safely */}
               {selectedPlatformId && selectedPlatform.iconUrl ? (
                 <>
                   <img
                     src={selectedPlatform.iconUrl}
-                    alt={selectedPlatform.name}
+                    alt={selectedPlatform.name || 'Platform'}
                     className="w-12 h-12 mb-3"
                   />
                   {selectedModel && (
@@ -144,7 +145,7 @@ function ChatArea({ className = '' }) {
                   )}
                 </>
               ) : (
-                <div></div> /* Placeholder if no platform selected */
+                <div className="w-12 h-12 mb-3"></div> // Placeholder if no platform/icon selected yet
               )}
             </div>
 
