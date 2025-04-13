@@ -13,7 +13,8 @@ import { isInjectablePage } from '../../shared/utils/content-utils';
 // --- Debounce Utility ---
 function debounce(func, wait) {
   let timeout;
-  return function executedFunction(...args) {
+
+  const debouncedFunction = function executedFunction(...args) {
     const later = () => {
       clearTimeout(timeout);
       func(...args);
@@ -21,10 +22,17 @@ function debounce(func, wait) {
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
+
+  // Add a cancel method to the debounced function
+  debouncedFunction.cancel = () => {
+    clearTimeout(timeout);
+  };
+
+  return debouncedFunction;
 }
 // --- End Debounce Utility ---
 
-// --- Icon Definitions --- (Keep these exactly as they were)
+// --- Icon Definitions --- (Keep exactly as they were)
 const InputTokenIcon = () => (
   <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M12 18V6M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -52,12 +60,14 @@ const FreeTierIcon = () => (
 const ScrollDownIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        {/* Added another path for a stronger down arrow visual */}
+        <path fillRule="evenodd" d="M10 18a.75.75 0 01-.75-.75V4.56l-2.22 2.22a.75.75 0 11-1.06-1.06l3.5-3.5a.75.75 0 011.06 0l3.5 3.5a.75.75 0 01-1.06 1.06L10.75 4.56v12.69a.75.75 0 01-.75.75z" clipRule="evenodd" transform="rotate(180 10 10)" />
     </svg>
 );
 // --- End Icon Definitions ---
 
 
-// --- Helper Function --- (Keep this exactly as it was)
+// --- Helper Function --- (Keep exactly as it was)
 const formatContextWindow = (value) => {
   if (typeof value !== 'number') return '';
   if (value >= 1000000) {
@@ -87,9 +97,6 @@ function ChatArea({ className = '' }) {
   const outputPriceRef = useRef(null);
   const contextWindowRef = useRef(null);
   const freeTierRef = useRef(null);
-  const [userInteractedWithScroll, setUserInteractedWithScroll] = useState(false);
-  const [showScrollDownButton, setShowScrollDownButton] = useState(false);
-  const isNearBottomRef = useRef(true); // Ref to track if near bottom reliably
   const {
     platforms,
     selectedPlatformId,
@@ -97,10 +104,21 @@ function ChatArea({ className = '' }) {
     hasAnyPlatformCredentials,
   } = useSidebarPlatform();
 
-  // --- Local State for Stable Display --- (Keep this block)
+  // --- State for Scroll Logic ---
+  // Tracks if the user has *manually* scrolled up away from the bottom
+  const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
+  // Controls the visibility of the scroll-to-bottom button
+  const [showScrollDownButton, setShowScrollDownButton] = useState(false);
+  // Ref to track if we are *currently* near the bottom, avoids state updates on every pixel scrolled
+  const isNearBottomRef = useRef(true);
+  // Ref to manage the timeout for scrolling after message updates
+  const scrollTimeoutRef = useRef(null);
+  // --- End State for Scroll Logic ---
+
+
+  // --- Local State for Stable Display --- (Keep as is)
   const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
-
   useEffect(() => {
     const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
     const isModelConfigReady = modelConfigData && selectedModel && modelConfigData.id === selectedModel;
@@ -114,14 +132,13 @@ function ChatArea({ className = '' }) {
       });
       setDisplayModelConfig(modelConfigData);
     } else if (!isPlatformReady || !isModelConfigReady) {
-        // Reset if platform/model changes and data isn't ready yet
         setDisplayPlatformConfig(null);
         setDisplayModelConfig(null);
     }
   }, [platforms, selectedPlatformId, modelConfigData, selectedModel]);
   // --- End Local State ---
 
-  // --- Get Content Type Name --- (Keep this block)
+  // --- Get Content Type Name --- (Keep as is)
   const getContentTypeName = (type) => {
     switch (type) {
       case CONTENT_TYPES.YOUTUBE: return "YouTube Video";
@@ -133,145 +150,145 @@ function ChatArea({ className = '' }) {
   };
   // --- End Get Content Type Name ---
 
-  // --- Scroll Handling Logic (Improved Again) ---
-  const SCROLL_THRESHOLD = 50; // Pixels from bottom threshold
-  const DEBOUNCE_DELAY = 150; // Milliseconds for debounce
 
-  // Function to check scroll position and update state (REVISED)
+  // --- Scroll Handling Logic (REVISED based on discussion) ---
+  const SCROLL_THRESHOLD = 50; // Pixels from bottom to consider "near"
+  const DEBOUNCE_DELAY = 100; // Milliseconds for scroll event debounce
+
+  // Function to scroll reliably to the very bottom
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    // Clear any pending scroll checks triggered by message updates
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    // Perform the scroll
+    messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
+
+    // --- IMMEDIATE STATE/REF RESET ---
+    // We assume scrolling worked, so we are now near the bottom
+    isNearBottomRef.current = true;
+    // Re-enable auto-scroll by resetting the user interaction flag
+    setUserHasScrolledUp(false);
+    // Hide the button as we are scrolling down
+    setShowScrollDownButton(false);
+    // --- END IMMEDIATE STATE/REF RESET ---
+  }, []); // No dependencies needed
+
+  // Function to check the current scroll position and update states
   const checkScrollPosition = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer || messages.length === 0) {
-      setShowScrollDownButton(false);
-      isNearBottomRef.current = true;
-      // If no content or container, ensure interaction flag is false
-      if (userInteractedWithScroll) setUserInteractedWithScroll(false);
-      return;
+    if (!scrollContainer) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    // Check if scroll position is within the threshold of the bottom
+    const isScrolledToBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
+
+    // Update the ref immediately for other effects to read
+    isNearBottomRef.current = isScrolledToBottom;
+
+    // Show the button only if the user is scrolled up (not near the bottom)
+    setShowScrollDownButton(!isScrolledToBottom);
+
+    // Update the state tracking user's manual scroll intention
+    if (!isScrolledToBottom) {
+      // User has scrolled up away from the bottom
+      if (!userHasScrolledUp) { // Prevent unnecessary state updates
+          setUserHasScrolledUp(true); // Disable auto-scroll
+      }
+    } else {
+      // User is back near the bottom (scrolled down manually or via button)
+      if (userHasScrolledUp) { // Prevent unnecessary state updates
+          setUserHasScrolledUp(false); // Re-enable auto-scroll
+      }
     }
+  }, [userHasScrolledUp, SCROLL_THRESHOLD]); // Depends on userHasScrolledUp to decide the next state
 
-    const currentScrollTop = scrollContainer.scrollTop;
-    const scrollHeight = scrollContainer.scrollHeight;
-    const clientHeight = scrollContainer.clientHeight;
-
-    const isCurrentlyNearBottom = scrollHeight - currentScrollTop - clientHeight <= SCROLL_THRESHOLD;
-    isNearBottomRef.current = isCurrentlyNearBottom; // Update ref immediately
-
-    // Show button only if *not* near bottom
-    setShowScrollDownButton(!isCurrentlyNearBottom);
-
-    // Detect if user scrolled up significantly (interaction)
-    // Use a slightly larger threshold here to avoid triggering on minor bounces
-    const interactionThreshold = SCROLL_THRESHOLD * 1.5;
-    if (!isCurrentlyNearBottom && (scrollHeight - currentScrollTop - clientHeight > interactionThreshold)) {
-        if (!userInteractedWithScroll) {
-            // Only set state if it's changing
-             setUserInteractedWithScroll(true);
-        }
-    }
-    // Detect if user scrolled back to the bottom area
-    else if (isCurrentlyNearBottom) {
-        if (userInteractedWithScroll) {
-            // Only set state if it's changing
-            setUserInteractedWithScroll(false);
-        }
-    }
-    // Note: We don't explicitly handle the case where the user is scrolled up but *not* past the interactionThreshold.
-    // In this scenario, userInteractedWithScroll remains false, allowing auto-scroll, which is usually desired
-    // for small upward drifts.
-
-  }, [userInteractedWithScroll, messages.length, SCROLL_THRESHOLD]); // Added SCROLL_THRESHOLD to deps
-
-  // Create the debounced version of the scroll check
+  // Create the debounced version of the scroll check function
   const debouncedCheckScrollPosition = useMemo(
     () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
-    [checkScrollPosition] // Recreate debounce if checkScrollPosition changes
+    [checkScrollPosition] // Recreate if checkScrollPosition function identity changes
   );
 
-  // Scroll to bottom function
-  const scrollToBottom = useCallback((behavior = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
-    // Reset flags immediately when explicitly scrolling to bottom
-    setShowScrollDownButton(false);
-    setUserInteractedWithScroll(false);
-    isNearBottomRef.current = true;
-  }, []); // No dependencies needed here
-
-  // Effect to attach scroll listener
+  // Effect to attach and clean up the scroll event listener
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      // Use the debounced handler
+      // Attach the debounced listener
       scrollContainer.addEventListener('scroll', debouncedCheckScrollPosition, { passive: true });
-      checkScrollPosition(); // Initial check (non-debounced)
+      // Perform an initial check in case content loads taller than viewport
+      checkScrollPosition();
 
       // Cleanup function
       return () => {
         scrollContainer.removeEventListener('scroll', debouncedCheckScrollPosition);
+        // Cancel any pending debounced calls on unmount
+        if (debouncedCheckScrollPosition && typeof debouncedCheckScrollPosition.cancel === 'function') {
+             debouncedCheckScrollPosition.cancel();
+        }
+        // Clear any pending scroll timeouts
+        if (scrollTimeoutRef.current) {
+            clearTimeout(scrollTimeoutRef.current);
+        }
       };
     }
   }, [debouncedCheckScrollPosition, checkScrollPosition]); // Add checkScrollPosition for initial check dependency
 
-  // Effect to handle automatic scrolling on new messages (REVISED)
+  // Effect to handle automatic scrolling when new messages arrive or processing state changes
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
+    // Don't run if container isn't mounted or there are no messages
+    if (!scrollContainer || messages.length === 0) return;
 
-    // Determine if we SHOULD auto-scroll:
-    // - Only if the user hasn't manually scrolled up significantly.
-    const shouldAutoScroll = !userInteractedWithScroll;
+    // Determine if we should auto-scroll: only if user hasn't manually scrolled up
+    const shouldAutoScroll = !userHasScrolledUp;
 
-    if (shouldAutoScroll && messagesEndRef.current && messages.length > 0) { // Ensure messages exist
-        // Use 'auto' behavior during processing for instant jump, 'smooth' otherwise
-        const behavior = isProcessing ? 'auto' : 'smooth';
+    if (shouldAutoScroll) {
+      // Use 'auto' for instant jump during streaming/rapid updates, 'smooth' otherwise
+      const behavior = isProcessing ? 'auto' : 'smooth';
 
-        // Scroll down
-        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+      // Clear any existing scroll timeout to prevent conflicts
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
 
-        // Since we just auto-scrolled, ensure flags are consistent
-        isNearBottomRef.current = true;
-        setShowScrollDownButton(false); // Hide button after auto-scroll
+      // Use a minimal timeout (0ms) to ensure scrolling happens *after*
+      // the DOM has updated with the new message height. Crucial for reliability.
+      scrollTimeoutRef.current = setTimeout(() => {
+           scrollToBottom(behavior);
+      }, 0); // Schedule scroll after current execution context
 
-    } else if (userInteractedWithScroll && messages.length > 0) {
-        // If user *has* scrolled up, simply re-check the position
-        // in case new content makes the button necessary again.
-        // Use the non-debounced version for immediate feedback after message add.
-        checkScrollPosition();
+    } else {
+      // If user HAS scrolled up, auto-scroll is disabled.
+      // BUT, new messages increase scrollHeight. We need to re-check if the
+      // button should now be visible because the relative scroll position changed.
+      // Use the non-debounced check for immediate feedback.
+      checkScrollPosition();
     }
 
-  }, [messages, isProcessing, userInteractedWithScroll, checkScrollPosition]); // Dependencies
+    // Cleanup the timeout if the effect re-runs or component unmounts
+    return () => {
+       if (scrollTimeoutRef.current) {
+           clearTimeout(scrollTimeoutRef.current);
+       }
+    };
+    // Dependencies: Run when messages change, processing status changes,
+    // or the user's scrolled-up status changes. Also include functions called inside.
+  }, [messages, isProcessing, userHasScrolledUp, scrollToBottom, checkScrollPosition]);
 
 
-  // Reset user interaction flag when processing starts (user likely wants to see new output)
+  // Effect to reset user interaction flag when processing starts (good UX)
+  // This allows auto-scroll to resume when the *next* message chunk arrives.
   useEffect(() => {
     if (isProcessing) {
-        // We want to allow auto-scroll when processing starts
-        setUserInteractedWithScroll(false);
-        // Optional: Force scroll down immediately when processing starts
-        // if (messagesEndRef.current) {
-        //     messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-        //     isNearBottomRef.current = true;
-        //     setShowScrollDownButton(false);
-        // }
+      // Assume user wants to see new output, reset the flag that disables auto-scroll.
+      // The actual scrolling will be triggered by the message useEffect above.
+       setUserHasScrolledUp(false);
     }
-  }, [isProcessing]); // Removed scrollToBottom dependency
+  }, [isProcessing]); // Only depends on processing state
   // --- End Scroll Handling ---
 
 
-  // --- Get Welcome Message --- (Keep this block)
-  const getWelcomeMessage = (type, isInjectable) => {
-    if (!isInjectable) {
-      return "Ask a general question or start a new conversation.";
-    }
-    switch (type) {
-      case CONTENT_TYPES.YOUTUBE: return "Ask a question about this YouTube video or request a summary.";
-      case CONTENT_TYPES.REDDIT: return "Ask a question about this Reddit post or request a summary.";
-      case CONTENT_TYPES.PDF: return "Ask a question about this PDF document or request a summary.";
-      case CONTENT_TYPES.GENERAL: return "Ask a question about this web page or request a summary.";
-      default: return "Ask a question to get started.";
-    }
-  };
-  // --- End Get Welcome Message ---
-
-  // --- Open API Settings --- (Keep this block)
+  // --- Open API Settings --- (Keep as is)
   const openApiSettings = () => {
     try {
       if (chrome && chrome.tabs && chrome.runtime) {
@@ -287,7 +304,7 @@ function ChatArea({ className = '' }) {
 
   const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
-  // --- Initial View Logic (when no messages) --- (Keep this block, no changes needed here)
+  // --- Initial View Logic (when no messages) --- (Keep this block exactly as it was)
   if (messages.length === 0) {
     // --- No Credentials View ---
     if (!hasAnyPlatformCredentials) {
@@ -298,6 +315,7 @@ function ChatArea({ className = '' }) {
             className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark"
             aria-label="Configure API Credentials in Settings"
           >
+            {/* SVG Icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1.51-1V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               <circle cx="12" cy="12" r="3"></circle>
@@ -342,7 +360,8 @@ function ChatArea({ className = '' }) {
                   </p>
                 )}
                 <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-2">
-                  {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
+                  {/* Pricing and Context Window Info with Tooltips */}
+                   {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
                      <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                        <FreeTierIcon /> <span>Free</span>
                        <Tooltip show={hoveredElement === 'freeTier'} message="This model is currently free to use via API." targetRef={freeTierRef} position="bottom" />
@@ -372,7 +391,7 @@ function ChatArea({ className = '' }) {
                 </div>
               </>
             ) : (
-               <div className="h-5 mt-1 mb-2"></div> // Placeholder for spacing if model config is loading
+               <div className="h-5 mt-1 mb-2"></div> // Placeholder for spacing
             )}
           </div>
 
@@ -431,7 +450,7 @@ function ChatArea({ className = '' }) {
         </div>
       );
     }
-    return null; // Should not happen if logic is correct, but good practice
+    return null; // Fallback, should not be reached
   }
   // --- End Initial View Logic ---
 
@@ -439,11 +458,10 @@ function ChatArea({ className = '' }) {
   // --- Chat Message Display Logic (when messages exist) ---
   return (
     <div className={`flex-1 flex flex-col relative ${className}`}>
-      {/* Scrollable container */}
+      {/* Scrollable container - remove scroll-smooth class/style, handled by JS */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto flex flex-col pt-2 scroll-smooth" // scroll-smooth might interfere slightly, test removing if needed
-        style={{ scrollBehavior: 'smooth' }} // Ensure smooth behavior
+        className="flex-1 overflow-y-auto flex flex-col pt-2"
       >
         {messages.map((message) => (
           <MessageBubble
@@ -455,29 +473,33 @@ function ChatArea({ className = '' }) {
             platformIconUrl={message.platformIconUrl}
           />
         ))}
-        {/* Invisible element to target for scrolling */}
+        {/* Invisible element at the very end to target for scrolling */}
         <div ref={messagesEndRef} style={{ height: '1px' }} />
       </div>
 
-      {/* --- Scroll Down Button (Improved Styling & Transition) --- */}
+      {/* --- Scroll Down Button (Improved Styling & Logic) --- */}
       <button
-        onClick={() => scrollToBottom('smooth')} // Ensure smooth scroll on click
+        // Click handler uses 'smooth' scroll and resets state via scrollToBottom
+        onClick={() => scrollToBottom('smooth')}
         className={`
-            absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10
-            p-1.5 rounded-full shadow-md
+            absolute bottom-4 right-4 z-10 /* Example: Position bottom-right */
+            /* Or keep centered: bottom-2 left-1/2 transform -translate-x-1/2 */
+            p-1.5 rounded-full shadow-lg /* Enhanced shadow */
             bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700
             text-theme-primary dark:text-theme-primary-dark
-            transition-opacity duration-300 ease-in-out
+            transition-opacity duration-200 ease-in-out /* Slightly faster fade */
             focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark focus-visible:ring-offset-background dark:focus-visible:ring-offset-background-dark
+            ${/* Conditional visibility and interaction based on state */''}
             ${showScrollDownButton ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}
         aria-label="Scroll to bottom"
         title="Scroll to bottom"
-        // Disable button if it's not supposed to be shown (for accessibility)
+        // Hide from accessibility tree when not visible
         aria-hidden={!showScrollDownButton}
+        // Remove from tab order when not visible
         tabIndex={showScrollDownButton ? 0 : -1}
       >
-        <ScrollDownIcon /> {/* Icon component */}
+        <ScrollDownIcon /> {/* Use the Icon component */}
       </button>
       {/* --- End Scroll Down Button --- */}
     </div>
