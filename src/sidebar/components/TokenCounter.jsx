@@ -117,7 +117,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           {/* Last Call Cost with tooltip */}
           <div
             ref={lastCostRef}
-            className="relative cursor-help text-gray-400 dark:text-gray-500 mr-2" // Added margin
+            className="relative cursor-help text-gray-400 dark:text-gray-500 mr-2"
             onMouseEnter={() => setHoveredElement('lastCost')}
             onMouseLeave={() => setHoveredElement(null)}
             onFocus={() => setHoveredElement('lastCost')}
@@ -159,7 +159,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
       {showDetails && (
         <>
           {/* Grid for detailed token breakdown */}
-          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-2">
+          <div className="mt-2 py-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-2">
             {/* Prompt tokens */}
             <div
               ref={promptRef}
@@ -207,7 +207,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           </div>
 
           {/* Context window progress bar */}
-          <div className="mt-3">
+          <div>
             <div
               ref={contextWindowRef}
               className="flex items-center relative cursor-help"
