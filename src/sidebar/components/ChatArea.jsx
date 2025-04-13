@@ -313,7 +313,7 @@ function ChatArea({ className = '' }) {
                 </div>
               ) : (
                 // Show Message if page is not injectable
-                <p className="text-xs text-theme-secondary mt-1">
+                <p className="text-xs text-theme-secondary">
                   Extraction not available for this page type.
                 </p>
               )}
