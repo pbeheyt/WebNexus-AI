@@ -77,7 +77,7 @@ function ChatArea({ className = '' }) {
   } = useSidebarPlatform();
 
   // --- Local State for Stable Display ---
-  const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null); // Holds { id, name, iconUrl }
+  const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null)
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
 
   // Effect to update display configs smoothly and synchronously
@@ -215,7 +215,7 @@ function ChatArea({ className = '' }) {
           // Welcome Message (Credentials Exist)
           <>
             {/* Platform Logo, Model Name, and Details */}
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center py-2"> 
               {/* RENDER BASED ON displayPlatformConfig */}
               {displayPlatformConfig ? ( // Use local state for platform
                 <>
@@ -230,9 +230,15 @@ function ChatArea({ className = '' }) {
                       {displayModelConfig.name || displayModelConfig.id}
                     </div>
                   )}
+                  {/* Model Description */}
+                  {displayModelConfig.description && (
+                    <p className="text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto">
+                      {displayModelConfig.description}
+                    </p>
+                  )}
                   {/* Model Details Section - RENDER BASED ON displayModelConfig */}
                   {displayModelConfig && ( // Use local state for model details
-                    <div className="flex flex-row items-center justify-center gap-3 text-xs text-theme-secondary mt-2">
+                    <div className="flex flex-row items-center justify-center gap-3 text-xs text-theme-secondary">
                       {/* Price Section */}
                       {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
                         <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
@@ -244,13 +250,13 @@ function ChatArea({ className = '' }) {
                           {typeof displayModelConfig.inputTokenPrice === 'number' && displayModelConfig.inputTokenPrice > 0 && (
                             <div ref={inputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('inputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('inputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                               <InputTokenIcon /> <span>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
-                              <Tooltip show={hoveredElement === 'inputPrice'} message={`Est. cost per 1 million input tokens.`} targetRef={inputPriceRef} position="bottom" />
+                              <Tooltip show={hoveredElement === 'inputPrice'} message={`Cost per 1 million input tokens.`} targetRef={inputPriceRef} position="bottom" />
                             </div>
                           )}
                           {typeof displayModelConfig.outputTokenPrice === 'number' && displayModelConfig.outputTokenPrice > 0 && (
                             <div ref={outputPriceRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('outputPrice')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('outputPrice')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                               <OutputTokenIcon /> <span>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
-                              <Tooltip show={hoveredElement === 'outputPrice'} message={`Est. cost per 1 million output tokens.`} targetRef={outputPriceRef} position="bottom" />
+                              <Tooltip show={hoveredElement === 'outputPrice'} message={`Cost per 1 million output tokens.`} targetRef={outputPriceRef} position="bottom" />
                             </div>
                           )}
                         </>
@@ -272,7 +278,7 @@ function ChatArea({ className = '' }) {
             </div>
 
             {/* Start a conversation message */}
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center py-2">
               <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
               <p className="text-sm">
                 {getWelcomeMessage(contentType)}
@@ -280,7 +286,7 @@ function ChatArea({ className = '' }) {
             </div>
 
             {/* Content Type Badge and Extraction Info/Toggle */}
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center py-2">
               {/* Content Type Badge Display */}
               {getContentTypeIconSvg(contentType) && (
                 <div className="mb-4">
