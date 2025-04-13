@@ -9,7 +9,9 @@ export function AppHeader({
   onRefreshClick,
   isExpanded = false,
   onToggleExpand = () => {},
-  showExpandToggle = false
+  showExpandToggle = false,
+  className = '',
+  showBorder = true,
 }) {
   const { theme, toggleTheme, textSize, toggleTextSize } = useUI();
 
@@ -18,14 +20,25 @@ export function AppHeader({
       chrome.runtime.openOptionsPage();
     } catch (error) {
       console.error('Could not open options page:', error);
+      // Fallback for environments where openOptionsPage might not be available or fail
       chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
     }
   };
 
+  // Construct the base classes and conditionally add the border classes
+  const headerClasses = `
+    flex items-center justify-between
+    ${showBorder ? 'border-b border-theme' : ''}
+    ${className} // Append any custom classes passed via props
+  `.trim().replace(/\s+/g, ' '); // Trim whitespace and normalize spaces
+
   return (
-    <header className="flex items-center justify-between pb-1 mb-1 border-b border-theme">
+    <header className={headerClasses}>
       <h1 className="text-base font-semibold flex items-center">
-        <img src={chrome.runtime.getURL('images/icon128.png')} alt="AI Content Assistant logo" className="w-5 h-5 mr-2" />
+        {/* Ensure chrome API is available before accessing runtime */}
+        {typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL && (
+           <img src={chrome.runtime.getURL('images/icon128.png')} alt="AI Content Assistant logo" className="w-5 h-5 mr-2" />
+        )}
         <span className="truncate overflow-hidden whitespace-nowrap max-w-[150px]">
           Nexus AI
         </span>
@@ -38,7 +51,7 @@ export function AppHeader({
           className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
           title={
             textSize === 'sm' ? "Switch to Base Size" :
-            textSize === 'base' ? "Switch to Large Size" : 
+            textSize === 'base' ? "Switch to Large Size" :
             "Switch to Small Size"
           }
         >

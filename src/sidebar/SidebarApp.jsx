@@ -104,15 +104,15 @@ export default function SidebarApp() {
     <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary">
       {isReady && tabId ? ( // Ensure tabId is also set before rendering main content
         <>
-          <div className="p-4 pb-0">
-            <AppHeader
-              showRefreshButton={true}
-              onRefreshClick={resetCurrentTabData}
-              isExpanded={headerExpanded}
-              onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
-              showExpandToggle={true}
-            />
-          </div>
+          <AppHeader
+            showRefreshButton={true}
+            onRefreshClick={resetCurrentTabData}
+            isExpanded={headerExpanded}
+            onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
+            showExpandToggle={true}
+            showBorder={!headerExpanded}
+            className='px-5 py-4'
+          />
 
           {/* Collapsible header section */}
           <div className="relative">

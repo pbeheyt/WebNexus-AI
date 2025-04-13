@@ -100,7 +100,7 @@ function Header() {
 
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
-      <div className="flex items-center px-4">
+      <div className="flex items-center px-5">
         <div className="flex items-center w-full min-w-0">
           {hasAnyPlatformCredentials ? (
             <>

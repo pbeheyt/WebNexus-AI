@@ -162,7 +162,7 @@ export function Popup() {
 
   return (
     <div className="min-w-[350px] p-4 bg-theme-primary text-theme-primary">
-      <AppHeader onClose={closePopup}>
+      <AppHeader onClose={closePopup} className='pb-2'>
         {/* Sidebar toggle button */}
         <button
           onClick={toggleSidebar}
@@ -179,22 +179,22 @@ export function Popup() {
 
       {/* Info Panel */}
       {!contentLoading && contentTypeLabel && (
-        <div className="mt-3">
+        <div className="mt-2">
           <InfoPanel contentTypeLabel={contentTypeLabel} contentType={contentType} />
         </div>
       )}
 
-      <div className="mt-3"> {/* Ensured mt-3 is present */}
+      <div className="mt-2"> 
         <PlatformSelector />
       </div>
 
-      <div className="mt-3">
+      <div className="mt-2">
         <UnifiedInput
           value={inputText}
           onChange={setInputText}
           onSubmit={handleProcessWithText}
           disabled={!isSupported || contentLoading || isProcessingContent || isProcessing}
-          isProcessing={isProcessingContent || isProcessing} // Combined processing state
+          isProcessing={isProcessingContent || isProcessing}
           contentType={contentType}
           showTokenInfo={false}
           layoutVariant="popup"
