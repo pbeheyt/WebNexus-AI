@@ -66,7 +66,7 @@ export const MessageBubble = memo(({
     const segments = parseTextAndMath(content || '');
 
     return (
-      <div className={`px-5 py-3 w-full message-group relative mb-2 ${className}`}>
+      <div className={`group px-5 py-3 w-full message-group relative mb-2 ${className}`}>
         <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-3`}>
           {segments.map((segment, index) => {
             return (
