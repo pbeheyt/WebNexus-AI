@@ -45,12 +45,12 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
 
   // Normal rendering with appropriate KaTeX component
   return inline ? (
-    <span className="inline-flex items-center align-middle mx-1">
+    <span className="inline-flex items-center align-middle my-2 mx-1">
       {renderedMath}
     </span>
   ) : (
     // Removed 'flex justify-center' to fix left-truncation with overflow
-    <div className="my-4 overflow-x-auto max-w-full">
+    <div className="my-3 overflow-x-auto max-w-full">
       {renderedMath}
     </div>
   );
