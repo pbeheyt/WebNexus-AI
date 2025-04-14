@@ -14,11 +14,11 @@ export function Toggle({
   checked = false,
   onChange,
   disabled = false,
-  className = '',
+  className = 'w-10 h-5',
   ...props
 }) {
   return (
-    <label className={`relative inline-block w-10 h-5 ${className}`}>
+    <label className={`relative inline-block ${className}`}>
       <input
         type="checkbox"
         className="opacity-0 w-0 h-0"

@@ -1,5 +1,5 @@
 // src/components/messaging/MessageBubble.jsx
-import React, { useState, memo, Fragment } from 'react';
+import React, { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -78,18 +78,6 @@ const renderWithPlaceholdersRecursive = (children, mathMap) => {
   });
 };
 
-
-/**
- * Custom Text Renderer - Uses the recursive helper function.
- * Necessary because ReactMarkdown might pass text nodes directly even if they are not inside p or li.
- */
-const CustomTextRenderer = ({ children, mathMap }) => {
-  // The 'children' prop for a text override is the string content.
-  const processedParts = renderWithPlaceholdersRecursive(children, mathMap);
-  return <>{processedParts}</>;
-};
-
-
 /**
  * Message bubble component
  */
@@ -119,9 +107,8 @@ export const MessageBubble = memo(({
     }
   };
 
-  // System messages (no change)
+  // System messages
   if (isSystem) {
-    // ... (no changes)
      return (
         <div className={`px-5 py-3 mb-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}>
           <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
@@ -129,15 +116,14 @@ export const MessageBubble = memo(({
       );
   }
 
-  // User messages (no change)
+  // User messages
   if (isUser) {
-    // ... (no changes)
      return (
       <div className={`px-5 py-2 w-full flex justify-end items-start mb-2 ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
            <ReactMarkdown
              remarkPlugins={[remarkGfm]}
-             className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm"
+             className="whitespace-pre-wrap break-words overflow-wrap-anywhere text-sm"
              allowedElements={['a', 'code', 'pre', 'strong', 'em', 'br']}
              unwrapDisallowed={true}
              components={{

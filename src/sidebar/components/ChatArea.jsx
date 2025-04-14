@@ -278,19 +278,19 @@ function ChatArea({ className = '' }) {
     // which won't be nullified during transitions after the first load.
     if (hasAnyPlatformCredentials && hasCompletedInitialLoad) {
       return (
-        <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-4 overflow-y-auto`}>
+        <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3 overflow-y-auto`}>
           {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
-          <div className="flex flex-col items-center py-5 w-full">
+          <div className="flex flex-col items-center py-3 w-full">
              {/* Display platform info only if available */}
             {displayPlatformConfig ? (
               <img
                 src={displayPlatformConfig.iconUrl}
                 alt={`${displayPlatformConfig.name || 'Platform'} logo`}
-                className="w-12 h-12 mb-3 object-contain"
+                className="w-8 h-8 mb-2 object-contain"
               />
             ) : (
                // This fallback should now only appear very briefly during the *absolute first* load
-               <div className="w-12 h-12 mb-3 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+               <div className="w-12 h-12 mb-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
             )}
 
             {/* Display model info only if available */}
@@ -304,7 +304,7 @@ function ChatArea({ className = '' }) {
                     {displayModelConfig.description}
                   </p>
                 )}
-                <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-2">
+                <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-1">
                   {/* Pricing and Context Window Info with Tooltips */}
                    {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
                      <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
@@ -343,21 +343,21 @@ function ChatArea({ className = '' }) {
           </div>
 
           {/* SECTION 2: Start a conversation message Section */}
-          <div className="flex flex-col items-center py-5 w-full">
+          <div className="flex flex-col items-center py-3 w-full">
             <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
-            <p className="text-sm max-w-xs mx-auto">
+            <p className="text-xs max-w-xs mx-auto">
               {getWelcomeMessage(contentType, isPageInjectable)}
             </p>
           </div>
 
           {/* SECTION 3: Content Type / Extraction Info Section */}
-          <div className="flex flex-col items-center py-5 w-full">
+          <div className="flex flex-col items-center py-3 w-full">
             {isPageInjectable ? (
               <>
                 {getContentTypeIconSvg(contentType) && (
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <div
-                      className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
+                      className="inline-flex items-center px-4 py-2 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
                       aria-label={`Current content type: ${getContentTypeName(contentType)}`}
                     >
                       <div
@@ -371,20 +371,21 @@ function ChatArea({ className = '' }) {
                     </div>
                   </div>
                 )}
-                <div className="flex items-center gap-3 text-sm text-theme-secondary">
+                <div className="flex items-center gap-3 text-xs text-theme-secondary">
                   <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
                   <Toggle
                     id="content-extract-toggle"
                     checked={isContentExtractionEnabled}
                     onChange={() => setIsContentExtractionEnabled(prev => !prev)}
                     disabled={!hasAnyPlatformCredentials} // Keep disabled check
+                    className='w-10 h-5'
                   />
                 </div>
               </>
             ) : (
-              <div className="mb-4">
+              <div className="mb-2">
                 <div
-                  className="inline-flex items-center px-4 py-2.5 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
+                  className="inline-flex items-center px-4 py-2 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
                   aria-label="Content extraction not available for this page"
                 >
                 <span className="text-sm font-medium">
