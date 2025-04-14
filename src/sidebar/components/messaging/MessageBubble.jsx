@@ -118,22 +118,10 @@ export const MessageBubble = memo(({
 
   // User messages
   if (isUser) {
-     return (
+    return (
       <div className={`px-5 py-2 w-full flex justify-end items-start mb-2 ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
-           <ReactMarkdown
-             remarkPlugins={[remarkGfm]}
-             className="whitespace-pre-wrap break-words overflow-wrap-anywhere text-sm"
-             allowedElements={['a', 'code', 'pre', 'strong', 'em', 'br']}
-             unwrapDisallowed={true}
-             components={{
-                a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-                code: ({node, ...props}) => <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-xs font-mono" {...props}>{props.children}</code>,
-                pre: ({node, ...props}) => <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs font-mono overflow-x-auto">{props.children}</pre>,
-             }}
-          >
-             {content}
-          </ReactMarkdown>
+          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
         </div>
       </div>
     );
