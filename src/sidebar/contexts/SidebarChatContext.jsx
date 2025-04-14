@@ -217,7 +217,7 @@ export function SidebarChatProvider({ children }) {
                   role: MESSAGE_ROLES.USER,
                   content: extractedContent,
                   timestamp: new Date().toISOString(),
-                  inputTokens: TokenManagementService.estimateTokens(extractedContent), // Removed await
+                  inputTokens: TokenManagementService.estimateTokens(extractedContent),
                   outputTokens: 0,
                   isExtractedContent: true
                 };
@@ -293,7 +293,6 @@ export function SidebarChatProvider({ children }) {
             cancelAnimationFrame(rafIdRef.current);
             rafIdRef.current = null;
           }
-          // debouncedStateUpdate.cancel(); // Original line removed
 
           if (chunkData.cancelled === true) {
             // Handle Cancellation: Stream was cancelled by the user (via background script signal)
@@ -345,7 +344,7 @@ export function SidebarChatProvider({ children }) {
         rafIdRef.current = null; // Also reset the ref here
       }
     };
-  }, [streamingMessageId, messages, visibleMessages, tabId, selectedModel, // Removed streamingContent dependency
+  }, [streamingMessageId, messages, visibleMessages, tabId, selectedModel,
       selectedPlatformId, modelConfigData, extractedContentAdded]);
 
   /**
@@ -557,7 +556,7 @@ export function SidebarChatProvider({ children }) {
                   role: MESSAGE_ROLES.USER,
                   content: extractedContent,
                   timestamp: new Date().toISOString(),
-                  inputTokens: TokenManagementService.estimateTokens(extractedContent), // Removed await
+                  inputTokens: TokenManagementService.estimateTokens(extractedContent),
                   outputTokens: 0,
                   isExtractedContent: true
                 };
@@ -605,10 +604,9 @@ export function SidebarChatProvider({ children }) {
       // Update state with the final message list
       setMessages(finalMessages);
 
-      // Save the final state to history (this now implicitly triggers calculateAndUpdateStatistics which handles cost)
+      // Save the final state to history
       if (tabId) {
         await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
-        // The call to updateAccumulatedCost is removed as it's handled by saveHistory -> calculateAndUpdateStatistics
       }
 
       // Reset streaming state
@@ -639,6 +637,7 @@ export function SidebarChatProvider({ children }) {
    * Clears all chat history, token data, and formatted content stored
    * for the current tab by sending a message to the background script.
    * Prompts the user for confirmation before proceeding.
+   * Also cancels any ongoing stream.
    */
   const resetCurrentTabData = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
@@ -648,6 +647,12 @@ export function SidebarChatProvider({ children }) {
 
     if (window.confirm("Are you sure you want to clear all chat history and data for this tab? This action cannot be undone.")) {
       try {
+        if (streamingMessageId && isProcessing && !isCanceling) {
+          console.info('Refresh requested: Cancelling ongoing stream first...');
+          await cancelStream(); // Wait for cancellation to attempt completion
+          console.info('Stream cancellation attempted.');
+        }
+
         const response = await chrome.runtime.sendMessage({
           action: 'clearTabData',
           tabId: tabId
@@ -656,9 +661,9 @@ export function SidebarChatProvider({ children }) {
         if (response && response.success) {
           setMessages([]);
           setInputValue('');
-          setStreamingMessageId(null);
+          setStreamingMessageId(null); // Ensure streaming ID is cleared if cancellation didn't reset it
           setExtractedContentAdded(false); // Allow extracted content to be added again
-          setIsCanceling(false);
+          setIsCanceling(false); // Ensure canceling state is reset
 
           // Clear token data (which also recalculates stats)
           await clearTokenData();
@@ -668,6 +673,8 @@ export function SidebarChatProvider({ children }) {
         }
       } catch (error) {
         console.error('Failed to reset tab data:', error);
+        // Ensure canceling state is reset even on error
+        setIsCanceling(false);
       }
     }
   }, [
@@ -677,7 +684,11 @@ export function SidebarChatProvider({ children }) {
     setInputValue,
     setStreamingMessageId,
     setExtractedContentAdded,
-    setIsCanceling
+    setIsCanceling,
+    streamingMessageId,
+    isProcessing,
+    isCanceling,
+    cancelStream
   ]);
 
   /**
