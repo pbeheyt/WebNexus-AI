@@ -384,14 +384,9 @@ function ChatArea({ className = '' }) {
               </>
             ) : (
               <div className="mb-2">
-                <div
-                  className="inline-flex items-center px-4 py-2 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
-                  aria-label="Content extraction not available for this page"
-                >
-                <span className="text-sm font-medium">
-                  This page content cannot be extracted
+                <span className="text-xs text-theme-secondary">
+                  This page content cannot be extracted.
                 </span>
-                </div>
               </div>
             )}
           </div>
