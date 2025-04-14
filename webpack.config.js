@@ -1,5 +1,6 @@
 const path = require('path');
 const isProduction = process.env.NODE_ENV === 'production';
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: {
@@ -57,7 +58,22 @@ module.exports = {
     }
   },
   optimization: {
-    minimize: isProduction, // Only minimize in production
+    minimize: isProduction,
+    minimizer: [
+      // Only add Terser config if in production
+      ...(isProduction ? [
+        new TerserPlugin({
+          terserOptions: {
+            compress: {
+              drop_console: true, // This explicitly removes console.* statements
+            },
+          },
+        }),
+      ] : []),
+    ],
+  },
+  performance: {
+    hints: isProduction ? 'warning' : false
   },
   performance: {
     hints: isProduction ? 'warning' : false // Show hints only in production
