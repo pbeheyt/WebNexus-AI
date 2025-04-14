@@ -20,9 +20,6 @@ export { PlatformCard} from './layout/PlatformCard';
 export { AppHeader } from './layout/AppHeader';
 export { Tooltip } from './layout/Tooltip';
 
-// Messaging components
-export { MessageBubble } from './messaging/MessageBubble';
-
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';
 export { UnifiedInput } from './input/UnifiedInput';
