@@ -2,6 +2,7 @@
 const ApiInterface = require('./api-interface');
 const { extractApiErrorMessage } = require('../shared/utils/error-utils');
 const ConfigService = require('../services/ConfigService');
+const logger = require('../shared/logger').api;
 
 /**
  * Base class with shared API functionality
@@ -10,7 +11,8 @@ class BaseApiService extends ApiInterface {
   constructor(platformId) {
     super();
     this.platformId = platformId;
-    this.logger = this._createLogger();
+    // Assign the shared logger directly
+    this.logger = logger;
     this.credentials = null;
     this.config = null;
   }
@@ -18,7 +20,8 @@ class BaseApiService extends ApiInterface {
   async initialize(credentials) {
     this.credentials = credentials;
     this.config = await ConfigService.getPlatformApiConfig(this.platformId);
-    this.logger.info('API service initialized');
+    // Update log call to include platformId
+    this.logger.info(`[${this.platformId}] API service initialized`);
   }
 
   async processRequest(requestConfig) {
@@ -28,22 +31,25 @@ class BaseApiService extends ApiInterface {
 
     try {
       if (!requestConfig || !resolvedParams || !prompt || !onChunk) {
-        throw new Error('Invalid requestConfig provided to BaseApiService.processRequest');
+        throw new Error(`[${this.platformId}] Invalid requestConfig provided to BaseApiService.processRequest`);
       }
       if (!apiKey) {
-        throw new Error('API key not available in BaseApiService');
+        throw new Error(`[${this.platformId}] API key not available in BaseApiService`);
       }
 
       const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent);
-      this.logger.info(`Processing request for model ${model} with${formattedContent ? ' included' : 'out'} content.`);
+      // Update log call
+      this.logger.info(`[${this.platformId}] Processing request for model ${model} with${formattedContent ? ' included' : 'out'} content.`);
       const fetchOptions = await this._buildApiRequest(structuredPrompt, resolvedParams, apiKey);
       await this._executeStreamingRequest(fetchOptions, onChunk, abortSignal, model);
 
-      this.logger.info(`Streaming request for model ${model} completed.`);
+      // Update log call
+      this.logger.info(`[${this.platformId}] Streaming request for model ${model} completed.`);
       return { success: true, model: model };
 
     } catch (error) {
-      this.logger.error(`Error in BaseApiService.processRequest for model ${model}:`, error);
+      // Update log call
+      this.logger.error(`[${this.platformId}] Error in BaseApiService.processRequest for model ${model}:`, error);
       if (onChunk && typeof onChunk === 'function') {
         onChunk({
           done: true,
@@ -71,13 +77,13 @@ class BaseApiService extends ApiInterface {
     try {
       const { apiKey } = this.credentials;
       if (!apiKey) {
-        this.logger.warn('No API key provided for validation');
+        this.logger.warn(`[${this.platformId}] No API key provided for validation`);
         return false;
       }
       const isValid = await this._validateApiKey(apiKey);
       return isValid;
     } catch (error) {
-      this.logger.error('Error validating credentials:', error);
+      this.logger.error(`[${this.platformId}] Error validating credentials:`, error);
       return false;
     }
   }
@@ -86,19 +92,19 @@ class BaseApiService extends ApiInterface {
     try {
       const defaultModel = this.config?.defaultModel;
       if (!defaultModel) {
-        this.logger.warn('No default model found in configuration');
+        this.logger.warn(`[${this.platformId}] No default model found in configuration`);
         return false;
       }
       return await this._validateWithModel(apiKey, defaultModel);
     } catch (error) {
-      this.logger.error('Error validating API key:', error);
+      this.logger.error(`[${this.platformId}] Error validating API key:`, error);
       return false;
     }
   }
 
   async _validateWithModel(apiKey, model) {
     try {
-      this.logger.info(`Attempting API key validation for model ${model}...`);
+      this.logger.info(`[${this.platformId}] Attempting API key validation for model ${model}...`);
       const fetchOptions = await this._buildValidationRequest(apiKey, model);
       const response = await fetch(fetchOptions.url, {
         method: fetchOptions.method,
@@ -107,15 +113,15 @@ class BaseApiService extends ApiInterface {
       });
 
       if (response.ok) {
-        this.logger.info(`API key validation successful for model ${model} (Status: ${response.status})`);
+        this.logger.info(`[${this.platformId}] API key validation successful for model ${model} (Status: ${response.status})`);
         return true;
       } else {
         const errorMessage = await extractApiErrorMessage(response);
-        this.logger.warn(`API key validation failed for model ${model} (Status: ${response.status}): ${errorMessage}`);
+        this.logger.warn(`[${this.platformId}] API key validation failed for model ${model} (Status: ${response.status}): ${errorMessage}`);
         return false;
       }
     } catch (error) {
-      this.logger.error(`API key validation error for model ${model}:`, error);
+      this.logger.error(`[${this.platformId}] API key validation error for model ${model}:`, error);
       return false;
     }
   }
@@ -148,7 +154,6 @@ class BaseApiService extends ApiInterface {
   _handleParsedChunk(parsedResult, onChunk, model, accumulatedContent) {
     if (parsedResult.type === 'content') {
       if (Array.isArray(parsedResult.chunks)) {
-        this.logger.info(`Handling ${parsedResult.chunks.length} sub-chunks from parser.`);
         for (const subChunk of parsedResult.chunks) {
           if (subChunk && subChunk.length > 0) {
             accumulatedContent += subChunk;
@@ -172,12 +177,14 @@ class BaseApiService extends ApiInterface {
     let buffer = ""; // Buffer for non-Gemini platforms
 
     if (typeof this._resetStreamState === 'function') {
-      this.logger.info(`Resetting stream state for ${this.platformId}`);
+      // Update log call
+      this.logger.info(`[${this.platformId}] Resetting stream state`);
       this._resetStreamState();
     }
 
     try {
-      this.logger.info(`Executing streaming request to ${fetchOptions.url} for model ${model}`);
+      // Update log call
+      this.logger.info(`[${this.platformId}] Executing streaming request to ${fetchOptions.url} for model ${model}`);
       const response = await fetch(fetchOptions.url, {
         method: fetchOptions.method,
         headers: fetchOptions.headers,
@@ -187,7 +194,8 @@ class BaseApiService extends ApiInterface {
 
       if (!response.ok) {
         const errorMessage = await extractApiErrorMessage(response);
-        this.logger.error(`API Error (${response.status}) for model ${model}: ${errorMessage}`, response);
+        // Update log call
+        this.logger.error(`[${this.platformId}] API Error (${response.status}) for model ${model}: ${errorMessage}`, response);
         onChunk({ done: true, error: errorMessage, model });
         throw new Error(`API request failed with status ${response.status}: ${errorMessage}`);
       }
@@ -199,10 +207,12 @@ class BaseApiService extends ApiInterface {
         const { done, value } = await reader.read();
 
         if (done) {
-          this.logger.info(`Stream finished naturally for model ${model}.`);
+          // Update log call
+          this.logger.info(`[${this.platformId}] Stream finished naturally for model ${model}.`);
           // Final buffer processing for all platforms
           if (buffer.trim()) {
-            this.logger.warn(`Processing remaining buffer content after stream end for model ${model}: "${buffer}"`);
+            // Update log call
+            this.logger.warn(`[${this.platformId}] Processing remaining buffer content after stream end for model ${model}: "${buffer}"`);
             try {
               const parsedResult = this._parseStreamChunk(buffer.trim());
               accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent);
@@ -211,7 +221,8 @@ class BaseApiService extends ApiInterface {
                 return false;
               }
             } catch (parseError) {
-              this.logger.error(`Error parsing final buffer chunk for model ${model}:`, parseError, 'Buffer:', buffer);
+              // Update log call
+              this.logger.error(`[${this.platformId}] Error parsing final buffer chunk for model ${model}:`, parseError, 'Buffer:', buffer);
               onChunk({ done: true, error: `Error parsing final stream data: ${parseError.message}`, model });
               return false;
             }
@@ -235,32 +246,34 @@ class BaseApiService extends ApiInterface {
             accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent);
 
             if (parsedResult.type === 'error') {
-              this.logger.error(`Parsed stream error for model ${model}: ${parsedResult.error}`);
+              // Update log call
+              this.logger.error(`[${this.platformId}] Parsed stream error for model ${model}: ${parsedResult.error}`);
               onChunk({ done: true, error: parsedResult.error, model });
               return false; // Stop processing loop
             }
             // Ignore 'done' and 'ignore' types here
           } catch (parseError) {
-            this.logger.error(`Error parsing stream chunk for model ${model}:`, parseError, 'Line:', line);
+            // Update log call
+            this.logger.error(`[${this.platformId}] Error parsing stream chunk for model ${model}:`, parseError, 'Line:', line);
             onChunk({ done: true, error: `Error parsing stream data: ${parseError.message}`, model });
             return false; // Stop processing loop
           }
         }
 
-      } // end while(true)
+      }
 
       return true; // Signal successful completion
 
     } catch (error) {
       // Handle AbortError specifically
       if (error.name === 'AbortError') {
-        this.logger.info(`API request cancelled by user (AbortError) for model ${model}.`);
+        this.logger.info(`[${this.platformId}] API request cancelled by user (AbortError) for model ${model}.`);
         // Send a specific 'Cancelled by user' message via onChunk
         onChunk({ done: true, error: 'Cancelled by user', model });
         // No need to re-throw AbortError, it's handled.
       } else {
         // Handle other errors during fetch or reading
-        this.logger.error(`Unhandled streaming error for model ${model}:`, error);
+        this.logger.error(`[${this.platformId}] Unhandled streaming error for model ${model}:`, error);
         onChunk({ done: true, error: error.message || 'An unknown streaming error occurred', model });
         // Re-throw other errors to be caught by the outer try/catch in processRequest
         throw error;
@@ -272,25 +285,16 @@ class BaseApiService extends ApiInterface {
         try {
           // Attempt to cancel the reader. This also releases the lock.
           await reader.cancel();
-          this.logger.info(`Stream reader cancelled successfully for model ${model}.`);
+          this.logger.info(`[${this.platformId}] Stream reader cancelled successfully for model ${model}.`);
         } catch (cancelError) {
-          // Log if cancelling fails. This might happen if the stream was already forcefully closed
-          // due to the AbortSignal or other network issues. Treat as informational.
-          this.logger.warn(`Error cancelling stream reader for model ${model} (potentially expected after abort):`, cancelError);
+          this.logger.warn(`[${this.platformId}] Error cancelling stream reader for model ${model} (potentially expected after abort):`, cancelError);
         }
         // No need for releaseLock() as cancel() handles it.
       } else {
-        this.logger.info(`No active reader found in finally block for model ${model}.`);
+        // Update log call
+        this.logger.info(`[${this.platformId}] No active reader found in finally block for model ${model}.`);
       }
     }
-  }
-
-  _createLogger() {
-    return {
-      info: (message, data = null) => console.log(`[${this.platformId}-api] INFO: ${message}`, data ?? ''),
-      warn: (message, data = null) => console.warn(`[${this.platformId}-api] WARN: ${message}`, data ?? ''),
-      error: (message, data = null) => console.error(`[${this.platformId}-api] ERROR: ${message}`, data ?? '')
-    };
   }
 }
 

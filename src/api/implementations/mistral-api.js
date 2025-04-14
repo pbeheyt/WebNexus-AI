@@ -19,7 +19,7 @@ class MistralApiService extends BaseApiService {
    */
   async _buildApiRequest(prompt, params, apiKey) {
     const endpoint = this.config?.endpoint || 'https://api.mistral.ai/v1/chat/completions';
-    this.logger.info(`Building Mistral API request for model: ${params.model}`);
+    this.logger.info(`[${this.platformId}] Building API request for model: ${params.model}`);
 
     const requestPayload = {
       model: params.model,
@@ -47,7 +47,6 @@ class MistralApiService extends BaseApiService {
     if ('topP' in params) {
       requestPayload.top_p = params.topP;
     }
-    // Mistral specific parameters like 'safe_prompt' could be added here if needed
 
     return {
       url: endpoint,
@@ -88,12 +87,12 @@ class MistralApiService extends BaseApiService {
         } else {
           // Ignore chunks without content (like finish_reason markers)
           if (data.choices?.[0]?.finish_reason) {
-             this.logger.info(`Mistral stream finished with reason: ${data.choices[0].finish_reason}`);
+             this.logger.info(`[${this.platformId}] Stream finished with reason: ${data.choices[0].finish_reason}`);
           }
           return { type: 'ignore' };
         }
       } catch (e) {
-        this.logger.error('Error parsing Mistral stream chunk:', e, 'Line:', line);
+        this.logger.error(`[${this.platformId}] Error parsing stream chunk:`, e, 'Line:', line);
         return { type: 'error', error: `Error parsing stream data: ${e.message}` };
       }
     }
@@ -112,7 +111,7 @@ class MistralApiService extends BaseApiService {
       let role = 'user';
       if (msg.role === 'assistant') role = 'assistant';
       else if (msg.role === 'system') role = 'system';
-      
+
       return {
         role,
         content: msg.content

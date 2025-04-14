@@ -16,7 +16,7 @@ class GeminiApiService extends BaseApiService {
     }
     const isExperimental = model.includes('-exp-');
     const apiVersion = isExperimental ? 'v1beta' : 'v1';
-    this.logger.info(`Using API version '${apiVersion}' for model '${model}'`);
+    this.logger.info(`[${this.platformId}] Using API version '${apiVersion}' for model '${model}'`);
     return baseTemplate
       .replace('{version}', apiVersion)
       .replace('{model}', model)
@@ -25,7 +25,7 @@ class GeminiApiService extends BaseApiService {
 
   async _buildApiRequest(prompt, params, apiKey) {
     const endpoint = this._getGeminiEndpoint(params.model, ':streamGenerateContent');
-    this.logger.info(`Building Gemini API request to: ${endpoint}`);
+    this.logger.info(`[${this.platformId}] Building API request to: ${endpoint}`);
     const url = new URL(endpoint);
     url.searchParams.append('alt', 'sse');
     url.searchParams.append('key', apiKey);
@@ -39,10 +39,10 @@ class GeminiApiService extends BaseApiService {
 
     if (params.systemPrompt) {
       if (params.modelSupportsSystemPrompt === true) {
-        this.logger.info(`Adding system prompt using systemInstruction for model: ${params.model}.`);
+        this.logger.info(`[${this.platformId}] Adding system prompt using systemInstruction for model: ${params.model}.`);
         formattedRequest.systemInstruction = { parts: [{ text: params.systemPrompt }] };
       } else {
-        this.logger.warn(`System prompts via systemInstruction are not supported by the selected model: ${params.model}. The provided system prompt will be IGNORED.`);
+        this.logger.warn(`[${this.platformId}] System prompts via systemInstruction are not supported by the selected model: ${params.model}. The provided system prompt will be IGNORED.`);
       }
     }
 
@@ -84,7 +84,8 @@ class GeminiApiService extends BaseApiService {
       // Also handles potential 'event:' lines if Gemini SSE uses them.
       // Check for potential [DONE] signal if Gemini SSE uses it.
       if (line === 'data: [DONE]') {
-         this.logger.info('Gemini SSE stream signal [DONE] received.');
+         // Update log call
+         this.logger.info(`[${this.platformId}] SSE stream signal [DONE] received.`);
          return { type: 'done' };
       }
       return { type: 'ignore' };
@@ -111,21 +112,21 @@ class GeminiApiService extends BaseApiService {
         // If structure is valid but no text found, or if error field exists
         if (data?.error) {
             const errorMessage = data.error.message || JSON.stringify(data.error);
-            this.logger.error(`Gemini SSE stream returned an error: ${errorMessage}`, data.error);
+            this.logger.error(`[${this.platformId}] SSE stream returned an error: ${errorMessage}`, data.error);
             return { type: 'error', error: `API Error in stream: ${errorMessage}` };
         }
         // Log other valid structures without text for debugging
         if (data?.candidates?.[0]?.finishReason) {
-            this.logger.info(`Gemini SSE stream finished with reason: ${data.candidates[0].finishReason}`);
+            this.logger.info(`[${this.platformId}] SSE stream finished with reason: ${data.candidates[0].finishReason}`);
             // We might treat specific finish reasons differently later if needed.
             // For now, ignore finish reason markers unless they contain an error.
         } else {
-            this.logger.warn('Parsed Gemini SSE data, but no text chunk found or structure mismatch.', data);
+            this.logger.warn(`[${this.platformId}] Parsed SSE data, but no text chunk found or structure mismatch.`, data);
         }
         return { type: 'ignore' }; // Ignore chunks without usable text content
       }
     } catch (parseError) {
-      this.logger.error('Error parsing Gemini SSE JSON chunk:', parseError, 'Raw JSON String:', jsonString);
+      this.logger.error(`[${this.platformId}] Error parsing SSE JSON chunk:`, parseError, 'Raw JSON String:', jsonString);
       // Return error type on JSON parsing failure
       return { type: 'error', error: `Error parsing stream data: ${parseError.message}` };
     }
@@ -143,7 +144,7 @@ class GeminiApiService extends BaseApiService {
 
   async _buildValidationRequest(apiKey, model) {
     const endpoint = this._getGeminiEndpoint(model, ':generateContent');
-    this.logger.info(`Building Gemini validation request to: ${endpoint}`);
+    this.logger.info(`[${this.platformId}] Building validation request to: ${endpoint}`);
     const url = new URL(endpoint);
     url.searchParams.append('key', apiKey);
     const validationPayload = {

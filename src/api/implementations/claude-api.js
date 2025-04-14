@@ -19,7 +19,7 @@ class ClaudeApiService extends BaseApiService {
    */
   async _buildApiRequest(prompt, params, apiKey) {
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
-    this.logger.info(`Building Claude API request for model: ${params.model}`);
+    this.logger.info(`[${this.platformId}] Building API request for model: ${params.model}`);
 
     const requestPayload = {
       model: params.model,
@@ -97,7 +97,7 @@ class ClaudeApiService extends BaseApiService {
         // Check for errors reported within the stream
         if (data.type === 'error') {
           const streamErrorMessage = `Stream error: ${data.error?.type} - ${data.error?.message || 'Unknown stream error'}`;
-          this.logger.error(streamErrorMessage, data.error);
+          this.logger.error(`[${this.platformId}] ${streamErrorMessage}`, data.error);
           return { type: 'error', error: streamErrorMessage };
         }
 
@@ -105,7 +105,8 @@ class ClaudeApiService extends BaseApiService {
         return { type: 'ignore' };
 
       } catch (e) {
-        this.logger.error('Error parsing Claude stream chunk:', e, 'Line:', line);
+        // Update log call
+        this.logger.error(`[${this.platformId}] Error parsing stream chunk:`, e, 'Line:', line);
         return { type: 'error', error: `Error parsing stream data: ${e.message}` };
       }
     }
@@ -122,12 +123,12 @@ class ClaudeApiService extends BaseApiService {
    */
   _formatClaudeMessages(history, currentPrompt) {
     const formattedMessages = [];
-    
+
     // Process conversation history
     for (const message of history) {
       // Map internal role to Claude role
       const role = message.role === 'assistant' ? 'assistant' : 'user';
-      
+
       formattedMessages.push({
         role: role,
         content: [
@@ -138,7 +139,7 @@ class ClaudeApiService extends BaseApiService {
         ]
       });
     }
-    
+
     // Add current prompt as the final user message
     formattedMessages.push({
       role: 'user',
@@ -149,7 +150,7 @@ class ClaudeApiService extends BaseApiService {
         }
       ]
     });
-    
+
     return formattedMessages;
   }
 

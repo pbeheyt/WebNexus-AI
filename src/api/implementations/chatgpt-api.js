@@ -19,7 +19,7 @@ class ChatGptApiService extends BaseApiService {
    */
   async _buildApiRequest(prompt, params, apiKey) {
     const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
-    this.logger.info(`Building ChatGPT API request for model: ${params.model}`);
+    this.logger.info(`[${this.platformId}] Building API request for model: ${params.model}`);
 
     const requestPayload = {
       model: params.model,
@@ -89,7 +89,7 @@ class ChatGptApiService extends BaseApiService {
           return { type: 'ignore' };
         }
       } catch (e) {
-        this.logger.error('Error parsing ChatGPT stream chunk:', e, 'Line:', line);
+        this.logger.error(`[${this.platformId}] Error parsing stream chunk:`, e, 'Line:', line);
         // Treat parsing errors as stream errors - return error type
         return { type: 'error', error: `Error parsing stream data: ${e.message}` };
       }
@@ -110,7 +110,7 @@ class ChatGptApiService extends BaseApiService {
       let role = 'user';
       if (msg.role === 'assistant') role = 'assistant';
       else if (msg.role === 'system') role = 'system';
-      
+
       return {
         role,
         content: msg.content

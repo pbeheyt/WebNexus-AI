@@ -20,7 +20,7 @@ class DeepSeekApiService extends BaseApiService {
    */
   async _buildApiRequest(prompt, params, apiKey) {
     const endpoint = this.config?.endpoint || 'https://api.deepseek.com/v1/chat/completions';
-    this.logger.info(`Building DeepSeek API request for model: ${params.model}`);
+    this.logger.info(`[${this.platformId}] Building API request for model: ${params.model}`);
 
     const requestPayload = {
       model: params.model,
@@ -43,7 +43,7 @@ class DeepSeekApiService extends BaseApiService {
 
     if (lastMessage && lastMessage.role === 'user') {
       // Merge the current prompt into the last user message
-      this.logger.info('Merging current user prompt with previous user message for DeepSeek compatibility.');
+      this.logger.info(`[${this.platformId}] Merging current user prompt with previous user message for DeepSeek compatibility.`);
       lastMessage.content += `\n\n${prompt}`; // Append the new prompt text
     } else {
       // Add the current prompt as a new user message
@@ -101,12 +101,12 @@ class DeepSeekApiService extends BaseApiService {
         } else {
           // Ignore chunks without content (like finish_reason markers)
           if (data.choices?.[0]?.finish_reason) {
-             this.logger.info(`DeepSeek stream finished with reason: ${data.choices[0].finish_reason}`);
+             this.logger.info(`[${this.platformId}] Stream finished with reason: ${data.choices[0].finish_reason}`);
           }
           return { type: 'ignore' };
         }
       } catch (e) {
-        this.logger.error('Error parsing DeepSeek stream chunk:', e, 'Line:', line);
+        this.logger.error(`[${this.platformId}] Error parsing stream chunk:`, e, 'Line:', line);
         return { type: 'error', error: `Error parsing stream data: ${e.message}` };
       }
     }
@@ -122,7 +122,8 @@ class DeepSeekApiService extends BaseApiService {
    */
   _formatDeepSeekMessages(history) {
     const formattedMessages = [];
-    this.logger.info(`Formatting ${history.length} history messages for DeepSeek, merging consecutive roles.`);
+    // Update log call
+    this.logger.info(`[${this.platformId}] Formatting ${history.length} history messages, merging consecutive roles.`);
 
     for (const msg of history) {
       let apiRole;
@@ -132,7 +133,7 @@ class DeepSeekApiService extends BaseApiService {
       } else if (msg.role === 'assistant') {
         apiRole = 'assistant';
       } else {
-        this.logger.warn(`Skipping message with role '${msg.role || 'unknown'}' found within conversation history for DeepSeek API call.`);
+        this.logger.warn(`[${this.platformId}] Skipping message with role '${msg.role || 'unknown'}' found within conversation history for API call.`);
         continue; // Skip system or unknown roles
       }
 
@@ -141,7 +142,7 @@ class DeepSeekApiService extends BaseApiService {
       // Check if the last message exists and has the same role as the current message
       if (lastMessage && lastMessage.role === apiRole) {
         // Merge content with the last message
-        this.logger.info(`Merging consecutive '${apiRole}' message content for DeepSeek compatibility.`);
+        this.logger.info(`[${this.platformId}] Merging consecutive '${apiRole}' message content for compatibility.`);
         lastMessage.content += `\n\n${msg.content}`; // Append content
       } else {
         // Add as a new message if roles differ or it's the first message
@@ -152,13 +153,13 @@ class DeepSeekApiService extends BaseApiService {
     // Final check for alternation (optional, but good for debugging)
     for (let i = 0; i < formattedMessages.length - 1; i++) {
         if (formattedMessages[i].role === formattedMessages[i+1].role) {
-            this.logger.error(`DeepSeek formatting failed: Consecutive roles found after merge at index ${i}. Role: ${formattedMessages[i].role}`);
+            // Update log call
+            this.logger.error(`[${this.platformId}] Formatting failed: Consecutive roles found after merge at index ${i}. Role: ${formattedMessages[i].role}`);
             // Handle error case if needed, e.g., return only valid prefix
         }
     }
 
-
-    this.logger.info(`Formatted history for DeepSeek contains ${formattedMessages.length} messages after merging.`);
+    this.logger.info(`[${this.platformId}] Formatted history contains ${formattedMessages.length} messages after merging.`);
     return formattedMessages;
   }
 

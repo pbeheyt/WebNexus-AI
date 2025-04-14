@@ -5,20 +5,30 @@
  * Console-only implementation with backward compatibility
  */
 
+// Determine if running in production mode (set by Webpack's mode option)
+const isProduction = process.env.NODE_ENV === 'production';
+
 /**
- * Log a message to console
- * @param {string} context - The context (background, content, popup)
+ * Log a message to console, conditionally skipping 'info' logs in production.
+ * @param {string} context - The context (background, content, popup, etc.)
  * @param {string} level - Log level (info, warn, error)
  * @param {string} message - The message to log
- * @param {any} data - Optional data to include
+ * @param {any} [data=null] - Optional data to include
  */
 function log(context, level, message, data = null) {
+  // --- Production Log Filtering ---
+  // Skip 'info' level logs when in production mode
+  if (isProduction && level === 'info') {
+    return; // Exit early, do not log
+  }
+  // -----------------------------
+
   // Map level to console method
-  const consoleMethod = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
-  
+  const consoleMethod = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'; // Default to 'log' for 'info'
+
   // Format prefix with context
   const prefix = `[${context}]`;
-  
+
   // Log to console with or without data
   if (data !== null) {
     console[consoleMethod](prefix, message, data);
@@ -33,6 +43,7 @@ function log(context, level, message, data = null) {
  * @returns {Promise<Array>} Empty array
  */
 async function getLogs() {
+  // Log this message even in production, as it's informational about the logger itself
   console.log('[Logger] getLogs called - logs are not being stored in this version');
   return [];
 }
@@ -41,11 +52,16 @@ async function getLogs() {
  * Stub function for backward compatibility
  */
 async function clearLogs() {
+  // Log this message even in production
   console.log('[Logger] clearLogs called - logs are not being stored in this version');
 }
 
-// Maintain the exact same interface for backward compatibility
 const logger = {
+  api: {
+    info: (message, data) => log('api', 'info', message, data),
+    warn: (message, data) => log('api', 'warn', message, data),
+    error: (message, data) => log('api', 'error', message, data)
+  },
   background: {
     info: (message, data) => log('background', 'info', message, data),
     warn: (message, data) => log('background', 'warn', message, data),
@@ -66,7 +82,7 @@ const logger = {
     warn: (message, data) => log('service', 'warn', message, data),
     error: (message, data) => log('service', 'error', message, data)
   },
-  sidebar: { // Add sidebar logger instance
+  sidebar: {
     info: (message, data) => log('sidebar', 'info', message, data),
     warn: (message, data) => log('sidebar', 'warn', message, data),
     error: (message, data) => log('sidebar', 'error', message, data)
