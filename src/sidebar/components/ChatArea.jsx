@@ -426,7 +426,7 @@ function ChatArea({ className = '' }) {
       {/* Scrollable container */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto flex flex-col pt-2"
+        className="flex-1 overflow-y-auto flex flex-col pt-4"
       >
         {messages.map((message) => (
           <MessageBubble
