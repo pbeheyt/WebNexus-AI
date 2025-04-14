@@ -2,6 +2,7 @@
 import React, { useState, memo, Fragment } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
 import 'katex/dist/katex.min.css';
 
 import CopyButtonIcon from './icons/CopyButtonIcon';
@@ -9,6 +10,85 @@ import EnhancedCodeBlock from './components/EnhancedCodeBlock';
 import MathFormulaBlock from './components/MathFormulaBlock';
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
+import logger from '../../../shared/logger';
+
+// Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
+const MATH_PLACEHOLDER_REGEX = /@@MATH_(BLOCK|INLINE)_(\d+)@@/g;
+
+/**
+ * RECURSIVE function to process children, find placeholders, and replace them with MathFormulaBlock
+ * @param {React.ReactNode|React.ReactNodeArray} children - Children nodes to process
+ * @param {Map<string, { content: string, inline: boolean }>} mathMap - Map containing math data
+ * @returns {Array<React.ReactNode>} - Array of processed nodes
+ */
+const renderWithPlaceholdersRecursive = (children, mathMap) => {
+  if (!mathMap) return React.Children.toArray(children); // Return array if no map
+
+  return React.Children.toArray(children).flatMap((child, index) => {
+    // 1. Process String Children
+    if (typeof child === 'string') {
+      const parts = [];
+      let lastIndex = 0;
+      let match;
+      MATH_PLACEHOLDER_REGEX.lastIndex = 0; // Reset regex state for each string
+
+      while ((match = MATH_PLACEHOLDER_REGEX.exec(child)) !== null) {
+        // Add text before the placeholder
+        if (match.index > lastIndex) {
+          parts.push(child.slice(lastIndex, match.index));
+        }
+        // Add the MathFormulaBlock component
+        const placeholder = match[0];
+        const mathType = match[1]; // Extract type for fallback
+        const mathData = mathMap.get(placeholder);
+        if (mathData) {
+          parts.push(
+            <MathFormulaBlock
+              key={`${placeholder}-${index}`} // Make key more unique
+              content={mathData.content}
+              inline={mathData.inline}
+            />
+          );
+        } else {
+          // Fallback: Render marker based on placeholder type
+          logger.sidebar.warn(`Math placeholder ${placeholder} not found in map. Rendering fallback marker.`);
+          const fallbackText = mathType === 'INLINE' ? '[ inline math ]' : '[ block math ]';
+          parts.push(fallbackText);
+        }
+        lastIndex = MATH_PLACEHOLDER_REGEX.lastIndex;
+      }
+      // Add any remaining text after the last placeholder
+      if (lastIndex < child.length) {
+        parts.push(child.slice(lastIndex));
+      }
+      // If no placeholders were found, parts will be empty, return original text string in an array
+      return parts.length > 0 ? parts : [child];
+    }
+
+    // 2. Process React Element Children (Recursively)
+    if (React.isValidElement(child) && child.props.children) {
+      const processedGrandchildren = renderWithPlaceholdersRecursive(child.props.children, mathMap);
+      // Ensure key is stable and unique if possible, fallback to index
+      const key = child.key ?? `child-${index}`;
+      return React.cloneElement(child, { ...child.props, key: key }, processedGrandchildren);
+    }
+
+    // 3. Return other children (non-string, non-element with children) as is
+    return child;
+  });
+};
+
+
+/**
+ * Custom Text Renderer - Uses the recursive helper function.
+ * Necessary because ReactMarkdown might pass text nodes directly even if they are not inside p or li.
+ */
+const CustomTextRenderer = ({ children, mathMap }) => {
+  // The 'children' prop for a text override is the string content.
+  const processedParts = renderWithPlaceholdersRecursive(children, mathMap);
+  return <>{processedParts}</>;
+};
+
 
 /**
  * Message bubble component
@@ -26,7 +106,6 @@ export const MessageBubble = memo(({
   const isSystem = role === 'system';
   const [copyState, setCopyState] = useState('idle');
 
-
   const handleCopyToClipboard = async () => {
     if (!content || isStreaming) return;
     try {
@@ -34,101 +113,140 @@ export const MessageBubble = memo(({
       setCopyState('copied');
       setTimeout(() => setCopyState('idle'), 2000);
     } catch (error) {
-      console.error('Failed to copy text: ', error);
+      logger.sidebar.error('Failed to copy text: ', error);
       setCopyState('error');
       setTimeout(() => setCopyState('idle'), 2000);
     }
   };
 
-  // System messages
+  // System messages (no change)
   if (isSystem) {
-    return (
-      <div className={`px-5 py-3 mb-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}>
-        <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
-      </div>
-    );
+    // ... (no changes)
+     return (
+        <div className={`px-5 py-3 mb-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}>
+          <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
+        </div>
+      );
   }
 
-  // User messages
+  // User messages (no change)
   if (isUser) {
-    return (
+    // ... (no changes)
+     return (
       <div className={`px-5 py-2 w-full flex justify-end items-start mb-2 ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
-          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
+           <ReactMarkdown
+             remarkPlugins={[remarkGfm]}
+             className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm"
+             allowedElements={['a', 'code', 'pre', 'strong', 'em', 'br']}
+             unwrapDisallowed={true}
+             components={{
+                a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                code: ({node, ...props}) => <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-xs font-mono" {...props}>{props.children}</code>,
+                pre: ({node, ...props}) => <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs font-mono overflow-x-auto">{props.children}</pre>,
+             }}
+          >
+             {content}
+          </ReactMarkdown>
         </div>
       </div>
     );
   }
 
-  // Assistant Message Rendering
+  // Assistant Message Rendering - Placeholder Method
   if (role === 'assistant') {
-    const segments = parseTextAndMath(content || '');
+
+    // --- Preprocessing Step: Generate Placeholders ---
+    const mathMap = new Map();
+    let preprocessedContent = '';
+    let mathIndex = 0;
+    try {
+        const segments = parseTextAndMath(content || ''); // Use original parser
+        const processedSegments = segments.map((segment) => {
+            if (segment.type === 'math') {
+                // Generate placeholder and store original math data
+                const placeholder = `@@MATH_${segment.inline ? 'INLINE' : 'BLOCK'}_${mathIndex++}@@`;
+                mathMap.set(placeholder, { content: segment.value, inline: segment.inline });
+                return placeholder;
+            }
+            return segment.value; // Keep text segment value
+        });
+        preprocessedContent = processedSegments.join('');
+    } catch (error) {
+        logger.sidebar.error("Error during math preprocessing:", error);
+        preprocessedContent = content || ''; // Fallback
+    }
+    // --- End Preprocessing Step ---
+
 
     return (
       <div className={`group px-5 py-2 w-full message-group relative mb-2 ${className}`}>
         <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-3`}>
-          {segments.map((segment, index) => {
-            return (
-              <Fragment key={index}>
-                {segment.type === 'text' ? (
-                  <span className="text-segment">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[]}
-                      disallowedElements={['p']} // Keep p disallowed if rendering manually below
-                      unwrapDisallowed={true}
-                      components={{
-                         h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-6 mb-4" {...props} />,
-                         h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-5 mb-3" {...props} />,
-                         h3: ({node, ...props}) => <h3 className="text-base font-medium mt-4 mb-3" {...props} />,
-                         p: ({node, children, ...props}) => <p className="mb-4 leading-relaxed text-sm" {...props}>{children}</p>,
-                         ul: ({node, ...props}) => <ul className="list-disc pl-5 my-4 space-y-2" {...props} />,
-                         ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-4 space-y-2" {...props} />,
-                         li: ({node, ...props}) => <li className="leading-relaxed text-sm" {...props} />,
-                         code: ({node, inline, className, children, ...props}) => {
-                            const rawChildren = React.Children.toArray(children);
-                            const codeString = rawChildren
-                              .map(child => typeof child === 'string' ? child : '')
-                              .join('');
-                            const treatAsInline = inline || !codeString.includes('\n');
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]} // Keep GFM
+            rehypePlugins={[]} // No rehype plugins needed for math
+            components={{
+               // --- Standard element overrides ---
+               h1: ({node, ...props}) => <h1 className="text-xl font-semibold mt-6 mb-4" {...props} />,
+               h2: ({node, ...props}) => <h2 className="text-lg font-medium mt-5 mb-3" {...props} />,
+               h3: ({node, ...props}) => <h3 className="text-base font-medium mt-4 mb-3" {...props} />,
+               ul: ({node, ...props}) => <ul className="list-disc pl-5 my-4 space-y-2" {...props} />,
+               ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-4 space-y-2" {...props} />,
+               li: ({node, children, ...props}) => {
+                  // Process children of li recursively for placeholders
+                  const processedChildren = renderWithPlaceholdersRecursive(children, mathMap);
+                  return <li className="leading-relaxed text-sm" {...props}>{processedChildren}</li>;
+               },
+               p: ({node, children, ...props}) => {
+                  // Process children of p recursively for placeholders
+                  const processedChildren = renderWithPlaceholdersRecursive(children, mathMap);
+                  return <p className="mb-4 leading-relaxed text-sm" {...props}>{processedChildren}</p>;
+               },
+               code: ({node, inline, className, children, ...props}) => {
+                  // Code blocks should not contain math placeholders, render normally
+                  if (className && className.startsWith('language-')) {
+                     const codeContent = String(children).replace(/\n$/, '');
+                     const match = /language-(\w+)/.exec(className);
+                     const language = match ? match[1] : 'text';
+                     return <EnhancedCodeBlock className={`language-${language}`} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
+                  }
+                  // Inline code - process children just in case (though unlikely needed)
+                  const processedChildren = renderWithPlaceholdersRecursive(children, mathMap);
+                  return <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono mx-0.5" {...props}>{processedChildren}</code>;
+               },
+               pre: ({node, children, ...props}) => {
+                 // Pre should typically contain only code, let code override handle it
+                 return <>{children}</>;
+               },
+               a: ({node, children, ...props}) => {
+                 const processedChildren = renderWithPlaceholdersRecursive(children, mathMap);
+                 return <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props}>{processedChildren}</a>;
+               },
+               blockquote: ({node, children, ...props}) => {
+                 const processedChildren = renderWithPlaceholdersRecursive(children, mathMap);
+                 return <blockquote className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 italic text-gray-600 dark:text-gray-400 my-4 py-1 text-sm" {...props}>{processedChildren}</blockquote>;
+               },
+               strong: ({node, children, ...props}) => {
+                 const processedChildren = renderWithPlaceholdersRecursive(children, mathMap);
+                 return <strong className="font-semibold" {...props}>{processedChildren}</strong>;
+               },
+               em: ({node, children, ...props}) => {
+                 const processedChildren = renderWithPlaceholdersRecursive(children, mathMap);
+                 return <em className="italic" {...props}>{processedChildren}</em>;
+               },
+               // Add overrides for any other elements that might contain text/math
+               // Default rendering will apply for elements not overridden
 
-                            if (treatAsInline) {
-                               return <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono mx-0.5" {...props}>{children}</code>;
-                            } else {
-                               const codeContent = codeString.replace(/\n$/, '');
-                               return <EnhancedCodeBlock className={className} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
-                            }
-                         },
-                         // `pre` is handled by the `code` component override above for blocks
-                         pre: ({node, children, ...props}) => <>{children}</>,
-                         a: ({node, ...props}) => <a className="text-primary hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-                         blockquote: ({node, children, ...props}) => <blockquote className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 italic text-gray-600 dark:text-gray-400 my-4 py-1 text-sm" {...props}>{children}</blockquote>,
-                         strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
-                         em: ({node, ...props}) => <em className="italic" {...props} />,
-                         hr: ({node, ...props}) => <hr className="my-6 border-t border-gray-300 dark:border-gray-600" {...props} />,
-                         table: ({node, ...props}) => <div className="overflow-x-auto my-4"><table className="border-collapse w-full text-sm" {...props} /></div>,
-                         thead: ({node, ...props}) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
-                         tbody: ({node, ...props}) => <tbody {...props} />,
-                         tr: ({node, ...props}) => <tr className="border-b border-gray-200 dark:border-gray-700" {...props} />,
-                         th: ({node, children, ...props}) => <th className="p-2.5 text-left font-medium text-sm" {...props}>{children}</th>,
-                         td: ({node, children, ...props}) => <td className="p-2.5 border-gray-200 dark:border-gray-700 text-sm" {...props}>{children}</td>,
-                      }}
-                      children={segment.value}
-                     />
-                   </span>
-                ) : (
-                  <MathFormulaBlock content={segment.value} inline={segment.inline} />
-                )}
-              </Fragment>
-            );
-          })}
+            }}
+            children={preprocessedContent} // Pass preprocessed content
+           />
         </div>
 
         {/* Footer section */}
         <div className="flex justify-between items-center -mt-1">
-          <div className="text-xs opacity-70 flex items-center space-x-2">
+           <div className="text-xs opacity-70 flex items-center space-x-2">
             {platformIconUrl && !isUser && (
-              <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" /> 
+              <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" />
             )}
             {model && !isUser && <span>{model}</span>}
             {isStreaming && (
@@ -139,7 +257,6 @@ export const MessageBubble = memo(({
               </div>
             )}
           </div>
-          {/* Copy button container */}
           <div className="w-7 h-7 flex items-center justify-center">
             {!isStreaming && content && (
               <button
@@ -153,7 +270,7 @@ export const MessageBubble = memo(({
           </div>
         </div>
 
-        {/* Metadata */}
+        {/* Metadata (no change) */}
         {Object.keys(metadata).length > 0 && (
           <div className="text-xs mt-3 opacity-70 overflow-hidden text-ellipsis space-x-3">
             {Object.entries(metadata).map(([key, value]) => (
@@ -169,3 +286,5 @@ export const MessageBubble = memo(({
 
   return null; // Fallback return
 });
+
+MessageBubble.displayName = 'MessageBubble';
