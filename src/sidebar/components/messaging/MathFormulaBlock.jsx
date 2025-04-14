@@ -49,7 +49,8 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
       {renderedMath}
     </span>
   ) : (
-    <div className="flex justify-center my-4 overflow-x-auto max-w-full">
+    // Removed 'flex justify-center' to fix left-truncation with overflow
+    <div className="my-4 overflow-x-auto max-w-full">
       {renderedMath}
     </div>
   );
