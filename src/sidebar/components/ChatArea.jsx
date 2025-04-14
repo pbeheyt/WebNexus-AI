@@ -99,32 +99,23 @@ function ChatArea({ className = '' }) {
     const isPlatformReady = !!targetPlatform;
 
     if (isPlatformReady && isModelConfigReady) {
+      // Only update state if the data is actually ready
       setDisplayPlatformConfig({
           id: targetPlatform.id,
           name: targetPlatform.name,
           iconUrl: targetPlatform.iconUrl
       });
       setDisplayModelConfig(modelConfigData);
-      // --- Set flag on first successful load ---
-      // Only set this flag if it hasn't been set before.
-      // Once true, it stays true for the lifetime of the component instance.
+
+      // Set flag on first successful load
       if (!hasCompletedInitialLoad) {
           setHasCompletedInitialLoad(true);
       }
-      // --- End NEW ---
-    } else { // Simplified else for clarity
-        // Only clear display configs if they are currently set,
-        // preventing unnecessary re-renders if they are already null.
-        if (displayPlatformConfig !== null || displayModelConfig !== null) {
-             setDisplayPlatformConfig(null);
-             setDisplayModelConfig(null);
-        }
-        // --- IMPORTANT: Do NOT reset hasCompletedInitialLoad here ---
     }
-    // Dependencies: Only re-run when the inputs change.
-    // `hasCompletedInitialLoad` is *not* a dependency because we don't want
-    // the effect to re-run just because the flag changed. We only read it.
-  }, [platforms, selectedPlatformId, modelConfigData, selectedModel]);
+    // Intentionally do NOT set to null here if data isn't ready
+    // This preserves the old value during transitions after the initial load.
+
+  }, [platforms, selectedPlatformId, modelConfigData, selectedModel, hasCompletedInitialLoad]); // Include hasCompletedInitialLoad in dependencies
   // --- End Local State ---
 
   // --- Get Content Type Name ---
@@ -281,9 +272,10 @@ function ChatArea({ className = '' }) {
       );
     }
 
-    // --- Welcome Message View (Shown once initial load completes, even if data changes) ---
+    // --- Welcome Message View (Shown once initial load completes, using potentially stale data during transition) ---
     // Show welcome message if credentials exist AND the initial load has completed at least once.
-    // The content inside will update based on `displayPlatformConfig` and `displayModelConfig`.
+    // The content inside will use the current `displayPlatformConfig` and `displayModelConfig` state,
+    // which won't be nullified during transitions after the first load.
     if (hasAnyPlatformCredentials && hasCompletedInitialLoad) {
       return (
         <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-4 overflow-y-auto`}>
@@ -297,8 +289,8 @@ function ChatArea({ className = '' }) {
                 className="w-12 h-12 mb-3 object-contain"
               />
             ) : (
-               // Placeholder or fallback if platform info is temporarily unavailable during switch
-               <div className="w-12 h-12 mb-3 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+               // This fallback should now only appear very briefly during the *absolute first* load
+               <div className="w-12 h-12 mb-3 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
             )}
 
             {/* Display model info only if available */}
@@ -344,7 +336,7 @@ function ChatArea({ className = '' }) {
                 </div>
               </>
             ) : (
-               // Placeholder for spacing if model info is temporarily unavailable
+               // Placeholder for spacing if model info is temporarily unavailable (should be rare after initial load)
                <div className="h-5 mt-1 mb-2">
                </div>
             )}
@@ -405,13 +397,13 @@ function ChatArea({ className = '' }) {
         </div>
       );
     }
-    // Fallback case (should ideally not be reached if logic above is correct)
+    // Fallback case
     return null;
   }
   // --- End Initial View Logic ---
 
 
-  // --- Chat Message Display Logic (when messages exist) --- (Keep as is)
+  // --- Chat Message Display Logic (when messages exist) ---
   return (
     <div className={`flex-1 flex flex-col relative ${className}`}>
       {/* Scrollable container */}
@@ -457,21 +449,25 @@ function ChatArea({ className = '' }) {
   );
 }
 
-// Helper function for welcome message (Keep as is)
+// Helper function for welcome message
 function getWelcomeMessage(contentType, isPageInjectable) {
   if (!isPageInjectable) {
+    // If content cannot be extracted, keep the general prompt
     return "Ask me anything! Type your question or prompt below.";
   }
+
+  // If content can be extracted, tailor the message
   switch (contentType) {
     case CONTENT_TYPES.YOUTUBE:
-      return "Ask about this YouTube video, or type a general question.";
+      return "Ask about this YouTube video or request a summary.";
     case CONTENT_TYPES.REDDIT:
-      return "Ask about this Reddit post, or type a general question.";
+      return "Ask me anything about this Reddit post or request key takeaways.";
     case CONTENT_TYPES.PDF:
-      return "Ask about this PDF document, or type a general question.";
+      return "Ask specific questions about this PDF document or request a summary.";
     case CONTENT_TYPES.GENERAL:
     default:
-      return "Ask about this page's content, or type a general question.";
+      // Default for general web pages
+      return "Ask about this page's content, request a summary, or start a related chat.";
   }
 }
 
