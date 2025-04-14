@@ -6,8 +6,8 @@ import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
 import CopyButtonIcon from './icons/CopyButtonIcon';
-import EnhancedCodeBlock from './components/EnhancedCodeBlock';
-import MathFormulaBlock from './components/MathFormulaBlock';
+import EnhancedCodeBlock from './EnhancedCodeBlock';
+import MathFormulaBlock from './MathFormulaBlock';
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
 import logger from '../../../shared/logger';
@@ -110,7 +110,7 @@ export const MessageBubble = memo(({
   // System messages
   if (isSystem) {
      return (
-        <div className={`px-5 py-3 mb-2 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}>
+        <div className={`px-5 py-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}>
           <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
         </div>
       );
@@ -119,7 +119,7 @@ export const MessageBubble = memo(({
   // User messages
   if (isUser) {
     return (
-      <div className={`px-5 py-2 w-full flex justify-end items-start mb-2 ${className}`}>
+      <div className={`px-5 py-2 mb-2 w-full flex justify-end items-start ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
           <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
         </div>
