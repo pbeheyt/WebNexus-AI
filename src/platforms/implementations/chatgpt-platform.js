@@ -8,7 +8,7 @@ class ChatGptPlatform extends BasePlatform {
   constructor() {
     super('chatgpt');
   }
-  
+
   /**
    * Check if the current page is ChatGPT
    * @returns {boolean} True if on ChatGPT
@@ -16,15 +16,15 @@ class ChatGptPlatform extends BasePlatform {
   isCurrentPlatform() {
     return window.location.href.includes('chatgpt.com');
   }
-  
+
   /**
    * Find ChatGPT's editor element
    * @returns {HTMLElement|null} The editor element or null if not found
    */
   findEditorElement() {
-    return document.querySelector('#prompt-textarea.ProseMirror');
+    return document.querySelector('#prompt-textarea'); // Simplified selector
   }
-  
+
   /**
    * Find ChatGPT's submit button
    * @returns {HTMLElement|null} The submit button or null if not found
@@ -35,51 +35,18 @@ class ChatGptPlatform extends BasePlatform {
 
   /**
    * Override: Insert text into ChatGPT's contenteditable editor.
-   * @param {HTMLElement} editorElement - The editor element (ProseMirror).
+   * @param {HTMLElement} editorElement - The editor element (textarea).
    * @param {string} text - The text to insert.
    * @returns {Promise<boolean>} - True if successful, false otherwise.
    * @protected
    */
   async _insertTextIntoEditor(editorElement, text) {
     try {
-      this.logger.info(`Inserting text into ChatGPT editor (ProseMirror)`);
-      // Clear existing content
-      editorElement.innerHTML = '';
-
-      // Split the text into paragraphs by newline
-      const paragraphs = text.split('\n');
-
-      // Insert each paragraph
-      paragraphs.forEach((paragraph) => {
-        if (paragraph.trim() === '') {
-          // Add empty paragraph with break for blank lines
-          const p = document.createElement('p');
-          p.appendChild(document.createElement('br'));
-          editorElement.appendChild(p);
-        } else {
-          // Add text paragraph
-          const p = document.createElement('p');
-          p.textContent = paragraph;
-          editorElement.appendChild(p);
-        }
-      });
-
-      // Remove placeholder class if it exists (though clearing innerHTML might handle this)
-      const placeholderP = editorElement.querySelector('p.placeholder');
-      if (placeholderP) {
-        placeholderP.classList.remove('placeholder');
-      }
-
-      // Focus the editor
-      editorElement.focus();
-
-      // Dispatch input event to ensure ChatGPT recognizes the change
-      this._dispatchEvents(editorElement, ['input']); // Use base class helper
-
-      this.logger.info(`Successfully inserted text into ChatGPT editor.`);
-      return true;
+      this.logger.info(`[${this.platformId}] Inserting text into ChatGPT editor`);
+      // Use the default implementation for textarea
+      return await super._insertTextIntoEditor(editorElement, text);
     } catch (error) {
-      this.logger.error('Error inserting text into ChatGPT editor:', error);
+      this.logger.error(`[${this.platformId}] Error inserting text into ChatGPT editor:`, error);
       return false;
     }
   }
@@ -92,9 +59,9 @@ class ChatGptPlatform extends BasePlatform {
    */
   async _clickSubmitButton(buttonElement) {
     try {
-      this.logger.info(`Attempting to click submit button for ChatGPT with event sequence`);
+      this.logger.info(`[${this.platformId}] Attempting to click submit button for ChatGPT with event sequence`);
       if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-        this.logger.warn(`Submit button for ChatGPT is disabled.`);
+        this.logger.warn(`[${this.platformId}] Submit button is disabled.`);
         return false;
       }
 
@@ -109,10 +76,10 @@ class ChatGptPlatform extends BasePlatform {
         buttonElement.dispatchEvent(event);
       });
 
-      this.logger.info(`Successfully clicked submit button for ChatGPT.`);
+      this.logger.info(`[${this.platformId}] Successfully clicked submit button.`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to click submit button for ChatGPT:`, error);
+      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
       return false;
     }
   }

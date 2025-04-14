@@ -26,14 +26,14 @@ class GrokPlatform extends BasePlatform {
     if (element.getAttribute('aria-hidden') === 'true' ||
         element.style.visibility === 'hidden' ||
         element.style.display === 'none') {
-      this.logger.warn(`Element hidden by attribute/style:`, element);
+      this.logger.warn(`[${this.platformId}] Element hidden by attribute/style:`, element);
       return false;
     }
 
     // Check computed styles
     const style = window.getComputedStyle(element);
     if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0' || style.pointerEvents === 'none') {
-      this.logger.warn(`Element hidden by computed style: display=${style.display}, visibility=${style.visibility}, opacity=${style.opacity}, pointerEvents=${style.pointerEvents}`, element);
+      this.logger.warn(`[${this.platformId}] Element hidden by computed style: display=${style.display}, visibility=${style.visibility}, opacity=${style.opacity}, pointerEvents=${style.pointerEvents}`, element);
       return false;
     }
 
@@ -42,17 +42,17 @@ class GrokPlatform extends BasePlatform {
     if (rect.width === 0 || rect.height === 0) {
       // Allow zero height for textareas which might start small
       if (element.tagName !== 'TEXTAREA') {
-        this.logger.warn(`Element has zero dimensions: width=${rect.width}, height=${rect.height}`, element);
+        this.logger.warn(`[${this.platformId}] Element has zero dimensions: width=${rect.width}, height=${rect.height}`, element);
         return false;
       } else {
-         this.logger.info(`Textarea has zero height, allowing as potentially visible.`);
+         this.logger.info(`[${this.platformId}] Textarea has zero height, allowing as potentially visible.`);
       }
     }
 
     // Check if element is practically off-screen (adjust threshold as needed)
     const threshold = 5; // Small pixel threshold
     if (rect.right < threshold || rect.bottom < threshold || rect.left > (window.innerWidth - threshold) || rect.top > (window.innerHeight - threshold)) {
-       this.logger.warn(`Element is positioned off-screen:`, rect, element);
+       this.logger.warn(`[${this.platformId}] Element is positioned off-screen:`, rect, element);
        return false;
     }
 
@@ -64,7 +64,7 @@ class GrokPlatform extends BasePlatform {
         const parentRect = parent.getBoundingClientRect();
         // Check if the element is outside the parent's visible bounds
         if (rect.top < parentRect.top || rect.bottom > parentRect.bottom || rect.left < parentRect.left || rect.right > parentRect.right) {
-           this.logger.warn(`Element hidden by parent overflow:`, element, parent);
+           this.logger.warn(`[${this.platformId}] Element hidden by parent overflow:`, element, parent);
            // return false; // Be cautious with this check, might be too strict
         }
       }
@@ -82,7 +82,7 @@ class GrokPlatform extends BasePlatform {
    * @returns {HTMLElement|null} The editor element or null if not found
    */
   findEditorElement() {
-    this.logger.info("Attempting to find Grok editor element...");
+    this.logger.info(`[${this.platformId}] Attempting to find editor element...`);
 
     // --- Strategy 1: Query Bar Parent + Attributes ---
     try {
@@ -91,19 +91,19 @@ class GrokPlatform extends BasePlatform {
         // More specific check first
         const editor = queryBar.querySelector('textarea[dir="auto"][style*="resize: none"]');
         if (editor && this.isVisibleElement(editor)) {
-          this.logger.info("Found editor using Strategy 1a (Query Bar + Attributes)");
+          this.logger.info(`[${this.platformId}] Found editor using Strategy 1a (Query Bar + Attributes)`);
           return editor;
         }
          // Simpler version within query bar if the style one fails
         const simplerEditor = queryBar.querySelector('textarea[dir="auto"]');
          if (simplerEditor && this.isVisibleElement(simplerEditor)) {
-          this.logger.info("Found editor using Strategy 1b (Query Bar + dir=auto)");
+          this.logger.info(`[${this.platformId}] Found editor using Strategy 1b (Query Bar + dir=auto)`);
           return simplerEditor;
         }
       } else {
-        this.logger.warn("Strategy 1: Query Bar container not found.");
+        this.logger.warn(`[${this.platformId}] Strategy 1: Query Bar container not found.`);
       }
-    } catch (e) { this.logger.warn("Error during Strategy 1 editor search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 1 editor search:`, e); }
 
 
     // --- Strategy 2: Attributes Only ---
@@ -111,35 +111,35 @@ class GrokPlatform extends BasePlatform {
       const textareas = document.querySelectorAll('textarea[dir="auto"][style*="resize: none"]');
       for (const editor of textareas) {
         if (this.isVisibleElement(editor)) {
-          this.logger.info("Found editor using Strategy 2 (Attributes Only)");
+          this.logger.info(`[${this.platformId}] Found editor using Strategy 2 (Attributes Only)`);
           return editor;
         }
       }
-    } catch (e) { this.logger.warn("Error during Strategy 2 editor search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 2 editor search:`, e); }
 
     // --- Strategy 3: Broader dir=auto ---
     try {
        const textareasDirAuto = document.querySelectorAll('textarea[dir="auto"]');
        for (const editor of textareasDirAuto) {
          if (this.isVisibleElement(editor)) {
-           this.logger.info("Found editor using Strategy 3 (Broader dir=auto)");
+           this.logger.info(`[${this.platformId}] Found editor using Strategy 3 (Broader dir=auto)`);
            return editor;
          }
        }
-    } catch (e) { this.logger.warn("Error during Strategy 3 editor search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 3 editor search:`, e); }
 
     // --- Strategy 4: Fallback using aria-label ---
     try {
         const ariaLabelSelector = 'textarea[aria-label*="Ask Grok"], textarea[aria-label*="Demander"]'; // Match English/French
         const editor = document.querySelector(ariaLabelSelector);
         if (editor && this.isVisibleElement(editor)) {
-            this.logger.info("Found editor using Strategy 4 (Aria Label)");
+            this.logger.info(`[${this.platformId}] Found editor using Strategy 4 (Aria Label)`);
             return editor;
         }
-    } catch (e) { this.logger.warn("Error during Strategy 4 editor search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 4 editor search:`, e); }
 
 
-    this.logger.error("Grok editor element not found using any strategy.");
+    this.logger.error(`[${this.platformId}] Editor element not found using any strategy.`);
     return null;
   }
 
@@ -148,7 +148,7 @@ class GrokPlatform extends BasePlatform {
    * @returns {HTMLElement|null} The submit button or null if not found
    */
   findSubmitButton() {
-     this.logger.info("Attempting to find Grok submit button...");
+     this.logger.info(`[${this.platformId}] Attempting to find submit button...`);
 
     // --- Strategy 1: Specific SVG Path ---
     try {
@@ -159,13 +159,13 @@ class GrokPlatform extends BasePlatform {
             const button = pathElement.closest('button[type="submit"]');
             // Check visibility *and* ensure it's not disabled
             if (button && this.isVisibleElement(button) && !button.disabled && button.getAttribute('aria-disabled') !== 'true') {
-                this.logger.info("Found submit button using Strategy 1 (SVG Path)");
+                this.logger.info(`[${this.platformId}] Found submit button using Strategy 1 (SVG Path)`);
                 return button;
             } else if (button) {
-                 this.logger.warn("Strategy 1: Found button via SVG, but it's hidden or disabled.", button);
+                 this.logger.warn(`[${this.platformId}] Strategy 1: Found button via SVG, but it's hidden or disabled.`, button);
             }
         }
-    } catch (e) { this.logger.warn("Error during Strategy 1 submit button search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 1 submit button search:`, e); }
 
 
     // --- Strategy 2: Structural Position ---
@@ -178,15 +178,15 @@ class GrokPlatform extends BasePlatform {
             const submitButton = bottomBar.querySelector('div[class*="ml-auto"] button[type="submit"]');
              // Check visibility *and* ensure it's not disabled
             if (submitButton && this.isVisibleElement(submitButton) && !submitButton.disabled && submitButton.getAttribute('aria-disabled') !== 'true') {
-                this.logger.info("Found submit button using Strategy 2 (Structural Position)");
+                this.logger.info(`[${this.platformId}] Found submit button using Strategy 2 (Structural Position)`);
                 return submitButton;
             } else if (submitButton) {
-                 this.logger.warn("Strategy 2: Found button via structure, but it's hidden or disabled.", submitButton);
+                 this.logger.warn(`[${this.platformId}] Strategy 2: Found button via structure, but it's hidden or disabled.`, submitButton);
             }
         } else {
-           this.logger.warn("Strategy 2: Bottom action bar not found.");
+           this.logger.warn(`[${this.platformId}] Strategy 2: Bottom action bar not found.`);
         }
-    } catch (e) { this.logger.warn("Error during Strategy 2 submit button search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 2 submit button search:`, e); }
 
 
     // --- Strategy 3: Aria Label (Fallback) ---
@@ -200,16 +200,16 @@ class GrokPlatform extends BasePlatform {
             const button = document.querySelector(selector);
              // Check visibility *and* ensure it's not disabled
             if (button && this.isVisibleElement(button) && !button.disabled && button.getAttribute('aria-disabled') !== 'true') {
-                this.logger.info(`Found submit button using Strategy 3 (Aria Label: ${selector})`);
+                this.logger.info(`[${this.platformId}] Found submit button using Strategy 3 (Aria Label: ${selector})`);
                 return button;
             } else if (button) {
-                 this.logger.warn(`Strategy 3: Found button via aria-label (${selector}), but it's hidden or disabled.`, button);
+                 this.logger.warn(`[${this.platformId}] Strategy 3: Found button via aria-label (${selector}), but it's hidden or disabled.`, button);
             }
         }
-    } catch (e) { this.logger.warn("Error during Strategy 3 submit button search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 3 submit button search:`, e); }
 
 
-    this.logger.error("Grok submit button not found using any strategy.");
+    this.logger.error(`[${this.platformId}] Submit button not found using any strategy.`);
     return null;
   }
 }

@@ -77,6 +77,11 @@ const logger = {
     warn: (message, data) => log('popup', 'warn', message, data),
     error: (message, data) => log('popup', 'error', message, data)
   },
+  platform: {
+    info: (message, data) => log('platform', 'info', message, data),
+    warn: (message, data) => log('platform', 'warn', message, data),
+    error: (message, data) => log('platform', 'error', message, data)
+  },
   service: {
     info: (message, data) => log('service', 'info', message, data),
     warn: (message, data) => log('service', 'warn', message, data),

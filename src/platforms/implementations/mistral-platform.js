@@ -11,13 +11,14 @@ class MistralPlatform extends BasePlatform {
 
   findEditorElement() {
     // Updated selector based on actual textarea attributes
-    return document.querySelector('textarea[name="message.text"][placeholder="Demander au Chat ou @mentionner un agent"]') ||
-           document.querySelector('textarea.border-default.ring-offset-background');
+    return document.querySelector('textarea[name="message.text"][placeholder*="Demander au Chat"]') || // French placeholder
+           document.querySelector('textarea[name="message.text"][placeholder*="Ask the Chat"]') || // English placeholder
+           document.querySelector('textarea.border-default.ring-offset-background'); // Fallback
   }
 
   findSubmitButton() {
     // More specific selector including aria-label and class structure
-    return document.querySelector('button[aria-label="Send question"].bg-inverted.text-inverted-default');
+    return document.querySelector('button[aria-label*="Send question"][class*="bg-inverted"]'); // Match partial class
   }
 
   /**
@@ -29,7 +30,7 @@ class MistralPlatform extends BasePlatform {
    */
   async _insertTextIntoEditor(editorElement, text) {
     try {
-      this.logger.info(`Inserting text into Mistral editor with specific events`);
+      this.logger.info(`[${this.platformId}] Inserting text into Mistral editor with specific events`);
       // Focus first to ensure proper state
       editorElement.focus();
 
@@ -37,24 +38,13 @@ class MistralPlatform extends BasePlatform {
       editorElement.value = text;
 
       // Trigger comprehensive set of events to ensure React state updates
-      // Use base helper for standard events, manually dispatch others if needed
+      // Use base helper for standard events
       this._dispatchEvents(editorElement, ['input', 'change']);
-      // Additional events previously used: ['keydown', 'keyup', 'keypress']
-      // Let's try without them first, add back if necessary
-      // ['keydown', 'keyup', 'keypress'].forEach(eventType => {
-      //   editorElement.dispatchEvent(new Event(eventType, { bubbles: true, cancelable: true }));
-      // });
 
-
-      // Additional blur/focus cycle previously used
-      // editorElement.blur();
-      // editorElement.focus();
-      // Let's try without this first, add back if necessary
-
-      this.logger.info(`Successfully inserted text into Mistral editor.`);
+      this.logger.info(`[${this.platformId}] Successfully inserted text into Mistral editor.`);
       return true;
     } catch (error) {
-      this.logger.error('Error inserting text into Mistral editor:', error);
+      this.logger.error(`[${this.platformId}] Error inserting text into Mistral editor:`, error);
       return false;
     }
   }
@@ -67,21 +57,20 @@ class MistralPlatform extends BasePlatform {
    */
   async _clickSubmitButton(buttonElement) {
     try {
-      this.logger.info(`Attempting to click submit button for Mistral`);
+      this.logger.info(`[${this.platformId}] Attempting to click submit button`);
       // Remove disabled attribute if present
       if (buttonElement.disabled) {
-        this.logger.warn(`Mistral submit button is disabled, attempting to enable.`);
+        this.logger.warn(`[${this.platformId}] Submit button is disabled, attempting to enable.`);
         buttonElement.removeAttribute('disabled');
         // Re-check after attempting to enable
         if (buttonElement.disabled) {
-            this.logger.error(`Mistral submit button remained disabled.`);
+            this.logger.error(`[${this.platformId}] Submit button remained disabled.`);
             return false;
         }
       }
        // Also check aria-disabled just in case
       if (buttonElement.getAttribute('aria-disabled') === 'true') {
-         this.logger.warn(`Mistral submit button is aria-disabled.`);
-         // Cannot directly change aria-disabled usually, proceed but might fail
+         this.logger.warn(`[${this.platformId}] Submit button is aria-disabled.`);
       }
 
 
@@ -96,10 +85,10 @@ class MistralPlatform extends BasePlatform {
         buttonElement.dispatchEvent(event);
       });
 
-      this.logger.info(`Successfully clicked submit button for Mistral.`);
+      this.logger.info(`[${this.platformId}] Successfully clicked submit button.`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to click submit button for Mistral:`, error);
+      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
       return false;
     }
   }

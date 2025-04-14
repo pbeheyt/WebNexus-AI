@@ -1,6 +1,7 @@
 // src/platforms/platform-base.js
 const PlatformInterface = require('./platform-interface');
 const STORAGE_KEYS = require('../shared/constants').STORAGE_KEYS;
+const logger = require('../shared/logger').platform;
 
 /**
  * Base implementation with shared functionality for all AI platforms
@@ -12,35 +13,24 @@ class BasePlatform extends PlatformInterface {
   constructor(platformId) {
     super();
     this.platformId = platformId;
-    this.logger = this.createLogger();
+    this.logger = logger;
     this.maxRetries = 20;
     this.processingStarted = false;
   }
-  
-  /**
-   * Create a logger specific to this platform
-   * @returns {Object} Logger object
-   */
-  createLogger() {
-    return {
-      info: (message, data = null) => console.log(`[${this.platformId}] INFO: ${message}`, data || ''),
-      warn: (message, data = null) => console.warn(`[${this.platformId}] WARN: ${message}`, data || ''),
-      error: (message, data = null) => console.error(`[${this.platformId}] ERROR: ${message}`, data || '')
-    };
-  }
-  
+
+
   /**
    * Initialize the platform integration
    * @returns {Promise<void>}
    */
   async initialize() {
     if (!this.isCurrentPlatform()) {
-      this.logger.info(`Not on ${this.platformId}, exiting`);
+      this.logger.info(`[${this.platformId}] Not on platform, exiting`);
       return;
     }
-    
-    this.logger.info(`Initializing ${this.platformId} platform integration`);
-    
+
+    this.logger.info(`[${this.platformId}] Initializing platform integration`);
+
     if (document.readyState === 'complete') {
       this.observeForEditor();
     } else {
@@ -49,19 +39,19 @@ class BasePlatform extends PlatformInterface {
       });
     }
   }
-  
+
   /**
    * Use MutationObserver to wait for editor element to be available
    */
   observeForEditor() {
     const observerConfig = { childList: true, subtree: true };
     let retryCount = 0;
-    
+
     const observer = new MutationObserver(() => {
       const editorElement = this.findEditorElement();
-      
+
       if (editorElement && !this.processingStarted) {
-        this.logger.info(`${this.platformId} interface ready, starting processing`);
+        this.logger.info(`[${this.platformId}] Interface ready, starting processing`);
         this.processingStarted = true;
         observer.disconnect();
         this.processContent();
@@ -69,7 +59,7 @@ class BasePlatform extends PlatformInterface {
         retryCount++;
         if (retryCount >= this.maxRetries) {
           observer.disconnect();
-          this.logger.error(`Failed to find ${this.platformId} interface elements after maximum retries`);
+          this.logger.error(`[${this.platformId}] Failed to find interface elements after maximum retries`);
           chrome.runtime.sendMessage({
             action: 'notifyError',
             error: `Could not interact with ${this.platformId} interface. The page may still be loading or the interface may have changed.`
@@ -77,7 +67,7 @@ class BasePlatform extends PlatformInterface {
         }
       }
     });
-    
+
     observer.observe(document.body, observerConfig);
   }
 
@@ -114,14 +104,14 @@ class BasePlatform extends PlatformInterface {
    */
   async _insertTextIntoEditor(editorElement, text) {
     try {
-      this.logger.info(`Inserting text into standard input/textarea for ${this.platformId}`);
+      this.logger.info(`[${this.platformId}] Inserting text into standard input/textarea`);
       editorElement.focus();
       editorElement.value = text;
       this._dispatchEvents(editorElement, ['input', 'change']);
-      this.logger.info(`Successfully inserted text into ${this.platformId} editor.`);
+      this.logger.info(`[${this.platformId}] Successfully inserted text into editor.`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to insert text into ${this.platformId} editor:`, error);
+      this.logger.error(`[${this.platformId}] Failed to insert text into editor:`, error);
       return false;
     }
   }
@@ -135,16 +125,16 @@ class BasePlatform extends PlatformInterface {
    */
   async _clickSubmitButton(buttonElement) {
     try {
-      this.logger.info(`Attempting to click submit button for ${this.platformId}`);
+      this.logger.info(`[${this.platformId}] Attempting to click submit button`);
       if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-        this.logger.warn(`Submit button for ${this.platformId} is disabled.`);
+        this.logger.warn(`[${this.platformId}] Submit button is disabled.`);
         return false;
       }
       buttonElement.click();
-      this.logger.info(`Successfully clicked submit button for ${this.platformId}.`);
+      this.logger.info(`[${this.platformId}] Successfully clicked submit button.`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to click submit button for ${this.platformId}:`, error);
+      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
       return false;
     }
   }
@@ -153,12 +143,12 @@ class BasePlatform extends PlatformInterface {
    * Template Method: Process content from storage, find elements, insert, and submit.
    */
   async processContent() {
-    this.logger.info(`Starting template method processContent for ${this.platformId}`);
+    this.logger.info(`[${this.platformId}] Starting template method processContent`);
     chrome.storage.local.get(
       [STORAGE_KEYS.PRE_PROMPT, STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION],
       async (result) => {
         try {
-          this.logger.info('Retrieved data from storage', {
+          this.logger.info(`[${this.platformId}] Retrieved data from storage`, {
             hasPrompt: !!result[STORAGE_KEYS.PRE_PROMPT],
             hasFormattedContent: !!result[STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION]
           });
@@ -174,47 +164,47 @@ class BasePlatform extends PlatformInterface {
           }
 
           const fullText = this.createStructuredPrompt(prePrompt, formattedContentString);
-          this.logger.info(`Combined prompt and content for ${this.platformId}`);
+          this.logger.info(`[${this.platformId}] Combined prompt and content`);
 
           // --- Template Method Steps ---
           // 1. Find Editor
           const editorElement = this.findEditorElement();
           if (!editorElement) {
-            this.logger.error(`Editor element not found for ${this.platformId}.`);
+            this.logger.error(`[${this.platformId}] Editor element not found.`);
             throw new Error(`Could not find the editor element on ${this.platformId}.`);
           }
-          this.logger.info(`Found editor element for ${this.platformId}.`);
+          this.logger.info(`[${this.platformId}] Found editor element.`);
 
           // 2. Insert Text
           const insertSuccess = await this._insertTextIntoEditor(editorElement, fullText);
           if (!insertSuccess) {
-            this.logger.error(`Failed to insert text using _insertTextIntoEditor for ${this.platformId}.`);
+            this.logger.error(`[${this.platformId}] Failed to insert text using _insertTextIntoEditor.`);
             throw new Error(`Failed to insert text into the ${this.platformId} editor.`);
           }
-          this.logger.info(`Text insertion step completed for ${this.platformId}.`);
+          this.logger.info(`[${this.platformId}] Text insertion step completed.`);
 
           // 3. Wait
           await this._wait(800); // Allow time for UI updates or checks
-          this.logger.info(`Wait step completed for ${this.platformId}.`);
+          this.logger.info(`[${this.platformId}] Wait step completed.`);
 
           // 4. Find Submit Button
           const submitButton = this.findSubmitButton();
           if (!submitButton) {
-            this.logger.error(`Submit button not found for ${this.platformId}.`);
+            this.logger.error(`[${this.platformId}] Submit button not found.`);
             throw new Error(`Could not find the submit button on ${this.platformId}.`);
           }
-          this.logger.info(`Found submit button for ${this.platformId}.`);
+          this.logger.info(`[${this.platformId}] Found submit button.`);
 
           // 5. Click Submit Button
           const clickSuccess = await this._clickSubmitButton(submitButton);
           if (!clickSuccess) {
-            this.logger.error(`Failed to click submit button using _clickSubmitButton for ${this.platformId}.`);
+            this.logger.error(`[${this.platformId}] Failed to click submit button using _clickSubmitButton.`);
             throw new Error(`Failed to click the submit button on ${this.platformId}.`);
           }
-          this.logger.info(`Submit button click step completed for ${this.platformId}.`);
+          this.logger.info(`[${this.platformId}] Submit button click step completed.`);
           // --- End Template Method Steps ---
 
-          this.logger.info(`Content successfully processed and submitted for ${this.platformId}`);
+          this.logger.info(`[${this.platformId}] Content successfully processed and submitted`);
           // Clear the data after successful processing
           chrome.storage.local.remove([
             STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
@@ -223,7 +213,7 @@ class BasePlatform extends PlatformInterface {
           ]);
 
         } catch (error) {
-          this.logger.error(`Error during ${this.platformId} processContent execution:`, error);
+          this.logger.error(`[${this.platformId}] Error during processContent execution:`, error);
           chrome.runtime.sendMessage({
             action: 'notifyError',
             error: `Error interacting with ${this.platformId}: ${error.message}`

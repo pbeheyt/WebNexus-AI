@@ -8,7 +8,7 @@ class ClaudePlatform extends BasePlatform {
   constructor() {
     super('claude');
   }
-  
+
   /**
    * Check if the current page is Claude
    * @returns {boolean} True if on Claude
@@ -16,7 +16,7 @@ class ClaudePlatform extends BasePlatform {
   isCurrentPlatform() {
     return window.location.href.includes('claude.ai');
   }
-  
+
 
   /**
  * Helper method to determine if an element is visible and interactive
@@ -39,7 +39,7 @@ class ClaudePlatform extends BasePlatform {
    * @returns {HTMLElement|null} The editor element or null if not found
    */
   findEditorElement() {
-    this.logger.info("Attempting to find Claude editor element...");
+    this.logger.info(`[${this.platformId}] Attempting to find editor element...`);
 
     // Strategy 1: Look for contenteditable inside the known wrapper
     try {
@@ -47,11 +47,11 @@ class ClaudePlatform extends BasePlatform {
       if (wrapper) {
         const editor = wrapper.querySelector('div[contenteditable="true"].ProseMirror');
         if (editor && this.isVisibleElement(editor)) {
-          this.logger.info("Found editor using Strategy 1 (Wrapper + Contenteditable)");
+          this.logger.info(`[${this.platformId}] Found editor using Strategy 1 (Wrapper + Contenteditable)`);
           return editor;
         }
       }
-    } catch (e) { this.logger.warn("Error during Strategy 1 editor search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 1 editor search:`, e); }
 
     // Strategy 2: Look for contenteditable containing the placeholder paragraph
     try {
@@ -60,11 +60,11 @@ class ClaudePlatform extends BasePlatform {
       if (placeholderParagraph) {
         const editor = placeholderParagraph.closest('div[contenteditable="true"].ProseMirror');
         if (editor && this.isVisibleElement(editor)) {
-          this.logger.info("Found editor using Strategy 2 (Placeholder Parent)");
+          this.logger.info(`[${this.platformId}] Found editor using Strategy 2 (Placeholder Parent)`);
           return editor;
         }
       }
-    } catch (e) { this.logger.warn("Error during Strategy 2 editor search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 2 editor search:`, e); }
 
     // Strategy 3: Find the most prominent contenteditable div
     try {
@@ -72,24 +72,24 @@ class ClaudePlatform extends BasePlatform {
       // Find the first one that's visible (usually the main input)
       for (const editor of editors) {
         if (this.isVisibleElement(editor)) {
-          this.logger.info("Found editor using Strategy 3 (Visible Contenteditable)");
+          this.logger.info(`[${this.platformId}] Found editor using Strategy 3 (Visible Contenteditable)`);
           return editor;
         }
       }
-    } catch (e) { this.logger.warn("Error during Strategy 3 editor search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 3 editor search:`, e); }
 
 
-    this.logger.error("Claude editor element not found using any strategy.");
+    this.logger.error(`[${this.platformId}] Editor element not found using any strategy.`);
     return null;
   }
-  
+
   /**
    * Find Claude's submit button using more robust strategies.
    * Checks for visibility and enabled state.
    * @returns {HTMLElement|null} The submit button or null if not found
    */
   findSubmitButton() {
-    this.logger.info("Attempting to find Claude submit button...");
+    this.logger.info(`[${this.platformId}] Attempting to find submit button...`);
 
     // Strategy 1: Specific SVG Path within a button
     try {
@@ -99,13 +99,13 @@ class ClaudePlatform extends BasePlatform {
         const button = pathElement.closest('button');
         // Check visibility AND ensure it's not disabled
         if (button && this.isVisibleElement(button) && !button.disabled) {
-          this.logger.info("Found submit button using Strategy 1 (SVG Path)");
+          this.logger.info(`[${this.platformId}] Found submit button using Strategy 1 (SVG Path)`);
           return button;
         } else if (button) {
-            this.logger.warn("Strategy 1: Found button via SVG, but it's hidden or disabled.", button);
+            this.logger.warn(`[${this.platformId}] Strategy 1: Found button via SVG, but it's hidden or disabled.`, button);
         }
       }
-    } catch (e) { this.logger.warn("Error during Strategy 1 submit button search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 1 submit button search:`, e); }
 
     // Strategy 2: Aria Label (Multi-language)
     try {
@@ -118,13 +118,13 @@ class ClaudePlatform extends BasePlatform {
         const button = document.querySelector(selector);
          // Check visibility AND ensure it's not disabled
         if (button && this.isVisibleElement(button) && !button.disabled) {
-          this.logger.info(`Found submit button using Strategy 2 (Aria Label: ${selector})`);
+          this.logger.info(`[${this.platformId}] Found submit button using Strategy 2 (Aria Label: ${selector})`);
           return button;
         } else if (button) {
-             this.logger.warn(`Strategy 2: Found button via aria-label (${selector}), but it's hidden or disabled.`, button);
+             this.logger.warn(`[${this.platformId}] Strategy 2: Found button via aria-label (${selector}), but it's hidden or disabled.`, button);
         }
       }
-    } catch (e) { this.logger.warn("Error during Strategy 2 submit button search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 2 submit button search:`, e); }
 
     // Strategy 3: Structure and Classes (More specific)
     try {
@@ -132,14 +132,14 @@ class ClaudePlatform extends BasePlatform {
         const button = document.querySelector('div.flex.gap-2\\.5.w-full.items-center button.bg-accent-main-000');
          // Check visibility AND ensure it's not disabled
         if (button && this.isVisibleElement(button) && !button.disabled) {
-            this.logger.info("Found submit button using Strategy 3 (Structure/Classes)");
+            this.logger.info(`[${this.platformId}] Found submit button using Strategy 3 (Structure/Classes)`);
             return button;
         } else if (button) {
-             this.logger.warn("Strategy 3: Found button via structure/classes, but it's hidden or disabled.", button);
+             this.logger.warn(`[${this.platformId}] Strategy 3: Found button via structure/classes, but it's hidden or disabled.`, button);
         }
-    } catch (e) { this.logger.warn("Error during Strategy 3 submit button search:", e); }
+    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 3 submit button search:`, e); }
 
-    this.logger.error("Claude submit button not found or is disabled using any strategy.");
+    this.logger.error(`[${this.platformId}] Submit button not found or is disabled using any strategy.`);
     return null; // Return null if no enabled button is found
   }
 
@@ -152,7 +152,7 @@ class ClaudePlatform extends BasePlatform {
    */
   async _insertTextIntoEditor(editorElement, text) {
     try {
-      this.logger.info(`Inserting text into Claude editor`);
+      this.logger.info(`[${this.platformId}] Inserting text into Claude editor`);
       // Clear existing content
       editorElement.innerHTML = '';
 
@@ -181,14 +181,14 @@ class ClaudePlatform extends BasePlatform {
       try {
         editorElement.focus();
       } catch (focusError) {
-        this.logger.warn('Could not focus Claude editor:', focusError);
+        this.logger.warn(`[${this.platformId}] Could not focus Claude editor:`, focusError);
         // Continue anyway, focus might not be critical
       }
 
-      this.logger.info(`Successfully inserted text into Claude editor.`);
+      this.logger.info(`[${this.platformId}] Successfully inserted text into Claude editor.`);
       return true;
     } catch (error) {
-      this.logger.error('Error inserting text into Claude editor:', error);
+      this.logger.error(`[${this.platformId}] Error inserting text into Claude editor:`, error);
       return false;
     }
   }
@@ -201,19 +201,19 @@ class ClaudePlatform extends BasePlatform {
    */
   async _clickSubmitButton(buttonElement) {
     try {
-      this.logger.info(`Attempting to click submit button for Claude with event sequence`);
+      this.logger.info(`[${this.platformId}] Attempting to click submit button for Claude with event sequence`);
       if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
         // Attempt to enable if possible, otherwise warn
         if (buttonElement.hasAttribute('disabled')) {
-           this.logger.warn(`Claude submit button is disabled, attempting to enable.`);
+           this.logger.warn(`[${this.platformId}] Submit button is disabled, attempting to enable.`);
            buttonElement.disabled = false;
         } else {
-           this.logger.warn(`Claude submit button is aria-disabled.`);
+           this.logger.warn(`[${this.platformId}] Submit button is aria-disabled.`);
            // Cannot directly change aria-disabled usually, proceed but might fail
         }
         // Re-check after attempting to enable
         if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-            this.logger.error(`Claude submit button remains disabled.`);
+            this.logger.error(`[${this.platformId}] Submit button remains disabled.`);
             return false;
         }
       }
@@ -229,10 +229,10 @@ class ClaudePlatform extends BasePlatform {
         buttonElement.dispatchEvent(event);
       });
 
-      this.logger.info(`Successfully clicked submit button for Claude.`);
+      this.logger.info(`[${this.platformId}] Successfully clicked submit button.`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to click submit button for Claude:`, error);
+      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
       return false;
     }
   }

@@ -5,16 +5,16 @@ class GeminiPlatform extends BasePlatform {
   constructor() {
     super('gemini');
   }
-  
+
   isCurrentPlatform() {
     return window.location.hostname.includes('gemini.google.com');
   }
-  
+
   findEditorElement() {
     // Exact selector based on provided HTML
     return document.querySelector('div.ql-editor[contenteditable="true"][aria-multiline="true"]');
   }
-  
+
   findSubmitButton() {
     // Exact selector based on provided HTML
     return document.querySelector('button.send-button');
@@ -29,7 +29,7 @@ class GeminiPlatform extends BasePlatform {
    */
   async _insertTextIntoEditor(editorElement, text) {
     try {
-      this.logger.info(`Inserting text into Gemini editor (Quill)`);
+      this.logger.info(`[${this.platformId}] Inserting text into Gemini editor (Quill)`);
       // Focus the editor
       editorElement.focus();
 
@@ -57,10 +57,10 @@ class GeminiPlatform extends BasePlatform {
       // Trigger input events using base class helper
       this._dispatchEvents(editorElement, ['input', 'change']);
 
-      this.logger.info(`Successfully inserted text into Gemini editor.`);
+      this.logger.info(`[${this.platformId}] Successfully inserted text into Gemini editor.`);
       return true;
     } catch (error) {
-      this.logger.error('Error inserting text into Gemini editor:', error);
+      this.logger.error(`[${this.platformId}] Error inserting text into Gemini editor:`, error);
       return false;
     }
   }
@@ -73,10 +73,10 @@ class GeminiPlatform extends BasePlatform {
    */
   async _clickSubmitButton(buttonElement) {
     try {
-      this.logger.info(`Attempting to click submit button for Gemini`);
+      this.logger.info(`[${this.platformId}] Attempting to click submit button`);
       // Check and potentially remove disabled state
       if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-        this.logger.warn(`Gemini submit button is disabled, attempting to enable.`);
+        this.logger.warn(`[${this.platformId}] Submit button is disabled, attempting to enable.`);
         if (buttonElement.hasAttribute('disabled')) {
             buttonElement.disabled = false;
         }
@@ -85,7 +85,7 @@ class GeminiPlatform extends BasePlatform {
         }
         // Re-check after attempting to enable
         if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-            this.logger.error(`Gemini submit button remained disabled.`);
+            this.logger.error(`[${this.platformId}] Submit button remained disabled.`);
             return false;
         }
       }
@@ -101,10 +101,10 @@ class GeminiPlatform extends BasePlatform {
         buttonElement.dispatchEvent(event);
       });
 
-      this.logger.info(`Successfully clicked submit button for Gemini.`);
+      this.logger.info(`[${this.platformId}] Successfully clicked submit button.`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to click submit button for Gemini:`, error);
+      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
       return false;
     }
   }
