@@ -1,11 +1,11 @@
 // src/extractor/base-extractor.js
-const logger = require('../shared/logger.js');
+const logger = require('../shared/logger').extractor;
 
 class BaseExtractor {
   constructor(contentType) {
     this.contentType = contentType;
     this.contentScriptReady = false;
-    this.logger = logger.content;
+    this.logger = logger;
     this.messageListener = null;
   }
 

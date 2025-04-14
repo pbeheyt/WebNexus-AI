@@ -75,6 +75,12 @@ const logger = {
     warn: (message, data) => log('content', 'warn', message, data),
     error: (message, data) => log('content', 'error', message, data)
   },
+  extractor: {
+    debug: (message, data) => log('extractor', 'debug', message, data),
+    info: (message, data) => log('extractor', 'info', message, data),
+    warn: (message, data) => log('extractor', 'warn', message, data),
+    error: (message, data) => log('extractor', 'error', message, data)
+  },
   popup: {
     debug: (message, data) => log('popup', 'debug', message, data),
     info: (message, data) => log('popup', 'info', message, data),
