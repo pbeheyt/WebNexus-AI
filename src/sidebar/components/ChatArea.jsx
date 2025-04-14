@@ -61,7 +61,6 @@ const formatContextWindow = (value) => {
 function ChatArea({ className = '' }) {
   const {
     messages,
-    isProcessing,
     isContentExtractionEnabled,
     setIsContentExtractionEnabled,
     modelConfigData
@@ -81,12 +80,8 @@ function ChatArea({ className = '' }) {
     hasAnyPlatformCredentials,
   } = useSidebarPlatform();
 
-  // --- State for Scroll Logic ---
-  const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
+  // --- State for Scroll Button Visibility ---
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
-  const isNearBottomRef = useRef(true); // Ref tracks if *currently* near bottom
-  const scrollTimeoutRef = useRef(null); // Ref for scrollIntoView timeout
-  // --- End State for Scroll Logic ---
 
   // --- Local State for Stable Display ---
   const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
@@ -99,23 +94,17 @@ function ChatArea({ className = '' }) {
     const isPlatformReady = !!targetPlatform;
 
     if (isPlatformReady && isModelConfigReady) {
-      // Only update state if the data is actually ready
       setDisplayPlatformConfig({
           id: targetPlatform.id,
           name: targetPlatform.name,
           iconUrl: targetPlatform.iconUrl
       });
       setDisplayModelConfig(modelConfigData);
-
-      // Set flag on first successful load
       if (!hasCompletedInitialLoad) {
           setHasCompletedInitialLoad(true);
       }
     }
-    // Intentionally do NOT set to null here if data isn't ready
-    // This preserves the old value during transitions after the initial load.
-
-  }, [platforms, selectedPlatformId, modelConfigData, selectedModel, hasCompletedInitialLoad]); // Include hasCompletedInitialLoad in dependencies
+  }, [platforms, selectedPlatformId, modelConfigData, selectedModel, hasCompletedInitialLoad]);
   // --- End Local State ---
 
   // --- Get Content Type Name ---
@@ -130,94 +119,45 @@ function ChatArea({ className = '' }) {
   };
   // --- End Get Content Type Name ---
 
-  // --- Scroll Handling Logic ---
-  const SCROLL_THRESHOLD = 3;
-  const DEBOUNCE_DELAY = 50;
+  // --- Scroll Handling Logic (Manual Scroll Button Only) ---
+  const SCROLL_THRESHOLD = 10; // Pixels from bottom to hide button
+  const DEBOUNCE_DELAY = 200; // ms
 
+  // Function to scroll to the bottom (used by the button)
   const scrollToBottom = useCallback((behavior = 'smooth') => {
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
     messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
-    isNearBottomRef.current = true;
-    setUserHasScrolledUp(false);
-    setShowScrollDownButton(false);
   }, []);
 
+  // Function to check scroll position and show/hide the button
   const checkScrollPosition = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-    const isScrolledToBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
-    isNearBottomRef.current = isScrolledToBottom;
-    setShowScrollDownButton(!isScrolledToBottom);
-    if (isScrolledToBottom && userHasScrolledUp) {
-        setUserHasScrolledUp(false);
-    }
-  }, [userHasScrolledUp, SCROLL_THRESHOLD]);
+    const isNearBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
+    setShowScrollDownButton(!isNearBottom); // Show button if NOT near bottom
+  }, [SCROLL_THRESHOLD]);
 
+  // Debounced version of the check function
   const debouncedCheckScrollPosition = useMemo(
     () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
     [checkScrollPosition, DEBOUNCE_DELAY]
   );
 
-  const handleWheelScroll = useCallback((event) => {
-    if (event.deltaY < 0) {
-        setUserHasScrolledUp(true);
-    }
-  }, [setUserHasScrolledUp]);
-
-  const handleTouchStart = useCallback(() => {
-    if (!isNearBottomRef.current) {
-        setUserHasScrolledUp(true);
-    }
-  }, [setUserHasScrolledUp]);
-
+  // Effect to setup and cleanup scroll listener for the button visibility
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
       scrollContainer.addEventListener('scroll', debouncedCheckScrollPosition, { passive: true });
-      scrollContainer.addEventListener('wheel', handleWheelScroll, { passive: true });
-      scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+      // Initial check in case content is already scrolled up when loaded
       checkScrollPosition();
       return () => {
         scrollContainer.removeEventListener('scroll', debouncedCheckScrollPosition);
-        scrollContainer.removeEventListener('wheel', handleWheelScroll);
-        scrollContainer.removeEventListener('touchstart', handleTouchStart);
         if (debouncedCheckScrollPosition && typeof debouncedCheckScrollPosition.cancel === 'function') {
           debouncedCheckScrollPosition.cancel();
         }
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-        }
       };
     }
-  }, [debouncedCheckScrollPosition, handleWheelScroll, handleTouchStart, checkScrollPosition]);
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer || messages.length === 0) return;
-    if (!userHasScrolledUp) {
-      const behavior = isProcessing ? 'auto' : 'smooth';
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      scrollTimeoutRef.current = setTimeout(() => {
-        scrollToBottom(behavior);
-      }, 0);
-    }
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, [messages, isProcessing, userHasScrolledUp, scrollToBottom]);
-
-  useEffect(() => {
-    if (isProcessing) {
-      setUserHasScrolledUp(false);
-    }
-  }, [isProcessing]);
+  }, [debouncedCheckScrollPosition, checkScrollPosition]);
   // --- End Scroll Handling ---
 
 
@@ -248,7 +188,6 @@ function ChatArea({ className = '' }) {
             className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark"
             aria-label="Configure API Credentials in Settings"
           >
-            {/* SVG Icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1.51-1V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               <circle cx="12" cy="12" r="3"></circle>
@@ -262,8 +201,7 @@ function ChatArea({ className = '' }) {
       );
     }
 
-    // --- Initial Loading Spinner View (Only if initial load never completed) ---
-    // Show spinner ONLY if credentials exist AND the initial load hasn't completed yet.
+    // --- Initial Loading Spinner View ---
     if (hasAnyPlatformCredentials && !hasCompletedInitialLoad) {
       return (
         <div className={`${className} flex items-center justify-center h-full`}>
@@ -272,16 +210,12 @@ function ChatArea({ className = '' }) {
       );
     }
 
-    // --- Welcome Message View (Shown once initial load completes, using potentially stale data during transition) ---
-    // Show welcome message if credentials exist AND the initial load has completed at least once.
-    // The content inside will use the current `displayPlatformConfig` and `displayModelConfig` state,
-    // which won't be nullified during transitions after the first load.
+    // --- Welcome Message View ---
     if (hasAnyPlatformCredentials && hasCompletedInitialLoad) {
       return (
         <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3 overflow-y-auto`}>
           {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
           <div className="flex flex-col items-center py-3 w-full">
-             {/* Display platform info only if available */}
             {displayPlatformConfig ? (
               <img
                 src={displayPlatformConfig.iconUrl}
@@ -289,11 +223,8 @@ function ChatArea({ className = '' }) {
                 className="w-8 h-8 mb-2 object-contain"
               />
             ) : (
-               // This fallback should now only appear very briefly during the *absolute first* load
                <div className="w-12 h-12 mb-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
             )}
-
-            {/* Display model info only if available */}
             {displayModelConfig ? (
               <>
                 <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium" title={displayModelConfig.id}>
@@ -305,7 +236,6 @@ function ChatArea({ className = '' }) {
                   </p>
                 )}
                 <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-1">
-                  {/* Pricing and Context Window Info with Tooltips */}
                    {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
                      <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                        <FreeTierIcon /> <span>Free</span>
@@ -336,9 +266,7 @@ function ChatArea({ className = '' }) {
                 </div>
               </>
             ) : (
-               // Placeholder for spacing if model info is temporarily unavailable (should be rare after initial load)
-               <div className="h-5 mt-1 mb-2">
-               </div>
+               <div className="h-5 mt-1 mb-2"></div>
             )}
           </div>
 
@@ -377,7 +305,7 @@ function ChatArea({ className = '' }) {
                     id="content-extract-toggle"
                     checked={isContentExtractionEnabled}
                     onChange={() => setIsContentExtractionEnabled(prev => !prev)}
-                    disabled={!hasAnyPlatformCredentials} // Keep disabled check
+                    disabled={!hasAnyPlatformCredentials}
                     className='w-10 h-5'
                   />
                 </div>
@@ -393,7 +321,6 @@ function ChatArea({ className = '' }) {
         </div>
       );
     }
-    // Fallback case
     return null;
   }
   // --- End Initial View Logic ---
@@ -430,7 +357,6 @@ function ChatArea({ className = '' }) {
             bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700
             text-theme-primary dark:text-theme-primary-dark
             transition-opacity duration-300 ease-in-out
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark focus-visible:ring-offset-background dark:focus-visible:ring-offset-background-dark
             ${showScrollDownButton ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}
         aria-label="Scroll to bottom"
@@ -448,11 +374,8 @@ function ChatArea({ className = '' }) {
 // Helper function for welcome message
 function getWelcomeMessage(contentType, isPageInjectable) {
   if (!isPageInjectable) {
-    // If content cannot be extracted, keep the general prompt
     return "Ask me anything! Type your question or prompt below.";
   }
-
-  // If content can be extracted, tailor the message
   switch (contentType) {
     case CONTENT_TYPES.YOUTUBE:
       return "Ask about this YouTube video or request a summary.";
@@ -462,7 +385,6 @@ function getWelcomeMessage(contentType, isPageInjectable) {
       return "Ask specific questions about this PDF document or request a summary.";
     case CONTENT_TYPES.GENERAL:
     default:
-      // Default for general web pages
       return "Ask about this page's content, request a summary, or start a related chat.";
   }
 }

@@ -23,7 +23,7 @@ export function SidebarChatProvider({ children }) {
     getPlatformApiConfig
   } = useSidebarPlatform();
 
-  const { contentType, currentTab } = useContent(); // Added currentTab
+  const { contentType, currentTab } = useContent();
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState(null);
@@ -32,8 +32,8 @@ export function SidebarChatProvider({ children }) {
   const [isCanceling, setIsCanceling] = useState(false);
   const [isContentExtractionEnabled, setIsContentExtractionEnabled] = useState(true);
   const [modelConfigData, setModelConfigData] = useState(null);
-  const batchedStreamingContentRef = useRef(''); // Added Ref for buffering
-  const rafIdRef = useRef(null); // Added Ref for requestAnimationFrame ID
+  const batchedStreamingContentRef = useRef('');
+  const rafIdRef = useRef(null);
 
   // Use the token tracking hook
   const {
