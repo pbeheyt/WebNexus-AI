@@ -11,7 +11,7 @@ import { CONTENT_TYPES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 
-// --- Icon Definitions --- (Keep exactly as they were)
+// --- Icon Definitions ---
 const InputTokenIcon = () => (
   <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M12 18V6M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -44,7 +44,7 @@ const ScrollDownIcon = () => (
 // --- End Icon Definitions ---
 
 
-// --- Helper Function --- (Keep exactly as it was)
+// --- Helper Function ---
 const formatContextWindow = (value) => {
   if (typeof value !== 'number') return '';
   if (value >= 1000000) {
@@ -88,10 +88,11 @@ function ChatArea({ className = '' }) {
   const scrollTimeoutRef = useRef(null); // Ref for scrollIntoView timeout
   // --- End State for Scroll Logic ---
 
-
-  // --- Local State for Stable Display --- (Keep as is)
+  // --- Local State for Stable Display ---
   const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
+  const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
+
   useEffect(() => {
     const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
     const isModelConfigReady = modelConfigData && selectedModel && modelConfigData.id === selectedModel;
@@ -104,10 +105,25 @@ function ChatArea({ className = '' }) {
           iconUrl: targetPlatform.iconUrl
       });
       setDisplayModelConfig(modelConfigData);
-    } else if (!isPlatformReady || !isModelConfigReady) {
-        setDisplayPlatformConfig(null);
-        setDisplayModelConfig(null);
+      // --- Set flag on first successful load ---
+      // Only set this flag if it hasn't been set before.
+      // Once true, it stays true for the lifetime of the component instance.
+      if (!hasCompletedInitialLoad) {
+          setHasCompletedInitialLoad(true);
+      }
+      // --- End NEW ---
+    } else { // Simplified else for clarity
+        // Only clear display configs if they are currently set,
+        // preventing unnecessary re-renders if they are already null.
+        if (displayPlatformConfig !== null || displayModelConfig !== null) {
+             setDisplayPlatformConfig(null);
+             setDisplayModelConfig(null);
+        }
+        // --- IMPORTANT: Do NOT reset hasCompletedInitialLoad here ---
     }
+    // Dependencies: Only re-run when the inputs change.
+    // `hasCompletedInitialLoad` is *not* a dependency because we don't want
+    // the effect to re-run just because the flag changed. We only read it.
   }, [platforms, selectedPlatformId, modelConfigData, selectedModel]);
   // --- End Local State ---
 
@@ -123,87 +139,56 @@ function ChatArea({ className = '' }) {
   };
   // --- End Get Content Type Name ---
 
+  // --- Scroll Handling Logic ---
+  const SCROLL_THRESHOLD = 3;
+  const DEBOUNCE_DELAY = 50;
 
-  // --- Scroll Handling Logic with user intent detection ---
-  const SCROLL_THRESHOLD = 3; // Pixels from bottom to consider "near"
-  const DEBOUNCE_DELAY = 50; // Milliseconds for scroll event debounce
-
-  // Function to scroll reliably to the very bottom
   const scrollToBottom = useCallback((behavior = 'smooth') => {
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
     messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
-
-    // --- IMMEDIATE STATE/REF RESET on programmatic scroll ---
     isNearBottomRef.current = true;
-    setUserHasScrolledUp(false); // Re-enable auto-scroll
-    setShowScrollDownButton(false); // Hide button
+    setUserHasScrolledUp(false);
+    setShowScrollDownButton(false);
   }, []);
 
-  // Function to check scroll position and update button/state
-  // This is now primarily for the debounced listener and manual checks
   const checkScrollPosition = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
-
     const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
     const isScrolledToBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
-
-    // Update ref immediately
     isNearBottomRef.current = isScrolledToBottom;
-
-    // Update button visibility based *only* on position
     setShowScrollDownButton(!isScrolledToBottom);
-
-    // If the user manually scrolls back to the bottom, re-enable auto-scroll
-    if (isScrolledToBottom) {
-        if (userHasScrolledUp) { // Only update state if it changes
-            setUserHasScrolledUp(false);
-        }
+    if (isScrolledToBottom && userHasScrolledUp) {
+        setUserHasScrolledUp(false);
     }
-  }, [userHasScrolledUp, SCROLL_THRESHOLD]); // Depends on userHasScrolledUp to decide if reset is needed
+  }, [userHasScrolledUp, SCROLL_THRESHOLD]);
 
-  // Create the debounced version for the 'scroll' event
   const debouncedCheckScrollPosition = useMemo(
     () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
     [checkScrollPosition, DEBOUNCE_DELAY]
   );
 
-  // Listener for direct user scroll input (mouse wheel)
   const handleWheelScroll = useCallback((event) => {
-    // If scrolling up (negative deltaY), explicitly disable auto-scroll
     if (event.deltaY < 0) {
         setUserHasScrolledUp(true);
     }
-    // We still let the debounced 'scroll' event handler manage the button
-    // and re-enable auto-scroll if the user scrolls back down.
-  }, [setUserHasScrolledUp]); // Dependency on state setter
+  }, [setUserHasScrolledUp]);
 
-  // Listener for direct user scroll input (touch)
   const handleTouchStart = useCallback(() => {
-    // If the user touches the screen *while not near the bottom*,
-    // assume they intend to take control of scrolling.
     if (!isNearBottomRef.current) {
         setUserHasScrolledUp(true);
     }
-  }, [setUserHasScrolledUp]); // Dependency on state setter
+  }, [setUserHasScrolledUp]);
 
-  // Effect to attach/detach scroll-related listeners
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      // Debounced listener for general scroll events (updates button, resets flag if user reaches bottom)
       scrollContainer.addEventListener('scroll', debouncedCheckScrollPosition, { passive: true });
-      // Direct listener for mouse wheel (disables auto-scroll on upward scroll)
       scrollContainer.addEventListener('wheel', handleWheelScroll, { passive: true });
-      // Direct listener for touch start (disables auto-scroll if touch starts while scrolled up)
       scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
-
-      // Initial check
       checkScrollPosition();
-
-      // Cleanup
       return () => {
         scrollContainer.removeEventListener('scroll', debouncedCheckScrollPosition);
         scrollContainer.removeEventListener('wheel', handleWheelScroll);
@@ -218,35 +203,27 @@ function ChatArea({ className = '' }) {
     }
   }, [debouncedCheckScrollPosition, handleWheelScroll, handleTouchStart, checkScrollPosition]);
 
-  // Effect for automatic scrolling on new messages/processing state change
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer || messages.length === 0) return;
-
-    // Auto-scroll ONLY if the userHasScrolledUp flag is false
     if (!userHasScrolledUp) {
       const behavior = isProcessing ? 'auto' : 'smooth';
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-      // Schedule scroll after DOM update
       scrollTimeoutRef.current = setTimeout(() => {
         scrollToBottom(behavior);
       }, 0);
     }
-
-    // Cleanup timeout
     return () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [messages, isProcessing, userHasScrolledUp, scrollToBottom]); // Dependencies remain the same
+  }, [messages, isProcessing, userHasScrolledUp, scrollToBottom]);
 
-  // Effect to reset user interaction flag when processing starts
   useEffect(() => {
     if (isProcessing) {
-      // When new processing starts, assume user wants to see the output
       setUserHasScrolledUp(false);
     }
   }, [isProcessing]);
@@ -294,8 +271,9 @@ function ChatArea({ className = '' }) {
       );
     }
 
-    // --- Initial Loading Spinner View ---
-    if (hasAnyPlatformCredentials && displayPlatformConfig === null) {
+    // --- Initial Loading Spinner View (Only if initial load never completed) ---
+    // Show spinner ONLY if credentials exist AND the initial load hasn't completed yet.
+    if (hasAnyPlatformCredentials && !hasCompletedInitialLoad) {
       return (
         <div className={`${className} flex items-center justify-center h-full`}>
           <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status" aria-label="Loading model information"></div>
@@ -303,17 +281,27 @@ function ChatArea({ className = '' }) {
       );
     }
 
-    // --- Welcome Message View ---
-    if (hasAnyPlatformCredentials && displayPlatformConfig !== null) {
+    // --- Welcome Message View (Shown once initial load completes, even if data changes) ---
+    // Show welcome message if credentials exist AND the initial load has completed at least once.
+    // The content inside will update based on `displayPlatformConfig` and `displayModelConfig`.
+    if (hasAnyPlatformCredentials && hasCompletedInitialLoad) {
       return (
         <div className={`${className} flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-4 overflow-y-auto`}>
           {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
           <div className="flex flex-col items-center py-5 w-full">
-            <img
-              src={displayPlatformConfig.iconUrl}
-              alt={`${displayPlatformConfig.name || 'Platform'} logo`}
-              className="w-12 h-12 mb-3 object-contain"
-            />
+             {/* Display platform info only if available */}
+            {displayPlatformConfig ? (
+              <img
+                src={displayPlatformConfig.iconUrl}
+                alt={`${displayPlatformConfig.name || 'Platform'} logo`}
+                className="w-12 h-12 mb-3 object-contain"
+              />
+            ) : (
+               // Placeholder or fallback if platform info is temporarily unavailable during switch
+               <div className="w-12 h-12 mb-3 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+            )}
+
+            {/* Display model info only if available */}
             {displayModelConfig ? (
               <>
                 <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium" title={displayModelConfig.id}>
@@ -356,7 +344,9 @@ function ChatArea({ className = '' }) {
                 </div>
               </>
             ) : (
-               <div className="h-5 mt-1 mb-2"></div> // Placeholder for spacing
+               // Placeholder for spacing if model info is temporarily unavailable
+               <div className="h-5 mt-1 mb-2">
+               </div>
             )}
           </div>
 
@@ -395,7 +385,7 @@ function ChatArea({ className = '' }) {
                     id="content-extract-toggle"
                     checked={isContentExtractionEnabled}
                     onChange={() => setIsContentExtractionEnabled(prev => !prev)}
-                    disabled={!hasAnyPlatformCredentials}
+                    disabled={!hasAnyPlatformCredentials} // Keep disabled check
                   />
                 </div>
               </>
@@ -415,12 +405,13 @@ function ChatArea({ className = '' }) {
         </div>
       );
     }
-    return null; // Fallback, should not be reached
+    // Fallback case (should ideally not be reached if logic above is correct)
+    return null;
   }
   // --- End Initial View Logic ---
 
 
-  // --- Chat Message Display Logic (when messages exist) ---
+  // --- Chat Message Display Logic (when messages exist) --- (Keep as is)
   return (
     <div className={`flex-1 flex flex-col relative ${className}`}>
       {/* Scrollable container */}
@@ -466,7 +457,7 @@ function ChatArea({ className = '' }) {
   );
 }
 
-// Helper function for welcome message
+// Helper function for welcome message (Keep as is)
 function getWelcomeMessage(contentType, isPageInjectable) {
   if (!isPageInjectable) {
     return "Ask me anything! Type your question or prompt below.";
