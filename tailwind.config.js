@@ -4,11 +4,33 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./popup.html",
     "./settings.html",
+    "./sidepanel.html", // Added sidepanel.html just in case
     "./*.html"
   ],
   darkMode: 'class', // Enable class-based dark mode
   theme: {
     extend: {
+      typography: (theme) => ({
+        DEFAULT: { // Applies to the base 'prose' class
+          css: {
+            // Target inline code elements specifically
+            'code': {
+              // Reset potential default styles if needed, though usually handled by prose
+            },
+            // Explicitly remove content from pseudo-elements for inline code
+            'code::before': {
+              content: 'none', // Remove backtick before
+            },
+            'code::after': {
+              content: 'none', // Remove backtick after
+            },
+            // Ensure block code (pre code) is not affected if it had different defaults
+            'pre code::before': null, // Use null to potentially revert to any other defaults if needed
+            'pre code::after': null,
+          },
+        },
+      }),
+
       colors: {
         // Brand colors (consistent across themes)
         primary: {
@@ -69,7 +91,7 @@ module.exports = {
 
       addUtilities(themeUtilities);
     },
-    
+
     // New custom group variants for code block hover states
     function({ addVariant, e }) {
       // Add custom group variants for code blocks and message containers
@@ -78,7 +100,7 @@ module.exports = {
           return `.code-block-group:hover .${e(`code-block-group-hover${separator}${className}`)}`
         })
       });
-      
+
       addVariant('message-group-hover', ({ modifySelectors, separator }) => {
         modifySelectors(({ className }) => {
           return `.message-group:hover .${e(`message-group-hover${separator}${className}`)}`
