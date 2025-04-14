@@ -84,63 +84,79 @@ class ClaudePlatform extends BasePlatform {
   }
 
   /**
+   * Helper method to determine if an element is visible and interactive
+   * @param {HTMLElement} element - The element to check
+   * @returns {boolean} True if the element is visible and interactive
+   */
+  isVisibleElement(element) {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    const isVisible = style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      style.opacity !== '0' &&
+      element.getAttribute('aria-hidden') !== 'true' &&
+      rect.width > 0 && rect.height > 0;
+
+    if (!isVisible) {
+        this.logger.debug(`[${this.platformId}] Element failed visibility check:`, { element, style, rect });
+    }
+    return isVisible;
+  }
+
+  /**
+   * Check if a button element is currently enabled and ready for interaction.
+   * @param {HTMLElement} button - The button element to check.
+   * @returns {boolean} True if the button is enabled, false otherwise.
+   * @private
+   */
+  _isButtonEnabled(button) {
+    if (!button) return false;
+    const isDisabled = button.disabled || button.getAttribute('aria-disabled') === 'true';
+    if (isDisabled) {
+        this.logger.debug(`[${this.platformId}] Button is disabled:`, button);
+    }
+    return !isDisabled;
+  }
+
+  /**
    * Find Claude's submit button using more robust strategies.
    * Checks for visibility and enabled state.
    * @returns {HTMLElement|null} The submit button or null if not found
    */
   findSubmitButton() {
-    this.logger.info(`[${this.platformId}] Attempting to find submit button...`);
+    this.logger.info(`[${this.platformId}] Attempting to find submit button using selector...`);
 
-    // Strategy 1: Specific SVG Path within a button
+    // Strategy: Find button by aria-label containing "message" (case-insensitive) that has an SVG inside
+    const selector = 'button[aria-label*="message" i] svg';
+    let button = null;
+
     try {
-      const svgPathSelector = 'button svg path[d^="M208.49,120.49"]'; // Start of the path data
-      const pathElement = document.querySelector(svgPathSelector);
-      if (pathElement) {
-        const button = pathElement.closest('button');
-        // Check visibility AND ensure it's not disabled
-        if (button && this.isVisibleElement(button) && !button.disabled) {
-          this.logger.info(`[${this.platformId}] Found submit button using Strategy 1 (SVG Path)`);
-          return button;
-        } else if (button) {
-            this.logger.warn(`[${this.platformId}] Strategy 1: Found button via SVG, but it's hidden or disabled.`, button);
-        }
+      const svgElement = document.querySelector(selector);
+      if (svgElement) {
+        button = svgElement.closest('button');
       }
-    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 1 submit button search:`, e); }
+    } catch (e) {
+      this.logger.warn(`[${this.platformId}] Error during submit button search:`, e);
+      return null;
+    }
 
-    // Strategy 2: Aria Label (Multi-language)
-    try {
-      const ariaSelectors = [
-        'button[aria-label*="Send message" i]', // Case-insensitive English
-        'button[aria-label*="Envoyer le message" i]' // Case-insensitive French
-        // Add other potential languages if needed
-      ];
-      for (const selector of ariaSelectors) {
-        const button = document.querySelector(selector);
-         // Check visibility AND ensure it's not disabled
-        if (button && this.isVisibleElement(button) && !button.disabled) {
-          this.logger.info(`[${this.platformId}] Found submit button using Strategy 2 (Aria Label: ${selector})`);
-          return button;
-        } else if (button) {
-             this.logger.warn(`[${this.platformId}] Strategy 2: Found button via aria-label (${selector}), but it's hidden or disabled.`, button);
-        }
-      }
-    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 2 submit button search:`, e); }
-
-    // Strategy 3: Structure and Classes (More specific)
-    try {
-        // Look for the button with specific classes within the input area's bottom controls
-        const button = document.querySelector('div.flex.gap-2\\.5.w-full.items-center button.bg-accent-main-000');
-         // Check visibility AND ensure it's not disabled
-        if (button && this.isVisibleElement(button) && !button.disabled) {
-            this.logger.info(`[${this.platformId}] Found submit button using Strategy 3 (Structure/Classes)`);
-            return button;
-        } else if (button) {
-             this.logger.warn(`[${this.platformId}] Strategy 3: Found button via structure/classes, but it's hidden or disabled.`, button);
-        }
-    } catch (e) { this.logger.warn(`[${this.platformId}] Error during Strategy 3 submit button search:`, e); }
-
-    this.logger.error(`[${this.platformId}] Submit button not found or is disabled using any strategy.`);
-    return null; // Return null if no enabled button is found
+    // Check if the button was found and if it's ready
+    if (button && this._isButtonEnabled(button) && this.isVisibleElement(button)) {
+      this.logger.info(`[${this.platformId}] Found valid submit button using selector.`);
+      return button;
+    } else if (button) {
+      // Log why it wasn't returned (disabled or hidden)
+      this.logger.warn(`[${this.platformId}] Found button element with selector, but it's not enabled or visible.`, {
+          isDisabled: !this._isButtonEnabled(button),
+          isHidden: !this.isVisibleElement(button),
+          element: button
+      });
+      return null; // Return null if found but not ready
+    } else {
+      this.logger.warn(`[${this.platformId}] Submit button not found using selector (${selector}).`);
+      return null;
+    }
   }
 
   /**
