@@ -1,3 +1,4 @@
+// src/components/layout/PlatformCard.jsx
 import React, { useRef } from 'react';
 
 export function PlatformCard({
@@ -19,7 +20,7 @@ export function PlatformCard({
     <div
       ref={cardRef}
       className={`
-        flex flex-col items-center justify-center p-2 rounded-md transition-all duration-200 select-none
+        flex flex-col items-center justify-center p-2 rounded-md transition-all duration-200 select-none cursor-pointer
         ${selected ? 'bg-primary/10 dark:bg-primary/20' : 'hover:bg-theme-hover'}
       `}
       onClick={handleClick}
