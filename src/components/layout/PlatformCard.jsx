@@ -29,7 +29,7 @@ export function PlatformCard({
         <img
           src={iconUrl}
           alt={name}
-          className={`${showName ? 'w-6 h-6' : 'w-8 h-8'} object-contain`}
+          className={`${showName ? 'w-5 h-5' : 'w-7 h-7'} object-contain`}
         />
       </div>
 

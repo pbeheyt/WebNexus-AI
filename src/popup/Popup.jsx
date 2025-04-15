@@ -36,11 +36,9 @@ export function Popup() {
         updateStatus('API response ready');
         setIsProcessing(false);
       } else if (message.action === 'apiProcessingError') {
-        // Use updateStatus to show the error
         updateStatus(`API processing error: ${message.error || 'Unknown error'}`);
         setIsProcessing(false);
       }
-      // Add other message actions if needed
     };
 
     chrome.runtime.onMessage.addListener(messageListener);
@@ -48,7 +46,6 @@ export function Popup() {
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
     };
-    // Updated dependency array: only includes updateStatus
   }, [updateStatus]);
 
   // Function to close the popup
@@ -56,20 +53,19 @@ export function Popup() {
     window.close();
   };
 
-  // Function to toggle sidebar with auto-close (Refactored)
+  // Function to toggle sidebar with auto-close
   const toggleSidebar = async () => {
     if (!currentTab?.id) {
       updateStatus('Error: No active tab found.');
       return;
     }
 
-    updateStatus('Toggling sidebar...', true); // Indicate processing
+    updateStatus('Toggling sidebar...', true);
     try {
       // Send message to background to toggle the native side panel state (enable/disable)
       const response = await robustSendMessage({
-        action: 'toggleNativeSidePanelAction', // Action handled by message router
+        action: 'toggleNativeSidePanelAction',
         tabId: currentTab.id,
-        // No 'visible' property sent; background determines new state
       });
 
       if (response?.success) {
@@ -96,7 +92,6 @@ export function Popup() {
           window.close();
         }
       } else {
-        // Handle failure reported by the background script
         throw new Error(response?.error || 'Failed to toggle sidebar state in background.');
       }
     } catch (error) {
@@ -109,7 +104,6 @@ export function Popup() {
   // Handler for UnifiedInput submission
   const handleProcessWithText = async (text) => {
     if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id || !text.trim()) {
-      // Optionally provide feedback if the button is clicked while disabled
       if (!isSupported) updateStatus('Error: Extension cannot access this page.');
       else if (contentLoading) updateStatus('Page content still loading...');
       else if (!text.trim()) updateStatus('Please enter a prompt.');
@@ -118,7 +112,7 @@ export function Popup() {
 
     const promptContent = text.trim();
     setIsProcessing(true);
-    updateStatus('Preparing content...', true); // Updated status message
+    updateStatus('Preparing content...', true);
 
     try {
       // Clear previous state related to content processing
@@ -141,8 +135,7 @@ export function Popup() {
       if (result.success) {
         updateStatus('Opening AI platform...', true);
         // Popup might close automatically if the platform opens in a new tab,
-        // otherwise, it remains open. Consider if explicit closing is needed here.
-        // setIsProcessing(false); // Keep processing state until platform interaction completes or fails
+        // otherwise, it remains open.
       } else {
         // Check for specific non-injectable error code
         if (result.code === 'EXTRACTION_NOT_SUPPORTED') {
@@ -151,7 +144,7 @@ export function Popup() {
           // Use updateStatus for generic error feedback
           updateStatus(`Error: ${result.error || 'Processing failed'}`, false);
         }
-        setIsProcessing(false); // Stop processing on failure
+        setIsProcessing(false);
       }
     } catch (error) {
       console.error('Process error:', error);
@@ -189,7 +182,7 @@ export function Popup() {
         <PlatformSelector />
       </div>
 
-      <div className="mt-2">
+      <div className="mt-4">
         <UnifiedInput
           value={inputText}
           onChange={setInputText}
