@@ -165,7 +165,7 @@ export default function SidebarApp() {
             onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
             showExpandToggle={true}
             showBorder={true}
-            className='px-5 pt-4 pb-2 flex-shrink-0' // Prevent header from shrinking
+            className='px-5 py-2 flex-shrink-0' // Prevent header from shrinking
           />
 
           {/* Collapsible header section */}
