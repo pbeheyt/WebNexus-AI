@@ -93,6 +93,12 @@ const logger = {
     warn: (message, data) => log('platform', 'warn', message, data),
     error: (message, data) => log('platform', 'error', message, data)
   },
+  message:{
+    debug: (message, data) => log('message', 'debug', message, data),
+    info: (message, data) => log('message', 'info', message, data),
+    warn: (message, data) => log('message', 'warn', message, data),
+    error: (message, data) => log('message', 'error', message, data)
+  },
   service: {
     debug: (message, data) => log('service', 'debug', message, data),
     info: (message, data) => log('service', 'info', message, data),

@@ -10,6 +10,7 @@ import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 import { isInjectablePage } from '../../shared/utils/content-utils';
+import { robustSendMessage } from '../../shared/utils/message-utils';
 
 const SidebarChatContext = createContext(null);
 
@@ -528,7 +529,7 @@ export function SidebarChatProvider({ children }) {
 
     try {
       // Send cancellation message to background script
-      const result = await chrome.runtime.sendMessage({
+      const result = await robustSendMessage({
         action: 'cancelStream',
         streamId: streamId,
       });
@@ -653,7 +654,7 @@ export function SidebarChatProvider({ children }) {
           console.info('Stream cancellation attempted.');
         }
 
-        const response = await chrome.runtime.sendMessage({
+        const response = await robustSendMessage({
           action: 'clearTabData',
           tabId: tabId
         });

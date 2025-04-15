@@ -9,6 +9,7 @@ import { UnifiedInput } from '../components/input/UnifiedInput';
 import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
 import { InfoPanel } from './components/InfoPanel';
+import { robustSendMessage } from '../shared/utils/message-utils';
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
@@ -65,7 +66,7 @@ export function Popup() {
     updateStatus('Toggling sidebar...', true); // Indicate processing
     try {
       // Send message to background to toggle the native side panel state (enable/disable)
-      const response = await chrome.runtime.sendMessage({
+      const response = await robustSendMessage({
         action: 'toggleNativeSidePanelAction', // Action handled by message router
         tabId: currentTab.id,
         // No 'visible' property sent; background determines new state

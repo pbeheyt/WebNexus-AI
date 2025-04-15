@@ -2,6 +2,7 @@
 const PlatformInterface = require('./platform-interface');
 const STORAGE_KEYS = require('../shared/constants').STORAGE_KEYS;
 const logger = require('../shared/logger').platform;
+const { robustSendMessage } = require('../shared/utils/message-utils');
 
 /**
  * Base implementation with shared functionality for all AI platforms
@@ -60,10 +61,10 @@ class BasePlatform extends PlatformInterface {
         if (retryCount >= this.maxRetries) {
           observer.disconnect();
           this.logger.error(`[${this.platformId}] Failed to find interface elements after maximum retries`);
-          chrome.runtime.sendMessage({
+          robustSendMessage({
             action: 'notifyError',
             error: `Could not interact with ${this.platformId} interface. The page may still be loading or the interface may have changed.`
-          });
+          }).catch(err => this.logger.error('Failed to send notifyError message:', err));
         }
       }
     });
@@ -214,10 +215,10 @@ class BasePlatform extends PlatformInterface {
 
         } catch (error) {
           this.logger.error(`[${this.platformId}] Error during processContent execution:`, error);
-          chrome.runtime.sendMessage({
+          robustSendMessage({
             action: 'notifyError',
             error: `Error interacting with ${this.platformId}: ${error.message}`
-          });
+          }).catch(err => this.logger.error('Failed to send notifyError message:', err));
           // Optionally clear storage even on error? Depends on desired retry behavior.
           // chrome.storage.local.remove([STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION, STORAGE_KEYS.PRE_PROMPT, STORAGE_KEYS.CONTENT_READY]);
         }

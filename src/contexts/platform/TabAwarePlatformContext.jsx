@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
 import ModelParameterService from '../../services/ModelParameterService';
 import ConfigService from '../../services/ConfigService';
+import { robustSendMessage } from '../../shared/utils/message-utils';
 
 /**
  * Creates a tab-aware platform context with shared functionality.
@@ -61,7 +62,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
       try {
         // Request models from background script
-        const response = await chrome.runtime.sendMessage({
+        const response = await robustSendMessage({
           action: 'getApiModels',
           platformId,
           source: interfaceType
@@ -143,7 +144,7 @@ export function createTabAwarePlatformContext(options = {}) {
         // Check credentials for all platforms (only if sidebar)
         if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
           const credentialChecks = platformList.map(platform =>
-            chrome.runtime.sendMessage({
+            robustSendMessage({
               action: 'credentialOperation',
               operation: 'get',
               platformId: platform.id

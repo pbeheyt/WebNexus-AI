@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { INTERFACE_SOURCES } from '../shared/constants';
 import { useContent } from '../contexts/ContentContext';
+import { robustSendMessage } from '../shared/utils/message-utils';
 
 /**
  * Hook for content extraction and processing
@@ -24,7 +25,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   useEffect(() => {
     return () => {
       if (streamId) {
-        chrome.runtime.sendMessage({
+        robustSendMessage({
           action: 'cancelStream',
           streamId
         }).catch(err => console.error('Error canceling stream:', err));
@@ -67,7 +68,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     setError(null);
 
     try {
-      const response = await chrome.runtime.sendMessage({
+      const response = await robustSendMessage({
         action: 'processContent',
         tabId: currentTab?.id,
         url: currentTab?.url,
@@ -147,7 +148,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       if (conversationHistory?.length > 0) request.conversationHistory = conversationHistory;
       if (streaming && onStreamChunk) request.streaming = true;
 
-      const response = await chrome.runtime.sendMessage(request);
+      const response = await robustSendMessage(request);
 
       if (!response || !response.success) {
         const errorMsg = response?.error || 'API processing failed';
