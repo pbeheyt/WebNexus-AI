@@ -11,6 +11,7 @@ import MathFormulaBlock from './MathFormulaBlock'
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
 import logger from '../../../shared/logger';
+import { MESSAGE_ROLES } from '../../../shared/constants'; // Import MESSAGE_ROLES
 
 // Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
 const MATH_PLACEHOLDER_REGEX = /@@MATH_(BLOCK|INLINE)_(\d+)@@/g;
@@ -85,16 +86,17 @@ const renderWithPlaceholdersRecursive = (children, mathMap) => {
  * Message bubble component
  */
 export const MessageBubble = memo(({
+  id, // Expect the message ID to be passed as a prop
   content,
-  role = 'assistant',
+  role = MESSAGE_ROLES.ASSISTANT, // Use constant
   isStreaming = false,
   model = null,
   platformIconUrl = null,
   metadata = {},
   className = ''
 }) => {
-  const isUser = role === 'user';
-  const isSystem = role === 'system';
+  const isUser = role === MESSAGE_ROLES.USER; // Use constant
+  const isSystem = role === MESSAGE_ROLES.SYSTEM; // Use constant
   const [copyState, setCopyState] = useState('idle');
 
   const handleCopyToClipboard = async () => {
@@ -110,19 +112,21 @@ export const MessageBubble = memo(({
     }
   };
 
-  // System messages 
+  // System messages
   if (isSystem) {
      return (
-        <div className={`px-5 py-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}>
+        // *** ADDED id attribute ***
+        <div id={`message-${id}`} className={`px-5 py-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}>
           <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
         </div>
       );
   }
 
-  // User messages 
+  // User messages
   if (isUser) {
     return (
-      <div className={`px-5 py-2 mb-2 w-full flex justify-end items-start ${className}`}>
+      // *** ADDED id attribute ***
+      <div id={`message-${id}`} className={`px-5 py-2 mb-2 w-full flex justify-end items-start ${className}`}>
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
           <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
         </div>
@@ -131,7 +135,7 @@ export const MessageBubble = memo(({
   }
 
   // Assistant Message Rendering
-  if (role === 'assistant') {
+  if (role === MESSAGE_ROLES.ASSISTANT) { // Use constant
 
     // --- Preprocessing Step  ---
     const mathMap = new Map();
@@ -264,7 +268,8 @@ export const MessageBubble = memo(({
 
 
     return (
-      <div className={`group px-5 py-2 w-full message-group relative mb-2 ${className}`}>
+      // *** ADDED id attribute ***
+      <div id={`message-${id}`} className={`group px-5 py-2 w-full message-group relative mb-2 ${className}`}>
         <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-3`}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}

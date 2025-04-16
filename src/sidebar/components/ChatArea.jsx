@@ -7,7 +7,7 @@ import { MessageBubble } from './messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle';
 import { Tooltip } from '../../components/layout/Tooltip';
 import { useContent } from '../../contexts/ContentContext';
-import { CONTENT_TYPES } from '../../shared/constants';
+import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants'; // Import MESSAGE_ROLES
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import logger from '../../shared/logger'; // Import the logger
@@ -61,7 +61,7 @@ const formatContextWindow = (value) => {
 
 function ChatArea({ className = '' }) {
     const {
-        messages,
+        allMessages: messages, // Use allMessages which includes extracted content for rendering logic
         isContentExtractionEnabled,
         setIsContentExtractionEnabled,
         modelConfigData
@@ -88,6 +88,9 @@ function ChatArea({ className = '' }) {
     const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
     const [displayModelConfig, setDisplayModelConfig] = useState(null);
     const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
+
+    // *** Ref to track previous message count for scroll-to-top logic ***
+    const prevMessagesLength = useRef(messages.length);
 
     useEffect(() => {
         const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
@@ -124,14 +127,60 @@ function ChatArea({ className = '' }) {
     const SCROLL_THRESHOLD = 10;
     const DEBOUNCE_DELAY = 200; // Debounce for manual scroll listener
 
-    // --- Auto-Scroll Effect ---
+    // --- Effect for Handling Message List Changes (Scroll-to-Top Logic) ---
     useEffect(() => {
-        if (messages.length > 0) {
-            logger.sidebar.debug('[ChatArea] Messages length changed, auto-scrolling to bottom.');
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        const currentLength = messages.length;
+        const previousLength = prevMessagesLength.current;
+
+        logger.sidebar.debug(`[ChatArea] Messages effect running. Current length: ${currentLength}, Previous length: ${previousLength}`);
+
+        // Check if new messages were added (specifically looking for user + assistant pattern)
+        if (currentLength > previousLength && currentLength >= 2) {
+            const lastMessage = messages[currentLength - 1];
+            const secondLastMessage = messages[currentLength - 2];
+
+            // Check if the pattern is: User message followed by an Assistant placeholder
+            const isNewUserPromptPattern =
+                secondLastMessage?.role === MESSAGE_ROLES.USER &&
+                lastMessage?.role === MESSAGE_ROLES.ASSISTANT &&
+                lastMessage?.isStreaming === true; // Check if assistant message is the streaming placeholder
+
+            if (isNewUserPromptPattern) {
+                logger.sidebar.info(`[ChatArea] New user prompt pattern detected. Attempting to scroll user message (ID: ${secondLastMessage.id}) to top.`);
+                const userMessageId = secondLastMessage.id;
+                const targetElementId = `message-${userMessageId}`;
+
+                // Use timeout to allow DOM to update before scrolling
+                setTimeout(() => {
+                    const targetElement = scrollContainerRef.current?.querySelector(`#${targetElementId}`);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start' // Scroll to the TOP of the user message
+                        });
+                        logger.sidebar.info(`[ChatArea] Successfully scrolled element #${targetElementId} to top.`);
+                    } else {
+                        logger.sidebar.warn(`[ChatArea] Could not find element with ID #${targetElementId} to scroll to top.`);
+                    }
+                }, 0); // Timeout 0 pushes execution after current event loop tick
+
+                // *** IMPORTANT: Do NOT scroll to bottom in this case ***
+                // The scroll-to-top takes precedence.
+
+            } else {
+                 logger.sidebar.debug('[ChatArea] Message list changed, but not the new user prompt pattern. No scroll-to-top action taken.');
+                 // We also don't automatically scroll to bottom here anymore.
+                 // The scroll-down button logic will handle visibility.
+            }
+        } else {
+            logger.sidebar.debug('[ChatArea] Message list changed, but no new messages added or list too short. No scroll action taken.');
         }
-    }, [messages.length]);
-    // --- End Auto-Scroll Effect ---
+
+        // Update the ref for the next comparison AFTER processing the current change
+        prevMessagesLength.current = currentLength;
+
+    }, [messages]); // Dependency: run whenever the messages array changes
+    // --- End Scroll-to-Top Effect ---
 
 
     const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -388,6 +437,7 @@ function ChatArea({ className = '' }) {
             {/* Scrollable container - ALWAYS RENDERED */}
             <div
                 ref={scrollContainerRef}
+                // *** Added flex flex-col ***
                 className="flex-1 overflow-y-auto flex flex-col pt-4"
             >
                 {/* Conditional Content Inside Scrollable Container */}
@@ -395,9 +445,11 @@ function ChatArea({ className = '' }) {
                     renderInitialView()
                 ) : (
                     <>
+                        {/* Map through messages */}
                         {messages.map((message) => (
                             <MessageBubble
                                 key={message.id}
+                                id={message.id} // *** Pass the ID prop ***
                                 content={message.content}
                                 role={message.role}
                                 isStreaming={message.isStreaming}
@@ -406,6 +458,12 @@ function ChatArea({ className = '' }) {
                             />
                         ))}
                         <div ref={messagesEndRef} style={{ height: '1px' }} />
+
+                        {/* --- ADDED THE SPACER --- */}
+                        {/* This div takes up remaining space, ensuring content above can scroll higher */}
+                        {/* Adjust min-height as needed, e.g., based on viewport height estimate */}
+                        <div className="flex-grow min-h-[75vh]" aria-hidden="true"></div>
+                        {/* --- END SPACER --- */}
                     </>
                 )}
             </div>
