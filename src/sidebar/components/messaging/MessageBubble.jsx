@@ -1,5 +1,5 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
-import React, { useState, memo } from 'react';
+import React, { useState, memo, forwardRef } from 'react'; // Import forwardRef
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -33,6 +33,14 @@ const containsBlockElementCheck = (processedChildren) => {
  * RECURSIVE function to process children, find placeholders, and replace them with MathFormulaBlock
  */
 const renderWithPlaceholdersRecursive = (children, mathMap) => {
+  // Check if math placeholders are even present in the parent string/element for optimization
+  const hasMathPlaceholders = typeof children === 'string'
+      ? HAS_MATH_PLACEHOLDER_REGEX.test(children)
+      : React.Children.toArray(children).some(c => typeof c === 'string' && HAS_MATH_PLACEHOLDER_REGEX.test(c));
+
+  // If no placeholders in this branch, return children as is
+  if (!hasMathPlaceholders) return children;
+
   return React.Children.toArray(children).flatMap((child, index) => {
     // 1. Process String Children
     if (typeof child === 'string') {
@@ -74,8 +82,8 @@ const renderWithPlaceholdersRecursive = (children, mathMap) => {
 
     // 2. Process React Element Children (Recursively)
     if (React.isValidElement(child) && child.props.children) {
-      // Ensure grandchildren processing happens only if needed
-      const processedGrandchildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(child.props.children, mathMap) : child.props.children;
+      // Process grandchildren only if the element itself might contain placeholders (recursively)
+      const processedGrandchildren = renderWithPlaceholdersRecursive(child.props.children, mathMap);
       const key = child.key ?? `child-${index}`; // Use existing key or generate one
       // Clone element with potentially processed children
       return React.cloneElement(child, { ...child.props, key: key }, processedGrandchildren);
@@ -88,10 +96,10 @@ const renderWithPlaceholdersRecursive = (children, mathMap) => {
 
 
 /**
- * Message bubble component
+ * Message bubble component wrapped with forwardRef
  */
-export const MessageBubble = memo(({
-  id, // Added id prop
+export const MessageBubble = memo(forwardRef(({ // Use forwardRef
+  id,
   content,
   role = 'assistant',
   isStreaming = false,
@@ -99,8 +107,8 @@ export const MessageBubble = memo(({
   platformIconUrl = null,
   metadata = {},
   className = '',
-  style = {} // Added style prop
-}) => {
+  style = {}
+}, ref) => { // Add ref as second argument
   const isUser = role === MESSAGE_ROLES.USER;
   const isSystem = role === MESSAGE_ROLES.SYSTEM;
   const [copyState, setCopyState] = useState('idle');
@@ -122,8 +130,9 @@ export const MessageBubble = memo(({
   if (isSystem) {
      return (
         <div
-          id={id} // Apply id
-          style={style} // Apply style
+          ref={ref} // Apply ref here
+          id={id}
+          style={style}
           className={`px-5 py-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}
         >
           <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
@@ -135,8 +144,9 @@ export const MessageBubble = memo(({
   if (isUser) {
     return (
       <div
-        id={id} // Apply id
-        style={style} // Apply style
+        ref={ref} // Apply ref here
+        id={id}
+        style={style}
         className={`px-5 py-2 mb-2 w-full flex justify-end items-start message-group user-message ${className}`}
       >
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
@@ -153,7 +163,6 @@ export const MessageBubble = memo(({
     // --- Preprocessing Step ---
     const mathMap = new Map();
     let preprocessedContent = '';
-    // Optimization: Only preprocess if content might contain math delimiters
     const potentialMath = content && /(\$\$|\\\[|\\\]|\$|\\\(|\\\))/.test(content);
     if (potentialMath) {
         let mathIndex = 0;
@@ -178,13 +187,11 @@ export const MessageBubble = memo(({
     // --- End Preprocessing ---
 
     // --- Optimization Check ---
-    // Check if the *preprocessed* content actually contains placeholders
     const hasMathPlaceholders = HAS_MATH_PLACEHOLDER_REGEX.test(preprocessedContent);
     // --- End Optimization Check ---
 
     // --- Define Component Overrides ---
     const markdownComponents = {
-        // --- Headings (h1-h6) ---
         h1: ({node, children, ...props}) => {
             const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
             return <h1 className="text-xl font-semibold mt-6 mb-4" {...props}>{processedChildren}</h1>;
@@ -209,76 +216,58 @@ export const MessageBubble = memo(({
             const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
             return <h6 className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-2 mb-1" {...props}>{processedChildren}</h6>;
         },
-        // --- Lists (ul, ol, li) ---
-        ul: ({node, ordered, ...props}) => <ul className="list-disc pl-5 my-4 space-y-2" {...props} />, // Added ordered prop removal
-        ol: ({node, ordered, ...props}) => <ol className="list-decimal pl-5 my-4 space-y-2" {...props} />, // Added ordered prop removal
-        li: ({node, children, ordered, ...props}) => { // Added ordered prop removal
+        ul: ({node, ordered, ...props}) => <ul className="list-disc pl-5 my-4 space-y-2" {...props} />,
+        ol: ({node, ordered, ...props}) => <ol className="list-decimal pl-5 my-4 space-y-2" {...props} />,
+        li: ({node, children, ordered, ...props}) => {
            const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
            return <li className="leading-relaxed text-sm" {...props}>{processedChildren}</li>;
         },
-        // --- Paragraph Override ---
         p: ({ node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
-            // Check if direct children include a block math element (which renders as a div)
             const containsBlockElement = containsBlockElementCheck(processedChildren);
             const commonClasses = "mb-4 leading-relaxed text-sm";
-            // Use div wrapper if block math is present to avoid p > div nesting invalid HTML
             const Tag = containsBlockElement ? 'div' : 'p';
             return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
         },
-        // --- Code and Pre ---
         code: ({node, inline, className, children, ...props}) => {
-           // Block code: Render EnhancedCodeBlock, no placeholder processing needed inside
            if (className && className.startsWith('language-')) {
-              const codeContent = String(children).replace(/\n$/, ''); // Trim trailing newline typical from markdown
+              const codeContent = String(children).replace(/\n$/, '');
               return <EnhancedCodeBlock className={className} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
            }
-
-           // Inline code: Apply conditional placeholder processing AND nesting fix
            const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
            const containsBlockElement = containsBlockElementCheck(processedChildren);
-           const commonClasses = "bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono mx-0.5 align-middle"; // Added align-middle
-           // Use span wrapper if block math is present to avoid code > div nesting
+           const commonClasses = "bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono mx-0.5 align-middle";
            const Tag = containsBlockElement ? 'span' : 'code';
            return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
         },
         pre: ({node, children, ...props}) => {
-          // Let the 'code' component override handle the actual rendering of the code block
-          // The 'pre' tag itself doesn't need complex processing here.
           return <pre {...props}>{children}</pre>;
         },
-        // --- Link Override ---
         a: ({node, children, ...props}) => {
           const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
           const containsBlockElement = containsBlockElementCheck(processedChildren);
           const commonClasses = "text-primary hover:underline";
-          // Use span wrapper if block math is present to avoid a > div nesting
           const Tag = containsBlockElement ? 'span' : 'a';
           const tagProps = containsBlockElement
-            ? { className: commonClasses, ...props } // Apply classes to span, keep other props
-            : { className: commonClasses, target: "_blank", rel: "noopener noreferrer", ...props }; // Apply classes and link attrs to <a>
+            ? { className: commonClasses, ...props }
+            : { className: commonClasses, target: "_blank", rel: "noopener noreferrer", ...props };
           return <Tag {...tagProps}>{processedChildren}</Tag>;
         },
-        // --- Blockquote ---
         blockquote: ({node, children, ...props}) => {
           const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
           return <blockquote className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 italic text-gray-600 dark:text-gray-400 my-4 py-1 text-sm" {...props}>{processedChildren}</blockquote>;
         },
-        // --- Strong Override ---
         strong: ({node, children, ...props}) => {
           const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
           const containsBlockElement = containsBlockElementCheck(processedChildren);
           const commonClasses = "font-semibold";
-          // Use span wrapper if block math is present
           const Tag = containsBlockElement ? 'span' : 'strong';
           return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
         },
-        // --- Emphasis Override ---
         em: ({node, children, ...props}) => {
           const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
           const containsBlockElement = containsBlockElementCheck(processedChildren);
           const commonClasses = "italic";
-          // Use span wrapper if block math is present
           const Tag = containsBlockElement ? 'span' : 'em';
           return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
         },
@@ -288,18 +277,17 @@ export const MessageBubble = memo(({
 
     return (
       <div
-        id={id} // Apply id
-        style={style} // Apply style
+        ref={ref} // Apply ref here
+        id={id}
+        style={style}
         className={`group px-5 py-2 w-full message-group assistant-message relative mb-2 ${className}`}
       >
         {/* Prose container for Markdown styling */}
         <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-3`}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
-            // No rehype plugins needed for basic math handling via placeholders
             rehypePlugins={[]}
             components={markdownComponents}
-            // Render the preprocessed content (with placeholders)
             children={preprocessedContent}
            />
         </div>
@@ -307,15 +295,14 @@ export const MessageBubble = memo(({
         {/* Footer section */}
         <div className="flex justify-between items-center -mt-1">
            <div className="text-xs opacity-70 flex items-center space-x-2">
-            {platformIconUrl && ( // Removed !isUser check, system doesn't reach here
+            {platformIconUrl && (
               <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" />
             )}
-            {model && ( // Removed !isUser check
-              <span className='truncate max-w-[100px]' title={model}>{model}</span> // Added truncate
+            {model && (
+              <span className='truncate max-w-[100px]' title={model}>{model}</span>
             )}
             {isStreaming && (
               <div className="flex gap-1 items-center">
-                {/* Simple dot animation */}
                 <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce"></div>
                 <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 <div className="w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
@@ -324,7 +311,6 @@ export const MessageBubble = memo(({
           </div>
           {/* Copy Button Container */}
           <div className="w-7 h-7 flex items-center justify-center">
-            {/* Show copy button only when not streaming and content exists */}
             {!isStreaming && content && content.trim() && (
               <button
                 onClick={handleCopyToClipboard}
@@ -353,6 +339,6 @@ export const MessageBubble = memo(({
 
   // Fallback if role is somehow invalid
   return null;
-});
+})); // Close forwardRef
 
-MessageBubble.displayName = 'MessageBubble';
+MessageBubble.displayName = 'MessageBubble'; // Set display name
