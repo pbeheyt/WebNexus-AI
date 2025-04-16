@@ -1,5 +1,5 @@
 // src/sidebar/SidebarApp.jsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react'; // Added useCallback
 import { useSidebarPlatform } from '../contexts/platform';
 import { useSidebarChat } from './contexts/SidebarChatContext';
 import { useContent } from '../contexts/ContentContext';
@@ -15,6 +15,10 @@ export default function SidebarApp() {
   const [isReady, setIsReady] = useState(false); // Tracks if tabId initialization is complete
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
+  const appHeaderRef = useRef(null);
+  const collapsibleHeaderRef = useRef(null);
+  const userInputRef = useRef(null);
+  const [otherUIHeight, setOtherUIHeight] = useState(160); // Default guess
 
   // --- Effect to determine Tab ID ---
   useEffect(() => {
@@ -143,6 +147,50 @@ export default function SidebarApp() {
     };
   }, [isReady, tabId]); // Re-run effect if isReady or tabId changes
 
+  // --- Height Calculation Logic ---
+  const calculateAndSetHeight = useCallback(() => {
+    const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
+    // Only include collapsible header height if it's actually expanded
+    const collapsibleHeight = headerExpanded ? (collapsibleHeaderRef.current?.offsetHeight || 0) : 0;
+    const inputHeight = userInputRef.current?.offsetHeight || 0;
+    const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
+    // Add a small buffer (e.g., 1-2px) to prevent minor scrollbars due to subpixel rendering/borders
+    const buffer = 2;
+    setOtherUIHeight(totalHeight + buffer);
+    // console.debug(`Calculated otherUIHeight: ${totalHeight + buffer} (App: ${appHeaderHeight}, Header: ${collapsibleHeight}, Input: ${inputHeight})`); // Optional logging
+  }, [headerExpanded]); // Dependency on headerExpanded
+
+  // Effect for ResizeObserver
+  useEffect(() => {
+    // Initial calculation
+    calculateAndSetHeight();
+
+    const elementsToObserve = [
+      appHeaderRef.current,
+      collapsibleHeaderRef.current,
+      userInputRef.current,
+    ].filter(Boolean); // Filter out null refs
+
+    if (elementsToObserve.length === 0) return; // No elements to observe
+
+    const resizeObserver = new ResizeObserver(() => {
+      calculateAndSetHeight();
+    });
+
+    elementsToObserve.forEach(el => resizeObserver.observe(el));
+
+    // Cleanup
+    return () => {
+      resizeObserver.disconnect();
+    };
+    // Rerun if the refs *themselves* change (unlikely) or calculation logic changes
+  }, [calculateAndSetHeight]);
+
+  // Effect to recalculate specifically when headerExpanded changes
+  useEffect(() => {
+      calculateAndSetHeight();
+  }, [headerExpanded, calculateAndSetHeight]); // Recalculate when headerExpanded changes
+
   // --- Render Logic ---
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary">
@@ -158,18 +206,21 @@ export default function SidebarApp() {
         // ----- Ready State -----
         // Show main content only when isReady is true AND tabId is valid
         <>
-          <AppHeader
-            showRefreshButton={true}
-            onRefreshClick={resetCurrentTabData}
-            isExpanded={headerExpanded}
-            onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
-            showExpandToggle={true}
-            showBorder={true}
-            className='px-5 py-2 flex-shrink-0' // Prevent header from shrinking
-          />
+          {/* Wrap AppHeader to attach ref */}
+          <div ref={appHeaderRef}>
+            <AppHeader
+              showRefreshButton={true}
+              onRefreshClick={resetCurrentTabData}
+              isExpanded={headerExpanded}
+              onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
+              showExpandToggle={true}
+              showBorder={true}
+              className='px-5 py-2 flex-shrink-0' // Prevent header from shrinking
+            />
+          </div>
 
-          {/* Collapsible header section */}
-          <div className="relative flex-shrink-0 z-10">
+          {/* Collapsible header section - Attach ref here */}
+          <div ref={collapsibleHeaderRef} className="relative flex-shrink-0 z-10">
             <div
               className={`transition-all duration-300 ease-in-out border-b border-theme ${
                 headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 invisible' // Keep invisible when collapsed
@@ -182,11 +233,13 @@ export default function SidebarApp() {
             </div>
           </div>
 
-          {/* Make ChatArea flexible and ensure it's behind the header dropdowns */}
-          <ChatArea className="flex-1 min-h-0 relative z-0" /> {/* Ensure ChatArea can grow/shrink*/}
+          {/* Make ChatArea flexible and pass down the calculated height */}
+          <ChatArea className="flex-1 min-h-0 relative z-0" otherUIHeight={otherUIHeight} /> {/* Pass prop */}
 
-          {/* User input at the bottom */}
-          <UserInput className="flex-shrink-0 relative z-10 border-t border-theme" /> {/* Ensure input is above chat area visually */}
+          {/* User input at the bottom - Wrap to attach ref */}
+          <div ref={userInputRef}>
+            <UserInput className="flex-shrink-0 relative z-10 border-t border-theme" /> {/* Ensure input is above chat area visually */}
+          </div>
         </>
       ) : (
         // ----- Error State -----

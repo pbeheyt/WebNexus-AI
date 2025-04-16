@@ -57,7 +57,7 @@ const formatContextWindow = (value) => {
 };
 // --- End Helper Function ---
 
-function ChatArea({ className = '' }) {
+function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and default
     const {
         messages,
         isContentExtractionEnabled,
@@ -466,20 +466,15 @@ function ChatArea({ className = '' }) {
                            let dynamicStyle = {};
 
                            if (isLastMessage) {
-                               // ================= IMPORTANT ADJUSTMENT ==================
-                               // ** Adjust '160px' based on the combined height of your **
-                               // ** AppHeader, Header (when expanded), and UserInput.    **
-                               const estimatedOtherUIHeight = '160px';
-                               // =========================================================
                                dynamicStyle = {
                                    // Apply min-height to push content up and create space below
-                                   minHeight: `calc(100vh - ${estimatedOtherUIHeight})`,
+                                   minHeight: `calc(100vh - ${otherUIHeight}px)`, // Use the prop value
                                    // Add scroll-margin-top like ChatGPT to prevent top UI overlap
                                    scrollMarginTop: '12px', // Adjust as needed
                                    // Ensure smooth transition when height might change (e.g., streaming ends)
                                    transition: 'min-height 0.2s ease-out'
                                };
-                               logger.sidebar.debug(`Applying dynamic style to last message: ${message.id}`, dynamicStyle);
+                               logger.sidebar.debug(`Applying dynamic style to last message ${message.id} with otherUIHeight: ${otherUIHeight}px`, dynamicStyle); // Update log
                            }
 
                             return (
