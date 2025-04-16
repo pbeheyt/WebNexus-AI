@@ -150,12 +150,12 @@ function ChatArea({ className = '' }) {
         let scrollTargetElement = null;
         let scrollOptions = { behavior: 'auto', block: 'end' }; // Default: instant scroll to end
 
-        if (userJustSent && lastMessage.id) {
-             // --- User Just Sent: Scroll Placeholder to Top ---
-            scrollTargetElement = document.getElementById(lastMessage.id);
+        if (userJustSent && secondLastMessage.id) { // Target the user's message
+             // --- User Just Sent: Scroll User's Message to Top ---
+            scrollTargetElement = document.getElementById(secondLastMessage.id); // MODIFIED: Target user message
             scrollOptions = { behavior: 'auto', block: 'start' }; // Instant scroll to top
             setShowScrollDownButton(false); // Hide button immediately
-            logger.sidebar.debug(`[ChatArea] User sent. Scrolling placeholder ${lastMessage.id} to start.`);
+            logger.sidebar.debug(`[ChatArea] User sent. Scrolling user message ${secondLastMessage.id} to start.`); // MODIFIED: Log message update
 
         } else {
             // --- Other Cases (Streaming, Finished, Initial Load) ---
@@ -183,7 +183,7 @@ function ChatArea({ className = '' }) {
                 // Use ref directly if possible, otherwise use ID
                  const target = scrollTargetElement === messagesEndRef.current
                                ? messagesEndRef.current
-                               : document.getElementById(lastMessage.id); // Fetch last element by ID if needed
+                               : scrollTargetElement; // Already got the element by ID above
 
                 target?.scrollIntoView(scrollOptions);
                 logger.sidebar.debug(`[ChatArea] Scrolled target ${target?.id || 'endRef'} with options:`, scrollOptions);
