@@ -1,20 +1,23 @@
 // src/sidebar/SidebarApp.jsx
-import React, { useEffect, useState, useRef, useCallback } from 'react'; // Added useCallback
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSidebarPlatform } from '../contexts/platform';
 import { useSidebarChat } from './contexts/SidebarChatContext';
 import { useContent } from '../contexts/ContentContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
-import { UserInput } from './components/UserInput'; 
-import { AppHeader } from '../components'; 
+import { UserInput } from './components/UserInput';
+import { AppHeader } from '../components';
+import logger from '../shared/logger'; // Import logger
 
 export default function SidebarApp() {
   const { tabId, setTabId } = useSidebarPlatform();
-  const { resetCurrentTabData, clearFormattedContentForTab } = useSidebarChat();
+  const { resetCurrentTabData } = useSidebarChat(); // Removed clearFormattedContentForTab as it's not used directly here
   const { updateContentContext } = useContent();
-  const [isReady, setIsReady] = useState(false); // Tracks if tabId initialization is complete
+  const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
+
+  // Refs for height calculation
   const appHeaderRef = useRef(null);
   const collapsibleHeaderRef = useRef(null);
   const userInputRef = useRef(null);
@@ -22,8 +25,8 @@ export default function SidebarApp() {
 
   // --- Effect to determine Tab ID ---
   useEffect(() => {
-    console.info('SidebarApp mounted, attempting to determine tab context...');
-    let foundTabId = NaN; // Use a local variable first
+    logger.sidebar.info('SidebarApp mounted, attempting to determine tab context...');
+    let foundTabId = NaN;
 
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -31,121 +34,106 @@ export default function SidebarApp() {
       const parsedTabId = tabIdFromUrl ? parseInt(tabIdFromUrl, 10) : NaN;
 
       if (tabIdFromUrl && !isNaN(parsedTabId)) {
-        console.info(`Found valid tabId ${parsedTabId} in URL.`);
+        logger.sidebar.info(`Found valid tabId ${parsedTabId} in URL.`);
         foundTabId = parsedTabId;
       } else {
-        console.error('FATAL: Sidebar loaded without a valid tabId in URL. Cannot initialize.');
-        // Keep foundTabId as NaN
+        logger.sidebar.error('FATAL: Sidebar loaded without a valid tabId in URL. Cannot initialize.');
       }
     } catch (error) {
-      console.error('Error parsing tabId from URL:', error);
-      // Keep foundTabId as NaN
+      logger.sidebar.error('Error parsing tabId from URL:', error);
     }
 
-    // Set the tabId in context *if* it's valid
     if (!isNaN(foundTabId)) {
       setTabId(foundTabId);
     }
 
-    // Mark as ready (or not) based on whether a valid ID was found
-    // Use a small timeout to allow initial rendering before potentially heavy context updates
     const timer = setTimeout(() => {
         setIsReady(!isNaN(foundTabId));
-        console.info(`Sidebar initialization complete. isReady: ${!isNaN(foundTabId)}, tabId set to: ${foundTabId}`);
-    }, 50); // Small delay 50ms
+        logger.sidebar.info(`Sidebar initialization complete. isReady: ${!isNaN(foundTabId)}, tabId set to: ${foundTabId}`);
+    }, 50);
 
-    return () => clearTimeout(timer); // Cleanup timeout on unmount/re-run
+    return () => clearTimeout(timer);
 
-  }, [setTabId]); // Dependency ensures it runs once when setTabId is available
+  }, [setTabId]);
 
   // --- Effect for Page Navigation Listener ---
   useEffect(() => {
-    // Only run if we have a valid tabId and are ready
     if (!isReady || !tabId) {
-      console.info(`Skipping pageNavigated listener setup (isReady: ${isReady}, tabId: ${tabId})`);
+      logger.sidebar.info(`Skipping pageNavigated listener setup (isReady: ${isReady}, tabId: ${tabId})`);
       return;
     }
 
     const messageListener = (message, sender, sendResponse) => {
-      // Ensure the message is for *this* sidebar instance's tab
       if (message.action === 'pageNavigated' && message.tabId === tabId) {
-        console.info(`Received pageNavigated event for current tab ${tabId}:`, message);
+        logger.sidebar.info(`Received pageNavigated event for current tab ${tabId}:`, message);
         try {
-          // Update the content context with the new URL and type
           updateContentContext(message.newUrl, message.newContentType);
-          console.info(`Content context updated for tab ${tabId} to URL: ${message.newUrl}, Type: ${message.newContentType}`);
+          logger.sidebar.info(`Content context updated for tab ${tabId} to URL: ${message.newUrl}, Type: ${message.newContentType}`);
         } catch (error) {
-          console.error(`Error handling pageNavigated event for tab ${tabId}:`, error);
+          logger.sidebar.error(`Error handling pageNavigated event for tab ${tabId}:`, error);
         }
       }
     };
 
-    // Ensure chrome APIs are available before adding listener
     if (chrome && chrome.runtime && chrome.runtime.onMessage) {
       chrome.runtime.onMessage.addListener(messageListener);
-      console.info(`Added runtime message listener for pageNavigated events (tabId: ${tabId})`);
+      logger.sidebar.info(`Added runtime message listener for pageNavigated events (tabId: ${tabId})`);
     } else {
-      console.warn("Chrome runtime API not available for message listener.");
+      logger.sidebar.warn("Chrome runtime API not available for message listener.");
     }
 
-    // Cleanup function
     return () => {
       if (chrome && chrome.runtime && chrome.runtime.onMessage) {
         chrome.runtime.onMessage.removeListener(messageListener);
-        console.info(`Removed runtime message listener for pageNavigated events (tabId: ${tabId})`);
+        logger.sidebar.info(`Removed runtime message listener for pageNavigated events (tabId: ${tabId})`);
       }
     };
-    // Dependencies: run when tabId is confirmed, or context functions change
-  }, [isReady, tabId, updateContentContext, resetCurrentTabData]); // Added isReady, resetCurrentTabData
+  }, [isReady, tabId, updateContentContext]); // Dependency includes isReady and tabId
 
   // --- Effect for Background Connection Port ---
   useEffect(() => {
-    // Only run if we have a valid tabId and are ready
     if (!isReady || !tabId) {
-      console.info(`Skipping background port connection (isReady: ${isReady}, tabId: ${tabId})`);
+      logger.sidebar.info(`Skipping background port connection (isReady: ${isReady}, tabId: ${tabId})`);
       return;
     }
 
-    // Prevent reconnecting if already connected
     if (portRef.current) {
-        console.log(`[SidebarApp] Port already exists for tab ${tabId}. Skipping reconnection.`);
+        logger.sidebar.debug(`[SidebarApp] Port already exists for tab ${tabId}. Skipping reconnection.`);
         return;
     }
 
-    // Ensure chrome APIs are available
     if (!(chrome && chrome.runtime && chrome.runtime.connect)) {
-        console.warn("[SidebarApp] Chrome runtime connect API not available.");
+        logger.sidebar.warn("[SidebarApp] Chrome runtime connect API not available.");
         return;
     }
 
     const portName = `sidepanel-connect-${tabId}`;
-    console.log(`[SidebarApp] Attempting to connect to background with name: ${portName}`);
+    logger.sidebar.debug(`[SidebarApp] Attempting to connect to background with name: ${portName}`);
     try {
       portRef.current = chrome.runtime.connect({ name: portName });
-      console.log(`[SidebarApp] Connection established for tab ${tabId}`, portRef.current);
+      logger.sidebar.debug(`[SidebarApp] Connection established for tab ${tabId}`, portRef.current);
 
       portRef.current.onDisconnect.addListener(() => {
-        console.log(`[SidebarApp] Port disconnected for tab ${tabId}.`);
+        logger.sidebar.info(`[SidebarApp] Port disconnected for tab ${tabId}.`);
         if (chrome.runtime.lastError) {
-          console.error(`[SidebarApp] Disconnect error for tab ${tabId}:`, chrome.runtime.lastError.message);
+          logger.sidebar.error(`[SidebarApp] Disconnect error for tab ${tabId}:`, chrome.runtime.lastError.message);
         }
-        portRef.current = null; // Clear the ref on disconnect
+        portRef.current = null;
       });
 
     } catch (error) {
-      console.error(`[SidebarApp] Error connecting to background for tab ${tabId}:`, error);
-      portRef.current = null; // Ensure ref is null on error
+      logger.sidebar.error(`[SidebarApp] Error connecting to background for tab ${tabId}:`, error);
+      portRef.current = null;
     }
 
-    // Cleanup function: Disconnect the port when the component unmounts or tabId/isReady changes
     return () => {
       if (portRef.current) {
-        console.log(`[SidebarApp] Disconnecting port for tab ${tabId} due to cleanup.`);
+        logger.sidebar.debug(`[SidebarApp] Disconnecting port for tab ${tabId} due to cleanup.`);
         portRef.current.disconnect();
         portRef.current = null;
       }
     };
-  }, [isReady, tabId]); // Re-run effect if isReady or tabId changes
+  }, [isReady, tabId]);
 
   // --- Height Calculation Logic ---
   const calculateAndSetHeight = useCallback(() => {
@@ -154,16 +142,16 @@ export default function SidebarApp() {
     const collapsibleHeight = headerExpanded ? (collapsibleHeaderRef.current?.offsetHeight || 0) : 0;
     const inputHeight = userInputRef.current?.offsetHeight || 0;
     const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
-    // Add a small buffer (e.g., 1-2px) to prevent minor scrollbars due to subpixel rendering/borders
+    // Add a small buffer (e.g., 1-2px)
     const buffer = 2;
     setOtherUIHeight(totalHeight + buffer);
-    // console.debug(`Calculated otherUIHeight: ${totalHeight + buffer} (App: ${appHeaderHeight}, Header: ${collapsibleHeight}, Input: ${inputHeight})`); // Optional logging
+    logger.sidebar.debug(`Calculated otherUIHeight: ${totalHeight + buffer} (AppH: ${appHeaderHeight}, CollapsibleH: ${collapsibleHeight}, InputH: ${inputHeight}, Expanded: ${headerExpanded})`);
   }, [headerExpanded]); // Dependency on headerExpanded
 
-  // Effect for ResizeObserver
+  // Effect for ResizeObserver and initial calculation
   useEffect(() => {
-    // Initial calculation
-    calculateAndSetHeight();
+    // Run calculation once refs might be available
+    const initialCalcTimer = setTimeout(calculateAndSetHeight, 50); // Small delay
 
     const elementsToObserve = [
       appHeaderRef.current,
@@ -171,23 +159,30 @@ export default function SidebarApp() {
       userInputRef.current,
     ].filter(Boolean); // Filter out null refs
 
-    if (elementsToObserve.length === 0) return; // No elements to observe
+    if (elementsToObserve.length === 0) {
+        logger.sidebar.debug("ResizeObserver: No elements to observe yet.");
+        return () => clearTimeout(initialCalcTimer);
+    }
 
-    const resizeObserver = new ResizeObserver(() => {
-      calculateAndSetHeight();
+    logger.sidebar.debug("ResizeObserver: Setting up observer for elements:", elementsToObserve);
+    const resizeObserver = new ResizeObserver((entries) => {
+        logger.sidebar.debug("ResizeObserver triggered", entries);
+        calculateAndSetHeight();
     });
 
     elementsToObserve.forEach(el => resizeObserver.observe(el));
 
     // Cleanup
     return () => {
+      clearTimeout(initialCalcTimer);
+      logger.sidebar.debug("ResizeObserver: Disconnecting observer.");
       resizeObserver.disconnect();
     };
-    // Rerun if the refs *themselves* change (unlikely) or calculation logic changes
-  }, [calculateAndSetHeight]);
+  }, [calculateAndSetHeight]); // Rerun if calculation logic changes
 
   // Effect to recalculate specifically when headerExpanded changes
   useEffect(() => {
+      logger.sidebar.debug(`Header expanded state changed to: ${headerExpanded}. Recalculating height.`);
       calculateAndSetHeight();
   }, [headerExpanded, calculateAndSetHeight]); // Recalculate when headerExpanded changes
 
@@ -196,18 +191,16 @@ export default function SidebarApp() {
     <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary">
       {!isReady ? (
         // ----- Loading State -----
-        // Show spinner while isReady is false (during initial tabId determination)
         <div className="flex h-full w-full items-center justify-center" aria-live="polite" aria-busy="true">
           <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status">
-             <span className="sr-only">Loading sidebar...</span> {/* Accessibility */}
+             <span className="sr-only">Loading sidebar...</span>
           </div>
         </div>
       ) : tabId ? (
         // ----- Ready State -----
-        // Show main content only when isReady is true AND tabId is valid
         <>
           {/* Wrap AppHeader to attach ref */}
-          <div ref={appHeaderRef}>
+          <div ref={appHeaderRef} className="flex-shrink-0">
             <AppHeader
               showRefreshButton={true}
               onRefreshClick={resetCurrentTabData}
@@ -215,35 +208,33 @@ export default function SidebarApp() {
               onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
               showExpandToggle={true}
               showBorder={true}
-              className='px-5 py-2 flex-shrink-0' // Prevent header from shrinking
+              className='px-5 py-2' // Removed flex-shrink-0 here as parent div handles it
             />
           </div>
 
           {/* Collapsible header section - Attach ref here */}
           <div ref={collapsibleHeaderRef} className="relative flex-shrink-0 z-10">
             <div
-              className={`transition-all duration-300 ease-in-out border-b border-theme ${
-                headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 invisible' // Keep invisible when collapsed
+              className={`transition-all duration-300 ease-in-out border-b border-theme overflow-hidden ${ // Added overflow-hidden
+                headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 invisible'
               }`}
-              // Add aria-hidden based on expansion state for accessibility
               aria-hidden={!headerExpanded}
             >
-              {/* Conditionally render Header to prevent potential issues when hidden */}
+              {/* Render Header content only when expanded to ensure correct height calc */}
               {headerExpanded && <Header />}
             </div>
           </div>
 
-          {/* Make ChatArea flexible and pass down the calculated height */}
-          <ChatArea className="flex-1 min-h-0 relative z-0" otherUIHeight={otherUIHeight} /> {/* Pass prop */}
+          {/* Ensure ChatArea takes remaining space */}
+          <ChatArea className="flex-1 min-h-0 relative z-0" otherUIHeight={otherUIHeight} />
 
           {/* User input at the bottom - Wrap to attach ref */}
-          <div ref={userInputRef}>
-            <UserInput className="flex-shrink-0 relative z-10 border-t border-theme" /> {/* Ensure input is above chat area visually */}
+          <div ref={userInputRef} className="flex-shrink-0 relative z-10 border-t border-theme">
+            <UserInput className="" /> {/* Removed flex-shrink-0 here */}
           </div>
         </>
       ) : (
         // ----- Error State -----
-        // Show error if ready check finished (isReady=true) but tabId is still invalid (e.g., NaN)
          <div className="flex flex-col h-full w-full items-center justify-center p-4">
            <div className="text-center text-error">
              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto mb-2 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

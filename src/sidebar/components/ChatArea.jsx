@@ -57,7 +57,7 @@ const formatContextWindow = (value) => {
 };
 // --- End Helper Function ---
 
-function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and default
+function ChatArea({ className = '', otherUIHeight = 160 }) { // Accept otherUIHeight prop
     const {
         messages,
         isContentExtractionEnabled,
@@ -65,8 +65,8 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
         modelConfigData
     } = useSidebarChat();
     const { contentType, currentTab } = useContent();
-    const messagesEndRef = useRef(null); // Anchor for scrolling to actual bottom
-    const scrollContainerRef = useRef(null); // Ref for the scrollable div
+    const messagesEndRef = useRef(null);
+    const scrollContainerRef = useRef(null);
     const [hoveredElement, setHoveredElement] = useState(null);
     const inputPriceRef = useRef(null);
     const outputPriceRef = useRef(null);
@@ -81,7 +81,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
 
     // --- State ---
     const [showScrollDownButton, setShowScrollDownButton] = useState(false);
-    // No longer need placeholderStyleInfo state
     const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
     const [displayModelConfig, setDisplayModelConfig] = useState(null);
     const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
@@ -132,7 +131,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
     // --- Scrolling Effect (Applying ChatGPT-like structure) ---
     useLayoutEffect(() => {
         if (messages.length === 0 || !scrollContainerRef.current) {
-            // Ensure button is hidden if no messages
             setShowScrollDownButton(false);
             return;
         }
@@ -141,56 +139,47 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
         const lastMessage = messages[messages.length - 1];
         const secondLastMessage = messages.length > 1 ? messages[messages.length - 2] : null;
 
-        // Condition: User just sent a message (last is placeholder, previous is user)
         const userJustSent = secondLastMessage &&
                              secondLastMessage.role === MESSAGE_ROLES.USER &&
                              lastMessage.role === MESSAGE_ROLES.ASSISTANT &&
                              lastMessage.isStreaming === true;
 
         let scrollTargetElement = null;
-        let scrollOptions = { behavior: 'auto', block: 'end' }; // Default: instant scroll to end
+        let scrollOptions = { behavior: 'auto', block: 'end' };
 
-        if (userJustSent && secondLastMessage.id) { // Target the user's message
-             // --- User Just Sent: Scroll User's Message to Top ---
-            scrollTargetElement = document.getElementById(secondLastMessage.id); // MODIFIED: Target user message
-            scrollOptions = { behavior: 'auto', block: 'start' }; // Instant scroll to top
-            setShowScrollDownButton(false); // Hide button immediately
-            logger.sidebar.debug(`[ChatArea] User sent. Scrolling user message ${secondLastMessage.id} to start.`); // MODIFIED: Log message update
+        if (userJustSent && secondLastMessage.id) {
+            scrollTargetElement = document.getElementById(secondLastMessage.id);
+            scrollOptions = { behavior: 'auto', block: 'start' };
+            setShowScrollDownButton(false);
+            logger.sidebar.debug(`[ChatArea] User sent. Scrolling user message ${secondLastMessage.id} to start.`);
 
         } else {
-            // --- Other Cases (Streaming, Finished, Initial Load) ---
             const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-            const isNearBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD + 5; // Add tolerance
+            const isNearBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD + 5;
             const isAssistantStreaming = lastMessage.role === MESSAGE_ROLES.ASSISTANT && lastMessage.isStreaming;
 
             if (isNearBottom || isAssistantStreaming) {
-                // Auto-scroll smoothly to the general end anchor if near bottom OR still streaming
                 scrollTargetElement = messagesEndRef.current;
                 scrollOptions = { behavior: 'smooth', block: 'end' };
                 logger.sidebar.debug(`[ChatArea] Default scroll: near bottom or assistant streaming. Scrolling to end anchor.`);
             } else {
-                // User scrolled up, don't scroll automatically
                 scrollTargetElement = null;
                 logger.sidebar.debug('[ChatArea] User scrolled up & assistant not streaming, not auto-scrolling.');
             }
-             // Check button visibility in these cases too
              checkScrollPosition();
         }
 
-        // Perform Scrolling
         if (scrollTargetElement) {
             requestAnimationFrame(() => {
-                // Use ref directly if possible, otherwise use ID
                  const target = scrollTargetElement === messagesEndRef.current
                                ? messagesEndRef.current
-                               : scrollTargetElement; // Already got the element by ID above
+                               : scrollTargetElement;
 
                 target?.scrollIntoView(scrollOptions);
                 logger.sidebar.debug(`[ChatArea] Scrolled target ${target?.id || 'endRef'} with options:`, scrollOptions);
             });
         }
 
-    // Depend only on messages array. Internal logic decides scroll target/behavior.
     }, [messages]);
 
 
@@ -211,11 +200,10 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
         }
         const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
         const scrollFromBottom = scrollHeight - scrollTop - clientHeight;
-        const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 5; // Add tolerance
+        const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 5;
 
         const lastMsg = messages[messages.length - 1];
         const isAssistantStreaming = lastMsg?.role === MESSAGE_ROLES.ASSISTANT && lastMsg?.isStreaming;
-        // Show if scrolled up AND assistant is NOT streaming
         const shouldShow = !isNearBottom && !isAssistantStreaming;
 
         setShowScrollDownButton(prev => {
@@ -239,7 +227,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
         if (scrollContainer) {
             logger.sidebar.info('[ChatArea] Adding scroll listener for manual scroll.');
             scrollContainer.addEventListener('scroll', debouncedCheckScrollPosition, { passive: true });
-             // Check position slightly after initial render/scroll effect
             const timerId = setTimeout(checkScrollPosition, 100);
 
             return () => {
@@ -257,14 +244,12 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
     const lastMessageStreaming = messages.length > 0 ? messages[messages.length - 1]?.isStreaming : false;
     useEffect(() => {
          if (lastMessageStreaming && lastMessageContent) {
-             // Check button visibility immediately when streaming content updates
              checkScrollPosition();
          }
-         // Also check when streaming *stops*
          if (!lastMessageStreaming && messages.length > 0) {
              checkScrollPosition();
          }
-    }, [lastMessageContent, lastMessageStreaming, checkScrollPosition, messages.length]); // Added messages.length dependency
+    }, [lastMessageContent, lastMessageStreaming, checkScrollPosition, messages.length]);
 
 
     logger.sidebar.debug(`[ChatArea] Rendering with showScrollDownButton state: ${showScrollDownButton}`);
@@ -307,7 +292,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
                 </div>
             );
         }
-        // Show loading only if creds exist but initial load isn't finished
         if (hasAnyPlatformCredentials && !hasCompletedInitialLoad) {
             return (
                 <div className={`flex items-center justify-center h-full`}>
@@ -315,14 +299,13 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
                 </div>
             );
         }
-        // Show main initial view once creds exist AND initial load is done
          if (hasAnyPlatformCredentials && hasCompletedInitialLoad) {
-             const modelReady = !!displayModelConfig; // Check if specific model details are loaded
+             const modelReady = !!displayModelConfig;
 
             return (
                 <div className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3`}>
                      {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
-                     <div className="flex flex-col items-center py-3 w-full min-h-[120px]"> {/* Added min-height */}
+                     <div className="flex flex-col items-center py-3 w-full min-h-[120px]">
                          {displayPlatformConfig ? (
                              <img
                                  src={displayPlatformConfig.iconUrl}
@@ -330,9 +313,9 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
                                  className="w-8 h-8 mb-2 object-contain"
                              />
                          ) : (
-                             <div className="w-8 h-8 mb-2 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div> // Placeholder
+                             <div className="w-8 h-8 mb-2 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
                          )}
-                         {modelReady ? ( // Use modelReady flag
+                         {modelReady ? (
                              <>
                                  <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium" title={displayModelConfig.id}>
                                      {displayModelConfig.name || displayModelConfig.id}
@@ -343,7 +326,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
                                      </p>
                                  )}
                                  <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-1">
-                                     {/* ... (rest of the model details rendering - unchanged) ... */}
                                       {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
                                          <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                                              <FreeTierIcon /> <span>Free</span>
@@ -375,7 +357,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
                                  </div>
                              </>
                          ) : (
-                             // Skeleton loader for model details
                              <div className="animate-pulse flex flex-col items-center w-full mt-1">
                                  <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24 mb-2"></div>
                                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-3"></div>
@@ -439,8 +420,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
                  </div>
             );
         }
-        // Fallback if !hasAnyPlatformCredentials (handled first)
-        // Or if initial load fails for some reason
         return null;
     };
     // --- End Initial View Rendering ---
@@ -451,7 +430,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
             {/* Scrollable container */}
             <div
                 ref={scrollContainerRef}
-                // Added scrollbar-gutter: stable to mimic ChatGPT and prevent layout shifts
                 className="flex-1 overflow-y-auto flex flex-col pt-4" style={{ scrollbarGutter: 'stable' }}
             >
                 {/* Conditional Content Inside Scrollable Container */}
@@ -463,7 +441,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
                         {messages.map((message, index) => {
                            // Determine style ONLY for the very last message
                            const isLastMessage = index === messages.length - 1;
-                           let dynamicStyle = {};
+                           let dynamicStyle = {}; // Default empty style
 
                            if (isLastMessage) {
                                dynamicStyle = {
@@ -474,25 +452,24 @@ function ChatArea({ className = '', otherUIHeight = 160 }) { // Add prop and def
                                    // Ensure smooth transition when height might change (e.g., streaming ends)
                                    transition: 'min-height 0.2s ease-out'
                                };
-                               logger.sidebar.debug(`Applying dynamic style to last message ${message.id} with otherUIHeight: ${otherUIHeight}px`, dynamicStyle); // Update log
+                               logger.sidebar.debug(`Applying dynamic style to last message ${message.id} with otherUIHeight: ${otherUIHeight}px`, dynamicStyle); // Log application
                            }
 
                             return (
                                 <MessageBubble
                                     key={message.id}
-                                    id={message.id} // Pass ID for targeting
+                                    id={message.id}
                                     content={message.content}
                                     role={message.role}
                                     isStreaming={message.isStreaming}
                                     model={message.model}
                                     platformIconUrl={message.platformIconUrl}
-                                    style={dynamicStyle} // Apply the calculated style to the last message
+                                    style={dynamicStyle} // Apply the calculated style
                                 />
                             );
                         })}
 
                         {/* Scroll Anchor (for manual scroll to bottom) */}
-                        {/* Placed AFTER the loop */}
                         <div ref={messagesEndRef} style={{ height: '1px' }} aria-hidden="true" />
                     </>
                 )}
