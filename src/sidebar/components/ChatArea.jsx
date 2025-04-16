@@ -61,7 +61,8 @@ const formatContextWindow = (value) => {
 
 function ChatArea({ className = '' }) {
     const {
-        allMessages: messages, // Use allMessages which includes extracted content for rendering logic
+        messages, // *** Use the filtered 'messages' for rendering ***
+        allMessages, // *** Use 'allMessages' for internal logic (like scroll effect) ***
         isContentExtractionEnabled,
         setIsContentExtractionEnabled,
         modelConfigData
@@ -89,8 +90,8 @@ function ChatArea({ className = '' }) {
     const [displayModelConfig, setDisplayModelConfig] = useState(null);
     const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
 
-    // *** Ref to track previous message count for scroll-to-top logic ***
-    const prevMessagesLength = useRef(messages.length);
+    // *** Ref to track previous message count (using allMessages) ***
+    const prevMessagesLength = useRef(allMessages.length);
 
     useEffect(() => {
         const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
@@ -129,24 +130,25 @@ function ChatArea({ className = '' }) {
 
     // --- Effect for Handling Message List Changes (Scroll-to-Top Logic) ---
     useEffect(() => {
-        const currentLength = messages.length;
+        // *** Use allMessages for length and index checks ***
+        const currentLength = allMessages.length;
         const previousLength = prevMessagesLength.current;
 
-        logger.sidebar.debug(`[ChatArea] Messages effect running. Current length: ${currentLength}, Previous length: ${previousLength}`);
+        logger.sidebar.debug(`[ChatArea] Messages effect running. Current allMessages length: ${currentLength}, Previous length: ${previousLength}`);
 
-        // Check if new messages were added (specifically looking for user + assistant pattern)
+        // Check if new messages were added (specifically looking for user + assistant pattern in allMessages)
         if (currentLength > previousLength && currentLength >= 2) {
-            const lastMessage = messages[currentLength - 1];
-            const secondLastMessage = messages[currentLength - 2];
+            const lastMessage = allMessages[currentLength - 1];
+            const secondLastMessage = allMessages[currentLength - 2];
 
-            // Check if the pattern is: User message followed by an Assistant placeholder
+            // Check if the pattern is: User message followed by an Assistant placeholder in the unfiltered list
             const isNewUserPromptPattern =
                 secondLastMessage?.role === MESSAGE_ROLES.USER &&
                 lastMessage?.role === MESSAGE_ROLES.ASSISTANT &&
-                lastMessage?.isStreaming === true; // Check if assistant message is the streaming placeholder
+                lastMessage?.isStreaming === true;
 
             if (isNewUserPromptPattern) {
-                logger.sidebar.info(`[ChatArea] New user prompt pattern detected. Attempting to scroll user message (ID: ${secondLastMessage.id}) to top.`);
+                logger.sidebar.info(`[ChatArea] New user prompt pattern detected in allMessages. Attempting to scroll user message (ID: ${secondLastMessage.id}) to top.`);
                 const userMessageId = secondLastMessage.id;
                 const targetElementId = `message-${userMessageId}`;
 
@@ -160,26 +162,23 @@ function ChatArea({ className = '' }) {
                         });
                         logger.sidebar.info(`[ChatArea] Successfully scrolled element #${targetElementId} to top.`);
                     } else {
-                        logger.sidebar.warn(`[ChatArea] Could not find element with ID #${targetElementId} to scroll to top.`);
+                        // This might happen briefly if the filtered 'messages' haven't rendered the target yet
+                        logger.sidebar.warn(`[ChatArea] Could not find element with ID #${targetElementId} to scroll to top (might be expected if rendering is deferred).`);
                     }
                 }, 0); // Timeout 0 pushes execution after current event loop tick
 
-                // *** IMPORTANT: Do NOT scroll to bottom in this case ***
-                // The scroll-to-top takes precedence.
-
             } else {
-                 logger.sidebar.debug('[ChatArea] Message list changed, but not the new user prompt pattern. No scroll-to-top action taken.');
-                 // We also don't automatically scroll to bottom here anymore.
-                 // The scroll-down button logic will handle visibility.
+                 logger.sidebar.debug('[ChatArea] Message list changed, but not the new user prompt pattern in allMessages. No scroll-to-top action taken.');
             }
         } else {
             logger.sidebar.debug('[ChatArea] Message list changed, but no new messages added or list too short. No scroll action taken.');
         }
 
         // Update the ref for the next comparison AFTER processing the current change
+        // *** Use allMessages length for the ref ***
         prevMessagesLength.current = currentLength;
 
-    }, [messages]); // Dependency: run whenever the messages array changes
+    }, [allMessages]); // *** Dependency: run whenever the UNFILTERED allMessages array changes ***
     // --- End Scroll-to-Top Effect ---
 
 
@@ -190,18 +189,17 @@ function ChatArea({ className = '' }) {
 
     // --- Function to Check Scroll Position ---
     const checkScrollPosition = useCallback(() => {
-        // --- ADDED CHECK: Hide button if there are no messages ---
+        // *** Use filtered 'messages' for the empty check, as it reflects the visible state ***
         if (messages.length === 0) {
             setShowScrollDownButton(prev => {
                 if (prev === true) {
-                    logger.sidebar.debug('[ChatArea] checkScrollPosition: No messages, ensuring button is hidden.');
+                    logger.sidebar.debug('[ChatArea] checkScrollPosition: No visible messages, ensuring button is hidden.');
                     return false;
                 }
                 return prev;
             });
             return; // Exit early
         }
-        // --- END ADDED CHECK ---
 
         const scrollContainer = scrollContainerRef.current;
         if (!scrollContainer) {
@@ -212,8 +210,6 @@ function ChatArea({ className = '' }) {
         const scrollFromBottom = scrollHeight - scrollTop - clientHeight;
         const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 1;
 
-        // logger.sidebar.debug(`[ChatArea] checkScrollPosition: scrollTop=${scrollTop.toFixed(1)}, scrollHeight=${scrollHeight.toFixed(1)}, clientHeight=${clientHeight.toFixed(1)}, scrollFromBottom=${scrollFromBottom.toFixed(1)}, isNearBottom=${isNearBottom}`);
-
         const shouldShow = !isNearBottom;
         setShowScrollDownButton(prev => {
             if (prev !== shouldShow) {
@@ -222,7 +218,7 @@ function ChatArea({ className = '' }) {
             return shouldShow;
         });
 
-    }, [messages.length, SCROLL_THRESHOLD]); // Add messages.length as dependency
+    }, [messages.length, SCROLL_THRESHOLD]); // *** Dependency is filtered messages.length ***
 
     // --- Debounced version for the scroll listener ---
     const debouncedCheckScrollPosition = useMemo(
@@ -248,23 +244,24 @@ function ChatArea({ className = '' }) {
         } else {
             logger.sidebar.error('[ChatArea] CRITICAL: scrollContainerRef.current is null in manual scroll listener setup.');
         }
-    }, [debouncedCheckScrollPosition, checkScrollPosition]); // Add checkScrollPosition here too
+    }, [debouncedCheckScrollPosition, checkScrollPosition]);
 
 
     // --- Effect to check scroll on content update (during streaming) ---
-    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    // *** Use filtered 'messages' to find the last VISIBLE message ***
+    const lastVisibleMessage = messages.length > 0 ? messages[messages.length - 1] : null;
     useEffect(() => {
-        if (lastMessage && lastMessage.isStreaming) {
+        if (lastVisibleMessage && lastVisibleMessage.isStreaming) {
             queueMicrotask(() => {
                 if (scrollContainerRef.current) {
-                    logger.sidebar.debug('[ChatArea] Last message content updated while streaming, checking scroll position.');
+                    logger.sidebar.debug('[ChatArea] Last visible message content updated while streaming, checking scroll position.');
                     checkScrollPosition();
                 } else {
                     logger.sidebar.warn('[ChatArea] Microtask ran, but scrollContainerRef was null.');
                 }
             });
         }
-    }, [lastMessage?.content, lastMessage?.isStreaming, checkScrollPosition]);
+    }, [lastVisibleMessage?.content, lastVisibleMessage?.isStreaming, checkScrollPosition]);
     // --- End Effect ---
 
     logger.sidebar.debug(`[ChatArea] Rendering with showScrollDownButton state: ${showScrollDownButton}`);
@@ -288,6 +285,7 @@ function ChatArea({ className = '' }) {
 
     // --- Render Initial View Content (Helper Function) ---
     const renderInitialView = () => {
+        // This function remains the same, logic depends on credentials/loading state
         if (!hasAnyPlatformCredentials) {
             return (
                 <div className={`flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}>
@@ -437,19 +435,19 @@ function ChatArea({ className = '' }) {
             {/* Scrollable container - ALWAYS RENDERED */}
             <div
                 ref={scrollContainerRef}
-                // *** Added flex flex-col ***
                 className="flex-1 overflow-y-auto flex flex-col pt-4"
             >
                 {/* Conditional Content Inside Scrollable Container */}
+                {/* *** Use filtered 'messages' for empty check and rendering *** */}
                 {messages.length === 0 ? (
                     renderInitialView()
                 ) : (
                     <>
-                        {/* Map through messages */}
+                        {/* *** Map through FILTERED messages for rendering *** */}
                         {messages.map((message) => (
                             <MessageBubble
                                 key={message.id}
-                                id={message.id} // *** Pass the ID prop ***
+                                id={message.id} // Pass the ID prop
                                 content={message.content}
                                 role={message.role}
                                 isStreaming={message.isStreaming}
@@ -459,9 +457,7 @@ function ChatArea({ className = '' }) {
                         ))}
                         <div ref={messagesEndRef} style={{ height: '1px' }} />
 
-                        {/* --- ADDED THE SPACER --- */}
-                        {/* This div takes up remaining space, ensuring content above can scroll higher */}
-                        {/* Adjust min-height as needed, e.g., based on viewport height estimate */}
+                        {/* --- SPACER --- */}
                         <div className="flex-grow min-h-[75vh]" aria-hidden="true"></div>
                         {/* --- END SPACER --- */}
                     </>
