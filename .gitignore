@@ -1,0 +1,6 @@
+node_modules/
+codebase.md
+codebase_tree.md
+ai_prompt_directive.md
+dist/
+.aidigestignore
