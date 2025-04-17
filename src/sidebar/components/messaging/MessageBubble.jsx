@@ -299,7 +299,7 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
               <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" />
             )}
             {model && (
-              <span className='truncate max-w-[100px]' title={model}>{model}</span>
+              <span title={model}>{model}</span>
             )}
             {isStreaming && (
               <div className="flex gap-1 items-center">
