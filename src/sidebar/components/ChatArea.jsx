@@ -128,8 +128,8 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     // --- End Get Content Type Name ---
 
     // --- Scroll Handling Logic ---
-    const SCROLL_THRESHOLD = 50;
-    const DEBOUNCE_DELAY = 200;
+    const SCROLL_THRESHOLD = 5;
+    const DEBOUNCE_DELAY = 50;
 
     // --- Scrolling Effect ---
     useLayoutEffect(() => {
@@ -161,17 +161,17 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         } else {
             const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
             const isNearBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD + 5;
-            const isAssistantStreaming = lastMessage.role === MESSAGE_ROLES.ASSISTANT && lastMessage.isStreaming;
+            // Removed isAssistantStreaming check from here
 
-            // Auto-scroll to bottom if near bottom or assistant is streaming
-            if (isNearBottom || isAssistantStreaming) {
+            // Auto-scroll to bottom ONLY if near bottom
+            if (isNearBottom) { // <<< MODIFIED CONDITION HERE
                 scrollTargetElement = messagesEndRef.current;
                 scrollOptions = { behavior: 'smooth', block: 'end' };
-                 logger.sidebar.debug(`[ChatArea] Default scroll: near bottom or assistant streaming. Scrolling to end anchor.`);
+                 logger.sidebar.debug(`[ChatArea] Default scroll: near bottom. Scrolling to end anchor.`); // <<< UPDATED LOG MESSAGE
             } else {
-                // Don't auto-scroll if user has scrolled up and assistant isn't streaming
+                // Don't auto-scroll if user has scrolled up
                 scrollTargetElement = null;
-                 logger.sidebar.debug('[ChatArea] User scrolled up & assistant not streaming, not auto-scrolling.');
+                 logger.sidebar.debug('[ChatArea] User scrolled up, not auto-scrolling.');
             }
             // Check scroll position regardless of auto-scroll decision
             checkScrollPosition();
@@ -222,16 +222,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     // --- Manual Scroll To Bottom Function ---
     const scrollToBottom = useCallback((behavior = 'smooth') => {
         logger.sidebar.debug('[ChatArea] scrollToBottom called manually');
-        const scrollContainer = scrollContainerRef.current;
-        if (scrollContainer) {
-          scrollContainer.scrollTo({
-            top: scrollContainer.scrollHeight, // Scroll to the maximum scroll height
-            behavior: behavior // Use the behavior argument ('smooth' or 'auto')
-          });
-           logger.sidebar.debug(`[ChatArea] Manually scrolled to bottom using scrollTo. ScrollTop: ${scrollContainer.scrollHeight}`);
-        } else {
-           logger.sidebar.warn('[ChatArea] scrollToBottom called but scrollContainerRef is null');
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
     }, []);
 
     // --- Function to Check Scroll Position (for Scroll Down Button) ---
@@ -249,6 +240,8 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
         const lastMsg = messages[messages.length - 1];
         const isAssistantStreaming = lastMsg?.role === MESSAGE_ROLES.ASSISTANT && lastMsg?.isStreaming;
+        // Show button if NOT near bottom AND assistant is NOT streaming (or has finished)
+        // If assistant IS streaming, we rely on the auto-scroll (if near bottom) or user's manual control
         const shouldShow = !isNearBottom && !isAssistantStreaming;
 
         // Update state only if the value changes
@@ -292,7 +285,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     useEffect(() => {
          // Check scroll position when streaming updates occur or when streaming stops
          if (lastMessageStreaming && lastMessageContent) {
-             // During streaming, likely handled by the main useLayoutEffect, but check anyway
+             // During streaming, check if the button should be shown/hidden
              checkScrollPosition();
          }
          // Check explicitly when streaming stops
@@ -331,7 +324,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                         aria-label="Configure API Credentials in Settings"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1.51-1V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1.51-1V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15a1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                         <h3 className="text-base font-semibold mb-2">API Credentials Required</h3>
