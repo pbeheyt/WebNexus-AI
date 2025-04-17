@@ -500,7 +500,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                 if (isTargetScenario && precedingUserMessageHeight > 0) {
                                     // Scenario: Last is assistant, previous is user, and user height is measured
                                     dynamicStyle = {
-                                        minHeight: `calc(100vh - ${otherUIHeight}px - ${precedingUserMessageHeight}px)`,
+                                        minHeight: `calc(100vh - ${otherUIHeight}px - ${precedingUserMessageHeight}px - 1.5rem)`,
                                         scrollMarginTop: '12px',
                                         transition: 'min-height 0.2s ease-out'
                                     };
@@ -508,7 +508,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                 } else {
                                     // Default scenario for the last message (or if height measurement failed)
                                     dynamicStyle = {
-                                        minHeight: `calc(100vh - ${otherUIHeight}px)`,
+                                        minHeight: `calc(100vh - ${otherUIHeight}px - 1.5rem)`,
                                         scrollMarginTop: '12px',
                                         transition: 'min-height 0.2s ease-out'
                                     };
