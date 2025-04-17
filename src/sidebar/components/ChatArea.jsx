@@ -88,7 +88,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     const [precedingUserMessageHeight, setPrecedingUserMessageHeight] = useState(0);
     const precedingUserMessageRef = useRef(null);
     // Ref to track if initial scroll to user message top is done for the current response
-    const initialScrollForResponseDoneRef = useRef(false); // <<< ADDED REF
+    const initialScrollForResponseDoneRef = useRef(false);
 
     // --- Effect for Platform/Model Display ---
      useEffect(() => {
@@ -130,8 +130,8 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     // --- End Get Content Type Name ---
 
     // --- Scroll Handling Logic ---
-    const SCROLL_THRESHOLD = 5;
-    const DEBOUNCE_DELAY = 50;
+    const SCROLL_THRESHOLD = 10;
+    const DEBOUNCE_DELAY = 100;
 
     // --- Scrolling Effect ---
     useLayoutEffect(() => {
@@ -233,9 +233,17 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
     // --- Manual Scroll To Bottom Function ---
     const scrollToBottom = useCallback((behavior = 'smooth') => {
-        logger.sidebar.debug('[ChatArea] scrollToBottom called manually');
-        messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
-    }, []);
+        logger.sidebar.debug('[ChatArea] scrollToBottom called manually (using scrollTo)'); // Updated log
+        const scrollContainer = scrollContainerRef.current;
+        if (scrollContainer) {
+            // Use scrollTo for more direct control over scroll position
+            scrollContainer.scrollTo({
+                top: scrollContainer.scrollHeight, // Scroll to the very bottom
+                behavior: behavior // Use the requested behavior ('smooth' or 'auto')
+            });
+        }
+    }, []); // Keep dependencies empty as it only relies on the ref
+
 
     // --- Function to Check Scroll Position (for Scroll Down Button) ---
     const checkScrollPosition = useCallback(() => {
@@ -253,8 +261,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         const lastMsg = messages[messages.length - 1];
         const isAssistantStreaming = lastMsg?.role === MESSAGE_ROLES.ASSISTANT && lastMsg?.isStreaming;
 
-        // Show button if NOT near bottom. Don't hide it just because streaming started.
-        // It will hide automatically if the user scrolls down or clicks it.
+        // Show button if NOT near bottom.
         const shouldShow = !isNearBottom;
 
         // Update state only if the value changes
