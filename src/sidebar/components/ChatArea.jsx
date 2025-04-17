@@ -1,5 +1,5 @@
 // src/sidebar/components/ChatArea.jsx
-import React, { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from 'react'; // Added useState, useLayoutEffect
+import React, { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from 'react';
 import { debounce } from '../../shared/utils/debounce';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { useSidebarPlatform } from '../../contexts/platform';
@@ -87,6 +87,8 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     // State and Ref for preceding user message height measurement
     const [precedingUserMessageHeight, setPrecedingUserMessageHeight] = useState(0);
     const precedingUserMessageRef = useRef(null);
+    // Ref to track if initial scroll to user message top is done for the current response
+    const initialScrollForResponseDoneRef = useRef(false); // <<< ADDED REF
 
     // --- Effect for Platform/Model Display ---
      useEffect(() => {
@@ -150,36 +152,46 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         let scrollTargetElement = null;
         let scrollOptions = { behavior: 'auto', block: 'end' };
 
+        // --- Logic Modification ---
         if (userJustSent && secondLastMessage.id) {
-            // Find the DOM element for the user message
-            scrollTargetElement = document.getElementById(secondLastMessage.id);
-            // If user just sent, scroll their message to the top of the viewport
-            scrollOptions = { behavior: 'auto', block: 'start' };
-            setShowScrollDownButton(false); // Hide button when auto-scrolling user message
-            logger.sidebar.debug(`[ChatArea] User sent. Scrolling user message ${secondLastMessage.id} to start.`);
-
+            // Scenario: Assistant just started responding or is actively streaming
+            if (!initialScrollForResponseDoneRef.current) {
+                // Perform the initial 'scroll to user message top' ONLY ONCE
+                scrollTargetElement = document.getElementById(secondLastMessage.id);
+                scrollOptions = { behavior: 'auto', block: 'start' };
+                setShowScrollDownButton(false); // Hide button during initial scroll
+                initialScrollForResponseDoneRef.current = true; // Mark as done for this response
+                logger.sidebar.debug(`[ChatArea] Initial scroll: Scrolling user message ${secondLastMessage.id} to start.`);
+            } else {
+                // Initial scroll done, let normal scrolling rules apply (check if near bottom)
+                // No automatic scroll here, allowing manual scrolling during stream.
+                 logger.sidebar.debug(`[ChatArea] Initial scroll done. Checking scroll position.`);
+                 checkScrollPosition(); // Check button visibility during stream
+            }
         } else {
+            // Scenario: Not streaming, or user message wasn't the immediately preceding one
+            initialScrollForResponseDoneRef.current = false; // Reset the flag for the next response
+
             const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
             const isNearBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD + 5;
-            // Removed isAssistantStreaming check from here
 
-            // Auto-scroll to bottom ONLY if near bottom
-            if (isNearBottom) { // <<< MODIFIED CONDITION HERE
+            if (isNearBottom) {
+                // If near bottom (and not the initial userJustSent case), scroll smoothly to end
                 scrollTargetElement = messagesEndRef.current;
                 scrollOptions = { behavior: 'smooth', block: 'end' };
-                 logger.sidebar.debug(`[ChatArea] Default scroll: near bottom. Scrolling to end anchor.`); // <<< UPDATED LOG MESSAGE
+                logger.sidebar.debug(`[ChatArea] Default scroll: near bottom. Scrolling to end anchor.`);
             } else {
-                // Don't auto-scroll if user has scrolled up
+                // User is scrolled up, don't auto-scroll
                 scrollTargetElement = null;
-                 logger.sidebar.debug('[ChatArea] User scrolled up, not auto-scrolling.');
+                logger.sidebar.debug('[ChatArea] User scrolled up, not auto-scrolling.');
             }
-            // Check scroll position regardless of auto-scroll decision
-            checkScrollPosition();
+            checkScrollPosition(); // Check button visibility
         }
+        // --- End Logic Modification ---
 
         // Perform the scroll if a target is determined
         if (scrollTargetElement) {
-            requestAnimationFrame(() => {
+           requestAnimationFrame(() => {
                 // Ensure the target exists before scrolling
                 const target = scrollTargetElement === messagesEndRef.current
                                ? messagesEndRef.current // Use the anchor ref directly
@@ -240,9 +252,10 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
         const lastMsg = messages[messages.length - 1];
         const isAssistantStreaming = lastMsg?.role === MESSAGE_ROLES.ASSISTANT && lastMsg?.isStreaming;
-        // Show button if NOT near bottom AND assistant is NOT streaming (or has finished)
-        // If assistant IS streaming, we rely on the auto-scroll (if near bottom) or user's manual control
-        const shouldShow = !isNearBottom && !isAssistantStreaming;
+
+        // Show button if NOT near bottom. Don't hide it just because streaming started.
+        // It will hide automatically if the user scrolls down or clicks it.
+        const shouldShow = !isNearBottom;
 
         // Update state only if the value changes
         setShowScrollDownButton(prev => {
