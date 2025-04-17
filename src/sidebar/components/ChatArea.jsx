@@ -222,7 +222,16 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     // --- Manual Scroll To Bottom Function ---
     const scrollToBottom = useCallback((behavior = 'smooth') => {
         logger.sidebar.debug('[ChatArea] scrollToBottom called manually');
-        messagesEndRef.current?.scrollIntoView({ behavior: behavior, block: 'end' });
+        const scrollContainer = scrollContainerRef.current;
+        if (scrollContainer) {
+          scrollContainer.scrollTo({
+            top: scrollContainer.scrollHeight, // Scroll to the maximum scroll height
+            behavior: behavior // Use the behavior argument ('smooth' or 'auto')
+          });
+           logger.sidebar.debug(`[ChatArea] Manually scrolled to bottom using scrollTo. ScrollTop: ${scrollContainer.scrollHeight}`);
+        } else {
+           logger.sidebar.warn('[ChatArea] scrollToBottom called but scrollContainerRef is null');
+        }
     }, []);
 
     // --- Function to Check Scroll Position (for Scroll Down Button) ---
