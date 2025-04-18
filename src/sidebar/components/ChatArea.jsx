@@ -146,15 +146,15 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
         const userJustSent = secondLastMessage &&
                              secondLastMessage.role === MESSAGE_ROLES.USER &&
-                             lastMessage.role === MESSAGE_ROLES.ASSISTANT &&
-                             lastMessage.isStreaming === true;
+                             (lastMessage.role === MESSAGE_ROLES.ASSISTANT || lastMessage.role === MESSAGE_ROLES.SYSTEM) && // Check for ASSISTANT OR SYSTEM
+                             lastMessage.isStreaming === true; // Only consider if the last message is marked as streaming initially
 
         let scrollTargetElement = null;
         let scrollOptions = { behavior: 'auto', block: 'end' };
 
         // --- Logic Modification ---
         if (userJustSent && secondLastMessage.id) {
-            // Scenario: Assistant just started responding or is actively streaming
+            // Scenario: Assistant or System just started responding or is actively streaming
             if (!initialScrollForResponseDoneRef.current) {
                 // Perform the initial 'scroll to user message top' ONLY ONCE
                 scrollTargetElement = document.getElementById(secondLastMessage.id);
@@ -207,10 +207,9 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
     // --- Layout Effect for Preceding User Message Height ---
     useLayoutEffect(() => {
-        // Check if the specific scenario is met: last message is assistant, second-to-last is user
         const isTargetScenario =
             messages.length >= 2 &&
-            messages[messages.length - 1].role === MESSAGE_ROLES.ASSISTANT &&
+            (messages[messages.length - 1].role === MESSAGE_ROLES.ASSISTANT || messages[messages.length - 1].role === MESSAGE_ROLES.SYSTEM) && // Check for ASSISTANT OR SYSTEM
             messages[messages.length - 2].role === MESSAGE_ROLES.USER;
 
         if (isTargetScenario && precedingUserMessageRef.current) {
@@ -259,7 +258,9 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 5;
 
         const lastMsg = messages[messages.length - 1];
-        const isAssistantStreaming = lastMsg?.role === MESSAGE_ROLES.ASSISTANT && lastMsg?.isStreaming;
+        const isLastMsgStreaming = lastMsg &&
+                                   (lastMsg.role === MESSAGE_ROLES.ASSISTANT || lastMsg.role === MESSAGE_ROLES.SYSTEM) && // Check for ASSISTANT OR SYSTEM
+                                   lastMsg.isStreaming;
 
         // Show button if NOT near bottom.
         const shouldShow = !isNearBottom;
@@ -267,7 +268,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         // Update state only if the value changes
         setShowScrollDownButton(prev => {
             if (prev !== shouldShow) {
-                 logger.sidebar.info(`[ChatArea] Setting showScrollDownButton to: ${shouldShow} (isNearBottom: ${isNearBottom}, scrollFromBottom: ${scrollFromBottom.toFixed(1)}, isAssistantStreaming: ${isAssistantStreaming})`);
+                 logger.sidebar.info(`[ChatArea] Setting showScrollDownButton to: ${shouldShow} (isNearBottom: ${isNearBottom}, scrollFromBottom: ${scrollFromBottom.toFixed(1)}, isLastMsgStreaming: ${isLastMsgStreaming})`);
                  return shouldShow;
             }
             return prev;
@@ -506,7 +507,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                             const isSecondLastMessage = index === messages.length - 2;
                             const isTargetScenario =
                                 messages.length >= 2 &&
-                                messages[messages.length - 1].role === MESSAGE_ROLES.ASSISTANT &&
+                                (messages[messages.length - 1].role === MESSAGE_ROLES.ASSISTANT || messages[messages.length - 1].role === MESSAGE_ROLES.SYSTEM) && // Check for ASSISTANT OR SYSTEM
                                 messages[messages.length - 2].role === MESSAGE_ROLES.USER;
 
                             let dynamicStyle = {};
@@ -519,17 +520,29 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
                             // Calculate dynamic style only for the very last message
                             if (isLastMessage) {
+                                const baseCalcHeight = `calc(100vh - ${otherUIHeight}px - ${precedingUserMessageHeight}px`;
+                                let offsetRem = '1.25rem'; // Default offset for assistant messages
+
+                                // --- MODIFICATION START: Conditional Offset ---
+                                if (message.role === MESSAGE_ROLES.SYSTEM) {
+                                    offsetRem = '0.75rem'; // Use smaller offset (12px) for system messages
+                                    logger.sidebar.debug(`Applying SYSTEM specific offset (${offsetRem}) for min-height calculation.`);
+                                } else {
+                                    logger.sidebar.debug(`Applying default offset (${offsetRem}) for min-height calculation.`);
+                                }
+                                // --- MODIFICATION END ---
+
                                 if (isTargetScenario && precedingUserMessageHeight > 0) {
-                                    // Scenario: Last is assistant, previous is user, and user height is measured
+                                    // Scenario: Last is assistant/system, previous is user, and user height is measured
                                     dynamicStyle = {
-                                        minHeight: `calc(100vh - ${otherUIHeight}px - ${precedingUserMessageHeight}px - 1.5rem)`,
+                                        minHeight: `${baseCalcHeight} - ${offsetRem})`, // Use calculated offset
                                         transition: 'min-height 0.2s ease-out'
                                     };
                                     logger.sidebar.debug(`Applying adjusted dynamic style to last message ${message.id}. User Height: ${precedingUserMessageHeight}px`, dynamicStyle);
                                 } else {
                                     // Default scenario for the last message (or if height measurement failed)
                                     dynamicStyle = {
-                                        minHeight: `calc(100vh - ${otherUIHeight}px - 1.5rem)`,
+                                        minHeight: `${baseCalcHeight} - ${offsetRem})`, // Use calculated offset
                                         transition: 'min-height 0.2s ease-out'
                                     };
                                     logger.sidebar.debug(`Applying default dynamic style to last message ${message.id}. Target Scenario: ${isTargetScenario}, User Height: ${precedingUserMessageHeight}px`, dynamicStyle);
