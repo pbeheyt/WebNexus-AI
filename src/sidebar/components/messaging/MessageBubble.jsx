@@ -293,7 +293,7 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
         </div>
 
         {/* Footer section */}
-        <div className="flex justify-between items-center -mt-1">
+        <div className="flex justify-between items-center -mt-1 pb-6">
            <div className="text-xs opacity-70 flex items-center space-x-2">
             {platformIconUrl && (
               <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" />
@@ -322,17 +322,6 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
             )}
           </div>
         </div>
-
-        {/* Metadata (Optional) */}
-        {Object.keys(metadata).length > 0 && (
-          <div className="text-xs mt-3 opacity-70 overflow-hidden text-ellipsis space-x-3">
-            {Object.entries(metadata).map(([key, value]) => (
-              <span key={key} className="inline-block break-words">
-                <span className='font-medium'>{key}:</span> {typeof value === 'object' ? JSON.stringify(value) : value}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     );
   }
