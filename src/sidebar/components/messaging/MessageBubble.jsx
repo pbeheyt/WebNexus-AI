@@ -127,21 +127,31 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
   };
 
   // System messages
-  if (isSystem) {
-     return (
-        <div
-          ref={ref} // Apply ref here
-          id={id}
-          style={style}
-          className={`px-5 py-4 w-full bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md ${className}`}
-        >
-          <div className="whitespace-pre-wrap break-words overflow-hidden leading-relaxed text-sm">{content}</div>
-        </div>
-      );
+  // System messages
+  if (role === MESSAGE_ROLES.SYSTEM) {
+    return (
+       <div // Outer container: Provides overall spacing (px-5 py-4) and structure
+         ref={ref}
+         id={id}
+         style={style}
+         // REMOVED background and text color from here
+         className={`px-5 py-4 w-full ${className}`} // Kept padding for spacing
+       >
+         <div // Intermediate container: Provides the red background around the text ONLY
+           className="inline-block bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md px-3 py-1.5" // Added inline-block, bg, text color, internal padding, rounded
+         >
+           <div // Inner container: Holds the actual text content
+             className="whitespace-pre-wrap break-words leading-relaxed text-sm" // Removed overflow-hidden as inline-block handles wrapping
+           >
+             {content}
+           </div>
+         </div>
+       </div>
+     );
   }
 
   // User messages
-  if (isUser) {
+  if (role === MESSAGE_ROLES.USER) {
     return (
       <div
         ref={ref} // Apply ref here
@@ -322,6 +332,17 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
             )}
           </div>
         </div>
+
+        {/* Metadata (Optional) */}
+        {Object.keys(metadata).length > 0 && (
+          <div className="text-xs mt-3 opacity-70 overflow-hidden text-ellipsis space-x-3">
+            {Object.entries(metadata).map(([key, value]) => (
+              <span key={key} className="inline-block break-words">
+                <span className='font-medium'>{key}:</span> {typeof value === 'object' ? JSON.stringify(value) : value}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
