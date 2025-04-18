@@ -291,7 +291,7 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
         className={`group px-5 py-2 mb-2 w-full message-group assistant-message relative ${className}`}
       >
         {/* Prose container for Markdown styling */}
-        <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-3`}>
+        <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-2`}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[]}
@@ -301,7 +301,7 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
         </div>
 
         {/* Footer section */}
-        <div className="flex justify-between items-center -mt-1 pb-6">
+        <div className="flex justify-between items-center -mt-1 pb-2">
            <div className="text-xs opacity-70 flex items-center space-x-2">
             {platformIconUrl && (
               <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" />

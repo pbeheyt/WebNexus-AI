@@ -494,7 +494,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             {/* Scrollable container */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto flex flex-col pt-4" style={{ scrollbarGutter: 'stable' }}
+                className="flex-1 overflow-y-auto flex flex-col" style={{ scrollbarGutter: 'stable' }}
             >
                 {/* Conditional Content Inside Scrollable Container */}
                 {messages.length === 0 ? (
@@ -521,11 +521,11 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                             // Calculate dynamic style only for the very last message
                             if (isLastMessage) {
                                 const baseCalcHeight = `calc(100vh - ${otherUIHeight}px - ${precedingUserMessageHeight}px`;
-                                let offsetRem = '1.25rem'; // Default offset for assistant messages
+                                let offsetRem = '1rem'; // Default offset for assistant messages
 
                                 // --- MODIFICATION START: Conditional Offset ---
                                 if (message.role === MESSAGE_ROLES.SYSTEM) {
-                                    offsetRem = '0.75rem'; // Use smaller offset (12px) for system messages
+                                    offsetRem = '0.5rem'; // Use smaller offset (8px) for system messages
                                     logger.sidebar.debug(`Applying SYSTEM specific offset (${offsetRem}) for min-height calculation.`);
                                 } else {
                                     logger.sidebar.debug(`Applying default offset (${offsetRem}) for min-height calculation.`);
