@@ -155,8 +155,8 @@ export function Popup() {
   };
 
   return (
-    <div className="min-w-[350px] p-4 bg-theme-primary text-theme-primary">
-      <AppHeader onClose={closePopup} className='pb-2'>
+    <div className="min-w-[350px] px-4 bg-theme-primary text-theme-primary">
+      <AppHeader onClose={closePopup} className='py-2'>
         {/* Sidebar toggle button */}
         <button
           onClick={toggleSidebar}
@@ -197,7 +197,7 @@ export function Popup() {
       </div>
 
       {/* Status message displayed below the input */}
-      <StatusMessage message={statusMessage} context="popup" className="mt-3" />
+      <StatusMessage message={statusMessage} context="popup" className="py-3" />
 
     </div>
   );
