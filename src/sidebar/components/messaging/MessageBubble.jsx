@@ -1,17 +1,16 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
-import React, { useState, memo, forwardRef } from 'react'; // Import forwardRef
+import React, { useState, memo, forwardRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-import 'katex/dist/katex.min.css'; // Ensure KaTeX CSS is imported
+import 'katex/dist/katex.min.css';
 
 import CopyButtonIcon from './icons/CopyButtonIcon';
 import EnhancedCodeBlock from './EnhancedCodeBlock';
 import MathFormulaBlock from './MathFormulaBlock'
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
+import { MESSAGE_ROLES } from '../../../shared/constants';
 import logger from '../../../shared/logger';
-import { MESSAGE_ROLES } from '../../../shared/constants'; // Import message roles
 
 // Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
 const MATH_PLACEHOLDER_REGEX = /@@MATH_(BLOCK|INLINE)_(\d+)@@/g;
@@ -61,14 +60,14 @@ const renderWithPlaceholdersRecursive = (children, mathMap) => {
         if (mathData) {
           parts.push(
             <MathFormulaBlock
-              key={`${placeholder}-${index}-${lastIndex}`} // More unique key
+              key={`${placeholder}-${index}-${lastIndex}`}
               content={mathData.content}
               inline={mathData.inline}
             />
           );
         } else {
           logger.sidebar.warn(`Math placeholder ${placeholder} not found in map. Rendering fallback marker.`);
-          const fallbackText = mathType === 'INLINE' ? '[ math ]' : '[ block math ]'; // Simplified fallback
+          const fallbackText = mathType === 'INLINE' ? '[ math ]' : '[ block math ]';
           parts.push(fallbackText);
         }
         lastIndex = MATH_PLACEHOLDER_REGEX.lastIndex;
@@ -98,7 +97,7 @@ const renderWithPlaceholdersRecursive = (children, mathMap) => {
 /**
  * Message bubble component wrapped with forwardRef
  */
-export const MessageBubble = memo(forwardRef(({ // Use forwardRef
+export const MessageBubble = memo(forwardRef(({
   id,
   content,
   role = 'assistant',
@@ -108,7 +107,7 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
   metadata = {},
   className = '',
   style = {}
-}, ref) => { // Add ref as second argument
+}, ref) => {
   const [copyState, setCopyState] = useState('idle');
 
   const handleCopyToClipboard = async () => {
@@ -127,18 +126,17 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
   // System messages
   if (role === MESSAGE_ROLES.SYSTEM) {
     return (
-       <div // Outer container: Provides overall spacing (px-5 py-4) and structure
+       <div
          ref={ref}
          id={id}
          style={style}
-         // REMOVED background and text color from here
-         className={`px-5 py-2 w-full ${className}`} // Kept padding for spacing
+         className={`px-5 py-2 w-full ${className}`}
        >
          <div // Intermediate container: Provides the red background around the text ONLY
-           className="inline-block bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3" // Added inline-block, bg, text color, internal padding, rounded
+           className="inline-block bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3"
          >
-           <div // Inner container: Holds the actual text content
-             className="whitespace-pre-wrap break-words leading-relaxed text-sm" // Removed overflow-hidden as inline-block handles wrapping
+           <div
+             className="whitespace-pre-wrap break-words leading-relaxed text-sm"
            >
              {content}
            </div>
@@ -151,13 +149,12 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
   if (role === MESSAGE_ROLES.USER) {
     return (
       <div
-        ref={ref} // Apply ref here
+        ref={ref}
         id={id}
         style={style}
         className={`px-5 py-2 w-full flex justify-end items-start message-group user-message ${className}`}
       >
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
-          {/* User messages don't need complex rendering, just display content */}
           <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
         </div>
       </div>
@@ -236,7 +233,6 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
             const Tag = containsBlockElement ? 'div' : 'p';
             return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
         },
-        // --- NEW `pre` Override ---
         pre: ({ node, children, ...props }) => {
           // Check if this <pre> contains a <code> block with a language class (fenced code block)
           const codeChild = node?.children?.[0];
@@ -263,7 +259,6 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
           const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
           return <pre {...props}>{processedChildren}</pre>;
         },
-        // --- MODIFIED `code` Override ---
         code: ({ node, inline, className, children, ...props }) => {
           // Only handle INLINE code here. Fenced blocks are handled by the `pre` override.
           if (inline) {
@@ -279,7 +274,6 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
           // Return the raw children; the <pre> override will decide whether to wrap them or use EnhancedCodeBlock.
           return <>{children}</>;
         },
-        // --- End of NEW/MODIFIED Overrides ---
         a: ({node, children, ...props}) => {
           const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
           const containsBlockElement = containsBlockElementCheck(processedChildren);
@@ -314,7 +308,7 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
 
     return (
       <div
-        ref={ref} // Apply ref here
+        ref={ref}
         id={id}
         style={style}
         className={`group px-5 py-2 w-full message-group assistant-message relative ${className}`}
@@ -377,5 +371,3 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
   // Fallback if role is somehow invalid
   return null;
 })); // Close forwardRef
-
-MessageBubble.displayName = 'MessageBubble'; // Set display name

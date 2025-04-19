@@ -1,7 +1,6 @@
 // src/components/EnhancedCodeBlock.jsx
 import React, { useState, memo, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-// Import oneDark for dark mode and vs for light mode
 import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import CopyButtonIcon from './icons/CopyButtonIcon';
 import { copyToClipboard } from './utils/clipboard';
@@ -93,7 +92,6 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
       </div>
 
       {/* Code content area with syntax highlighting */}
-      {/* Updated background for better contrast with 'vs' theme */}
       <div className="bg-white dark:bg-gray-900 overflow-x-auto w-full rounded-b-lg">
         <SyntaxHighlighter
           language={language}
@@ -109,7 +107,6 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
             wordBreak: 'break-all', // Helps break long words if wrapLongLines isn't enough
           }}
           wrapLongLines={true}
-          // Adjusted codeTagProps for potential 'vs' theme text colors
           codeTagProps={{ className: 'font-mono text-gray-900 dark:text-gray-200' }}
         >
           {codeContent || ' '} {/* Render a space if content is empty to maintain height */}
@@ -118,7 +115,5 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
     </div>
   );
 });
-
-EnhancedCodeBlock.displayName = 'EnhancedCodeBlock'; // Add display name for easier debugging
 
 export default EnhancedCodeBlock;
