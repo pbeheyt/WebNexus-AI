@@ -176,7 +176,7 @@
       "maxTemperature": 2.0,
       "minTopP": 0.1,
       "maxTopP": 1.0,
-      "temperature": 3.0,
+      "temperature": 1.0,
       "topP": 0.9,
       "models": [
         {
