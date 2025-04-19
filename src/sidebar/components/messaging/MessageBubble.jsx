@@ -125,7 +125,6 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
   };
 
   // System messages
-  // System messages
   if (role === MESSAGE_ROLES.SYSTEM) {
     return (
        <div // Outer container: Provides overall spacing (px-5 py-4) and structure
@@ -237,20 +236,50 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
             const Tag = containsBlockElement ? 'div' : 'p';
             return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
         },
-        code: ({node, inline, className, children, ...props}) => {
-           if (className && className.startsWith('language-')) {
-              const codeContent = String(children).replace(/\n$/, '');
-              return <EnhancedCodeBlock className={className} isStreaming={isStreaming}>{codeContent}</EnhancedCodeBlock>;
-           }
-           const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
-           const containsBlockElement = containsBlockElementCheck(processedChildren);
-           const commonClasses = "bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono mx-0.5 align-middle";
-           const Tag = containsBlockElement ? 'span' : 'code';
-           return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
+        // --- NEW `pre` Override ---
+        pre: ({ node, children, ...props }) => {
+          // Check if this <pre> contains a <code> block with a language class (fenced code block)
+          const codeChild = node?.children?.[0];
+          const isFencedCodeBlock =
+            codeChild?.tagName === 'code' &&
+            codeChild?.properties?.className?.some(cls => cls.startsWith('language-'));
+
+          if (isFencedCodeBlock) {
+            const languageClass = codeChild.properties.className.find(cls => cls.startsWith('language-'));
+            const codeContent = codeChild.children?.[0]?.value || '';
+            // Render EnhancedCodeBlock directly, bypassing the default <pre> wrapper
+            return (
+              <EnhancedCodeBlock
+                className={languageClass}
+                isStreaming={isStreaming} // Pass streaming state from MessageBubble
+              >
+                {codeContent}
+              </EnhancedCodeBlock>
+            );
+          }
+
+          // For other <pre> blocks (not fenced code), render normally.
+          // Handle potential math placeholders within these blocks too.
+          const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
+          return <pre {...props}>{processedChildren}</pre>;
         },
-        pre: ({node, children, ...props}) => {
-          return <pre {...props}>{children}</pre>;
+        // --- MODIFIED `code` Override ---
+        code: ({ node, inline, className, children, ...props }) => {
+          // Only handle INLINE code here. Fenced blocks are handled by the `pre` override.
+          if (inline) {
+            const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
+            const containsBlockElement = containsBlockElementCheck(processedChildren);
+            const commonClasses = "bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono mx-0.5 align-middle";
+            // Use span if children contain block elements (like MathFormulaBlock), otherwise use code
+            const Tag = containsBlockElement ? 'span' : 'code';
+            return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
+          }
+
+          // For non-inline code (inside <pre>), let the `pre` override handle rendering.
+          // Return the raw children; the <pre> override will decide whether to wrap them or use EnhancedCodeBlock.
+          return <>{children}</>;
         },
+        // --- End of NEW/MODIFIED Overrides ---
         a: ({node, children, ...props}) => {
           const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
           const containsBlockElement = containsBlockElementCheck(processedChildren);
