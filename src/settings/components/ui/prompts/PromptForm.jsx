@@ -151,7 +151,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
           type="text"
           id="name"
           name="name"
-          className="w-full p-2.5 bg-theme-surface test-sm text-theme-primary border border-theme rounded-md focus-primary" // Added focus style
+          className="w-full p-2.5 bg-theme-surface text-sm text-theme-primary border border-theme rounded-md focus-primary"
           placeholder="Give your prompt a descriptive name"
           value={formData.name}
           onChange={handleChange}

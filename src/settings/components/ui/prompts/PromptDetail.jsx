@@ -26,13 +26,6 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       // Delete the prompt
       delete customPromptsByType[prompt.contentType].prompts[prompt.id];
 
-      // If this was the preferred prompt, reset to default (consider if 'default' is a valid ID or if it should be null)
-      // This logic might need adjustment depending on how preferred prompts are handled.
-      // Let's assume resetting to null is safer if the specific type isn't a valid fallback ID.
-      if (customPromptsByType[prompt.contentType]?.preferredPromptId === prompt.id) {
-        customPromptsByType[prompt.contentType].preferredPromptId = null; // Reset to null
-      }
-
       // Clean up empty content type entry if no prompts remain
       if (Object.keys(customPromptsByType[prompt.contentType]?.prompts || {}).length === 0) {
          // Check if other properties like preferredPromptId or settings exist before deleting
@@ -79,7 +72,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         </div>
       </div>
 
-      <div className="prompt-detail-content whitespace-pre-wrap bg-theme-hover/20 p-4 rounded-lg border border-theme mb-5 test-sm text-theme-secondary">
+      <div className="prompt-detail-content whitespace-pre-wrap bg-theme-hover/20 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary">
         {prompt.prompt.content}
       </div>
 
