@@ -91,29 +91,36 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     const initialScrollForResponseDoneRef = useRef(false);
 
     // --- Effect for Platform/Model Display ---
-     useEffect(() => {
+    useEffect(() => {
         const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
-        const isModelConfigReady = modelConfigData && selectedModel && modelConfigData.id === selectedModel;
         const isPlatformReady = !!targetPlatform;
+        // Check if the loaded modelConfigData matches the currently selected model ID
+        const isModelConfigReadyForSelection = modelConfigData && selectedModel && modelConfigData.id === selectedModel;
 
-        if (isPlatformReady && isModelConfigReady) {
+        if (isPlatformReady && isModelConfigReadyForSelection) {
+            // Update display only when both platform and the *matching* model config are ready
+            logger.sidebar.debug(`[ChatArea Effect] Updating display for platform ${targetPlatform.id} and model ${modelConfigData.id}`);
             setDisplayPlatformConfig({
                 id: targetPlatform.id,
                 name: targetPlatform.name,
                 iconUrl: targetPlatform.iconUrl
             });
             setDisplayModelConfig(modelConfigData);
+
+            // Set initial load complete only once
             if (!hasCompletedInitialLoad) {
+                logger.sidebar.info('[ChatArea Effect] Setting hasCompletedInitialLoad to true.');
                 setHasCompletedInitialLoad(true);
             }
         } else {
-             setDisplayPlatformConfig(null);
-             setDisplayModelConfig(null);
-             if (hasAnyPlatformCredentials && hasCompletedInitialLoad) {
-                 // Maintain completion if creds exist but config mismatch
-             } else {
-                 setHasCompletedInitialLoad(false);
-             }
+            // If the selected platform/model config isn't ready yet, *don't* clear the display.
+            // Keep showing the previous config until the new one loads.
+            // Only log if initial load was already done, otherwise the loading spinner handles it.
+            if (hasCompletedInitialLoad) {
+                 logger.sidebar.debug(`[ChatArea Effect] Waiting for matching config. Platform ready: ${isPlatformReady}, Model ready for selection (${selectedModel}): ${isModelConfigReadyForSelection}. Retaining previous display values.`);
+            }
+            // DO NOT set displayPlatformConfig or displayModelConfig to null here.
+            // DO NOT set hasCompletedInitialLoad to false here.
         }
     }, [platforms, selectedPlatformId, modelConfigData, selectedModel, hasCompletedInitialLoad, hasAnyPlatformCredentials]);
 
