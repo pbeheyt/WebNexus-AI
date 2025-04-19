@@ -67,7 +67,7 @@
       "models": [
         {
           "id": "gpt-4.5-preview",
-          "description": "Largest and most capable flagship GPT model (Preview).",
+          "description": "Largest and most capable flagship GPT model.",
           "maxTokens": 16384,
           "parameterStyle": "standard",
           "contextWindow": 128000,
@@ -116,7 +116,7 @@
         },
         {
           "id": "o3-mini",
-          "description": "Fast, flexible, and intelligent reasoning model (o-series).",
+          "description": "Fast, flexible, and intelligent reasoning model.",
           "maxTokens": 100000,
           "parameterStyle": "reasoning",
           "tokenParameter": "max_completion_tokens",
@@ -128,7 +128,7 @@
         },
         {
           "id": "o1-mini",
-          "description": "Faster, more affordable reasoning model compared to o1.",
+          "description": "Faster, more affordable reasoning model.",
           "maxTokens": 65536,
           "parameterStyle": "reasoning",
           "tokenParameter": "max_completion_tokens",
@@ -153,7 +153,7 @@
         },
         {
           "id": "gpt-3.5-turbo",
-          "description": "Legacy model, cost-effective for various chat and non-chat tasks.",
+          "description": "Legacy model, cost-effective for various tasks.",
           "maxTokens": 4096,
           "parameterStyle": "standard",
           "contextWindow": 16385,
@@ -181,7 +181,7 @@
       "models": [
         {
           "id": "deepseek-chat",
-          "description": "General chat model (DeepSeek-V3).",
+          "description": "General chat model.",
           "maxTokens": 8000,
           "parameterStyle": "standard",
           "contextWindow": 64000,
@@ -193,7 +193,7 @@
         },
         {
           "id": "deepseek-reasoner",
-          "description": "Reasoning model (DeepSeek-R1) featuring Chain of Thought capabilities.",
+          "description": "Reasoning model featuring Chain of Thought capabilities.",
           "maxTokens": 8000,
           "parameterStyle": "standard",
           "contextWindow": 64000,
@@ -281,7 +281,7 @@
       "models": [
         {
           "id": "gemini-2.5-pro-exp-03-25",
-          "description": "Most powerful reasoning model (Experimental Mar 2025). Peak performance.",
+          "description": "Most powerful reasoning model.",
           "maxTokens": 65536,
           "parameterStyle": "standard",
           "contextWindow": 1048576,
@@ -319,34 +319,8 @@
           "tokenParameter": "maxOutputTokens"
         },
         {
-          "id": "gemini-1.5-flash",
-          "description": "Fast and versatile model for diverse tasks.",
-          "maxTokens": 8192,
-          "parameterStyle": "standard",
-          "contextWindow": 1048576,
-          "inputTokenPrice": 0.00,
-          "outputTokenPrice": 0.00,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "supportsSystemPrompt": false,
-          "tokenParameter": "maxOutputTokens"
-        },
-        {
-          "id": "gemini-1.5-flash-8b",
-          "description": "Optimized for high-volume, lower-intelligence tasks.",
-          "maxTokens": 8192,
-          "parameterStyle": "standard",
-          "contextWindow": 1048576,
-          "inputTokenPrice": 0.00,
-          "outputTokenPrice": 0.00,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "supportsSystemPrompt": false,
-          "tokenParameter": "maxOutputTokens"
-        },
-        {
           "id": "gemini-1.5-pro",
-          "description": "Powerful model for complex reasoning tasks requiring high intelligence.",
+          "description": "Reasoning model featuring an extensive context window.",
           "maxTokens": 8192,
           "parameterStyle": "standard",
           "contextWindow": 2097152,
@@ -375,7 +349,7 @@
       "models": [
          {
           "id": "grok-3-latest",
-          "description": "Flagship model (Beta) excelling at enterprise tasks (data extraction, coding, summarization) with deep domain knowledge.",
+          "description": "Flagship model excelling at enterprise tasks with deep domain knowledge.",
           "maxTokens": 4096,
           "parameterStyle": "standard",
           "contextWindow": 131072,
@@ -387,7 +361,7 @@
         },
         {
           "id": "grok-3-fast-latest",
-          "description": "Faster version of Grok 3, offering significantly lower latency for the same quality at a higher cost.",
+          "description": "Faster version of Grok 3, lower latency at a higher cost.",
           "maxTokens": 4096,
           "parameterStyle": "standard",
           "contextWindow": 131072,
@@ -399,7 +373,7 @@
         },
         {
           "id": "grok-3-mini-latest",
-          "description": "Lightweight Grok 3 model with reasoning ('thinking'). Fast, smart, good for logic tasks without deep domain needs.",
+          "description": "Fast, smart, good for logic tasks without deep domain needs.",
           "maxTokens": 4096,
           "parameterStyle": "standard",
           "contextWindow": 131072,
@@ -411,7 +385,7 @@
         },
         {
           "id": "grok-3-mini-fast-latest",
-          "description": "Faster version of Grok 3 Mini, offering significantly lower latency for the same quality at a higher cost.",
+          "description": "Faster version of Grok 3 Mini, lower latency at a higher cost.",
           "maxTokens": 4096,
           "parameterStyle": "standard",
           "contextWindow": 131072,
