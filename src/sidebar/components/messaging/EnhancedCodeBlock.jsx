@@ -1,7 +1,8 @@
 // src/components/EnhancedCodeBlock.jsx
 import React, { useState, memo, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+// Import oneDark for dark mode and vs for light mode
+import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import CopyButtonIcon from './icons/CopyButtonIcon';
 import { copyToClipboard } from './utils/clipboard';
 
@@ -64,7 +65,8 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
   };
 
   // Define the syntax highlighter theme based on current app theme
-  const syntaxTheme = isDarkMode ? oneDark : oneLight;
+  // Use 'vs' for light mode and 'oneDark' for dark mode
+  const syntaxTheme = isDarkMode ? oneDark : vs;
 
   return (
     <div className="relative rounded-lg overflow-visible border border-gray-200 dark:border-gray-700 my-4 shadow-sm">
@@ -91,22 +93,24 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
       </div>
 
       {/* Code content area with syntax highlighting */}
-      <div className="bg-gray-100 dark:bg-gray-900 overflow-x-auto w-full rounded-b-lg">
+      {/* Updated background for better contrast with 'vs' theme */}
+      <div className="bg-white dark:bg-gray-900 overflow-x-auto w-full rounded-b-lg">
         <SyntaxHighlighter
           language={language}
           style={syntaxTheme}
           customStyle={{
             margin: 0,
             padding: '0.75rem 1rem', // equivalent to py-3 px-4
-            background: 'transparent', // Handled by parent div
+            background: 'transparent', // Background is handled by the parent div
             fontSize: '0.875rem', // text-sm
             lineHeight: 1.5, // Increased slightly for better readability
             minHeight: '1.5rem', // Ensure a minimum height even for empty/short code
             whiteSpace: 'pre-wrap', // Ensures wrapping respects whitespace and newlines
             wordBreak: 'break-all', // Helps break long words if wrapLongLines isn't enough
           }}
-          wrapLongLines={true} 
-          codeTagProps={{ className: 'font-mono text-gray-800 dark:text-gray-200' }}
+          wrapLongLines={true}
+          // Adjusted codeTagProps for potential 'vs' theme text colors
+          codeTagProps={{ className: 'font-mono text-gray-900 dark:text-gray-200' }}
         >
           {codeContent || ' '} {/* Render a space if content is empty to maintain height */}
         </SyntaxHighlighter>
