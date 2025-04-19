@@ -132,7 +132,7 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
          id={id}
          style={style}
          // REMOVED background and text color from here
-         className={`px-5 py-2 mb-2 w-full ${className}`} // Kept padding for spacing
+         className={`px-5 py-2 w-full ${className}`} // Kept padding for spacing
        >
          <div // Intermediate container: Provides the red background around the text ONLY
            className="inline-block bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3" // Added inline-block, bg, text color, internal padding, rounded
@@ -154,7 +154,7 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
         ref={ref} // Apply ref here
         id={id}
         style={style}
-        className={`px-5 py-2 mb-2 w-full flex justify-end items-start message-group user-message ${className}`}
+        className={`px-5 py-2 w-full flex justify-end items-start message-group user-message ${className}`}
       >
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
           {/* User messages don't need complex rendering, just display content */}
@@ -317,10 +317,10 @@ export const MessageBubble = memo(forwardRef(({ // Use forwardRef
         ref={ref} // Apply ref here
         id={id}
         style={style}
-        className={`group px-5 py-2 mb-2 w-full message-group assistant-message relative ${className}`}
+        className={`group px-5 py-2 w-full message-group assistant-message relative ${className}`}
       >
         {/* Prose container for Markdown styling */}
-        <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible mb-2`}>
+        <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[]}

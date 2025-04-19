@@ -520,29 +520,24 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
                             // Calculate dynamic style only for the very last message
                             if (isLastMessage) {
+                                // Simplified base calculation string
                                 const baseCalcHeight = `calc(100vh - ${otherUIHeight}px - ${precedingUserMessageHeight}px`;
-                                let offsetRem = '1rem'; // Default offset for assistant messages
 
-                                // --- MODIFICATION START: Conditional Offset ---
-                                if (message.role === MESSAGE_ROLES.SYSTEM) {
-                                    offsetRem = '0.5rem'; // Use smaller offset (8px) for system messages
-                                    logger.sidebar.debug(`Applying SYSTEM specific offset (${offsetRem}) for min-height calculation.`);
-                                } else {
-                                    logger.sidebar.debug(`Applying default offset (${offsetRem}) for min-height calculation.`);
-                                }
-                                // --- MODIFICATION END ---
+                                // Removed offsetRem variable and conditional logic
 
                                 if (isTargetScenario && precedingUserMessageHeight > 0) {
                                     // Scenario: Last is assistant/system, previous is user, and user height is measured
                                     dynamicStyle = {
-                                        minHeight: `${baseCalcHeight} - ${offsetRem})`, // Use calculated offset
+                                        // Simplified minHeight calculation
+                                        minHeight: `${baseCalcHeight})`,
                                         transition: 'min-height 0.2s ease-out'
                                     };
                                     logger.sidebar.debug(`Applying adjusted dynamic style to last message ${message.id}. User Height: ${precedingUserMessageHeight}px`, dynamicStyle);
                                 } else {
                                     // Default scenario for the last message (or if height measurement failed)
                                     dynamicStyle = {
-                                        minHeight: `${baseCalcHeight} - ${offsetRem})`, // Use calculated offset
+                                        // Simplified minHeight calculation
+                                        minHeight: `${baseCalcHeight})`,
                                         transition: 'min-height 0.2s ease-out'
                                     };
                                     logger.sidebar.debug(`Applying default dynamic style to last message ${message.id}. Target Scenario: ${isTargetScenario}, User Height: ${precedingUserMessageHeight}px`, dynamicStyle);
