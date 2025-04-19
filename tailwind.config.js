@@ -4,7 +4,7 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./popup.html",
     "./settings.html",
-    "./sidepanel.html", // Added sidepanel.html just in case
+    "./sidepanel.html",
     "./*.html"
   ],
   darkMode: 'class', // Enable class-based dark mode
