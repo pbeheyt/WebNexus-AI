@@ -9,42 +9,83 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const [isDefaultForType, setIsDefaultForType] = useState(false); // State for default status
 
   const handleDelete = async () => {
+    if (!prompt || !prompt.contentType || !prompt.id) {
+      error('Cannot delete: Invalid prompt data.');
+      return;
+    }
+
     if (!window.confirm(`Are you sure you want to delete the prompt "${prompt.prompt.name}"?`)) {
       return;
     }
 
     try {
-      // Get current prompts
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-      const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+      // Get current prompts and defaults
+      const [promptsResult, defaultsResult] = await Promise.all([
+        chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS),
+        chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE)
+      ]);
+      const customPromptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+      const currentDefaults = defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
+      const updatedDefaults = { ...currentDefaults }; // Mutable copy
 
-      // Check if prompt exists
-      // Use optional chaining for safer access
-      if (!customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
-        throw new Error('Prompt not found');
+      const promptsForType = customPromptsByType[prompt.contentType]?.prompts || {};
+      const isCurrentDefault = currentDefaults[prompt.contentType] === prompt.id;
+      const otherPromptsExist = Object.keys(promptsForType).length > 1;
+
+      // Check if deleting the last default prompt
+      if (isCurrentDefault && !otherPromptsExist) {
+        throw new Error("Cannot delete the only prompt for this content type while it's set as default. Create another prompt or set a different one as default first.");
       }
 
-      // Delete the prompt
-      delete customPromptsByType[prompt.contentType].prompts[prompt.id];
+      // If deleting the default, assign a new default if others exist
+      let defaultsNeedUpdate = false;
+      if (isCurrentDefault && otherPromptsExist) {
+        // Find the first available prompt ID that is NOT the one being deleted
+        const nextDefaultId = Object.keys(promptsForType).find(id => id !== prompt.id);
+        if (nextDefaultId) {
+          updatedDefaults[prompt.contentType] = nextDefaultId;
+          defaultsNeedUpdate = true;
+          console.info(`Reassigned default for ${prompt.contentType} to prompt ID ${nextDefaultId}.`);
+        } else {
+          // Should not happen if otherPromptsExist is true, but log defensively
+          console.warn(`Could not find a replacement default for ${prompt.contentType} despite other prompts existing.`);
+        }
+      }
+
+      // Delete the prompt from the custom prompts structure
+      if (customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
+        delete customPromptsByType[prompt.contentType].prompts[prompt.id];
+      } else {
+        // Prompt might already be gone? Log a warning but proceed with default update if needed.
+        console.warn(`Prompt ID ${prompt.id} not found in custom prompts during deletion.`);
+      }
 
       // Clean up empty content type entry if no prompts remain
       if (Object.keys(customPromptsByType[prompt.contentType]?.prompts || {}).length === 0) {
-         // Check if other properties like preferredPromptId or settings exist before deleting
-         if (!customPromptsByType[prompt.contentType]?.preferredPromptId && !customPromptsByType[prompt.contentType]?.settings) {
-             delete customPromptsByType[prompt.contentType];
-         } else if (!customPromptsByType[prompt.contentType]?.prompts) {
-             // If prompts object itself was deleted, ensure it's gone
-             delete customPromptsByType[prompt.contentType]?.prompts;
-         }
+        // Check if other properties like preferredPromptId or settings exist before deleting
+        if (!customPromptsByType[prompt.contentType]?.preferredPromptId && !customPromptsByType[prompt.contentType]?.settings) {
+            delete customPromptsByType[prompt.contentType];
+        } else if (!customPromptsByType[prompt.contentType]?.prompts) {
+            // If prompts object itself was deleted, ensure it's gone
+            delete customPromptsByType[prompt.contentType]?.prompts;
+        }
       }
 
-      // Save to storage
-      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
+      // Save updated prompts and potentially updated defaults
+      const updatePromises = [
+        chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType })
+      ];
+      if (defaultsNeedUpdate) {
+        updatePromises.push(chrome.storage.sync.set({ [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults }));
+      }
+      await Promise.all(updatePromises);
 
       success('Prompt deleted successfully');
       onDelete(); // Notify parent component
+
     } catch (err) {
       console.error('Error deleting prompt:', err);
+      // Display the specific error message from the check
       error(`Error deleting prompt: ${err.message}`);
     }
   };
@@ -124,7 +165,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       <div className="prompt-detail-actions flex justify-end gap-3">
         {!isDefaultForType && (
           <Button
-            variant="success" // Or another suitable variant
+            variant="secondary"
             onClick={handleSetAsDefault}
           >
             Set as Default

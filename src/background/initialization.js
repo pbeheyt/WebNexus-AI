@@ -73,12 +73,52 @@ async function initializeDefaultPrompts() {
       }
     }
 
-    // Save back to sync storage if any prompts were added
-    if (promptsAdded) {
+    // --- Ensure Default Prompt Assignment ---
+    let defaultsChanged = false;
+    // Load current default assignments
+    const defaultsResult = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE);
+    const currentDefaults = defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
+    const updatedDefaults = { ...currentDefaults }; // Create a mutable copy
+
+    // Ensure a default exists for every content type that now has prompts
+    for (const contentType in promptsByType) {
+      if (Object.hasOwnProperty.call(promptsByType, contentType)) {
+        const promptsForType = promptsByType[contentType]?.prompts || {};
+        const promptIdsForType = Object.keys(promptsForType);
+
+        // Check if a default is already set AND if that default still exists
+        const currentDefaultId = updatedDefaults[contentType];
+        const isCurrentDefaultValid = currentDefaultId && promptsForType[currentDefaultId];
+
+        // If no valid default is set and there are prompts for this type
+        if (!isCurrentDefaultValid && promptIdsForType.length > 0) {
+          // Assign the first prompt in the list as the new default
+          const newDefaultId = promptIdsForType[0];
+          updatedDefaults[contentType] = newDefaultId;
+          defaultsChanged = true;
+          logger.background.info(`Automatically assigned default prompt "${promptsForType[newDefaultId]?.name}" (ID: ${newDefaultId}) for content type "${contentType}".`);
+        } else if (!isCurrentDefaultValid && promptIdsForType.length === 0 && updatedDefaults[contentType]) {
+          // If default existed but the prompt is gone and no others exist, remove the default setting
+          delete updatedDefaults[contentType];
+          defaultsChanged = true;
+           logger.background.info(`Removed default prompt setting for empty content type "${contentType}".`);
+        }
+      }
+    }
+
+    // Save defaults back if any changes were made
+    if (defaultsChanged) {
+      await chrome.storage.sync.set({ [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults });
+      logger.background.info('Updated default prompt assignments in storage.');
+    }
+
+    // --- Save Custom Prompts (Original Logic) ---
+    // Now save the potentially updated custom prompts
+    if (promptsAdded) { // promptsAdded flag from original logic
       await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: promptsByType });
-      logger.background.info('Successfully added default prompts to sync storage.');
+      logger.background.info('Successfully added/updated custom prompts in sync storage.');
     } else {
-      logger.background.info('No new default prompts needed to be added.');
+      logger.background.info('No new custom prompts needed to be added.');
     }
 
     // Return true indicating success (or at least completion without error)
