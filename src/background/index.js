@@ -3,91 +3,10 @@
 import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
-// Import the specific cleanup function and the listener setup
 import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-state-listener.js';
+import { setupContextMenuListener } from './listeners/context-menu-listener.js';
 import SidebarStateManager from '../services/SidebarStateManager.js';
 import logger from '../shared/logger.js';
-import { determineContentType } from '../shared/utils/content-utils.js';
-import { processContent } from './services/content-processing.js'; // Adjust path if needed
-import { STORAGE_KEYS } from '../shared/constants.js';
-
-/**
- * Handles clicks on the context menu item.
- */
-async function handleContextMenuClick(info, tab) {
-  if (info.menuItemId === 'nexusai-quick-process') {
-    logger.background.info('Context menu clicked:', { menuItemId: info.menuItemId, tabId: tab?.id, url: tab?.url });
-    if (!tab || !tab.id || !tab.url) {
-      logger.background.error('Context menu click missing tab information.');
-      return;
-    }
-
-    try {
-      const contentType = determineContentType(tab.url);
-      logger.background.info(`Determined content type: ${contentType} for URL: ${tab.url}`);
-
-      // 1. Get the default prompt ID for this content type
-      const defaultsResult = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE);
-      const defaultPrompts = defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
-      const defaultPromptId = defaultPrompts[contentType];
-
-      if (!defaultPromptId) {
-        logger.background.warn(`No default prompt set for content type: ${contentType}. Aborting quick process.`);
-        // Optional: Notify user (consider if this is too noisy)
-        // try {
-        //   await chrome.notifications.create({
-        //     type: 'basic',
-        //     iconUrl: chrome.runtime.getURL('images/icon48.png'),
-        //     title: 'Nexus AI',
-        //     message: `No default prompt set for ${contentType} content. Configure one in Settings > Prompts.`
-        //   });
-        // } catch (notifError) {
-        //   logger.background.error('Failed to show notification:', notifError);
-        // }
-        return;
-      }
-      logger.background.info(`Found default prompt ID: ${defaultPromptId}`);
-
-      // 2. Get the actual prompt content
-      const promptsResult = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-      const promptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
-      // Make sure to check the prompts object exists for the content type
-      const promptObject = promptsByType[contentType]?.prompts?.[defaultPromptId];
-
-      if (!promptObject || !promptObject.content) {
-        logger.background.error(`Default prompt object or content not found for ID: ${defaultPromptId} under type ${contentType}`);
-        return;
-      }
-      const promptContent = promptObject.content;
-      logger.background.info(`Found default prompt content (length: ${promptContent.length}).`);
-
-      // 3. Get the last used popup platform
-      const platformResult = await chrome.storage.sync.get(STORAGE_KEYS.POPUP_PLATFORM);
-      // Provide a fallback platform if none is stored (e.g., 'chatgpt')
-      const platformId = platformResult[STORAGE_KEYS.POPUP_PLATFORM] || 'chatgpt'; // Ensure a default exists
-      logger.background.info(`Using platform: ${platformId} for popup flow.`);
-
-      // 4. Call processContent (ensure it's imported correctly)
-      logger.background.info(`Calling processContent for tab ${tab.id} with default prompt.`);
-      // Call the existing processContent function which handles the web UI flow
-      await processContent({
-        tabId: tab.id,
-        url: tab.url,
-        platformId: platformId,
-        promptContent: promptContent,
-        useApi: false // Explicitly use the Web UI interaction flow
-      });
-      logger.background.info(`processContent call initiated via context menu.`);
-
-    } catch (error) {
-      logger.background.error('Error handling context menu action:', error);
-      // Optional: Notify user of failure
-      // try {
-      //   await chrome.notifications.create({ ... basic error notification ... });
-      // } catch (notifError) { logger.background.error(...) }
-    }
-  }
-}
 
 
 /**
@@ -107,13 +26,8 @@ async function startBackgroundService() {
     setupTabStateListener(); // Sets up onRemoved listener
     setupConnectionListener(); // Add connection listener setup
 
-    // Add the context menu listener
-    if (chrome.contextMenus && chrome.contextMenus.onClicked) {
-       chrome.contextMenus.onClicked.addListener(handleContextMenuClick);
-       logger.background.info('Context menu click listener registered.');
-    } else {
-       logger.background.error('Context Menus API not available to register listener.');
-    }
+    // Set up context menu listener
+    setupContextMenuListener();
 
     // This runs every time the service worker starts (initial load, wake-up, after browser start)
     // It complements the onStartup listener.

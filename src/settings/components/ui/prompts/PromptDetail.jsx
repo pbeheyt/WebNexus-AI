@@ -7,7 +7,7 @@ import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils';
 
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();
-  const [isDefaultForType, setIsDefaultForType] = useState(false); // State for default status
+  const [isDefaultForType, setIsDefaultForType] = useState(false);
 
   const handleDelete = async () => {
     if (!prompt || !prompt.contentType || !prompt.id) {

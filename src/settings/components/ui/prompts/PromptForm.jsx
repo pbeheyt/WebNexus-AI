@@ -1,5 +1,5 @@
 // src/settings/components/ui/prompts/PromptForm.jsx
-import React, { useState, useEffect } from 'react'; // Import useEffect
+import React, { useState, useEffect } from 'react';
 import { Button, useNotification, CustomSelect } from '../../../../components';
 import {
   STORAGE_KEYS,
@@ -11,7 +11,7 @@ import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
 const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = CONTENT_TYPES.GENERAL }) => {
   const { success, error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
-  const [isDefaultForType, setIsDefaultForType] = useState(false); // State for default status
+  const [isDefaultForType, setIsDefaultForType] = useState(false);
 
   // Determine if editing before setting initial state
   const isEditing = !!prompt;

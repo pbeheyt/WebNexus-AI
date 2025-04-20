@@ -64,7 +64,7 @@ const PromptManagement = () => {
       <PromptForm
         onCancel={handleCancelForm}
         onSuccess={handlePromptSavedOrDeleted}
-        initialContentType={initialContentTypeForNew} // Pass the initial type
+        initialContentType={initialContentTypeForNew}
       />
     );
   } else if (isEditing && selectedPrompt) {

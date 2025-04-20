@@ -15,7 +15,7 @@ const PromptList = ({
   const { error } = useNotification();
   const [prompts, setPrompts] = useState([]);
   const [filteredPrompts, setFilteredPrompts] = useState([]);
-  const [defaultPromptIds, setDefaultPromptIds] = useState({}); // State for default prompt IDs
+  const [defaultPromptIds, setDefaultPromptIds] = useState({});
 
   // Load prompts and default settings when component mounts or dependencies change
   useEffect(() => {
