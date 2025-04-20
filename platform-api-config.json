@@ -108,8 +108,8 @@
           "parameterStyle": "reasoning",
           "tokenParameter": "max_completion_tokens",
           "contextWindow": 200000,
-          "inputTokenPrice": 10,
-          "outputTokenPrice": 40,
+          "inputTokenPrice": 10.00,
+          "outputTokenPrice": 40.00,
           "supportsTemperature": false,
           "supportsTopP": false
         },
