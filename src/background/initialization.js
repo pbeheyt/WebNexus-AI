@@ -174,8 +174,8 @@ export async function handleInstallation(details) {
       await chrome.contextMenus.removeAll();
       // Create the new context menu item
       await chrome.contextMenus.create({
-        id: "nexusai-quick-process",
-        title: "Nexus AI: Process with Default Prompt",
+        id: "menu-quick-process",
+        title: "Process in Web UI (Default Prompt)",
         contexts: ["page"], // Show only when right-clicking on the page
       });
       logger.background.info('Context menu created successfully.');

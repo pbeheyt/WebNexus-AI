@@ -7,7 +7,7 @@ import { STORAGE_KEYS } from '../../shared/constants.js';
  * Handles clicks on the context menu item.
  */
 async function handleContextMenuClick(info, tab) {
-  if (info.menuItemId === 'nexusai-quick-process') {
+  if (info.menuItemId === 'menu-quick-process') {
     logger.background.info('Context menu clicked:', { menuItemId: info.menuItemId, tabId: tab?.id, url: tab?.url });
     if (!tab || !tab.id || !tab.url) {
       logger.background.error('Context menu click missing tab information.');
@@ -43,7 +43,7 @@ async function handleContextMenuClick(info, tab) {
 
       // 3. Get the last used popup platform
       const platformResult = await chrome.storage.sync.get(STORAGE_KEYS.POPUP_PLATFORM);
-      const platformId = platformResult[STORAGE_KEYS.POPUP_PLATFORM] || 'chatgpt'; // Ensure a default exists
+      const platformId = platformResult[STORAGE_KEYS.POPUP_PLATFORM] || 'chatgpt';
       logger.background.info(`Using platform: ${platformId} for popup flow.`);
 
       // 4. Call processContent
