@@ -3,178 +3,175 @@ const logger = require('../shared/logger.js').service;
 
 class ContentFormatter {
   /**
-   * Format content based on content type
-   * @param {Object} contentData - The extracted content data
-   * @param {string} contentType - The type of content (e.g., 'youtube', 'reddit', 'general', 'pdf')
-   * @returns {string} Formatted content
+   * Format content based on content type for better LLM processing.
+   * @param {Object} contentData - The extracted content data.
+   * @param {string} contentType - The type of content (e.g., 'youtube', 'reddit', 'general', 'pdf').
+   * @returns {string} Formatted content string.
    */
   static formatContent(contentData, contentType) {
     if (!contentData) {
       logger.error('No content data available for formatting');
-      return 'No content data available';
+      return '[Error: No content data available]'; // Clear error indication
     }
 
     logger.info(`Formatting content of type: ${contentType}`);
 
     let formatted = '';
-    switch (contentType) {
-      case 'youtube':
-        formatted = this._formatYouTubeData(contentData);
-        break;
-      case 'reddit':
-        formatted = this._formatRedditData(contentData);
-        break;
-      case 'general':
-        formatted = this._formatGeneralData(contentData);
-        break;
-      case 'pdf':
-        formatted = this._formatPdfData(contentData);
-        break;
-      default:
-        logger.warn(`Unknown content type '${contentType}', using JSON stringify`);
-        try {
-          formatted = `Content Type: ${contentType}\nData: ${JSON.stringify(contentData, null, 2)}`;
-        } catch (e) {
-          logger.error('Failed to stringify unknown content data:', e);
-          formatted = `Content Type: ${contentType}\nData: [Could not stringify]`;
-        }
+    try {
+      switch (contentType) {
+        case 'youtube':
+          formatted = this._formatYouTubeData(contentData);
+          break;
+        case 'reddit':
+          formatted = this._formatRedditData(contentData);
+          break;
+        case 'general':
+          formatted = this._formatGeneralData(contentData);
+          break;
+        case 'pdf':
+          formatted = this._formatPdfData(contentData);
+          break;
+      }
+    } catch (error) {
+        logger.error(`Error formatting content type ${contentType}:`, error);
+        formatted = `[Error: Failed to format content of type ${contentType}]`;
+    }
+
+    // Basic cleanup: ensure consistent line breaks and trim whitespace
+    return formatted.replace(/\n{3,}/g, '\n').trim();
+  }
+
+  /** Helper to safely get data or return a placeholder */
+  static _getData(value, placeholder = 'Not Available') {
+    return value !== null && value !== undefined && value !== '' ? String(value) : placeholder;
+  }
+
+  /**
+   * Format YouTube video data for LLMs.
+   * @private
+   */
+  static _formatYouTubeData(data) {
+    const videoId = this._getData(data.videoId);
+    const url = videoId !== 'Not Available' ? `https://www.youtube.com/watch?v=${videoId}` : 'Not Available';
+
+    let formatted = `## METADATA\n`;
+    formatted += `- Title: ${this._getData(data.videoTitle)}\n`;
+    formatted += `- Channel: ${this._getData(data.channelName)}\n`;
+    formatted += `- URL: ${url}\n`; // Add URL here for context
+
+    formatted += `## DESCRIPTION\n`;
+    formatted += `${this._getData(data.videoDescription, 'No description provided.')}\n`;
+
+    formatted += `## TRANSCRIPT\n`;
+    formatted += `${this._getData(data.transcript, 'No transcript available.')}\n`;
+
+    if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
+      formatted += `## COMMENTS\n`;
+      data.comments.forEach((comment, index) => {
+        formatted += `${index + 1}. Author: ${this._getData(comment.author, 'Anonymous')}\n`;
+        formatted += `   Likes: ${this._getData(comment.likes, '0')}\n`;
+        formatted += `   Comment: "${this._getData(comment.text, '')}"\n`; // Indent comment text slightly
+      });
+    } else {
+      formatted += `## COMMENTS\nNo comments available.\n`;
     }
 
     return formatted;
   }
 
   /**
-   * Format YouTube video data
+   * Format Reddit post data for LLMs.
    * @private
-   * @param {Object} data - YouTube video data
-   * @returns {string} Formatted YouTube data
-   */
-  static _formatYouTubeData(data) {
-    const title = data.videoTitle || 'No title available';
-    const channel = data.channelName || 'Unknown channel';
-    const description = data.videoDescription || 'No description available';
-    const transcript = data.transcript || 'No transcript available';
-
-    // Format comments with likes
-    let commentsText = '';
-    if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      commentsText = `## COMMENTS\n`;
-      data.comments.forEach((comment, index) => {
-        commentsText += `${index + 1}. User: ${comment.author || 'Anonymous'} (${comment.likes || '0'} likes)\n  "${comment.text || ''}"\n`;
-      });
-    }
-
-    return `## VIDEO METADATA\n  - Title: ${title}\n  - Channel: ${channel}\n  - URL: https://www.youtube.com/watch?v=${data.videoId || ''}\n## DESCRIPTION\n${description}\n## TRANSCRIPT\n${transcript}\n${commentsText}`;
-  }
-
-  /**
-   * Format Reddit post data
-   * @private
-   * @param {Object} data - Reddit post data
-   * @returns {string} Formatted Reddit data
    */
   static _formatRedditData(data) {
-    const title = data.postTitle || 'No title available';
-    const content = data.postContent || 'No content available';
-    const author = data.postAuthor || 'Unknown author';
-    const postUrl = data.postUrl || '';
-    const subreddit = data.subreddit || 'Unknown subreddit';
+    let formatted = `## METADATA\n`;
+    formatted += `- Title: ${this._getData(data.postTitle)}\n`;
+    formatted += `- Author: ${this._getData(data.postAuthor, 'u/Unknown')}\n`;
+    formatted += `- Subreddit: ${this._getData(data.subreddit, 'r/Unknown')}\n`;
+    formatted += `- URL: ${this._getData(data.postUrl)}\n`;
+    formatted += `- Score: ${this._getData(data.postScore, 'Not Available')} points\n`;
 
-    let formattedText = `## POST METADATA\n  - Title: ${title}\n  - Author: ${author}\n  - Subreddit: ${subreddit}\n  - URL: ${postUrl}\n## POST CONTENT\n${content}\n`;
+    formatted += `## POST CONTENT\n`;
+    formatted += `${this._getData(data.postContent, 'No post body content.')}\n`;
 
-    // Format comments with links
     if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
-      formattedText += `## COMMENTS\n`;
-
+      formatted += `## COMMENTS\n`;
       data.comments.forEach((comment, index) => {
-        formattedText += `${index + 1}. u/${comment.author || 'Anonymous'} (${comment.popularity || '0'} points) [(link)](${comment.permalink || postUrl})\n  "${comment.content || ''}"\n`;
+        formatted += `${index + 1}. Author: ${this._getData(comment.author, 'u/Anonymous')}\n`;
+        formatted += `   Score: ${this._getData(comment.popularity, '0')} points\n`;
+        // Link removed as per previous request
+        formatted += `   Comment: "${this._getData(comment.content, '')}"\n`;
       });
+    } else {
+      formatted += `## COMMENTS\nNo comments available.\n`;
     }
 
-    return formattedText;
+    return formatted;
   }
 
   /**
-   * Format general web page data
+   * Format general web page data for LLMs.
    * @private
-   * @param {Object} data - Web page data
-   * @returns {string} Formatted web page data
    */
   static _formatGeneralData(data) {
-    const title = data.pageTitle || 'No title available';
-    const url = data.pageUrl || 'Unknown URL';
-    const content = data.content || 'No content available';
-    const author = data.pageAuthor || null;
-    const description = data.pageDescription || null;
+    let formatted = `## METADATA\n`;
+    formatted += `- Title: ${this._getData(data.pageTitle)}\n`;
+    formatted += `- URL: ${this._getData(data.pageUrl)}\n`;
+    formatted += `- Author: ${this._getData(data.pageAuthor)}\n`; // Included even if 'Not Available'
+    formatted += `- Description: ${this._getData(data.pageDescription)}\n`; // Included even if 'Not Available'
 
-    let metadataText = `## PAGE METADATA\n  - Title: ${title}\n  - URL: ${url}`;
+    formatted += `## PAGE CONTENT\n`;
+    formatted += `${this._getData(data.content, 'No main content extracted.')}\n`;
 
-    if (author) {
-      metadataText += `\n  - Author: ${author}`;
-    }
-
-    if (description) {
-      metadataText += `\n  - Description: ${description}`;
-    }
-
-    return `${metadataText}\n## PAGE CONTENT\n${content}`;
+    return formatted;
   }
 
   /**
-   * Format PDF document data
+   * Format PDF document data for LLMs.
    * @private
-   * @param {Object} data - PDF document data
-   * @returns {string} Formatted PDF data
    */
   static _formatPdfData(data) {
-    const title = data.pdfTitle || 'Untitled PDF';
-    const url = data.pdfUrl || 'Unknown URL';
-    const content = data.content || 'No content available';
-    const pageCount = data.pageCount || 'Unknown';
+    let formatted = `## METADATA\n`;
+    formatted += `- Title: ${this._getData(data.pdfTitle, 'Untitled PDF')}\n`;
+    formatted += `- URL/Source: ${this._getData(data.pdfUrl)}\n`;
+    formatted += `- Pages: ${this._getData(data.pageCount)}\n`;
+
     const metadata = data.metadata || {};
-
-    // Format metadata section
-    let metadataText = `## PDF METADATA\n  - Title: ${title}\n  - Pages: ${pageCount}\n  - URL: ${url}`;
-
-    if (metadata.author) {
-      metadataText += `\n  - Author: ${metadata.author}`;
-    }
-
-    if (metadata.creationDate) {
-      metadataText += `\n  - Created: ${metadata.creationDate}`;
-    }
+    formatted += `- Author: ${this._getData(metadata.author)}\n`;
+    formatted += `- Creation Date: ${this._getData(metadata.creationDate)}\n`;
 
     if (data.ocrRequired) {
-      metadataText += `\n  - Note: This PDF may require OCR as text extraction was limited.`;
+      formatted += `- Note: OCR may have been required; text accuracy might vary.\n`;
+    }
+    formatted += `\n`; // End metadata section
+
+    formatted += `## PDF CONTENT\n`;
+    let contentText = this._getData(data.content, 'No content extracted from PDF.');
+
+    // Attempt to clean JSON artifacts if necessary (keep existing logic)
+    if (typeof contentText === 'string' && contentText.startsWith('{"content":"')) {
+        try {
+            const contentObj = JSON.parse(contentText);
+            contentText = this._getData(contentObj.content, contentText); // Fallback to original if parse is empty
+        } catch (e) {
+            logger.warn('Failed to parse potential JSON in PDF content, using raw string.');
+        }
     }
 
-    // Format and clean up the content
-    let formattedContent = content;
-
-    // Remove JSON artifacts if present
-    if (typeof formattedContent === 'string' && formattedContent.includes('{"content":"')) {
-      try {
-        const contentObj = JSON.parse(formattedContent);
-        formattedContent = contentObj.content || formattedContent;
-      } catch (e) {
-        // If parsing fails, keep the original content
-        logger.warn('Failed to parse JSON in PDF content');
-      }
-    }
-
-    // Clean up page markers to make them more readable
-    if (typeof formattedContent === 'string') {
-        formattedContent = formattedContent
-          .replace(/--- Page (\d+) ---\n\n/g, '\n\n## PAGE $1\n') // Corrected regex
-          .replace(/\n{3,}/g, '\n\n')  // Reduce multiple line breaks
-          .trim();
+    // Standardize page markers (keep existing logic, ensure it works)
+    if (typeof contentText === 'string') {
+        contentText = contentText
+            .replace(/--- Page (\d+) ---\n*/g, '\n## PAGE $1\n') // Ensure separation
+            .replace(/\n{3,}/g, '\n') // Consolidate excessive newlines
+            .trim();
     } else {
-        logger.warn('PDF content is not a string, skipping cleanup.');
-        formattedContent = String(formattedContent); // Ensure it's a string
+        logger.warn('PDF content is not a string after processing, converting.');
+        contentText = String(contentText); // Ensure it's a string
     }
 
+    formatted += `${contentText}\n`;
 
-    return `${metadataText}\n\n## PDF CONTENT\n${formattedContent}`;
+    return formatted;
   }
 }
 

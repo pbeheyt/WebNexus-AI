@@ -42,6 +42,7 @@ class RedditExtractorStrategy extends BaseExtractor {
       // Extract basic post metadata
       const title = this.extractPostTitle();
       const content = this.extractPostContent();
+      const score = this.extractPostScore();
       const author = this.extractAuthor();
       const subreddit = this.extractSubreddit();
 
@@ -57,6 +58,7 @@ class RedditExtractorStrategy extends BaseExtractor {
       return {
         postTitle: title,
         postContent: content,
+        postScore: score,
         postAuthor: author,
         subreddit,
         comments,
@@ -70,6 +72,7 @@ class RedditExtractorStrategy extends BaseExtractor {
       return {
         postTitle: this.extractPostTitle(),
         postContent: 'Error extracting content: ' + error.message,
+        postScore: this.extractPostScore(),
         postAuthor: this.extractAuthor(),
         subreddit: this.extractSubreddit(),
         comments: [],
@@ -133,6 +136,39 @@ class RedditExtractorStrategy extends BaseExtractor {
     }
 
     return 'Post content not found';
+  }
+
+  extractPostScore() {
+    const postElement = document.querySelector('shreddit-post');
+    if (postElement && postElement.hasAttribute('score')) {
+        const score = postElement.getAttribute('score');
+        return score;
+    }
+
+    const scoreSelectors = [
+          'div[id^="vote-arrows-"] > div',
+          '[data-testid="post-score"]'
+    ];
+
+    for (const selector of scoreSelectors) {
+        const scoreElement = document.querySelector(selector);
+        if (scoreElement && scoreElement.textContent) {
+            const scoreText = scoreElement.textContent.trim();
+            // Basic normalization (remove non-digits, handle 'k')
+            if (scoreText.toLowerCase().includes('k')) {
+                const score = String(Math.round(parseFloat(scoreText.replace(/k/i, '')) * 1000));
+                this.logger.info(`Post score found and normalized from text selector '${selector}': ${score}`);
+                return score;
+            } else {
+                const score = scoreText.replace(/[^\d]/g, ''); // Remove non-digits
+                if (score) {
+                      return score;
+                }
+            }
+        }
+    }
+
+    return null;
   }
 
   /**
@@ -369,58 +405,12 @@ class RedditExtractorStrategy extends BaseExtractor {
           }
         }
 
-        // Extract permalink for the comment
-        let permalink = '';
-
-        // Method 1: Check for permalink attribute on shreddit-comment element
-        if (commentElement.getAttribute && commentElement.getAttribute('permalink')) {
-          permalink = commentElement.getAttribute('permalink');
-        }
-        // Method 2: Check for permalink attribute on shreddit-comment-action-row
-        else {
-          const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
-          if (commentActionRow && commentActionRow.getAttribute('permalink')) {
-            permalink = commentActionRow.getAttribute('permalink');
-          }
-          // Method 3: Look for permalink in link elements
-          else {
-            const permalinkSelectors = [
-              'a[href*="/comment/"]',
-              '.text-neutral-content-weak[href]',
-              'shreddit-comment-share-button[permalink]',
-              'a[rel="nofollow noopener noreferrer"]'
-            ];
-
-            for (const selector of permalinkSelectors) {
-              const permalinkElement = commentElement.querySelector(selector);
-              if (permalinkElement) {
-                // For normal link elements
-                if (permalinkElement.href) {
-                  permalink = permalinkElement.href;
-                  break;
-                }
-                // For elements with permalink attribute
-                else if (permalinkElement.getAttribute && permalinkElement.getAttribute('permalink')) {
-                  permalink = permalinkElement.getAttribute('permalink');
-                  break;
-                }
-              }
-            }
-          }
-        }
-
-        // Convert relative permalink to absolute URL if needed
-        if (permalink && permalink.startsWith('/')) {
-          permalink = `https://www.reddit.com${permalink}`;
-        }
-
         // Add comment to the list if it has content
         if (commentContent) {
           comments.push({
             author,
             content: commentContent,
-            popularity: score,
-            permalink: permalink || window.location.href // Fallback to post URL if permalink not found
+            popularity: score
           });
         }
       }

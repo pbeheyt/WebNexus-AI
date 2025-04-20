@@ -8,7 +8,6 @@ import { setupContextMenuListener } from './listeners/context-menu-listener.js';
 import SidebarStateManager from '../services/SidebarStateManager.js';
 import logger from '../shared/logger.js';
 
-
 /**
  * Main entry point for the background service worker
  */
