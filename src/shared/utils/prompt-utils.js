@@ -1,6 +1,5 @@
 // src/shared/utils/prompt-utils.js
 import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
-import logger from '../logger';
 
 /**
  * Ensures that every content type with at least one prompt has a valid default prompt assigned.
@@ -10,7 +9,6 @@ import logger from '../logger';
  * @returns {Promise<boolean>} True if default assignments were changed, false otherwise.
  */
 export async function ensureDefaultPrompts() {
-  logger.service.info('Running ensureDefaultPrompts check...');
   try {
     const [promptsResult, defaultsResult] = await Promise.all([
       chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS),
@@ -37,7 +35,6 @@ export async function ensureDefaultPrompts() {
           const newDefaultId = promptIdsForType[0];
           updatedDefaults[contentType] = newDefaultId;
           defaultsChanged = true;
-          logger.service.info(`Assigned default prompt for '${contentType}': ID ${newDefaultId}`);
         }
       } else {
         // --- No prompts exist for this type ---
@@ -45,7 +42,6 @@ export async function ensureDefaultPrompts() {
           // A default is set, but there are no prompts, so remove the default setting
           delete updatedDefaults[contentType];
           defaultsChanged = true;
-          logger.service.info(`Removed stale default prompt setting for empty content type '${contentType}'.`);
         }
       }
     }
@@ -53,15 +49,13 @@ export async function ensureDefaultPrompts() {
     // Save back to storage only if changes were made
     if (defaultsChanged) {
       await chrome.storage.sync.set({ [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults });
-      logger.service.info('Updated default prompt assignments in storage.');
       return true;
-    } else {
-      logger.service.info('No changes needed for default prompt assignments.');
-      return false;
     }
 
+    return false;
+
   } catch (error) {
-    logger.service.error('Error in ensureDefaultPrompts:', error);
+    console.error('Error in ensureDefaultPrompts:', error);
     return false;
   }
 }

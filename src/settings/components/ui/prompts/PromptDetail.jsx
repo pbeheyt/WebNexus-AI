@@ -1,5 +1,5 @@
 // src/settings/components/ui/PromptDetail.jsx
-import React, { useState, useEffect } from 'react'; // Added useState, useEffect
+import React, { useState, useEffect } from 'react';
 import { Button, useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
@@ -27,7 +27,6 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       ]);
       const customPromptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
       const currentDefaults = defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
-      const updatedDefaults = { ...currentDefaults }; // Mutable copy
 
       const promptsForType = customPromptsByType[prompt.contentType]?.prompts || {};
       const isCurrentDefault = currentDefaults[prompt.contentType] === prompt.id;
@@ -89,7 +88,29 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         setIsDefaultForType(false); // Assume not default on error
       }
     };
-    checkDefaultStatus();
+    // Listener for storage changes to update the badge dynamically
+    const handleStorageChange = (changes, area) => {
+      if (area === 'sync' && changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]) {
+        const newDefaults = changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE].newValue || {};
+        if (prompt && prompt.contentType && prompt.id) {
+            setIsDefaultForType(newDefaults[prompt.contentType] === prompt.id);
+        }
+      }
+    };
+
+    checkDefaultStatus(); // Initial check
+
+    // Add listener
+    if (chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener(handleStorageChange);
+    }
+
+    // Cleanup listener on component unmount or when prompt changes
+    return () => {
+      if (chrome.storage && chrome.storage.onChanged) {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      }
+    };
   }, [prompt]); // Rerun when the prompt prop changes
 
   // Function to handle setting the prompt as default
@@ -107,9 +128,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       };
 
       await chrome.storage.sync.set({ [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults });
-      setIsDefaultForType(true); // Update local state immediately
+      // No need to call setIsDefaultForType(true) here, the storage listener will handle it
       success(`"${prompt.prompt.name}" is now the default for ${prompt.contentTypeLabel}.`);
-      // The PromptList component will update automatically via its storage listener.
 
     } catch (err) {
       console.error('Error setting default prompt:', err);
@@ -122,13 +142,22 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
 
   return (
     <div className="prompt-detail bg-theme-surface rounded-lg p-5 border border-theme">
-      <div className="prompt-detail-header flex justify-between items-center mb-4 pb-3 border-b border-theme">
-        <h3 className="prompt-detail-title text-lg font-medium text-theme-primary">
-          {prompt.prompt.name}
-        </h3>
+      {/* Header with Conditional Badge */}
+      <div className="prompt-detail-header flex items-center justify-between mb-4 pb-3 border-b border-theme">
+        <div className="flex items-center"> {/* Wrapper for title and badge */}
+          <h3 className="prompt-detail-title text-lg font-medium text-theme-primary">
+            {prompt.prompt.name}
+          </h3>
+          {/* Conditionally render the Default badge */}
+          {isDefaultForType && (
+            <span className="default-badge ml-3 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+              Default
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Updated Content Type Display */}
+      {/* Content Type Display */}
       <div className="prompt-detail-meta mb-4 text-base text-theme-secondary">
         <div className="inline-flex items-center gap-2">
           <span>{prompt.contentTypeLabel}</span>
@@ -141,10 +170,12 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         </div>
       </div>
 
+      {/* Prompt Content */}
       <div className="prompt-detail-content whitespace-pre-wrap bg-theme-hover/20 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary">
         {prompt.prompt.content}
       </div>
 
+      {/* Action Buttons */}
       <div className="prompt-detail-actions flex justify-end gap-3">
         {!isDefaultForType && (
           <Button

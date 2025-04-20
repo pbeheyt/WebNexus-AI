@@ -1,16 +1,16 @@
 // src/settings/components/ui/prompts/PromptList.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNotification } from '../../../../components';
-import { STORAGE_KEYS, CONTENT_TYPES } from '../../../../shared/constants'; // Import CONTENT_TYPES
+import { STORAGE_KEYS } from '../../../../shared/constants';
 import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils.js';
 import { CustomSelect } from '../../../../components/core/CustomSelect';
 
 const PromptList = ({
-  filterValue, // This prop now defaults to 'general' from the parent
-  contentTypeLabels, // Passed from parent
+  filterValue,
+  contentTypeLabels,
   onSelectPrompt,
   selectedPromptId,
-  onFilterChange // Handler passed from parent
+  onFilterChange
 }) => {
   const { error } = useNotification();
   const [prompts, setPrompts] = useState([]);
@@ -38,7 +38,7 @@ const PromptList = ({
                 id,
                 prompt,
                 contentType: type,
-                contentTypeLabel: contentTypeLabels[type] || type // Use prop here
+                contentTypeLabel: contentTypeLabels[type] || type
               });
             });
           }
@@ -90,7 +90,6 @@ const PromptList = ({
   }, []); // Empty dependency array ensures this runs once on mount and cleans up on unmount
 
   // Format options for the CustomSelect component
-  // Keep the 'All Content Types' option available for user selection
   const filterOptions = useMemo(() => [
     ...Object.entries(contentTypeLabels).map(([type, label]) => ({
       id: type,
@@ -103,9 +102,9 @@ const PromptList = ({
       <div className="form-group mb-4">
         <CustomSelect
           options={filterOptions}
-          selectedValue={filterValue} // Will receive 'general' initially from parent
-          onChange={onFilterChange} // Use handler from parent
-          placeholder="Filter by Content Type" // Placeholder remains useful
+          selectedValue={filterValue}
+          onChange={onFilterChange} 
+          placeholder="Filter by Content Type"
         />
       </div>
 
@@ -126,18 +125,20 @@ const PromptList = ({
               <div className="prompt-header flex justify-between items-center mb-3">
                 <h3 className="prompt-title font-medium text-base truncate text-theme-primary">
                   {item.prompt.name}
-                  {/* Conditionally render the Default badge */}
-                  {item.id === defaultPromptIds[item.contentType] && (
-                    <span className="default-badge ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Default</span>
-                  )}
                 </h3>
               </div>
-              <small className="flex items-center text-theme-secondary text-xs">
-                {item.contentTypeLabel}
-                <span
-                  className="flex items-center justify-center ml-2 w-4 h-4"
-                  dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(item.contentType) }}
-                />
+              <small className="flex items-center justify-between text-theme-secondary text-xs">
+                <div className="flex items-center">
+                  {item.contentTypeLabel}
+                  <span
+                    className="flex items-center justify-center ml-2 w-4 h-4"
+                    dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(item.contentType) }}
+                  />
+                </div>
+                {/* Conditionally render the Default badge */}
+                {item.id === defaultPromptIds[item.contentType] && (
+                  <span className="default-badge text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Default</span>
+                )}
               </small>
             </div>
           ))}

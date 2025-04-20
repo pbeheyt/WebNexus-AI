@@ -1,5 +1,5 @@
 // src/settings/components/tabs/PromptManagement.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PromptList from '../ui/prompts/PromptList';
 import PromptDetail from '../ui/prompts/PromptDetail';
 import PromptForm from '../ui/prompts/PromptForm';
@@ -9,9 +9,8 @@ const PromptManagement = () => {
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  // Initialize filterValue state to CONTENT_TYPES.GENERAL
   const [filterValue, setFilterValue] = useState(CONTENT_TYPES.GENERAL);
-  const [initialContentTypeForNew, setInitialContentTypeForNew] = useState(CONTENT_TYPES.GENERAL); // Keep this for new prompt form
+  const [initialContentTypeForNew, setInitialContentTypeForNew] = useState(CONTENT_TYPES.GENERAL);
 
   const handleNewPrompt = () => {
     // Use the current filter value if it's a specific type, otherwise default to general
@@ -40,8 +39,7 @@ const PromptManagement = () => {
   const handleCancelForm = () => {
     setIsEditing(false);
     setIsCreating(false);
-    // Optional: Reset selectedPrompt if needed when cancelling creation/edit
-    // setSelectedPrompt(null);
+    setSelectedPrompt(null);
   };
 
   const handlePromptSavedOrDeleted = () => {
@@ -114,11 +112,11 @@ const PromptManagement = () => {
 
         {/* Pass state and handlers down to PromptList */}
         <PromptList
-          filterValue={filterValue} // Pass the state down ('general' initially)
+          filterValue={filterValue}
           contentTypeLabels={CONTENT_TYPE_LABELS}
           onSelectPrompt={handleViewPrompt}
           selectedPromptId={selectedPrompt?.id}
-          onFilterChange={handleFilterChange} // Pass the handler down
+          onFilterChange={handleFilterChange}
         />
       </div>
 

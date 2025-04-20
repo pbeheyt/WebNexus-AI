@@ -1,17 +1,17 @@
-// src/settings/components/ui/PromptForm.jsx
-import React, { useState } from 'react';
+// src/settings/components/ui/prompts/PromptForm.jsx
+import React, { useState, useEffect } from 'react'; // Import useEffect
 import { Button, useNotification, CustomSelect } from '../../../../components';
 import {
   STORAGE_KEYS,
-  CONTENT_TYPES, // Ensure CONTENT_TYPES is imported
+  CONTENT_TYPES,
   CONTENT_TYPE_LABELS
 } from '../../../../shared/constants';
 import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
 
-// Add initialContentType prop with a default value
 const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = CONTENT_TYPES.GENERAL }) => {
   const { success, error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
+  const [isDefaultForType, setIsDefaultForType] = useState(false); // State for default status
 
   // Determine if editing before setting initial state
   const isEditing = !!prompt;
@@ -20,8 +20,31 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
   const [formData, setFormData] = useState({
     name: prompt?.prompt?.name || '',
     content: prompt?.prompt?.content || '',
-    contentType: isEditing ? (prompt?.contentType || CONTENT_TYPES.GENERAL) : initialContentType // Use prop here
+    contentType: isEditing ? (prompt?.contentType || CONTENT_TYPES.GENERAL) : initialContentType
   });
+
+  // Effect to check default status when in edit mode or when content type changes
+  useEffect(() => {
+    const checkDefaultStatus = async () => {
+      // Only check if editing and we have a valid prompt ID and content type
+      if (!isEditing || !prompt?.id || !formData.contentType) {
+        setIsDefaultForType(false);
+        return;
+      }
+      try {
+        const result = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE);
+        const defaults = result[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
+        // Check if this prompt ID is the default for the *currently selected* content type in the form
+        setIsDefaultForType(defaults[formData.contentType] === prompt.id);
+      } catch (err) {
+        console.error('Error checking default prompt status in form:', err);
+        setIsDefaultForType(false); // Assume not default on error
+      }
+    };
+
+    checkDefaultStatus();
+    // Rerun when the original prompt object changes OR when the selected content type in the form changes
+  }, [prompt, isEditing, formData.contentType]);
 
   // Handler for standard input/textarea changes
   const handleChange = (e) => {
@@ -71,12 +94,11 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
         customPromptsByType[contentType].prompts = {};
       }
 
-
       // Prepare prompt data
       const promptData = {
         name: name.trim(),
         content: content.trim(),
-        contentType: contentType, // Use the potentially updated contentType from state
+        contentType: contentType,
         updatedAt: new Date().toISOString(),
       };
 
@@ -91,8 +113,6 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
           if (customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
             delete customPromptsByType[prompt.contentType].prompts[prompt.id];
             console.log(`Moved prompt ${prompt.id} from old content type ${prompt.contentType} to ${formData.contentType}`);
-             // Optional: Clean up old content type if empty (consider implications)
-             // if (Object.keys(customPromptsByType[prompt.contentType]?.prompts || {}).length === 0) { ... }
           }
         }
 
@@ -125,7 +145,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
     }
   };
 
-  // Prepare options for CustomSelect (excluding Shared type implicitly)
+  // Prepare options for CustomSelect
   const contentTypeOptions = Object.entries(CONTENT_TYPE_LABELS).map(([type, label]) => ({
     id: type,
     name: label
@@ -133,9 +153,19 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
 
   return (
     <form onSubmit={handleSubmit} className="add-prompt-form bg-theme-surface rounded-lg p-6 border border-theme">
-      <h3 className="type-heading mb-5 pb-3 border-b border-theme text-xl font-semibold text-theme-primary">
-        {isEditing ? 'Edit Prompt' : 'Create New Prompt'}
-      </h3>
+      {/* Title Section with Conditional Badge */}
+      <div className="flex items-center mb-5 pb-3 border-b border-theme">
+        <h3 className="type-heading text-xl font-semibold text-theme-primary">
+          {isEditing ? 'Edit Prompt' : 'Create New Prompt'}
+        </h3>
+        {/* Conditionally render the Default badge only in edit mode */}
+        {isEditing && isDefaultForType && (
+          <span className="default-badge ml-3 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+            Default
+          </span>
+        )}
+      </div>
+
 
       {/* Content Type Selection using CustomSelect */}
       <div className="form-group mb-6">
@@ -147,7 +177,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
         <div className="inline-block">
           <CustomSelect
             options={contentTypeOptions}
-            selectedValue={formData.contentType} // Reflects initial state or user changes
+            selectedValue={formData.contentType}
             onChange={handleContentTypeChange}
             placeholder="Select Content Type"
           />
