@@ -1,5 +1,70 @@
 // src/shared/utils/prompt-utils.js
-import { STORAGE_KEYS, SHARED_TYPE } from '../constants';
+import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
+import logger from '../logger';
+
+/**
+ * Ensures that every content type with at least one prompt has a valid default prompt assigned.
+ * If no default is set or the current default is invalid, it assigns the first available prompt.
+ * If a content type has no prompts, it ensures no default is set for it.
+ * This function should be called after any operation that modifies the custom prompts structure (create, update, delete).
+ * @returns {Promise<boolean>} True if default assignments were changed, false otherwise.
+ */
+export async function ensureDefaultPrompts() {
+  logger.service.info('Running ensureDefaultPrompts check...');
+  try {
+    const [promptsResult, defaultsResult] = await Promise.all([
+      chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS),
+      chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE)
+    ]);
+
+    const customPromptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+    const currentDefaults = defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
+    const updatedDefaults = { ...currentDefaults };
+    let defaultsChanged = false;
+
+    // Iterate through all defined content types
+    for (const contentType of Object.values(CONTENT_TYPES)) {
+      const promptsForType = customPromptsByType[contentType]?.prompts || {};
+      const promptIdsForType = Object.keys(promptsForType);
+      const currentDefaultId = updatedDefaults[contentType];
+
+      if (promptIdsForType.length > 0) {
+        // --- Prompts exist for this type ---
+        const isCurrentDefaultValid = currentDefaultId && promptsForType[currentDefaultId];
+
+        if (!isCurrentDefaultValid) {
+          // No default set, or the existing default ID is no longer valid
+          const newDefaultId = promptIdsForType[0];
+          updatedDefaults[contentType] = newDefaultId;
+          defaultsChanged = true;
+          logger.service.info(`Assigned default prompt for '${contentType}': ID ${newDefaultId}`);
+        }
+      } else {
+        // --- No prompts exist for this type ---
+        if (currentDefaultId) {
+          // A default is set, but there are no prompts, so remove the default setting
+          delete updatedDefaults[contentType];
+          defaultsChanged = true;
+          logger.service.info(`Removed stale default prompt setting for empty content type '${contentType}'.`);
+        }
+      }
+    }
+
+    // Save back to storage only if changes were made
+    if (defaultsChanged) {
+      await chrome.storage.sync.set({ [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults });
+      logger.service.info('Updated default prompt assignments in storage.');
+      return true;
+    } else {
+      logger.service.info('No changes needed for default prompt assignments.');
+      return false;
+    }
+
+  } catch (error) {
+    logger.service.error('Error in ensureDefaultPrompts:', error);
+    return false;
+  }
+}
 
 /**
  * Loads custom prompts relevant to a specific content type, including shared prompts.

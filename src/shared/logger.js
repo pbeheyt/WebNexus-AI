@@ -105,6 +105,12 @@ const logger = {
     warn: (message, data) => log('service', 'warn', message, data),
     error: (message, data) => log('service', 'error', message, data)
   },
+  settings: {
+    debug: (message, data) => log('settings', 'debug', message, data),
+    info: (message, data) => log('settings', 'info', message, data),
+    warn: (message, data) => log('settings', 'warn', message, data),
+    error: (message, data) => log('settings', 'error', message, data)
+  },
   sidebar: {
     debug: (message, data) => log('sidebar', 'debug', message, data),
     info: (message, data) => log('sidebar', 'info', message, data),

@@ -3,6 +3,7 @@
 import { resetState } from './core/state-manager.js';
 import logger from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
+import { ensureDefaultPrompts } from '../shared/utils/prompt-utils.js';
 
 /**
  * Initializes default prompts from prompt-config.json into sync storage
@@ -73,53 +74,17 @@ async function initializeDefaultPrompts() {
       }
     }
 
-    // --- Ensure Default Prompt Assignment ---
-    let defaultsChanged = false;
-    // Load current default assignments
-    const defaultsResult = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE);
-    const currentDefaults = defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
-    const updatedDefaults = { ...currentDefaults }; // Create a mutable copy
-
-    // Ensure a default exists for every content type that now has prompts
-    for (const contentType in promptsByType) {
-      if (Object.hasOwnProperty.call(promptsByType, contentType)) {
-        const promptsForType = promptsByType[contentType]?.prompts || {};
-        const promptIdsForType = Object.keys(promptsForType);
-
-        // Check if a default is already set AND if that default still exists
-        const currentDefaultId = updatedDefaults[contentType];
-        const isCurrentDefaultValid = currentDefaultId && promptsForType[currentDefaultId];
-
-        // If no valid default is set and there are prompts for this type
-        if (!isCurrentDefaultValid && promptIdsForType.length > 0) {
-          // Assign the first prompt in the list as the new default
-          const newDefaultId = promptIdsForType[0];
-          updatedDefaults[contentType] = newDefaultId;
-          defaultsChanged = true;
-          logger.background.info(`Automatically assigned default prompt "${promptsForType[newDefaultId]?.name}" (ID: ${newDefaultId}) for content type "${contentType}".`);
-        } else if (!isCurrentDefaultValid && promptIdsForType.length === 0 && updatedDefaults[contentType]) {
-          // If default existed but the prompt is gone and no others exist, remove the default setting
-          delete updatedDefaults[contentType];
-          defaultsChanged = true;
-           logger.background.info(`Removed default prompt setting for empty content type "${contentType}".`);
-        }
-      }
-    }
-
-    // Save defaults back if any changes were made
-    if (defaultsChanged) {
-      await chrome.storage.sync.set({ [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults });
-      logger.background.info('Updated default prompt assignments in storage.');
-    }
-
-    // --- Save Custom Prompts (Original Logic) ---
-    // Now save the potentially updated custom prompts
+    // Save the potentially updated custom prompts
     if (promptsAdded) { // promptsAdded flag from original logic
       await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: promptsByType });
       logger.background.info('Successfully added/updated custom prompts in sync storage.');
     } else {
       logger.background.info('No new custom prompts needed to be added.');
     }
+
+    // Use centralized function to ensure default prompts are set correctly
+    await ensureDefaultPrompts();
+    logger.background.info('Ensured default prompts are set after initialization.');
 
     // Return true indicating success (or at least completion without error)
     return true;

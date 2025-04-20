@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'; // Added useState, useEffect
 import { Button, useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
+import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
 import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils';
 
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
@@ -37,26 +38,11 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         throw new Error("Cannot delete the only prompt for this content type while it's set as default. Create another prompt or set a different one as default first.");
       }
 
-      // If deleting the default, assign a new default if others exist
-      let defaultsNeedUpdate = false;
-      if (isCurrentDefault && otherPromptsExist) {
-        // Find the first available prompt ID that is NOT the one being deleted
-        const nextDefaultId = Object.keys(promptsForType).find(id => id !== prompt.id);
-        if (nextDefaultId) {
-          updatedDefaults[prompt.contentType] = nextDefaultId;
-          defaultsNeedUpdate = true;
-          console.info(`Reassigned default for ${prompt.contentType} to prompt ID ${nextDefaultId}.`);
-        } else {
-          // Should not happen if otherPromptsExist is true, but log defensively
-          console.warn(`Could not find a replacement default for ${prompt.contentType} despite other prompts existing.`);
-        }
-      }
-
       // Delete the prompt from the custom prompts structure
       if (customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
         delete customPromptsByType[prompt.contentType].prompts[prompt.id];
       } else {
-        // Prompt might already be gone? Log a warning but proceed with default update if needed.
+        // Prompt might already be gone? Log a warning but proceed
         console.warn(`Prompt ID ${prompt.id} not found in custom prompts during deletion.`);
       }
 
@@ -71,14 +57,11 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         }
       }
 
-      // Save updated prompts and potentially updated defaults
-      const updatePromises = [
-        chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType })
-      ];
-      if (defaultsNeedUpdate) {
-        updatePromises.push(chrome.storage.sync.set({ [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults }));
-      }
-      await Promise.all(updatePromises);
+      // Save updated prompts
+      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
+
+      // Use centralized function to ensure default prompts are set correctly
+      await ensureDefaultPrompts();
 
       success('Prompt deleted successfully');
       onDelete(); // Notify parent component

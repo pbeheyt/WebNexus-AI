@@ -6,6 +6,7 @@ import {
   CONTENT_TYPES, // Ensure CONTENT_TYPES is imported
   CONTENT_TYPE_LABELS
 } from '../../../../shared/constants';
+import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
 
 // Add initialContentType prop with a default value
 const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = CONTENT_TYPES.GENERAL }) => {
@@ -110,6 +111,9 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
 
       // Save to storage
       await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
+
+      // Ensure default prompts are set correctly
+      await ensureDefaultPrompts();
 
       // Notify parent
       onSuccess();
