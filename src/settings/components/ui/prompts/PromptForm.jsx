@@ -3,20 +3,24 @@ import React, { useState } from 'react';
 import { Button, useNotification, CustomSelect } from '../../../../components';
 import {
   STORAGE_KEYS,
-  CONTENT_TYPES,
+  CONTENT_TYPES, // Ensure CONTENT_TYPES is imported
   CONTENT_TYPE_LABELS
 } from '../../../../shared/constants';
 
-const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
+// Add initialContentType prop with a default value
+const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = CONTENT_TYPES.GENERAL }) => {
   const { success, error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
+
+  // Determine if editing before setting initial state
+  const isEditing = !!prompt;
+
+  // Use initialContentType prop when creating a new prompt
   const [formData, setFormData] = useState({
     name: prompt?.prompt?.name || '',
     content: prompt?.prompt?.content || '',
-    contentType: prompt?.contentType || CONTENT_TYPES.GENERAL
+    contentType: isEditing ? (prompt?.contentType || CONTENT_TYPES.GENERAL) : initialContentType // Use prop here
   });
-
-  const isEditing = !!prompt;
 
   // Handler for standard input/textarea changes
   const handleChange = (e) => {
@@ -61,32 +65,39 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
           preferredPromptId: null,
           settings: {}
         };
+      } else if (!customPromptsByType[contentType].prompts) {
+        // Ensure prompts object exists even if the type entry exists
+        customPromptsByType[contentType].prompts = {};
       }
+
 
       // Prepare prompt data
       const promptData = {
         name: name.trim(),
         content: content.trim(),
-        contentType: contentType,
+        contentType: contentType, // Use the potentially updated contentType from state
         updatedAt: new Date().toISOString(),
       };
 
-        if (isEditing) {
-          promptData.id = prompt.id;
-          // Ensure createdAt is preserved if it exists
-          promptData.createdAt = prompt.prompt.createdAt || promptData.updatedAt;
-          
-          // Check if the content type has changed during the edit
-          if (prompt.contentType !== formData.contentType) {
-            // If changed, remove the prompt from its original content type location
-            if (customPromptsByType[prompt.contentType]?.prompts) {
-              delete customPromptsByType[prompt.contentType].prompts[prompt.id];
-              console.log(`Removed prompt ${prompt.id} from old content type ${prompt.contentType}`);
-            }
+      if (isEditing) {
+        promptData.id = prompt.id;
+        // Ensure createdAt is preserved if it exists
+        promptData.createdAt = prompt.prompt.createdAt || promptData.updatedAt;
+
+        // Check if the content type has changed during the edit
+        if (prompt.contentType !== formData.contentType) {
+          // If changed, remove the prompt from its original content type location
+          if (customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
+            delete customPromptsByType[prompt.contentType].prompts[prompt.id];
+            console.log(`Moved prompt ${prompt.id} from old content type ${prompt.contentType} to ${formData.contentType}`);
+             // Optional: Clean up old content type if empty (consider implications)
+             // if (Object.keys(customPromptsByType[prompt.contentType]?.prompts || {}).length === 0) { ... }
           }
-          
-          customPromptsByType[contentType].prompts[prompt.id] = promptData;
-          success('Prompt updated successfully');
+        }
+
+        // Add/Update the prompt in the new/current content type location
+        customPromptsByType[contentType].prompts[prompt.id] = promptData;
+        success('Prompt updated successfully');
       } else {
         // Create new prompt
         const promptId = 'prompt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -110,7 +121,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
     }
   };
 
-  // Prepare options for CustomSelect
+  // Prepare options for CustomSelect (excluding Shared type implicitly)
   const contentTypeOptions = Object.entries(CONTENT_TYPE_LABELS).map(([type, label]) => ({
     id: type,
     name: label
@@ -132,7 +143,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess }) => {
         <div className="inline-block">
           <CustomSelect
             options={contentTypeOptions}
-            selectedValue={formData.contentType}
+            selectedValue={formData.contentType} // Reflects initial state or user changes
             onChange={handleContentTypeChange}
             placeholder="Select Content Type"
           />

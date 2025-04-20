@@ -1,16 +1,16 @@
 // src/settings/components/ui/prompts/PromptList.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNotification } from '../../../../components';
-import { STORAGE_KEYS } from '../../../../shared/constants';
+import { STORAGE_KEYS, CONTENT_TYPES } from '../../../../shared/constants'; // Import CONTENT_TYPES
 import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils.js';
 import { CustomSelect } from '../../../../components/core/CustomSelect';
 
 const PromptList = ({
-  filterValue,
-  contentTypeLabels,
+  filterValue, // This prop now defaults to 'general' from the parent
+  contentTypeLabels, // Passed from parent
   onSelectPrompt,
   selectedPromptId,
-  onFilterChange
+  onFilterChange // Handler passed from parent
 }) => {
   const { error } = useNotification();
   const [prompts, setPrompts] = useState([]);
@@ -33,11 +33,12 @@ const PromptList = ({
         Object.entries(customPromptsByType).forEach(([type, data]) => {
           if (data.prompts) {
             Object.entries(data.prompts).forEach(([id, prompt]) => {
+              // Use the passed contentTypeLabels prop for consistency
               uniquePromptsMap.set(id, {
                 id,
                 prompt,
                 contentType: type,
-                contentTypeLabel: contentTypeLabels[type] || type
+                contentTypeLabel: contentTypeLabels[type] || type // Use prop here
               });
             });
           }
@@ -55,7 +56,7 @@ const PromptList = ({
       }
     };
     loadData();
-  }, [contentTypeLabels, error]); // Keep dependencies as needed
+  }, [contentTypeLabels, error]); // Dependency on contentTypeLabels prop
 
   // Filter prompts based on the filterValue prop from the parent
   useEffect(() => {
@@ -76,31 +77,35 @@ const PromptList = ({
       }
     };
 
-    chrome.storage.onChanged.addListener(handleStorageChange);
+    if (chrome.storage && chrome.storage.onChanged) {
+        chrome.storage.onChanged.addListener(handleStorageChange);
+    }
 
     // Cleanup listener on component unmount
     return () => {
-      chrome.storage.onChanged.removeListener(handleStorageChange);
+      if (chrome.storage && chrome.storage.onChanged) {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      }
     };
   }, []); // Empty dependency array ensures this runs once on mount and cleans up on unmount
 
   // Format options for the CustomSelect component
-  const filterOptions = [
-    { id: 'all', name: 'All Content Types' },
-    ...Object.keys(contentTypeLabels).map(type => ({
+  // Keep the 'All Content Types' option available for user selection
+  const filterOptions = useMemo(() => [
+    ...Object.entries(contentTypeLabels).map(([type, label]) => ({
       id: type,
-      name: contentTypeLabels[type]
+      name: label
     }))
-  ];
+  ], [contentTypeLabels]); // Dependency on contentTypeLabels prop
 
   return (
     <>
       <div className="form-group mb-4">
         <CustomSelect
           options={filterOptions}
-          selectedValue={filterValue}
-          onChange={onFilterChange}
-          placeholder="Filter by Content Type"
+          selectedValue={filterValue} // Will receive 'general' initially from parent
+          onChange={onFilterChange} // Use handler from parent
+          placeholder="Filter by Content Type" // Placeholder remains useful
         />
       </div>
 

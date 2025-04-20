@@ -3,15 +3,23 @@ import React, { useState, useEffect } from 'react';
 import PromptList from '../ui/prompts/PromptList';
 import PromptDetail from '../ui/prompts/PromptDetail';
 import PromptForm from '../ui/prompts/PromptForm';
-import { CONTENT_TYPE_LABELS } from '../../../shared/constants';
+import { CONTENT_TYPE_LABELS, CONTENT_TYPES } from '../../../shared/constants';
 
 const PromptManagement = () => {
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [filterValue, setFilterValue] = useState('all');
+  // Initialize filterValue state to CONTENT_TYPES.GENERAL
+  const [filterValue, setFilterValue] = useState(CONTENT_TYPES.GENERAL);
+  const [initialContentTypeForNew, setInitialContentTypeForNew] = useState(CONTENT_TYPES.GENERAL); // Keep this for new prompt form
 
   const handleNewPrompt = () => {
+    // Use the current filter value if it's a specific type, otherwise default to general
+    const isValidContentType = Object.values(CONTENT_TYPES).includes(filterValue);
+    const initialType = isValidContentType
+                      ? filterValue
+                      : CONTENT_TYPES.GENERAL;
+    setInitialContentTypeForNew(initialType);
     setSelectedPrompt(null);
     setIsEditing(false);
     setIsCreating(true);
@@ -32,16 +40,23 @@ const PromptManagement = () => {
   const handleCancelForm = () => {
     setIsEditing(false);
     setIsCreating(false);
+    // Optional: Reset selectedPrompt if needed when cancelling creation/edit
+    // setSelectedPrompt(null);
   };
 
   const handlePromptSavedOrDeleted = () => {
     setSelectedPrompt(null);
     setIsEditing(false);
     setIsCreating(false);
+    // Keep the current filter value, don't reset it
   };
 
   const handleFilterChange = (selectedId) => {
     setFilterValue(selectedId);
+    // When filter changes, clear the detail view unless creating/editing
+    if (!isCreating && !isEditing) {
+      setSelectedPrompt(null);
+    }
   };
 
   // Determine what to show in the detail panel
@@ -51,6 +66,7 @@ const PromptManagement = () => {
       <PromptForm
         onCancel={handleCancelForm}
         onSuccess={handlePromptSavedOrDeleted}
+        initialContentType={initialContentTypeForNew} // Pass the initial type
       />
     );
   } else if (isEditing && selectedPrompt) {
@@ -59,6 +75,7 @@ const PromptManagement = () => {
         prompt={selectedPrompt}
         onCancel={handleCancelForm}
         onSuccess={handlePromptSavedOrDeleted}
+        // No initialContentType needed when editing
       />
     );
   } else if (selectedPrompt) {
@@ -97,11 +114,11 @@ const PromptManagement = () => {
 
         {/* Pass state and handlers down to PromptList */}
         <PromptList
-          filterValue={filterValue}
+          filterValue={filterValue} // Pass the state down ('general' initially)
           contentTypeLabels={CONTENT_TYPE_LABELS}
           onSelectPrompt={handleViewPrompt}
           selectedPromptId={selectedPrompt?.id}
-          onFilterChange={handleFilterChange}
+          onFilterChange={handleFilterChange} // Pass the handler down
         />
       </div>
 

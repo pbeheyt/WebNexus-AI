@@ -11,19 +11,13 @@ export const CONTENT_TYPES = {
 };
 
 /**
- * Shared prompt type - accessible across all content types
- */
-export const SHARED_TYPE = 'shared';
-
-/**
  * User-friendly labels for content types
  */
 export const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.GENERAL]: 'Web Content',
   [CONTENT_TYPES.REDDIT]: 'Reddit Post',
   [CONTENT_TYPES.YOUTUBE]: 'YouTube Video',
-  [CONTENT_TYPES.PDF]: 'PDF Document',
-  [SHARED_TYPE]: 'Shared Prompts'
+  [CONTENT_TYPES.PDF]: 'PDF Document'
 };
 
 /**
@@ -42,16 +36,14 @@ export const AI_PLATFORMS = {
  * Storage keys used throughout the extension
  */
 export const STORAGE_KEYS = {
-  // Content
-  CONTENT_READY: 'contentReady',
-  EXTRACTED_CONTENT: 'extractedContent',
-  SCRIPT_INJECTED: 'scriptInjected',
-  TAB_FORMATTED_CONTENT: 'tab_formatted_content',
-  FORMATTED_CONTENT_FOR_INJECTION: 'formatted_content_for_injection',
-
-  // Service
+  // Preferences
   THEME_PREFERENCE: 'theme_preference',
   TEXT_SIZE_PREFERENCE: 'text_size_preference',
+  POPUP_PLATFORM: 'popup_platform_preference',
+  SIDEBAR_PLATFORM: 'sidebar_platform_preference',
+  SIDEBAR_MODEL: 'sidebar_model_preference',
+  
+  // Settings
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
   API_CREDENTIALS: 'api_credentials',
 
@@ -59,16 +51,15 @@ export const STORAGE_KEYS = {
   PRE_PROMPT: 'prePrompt',
   CUSTOM_PROMPTS: 'custom_prompts_by_type',
   DEFAULT_PROMPTS_INIT_FLAG: 'default_prompts_initialized_v1',
+  DEFAULT_PROMPTS_BY_TYPE: 'default_prompts_by_type',
 
-  // Platform
+  // Content
+  CONTENT_READY: 'contentReady',
+  EXTRACTED_CONTENT: 'extractedContent',
+  SCRIPT_INJECTED: 'scriptInjected',
+  FORMATTED_CONTENT_FOR_INJECTION: 'formatted_content_for_injection',
   INJECTION_PLATFORM: 'injectionPlatform',
   INJECTION_PLATFORM_TAB_ID: 'injectionPlatformTabId',
-  POPUP_PLATFORM: 'popup_platform',
-  SIDEBAR_PLATFORM: 'sidebar_platform_preference',
-  SIDEBAR_MODEL: 'sidebar_model_preferences',
-  TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
-  TAB_MODEL_PREFERENCES: 'tab_model_preferences',
-  TAB_SIDEBAR_STATES: 'tab_sidebar_states',
   
   // API
   API_PROCESSING_STATUS: 'apiProcessingStatus',
@@ -78,10 +69,13 @@ export const STORAGE_KEYS = {
   STREAM_ID: 'streamId',
   
   // Sidebar
+  TAB_FORMATTED_CONTENT: 'tab_formatted_content',
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
   TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
   TAB_TOKEN_STATISTICS: 'tab_token_statistics',
-  DEFAULT_PROMPTS_BY_TYPE: 'default_prompts_by_type', // Stores { contentType: promptId } mapping
+  TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
+  TAB_MODEL_PREFERENCES: 'tab_model_preferences',
+  TAB_SIDEBAR_STATES: 'tab_sidebar_states',
 };
 
 /**
@@ -90,14 +84,6 @@ export const STORAGE_KEYS = {
 export const INTERFACE_SOURCES = {
   POPUP: 'popup',
   SIDEBAR: 'sidebar'
-};
-
-/**
- * Prompt types
- */
-export const PROMPT_TYPES = {
-  CUSTOM: 'custom',
-  QUICK: 'quick'
 };
 
 /**
