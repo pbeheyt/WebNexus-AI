@@ -81,6 +81,7 @@ export const STORAGE_KEYS = {
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
   TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
   TAB_TOKEN_STATISTICS: 'tab_token_statistics',
+  DEFAULT_PROMPTS_BY_TYPE: 'default_prompts_by_type', // Stores { contentType: promptId } mapping
 };
 
 /**

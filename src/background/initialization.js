@@ -161,6 +161,23 @@ export async function handleInstallation(details) {
   try {
     await initializeExtension();
     logger.background.info('Core extension initialization completed.');
+
+    // --- Context Menu Setup ---
+    logger.background.info('Setting up context menu...');
+    try {
+      // Remove existing menu items first to prevent duplicates on update
+      await chrome.contextMenus.removeAll();
+      // Create the new context menu item
+      await chrome.contextMenus.create({
+        id: "nexusai-quick-process",
+        title: "Nexus AI: Process with Default Prompt",
+        contexts: ["page"], // Show only when right-clicking on the page
+      });
+      logger.background.info('Context menu created successfully.');
+    } catch (menuError) {
+      logger.background.error('Failed to create context menu:', menuError);
+    }
+
   } catch(error) {
      logger.background.error('Failed to complete core extension initialization after install/update event.');
   }

@@ -15,14 +15,20 @@ const PromptList = ({
   const { error } = useNotification();
   const [prompts, setPrompts] = useState([]);
   const [filteredPrompts, setFilteredPrompts] = useState([]);
+  const [defaultPromptIds, setDefaultPromptIds] = useState({}); // State for default prompt IDs
 
-  // Load prompts when component mounts or dependencies change
+  // Load prompts and default settings when component mounts or dependencies change
   useEffect(() => {
-    const loadPrompts = async () => {
+    const loadData = async () => {
       try {
-        const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-        const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+        // Fetch both custom prompts and default settings
+        const [promptsResult, defaultsResult] = await Promise.all([
+          chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS),
+          chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE)
+        ]);
 
+        // Process custom prompts
+        const customPromptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
         const uniquePromptsMap = new Map();
         Object.entries(customPromptsByType).forEach(([type, data]) => {
           if (data.prompts) {
@@ -36,18 +42,20 @@ const PromptList = ({
             });
           }
         });
-
         const allPrompts = Array.from(uniquePromptsMap.values());
         allPrompts.sort((a, b) => new Date(b.prompt.updatedAt || 0) - new Date(a.prompt.updatedAt || 0));
         setPrompts(allPrompts);
 
+        // Process and store default prompt IDs
+        setDefaultPromptIds(defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {}); // Store the defaults object
+
       } catch (err) {
-        console.error('Error loading prompts:', err);
-        error('Failed to load prompts');
+        console.error('Error loading prompts or defaults:', err);
+        error('Failed to load prompts or default settings');
       }
     };
-    loadPrompts();
-  }, [contentTypeLabels, error]);
+    loadData();
+  }, [contentTypeLabels, error]); // Keep dependencies as needed
 
   // Filter prompts based on the filterValue prop from the parent
   useEffect(() => {
@@ -57,6 +65,24 @@ const PromptList = ({
       setFilteredPrompts(prompts.filter(item => item.contentType === filterValue));
     }
   }, [filterValue, prompts]);
+
+  // Effect to listen for changes in default prompts storage
+  useEffect(() => {
+    const handleStorageChange = (changes, area) => {
+      if (area === 'sync' && changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]) {
+        console.log('Default prompts changed, reloading defaults...');
+        const newDefaults = changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE].newValue || {};
+        setDefaultPromptIds(newDefaults);
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    // Cleanup listener on component unmount
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
+  }, []); // Empty dependency array ensures this runs once on mount and cleans up on unmount
 
   // Format options for the CustomSelect component
   const filterOptions = [
@@ -95,6 +121,10 @@ const PromptList = ({
               <div className="prompt-header flex justify-between items-center mb-3">
                 <h3 className="prompt-title font-medium text-base truncate text-theme-primary">
                   {item.prompt.name}
+                  {/* Conditionally render the Default badge */}
+                  {item.id === defaultPromptIds[item.contentType] && (
+                    <span className="default-badge ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Default</span>
+                  )}
                 </h3>
               </div>
               <small className="flex items-center text-theme-secondary text-xs">
