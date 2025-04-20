@@ -24,12 +24,12 @@ export const CONTENT_TYPE_LABELS = {
  * AI platforms supported by the extension
  */
 export const AI_PLATFORMS = {
-  CLAUDE: 'claude',
-  CHATGPT: 'chatgpt',
-  DEEPSEEK: 'deepseek',
-  MISTRAL: 'mistral',
   GEMINI: 'gemini',
-  GROK: 'grok'
+  CHATGPT: 'chatgpt',
+  CLAUDE: 'claude',
+  DEEPSEEK: 'deepseek',
+  GROK: 'grok',
+  MISTRAL: 'mistral',
 };
 
 /**

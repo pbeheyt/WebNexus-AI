@@ -4,6 +4,7 @@ import { resetState } from './core/state-manager.js';
 import logger from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { ensureDefaultPrompts } from '../shared/utils/prompt-utils.js';
+import ConfigService from '../services/ConfigService.js';
 
 /**
  * Initializes default prompts from prompt-config.json into sync storage
@@ -75,7 +76,7 @@ async function initializeDefaultPrompts() {
     }
 
     // Save the potentially updated custom prompts
-    if (promptsAdded) { // promptsAdded flag from original logic
+    if (promptsAdded) {
       await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: promptsByType });
       logger.background.info('Successfully added/updated custom prompts in sync storage.');
     } else {
@@ -159,6 +160,27 @@ export async function handleInstallation(details) {
   } else {
      logger.background.info(`Reason is "${details.reason}", skipping default prompt initialization.`);
   }
+
+  // --- Set Default Popup Platform Preference ---
+  if (details.reason === 'install') {
+    logger.background.info('Setting default popup platform preference on install...');
+    try {
+      const platformList = await ConfigService.getAllPlatformConfigs();
+
+      if (platformList && platformList.length > 0) {
+        const defaultPlatformId = platformList[0].id; // Use the ID of the first platform
+        await chrome.storage.sync.set({
+          [STORAGE_KEYS.POPUP_PLATFORM]: defaultPlatformId
+        });
+        logger.background.info(`Default popup platform set to: ${defaultPlatformId}`);
+      } else {
+        logger.background.warn('No platforms found in config, cannot set default popup platform.');
+      }
+    } catch (error) {
+      logger.background.error('Error setting default popup platform preference:', error);
+    }
+  }
+  // --- End Set Default Popup Platform Preference ---
 
   // --- Core Initialization ---
   // Run general initialization on both install and update.
