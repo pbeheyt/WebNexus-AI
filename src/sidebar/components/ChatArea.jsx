@@ -125,7 +125,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     const DEBOUNCE_DELAY = 100;
 
     // --- Function to Check Scroll Position (for Scroll Down Button) ---
-    // Add textSize to dependencies, as font size affects scrollHeight/clientHeight
     const checkScrollPosition = useCallback(() => {
          const scrollContainer = scrollContainerRef.current;
          // Ensure state is updated even if we return early
@@ -150,20 +149,17 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         // Update state only if the value changes
         setShowScrollDownButton(prev => {
             if (prev !== shouldShow) {
-                 logger.sidebar.debug(`[ChatArea checkScrollPosition] Setting showScrollDownButton to: ${shouldShow}`);
                  return shouldShow;
             }
             return prev;
         });
-    }, [messages, showScrollDownButton, SCROLL_THRESHOLD, textSize]); // Add textSize dependency
+    }, [messages, showScrollDownButton, SCROLL_THRESHOLD, textSize]);
 
-    // --- Scrolling Effect (Revised) ---
+    // --- Scrolling Effect ---
     // Add textSize to dependencies
     useLayoutEffect(() => {
-        logger.sidebar.debug(`[ChatArea Scrolling Effect] Running (textSize: ${textSize})...`);
         if (messages.length === 0 || !scrollContainerRef.current) {
             setShowScrollDownButton(false);
-            logger.sidebar.debug('[ChatArea Scrolling Effect] No messages or scroll container, hiding button.');
             return;
         }
 
@@ -176,10 +172,9 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                              (lastMessage.role === MESSAGE_ROLES.ASSISTANT || lastMessage.role === MESSAGE_ROLES.SYSTEM) &&
                              lastMessage.isStreaming === true; // Check initial streaming state
 
-        logger.sidebar.debug(`[ChatArea Scrolling Effect] userJustSent: ${userJustSent}, lastMsgRole: ${lastMessage?.role}, secondLastMsgRole: ${secondLastMessage?.role}, isStreaming: ${lastMessage?.isStreaming}`);
 
         let scrollTargetTop = null;
-        let scrollBehavior = 'smooth'; // Default to smooth
+        let scrollBehavior = 'smooth';
 
         if (userJustSent && secondLastMessage.id) {
             // --- Scenario: Assistant/System just started responding ---
@@ -192,7 +187,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                 scrollTargetTop = scrollContainer.scrollTop + elementRect.top - containerRect.top;
                 // Optional: Add a small pixel offset if needed, e.g., scrollTargetTop -= 5;
                 scrollBehavior = 'smooth'; // Or 'auto' for instant jump
-                logger.sidebar.debug(`[ChatArea Scrolling Effect] Scrolling to user message top. Target scrollTop: ${scrollTargetTop}`);
             } else {
                  logger.sidebar.warn(`[ChatArea Scrolling Effect] User message element with ID ${secondLastMessage.id} not found for scrolling.`);
                  // Fallback: scroll to bottom if element not found
@@ -208,10 +202,8 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                  // Only scroll to bottom if near bottom AND the last message isn't actively streaming
                  scrollTargetTop = scrollContainer.scrollHeight; // Target the absolute bottom
                  scrollBehavior = 'smooth';
-                 logger.sidebar.debug('[ChatArea Scrolling Effect] Near bottom and not streaming, scrolling to end.');
              } else {
                  // User is scrolled up, or assistant is streaming and user isn't at the bottom. Don't auto-scroll.
-                 logger.sidebar.debug('[ChatArea Scrolling Effect] Not near bottom or streaming, no auto-scroll.');
                  scrollTargetTop = null; // Explicitly don't scroll
              }
         }
@@ -232,11 +224,10 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         // Always check button visibility after determining scroll behavior
         checkScrollPosition();
 
-    }, [messages, textSize, checkScrollPosition]); // Add textSize and checkScrollPosition dependencies
+    }, [messages, textSize, checkScrollPosition]);
 
 
     // --- Layout Effect for Preceding User Message Height ---
-    // Add textSize to dependencies
     useLayoutEffect(() => {
         const isTargetScenario =
             messages.length >= 2 &&
@@ -248,19 +239,16 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             // Rerun measurement if height OR textSize changes
             // Only update state if the height actually changed to avoid potential loops if textSize change didn't affect height
             if (height !== precedingUserMessageHeight) {
-                logger.sidebar.debug(`[ChatArea Height Effect] Measured preceding user message height: ${height} (textSize: ${textSize})`);
                 setPrecedingUserMessageHeight(height);
             }
         } else {
             // Reset height if the scenario doesn't apply or ref is not set
             if (precedingUserMessageHeight !== 0) {
-                logger.sidebar.debug('[ChatArea Height Effect] Resetting preceding user message height to 0.');
                 setPrecedingUserMessageHeight(0);
             }
         }
         // Dependencies: messages array content, the current measured height state, and textSize
-    }, [messages, precedingUserMessageHeight, textSize]); // Add textSize dependency
-
+    }, [messages, precedingUserMessageHeight, textSize]);
 
     // --- Manual Scroll To Bottom Function ---
     const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -278,7 +266,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     // --- Debounced Scroll Position Check ---
      const debouncedCheckScrollPosition = useMemo(
         () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
-        [checkScrollPosition] // checkScrollPosition now depends on textSize
+        [checkScrollPosition]
     );
 
     // --- Effect for Manual Scroll Listener ---
@@ -286,8 +274,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
          const scrollContainer = scrollContainerRef.current;
         if (scrollContainer) {
             scrollContainer.addEventListener('scroll', debouncedCheckScrollPosition, { passive: true });
-            const timerId = setTimeout(checkScrollPosition, 100); // Check initial position
-
+            const timerId = setTimeout(checkScrollPosition, 100);
             return () => {
                 clearTimeout(timerId);
                 logger.sidebar.info('[ChatArea] Removing scroll listener for manual scroll.');
@@ -491,7 +478,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             >
                 {/* Conditional Content Inside Scrollable Container */}
                 {messages.length === 0 ? (
-                    renderInitialView() // Keep initial view logic
+                    renderInitialView()
                 ) : (
                     <>
                         {/* Render Messages */}
@@ -523,8 +510,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                     minHeight: `max(2rem, ${baseCalcHeight})`, // Use a minimum like 2rem
                                     transition: 'min-height 0.2s ease-out'
                                 };
-                                // Uncomment for debugging height calculation:
-                                // logger.sidebar.debug(`[ChatArea Render] Applying min-height to last message ${message.id}: ${dynamicStyle.minHeight} (Offset: ${heightOffset}, UserH: ${precedingUserMessageHeight}, OtherH: ${otherUIHeight}, TextSize: ${textSize})`);
                             }
 
                             return (

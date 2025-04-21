@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSidebarPlatform } from '../contexts/platform';
 import { useSidebarChat } from './contexts/SidebarChatContext';
 import { useContent } from '../contexts/ContentContext';
-import { useUI } from '../contexts/UIContext'; // Import useUI
+import { useUI } from '../contexts/UIContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
@@ -14,7 +14,7 @@ export default function SidebarApp() {
   const { tabId, setTabId } = useSidebarPlatform();
   const { resetCurrentTabData } = useSidebarChat();
   const { updateContentContext } = useContent();
-  const { textSize } = useUI(); // Get textSize from UIContext
+  const { textSize } = useUI();
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
@@ -23,7 +23,7 @@ export default function SidebarApp() {
   const appHeaderRef = useRef(null);
   const collapsibleHeaderRef = useRef(null);
   const userInputRef = useRef(null);
-  const [otherUIHeight, setOtherUIHeight] = useState(160); // Default guess
+  const [otherUIHeight, setOtherUIHeight] = useState(160);
 
   // --- Effect to determine Tab ID ---
   useEffect(() => {
@@ -100,7 +100,6 @@ export default function SidebarApp() {
     }
 
     if (portRef.current) {
-        logger.sidebar.debug(`[SidebarApp] Port already exists for tab ${tabId}. Skipping reconnection.`);
         return;
     }
 
@@ -110,10 +109,8 @@ export default function SidebarApp() {
     }
 
     const portName = `sidepanel-connect-${tabId}`;
-    logger.sidebar.debug(`[SidebarApp] Attempting to connect to background with name: ${portName}`);
     try {
       portRef.current = chrome.runtime.connect({ name: portName });
-      logger.sidebar.debug(`[SidebarApp] Connection established for tab ${tabId}`, portRef.current);
 
       portRef.current.onDisconnect.addListener(() => {
         logger.sidebar.info(`[SidebarApp] Port disconnected for tab ${tabId}.`);
@@ -130,7 +127,6 @@ export default function SidebarApp() {
 
     return () => {
       if (portRef.current) {
-        logger.sidebar.debug(`[SidebarApp] Disconnecting port for tab ${tabId} due to cleanup.`);
         portRef.current.disconnect();
         portRef.current = null;
       }
@@ -145,8 +141,7 @@ export default function SidebarApp() {
     const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
     const buffer = 2;
     setOtherUIHeight(totalHeight + buffer);
-    logger.sidebar.debug(`Calculated otherUIHeight: ${totalHeight + buffer} (AppH: ${appHeaderHeight}, CollapsibleH: ${collapsibleHeight}, InputH: ${inputHeight}, Expanded: ${headerExpanded}, TextSize: ${textSize})`); // Log textSize
-  }, [headerExpanded, textSize]); // Add textSize dependency here
+  }, [headerExpanded, textSize]);
 
   // Effect for ResizeObserver and initial calculation
   useEffect(() => {
@@ -159,28 +154,23 @@ export default function SidebarApp() {
     ].filter(Boolean);
 
     if (elementsToObserve.length === 0) {
-        logger.sidebar.debug("ResizeObserver: No elements to observe yet.");
         return () => clearTimeout(initialCalcTimer);
     }
 
-    logger.sidebar.debug("ResizeObserver: Setting up observer for elements:", elementsToObserve);
     const resizeObserver = new ResizeObserver((entries) => {
-        logger.sidebar.debug("ResizeObserver triggered", entries);
-        calculateAndSetHeight(); // This will now use the latest textSize due to useCallback dependency
+        calculateAndSetHeight(); // This use the latest textSize due to useCallback dependency
     });
 
     elementsToObserve.forEach(el => resizeObserver.observe(el));
 
     return () => {
       clearTimeout(initialCalcTimer);
-      logger.sidebar.debug("ResizeObserver: Disconnecting observer.");
       resizeObserver.disconnect();
     };
-  }, [calculateAndSetHeight]); // Dependency is calculateAndSetHeight, which now depends on textSize
+  }, [calculateAndSetHeight]); // Dependency is calculateAndSetHeight, which depends on textSize
 
   // Effect to recalculate specifically when headerExpanded changes
   useEffect(() => {
-      logger.sidebar.debug(`Header expanded state changed to: ${headerExpanded}. Recalculating height.`);
       calculateAndSetHeight();
   }, [headerExpanded, calculateAndSetHeight]);
 
