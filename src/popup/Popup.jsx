@@ -126,26 +126,14 @@ export function Popup() {
 
       updateStatus(`Processing with ${selectedPlatformId}...`, true);
 
-      const result = await processContent({
+      processContent({
         platformId: selectedPlatformId,
         promptContent: promptContent,
         useApi: false // Popup uses web UI interaction
       });
 
-      if (result.success) {
-        updateStatus('Opening AI platform...', true);
-        // Popup might close automatically if the platform opens in a new tab,
-        // otherwise, it remains open.
-      } else {
-        // Check for specific non-injectable error code
-        if (result.code === 'EXTRACTION_NOT_SUPPORTED') {
-          updateStatus(result.error, false); // Use the specific message from background
-        } else {
-          // Use updateStatus for generic error feedback
-          updateStatus(`Error: ${result.error || 'Processing failed'}`, false);
-        }
-        setIsProcessing(false);
-      }
+      updateStatus('Processing initiated... Opening platform tab.', true);
+      window.close();
     } catch (error) {
       console.error('Process error:', error);
       // Use updateStatus for error feedback

@@ -117,11 +117,13 @@ export async function handleProcessContentRequest(message, sendResponse) {
     });
 
     // Call appropriate processing function based on API flag
-    const result = useApi
-      ? await processContentViaApi(message)
-      : await processContent(message);
-
-    sendResponse(result);
+    if (useApi) {
+      const result = await processContentViaApi(message);
+      sendResponse(result);
+    } else {
+      await processContent(message);
+      // No response for non-API case (fire-and-forget)
+    }
   } catch (error) {
     logger.background.error('Error handling process content request:', error);
     sendResponse({
