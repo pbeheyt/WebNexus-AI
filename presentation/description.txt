@@ -1,6 +1,6 @@
 # Nexus AI: Web Content Assistant (ChatGPT, Claude, Gemini & More)
 
-**Interact with, analyze, and summarize web pages, YouTube videos, PDFs, and Reddit posts using ChatGPT, Claude, Gemini and other AI platforms. Choose between direct API integration via side panel or seamless transfer to web UIs without copying and pasting**
+**Interact with, analyze, and summarize web pages, YouTube videos, PDFs, and Reddit posts using ChatGPT, Claude, Gemini and other AI platforms. Choose between direct API integration via side panel or seamless transfer to web UIs without copying and pasting.**
 
 ---
 
@@ -11,7 +11,7 @@ Nexus AI connects you to AI platforms via their Web UIs or APIs (all available m
 *   ChatGPT (OpenAI)
 *   Claude (Anthropic)
 *   Gemini (Google)
-*   Mistral AI
+*   Mistral
 *   DeepSeek
 *   Grok (xAI)
 
