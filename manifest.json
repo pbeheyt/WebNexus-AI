@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Nexus AI: Web Content Assistant",
+  "name": "AI Insightr: Web Content Assistant",
   "description": "Interact with, analyze, and summarize web pages, YouTube videos, PDFs, and Reddit posts using ChatGPT, Claude, Gemini and other AI platforms. Choose between direct API integration via side panel or seamless transfer to web UIs without copying and pasting",
   "version": "1.0.0",
   "permissions": [

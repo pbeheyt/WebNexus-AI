@@ -1,4 +1,4 @@
-# Nexus AI: Web Content Assistant (ChatGPT, Claude, Gemini & More)
+# AI Insightr: Web Content Assistant (ChatGPT, Claude, Gemini & More)
 
 **Interact with, analyze, and summarize web pages, YouTube videos, PDFs, and Reddit posts using ChatGPT, Claude, Gemini and other AI platforms. Choose between direct API integration via side panel or seamless transfer to web UIs without copying and pasting.**
 
@@ -6,14 +6,14 @@
 
 ## Your AI Hub
 
-Nexus AI connects you to AI platforms via their Web UIs or APIs (all available models, including the newest releases):
+AI Insightr connects you to AI platforms via their Web UIs or APIs (all available models, including the newest releases):
 
+*   Gemini (Google)
 *   ChatGPT (OpenAI)
 *   Claude (Anthropic)
-*   Gemini (Google)
-*   Mistral
 *   DeepSeek
 *   Grok (xAI)
+*   Mistral
 
 ---
 
@@ -31,7 +31,7 @@ Nexus AI connects you to AI platforms via their Web UIs or APIs (all available m
 ## Getting Started
 
 1.  **Install** the extension.
-2.  **Pin the extension** to your Chrome toolbar for easy access (Click the puzzle piece icon in Chrome, find Nexus AI, and click the pin icon).
+2.  **Pin the extension** to your Chrome toolbar for easy access (Click the puzzle piece icon in Chrome, find AI Insightr, and click the pin icon).
 
 ---
 
@@ -42,18 +42,18 @@ Choose the interaction mode that best suits your needs:
 *   **Best for:** Quickly summarizing or analyzing content using the official AI websites without needing API keys.
 *   **How it works:**
     1.  Navigate to the web page, PDF, YouTube video, or Reddit post you want to analyze.
-    2.  Click the **Nexus AI extension icon** in your toolbar to open the popup.
+    2.  Click the **AI Insightr extension icon** in your toolbar to open the popup.
     3.  **Select an AI platform** (e.g., ChatGPT, Claude).
         *   *Note: Ensure you are logged into the selected platform's website in your browser.*
     4.  **Type a custom prompt** in the input box, or select a pre-saved prompt using the 'P' button.
     5.  Press **Enter** to send.
-    6.  Nexus AI extracts the page content and opens the platform's official website in a new tab, automatically pasting your prompt and the extracted content.
+    6.  AI Insightr extracts the page content and opens the platform's official website in a new tab, automatically pasting your prompt and the extracted content.
 
 **2. Direct Chat via Side Panel (Requires API Keys)**
 
 *   **Best for:** In-depth conversations about page content, maintaining chat history per tab, using specific models, and tracking usage.
 *   **Setup (One-time per platform):**
-    1.  Click the Nexus AI extension icon, then click the **Side Panel icon** in the popup header to open the Side Panel.
+    1.  Click the AI Insightr extension icon, then click the **Side Panel icon** in the popup header to open the Side Panel.
     2.  Open the extension's **Settings** page (via the gear icon in the popup or by right-clicking the extension icon > Options).
     3.  Navigate to the **API Settings** tab.
     4.  Select the AI platform you want to configure (e.g., OpenAI for ChatGPT).
@@ -88,4 +88,4 @@ Choose the interaction mode that best suits your needs:
 
 ---
 
-Nexus AI is a versatile tool for anyone looking to leverage AI for deeper content understanding and interaction. Install now and enhance your browsing experience!
+AI Insightr is a versatile tool for anyone looking to leverage AI for deeper content understanding and interaction. Install now and enhance your browsing experience!
