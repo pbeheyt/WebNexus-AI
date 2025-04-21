@@ -241,13 +241,16 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         const scrollFromBottom = scrollHeight - scrollTop - clientHeight;
         const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 5;
 
-        const lastMsg = messages[messages.length - 1];
-        const isLastMsgStreaming = lastMsg &&
-                                   (lastMsg.role === MESSAGE_ROLES.ASSISTANT || lastMsg.role === MESSAGE_ROLES.SYSTEM) && // Check for ASSISTANT OR SYSTEM
-                                   lastMsg.isStreaming;
+        // --- Start of new code block ---
+        const lastMsg = messages[messages.length - 1]; // Get the last message
+        const forceHideButton = lastMsg &&
+                                (lastMsg.role === MESSAGE_ROLES.ASSISTANT || lastMsg.role === MESSAGE_ROLES.SYSTEM) && // Check for ASSISTANT OR SYSTEM
+                                lastMsg.isStreaming === true &&
+                                (!lastMsg.content || lastMsg.content.trim() === '');
+        // --- End of new code block ---
 
-        // Show button if NOT near bottom.
-        const shouldShow = !isNearBottom;
+        // Show button if NOT near bottom AND not forced hidden.
+        const shouldShow = !isNearBottom && !forceHideButton; // Modified line
 
         // Update state only if the value changes
         setShowScrollDownButton(prev => {
@@ -501,8 +504,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                             if (isLastMessage) {
                                 // Simplified base calculation string
                                 const baseCalcHeight = `calc(100vh - ${otherUIHeight}px - ${precedingUserMessageHeight}px`;
-
-                                // Removed offsetRem variable and conditional logic
 
                                 if (isTargetScenario && precedingUserMessageHeight > 0) {
                                     // Scenario: Last is assistant/system, previous is user, and user height is measured
