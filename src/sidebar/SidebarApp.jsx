@@ -3,16 +3,18 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSidebarPlatform } from '../contexts/platform';
 import { useSidebarChat } from './contexts/SidebarChatContext';
 import { useContent } from '../contexts/ContentContext';
+import { useUI } from '../contexts/UIContext'; // Import useUI
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
 import { AppHeader } from '../components';
-import logger from '../shared/logger'; // Import logger
+import logger from '../shared/logger';
 
 export default function SidebarApp() {
   const { tabId, setTabId } = useSidebarPlatform();
-  const { resetCurrentTabData } = useSidebarChat(); // Removed clearFormattedContentForTab as it's not used directly here
+  const { resetCurrentTabData } = useSidebarChat();
   const { updateContentContext } = useContent();
+  const { textSize } = useUI(); // Get textSize from UIContext
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
@@ -88,7 +90,7 @@ export default function SidebarApp() {
         logger.sidebar.info(`Removed runtime message listener for pageNavigated events (tabId: ${tabId})`);
       }
     };
-  }, [isReady, tabId, updateContentContext]); // Dependency includes isReady and tabId
+  }, [isReady, tabId, updateContentContext]);
 
   // --- Effect for Background Connection Port ---
   useEffect(() => {
@@ -138,26 +140,23 @@ export default function SidebarApp() {
   // --- Height Calculation Logic ---
   const calculateAndSetHeight = useCallback(() => {
     const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
-    // Only include collapsible header height if it's actually expanded
     const collapsibleHeight = headerExpanded ? (collapsibleHeaderRef.current?.offsetHeight || 0) : 0;
     const inputHeight = userInputRef.current?.offsetHeight || 0;
     const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
-    // Add a small buffer (e.g., 1-2px)
     const buffer = 2;
     setOtherUIHeight(totalHeight + buffer);
-    logger.sidebar.debug(`Calculated otherUIHeight: ${totalHeight + buffer} (AppH: ${appHeaderHeight}, CollapsibleH: ${collapsibleHeight}, InputH: ${inputHeight}, Expanded: ${headerExpanded})`);
-  }, [headerExpanded]); // Dependency on headerExpanded
+    logger.sidebar.debug(`Calculated otherUIHeight: ${totalHeight + buffer} (AppH: ${appHeaderHeight}, CollapsibleH: ${collapsibleHeight}, InputH: ${inputHeight}, Expanded: ${headerExpanded}, TextSize: ${textSize})`); // Log textSize
+  }, [headerExpanded, textSize]); // Add textSize dependency here
 
   // Effect for ResizeObserver and initial calculation
   useEffect(() => {
-    // Run calculation once refs might be available
-    const initialCalcTimer = setTimeout(calculateAndSetHeight, 50); // Small delay
+    const initialCalcTimer = setTimeout(calculateAndSetHeight, 50);
 
     const elementsToObserve = [
       appHeaderRef.current,
       collapsibleHeaderRef.current,
       userInputRef.current,
-    ].filter(Boolean); // Filter out null refs
+    ].filter(Boolean);
 
     if (elementsToObserve.length === 0) {
         logger.sidebar.debug("ResizeObserver: No elements to observe yet.");
@@ -167,28 +166,28 @@ export default function SidebarApp() {
     logger.sidebar.debug("ResizeObserver: Setting up observer for elements:", elementsToObserve);
     const resizeObserver = new ResizeObserver((entries) => {
         logger.sidebar.debug("ResizeObserver triggered", entries);
-        calculateAndSetHeight();
+        calculateAndSetHeight(); // This will now use the latest textSize due to useCallback dependency
     });
 
     elementsToObserve.forEach(el => resizeObserver.observe(el));
 
-    // Cleanup
     return () => {
       clearTimeout(initialCalcTimer);
       logger.sidebar.debug("ResizeObserver: Disconnecting observer.");
       resizeObserver.disconnect();
     };
-  }, [calculateAndSetHeight]); // Rerun if calculation logic changes
+  }, [calculateAndSetHeight]); // Dependency is calculateAndSetHeight, which now depends on textSize
 
   // Effect to recalculate specifically when headerExpanded changes
   useEffect(() => {
       logger.sidebar.debug(`Header expanded state changed to: ${headerExpanded}. Recalculating height.`);
       calculateAndSetHeight();
-  }, [headerExpanded, calculateAndSetHeight]); // Recalculate when headerExpanded changes
+  }, [headerExpanded, calculateAndSetHeight]);
 
   // --- Render Logic ---
+  // Apply textSize class to the root div
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary">
+    <div className={`flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary ${textSize ? `text-${textSize}` : 'text-sm'}`}>
       {!isReady ? (
         // ----- Loading State -----
         <div className="flex h-full w-full items-center justify-center" aria-live="polite" aria-busy="true">
@@ -208,7 +207,7 @@ export default function SidebarApp() {
               onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
               showExpandToggle={true}
               showBorder={true}
-              className='px-5 py-2' // Removed flex-shrink-0 here as parent div handles it
+              className='px-5 py-2'
             />
           </div>
 
@@ -220,7 +219,7 @@ export default function SidebarApp() {
               }`}
               aria-hidden={!headerExpanded}
             >
-              {/* Render Header content only when expanded to ensure correct height calc */}
+              {/* Render Header content only when expanded */}
               {headerExpanded && <Header />}
             </div>
           </div>
@@ -230,7 +229,7 @@ export default function SidebarApp() {
 
           {/* User input at the bottom - Wrap to attach ref */}
           <div ref={userInputRef} className="flex-shrink-0 relative z-10 border-t border-theme">
-            <UserInput className="" /> {/* Removed flex-shrink-0 here */}
+            <UserInput className="" />
           </div>
         </>
       ) : (
