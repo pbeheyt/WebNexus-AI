@@ -175,12 +175,11 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     useLayoutEffect(() => {
         // Early exit if no messages or container ref not ready
         if (messages.length === 0 || !scrollContainerRef.current) {
-            // Ensure button is hidden if there are no messages
             if (showScrollDownButton) setShowScrollDownButton(false);
             return;
         }
 
-        const scrollContainer = scrollContainerRef.current; // Get container ref
+        const scrollContainer = scrollContainerRef.current;
 
         // --- Condition 1: Reset flag when assistant finishes ---
         const assistantJustFinished = lastMessage &&
@@ -204,35 +203,35 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                     lastMessage.isStreaming === true;
 
         if (assistantJustStarted && !initialScrollCompletedForResponse) {
-            const userMessageElement = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
+            const userMessageElementId = secondLastMessage?.id; // Get the ID
 
-            if (userMessageElement) {
+            if (userMessageElementId) {
+                // Outer rAF (implicit in useLayoutEffect or explicit if needed)
                 requestAnimationFrame(() => {
-                    // Check refs again inside rAF callback
-                    const currentContainer = scrollContainerRef.current;
-                    const currentElement = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
+                    // Nested rAF for scroll calculation and execution
+                    requestAnimationFrame(() => {
+                        const currentContainer = scrollContainerRef.current;
+                        const currentElement = document.getElementById(userMessageElementId); // Get element by ID inside nested rAF
 
-                    if (currentContainer && currentElement) {
-                        const containerRect = currentContainer.getBoundingClientRect();
-                        const elementRect = currentElement.getBoundingClientRect();
-                        // Calculate the target scroll position based on current scroll and element position
-                        const scrollTargetTop = currentContainer.scrollTop + elementRect.top - containerRect.top;
+                        if (currentContainer && currentElement) {
+                            const containerRect = currentContainer.getBoundingClientRect();
+                            const elementRect = currentElement.getBoundingClientRect();
+                            const scrollTargetTop = currentContainer.scrollTop + elementRect.top - containerRect.top;
 
-                        currentContainer.scrollTo({
-                            top: scrollTargetTop,
-                            behavior: 'smooth' // Or 'auto' for instant jump
-                        });
-                        setInitialScrollCompletedForResponse(true); // Mark as completed after scroll starts
-                    } else {
-                         logger.sidebar.warn(`[ChatArea Scrolling Effect] Element or container not found inside rAF for ID ${secondLastMessage?.id}.`);
-                         setInitialScrollCompletedForResponse(true); // Still mark as complete
-                    }
-                });
+                            currentContainer.scrollTo({
+                                top: scrollTargetTop,
+                                behavior: 'smooth' // Keep smooth scrolling
+                            });
+                            setInitialScrollCompletedForResponse(true); // Mark as completed after scroll starts
+                        } else {
+                            logger.sidebar.warn(`[ChatArea Scrolling Effect] Element or container not found inside *nested* rAF for ID ${userMessageElementId}.`);
+                            setInitialScrollCompletedForResponse(true); // Still mark as complete
+                        }
+                    }); // End nested rAF
+                }); // End outer rAF
             } else {
-                 if (secondLastMessage?.id) { // Only warn if ID was expected
-                    logger.sidebar.warn(`[ChatArea Scrolling Effect] User message element with ID ${secondLastMessage.id} not found. Skipping initial scroll.`);
-                 }
-                 setInitialScrollCompletedForResponse(true); // Still mark as complete
+                logger.sidebar.warn(`[ChatArea Scrolling Effect] User message element ID not found. Skipping initial scroll.`);
+                setInitialScrollCompletedForResponse(true); // Still mark as complete
             }
         }
 
@@ -240,15 +239,15 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         checkScrollPosition();
 
     }, [
-        messages.length, // Basic trigger for message changes
-        lastMessage?.id, // Detects if the actual last message object changes
-        lastMessage?.role, // Detects role change (user->assistant)
-        lastMessage?.isStreaming, // Detects streaming start/end
-        secondLastMessage?.id, // Detects if the second last message changes
-        secondLastMessage?.role, // Detects if second last message role changes
-        textSize, // Affects layout
-        checkScrollPosition, // Callback dependency
-        initialScrollCompletedForResponse // State dependency
+        messages.length,
+        lastMessage?.id,
+        lastMessage?.role,
+        lastMessage?.isStreaming,
+        secondLastMessage?.id,
+        secondLastMessage?.role,
+        textSize,
+        checkScrollPosition,
+        initialScrollCompletedForResponse
     ]);
 
 
@@ -259,22 +258,19 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             (messages[messages.length - 1].role === MESSAGE_ROLES.ASSISTANT || messages[messages.length - 1].role === MESSAGE_ROLES.SYSTEM) &&
             messages[messages.length - 2].role === MESSAGE_ROLES.USER;
 
-        // Cancel previous frame request if any
         if (rafIdHeightCalc.current) {
              cancelAnimationFrame(rafIdHeightCalc.current);
         }
 
         if (isTargetScenario && precedingUserMessageRef.current) {
-            // Wrap the height reading in requestAnimationFrame
             rafIdHeightCalc.current = requestAnimationFrame(() => {
-                // Check ref again inside the callback
                 if (precedingUserMessageRef.current) {
                     const height = precedingUserMessageRef.current.offsetHeight;
                     if (height !== precedingUserMessageHeight) {
                         setPrecedingUserMessageHeight(height);
                     }
                 }
-                rafIdHeightCalc.current = null; // Reset ref after execution
+                rafIdHeightCalc.current = null;
             });
         } else {
             if (precedingUserMessageHeight !== 0) {
@@ -282,14 +278,13 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             }
         }
 
-        // Cleanup function to cancel frame request on unmount or dependency change
         return () => {
             if (rafIdHeightCalc.current) {
                 cancelAnimationFrame(rafIdHeightCalc.current);
                 rafIdHeightCalc.current = null;
             }
         };
-    }, [messages, precedingUserMessageHeight, textSize]); // Keep dependencies
+    }, [messages, precedingUserMessageHeight, textSize]);
 
     // --- Manual Scroll To Bottom Function ---
     const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -331,10 +326,9 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
          if (streaming && content) {
              checkScrollPosition();
          }
-         if (!streaming && messages.length > 0) { // Check also when streaming finishes
+         if (!streaming && messages.length > 0) {
              checkScrollPosition();
          }
-    // Depend on the specific properties read from lastMessage
     }, [lastMessage?.content, lastMessage?.isStreaming, checkScrollPosition, messages.length]);
 
     // --- Open API Settings ---
@@ -523,14 +517,12 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                             const isLastMessageMap = index === messages.length - 1;
                             const isSecondLastMessageMap = index === messages.length - 2;
 
-                            // Condition: Last message is Assistant/System, second-last is User (for dynamic style)
                             const isTargetScenarioForHeight =
                                 isLastMessageMap &&
                                 index > 0 &&
                                 (message.role === MESSAGE_ROLES.ASSISTANT || message.role === MESSAGE_ROLES.SYSTEM) &&
                                 messages[index - 1].role === MESSAGE_ROLES.USER;
 
-                            // Condition: Second-last message is User, and the last is Assistant/System (for ref assignment)
                             const isTargetScenarioForRef =
                                 isSecondLastMessageMap &&
                                 messages.length >= 2 &&
@@ -544,13 +536,12 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                 messageRef = precedingUserMessageRef;
                             }
 
-                            // Use the JS Height Calculation from the previous step
                             if (isTargetScenarioForHeight && precedingUserMessageHeight > 0) {
                                 const viewportHeight = window.innerHeight;
                                 const offset = otherUIHeight + precedingUserMessageHeight;
                                 const calculatedHeight = viewportHeight - Math.max(0, offset) + 1;
 
-                                let rootFontSize = 16; // Default fallback
+                                let rootFontSize = 16;
                                 try {
                                     rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
                                     if (isNaN(rootFontSize) || rootFontSize <= 0) {
@@ -559,7 +550,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                     }
                                 } catch (e) {
                                     logger.sidebar.error('Error getting root font size:', e);
-                                    rootFontSize = 16; // Fallback on error
+                                    rootFontSize = 16;
                                 }
                                 const minPixelHeight = MIN_ASSISTANT_BUBBLE_HEIGHT_REM * rootFontSize;
 
@@ -579,7 +570,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                     isStreaming={message.isStreaming}
                                     model={message.model}
                                     platformIconUrl={message.platformIconUrl}
-                                    style={dynamicStyle} // Apply the calculated style
+                                    style={dynamicStyle}
                                 />
                             );
                         })}
