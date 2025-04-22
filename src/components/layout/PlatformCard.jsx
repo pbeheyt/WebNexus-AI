@@ -21,7 +21,10 @@ export function PlatformCard({
       ref={cardRef}
       className={`
         flex flex-col items-center justify-center p-2 rounded-md transition-all duration-200 select-none cursor-pointer
-        ${selected ? 'bg-primary/10 dark:bg-primary/20' : 'hover:bg-theme-hover'}
+        ${selected
+          ? 'bg-gray-200 dark:bg-gray-800'
+          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+        }
       `}
       onClick={handleClick}
     >
