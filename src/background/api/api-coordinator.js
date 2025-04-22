@@ -114,9 +114,11 @@ export async function handleApiModelRequest(requestType, message, sendResponse) 
 /**
  * Process content via API with streaming support
  * @param {Object} params - Parameters for content processing
- * @returns {Promise<Object>} Result information
+ * @returns {Promise<Object>} Result information (initial setup result)
  */
 export async function processContentViaApi(params) {
+  let streamId; // Declare streamId in the outer scope
+
   const {
     tabId,
     url,
@@ -129,224 +131,222 @@ export async function processContentViaApi(params) {
     conversationHistory = []
   } = params;
 
-  if (!platformId || !modelId) {
-    const missing = [];
-    if (!platformId) missing.push('Platform ID');
-    if (!modelId) missing.push('Model ID');
-    throw new Error(`${missing.join(' and ')} are required for API processing`);
-  }
-
+  // Outer try-catch for setup errors
   try {
-    logger.background.info(`Starting API-based content processing from ${source}`, {
+    // --- Start of Synchronous Setup ---
+    if (!platformId || !modelId) {
+      const missing = [];
+      if (!platformId) missing.push('Platform ID');
+      if (!modelId) missing.push('Model ID');
+      throw new Error(`${missing.join(' and ')} are required for API processing`);
+    }
+
+    logger.background.info(`Starting API-based content processing setup from ${source}`, {
       tabId, url, promptId, platformId, modelId, streaming
     });
 
-    let extractedContent = null;
-    let newlyFormattedContent = null; // To hold content formatted in this run
     const contentType = determineContentType(url);
-    const skipExtractionRequested = params.skipInitialExtraction === true;
+    const isPageInjectable = isInjectablePage(url); // Determine injectability early
     const isFirstUserMessage = conversationHistory.length === 0;
-    logger.background.info(`Is this the first user message (history empty)? ${isFirstUserMessage}`);
+    const skipInitialExtractionRequested = params.skipInitialExtraction === true;
 
-    // 1. Decide whether to extract content based on existence, user request, and message history
-    const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
-    // Extraction only happens on the first message, if not skipped, if content doesn't already exist, and if page is injectable.
-    const canInject = isInjectablePage(url); // Check if page allows injection
-    const shouldExtract = isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && canInject;
-
-    // Log if extraction is skipped specifically due to non-injectable URL on first message
-    if (isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && !canInject) {
-        logger.background.info(`First message: Skipping extraction for tab ${tabId} because URL (${url}) is not injectable.`);
-        // Return immediately indicating context was skipped, preventing further processing for this message
-        return {
-          success: true, // The operation itself didn't fail, it just skipped context
-          skippedContext: true,
-          reason: 'Content extraction not supported on this page type.',
-          contentType: contentType // Pass content type back if needed by UI
-        };
-    }
-
-    if (shouldExtract) {
-        logger.background.info(`First message: Extraction will proceed for tab ${tabId} (no existing content, not skipped).`);
-        // Reset previous extraction state (ensure this happens ONLY if extracting)
-        await resetExtractionState();
-
-        // Extract content
-        logger.background.info(`Content type determined: ${contentType}`);
-        await extractContent(tabId, url); // url should be available here
-        extractedContent = await getExtractedContent(); // Assign to the outer scope variable
-
-        if (!extractedContent) {
-            logger.background.warn(`Failed to extract content for tab ${tabId}, proceeding without it.`);
-            newlyFormattedContent = null; // Ensure null if extraction failed
-        } else {
-            logger.background.info('Content extraction completed.');
-            // Format and Store Content
-            logger.background.info(`Formatting extracted content (type: ${contentType})...`);
-            newlyFormattedContent = ContentFormatter.formatContent(extractedContent, contentType);
-            await storeFormattedContentForTab(tabId, newlyFormattedContent);
-            logger.background.info(`Formatted and stored content for tab ${tabId}.`);
-        }
-        // Ensure these are null if extraction happened but failed
-        if (!newlyFormattedContent) {
-             extractedContent = null;
-        }
-    } else {
-        // Log the reason why extraction was skipped
-        if (!isFirstUserMessage) {
-            logger.background.info(`Not first message: Skipping extraction for tab ${tabId}.`);
-        } else if (skipExtractionRequested) {
-            logger.background.info(`First message: Extraction skipped for tab ${tabId} by user request.`);
-        } else if (initialFormattedContentExists) {
-            logger.background.info(`First message: Formatted content already exists for tab ${tabId}, skipping extraction.`);
-        } else if (isFirstUserMessage && !canInject) {
-        } else {
-             // Should not happen based on shouldExtract logic, but log just in case
-             logger.background.warn(`Extraction skipped for unknown reason for tab ${tabId}. Conditions: isFirst=${isFirstUserMessage}, skipped=${skipExtractionRequested}, exists=${initialFormattedContentExists}, canInject=${canInject}`);
-        }
-        // Ensure these are null if extraction didn't happen
-        extractedContent = null;
-        newlyFormattedContent = null;
-    }
-
-
-    // 4. Get the prompt
-    let promptContent;
-
-    if (customPrompt) {
-      promptContent = customPrompt;
-    } else {
-      throw new Error('No prompt content provided');
-    }
-
-    // 5. Parameter Resolution (Centralized) - Use platformId and modelId from params
+    // Parameter Resolution (Centralized)
     logger.background.info(`Resolving parameters for platform: ${platformId}, model: ${modelId}`);
     let resolvedParams = await ModelParameterService.resolveParameters(
       platformId,
       modelId,
-      { tabId, source, conversationHistory }
+      { tabId, source, conversationHistory } // Pass necessary context
     );
-    resolvedParams.conversationHistory = conversationHistory;
+    resolvedParams.conversationHistory = conversationHistory; // Ensure history is attached
     logger.background.info(`Resolved parameters:`, resolvedParams);
 
-    // 6. Generate a unique stream ID for this request
-    const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    // Generate a unique stream ID for this request
+    streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    // 7. Initialize streaming response (using platformId from params)
-    await initializeStreamResponse(streamId, platformId, resolvedParams.model); // Include model
+    // Initialize streaming response state
+    await initializeStreamResponse(streamId, platformId, resolvedParams.model);
 
-    // 8. Determine the formatted content to include in the request (only for the first message under specific conditions)
-    let formattedContentForRequest = null;
-
-    if (isFirstUserMessage) {
-        logger.background.info(`Processing first user message for content inclusion.`);
-        if (!skipExtractionRequested) {
-            logger.background.info(`Extraction was allowed for this first message.`);
-            if (shouldExtract && newlyFormattedContent) {
-                // Extraction was triggered now and succeeded
-                formattedContentForRequest = newlyFormattedContent;
-                logger.background.info(`Using newly extracted/formatted content for tab ${tabId}.`);
-            } else if (initialFormattedContentExists) {
-                // Extraction wasn't triggered now (because content existed), but it was allowed and content exists
-                formattedContentForRequest = await getFormattedContentForTab(tabId);
-                logger.background.info(`Using pre-existing formatted content for tab ${tabId}.`);
-            } else {
-                // Extraction was allowed, but either failed or wasn't triggered (and no pre-existing content)
-                logger.background.info(`No content available (extraction allowed but failed, or content didn't exist) for tab ${tabId}.`);
-                formattedContentForRequest = null;
-            }
-        } else {
-            // Extraction was explicitly skipped by the user for the first message
-            logger.background.info(`Extraction was skipped by user request for this first message. No content included.`);
-            formattedContentForRequest = null;
-        }
-    } else {
-        // Not the first message, never include content
-        logger.background.info(`Not the first user message: Skipping content inclusion.`);
-        formattedContentForRequest = null;
-    }
-
-    if (tabId) {
+    // Store system prompt state if applicable
+    if (tabId && resolvedParams.systemPrompt) {
       try {
-        const promptToStoreOrClear = resolvedParams.systemPrompt;
-        logger.background.info(`Updating system prompt state for tab ${tabId}. Prompt is ${promptToStoreOrClear ? 'present' : 'absent/empty'}.`);
-        await storeSystemPromptForTab(tabId, promptToStoreOrClear);
+        logger.background.info(`Updating system prompt state for tab ${tabId}.`);
+        await storeSystemPromptForTab(tabId, resolvedParams.systemPrompt);
       } catch (storeError) {
         logger.background.error(`Failed to update system prompt state for tab ${tabId}:`, storeError);
+        // Decide if this is fatal or just a warning
       }
+    } else if (tabId) {
+        // Clear if no system prompt resolved
+        await storeSystemPromptForTab(tabId, null);
     }
 
-    // 9. Notify the content script about streaming start ONLY if possible and from sidebar
+    // Notify the content script about streaming start (only if injectable and from sidebar)
     if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
-      if (isInjectablePage(url)) {
+      if (isPageInjectable) {
         try {
-          await chrome.tabs.sendMessage(tabId, {
+          // Use runtime.sendMessage for sidebar communication
+          chrome.runtime.sendMessage({
             action: 'streamStart',
             streamId,
             platformId: platformId,
             model: resolvedParams.model
           });
-          logger.background.info(`Sent streamStart notification to content script in tab ${tabId}.`);
+          logger.background.info(`Sent streamStart notification via runtime API for stream ${streamId}.`);
         } catch (err) {
-          if (err.message && (err.message.includes('Could not establish connection') || err.message.includes('Receiving end does not exist'))) {
-             // Log the warning, but don't treat it as a fatal error for the API call itself.
-             logger.background.warn(`Failed to send streamStart to tab ${tabId}: Content script likely not running or injected.`);
-          } else {
-             logger.background.error('Error notifying content script about stream start:', err);
-          }
+          // Log errors but don't necessarily stop the process
+          logger.background.error(`Error sending streamStart notification via runtime API for stream ${streamId}:`, err);
         }
       } else {
-        logger.background.info(`Skipped sending streamStart notification to tab ${tabId} (URL: ${url}) as it's not an injectable page.`);
+        logger.background.info(`Skipped sending streamStart notification for stream ${streamId} (tab ${tabId}, URL: ${url}) as page is not injectable.`);
       }
     }
 
-    // 10. Create unified request configuration
-    const requestConfig = {
-      prompt: promptContent,
-      resolvedParams: resolvedParams, // Pass the whole resolved params object ( includes history)
-      formattedContent: formattedContentForRequest, // Pass the formatted content string or null
-      streaming: true, // Always true for this function
-      onChunk: createStreamHandler(streamId, source, tabId, platformId, resolvedParams)
+    // Calculate skippedContext flag
+    const skippedContext = isFirstUserMessage && !isPageInjectable;
+    const skipReason = skippedContext ? 'Content extraction not supported on this page type.' : undefined;
+
+    // --- End of Synchronous Setup ---
+
+    // Define the asynchronous API call function
+    async function startApiCall() {
+      try {
+        logger.background.info(`Starting asynchronous API call for stream: ${streamId}`);
+        let extractedContent = null;
+        let newlyFormattedContent = null;
+        let formattedContentForRequest = null;
+
+        // 1. Content Extraction/Formatting Logic (moved inside async function)
+        const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
+        // Extraction only happens on the first message, if not skipped, if content doesn't already exist, and if page is injectable.
+        const shouldExtract = isFirstUserMessage && !initialFormattedContentExists && !skipInitialExtractionRequested && isPageInjectable;
+
+        if (shouldExtract) {
+            logger.background.info(`Stream ${streamId}: First message, extraction will proceed for tab ${tabId}.`);
+            await resetExtractionState(); // Reset only if extracting
+            await extractContent(tabId, url);
+            extractedContent = await getExtractedContent();
+
+            if (!extractedContent) {
+                logger.background.warn(`Stream ${streamId}: Failed to extract content for tab ${tabId}, proceeding without it.`);
+                newlyFormattedContent = null;
+            } else {
+                logger.background.info(`Stream ${streamId}: Content extraction completed.`);
+                newlyFormattedContent = ContentFormatter.formatContent(extractedContent, contentType);
+                await storeFormattedContentForTab(tabId, newlyFormattedContent);
+                logger.background.info(`Stream ${streamId}: Formatted and stored content for tab ${tabId}.`);
+            }
+            if (!newlyFormattedContent) extractedContent = null; // Ensure consistency
+        } else {
+            // Log reasons for skipping extraction (similar to original logic)
+            if (!isFirstUserMessage) logger.background.info(`Stream ${streamId}: Not first message, skipping extraction.`);
+            else if (skipInitialExtractionRequested) logger.background.info(`Stream ${streamId}: Extraction skipped by user request.`);
+            else if (initialFormattedContentExists) logger.background.info(`Stream ${streamId}: Formatted content already exists.`);
+            else if (!isPageInjectable) logger.background.info(`Stream ${streamId}: Page not injectable, extraction skipped.`);
+            else logger.background.warn(`Stream ${streamId}: Extraction skipped for unknown reason.`);
+            extractedContent = null;
+            newlyFormattedContent = null;
+        }
+
+        // Determine the formatted content to include in the request
+        if (isFirstUserMessage) {
+            if (!skipInitialExtractionRequested && isPageInjectable) { // Check injectability again here
+                if (shouldExtract && newlyFormattedContent) {
+                    formattedContentForRequest = newlyFormattedContent;
+                    logger.background.info(`Stream ${streamId}: Using newly extracted/formatted content.`);
+                } else if (initialFormattedContentExists) {
+                    formattedContentForRequest = await getFormattedContentForTab(tabId);
+                    logger.background.info(`Stream ${streamId}: Using pre-existing formatted content.`);
+                } else {
+                    logger.background.info(`Stream ${streamId}: No content available (extraction allowed but failed, or content didn't exist).`);
+                }
+            } else if (skipInitialExtractionRequested) {
+                logger.background.info(`Stream ${streamId}: Extraction skipped by user request. No content included.`);
+            } else { // Case: !isPageInjectable
+                 logger.background.info(`Stream ${streamId}: Page not injectable. No content included.`);
+            }
+        } else {
+            logger.background.info(`Stream ${streamId}: Not the first user message. Skipping content inclusion.`);
+        }
+
+        // Get the prompt content
+        let promptContent;
+        if (customPrompt) {
+          promptContent = customPrompt;
+        } else {
+          // This should ideally not happen if validation is done earlier, but handle defensively
+          throw new Error(`Stream ${streamId}: No prompt content provided for API call.`);
+        }
+
+        // Create unified request configuration
+        const requestConfig = {
+          prompt: promptContent,
+          resolvedParams: resolvedParams, // Includes history
+          formattedContent: formattedContentForRequest,
+          streaming: true,
+          onChunk: createStreamHandler(streamId, source, tabId, platformId, resolvedParams) // Pass streamId
+        };
+
+        // Process with API
+        const controller = new AbortController();
+        activeAbortControllers.set(streamId, controller);
+        requestConfig.abortSignal = controller.signal;
+
+        logger.background.info(`Stream ${streamId}: Calling ApiServiceManager.processWithUnifiedConfig`);
+        await ApiServiceManager.processWithUnifiedConfig(
+          platformId,
+          requestConfig
+        );
+        // Success is handled by the stream handler sending done: true without error
+
+      } catch (processingError) {
+        // Handle API processing errors specifically within the async call
+        logger.background.error(`Stream ${streamId}: API processing error inside startApiCall:`, processingError);
+        // Use the stream handler to report the error
+        const streamHandler = createStreamHandler(streamId, source, tabId, platformId, resolvedParams);
+        streamHandler({ done: true, error: processingError.message || 'An unknown error occurred during API processing.' });
+        // No need to call setApiProcessingError here, stream handler does it
+      } finally {
+        // Ensure controller is removed even if errors occur during the API call
+        activeAbortControllers.delete(streamId);
+        logger.background.info(`Stream ${streamId}: Removed AbortController in startApiCall finally block.`);
+      }
+    }
+
+    // --- Initiate the Asynchronous API Call (Fire and Forget) ---
+    startApiCall(); // Call without await
+
+    // --- Return Initial Success Response Immediately ---
+    logger.background.info(`Stream ${streamId}: Setup complete. Returning initial response.`);
+    return {
+      success: true,
+      streamId,
+      contentType: contentType,
+      skippedContext: skippedContext,
+      reason: skipReason
     };
 
-    // 11. Process with API (using platformId from params)
-    const controller = new AbortController();
-    activeAbortControllers.set(streamId, controller);
-    requestConfig.abortSignal = controller.signal; // Add signal to request config
-
-    try {
-      logger.background.info('Calling ApiServiceManager.processWithUnifiedConfig with config:', requestConfig);
-      // Pass platformId from params directly
-      const apiResponse = await ApiServiceManager.processWithUnifiedConfig(
-        platformId,
-        requestConfig
-      );
-
-      // If we get here without an error, streaming completed successfully
-      return {
-        success: true,
-        streamId,
-        response: apiResponse,
-        contentType: contentType // Use the variable determined earlier
-      };
-    } catch (processingError) {
-      // Handle API processing errors
-      await setApiProcessingError(processingError.message);
-      throw processingError; // Re-throw to be caught by the outer catch
-    } finally {
-      activeAbortControllers.delete(streamId);
-      logger.background.info(`Removed AbortController for stream: ${streamId}`);
+  } catch (setupError) {
+    // This outer catch handles errors ONLY from the synchronous setup phase
+    logger.background.error('API content processing setup error:', setupError);
+    // If streamId was generated before error, try to report error via stream state if possible
+    if (streamId) {
+        try {
+            await setApiProcessingError(setupError.message);
+            // Optionally, try to send an error chunk if handler can be created, though risky
+             const streamHandler = createStreamHandler(streamId, source, tabId, platformId, {}); // May need dummy params
+             streamHandler({ done: true, error: setupError.message });
+        } catch (reportError) {
+            logger.background.error('Failed to report setup error via stream state:', reportError);
+        }
     }
-  } catch (error) {
-    // This outer catch handles errors from setup (extraction, param resolution) AND re-thrown processing errors
-    logger.background.error('API content processing error:', error);
-    await setApiProcessingError(error.message);
     return {
       success: false,
-      error: error.message
+      error: setupError.message // Return setup error details
     };
   }
 }
+
+
 
 /**
  * Create a stream handler function

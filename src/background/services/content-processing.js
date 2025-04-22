@@ -137,16 +137,26 @@ export async function handleProcessContentRequest(message, sendResponse) {
  * Handle API content processing request from message
  * @param {Object} message - Message object
  * @param {Function} sendResponse - Response function
+ * Handle API content processing request from message, expecting an initial quick response
+ * and subsequent asynchronous stream updates.
+ * @param {Object} message - Message object
+ * @param {Function} sendResponse - Response function
+ * @returns {boolean} Returns true to indicate asynchronous response handling.
  */
 export async function handleProcessContentViaApiRequest(message, sendResponse) {
   try {
-    const result = await processContentViaApi(message);
-    sendResponse(result);
+    // processContentViaApi now returns the initial setup result quickly
+    const initialResult = await processContentViaApi(message);
+    // Send the initial result (success/failure of setup, includes streamId on success)
+    sendResponse(initialResult);
   } catch (error) {
-    logger.background.error('Error in API content processing:', error);
+    logger.background.error('Unexpected error in handleProcessContentViaApiRequest:', error);
     sendResponse({
       success: false,
-      error: error.message
+      error: error.message || 'An unknown error occurred before processing could start.'
     });
   }
+  // Crucially, return true to keep the message channel open for the asynchronous stream
+  // chunks that will be sent later by the stream handler via chrome.runtime.sendMessage.
+  return true;
 }

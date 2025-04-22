@@ -416,12 +416,12 @@ export function SidebarChatProvider({ children }) {
     // Determine if this is the first message (before adding the current user message)
     const isFirstMessage = messages.length === 0;
     // Determine if the current page is injectable
-    const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false; // Added injectability check
+    const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
     try {
       // Format conversation history for the API - Filter out streaming messages and extracted content messages
       const conversationHistory = messages
-        .filter(msg => (msg.role === MESSAGE_ROLES.USER || msg.role === MESSAGE_ROLES.ASSISTANT) && !msg.isStreaming)
+        .filter(msg => (msg.role === MESSAGE_ROLES.USER || msg.role === MESSAGE_ROLES.ASSISTANT) && !msg.isStreaming && !msg.isExtractedContent) // Ensure extracted content is excluded
         .map(msg => ({
           role: msg.role,
           content: msg.content,
@@ -429,56 +429,75 @@ export function SidebarChatProvider({ children }) {
         }));
 
       // Process with API in streaming mode - Pass explicit IDs
-      const result = await processContentViaApi({
+      // This now returns the *initial* result quickly (success/fail of setup, streamId, skippedContext)
+      const initialResult = await processContentViaApi({
         platformId: currentPlatformId, // Use the ID retrieved at the start
         modelId: currentModelId,       // Use the ID retrieved at the start
         promptContent: text.trim(),
         conversationHistory,
         streaming: true,
         // Determine if extraction should be skipped for the first message
-        skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true, // Updated logic
+        skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true,
         // Pass tabId and source explicitly if needed by the hook/API
         options: { tabId, source: INTERFACE_SOURCES.SIDEBAR }
       });
 
-      // Handle case where context extraction was skipped (e.g., non-injectable page)
-      if (result && result.skippedContext === true) {
-        console.info('Context extraction skipped by background:', result.reason);
+      // --- Handle Initial Response ---
+
+      // 1. Check for immediate setup errors
+      if (!initialResult || !initialResult.success) {
+        const errorMsg = initialResult?.error || 'Failed to initialize streaming request';
+        throw new Error(errorMsg); // Throw to be caught by the outer catch block
+      }
+
+      // 2. Check if context was skipped (successful setup, but no API call needed)
+      if (initialResult.skippedContext === true) {
+        console.info('Context extraction skipped by background:', initialResult.reason);
+        logger.sidebar.info('Context extraction skipped by background:', initialResult.reason);
 
         // Create the system message explaining why
         const systemMessage = {
-          id: `sys_${Date.now()}`,
+          id: `sys_skip_${Date.now()}`, // Unique ID
           role: MESSAGE_ROLES.SYSTEM,
-          content: `Note: ${result.reason || 'Page content could not be included.'}`,
+          content: `Note: ${initialResult.reason || 'Page content could not be included.'}`,
           timestamp: new Date().toISOString(),
         };
 
-        const finalMessages = messages // Use 'messages' which doesn't include the placeholder yet
-            .concat(userMessage, systemMessage); // Add user msg + system msg
-
-        setMessages(finalMessages); // Update UI immediately
-
+        // Update messages: Remove the optimistic assistant placeholder, add user + system message
+        setMessages(prevMessages => {
+          // Filter out the optimistic placeholder (using its ID) and add the real user message + system message
+          return prevMessages
+            .filter(msg => msg.id !== assistantMessageId) // Remove placeholder
+            .concat(userMessage, systemMessage); // Add user + system message
+        });
         // Save this state (user message + system message) to history
         if (tabId) {
-          await ChatHistoryService.saveHistory(tabId, finalMessages, modelConfigData);
-          // No API call made, so no cost to update here, user msg tokens already tracked
+          // Get the final state directly after the update
+          const finalMessagesState = messages
+            .filter(msg => msg.id !== assistantMessageId)
+            .concat(userMessage, systemMessage);
+          await ChatHistoryService.saveHistory(tabId, finalMessagesState, modelConfigData);
+          // Recalculate stats if needed, though only user message added cost here
+          await calculateStats(finalMessagesState, modelConfigData);
         }
 
-        // Reset streaming state as no stream was initiated
+        // Reset streaming state as no stream will follow
         setStreamingMessageId(null);
         resetContentProcessing(); // Reset the hook's processing state
 
-        return; // Stop further processing for this message send
+        return; // Exit sendMessage early
       }
 
-      if (!result || !result.success) {
-        // Use the error from the result if available, otherwise use a default
-        const errorMsg = result?.error || 'Failed to initialize streaming';
-        throw new Error(errorMsg);
-      }
+      // 3. If successful setup and context not skipped, the stream will start.
+      // The existing logic (handleStreamChunk listener) will handle the incoming chunks using initialResult.streamId.
+      // No further action needed here for this path.
 
     } catch (error) {
-      console.error('Error processing streaming message:', error);
+      // This catch block now handles:
+      // 1. Pre-flight validation errors (platform/model/creds)
+      // 2. Errors thrown by processContentViaApi during setup (!initialResult.success)
+      // 3. Any other unexpected errors within the try block before the API call returns.
+      console.error('Error sending message or during setup:', error);
 
       // Update streaming message to show error
       const errorMessages = messages.map(msg => // Use 'messages' which doesn't include the placeholder yet
