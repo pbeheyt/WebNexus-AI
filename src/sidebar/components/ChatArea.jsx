@@ -11,7 +11,7 @@ import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
-import logger from '../../shared/logger'; // Import logger
+import logger from '../../shared/logger';
 
 // --- Icon Definitions ---
 const InputTokenIcon = () => (
@@ -92,7 +92,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     const [precedingUserMessageHeight, setPrecedingUserMessageHeight] = useState(0);
     const precedingUserMessageRef = useRef(null);
     const [initialScrollCompletedForResponse, setInitialScrollCompletedForResponse] = useState(true);
-    const rafIdHeightCalc = useRef(null); // Ref for the rAF ID
+    const rafIdHeightCalc = useRef(null);
 
     // --- Effect for Platform/Model Display ---
     useEffect(() => {
@@ -220,7 +220,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
                             currentContainer.scrollTo({
                                 top: scrollTargetTop,
-                                behavior: 'smooth' // Keep smooth scrolling
+                                behavior: 'smooth'
                             });
                             setInitialScrollCompletedForResponse(true); // Mark as completed after scroll starts
                         } else {
