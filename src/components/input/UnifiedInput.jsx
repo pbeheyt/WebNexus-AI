@@ -117,7 +117,7 @@ export function UnifiedInput({
                 disabled={disabled || isProcessing}
                 autoResize={true}
                 style={sidebarStyle} // Pass style with rem units
-                className="flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable"
+                className="flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable text-sm"
               />
             </div>
 
@@ -202,7 +202,7 @@ export function UnifiedInput({
                 disabled={disabled || isProcessing}
                 autoResize={true}
                 style={popupStyle}
-                className="flex-grow w-full py-3 pl-3 pr-10 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary scrollbar-gutter-stable "
+                className="flex-grow w-full py-3 pl-3 pr-10 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary scrollbar-gutter-stable text-xs"
               />
             </div>
 
