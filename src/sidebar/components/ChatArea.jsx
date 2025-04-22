@@ -11,7 +11,7 @@ import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
-import logger from '../../shared/logger';
+import logger from '../../shared/logger'; // Import logger
 
 // --- Icon Definitions ---
 const InputTokenIcon = () => (
@@ -180,6 +180,8 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             return;
         }
 
+        const scrollContainer = scrollContainerRef.current; // Get container ref
+
         // --- Condition 1: Reset flag when assistant finishes ---
         const assistantJustFinished = lastMessage &&
                                      (lastMessage.role === MESSAGE_ROLES.ASSISTANT || lastMessage.role === MESSAGE_ROLES.SYSTEM) &&
@@ -205,20 +207,32 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             const userMessageElement = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
 
             if (userMessageElement) {
-                setInitialScrollCompletedForResponse(true);
+                // --- START: Restore Manual Scroll Calculation ---
                 requestAnimationFrame(() => {
-                    // Check element still exists inside rAF callback
-                    const element = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
-                    if (element) {
-                        element.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
+                    // Check refs again inside rAF callback
+                    const currentContainer = scrollContainerRef.current;
+                    const currentElement = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
+
+                    if (currentContainer && currentElement) {
+                        const containerRect = currentContainer.getBoundingClientRect();
+                        const elementRect = currentElement.getBoundingClientRect();
+                        // Calculate the target scroll position based on current scroll and element position
+                        const scrollTargetTop = currentContainer.scrollTop + elementRect.top - containerRect.top;
+
+                        currentContainer.scrollTo({
+                            top: scrollTargetTop,
+                            behavior: 'smooth' // Or 'auto' for instant jump
                         });
+                        setInitialScrollCompletedForResponse(true); // Mark as completed after scroll starts
+                    } else {
+                         logger.sidebar.warn(`[ChatArea Scrolling Effect] Element or container not found inside rAF for ID ${secondLastMessage?.id}.`);
+                         setInitialScrollCompletedForResponse(true); // Still mark as complete
                     }
                 });
+                // --- END: Restore Manual Scroll Calculation ---
             } else {
                  if (secondLastMessage?.id) { // Only warn if ID was expected
-                    console.warn(`[ChatArea Scrolling Effect] User message element with ID ${secondLastMessage.id} not found. Skipping initial scroll.`);
+                    logger.sidebar.warn(`[ChatArea Scrolling Effect] User message element with ID ${secondLastMessage.id} not found. Skipping initial scroll.`);
                  }
                  setInitialScrollCompletedForResponse(true); // Still mark as complete
             }
@@ -532,19 +546,31 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                 messageRef = precedingUserMessageRef;
                             }
 
+                            // Use the JS Height Calculation from the previous step
                             if (isTargetScenarioForHeight && precedingUserMessageHeight > 0) {
                                 const viewportHeight = window.innerHeight;
                                 const offset = otherUIHeight + precedingUserMessageHeight;
                                 const calculatedHeight = viewportHeight - Math.max(0, offset) + 1;
 
-                                // Convert MIN_ASSISTANT_BUBBLE_HEIGHT_REM to pixels (assuming 1rem = 16px)
-                                const minPixelHeight = MIN_ASSISTANT_BUBBLE_HEIGHT_REM * 16;
+                                // --- DYNAMICALLY GET REM SIZE ---
+                                let rootFontSize = 16; // Default fallback
+                                try {
+                                    rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                                    if (isNaN(rootFontSize) || rootFontSize <= 0) {
+                                        logger.sidebar.warn(`Could not parse root font size, falling back to 16px. Value was: ${getComputedStyle(document.documentElement).fontSize}`);
+                                        rootFontSize = 16;
+                                    }
+                                } catch (e) {
+                                    logger.sidebar.error('Error getting root font size:', e);
+                                    rootFontSize = 16; // Fallback on error
+                                }
+                                const minPixelHeight = MIN_ASSISTANT_BUBBLE_HEIGHT_REM * rootFontSize;
+                                // --- END DYNAMICALLY GET REM SIZE ---
 
                                 const finalMinHeight = Math.max(minPixelHeight, calculatedHeight);
                                 dynamicStyle = {
                                     minHeight: `${finalMinHeight}px`,
                                 };
-                                // logger.sidebar.debug('Applying dynamic minHeight (JS Calc):', dynamicStyle.minHeight);
                             }
 
                             return (
