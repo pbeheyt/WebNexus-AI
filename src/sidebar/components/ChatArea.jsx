@@ -12,7 +12,7 @@ import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 
-// --- Icon Definitions ---
+// --- Icon Definitions --- (Keep as is)
 const InputTokenIcon = () => (
     <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 18V6M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -44,7 +44,7 @@ const ScrollDownIcon = () => (
 );
 // --- End Icon Definitions ---
 
-// --- Helper Function ---
+// --- Helper Function --- (Keep as is)
 const formatContextWindow = (value) => {
     if (typeof value !== 'number') return '';
     if (value >= 1000000) {
@@ -80,7 +80,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         hasAnyPlatformCredentials,
     } = useSidebarPlatform();
 
-    // --- State ---
+    // --- State --- (Keep as is)
     const [showScrollDownButton, setShowScrollDownButton] = useState(false);
     const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
     const [displayModelConfig, setDisplayModelConfig] = useState(null);
@@ -89,8 +89,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     const precedingUserMessageRef = useRef(null);
     const [initialScrollCompletedForResponse, setInitialScrollCompletedForResponse] = useState(true);
 
-
-    // --- Effect for Platform/Model Display ---
+    // --- Effect for Platform/Model Display --- (Keep as is)
     useEffect(() => {
         const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
         const isPlatformReady = !!targetPlatform;
@@ -109,7 +108,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         }
     }, [platforms, selectedPlatformId, modelConfigData, selectedModel, hasCompletedInitialLoad, hasAnyPlatformCredentials]);
 
-    // --- Get Content Type Name ---
+    // --- Get Content Type Name --- (Keep as is)
     const getContentTypeName = (type) => {
         switch (type) {
             case CONTENT_TYPES.YOUTUBE: return "YouTube Video";
@@ -121,11 +120,11 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     };
     // --- End Get Content Type Name ---
 
-    // --- Scroll Handling Logic ---
+    // --- Scroll Handling Logic --- (Keep as is)
     const SCROLL_THRESHOLD = 10;
     const DEBOUNCE_DELAY = 100;
 
-    // --- Function to Check Scroll Position (for Scroll Down Button) ---
+    // --- Function to Check Scroll Position (for Scroll Down Button) --- (Keep as is)
     const checkScrollPosition = useCallback(() => {
          const scrollContainer = scrollContainerRef.current;
          if (!scrollContainer || messages.length === 0) {
@@ -146,21 +145,23 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         setShowScrollDownButton(prev => prev !== shouldShow ? shouldShow : prev);
     }, [messages, showScrollDownButton, SCROLL_THRESHOLD, textSize]);
 
-    // --- Scrolling Effect ---
+    // --- Define last/secondLast message OUTSIDE the effect ---
+    const lastMessage = messages[messages.length - 1];
+    const secondLastMessage = messages.length > 1 ? messages[messages.length - 2] : null;
+
+    // --- Scrolling Effect (Revised Dependencies) ---
     useLayoutEffect(() => {
+        // Early exit if no messages or container ref not ready
         if (messages.length === 0 || !scrollContainerRef.current) {
-            setShowScrollDownButton(false);
+            // Ensure button is hidden if there are no messages
+            if (showScrollDownButton) setShowScrollDownButton(false);
             return;
         }
 
         const scrollContainer = scrollContainerRef.current;
-        const lastMessage = messages[messages.length - 1];
-        const secondLastMessage = messages.length > 1 ? messages[messages.length - 2] : null;
+        // Note: lastMessage and secondLastMessage are available from the outer scope now
 
         // --- Condition 1: Reset flag when assistant finishes ---
-        // If the last message is an assistant/system message that is NOT streaming,
-        // and the flag is currently true (meaning the last scroll was completed),
-        // reset the flag to false to PREPARE for the NEXT user message.
         const assistantJustFinished = lastMessage &&
                                      (lastMessage.role === MESSAGE_ROLES.ASSISTANT || lastMessage.role === MESSAGE_ROLES.SYSTEM) &&
                                      !lastMessage.isStreaming;
@@ -170,59 +171,58 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         }
 
         // --- Condition 2: Reset flag when a new user message is added ---
-        // If the last message is a user message, reset the flag. This ensures that
-        // if the user sends multiple messages before the assistant replies, the flag is ready.
         if (lastMessage && lastMessage.role === MESSAGE_ROLES.USER && initialScrollCompletedForResponse) {
              setInitialScrollCompletedForResponse(false);
         }
 
-
-        // --- Condition 3: Perform the initial scroll ---
-        // Check if the assistant just started responding
+        // --- Condition 3: Perform the initial scroll when assistant starts ---
         const assistantJustStarted = secondLastMessage &&
                                     secondLastMessage.role === MESSAGE_ROLES.USER &&
-                                    lastMessage && // Ensure last message exists
+                                    lastMessage &&
                                     (lastMessage.role === MESSAGE_ROLES.ASSISTANT || lastMessage.role === MESSAGE_ROLES.SYSTEM) &&
-                                    lastMessage.isStreaming === true; // Check initial streaming state
+                                    lastMessage.isStreaming === true;
 
-
-        // If assistant just started AND the initial scroll for THIS response hasn't happened yet
         if (assistantJustStarted && !initialScrollCompletedForResponse) {
-            let scrollTargetTop = null;
-            const userMessageElement = document.getElementById(secondLastMessage.id);
+            const userMessageElement = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
 
             if (userMessageElement) {
-                const containerRect = scrollContainer.getBoundingClientRect();
-                const elementRect = userMessageElement.getBoundingClientRect();
-                scrollTargetTop = scrollContainer.scrollTop + elementRect.top - containerRect.top;
-
+                setInitialScrollCompletedForResponse(true);
                 requestAnimationFrame(() => {
-                    if (scrollContainerRef.current) {
-                        scrollContainerRef.current.scrollTo({
-                            top: scrollTargetTop,
-                            behavior: 'smooth' // Can be 'auto' for instant jump
+                    // Check element still exists inside rAF callback
+                    const element = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
+                    if (element) {
+                        element.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
                         });
                     }
                 });
-
-                // Mark the initial scroll for THIS response cycle as completed
-                setInitialScrollCompletedForResponse(true);
-
             } else {
-                 console.warn(`[ChatArea Scrolling Effect] User message element with ID ${secondLastMessage.id} not found. Skipping initial scroll.`);
-                 // Still mark as completed to prevent retries for this response
-                 setInitialScrollCompletedForResponse(true);
+                 if (secondLastMessage?.id) { // Only warn if ID was expected
+                    console.warn(`[ChatArea Scrolling Effect] User message element with ID ${secondLastMessage.id} not found. Skipping initial scroll.`);
+                 }
+                 setInitialScrollCompletedForResponse(true); // Still mark as complete
             }
         }
 
         // Always check button visibility
         checkScrollPosition();
 
-    // Dependencies: messages array content, textSize, and the scroll flag state.
-    }, [messages, textSize, checkScrollPosition, initialScrollCompletedForResponse]);
+    // Corrected Dependency Array: Use variables defined outside the effect
+    }, [
+        messages.length, // Basic trigger for message changes
+        lastMessage?.id, // Detects if the actual last message object changes
+        lastMessage?.role, // Detects role change (user->assistant)
+        lastMessage?.isStreaming, // Detects streaming start/end
+        secondLastMessage?.id, // Detects if the second last message changes
+        secondLastMessage?.role, // Detects if second last message role changes
+        textSize, // Affects layout
+        checkScrollPosition, // Callback dependency
+        initialScrollCompletedForResponse // State dependency
+    ]);
 
 
-    // --- Layout Effect for Preceding User Message Height ---
+    // --- Layout Effect for Preceding User Message Height (Kept as is) ---
     useLayoutEffect(() => {
         const isTargetScenario =
             messages.length >= 2 &&
@@ -241,7 +241,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         }
     }, [messages, precedingUserMessageHeight, textSize]);
 
-    // --- Manual Scroll To Bottom Function --- (Keep existing function)
+    // --- Manual Scroll To Bottom Function --- (Kept as is)
     const scrollToBottom = useCallback((behavior = 'smooth') => {
         const scrollContainer = scrollContainerRef.current;
         if (scrollContainer) {
@@ -252,14 +252,13 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         }
     }, []);
 
-
-    // --- Debounced Scroll Position Check --- (Keep existing memo)
+    // --- Debounced Scroll Position Check --- (Kept as is)
      const debouncedCheckScrollPosition = useMemo(
         () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
         [checkScrollPosition]
     );
 
-    // --- Effect for Manual Scroll Listener --- (Keep existing effect)
+    // --- Effect for Manual Scroll Listener --- (Kept as is)
     useEffect(() => {
          const scrollContainer = scrollContainerRef.current;
         if (scrollContainer) {
@@ -274,19 +273,22 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     }, [debouncedCheckScrollPosition, checkScrollPosition]);
 
 
-    // --- Effect to check scroll on content update (during streaming) --- (Keep existing effect)
-    const lastMessageContent = messages.length > 0 ? messages[messages.length - 1]?.content : null;
-    const lastMessageStreaming = messages.length > 0 ? messages[messages.length - 1]?.isStreaming : false;
+    // --- Effect to check scroll on content update (during streaming) --- (Revised slightly for clarity) ---
+    // Use the externally defined lastMessage variable
     useEffect(() => {
-         if (lastMessageStreaming && lastMessageContent) {
-             checkScrollPosition();
-         }
-         if (!lastMessageStreaming && messages.length > 0) {
-             checkScrollPosition();
-         }
-    }, [lastMessageContent, lastMessageStreaming, checkScrollPosition, messages.length]);
+         const streaming = lastMessage?.isStreaming;
+         const content = lastMessage?.content;
 
-    // --- Open API Settings ---
+         if (streaming && content) {
+             checkScrollPosition();
+         }
+         if (!streaming && messages.length > 0) { // Check also when streaming finishes
+             checkScrollPosition();
+         }
+    // Depend on the specific properties read from lastMessage
+    }, [lastMessage?.content, lastMessage?.isStreaming, checkScrollPosition, messages.length]);
+
+    // --- Open API Settings --- (Kept as is)
     const openApiSettings = () => {
         try {
             if (chrome && chrome.tabs && chrome.runtime) {
@@ -302,8 +304,9 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
     const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
-    // --- Render Initial View Content ---
+    // --- Render Initial View Content --- (Kept as is)
      const renderInitialView = () => {
+         // ... (No changes in this function) ...
          if (!hasAnyPlatformCredentials) {
             return (
                 <div className={`flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}>
@@ -471,30 +474,36 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                     <>
                         {/* Render Messages */}
                         {messages.map((message, index) => {
-                            const isLastMessage = index === messages.length - 1;
-                            const isSecondLastMessage = index === messages.length - 2;
-                            const isTargetScenario =
+                            const isLastMessageMap = index === messages.length - 1;
+                            const isSecondLastMessageMap = index === messages.length - 2;
+
+                            // Condition: Last message is Assistant/System, second-last is User (for dynamic style)
+                            const isTargetScenarioForHeight =
+                                isLastMessageMap &&
+                                index > 0 &&
+                                (message.role === MESSAGE_ROLES.ASSISTANT || message.role === MESSAGE_ROLES.SYSTEM) &&
+                                messages[index - 1].role === MESSAGE_ROLES.USER;
+
+                            // Condition: Second-last message is User, and the last is Assistant/System (for ref assignment)
+                            const isTargetScenarioForRef =
+                                isSecondLastMessageMap &&
                                 messages.length >= 2 &&
                                 (messages[messages.length - 1].role === MESSAGE_ROLES.ASSISTANT || messages[messages.length - 1].role === MESSAGE_ROLES.SYSTEM) &&
-                                messages[messages.length - 2].role === MESSAGE_ROLES.USER;
+                                message.role === MESSAGE_ROLES.USER;
 
                             let dynamicStyle = {};
-                            let messageRef = null; // Ref to pass to MessageBubble
+                            let messageRef = null;
 
-                            // Assign ref only to the second-to-last message if it's the target scenario
-                            if (isSecondLastMessage && isTargetScenario) {
+                            if (isTargetScenarioForRef) {
                                 messageRef = precedingUserMessageRef;
                             }
 
-                            // Apply min-height style ONLY to the last message if it's assistant/system
-                            if (isLastMessage && (message.role === MESSAGE_ROLES.ASSISTANT || message.role === MESSAGE_ROLES.SYSTEM)) {
+                            if (isTargetScenarioForHeight && precedingUserMessageHeight > 0) {
                                 const heightOffset = (typeof otherUIHeight === 'number' ? otherUIHeight : 160) +
-                                                     (typeof precedingUserMessageHeight === 'number' ? precedingUserMessageHeight : 0);
-                                const baseCalcHeight = `calc(100vh - ${heightOffset}px)`;
-
+                                                     precedingUserMessageHeight;
+                                const baseCalcHeight = `calc(100vh - ${Math.max(0, heightOffset)}px + 1px)`;
                                 dynamicStyle = {
                                     minHeight: `max(2rem, ${baseCalcHeight})`,
-                                    transition: 'min-height 0.2s ease-out'
                                 };
                             }
 
@@ -541,7 +550,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     );
 }
 
-// --- getWelcomeMessage --- (Keep existing function)
+// --- getWelcomeMessage --- (Keep as is)
 function getWelcomeMessage(contentType, isPageInjectable) {
     if (!isPageInjectable) {
         return "Ask me anything! Type your question or prompt below.";
