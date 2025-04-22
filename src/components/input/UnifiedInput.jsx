@@ -117,12 +117,12 @@ export function UnifiedInput({
                 disabled={disabled || isProcessing}
                 autoResize={true}
                 style={sidebarStyle} // Pass style with rem units
-                className="flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
+                className="flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable"
               />
             </div>
 
             {/* Button container - absolutely positioned */}
-            <div className="absolute right-3 top-3 flex flex-col items-center gap-2">
+            <div className="absolute right-3.5 top-3 flex flex-col items-center gap-2">
               {/* Send/Cancel Button */}
               <button
                 className={`flex items-center justify-center cursor-pointer border-none outline-none ${sidebarButtonStyle} w-6 h-6 rounded ${isCanceling ? 'opacity-70' : ''}`}
@@ -202,12 +202,12 @@ export function UnifiedInput({
                 disabled={disabled || isProcessing}
                 autoResize={true}
                 style={popupStyle}
-                className="flex-grow w-full py-3 pl-3 pr-10 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
+                className="flex-grow w-full py-3 pl-3 pr-10 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary scrollbar-gutter-stable "
               />
             </div>
 
             {/* Button container - absolutely positioned */}
-            <div className="absolute right-3 top-3 flex flex-col items-center gap-2">
+            <div className="absolute right-3.5 top-3 flex flex-col items-center gap-2">
               {/* Send Button */}
               <button
                 className={`flex items-center justify-center cursor-pointer border-none outline-none ${popupSendButtonStyle} w-5 h-5 rounded`}

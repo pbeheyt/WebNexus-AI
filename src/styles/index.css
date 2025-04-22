@@ -103,10 +103,12 @@
 
   ::-webkit-scrollbar-track {
     @apply bg-theme-primary rounded;
+    cursor: default; /* <-- Added cursor default */
   }
 
   ::-webkit-scrollbar-thumb {
     @apply bg-gray-300 dark:bg-theme-hover rounded; /* Base style */
+    cursor: default; /* <-- Added cursor default */
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -128,6 +130,11 @@
   /* For link styling */
   .link {
     @apply text-primary hover:text-primary-hover hover:underline transition-colors;
+  }
+
+  /* New scrollbar gutter utility */
+  .scrollbar-gutter-stable {
+    scrollbar-gutter: stable;
   }
 }
 
