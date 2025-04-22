@@ -130,7 +130,7 @@ export const MessageBubble = memo(forwardRef(({
          ref={ref}
          id={id}
          style={style}
-         className={`px-5 py-2 w-full ${className}`}
+         className={`px-5 py-3 w-full ${className}`}
        >
          <div // Intermediate container: Provides the red background around the text ONLY
            className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3"
@@ -152,7 +152,7 @@ export const MessageBubble = memo(forwardRef(({
         ref={ref}
         id={id}
         style={style}
-        className={`px-5 py-2 w-full flex justify-end items-start message-group user-message ${className}`}
+        className={`px-5 py-3 w-full flex justify-end items-start message-group user-message ${className}`}
       >
         <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden">
           <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
@@ -310,7 +310,7 @@ export const MessageBubble = memo(forwardRef(({
         ref={ref}
         id={id}
         style={style}
-        className={`group px-5 py-2 w-full message-group assistant-message relative ${className}`}
+        className={`group px-5 py-3 w-full message-group assistant-message relative ${className}`}
       >
         {/* Prose container for Markdown styling */}
         <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}>
@@ -323,7 +323,7 @@ export const MessageBubble = memo(forwardRef(({
         </div>
 
         {/* Footer section */}
-        <div className="flex justify-between items-center -mt-1 pb-2">
+        <div className="flex justify-between items-center -mt-3 pb-3">
            <div className="text-xs opacity-70 flex items-center space-x-2">
             {platformIconUrl && (
               <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" />
