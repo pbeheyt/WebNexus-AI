@@ -188,14 +188,16 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             if (userMessageElement) {
                 setInitialScrollCompletedForResponse(true);
                 requestAnimationFrame(() => {
-                    // Check element still exists inside rAF callback
-                    const element = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
-                    if (element) {
-                        element.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
+                    // Add a setTimeout inside rAF
+                    setTimeout(() => {
+                        const element = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
+                        if (element) {
+                            element.scrollIntoView({
+                                behavior: 'smooth', // or 'auto' for instant jump if smooth is still jittery
+                                block: 'start'
+                            });
+                        }
+                    }, 0); // Delay of 0 pushes it to the next event loop tick after paint
                 });
             } else {
                  if (secondLastMessage?.id) { // Only warn if ID was expected
