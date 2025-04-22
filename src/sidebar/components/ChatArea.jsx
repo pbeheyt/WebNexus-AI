@@ -207,7 +207,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             const userMessageElement = secondLastMessage?.id ? document.getElementById(secondLastMessage.id) : null;
 
             if (userMessageElement) {
-                // --- START: Restore Manual Scroll Calculation ---
                 requestAnimationFrame(() => {
                     // Check refs again inside rAF callback
                     const currentContainer = scrollContainerRef.current;
@@ -229,7 +228,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                          setInitialScrollCompletedForResponse(true); // Still mark as complete
                     }
                 });
-                // --- END: Restore Manual Scroll Calculation ---
             } else {
                  if (secondLastMessage?.id) { // Only warn if ID was expected
                     logger.sidebar.warn(`[ChatArea Scrolling Effect] User message element with ID ${secondLastMessage.id} not found. Skipping initial scroll.`);
@@ -552,7 +550,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                 const offset = otherUIHeight + precedingUserMessageHeight;
                                 const calculatedHeight = viewportHeight - Math.max(0, offset) + 1;
 
-                                // --- DYNAMICALLY GET REM SIZE ---
                                 let rootFontSize = 16; // Default fallback
                                 try {
                                     rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -565,7 +562,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                     rootFontSize = 16; // Fallback on error
                                 }
                                 const minPixelHeight = MIN_ASSISTANT_BUBBLE_HEIGHT_REM * rootFontSize;
-                                // --- END DYNAMICALLY GET REM SIZE ---
 
                                 const finalMinHeight = Math.max(minPixelHeight, calculatedHeight);
                                 dynamicStyle = {
