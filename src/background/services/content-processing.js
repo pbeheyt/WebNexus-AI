@@ -112,7 +112,6 @@ export async function processContent(params) {
   }
 }
 
-
 /**
  * Handle process content request from message
  * @param {Object} message - Message object
