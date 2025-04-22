@@ -11,6 +11,7 @@ import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
+import logger from '../../shared/logger';
 
 // --- Icon Definitions ---
 const InputTokenIcon = () => (
@@ -57,6 +58,9 @@ const formatContextWindow = (value) => {
 };
 // --- End Helper Function ---
 
+// --- Constants ---
+const MIN_ASSISTANT_BUBBLE_HEIGHT_REM = 2; // Equivalent to 2rem minimum height
+
 function ChatArea({ className = '', otherUIHeight = 160 }) {
     const {
         messages,
@@ -88,6 +92,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     const [precedingUserMessageHeight, setPrecedingUserMessageHeight] = useState(0);
     const precedingUserMessageRef = useRef(null);
     const [initialScrollCompletedForResponse, setInitialScrollCompletedForResponse] = useState(true);
+    const rafIdHeightCalc = useRef(null); // Ref for the rAF ID
 
     // --- Effect for Platform/Model Display ---
     useEffect(() => {
@@ -242,17 +247,37 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             (messages[messages.length - 1].role === MESSAGE_ROLES.ASSISTANT || messages[messages.length - 1].role === MESSAGE_ROLES.SYSTEM) &&
             messages[messages.length - 2].role === MESSAGE_ROLES.USER;
 
+        // Cancel previous frame request if any
+        if (rafIdHeightCalc.current) {
+             cancelAnimationFrame(rafIdHeightCalc.current);
+        }
+
         if (isTargetScenario && precedingUserMessageRef.current) {
-            const height = precedingUserMessageRef.current.offsetHeight;
-            if (height !== precedingUserMessageHeight) {
-                setPrecedingUserMessageHeight(height);
-            }
+            // Wrap the height reading in requestAnimationFrame
+            rafIdHeightCalc.current = requestAnimationFrame(() => {
+                // Check ref again inside the callback
+                if (precedingUserMessageRef.current) {
+                    const height = precedingUserMessageRef.current.offsetHeight;
+                    if (height !== precedingUserMessageHeight) {
+                        setPrecedingUserMessageHeight(height);
+                    }
+                }
+                rafIdHeightCalc.current = null; // Reset ref after execution
+            });
         } else {
             if (precedingUserMessageHeight !== 0) {
                 setPrecedingUserMessageHeight(0);
             }
         }
-    }, [messages, precedingUserMessageHeight, textSize]);
+
+        // Cleanup function to cancel frame request on unmount or dependency change
+        return () => {
+            if (rafIdHeightCalc.current) {
+                cancelAnimationFrame(rafIdHeightCalc.current);
+                rafIdHeightCalc.current = null;
+            }
+        };
+    }, [messages, precedingUserMessageHeight, textSize]); // Keep dependencies
 
     // --- Manual Scroll To Bottom Function ---
     const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -300,7 +325,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     // Depend on the specific properties read from lastMessage
     }, [lastMessage?.content, lastMessage?.isStreaming, checkScrollPosition, messages.length]);
 
-    // --- Open API Settings --- 
+    // --- Open API Settings ---
     const openApiSettings = () => {
         try {
             if (chrome && chrome.tabs && chrome.runtime) {
@@ -315,7 +340,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
 
     const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
-    // --- Render Initial View Content --- 
+    // --- Render Initial View Content ---
      const renderInitialView = () => {
          if (!hasAnyPlatformCredentials) {
             return (
@@ -508,12 +533,18 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                             }
 
                             if (isTargetScenarioForHeight && precedingUserMessageHeight > 0) {
-                                const heightOffset = (typeof otherUIHeight === 'number' ? otherUIHeight : 160) +
-                                                     precedingUserMessageHeight;
-                                const baseCalcHeight = `calc(100vh - ${Math.max(0, heightOffset)}px + 1px)`;
+                                const viewportHeight = window.innerHeight;
+                                const offset = otherUIHeight + precedingUserMessageHeight;
+                                const calculatedHeight = viewportHeight - Math.max(0, offset) + 1;
+
+                                // Convert MIN_ASSISTANT_BUBBLE_HEIGHT_REM to pixels (assuming 1rem = 16px)
+                                const minPixelHeight = MIN_ASSISTANT_BUBBLE_HEIGHT_REM * 16;
+
+                                const finalMinHeight = Math.max(minPixelHeight, calculatedHeight);
                                 dynamicStyle = {
-                                    minHeight: `max(2rem, ${baseCalcHeight})`,
+                                    minHeight: `${finalMinHeight}px`,
                                 };
+                                // logger.sidebar.debug('Applying dynamic minHeight (JS Calc):', dynamicStyle.minHeight);
                             }
 
                             return (
@@ -526,7 +557,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
                                     isStreaming={message.isStreaming}
                                     model={message.model}
                                     platformIconUrl={message.platformIconUrl}
-                                    style={dynamicStyle}
+                                    style={dynamicStyle} // Apply the calculated style
                                 />
                             );
                         })}

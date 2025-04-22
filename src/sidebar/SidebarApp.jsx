@@ -23,7 +23,8 @@ export default function SidebarApp() {
   const appHeaderRef = useRef(null);
   const collapsibleHeaderRef = useRef(null);
   const userInputRef = useRef(null);
-  const [otherUIHeight, setOtherUIHeight] = useState(160);
+  const [otherUIHeight, setOtherUIHeight] = useState(160); // Default value
+  const rafIdHeightCalc = useRef(null); // Ref for rAF ID
 
   // --- Effect to determine Tab ID ---
   useEffect(() => {
@@ -134,18 +135,38 @@ export default function SidebarApp() {
   }, [isReady, tabId]);
 
   // --- Height Calculation Logic ---
+  // Use useCallback to memoize the calculation function
   const calculateAndSetHeight = useCallback(() => {
-    const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
-    const collapsibleHeight = headerExpanded ? (collapsibleHeaderRef.current?.offsetHeight || 0) : 0;
-    const inputHeight = userInputRef.current?.offsetHeight || 0;
-    const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
-    const buffer = 2;
-    setOtherUIHeight(totalHeight + buffer);
-  }, [headerExpanded, textSize]);
+    // Cancel any pending frame before scheduling a new one
+    if (rafIdHeightCalc.current) {
+      cancelAnimationFrame(rafIdHeightCalc.current);
+    }
+
+    // Schedule the height reading in the next animation frame
+    rafIdHeightCalc.current = requestAnimationFrame(() => {
+      const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
+      const collapsibleHeight = headerExpanded ? (collapsibleHeaderRef.current?.offsetHeight || 0) : 0;
+      const inputHeight = userInputRef.current?.offsetHeight || 0;
+
+      // Ensure all heights are valid numbers before calculating
+      if (typeof appHeaderHeight === 'number' &&
+          typeof collapsibleHeight === 'number' &&
+          typeof inputHeight === 'number') {
+        const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
+        const buffer = 2; // Small buffer
+        setOtherUIHeight(totalHeight + buffer);
+        // logger.sidebar.debug(`Calculated otherUIHeight: ${totalHeight + buffer} (App: ${appHeaderHeight}, Collapsible: ${collapsibleHeight}, Input: ${inputHeight})`);
+      } else {
+        // logger.sidebar.warn('Could not read all element heights for calculation.');
+      }
+      rafIdHeightCalc.current = null; // Reset ref after execution
+    });
+  }, [headerExpanded, textSize]); // Recalculate if header state or text size changes
 
   // Effect for ResizeObserver and initial calculation
   useEffect(() => {
-    const initialCalcTimer = setTimeout(calculateAndSetHeight, 50);
+    // Initial calculation after a short delay
+    const initialCalcTimer = setTimeout(calculateAndSetHeight, 100); // Slightly increased delay
 
     const elementsToObserve = [
       appHeaderRef.current,
@@ -157,17 +178,23 @@ export default function SidebarApp() {
         return () => clearTimeout(initialCalcTimer);
     }
 
-    const resizeObserver = new ResizeObserver((entries) => {
-        calculateAndSetHeight(); // This use the latest textSize due to useCallback dependency
+    // Use ResizeObserver to recalculate whenever relevant elements change size
+    const resizeObserver = new ResizeObserver(() => {
+      calculateAndSetHeight();
     });
 
     elementsToObserve.forEach(el => resizeObserver.observe(el));
 
+    // Cleanup function
     return () => {
       clearTimeout(initialCalcTimer);
+      if (rafIdHeightCalc.current) { // Cancel pending frame on cleanup
+        cancelAnimationFrame(rafIdHeightCalc.current);
+        rafIdHeightCalc.current = null;
+      }
       resizeObserver.disconnect();
     };
-  }, [calculateAndSetHeight]); // Dependency is calculateAndSetHeight, which depends on textSize
+  }, [calculateAndSetHeight]); // Depend only on the memoized calculation function
 
   // Effect to recalculate specifically when headerExpanded changes
   useEffect(() => {
@@ -181,9 +208,7 @@ export default function SidebarApp() {
       {!isReady ? (
         // ----- Loading State -----
         <div className="flex h-full w-full items-center justify-center" aria-live="polite" aria-busy="true">
-          <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status">
-             <span className="sr-only">Loading sidebar...</span>
-          </div>
+          <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status"></div>
         </div>
       ) : tabId ? (
         // ----- Ready State -----
@@ -204,7 +229,7 @@ export default function SidebarApp() {
           {/* Collapsible header section - Attach ref here */}
           <div ref={collapsibleHeaderRef} className="relative flex-shrink-0 z-10">
             <div
-              className={`transition-all duration-300 ease-in-out border-b border-theme ${
+              className={`transition-all duration-300 ease-in-out border-b border-theme overflow-hidden ${ // Added overflow-hidden
                 headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 invisible'
               }`}
               aria-hidden={!headerExpanded}
