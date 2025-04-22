@@ -13,7 +13,7 @@ import ContentFormatter from '../../services/ContentFormatter.js';
  * Process content using web AI interface (non-API path)
  * Used by popup to extract content and send to web UI
  * @param {Object} params - Processing parameters
- * @returns {Promise<Object>} Result information
+ * @returns {Promise<Object>} Result information { success: boolean, aiPlatformTabId?: number, contentType?: string, error?: string, code?: string }
  */
 export async function processContent(params) {
   const { 
@@ -46,9 +46,10 @@ export async function processContent(params) {
     
     // Check for prompt content
     if (!promptContent) {
+      logger.background.warn('processContent: No prompt content provided.');
       return {
         success: false,
-        error: 'No prompt content provided'
+        error: 'No prompt content provided.' // Consistent error message
       };
     }
     
@@ -66,9 +67,14 @@ export async function processContent(params) {
 
     // 3. Get extracted content and check for specific errors
     const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
-    
+
     if (!extractedContent) {
-      throw new Error('Failed to extract content');
+      logger.background.error('processContent: Failed to retrieve extracted content from storage.');
+      // Return failure object directly instead of throwing
+      return {
+        success: false,
+        error: 'Failed to extract content from the page.'
+      };
     }
 
     // 4. Format content
@@ -80,9 +86,11 @@ export async function processContent(params) {
     const aiPlatformTabId = await openAiPlatformWithContent(effectivePlatformId);
     
     if (!aiPlatformTabId) {
+      logger.background.error(`processContent: Failed to open AI platform tab for ${effectivePlatformId}.`);
+      // Return failure object directly
       return {
         success: false,
-        error: 'Failed to open AI platform tab'
+        error: `Failed to open the ${effectivePlatformId} platform tab.`
       };
     }
     
@@ -95,10 +103,11 @@ export async function processContent(params) {
       contentType
     };
   } catch (error) {
-    logger.background.error('Error in processContent:', error);
+    logger.background.error('Error during web UI content processing:', error);
+    // Ensure consistent failure object structure
     return {
       success: false,
-      error: error.message || 'Unknown error occurred'
+      error: error.message || 'An unknown error occurred during content processing.'
     };
   }
 }
@@ -121,16 +130,19 @@ export async function handleProcessContentRequest(message, sendResponse) {
       const result = await processContentViaApi(message);
       sendResponse(result);
     } else {
-      await processContent(message);
-      // No response for non-API case (fire-and-forget)
+      // Await the result and send it back
+      const result = await processContent(message);
+      sendResponse(result);
     }
   } catch (error) {
     logger.background.error('Error handling process content request:', error);
     sendResponse({
       success: false,
-      error: error.message
+      error: error.message || 'Failed to handle process content request.' // Provide default message
     });
   }
+  // Return true to keep the message channel open for the asynchronous sendResponse
+  return true;
 }
 
 /**

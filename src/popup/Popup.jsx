@@ -112,33 +112,43 @@ export function Popup() {
 
     const promptContent = text.trim();
     setIsProcessing(true);
-    updateStatus('Preparing content...', true);
+    // Immediately update status to show processing has started
+    updateStatus(`Processing with ${selectedPlatformId}...`, true); 
 
     try {
-      // Clear previous state related to content processing
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.CONTENT_READY]: false,
-        [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
-        [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: null,
-        [STORAGE_KEYS.SCRIPT_INJECTED]: false,
-        [STORAGE_KEYS.PRE_PROMPT]: promptContent // Store the user's prompt
-      });
+      // Clear previous state (optional, but good practice)
+      await chrome.storage.local.remove([
+        STORAGE_KEYS.CONTENT_READY,
+        STORAGE_KEYS.EXTRACTED_CONTENT,
+        STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID,
+        STORAGE_KEYS.SCRIPT_INJECTED,
+        STORAGE_KEYS.PRE_PROMPT
+      ]);
+      // Store the new prompt
+      await chrome.storage.local.set({ [STORAGE_KEYS.PRE_PROMPT]: promptContent });
 
-      updateStatus(`Processing with ${selectedPlatformId}...`, true);
-
-      processContent({
+      // Call the hook function and wait for the result from the background script
+      const result = await processContent({
         platformId: selectedPlatformId,
         promptContent: promptContent,
-        useApi: false // Popup uses web UI interaction
+        // useApi: false is handled by the hook itself
       });
 
-      updateStatus('Processing initiated... Opening platform tab.', true);
-      window.close();
+      // Check the result from the background script
+      if (result && result.success) {
+        // Close the popup ONLY if the background script confirmed success
+        window.close(); 
+      } else {
+        // Background reported an error, display it
+        updateStatus(`Error: ${result?.error || 'Processing failed'}`, false);
+      }
     } catch (error) {
-      console.error('Process error:', error);
-      // Use updateStatus for error feedback
+      // Catch errors from the hook/message sending itself
+      console.error('Popup process error:', error);
       updateStatus(`Error: ${error.message || 'An unexpected error occurred'}`, false);
-      setIsProcessing(false); // Stop processing on exception
+    } finally {
+      // Ensure processing state is reset regardless of success or failure
+      setIsProcessing(false);
     }
   };
 

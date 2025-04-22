@@ -79,16 +79,24 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         useApi: false
       });
 
-      if (!response || !response.success) {
-        const errorMsg = response?.error || 'Processing failed';
-        throw new Error(errorMsg);
+      // The background script now consistently returns { success: boolean, ... }
+      // We don't need to check for !response here as robustSendMessage handles basic comms errors.
+      // Let the caller handle the success/error based on the response content.
+      if (response && response.success) {
+        setProcessingStatus('success');
+      } else {
+        // Set error state based on the response from background
+        const errorMsg = response?.error || 'Processing failed in background';
+        setError(new Error(errorMsg)); // Store the error message
+        setProcessingStatus('error');
       }
-
-      setProcessingStatus('success');
-      return response;
+      
+      // Return the actual response object received from the background script
+      return response; 
     } catch (error) {
-      console.error('Processing error:', error);
-      setError(error);
+      // Catch errors from robustSendMessage itself (e.g., port closed)
+      console.error('Error sending message to background:', error);
+      setError(error); // Store the communication error
       setProcessingStatus('error');
       throw error;
     }
