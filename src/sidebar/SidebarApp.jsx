@@ -229,7 +229,7 @@ export default function SidebarApp() {
           {/* Collapsible header section - Attach ref here */}
           <div ref={collapsibleHeaderRef} className="relative flex-shrink-0 z-10">
             <div
-              className={`transition-all duration-300 ease-in-out border-b border-theme overflow-hidden ${ // Added overflow-hidden
+              className={`transition-all duration-300 ease-in-out border-b border-theme ${
                 headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 invisible'
               }`}
               aria-hidden={!headerExpanded}
