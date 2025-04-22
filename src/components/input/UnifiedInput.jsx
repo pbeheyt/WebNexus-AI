@@ -6,7 +6,7 @@ import TokenCounter from '../../sidebar/components/TokenCounter';
 
 /**
  * Unified input component for both popup and sidebar, supporting direct input
- * and custom prompt selection via dropdown.
+ * and custom prompt selection via dropdown. Uses rem units for height to adapt to font size.
  */
 export function UnifiedInput({
   value,
@@ -48,7 +48,7 @@ export function UnifiedInput({
   const handleSubmit = () => {
     if (layoutVariant === 'sidebar' && isProcessing && onCancel) {
       onCancel();
-    } 
+    }
     else if (value.trim() && !disabled && !isProcessing) {
       onSubmit(value);
       if (textareaRef.current) {
@@ -84,8 +84,9 @@ export function UnifiedInput({
   const sidebarButtonLabel = isStreamingActive ? "Cancel generation" : "Send message";
   const sidebarButtonDisabled = (!value.trim() && !isStreamingActive) || disabled || (isStreamingActive && isCanceling);
 
-  // Calculate button area width based on layout variant - reduced to minimal functional space
-  const buttonAreaWidth = layoutVariant === 'sidebar' ? 'w-12' : 'w-10';
+  // --- Define styles with rem units ---
+  const sidebarStyle = { minHeight: '5rem', maxHeight: '12rem' };
+  const popupStyle = { minHeight: '4.5rem', maxHeight: '6rem' };
 
   // --- Render Logic ---
   if (layoutVariant === 'sidebar') {
@@ -100,34 +101,27 @@ export function UnifiedInput({
 
         {/* Input Area */}
         <div className="border-t border-gray-200 dark:border-gray-700">
-          <div 
+          <div
             ref={containerRef}
             onClick={handleContainerClick}
             className="input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all">
-            
-            {/* Flex container to ensure proper layout */}
+
+            {/* Flex container for layout - TextArea takes up available space */}
             <div className="flex w-full">
-              {/* Textarea that takes remaining width */}
-              <div className="flex-grow">
-                <TextArea
-                  ref={textareaRef}
-                  value={value}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a prompt or select one..."
-                  disabled={disabled || isProcessing}
-                  autoResize={true}
-                  minHeight={70}
-                  maxHeight={200}
-                  className="w-full py-3 pl-4 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
-                />
-              </div>
-              
-              {/* Spacer for button area - ensures text doesn't flow under buttons */}
-              <div className={buttonAreaWidth}></div>
+              <TextArea
+                ref={textareaRef}
+                value={value}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a prompt or select one..."
+                disabled={disabled || isProcessing}
+                autoResize={true}
+                style={sidebarStyle} // Pass style with rem units
+                className="flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200"
+              />
             </div>
-            
-            {/* Button container - column layout */}
+
+            {/* Button container - absolutely positioned */}
             <div className="absolute right-3 top-3 flex flex-col items-center gap-2">
               {/* Send/Cancel Button */}
               <button
@@ -162,9 +156,9 @@ export function UnifiedInput({
                   aria-label="Select prompt"
                   title="Select a custom prompt"
                 >
-                  <span className="font-semibold text-sm">P</span> 
+                  <span className="font-semibold text-sm">P</span>
                 </button>
-                
+
                 {/* Prompt dropdown positioned inside the button container */}
                 <PromptDropdown
                   isOpen={isDropdownOpen}
@@ -180,7 +174,7 @@ export function UnifiedInput({
       </div>
     );
   }
-  
+
   // --- Popup Variant ---
   else if (layoutVariant === 'popup') {
     const popupSendButtonDisabled = !value.trim() || disabled || isProcessing;
@@ -192,33 +186,27 @@ export function UnifiedInput({
       <div className={`flex flex-col ${className}`}>
         {/* Input Area */}
         <div className="border border-theme rounded-lg bg-theme-surface">
-          <div 
+          <div
             ref={containerRef}
             onClick={handleContainerClick}
             className="input-container relative">
-            
-            {/* Flex container to ensure proper layout */}
+
+            {/* Flex container for layout */}
             <div className="flex w-full">
-              {/* Textarea that takes remaining width */}
-              <div className="flex-grow">
-                <TextArea
-                  ref={textareaRef}
-                  value={value}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a prompt or select one..."
-                  disabled={disabled || isProcessing}
-                  autoResize={true}
-                  minHeight={40}
-                  maxHeight={150}
-                  className="w-full py-3 pl-3 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
-                />
-              </div>
-              
-              {/* Spacer for button area - ensures text doesn't flow under buttons */}
-              <div className={buttonAreaWidth}></div>
+              <TextArea
+                ref={textareaRef}
+                value={value}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a prompt or select one..."
+                disabled={disabled || isProcessing}
+                autoResize={true}
+                style={popupStyle}
+                className="flex-grow w-full py-3 pl-3 pr-10 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary"
+              />
             </div>
-            
+
+            {/* Button container - absolutely positioned */}
             <div className="absolute right-3 top-3 flex flex-col items-center gap-2">
               {/* Send Button */}
               <button
@@ -244,9 +232,9 @@ export function UnifiedInput({
                   aria-label="Select prompt"
                   title="Select a custom prompt"
                 >
-                  <span className="font-semibold text-sm">P</span> 
+                  <span className="font-semibold text-sm">P</span>
                 </button>
-                
+
                 {/* Prompt dropdown positioned inside the button container */}
                 <PromptDropdown
                   isOpen={isDropdownOpen}
