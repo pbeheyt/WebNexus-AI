@@ -227,12 +227,11 @@ export const MessageBubble = memo(forwardRef(({
            return <li className="leading-relaxed text-sm" {...props}>{processedChildren}</li>;
         },
         p: ({ node, children, ...props }) => {
-            const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
-            const containsBlockElement = containsBlockElementCheck(processedChildren);
-            const commonClasses = "mb-4 leading-relaxed text-sm";
-            const Tag = containsBlockElement ? 'div' : 'p';
-            return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
-        },
+          const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
+          const commonClasses = "mb-4 leading-relaxed text-sm";
+          // ALWAYS use a <div> tag as the container
+          return <div className={commonClasses} {...props}>{processedChildren}</div>;
+      },
         pre: ({ node, children, ...props }) => {
           // Check if this <pre> contains a <code> block with a language class (fenced code block)
           const codeChild = node?.children?.[0];
