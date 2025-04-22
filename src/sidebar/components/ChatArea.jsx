@@ -12,7 +12,7 @@ import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 
-// --- Icon Definitions --- (Keep as is)
+// --- Icon Definitions ---
 const InputTokenIcon = () => (
     <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 18V6M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -44,7 +44,7 @@ const ScrollDownIcon = () => (
 );
 // --- End Icon Definitions ---
 
-// --- Helper Function --- (Keep as is)
+// --- Helper Function ---
 const formatContextWindow = (value) => {
     if (typeof value !== 'number') return '';
     if (value >= 1000000) {
@@ -80,7 +80,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         hasAnyPlatformCredentials,
     } = useSidebarPlatform();
 
-    // --- State --- (Keep as is)
+    // --- State ---
     const [showScrollDownButton, setShowScrollDownButton] = useState(false);
     const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
     const [displayModelConfig, setDisplayModelConfig] = useState(null);
@@ -89,7 +89,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     const precedingUserMessageRef = useRef(null);
     const [initialScrollCompletedForResponse, setInitialScrollCompletedForResponse] = useState(true);
 
-    // --- Effect for Platform/Model Display --- (Keep as is)
+    // --- Effect for Platform/Model Display ---
     useEffect(() => {
         const targetPlatform = platforms.find(p => p.id === selectedPlatformId);
         const isPlatformReady = !!targetPlatform;
@@ -108,7 +108,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         }
     }, [platforms, selectedPlatformId, modelConfigData, selectedModel, hasCompletedInitialLoad, hasAnyPlatformCredentials]);
 
-    // --- Get Content Type Name --- (Keep as is)
+    // --- Get Content Type Name ---
     const getContentTypeName = (type) => {
         switch (type) {
             case CONTENT_TYPES.YOUTUBE: return "YouTube Video";
@@ -118,13 +118,30 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             default: return "Content";
         }
     };
-    // --- End Get Content Type Name ---
 
-    // --- Scroll Handling Logic --- (Keep as is)
+    // --- getWelcomeMessage ---
+    function getWelcomeMessage(contentType, isPageInjectable) {
+        if (!isPageInjectable) {
+            return "Ask me anything! Type your question or prompt below.";
+        }
+        switch (contentType) {
+            case CONTENT_TYPES.YOUTUBE:
+                return "Ask about this YouTube video or request a summary.";
+            case CONTENT_TYPES.REDDIT:
+                return "Ask me anything about this Reddit post or request key takeaways.";
+            case CONTENT_TYPES.PDF:
+                return "Ask specific questions about this PDF document or request a summary.";
+            case CONTENT_TYPES.GENERAL:
+            default:
+                return "Ask about this page's content, request a summary, or start a related chat.";
+        }
+    }
+
+    // --- Scroll Handling Logic ---
     const SCROLL_THRESHOLD = 10;
     const DEBOUNCE_DELAY = 100;
 
-    // --- Function to Check Scroll Position (for Scroll Down Button) --- (Keep as is)
+    // --- Function to Check Scroll Position (for Scroll Down Button) ---
     const checkScrollPosition = useCallback(() => {
          const scrollContainer = scrollContainerRef.current;
          if (!scrollContainer || messages.length === 0) {
@@ -149,7 +166,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     const lastMessage = messages[messages.length - 1];
     const secondLastMessage = messages.length > 1 ? messages[messages.length - 2] : null;
 
-    // --- Scrolling Effect (Revised Dependencies) ---
+    // --- Scrolling Effect ---
     useLayoutEffect(() => {
         // Early exit if no messages or container ref not ready
         if (messages.length === 0 || !scrollContainerRef.current) {
@@ -157,9 +174,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             if (showScrollDownButton) setShowScrollDownButton(false);
             return;
         }
-
-        const scrollContainer = scrollContainerRef.current;
-        // Note: lastMessage and secondLastMessage are available from the outer scope now
 
         // --- Condition 1: Reset flag when assistant finishes ---
         const assistantJustFinished = lastMessage &&
@@ -208,7 +222,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         // Always check button visibility
         checkScrollPosition();
 
-    // Corrected Dependency Array: Use variables defined outside the effect
     }, [
         messages.length, // Basic trigger for message changes
         lastMessage?.id, // Detects if the actual last message object changes
@@ -222,7 +235,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     ]);
 
 
-    // --- Layout Effect for Preceding User Message Height (Kept as is) ---
+    // --- Layout Effect for Preceding User Message Height ---
     useLayoutEffect(() => {
         const isTargetScenario =
             messages.length >= 2 &&
@@ -241,7 +254,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         }
     }, [messages, precedingUserMessageHeight, textSize]);
 
-    // --- Manual Scroll To Bottom Function --- (Kept as is)
+    // --- Manual Scroll To Bottom Function ---
     const scrollToBottom = useCallback((behavior = 'smooth') => {
         const scrollContainer = scrollContainerRef.current;
         if (scrollContainer) {
@@ -252,13 +265,13 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         }
     }, []);
 
-    // --- Debounced Scroll Position Check --- (Kept as is)
+    // --- Debounced Scroll Position Check ---
      const debouncedCheckScrollPosition = useMemo(
         () => debounce(checkScrollPosition, DEBOUNCE_DELAY),
         [checkScrollPosition]
     );
 
-    // --- Effect for Manual Scroll Listener --- (Kept as is)
+    // --- Effect for Manual Scroll Listener ---
     useEffect(() => {
          const scrollContainer = scrollContainerRef.current;
         if (scrollContainer) {
@@ -273,8 +286,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     }, [debouncedCheckScrollPosition, checkScrollPosition]);
 
 
-    // --- Effect to check scroll on content update (during streaming) --- (Revised slightly for clarity) ---
-    // Use the externally defined lastMessage variable
+    // --- Effect to check scroll on content update (during streaming) ---
     useEffect(() => {
          const streaming = lastMessage?.isStreaming;
          const content = lastMessage?.content;
@@ -288,7 +300,7 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
     // Depend on the specific properties read from lastMessage
     }, [lastMessage?.content, lastMessage?.isStreaming, checkScrollPosition, messages.length]);
 
-    // --- Open API Settings --- (Kept as is)
+    // --- Open API Settings --- 
     const openApiSettings = () => {
         try {
             if (chrome && chrome.tabs && chrome.runtime) {
@@ -300,13 +312,11 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             console.error('Could not open API options page:', error);
         }
     };
-    // --- End Open API Settings ---
 
     const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
 
-    // --- Render Initial View Content --- (Kept as is)
+    // --- Render Initial View Content --- 
      const renderInitialView = () => {
-         // ... (No changes in this function) ...
          if (!hasAnyPlatformCredentials) {
             return (
                 <div className={`flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}>
@@ -457,7 +467,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         }
         return null;
     };
-    // --- End Initial View Rendering ---
 
     // --- Main Component Render ---
     return (
@@ -548,24 +557,6 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
             </button>
         </div>
     );
-}
-
-// --- getWelcomeMessage --- (Keep as is)
-function getWelcomeMessage(contentType, isPageInjectable) {
-    if (!isPageInjectable) {
-        return "Ask me anything! Type your question or prompt below.";
-    }
-    switch (contentType) {
-        case CONTENT_TYPES.YOUTUBE:
-            return "Ask about this YouTube video or request a summary.";
-        case CONTENT_TYPES.REDDIT:
-            return "Ask me anything about this Reddit post or request key takeaways.";
-        case CONTENT_TYPES.PDF:
-            return "Ask specific questions about this PDF document or request a summary.";
-        case CONTENT_TYPES.GENERAL:
-        default:
-            return "Ask about this page's content, request a summary, or start a related chat.";
-    }
 }
 
 export default ChatArea;
