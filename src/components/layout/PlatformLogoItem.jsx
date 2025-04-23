@@ -37,7 +37,7 @@ export function PlatformLogoItem({
   // Conditional classes for the image based on selection and hover - ensure smooth transition
   const imageBaseClasses = 'object-contain transition-transform duration-300 ease-in-out logo-hover-effect';
   // Apply scale-125 on hover (if not selected) and when selected. Base size is w-8 h-8.
-  const imageSizeClasses = isSelected ? 'w-10 h-10 scale-150' : 'w-10 h-10 group-hover:scale-150';
+  const imageSizeClasses = isSelected ? 'w-12 h-12 scale-150' : 'w-12 h-12 group-hover:scale-150';
 
   return (
     <button
@@ -52,7 +52,7 @@ export function PlatformLogoItem({
       <img
         src={iconUrl}
         alt={`${name} logo`} // Keep name for alt text
-        className={`${imageBaseClasses} ${imageSizeClasses}`}
+        className={`${imageBaseClasses} platform-logo-image ${imageSizeClasses}`}
       />
       {/* Selection Indicator Dot */}
       <div

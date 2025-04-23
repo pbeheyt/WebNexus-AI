@@ -136,16 +136,38 @@
   .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
   }
+
+  .logo-hover-effect {
+    transition-property: transform;
+    transition-duration: 500ms;
+    transition-timing-function: ease-out;
+  }
+
+  .platform-selector-container {
+    perspective: 800px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Scale up the image in the NEXT button when the current button is hovered */
+
+  /* Scale up the image in the PREVIOUS button when the current button is hovered */
+
+  /* Ensure selected item maintains its full scale */
+  .platform-logo-button[aria-pressed="true"] .platform-logo-image {
+    transform: scale(1.5);
+    transition-delay: 0ms !important;
+  }
 }
 
 /* Custom Slider Styles */
 .custom-slider {
-  -webkit-appearance: none; /* Override default look */
+  -webkit-appearance: none;
   appearance: none;
-  height: 8px; /* Specified height */
-  background: transparent; /* Background set on the track */
+  height: 8px;
+  background: transparent;
   cursor: pointer;
-  border-radius: 9999px; /* Fully rounded */
+  border-radius: 9999px;
 }
 
 /* Webkit Track */
@@ -164,7 +186,7 @@
 .custom-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  margin-top: -4px; /* Center thumb vertically (half of thumb height - half of track height) */
+  margin-top: -4px;
   height: 16px;
   width: 16px;
   background: theme('colors.primary.DEFAULT');
