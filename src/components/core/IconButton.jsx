@@ -1,7 +1,7 @@
 // src/components/core/IconButton.jsx
-import React from 'react';
+import React, { forwardRef } from 'react';
 
-export function IconButton({
+export const IconButton = forwardRef(({
   icon: IconComponent,
   iconClassName = '',
   className = '',
@@ -10,9 +10,10 @@ export function IconButton({
   ariaLabel,
   title,
   ...props
-}) {
+}, ref) => {
   return (
     <button
+      ref={ref}
       type="button"
       className={`flex items-center justify-center cursor-pointer border-none outline-none transition-colors duration-150 ${className} ${disabled ? 'opacity-70 cursor-not-allowed' : ''}`}
       onClick={onClick}
@@ -24,4 +25,4 @@ export function IconButton({
       <IconComponent className={iconClassName} aria-hidden="true" />
     </button>
   );
-}
+});

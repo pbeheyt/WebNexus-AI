@@ -1,15 +1,16 @@
 // src/popup/Popup.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react'; // Added useRef
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform';
-import { AppHeader, StatusMessage } from '../components';
+import { AppHeader, StatusMessage, IconButton, InfoIcon } from '../components'; // Added IconButton
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';
 import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
-import { InfoPanel } from './components/InfoPanel';
+import InfoPopover from './components/InfoPopover'; // Added InfoPopover import
 import { robustSendMessage } from '../shared/utils/message-utils';
+import { getContentTypeIconSvg } from '../shared/utils/icon-utils'; // Added getContentTypeIconSvg import
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
@@ -28,6 +29,8 @@ export function Popup() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [isInfoVisible, setIsInfoVisible] = useState(false); // Added state for popover
+  const infoButtonRef = useRef(null); // Added ref for info button
 
   // Listen for messages from background script
   useEffect(() => {
@@ -169,18 +172,55 @@ export function Popup() {
         </button>
       </AppHeader>
 
-      {/* Info Panel */}
-      {!contentLoading && contentTypeLabel && (
-        <div className="mt-2">
-          <InfoPanel contentTypeLabel={contentTypeLabel} contentType={contentType} />
-        </div>
-      )}
+      {/* NEW: Badge and Info Button Section */}
+      <div className="mt-2 mb-3 flex items-center justify-between gap-2"> {/* Container for badge and button */}
+        {/* Content Type Badge (Conditional) */}
+        {!contentLoading && contentTypeLabel && (
+          <div className="inline-flex items-center px-2 py-1 rounded-md bg-theme-hover/50 text-xs font-medium text-theme-primary flex-shrink min-w-0">
+            {/* Icon (Render dynamically) */}
+            {(() => {
+               const iconSvg = getContentTypeIconSvg(contentType);
+               const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-3.5 h-3.5') : '';
+               return modifiedIconSvg ? (
+                 <span
+                   className="inline-block align-middle mr-1.5 flex-shrink-0"
+                   dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
+                 />
+               ) : null;
+            })()}
+            {/* Label */}
+            <span className="truncate">{contentTypeLabel}</span>
+          </div>
+        )}
+        {!contentLoading && !contentTypeLabel && (
+          <div className="flex-shrink min-w-0 h-6"></div> // Placeholder to maintain layout when no badge
+        )}
 
-      <div className="mt-2"> 
-        <PlatformSelector />
+        {/* Info Button */}
+        <div className="flex-shrink-0">
+          <IconButton
+            ref={infoButtonRef} // Attach ref here
+            icon={InfoIcon}
+            iconClassName="w-4 h-4"
+            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
+            onClick={(e) => e.stopPropagation()} // Prevent potential parent clicks
+            onMouseEnter={() => setIsInfoVisible(true)}
+            onMouseLeave={() => setIsInfoVisible(false)}
+            onFocus={() => setIsInfoVisible(true)}
+            onBlur={() => setIsInfoVisible(false)}
+            aria-label="More information"
+            title="More information"
+          />
+        </div>
       </div>
 
-      <div className="mt-4">
+      {/* Platform Selector */}
+      <div className="mt-auto pt-2"> {/* Use mt-auto to push down, pt for spacing */}
+         <PlatformSelector disabled={isProcessingContent || isProcessing} />
+      </div>
+
+      {/* Unified Input */}
+      <div className="mt-2"> {/* Adjust margin as needed */}
         <UnifiedInput
           value={inputText}
           onChange={setInputText}
@@ -194,9 +234,17 @@ export function Popup() {
         />
       </div>
 
-      {/* Status message displayed below the input */}
+      {/* Status Message */}
       <StatusMessage message={statusMessage} context="popup" className="py-3" />
 
+      {/* Info Popover (Position doesn't matter in JSX) */}
+      <InfoPopover
+        show={isInfoVisible}
+        targetRef={infoButtonRef}
+        contentTypeLabel={contentTypeLabel}
+        contentType={contentType}
+        position="bottom" // Or adjust as needed
+      />
     </div>
   );
 }
