@@ -153,7 +153,7 @@ export function Popup() {
   };
 
   return (
-    <div className="min-w-[350px] px-4 bg-theme-primary text-theme-primary">
+    <div className="min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme">
       <AppHeader onClose={closePopup} className='py-2'>
         {/* Sidebar toggle button */}
         <button
