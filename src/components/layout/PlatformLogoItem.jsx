@@ -32,18 +32,18 @@ export function PlatformLogoItem({
   };
 
   // Base classes for the button container - REMOVED inline focus/active utilities. Added specific class 'platform-logo-button'. Kept base transparent border style class.
-  const baseButtonClasses = 'platform-logo-button group relative flex flex-col items-center justify-center transition-all duration-200 ease-in-out p-1 rounded-md border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed'; // Added 'platform-logo-button', removed focus/active utilities, kept border-2 border-transparent
+  const baseButtonClasses = `platform-logo-button group relative flex flex-col items-center justify-center transition-all duration-300 ease-in-out p-1 rounded-md border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${isSelected ? 'mx-4' : 'mx-1'}`; // Added 'platform-logo-button', removed focus/active utilities, kept border-2 border-transparent
 
   // Conditional classes for the image based on selection and hover - ensure smooth transition
   const imageBaseClasses = 'object-contain transition-transform duration-300 ease-in-out logo-hover-effect';
   // Apply scale-125 on hover (if not selected) and when selected. Base size is w-8 h-8.
-  const imageSizeClasses = isSelected ? 'w-12 h-12 scale-150' : 'w-12 h-12 group-hover:scale-150';
+  const imageSizeClasses = isSelected ? 'w-10 h-10 scale-150' : 'w-10 h-10 group-hover:scale-150';
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      className={`${baseButtonClasses}`} // Apply the base classes
+      className={baseButtonClasses} // Apply the base classes
       aria-label={`Select ${name}`} // Keep name for accessibility label
       aria-pressed={isSelected}
       disabled={disabled} // Apply disabled attribute
@@ -56,7 +56,7 @@ export function PlatformLogoItem({
       />
       {/* Selection Indicator Dot */}
       <div
-        className={`absolute bottom-[-12px] left-1/2 -translate-x-1/2 w-5 h-1 bg-primary rounded transition-opacity duration-300 ease-in-out ${
+        className={`absolute bottom-[-12px] left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded transition-opacity duration-300 ease-in-out ${
           isSelected ? 'opacity-100' : 'opacity-0'
         }`}
       />
