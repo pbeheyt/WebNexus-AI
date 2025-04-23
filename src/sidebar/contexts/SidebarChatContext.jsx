@@ -314,7 +314,6 @@ export function SidebarChatProvider({ children }) {
           } else {
             // Handle Success: Stream completed normally
             const finalContent = chunkData.fullContent || batchedStreamingContentRef.current; // Use buffered ref
-            console.info(`Stream ${message.streamId} completed successfully. Final length: ${finalContent.length}`);
             // Update message with final content, mark as success (not error, not cancelled)
             await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false, false); // isError=false, isCancelled=false
 
