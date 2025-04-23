@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useUI } from '../../contexts/UIContext';
 
 /**
  * Tooltip component for displaying messages.
@@ -11,7 +12,8 @@ import React, { useEffect, useState, useRef } from 'react';
  * @param {object} targetRef - Reference to the target element.
  */
 export function Tooltip({ show, message, position = 'top', offset = 8, width = 'auto', delay = 0, targetRef }) {
-  const [isVisible, setIsVisible] = useState(false);
+  const { theme } = useUI();
+const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef(null);
   const [tooltipStyle, setTooltipStyle] = useState({});
 
@@ -95,7 +97,7 @@ export function Tooltip({ show, message, position = 'top', offset = 8, width = '
         position: 'fixed',
         visibility: Object.keys(tooltipStyle).length ? 'visible' : 'hidden'
       }}
-      className={`bg-gray-800 text-white text-xs rounded py-1 px-2 ${widthClass} text-center shadow-lg z-50 transition-opacity duration-200 opacity-100`}
+      className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 opacity-100`}
     >
       {message}
     </div>
