@@ -35,9 +35,9 @@ export function PlatformLogoItem({
   const baseButtonClasses = 'platform-logo-button group relative flex flex-col items-center justify-center transition-all duration-200 ease-in-out p-1 rounded-md border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed'; // Added 'platform-logo-button', removed focus/active utilities, kept border-2 border-transparent
 
   // Conditional classes for the image based on selection and hover - ensure smooth transition
-  const imageBaseClasses = 'object-contain transition-transform duration-200 ease-in-out';
+  const imageBaseClasses = 'object-contain transition-transform duration-300 ease-in-out logo-hover-effect';
   // Apply scale-125 on hover (if not selected) and when selected. Base size is w-8 h-8.
-  const imageSizeClasses = isSelected ? 'w-8 h-8 scale-125' : 'w-8 h-8 group-hover:scale-125';
+  const imageSizeClasses = isSelected ? 'w-10 h-10 scale-150' : 'w-10 h-10 group-hover:scale-150';
 
   return (
     <button
@@ -53,6 +53,12 @@ export function PlatformLogoItem({
         src={iconUrl}
         alt={`${name} logo`} // Keep name for alt text
         className={`${imageBaseClasses} ${imageSizeClasses}`}
+      />
+      {/* Selection Indicator Dot */}
+      <div
+        className={`absolute bottom-[-12px] left-1/2 -translate-x-1/2 w-5 h-1 bg-primary rounded transition-opacity duration-300 ease-in-out ${
+          isSelected ? 'opacity-100' : 'opacity-0'
+        }`}
       />
     </button>
   );
