@@ -188,15 +188,15 @@ export function Popup() {
       </AppHeader>
 
       {/* Platform Selector */}
-      <div className="mt-1.5 mb-3"> {/* Use mt-auto to push down, pt for spacing */}
+      <div className="mt-1.5 mb-3">
          <PlatformSelector disabled={isProcessingContent || isProcessing} />
       </div>
 
       {/* Unified Input */}
       <div>
-        {/* New container for badge and info button */}
+        {/* Container for badge and info button */}
         <div className="flex justify-between items-center mb-1.5 px-3">
-          {/* Content Type Indicator (Moved and Restyled) */}
+          {/* Content Type Indicator */}
           {!contentLoading && contentTypeLabel && (
             <div className="flex items-center gap-1">
               {/* Icon */}
