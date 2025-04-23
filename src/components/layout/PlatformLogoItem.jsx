@@ -36,7 +36,7 @@ export function PlatformLogoItem({
 
   // Conditional classes for the image based on selection and hover - ensure smooth transition
   const imageBaseClasses = 'object-contain transition-transform duration-300 ease-in-out logo-hover-effect';
-  const imageSizeClasses = isSelected ? 'w-5 h-5 scale-250' : 'w-5 h-5 group-hover:scale-250';
+  const imageSizeClasses = isSelected ? 'w-5 h-5 scale-200' : 'w-5 h-5 group-hover:scale-200';
 
   return (
     <button
