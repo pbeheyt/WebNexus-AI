@@ -1,15 +1,15 @@
 // src/popup/Popup.jsx
-import { useEffect, useState, useRef } from 'react'; // Added useRef
+import { useEffect, useState, useRef } from 'react';
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform';
-import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip } from '../components'; // Updated to include Tooltip
+import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';
 import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
 import { robustSendMessage } from '../shared/utils/message-utils';
-import { getContentTypeIconSvg } from '../shared/utils/icon-utils'; // Added getContentTypeIconSvg import
+import { getContentTypeIconSvg } from '../shared/utils/icon-utils';
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
@@ -28,8 +28,8 @@ export function Popup() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputText, setInputText] = useState('');
-  const [isInfoVisible, setIsInfoVisible] = useState(false); // Added state for popover
-  const infoButtonRef = useRef(null); // Added ref for info button
+  const [isInfoVisible, setIsInfoVisible] = useState(false);
+  const infoButtonRef = useRef(null);
 
   const tooltipMessage = (
     <div className="text-xs text-theme-primary max-w-xs">
@@ -134,7 +134,7 @@ export function Popup() {
     updateStatus(`Processing with ${selectedPlatformId}...`, true); 
 
     try {
-      // Clear previous state (optional, but good practice)
+      // Clear previous state
       await chrome.storage.local.remove([
         STORAGE_KEYS.CONTENT_READY,
         STORAGE_KEYS.EXTRACTED_CONTENT,
@@ -172,7 +172,7 @@ export function Popup() {
 
   return (
     <div className="min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme">
-      <AppHeader onClose={closePopup} className='py-2'>
+      <AppHeader onClose={closePopup} className="py-2">
         {/* Sidebar toggle button */}
         <button
           onClick={toggleSidebar}
@@ -187,28 +187,27 @@ export function Popup() {
         </button>
       </AppHeader>
 
-      {/* NEW: Badge and Info Button Section */}
-      <div className="mt-2 mb-3 flex items-center justify-between gap-2"> {/* Container for badge and button */}
+      {/* Badge and Info Button Section */}
+      <div className="mt-2 mb-4 flex items-center justify-between gap-2">
         {/* Content Type Badge (Conditional) */}
         {!contentLoading && contentTypeLabel && (
           <div
-            className="inline-flex items-center justify-center px-4 py-2 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark" // Added justify-center
+            className="inline-flex items-center justify-center px-4 py-2 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
             aria-label={`Current content type: ${contentTypeLabel}`}
           >
             {/* Icon (Render dynamically) */}
             {(() => {
                const iconSvg = getContentTypeIconSvg(contentType);
-               // Note: The replace logic might need adjustment if the base icon size changes, but class handles display size.
-               const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : ''; // Adjust replace if needed, class below sets size
+               const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : '';
                return modifiedIconSvg ? (
                  <span
-                   className="mr-2 flex-shrink-0 w-4 h-4" // Updated class
+                   className="mr-2 flex-shrink-0 w-4 h-4"
                    dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
                  />
                ) : null;
             })()}
             {/* Label */}
-            <span className="text-sm font-medium">{contentTypeLabel}</span> {/* Updated class */}
+            <span className="text-sm font-medium">{contentTypeLabel}</span>
           </div>
         )}
         {!contentLoading && !contentTypeLabel && (
@@ -220,25 +219,25 @@ export function Popup() {
            <IconButton
             ref={infoButtonRef}
             icon={InfoIcon}
-            className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6" // Updated class
+            className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6" 
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setIsInfoVisible(true)}
             onMouseLeave={() => setIsInfoVisible(false)}
             onFocus={() => setIsInfoVisible(true)}
             onBlur={() => setIsInfoVisible(false)}
-            ariaLabel="More information" // Use ariaLabel prop
+            ariaLabel="More information"
             title="More information"
           />
         </div>
       </div>
 
       {/* Platform Selector */}
-      <div className="mt-auto pt-2"> {/* Use mt-auto to push down, pt for spacing */}
+      <div className="mb-3"> {/* Use mt-auto to push down, pt for spacing */}
          <PlatformSelector disabled={isProcessingContent || isProcessing} />
       </div>
 
       {/* Unified Input */}
-      <div className="mt-2"> {/* Adjust margin as needed */}
+      <div>
         <UnifiedInput
           value={inputText}
           onChange={setInputText}
@@ -255,7 +254,7 @@ export function Popup() {
       {/* Status Message */}
       <StatusMessage message={statusMessage} context="popup" className="py-3" />
 
-      {/* Replace InfoPopover with Tooltip */}
+      {/* Tooltip */}
       <Tooltip
         show={isInfoVisible}
         targetRef={infoButtonRef}
