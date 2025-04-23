@@ -56,7 +56,7 @@ export function PlatformLogoItem({
       />
       {/* Selection Indicator Dot */}
       <div
-        className={`absolute bottom-[-12px] left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded transition-opacity duration-300 ease-in-out ${
+        className={`absolute bottom-[-0.5rem]  left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded transition-opacity duration-300 ease-in-out ${
           isSelected ? 'opacity-100' : 'opacity-0'
         }`}
       />
