@@ -187,57 +187,49 @@ export function Popup() {
         </button>
       </AppHeader>
 
-      {/* Badge and Info Button Section */}
-      <div className="mt-2 mb-4 flex items-center justify-between gap-2">
-        {/* Content Type Badge (Conditional) */}
-        {!contentLoading && contentTypeLabel && (
-          <div
-            className="inline-flex items-center justify-center px-4 py-2 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
-            aria-label={`Current content type: ${contentTypeLabel}`}
-          >
-            {/* Icon (Render dynamically) */}
-            {(() => {
-               const iconSvg = getContentTypeIconSvg(contentType);
-               const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : '';
-               return modifiedIconSvg ? (
-                 <span
-                   className="mr-2 flex-shrink-0 w-4 h-4"
-                   dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
-                 />
-               ) : null;
-            })()}
-            {/* Label */}
-            <span className="text-sm font-medium">{contentTypeLabel}</span>
-          </div>
-        )}
-        {!contentLoading && !contentTypeLabel && (
-          <div className="flex-shrink min-w-0 h-6"></div> // Placeholder to maintain layout when no badge
-        )}
-
-        {/* Info Button */}
-        <div className="flex-shrink-0">
-           <IconButton
-            ref={infoButtonRef}
-            icon={InfoIcon}
-            className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6" 
-            onClick={(e) => e.stopPropagation()}
-            onMouseEnter={() => setIsInfoVisible(true)}
-            onMouseLeave={() => setIsInfoVisible(false)}
-            onFocus={() => setIsInfoVisible(true)}
-            onBlur={() => setIsInfoVisible(false)}
-            ariaLabel="More information"
-            title="More information"
-          />
-        </div>
-      </div>
-
       {/* Platform Selector */}
-      <div className="mb-3"> {/* Use mt-auto to push down, pt for spacing */}
+      <div className="mt-2 mb-5"> {/* Use mt-auto to push down, pt for spacing */}
          <PlatformSelector disabled={isProcessingContent || isProcessing} />
       </div>
 
       {/* Unified Input */}
       <div>
+        {/* New container for badge and info button */}
+        <div className="flex justify-between items-center mb-1.5 px-3">
+          {/* Content Type Indicator (Moved and Restyled) */}
+          {!contentLoading && contentTypeLabel && (
+            <div className="flex items-center gap-1">
+              {/* Icon */}
+              {(() => {
+                const iconSvg = getContentTypeIconSvg(contentType);
+                const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : '';
+                return modifiedIconSvg ? (
+                  <span
+                    className="mr-1 flex-shrink-0 w-4 h-4"
+                    dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
+                  />
+                ) : null;
+              })()}
+              {/* Label */}
+              <span className="text-xs font-medium">{contentTypeLabel}</span>
+            </div>
+          )}
+          {/* Info Button (Moved) */}
+          <div className="flex-shrink-0">
+            <IconButton
+              ref={infoButtonRef}
+              icon={InfoIcon}
+              className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6" 
+              onClick={(e) => e.stopPropagation()}
+              onMouseEnter={() => setIsInfoVisible(true)}
+              onMouseLeave={() => setIsInfoVisible(false)}
+              onFocus={() => setIsInfoVisible(true)}
+              onBlur={() => setIsInfoVisible(false)}
+              ariaLabel="More information"
+            />
+          </div>
+        </div>
+
         <UnifiedInput
           value={inputText}
           onChange={setInputText}
@@ -252,7 +244,7 @@ export function Popup() {
       </div>
 
       {/* Status Message */}
-      <StatusMessage message={statusMessage} context="popup" className="py-3" />
+      <StatusMessage message={statusMessage} context="popup" className="pt-2 pb-3" />
 
       {/* Tooltip */}
       <Tooltip

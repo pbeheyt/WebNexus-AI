@@ -139,7 +139,7 @@
 
   .logo-hover-effect {
     transition-property: transform;
-    transition-duration: 500ms;
+    transition-duration: 300ms;
     transition-timing-function: ease-out;
   }
 }
