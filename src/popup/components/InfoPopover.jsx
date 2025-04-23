@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
 
 const InfoPopover = ({
   show,
   targetRef,
   contentTypeLabel,
-  contentType,
   position = 'bottom',
   offset = 8,
 }) => {
@@ -74,13 +72,18 @@ const InfoPopover = ({
     return null;
   }
 
-  const iconSvg = getContentTypeIconSvg(contentType);
-  const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-3.5 h-3.5') : '';
-
   // Hardcoded sidebar icon SVG
-  const sidebarIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 inline-block align-middle ml-0.5 mr-0.5">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M12.75 15l3-3m0 0l-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-  </svg>`;
+  const sidebarIconSvg = `<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary"
+          stroke="currentColor"
+          strokeWidth="2.5"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/>
+          <line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/>
+        </svg>`;
 
   return (
     <div
@@ -95,12 +98,6 @@ const InfoPopover = ({
     >
       <p className="mb-1.5">
         Extract this{' '}
-        {modifiedIconSvg && (
-          <span
-            className="inline-block align-middle mr-1"
-            dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
-          />
-        )}
         <span className="font-medium text-theme-primary">{contentTypeLabel || 'content'}</span>{' '}
         from the current page and send it to your selected AI platform.
       </p>
