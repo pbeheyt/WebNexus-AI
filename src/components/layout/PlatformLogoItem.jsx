@@ -22,7 +22,7 @@ export function PlatformLogoItem({
   iconUrl,
   isSelected,
   onClick,
-  disabled = false, // Add disabled prop
+  disabled = false,
 }) {
   const handleClick = () => {
     // Prevent action if disabled
@@ -31,27 +31,26 @@ export function PlatformLogoItem({
     }
   };
 
-  // Base classes for the button container - REMOVED inline focus/active utilities. Added specific class 'platform-logo-button'. Kept base transparent border style class.
-  const baseButtonClasses = `platform-logo-button group relative flex flex-col items-center justify-center transition-all duration-300 ease-in-out ${isSelected ? 'px-4' : 'px-1'} rounded-md border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed user-select-none cursor-pointer`; // Added 'platform-logo-button', removed focus/active utilities, kept border-2 border-transparent
+  // Base classes for the button container 
+  const baseButtonClasses = `platform-logo-button group relative flex flex-col items-center justify-center transition-all duration-300 ease-in-out ${isSelected ? 'px-6' : 'px-2'} rounded-md border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed user-select-none cursor-pointer`;
 
   // Conditional classes for the image based on selection and hover - ensure smooth transition
   const imageBaseClasses = 'object-contain transition-transform duration-300 ease-in-out logo-hover-effect';
-  // Apply scale-125 on hover (if not selected) and when selected. Base size is w-8 h-8.
-  const imageSizeClasses = isSelected ? 'w-6 h-6 scale-200' : 'w-6 h-6 group-hover:scale-200';
+  const imageSizeClasses = isSelected ? 'w-5 h-5 scale-200' : 'w-5 h-5 group-hover:scale-200';
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      className={baseButtonClasses} // Apply the base classes
-      aria-label={`Select ${name}`} // Keep name for accessibility label
+      className={baseButtonClasses}
+      aria-label={`Select ${name}`}
       aria-pressed={isSelected}
-      disabled={disabled} // Apply disabled attribute
+      disabled={disabled}
     >
       {/* Logo Image */}
       <img
         src={iconUrl}
-        alt={`${name} logo`} // Keep name for alt text
+        alt={`${name} logo`}
         className={`${imageBaseClasses} platform-logo-image ${imageSizeClasses}`}
       />
     </button>

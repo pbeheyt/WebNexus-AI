@@ -42,6 +42,9 @@ module.exports = {
         success: '#4CAF50',
         warning: '#FFC107',
       },
+      scale: {
+        '200': '2',
+      },
       animation: {
         'bounce': 'bounce 1s infinite',
       },
