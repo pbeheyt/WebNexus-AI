@@ -40,7 +40,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   const processContent = useCallback(async (options = {}) => {
     const {
       platformId,
-      promptContent
+      promptContent,
+      port
     } = options;
 
     if (!currentTab?.id) {
@@ -67,6 +68,61 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     setProcessingStatus('loading');
     setError(null);
 
+    if (source === INTERFACE_SOURCES.POPUP && port) {
+      // Use port communication
+      return new Promise((resolve, reject) => {
+        const messageListener = (response) => {
+          // Ensure this listener only handles the response for this specific action
+          if (response && response.originalAction === 'processContent') {
+            if (port && port.onMessage) {
+              port.onMessage.removeListener(messageListener);
+            }
+            if (response.success) {
+              setProcessingStatus('success');
+              resolve(response);
+            } else {
+              const errorMsg = response?.error || 'Processing failed via port';
+              setError(new Error(errorMsg));
+              setProcessingStatus('error');
+              resolve(response);
+            }
+          }
+        };
+
+        // Add listener before posting message
+        port.onMessage.addListener(messageListener);
+
+        try {
+          port.postMessage({
+            action: 'processContent',
+            tabId: currentTab?.id,
+            url: currentTab?.url,
+            platformId,
+            promptContent,
+            contentType,
+            source,
+            useApi: false
+          });
+        } catch (postError) {
+          if (port && port.onMessage) {
+            port.onMessage.removeListener(messageListener);
+          }
+          console.error('Error posting message via port:', postError);
+          setError(postError);
+          setProcessingStatus('error');
+          reject(postError);
+        }
+      });
+    } else if (source === INTERFACE_SOURCES.POPUP && !port) {
+      // Handle case where port isn't ready yet
+      console.warn('processContent called for POPUP source, but port is not available/connected.');
+      const portError = new Error('Popup communication port is not ready.');
+      setError(portError);
+      setProcessingStatus('error');
+      throw portError;
+    }
+
+    // Fallback to robustSendMessage for non-popup or portless popup
     try {
       const response = await robustSendMessage({
         action: 'processContent',
@@ -79,24 +135,17 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         useApi: false
       });
 
-      // The background script now consistently returns { success: boolean, ... }
-      // We don't need to check for !response here as robustSendMessage handles basic comms errors.
-      // Let the caller handle the success/error based on the response content.
       if (response && response.success) {
         setProcessingStatus('success');
       } else {
-        // Set error state based on the response from background
         const errorMsg = response?.error || 'Processing failed in background';
-        setError(new Error(errorMsg)); // Store the error message
+        setError(new Error(errorMsg));
         setProcessingStatus('error');
       }
-      
-      // Return the actual response object received from the background script
-      return response; 
+      return response;
     } catch (error) {
-      // Catch errors from robustSendMessage itself (e.g., port closed)
       console.error('Error sending message to background:', error);
-      setError(error); // Store the communication error
+      setError(error);
       setProcessingStatus('error');
       throw error;
     }

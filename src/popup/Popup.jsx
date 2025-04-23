@@ -1,7 +1,8 @@
 // src/popup/Popup.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform';
+import logger from '../shared/logger';
 import { AppHeader, StatusMessage } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
@@ -28,8 +29,38 @@ export function Popup() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [popupPort, setPopupPort] = useState(null);
 
-  // Listen for messages from background script
+  // Establish and manage port connection
+  useEffect(() => {
+    if (!chrome.runtime?.connect) {
+      logger.popup.warn('chrome.runtime.connect not available');
+      return;
+    }
+
+    try {
+      const port = chrome.runtime.connect({ name: 'popup-connect' });
+      logger.popup.info('Popup port connected');
+      
+      port.onDisconnect.addListener(() => {
+        logger.popup.warn('Popup port disconnected');
+        setPopupPort(null);
+      });
+
+      setPopupPort(port);
+      
+      return () => {
+        if (port) {
+          logger.popup.info('Cleaning up popup port');
+          port.disconnect();
+        }
+      };
+    } catch (error) {
+      logger.popup.error('Error connecting popup port:', error);
+    }
+  }, []);
+
+  // Listen for messages from background script (fallback)
   useEffect(() => {
     const messageListener = (message) => {
       if (message.action === 'apiResponseReady') {
@@ -127,10 +158,11 @@ export function Popup() {
       // Store the new prompt
       await chrome.storage.local.set({ [STORAGE_KEYS.PRE_PROMPT]: promptContent });
 
-      // Call the hook function and wait for the result from the background script
+      // Call the hook function with port if available
       const result = await processContent({
         platformId: selectedPlatformId,
         promptContent: promptContent,
+        port: popupPort,
         // useApi: false is handled by the hook itself
       });
 

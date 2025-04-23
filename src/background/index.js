@@ -7,6 +7,7 @@ import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-s
 import { setupContextMenuListener } from './listeners/context-menu-listener.js';
 import SidebarStateManager from '../services/SidebarStateManager.js';
 import logger from '../shared/logger.js';
+import { handleProcessContentRequest } from './services/content-processing.js';
 
 /**
  * Main entry point for the background service worker
@@ -66,7 +67,42 @@ function setupConnectionListener() {
   chrome.runtime.onConnect.addListener((port) => {
     logger.background.info(`Connection received: ${port.name}`);
 
-    if (port.name.startsWith('sidepanel-connect-')) {
+    if (port.name === 'popup-connect') {
+      logger.background.info('Popup port connected');
+      
+      port.onMessage.addListener(async (message) => {
+        logger.background.info(`Message received on popup port: ${message.action}`);
+        const action = message.action;
+
+        if (action === 'processContent') {
+          try {
+            const response = await new Promise((resolve) => {
+              const isAsync = handleProcessContentRequest(message, resolve);
+              if (!isAsync) {
+                // If handler resolved synchronously
+                logger.background.warn('handleProcessContentRequest did not return true for async operation');
+              }
+            });
+            port.postMessage({ ...response, originalAction: action });
+          } catch (error) {
+            logger.background.error(`Error handling popup message action "${action}":`, error);
+            port.postMessage({
+              success: false,
+              error: error.message || 'Failed to process request in background',
+              originalAction: action
+            });
+          }
+        } else {
+          logger.background.warn(`Unknown action on popup port: ${action}`);
+          port.postMessage({ 
+            success: false, 
+            error: `Unknown action: ${action}`, 
+            originalAction: action 
+          });
+        }
+      });
+
+    } else if (port.name.startsWith('sidepanel-connect-')) {
       const parts = port.name.split('-');
       const tabIdStr = parts[parts.length - 1];
       const tabId = parseInt(tabIdStr, 10);
