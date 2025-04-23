@@ -188,12 +188,15 @@ export function Popup() {
       </AppHeader>
 
       {/* Platform Selector */}
-      <div className="mt-1.5 mb-3">
+      <div className="my-1">
          <PlatformSelector disabled={isProcessingContent || isProcessing} />
       </div>
 
+      {/* Subtle, Non-Full-Width Divider */}
+      <hr className="border-0 border-t border-theme border-opacity-50 mx-auto" />
+
       {/* Unified Input */}
-      <div>
+      <div className="mt-4">
         {/* Container for badge and info button */}
         <div className="flex justify-between items-center mb-1.5 px-3">
           {/* Content Type Indicator */}
