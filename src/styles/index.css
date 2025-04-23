@@ -154,10 +154,10 @@
   /* Scale up the image in the PREVIOUS button when the current button is hovered */
 
   /* Ensure selected item maintains its full scale */
-  .platform-logo-button[aria-pressed="true"] .platform-logo-image {
+  /* .platform-logo-button[aria-pressed="true"] .platform-logo-image {
     transform: scale(1.5);
     transition-delay: 0ms !important;
-  }
+  } */
 }
 
 /* Custom Slider Styles */
