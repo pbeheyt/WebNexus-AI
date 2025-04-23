@@ -36,7 +36,7 @@ export function Popup() {
       <p className="mb-1.5">
         Extract this{' '}
         <span className="font-medium">{contentTypeLabel || 'content'}</span>{' '}
-        and send it with your prompt to your selected AI platform.
+        and send it with your prompt to the selected AI platform.
       </p>
       <p>
         Open the{' '}
@@ -191,20 +191,24 @@ export function Popup() {
       <div className="mt-2 mb-3 flex items-center justify-between gap-2"> {/* Container for badge and button */}
         {/* Content Type Badge (Conditional) */}
         {!contentLoading && contentTypeLabel && (
-          <div className="inline-flex items-center px-2 py-1 rounded-md bg-theme-hover/50 text-xs font-medium text-theme-primary flex-shrink min-w-0">
+          <div
+            className="inline-flex items-center justify-center px-4 py-2 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark" // Added justify-center
+            aria-label={`Current content type: ${contentTypeLabel}`}
+          >
             {/* Icon (Render dynamically) */}
             {(() => {
                const iconSvg = getContentTypeIconSvg(contentType);
-               const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-3.5 h-3.5') : '';
+               // Note: The replace logic might need adjustment if the base icon size changes, but class handles display size.
+               const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : ''; // Adjust replace if needed, class below sets size
                return modifiedIconSvg ? (
                  <span
-                   className="inline-block align-middle mr-1.5 flex-shrink-0"
+                   className="mr-2 flex-shrink-0 w-4 h-4" // Updated class
                    dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
                  />
                ) : null;
             })()}
             {/* Label */}
-            <span className="truncate">{contentTypeLabel}</span>
+            <span className="text-sm font-medium">{contentTypeLabel}</span> {/* Updated class */}
           </div>
         )}
         {!contentLoading && !contentTypeLabel && (
@@ -213,17 +217,16 @@ export function Popup() {
 
         {/* Info Button */}
         <div className="flex-shrink-0">
-          <IconButton
-            ref={infoButtonRef} // Attach ref here
+           <IconButton
+            ref={infoButtonRef}
             icon={InfoIcon}
-            iconClassName="w-4 h-4"
-            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
-            onClick={(e) => e.stopPropagation()} // Prevent potential parent clicks
+            className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6" // Updated class
+            onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setIsInfoVisible(true)}
             onMouseLeave={() => setIsInfoVisible(false)}
             onFocus={() => setIsInfoVisible(true)}
             onBlur={() => setIsInfoVisible(false)}
-            aria-label="More information"
+            ariaLabel="More information" // Use ariaLabel prop
             title="More information"
           />
         </div>
