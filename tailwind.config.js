@@ -43,7 +43,7 @@ module.exports = {
         warning: '#FFC107',
       },
       scale: {
-        '200': '2',
+        '250': '2.5',
       },
       animation: {
         'bounce': 'bounce 1s infinite',
