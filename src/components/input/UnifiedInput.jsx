@@ -181,7 +181,7 @@ export function UnifiedInput({
      return (
        <div className={`flex flex-col ${className}`}>
          {/* Input Area */}
-         <div className="border border-theme rounded-lg bg-theme-surface">
+         <div className="rounded-lg bg-theme-surface shadow-theme-light">
            <div
              ref={containerRef}
              onClick={handleContainerClick}
