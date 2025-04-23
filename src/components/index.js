@@ -16,7 +16,7 @@ export { SliderInput } from './form/SliderInput';
 
 // Layout components
 export { Card, CardHeader, CardTitle, CardContent } from './layout/Card';
-export { PlatformCard} from './layout/PlatformCard';
+export { PlatformLogoItem } from './layout/PlatformLogoItem';
 export { AppHeader } from './layout/AppHeader';
 export { Tooltip } from './layout/Tooltip';
 
