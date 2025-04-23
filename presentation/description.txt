@@ -1,12 +1,14 @@
-# AI Insightr: Web Content Assistant (ChatGPT, Claude, Gemini & More)
+# AI Insightr: Web Content Assistant
 
-**Interact with, analyze, and summarize web pages, YouTube videos, PDFs, and Reddit posts using ChatGPT, Claude, Gemini and other AI platforms. Choose between direct API integration via side panel or seamless transfer to web UIs without copying and pasting.**
+**Interact with web pages, YouTube videos, PDFs, and Reddit posts using AI models like ChatGPT, Claude, and Gemini, right within your browser. Choose between direct API chat via a side panel or quick actions using the platforms' web UIs.**
 
 ---
 
-## Your AI Hub
+This extension allows you to utilize various AI models to analyze and interact with content you encounter online. It provides two primary methods of interaction: a side panel for direct API communication and a popup/context menu for interaction via the AI platforms' standard web interfaces.
 
-AI Insightr connects you to AI platforms via their Web UIs or APIs (all available models, including the newest releases):
+## Supported Platforms
+
+AI Insightr can connect to the following AI platforms:
 
 *   Gemini (Google)
 *   ChatGPT (OpenAI)
@@ -15,77 +17,46 @@ AI Insightr connects you to AI platforms via their Web UIs or APIs (all availabl
 *   Grok (xAI)
 *   Mistral
 
----
-
-## Core Features
-
-*   **Engage with Diverse Content:** Analyze news articles, blog posts, and product pages; summarize YouTube videos using their transcripts; gain insights from Reddit posts by summarizing discussions and key comments; query and extract information from PDF documents.
-*   **Flexible Interaction Modes:** Choose between quick actions via the **Popup** (using platform Web UIs, no API key needed) or in-depth conversations via the **Side Panel** (using platform APIs, requires API keys).
-*   **Prompt Management:** Create, edit, and organize custom prompts tailored to specific content types (Web Pages, YouTube, PDFs, Reddit) for faster workflows. Manage your prompts in the extension's **Settings page** under the "Prompts" tab.
-*   **Advanced API Configuration:** Fine-tune API requests by setting temperature, max tokens, and system prompts for specific models in the Settings page (API Settings tab).
-*   **UI Customization:** Adapt the interface with Light/Dark themes and adjustable text sizes via the header buttons.
-*   **Local API Key Storage:** Securely stores your API keys using Chrome's local storage API within your browser profile. Your keys are not sent anywhere except directly to the respective AI platform's API endpoint during requests.
+Both API access (for the Side Panel) and Web UI interaction (for Popup/Context Menu) are supported for these platforms.
 
 ---
 
-## Getting Started
+## Core Functionality
 
-1.  **Install** the extension.
-2.  **Pin the extension** to your Chrome toolbar for easy access (Click the puzzle piece icon in Chrome, find AI Insightr, and click the pin icon).
+*   **Analyze Diverse Content:** Extracts relevant information from standard web pages (articles, blogs), YouTube video transcripts (when available), Reddit posts & comments, and the text content of PDF documents.
+*   **Flexible Interaction Modes:**
+    *   **Side Panel (API Mode):** Open a persistent panel alongside your content for direct chat conversations using the selected platform's API. This mode maintains chat history per tab and provides estimated token usage/cost tracking. *Requires configuring API keys in the extension's settings.*
+    *   **Popup (Web UI Mode):** Use the extension's popup to quickly send the current page's extracted content and your prompt to the chosen AI platform's official website in a new tab. The extension attempts to automatically paste the content and prompt into the site's input field. *Does not require API keys for interaction.*
+    *   **Context Menu (Web UI Mode):** Right-click on a page and select 'Process in Web UI' to instantly send the extracted content using your pre-defined default prompt for that content type to your preferred platform's website (similar to the Popup flow). *Does not require API keys.*
+*   **Prompt Management:** Create, save, and organize custom prompts tailored for different content types (Web Page, YouTube, PDF, Reddit). These prompts are accessible from both the Popup and Side Panel. Manage them in the "Prompts" tab of the extension's Settings page.
+*   **API Configuration (Side Panel Mode):** For users utilizing the Side Panel's API features:
+    *   Securely store API keys obtained from AI providers within your browser's local storage.
+    *   Fine-tune API request parameters (e.g., temperature, max tokens, system prompt) for specific models via the Settings page ("API Settings" tab).
+*   **UI Customization:** Adapt the Side Panel and Settings interface with Light/Dark themes and adjustable text sizes using controls in the header.
 
 ---
 
-Choose the interaction mode that best suits your needs:
+## Usage Overview
 
-**1. Quick Actions via Popup (Uses Web UIs - No API Key Needed)**
-
-*   **Best for:** Quickly summarizing or analyzing content using the official AI websites without needing API keys.
-*   **How it works:**
-    1.  Navigate to the web page, PDF, YouTube video, or Reddit post you want to analyze.
-    2.  Click the **AI Insightr extension icon** in your toolbar to open the popup.
-    3.  **Select an AI platform** (e.g., ChatGPT, Claude).
-        *   *Note: Ensure you are logged into the selected platform's website in your browser.*
-    4.  **Type a custom prompt** in the input box, or select a pre-saved prompt using the 'P' button.
-    5.  Press **Enter** to send.
-    6.  AI Insightr extracts the page content and opens the platform's official website in a new tab, automatically pasting your prompt and the extracted content.
-
-**2. Direct Chat via Side Panel (Requires API Keys)**
-
-*   **Best for:** In-depth conversations about page content, maintaining chat history per tab, using specific models, and tracking usage.
-*   **Setup (One-time per platform):**
-    1.  Click the AI Insightr extension icon, then click the **Side Panel icon** in the popup header to open the Side Panel.
-    2.  Open the extension's **Settings** page (via the gear icon in the popup or by right-clicking the extension icon > Options).
-    3.  Navigate to the **API Settings** tab.
-    4.  Select the AI platform you want to configure (e.g., OpenAI for ChatGPT).
-    5.  Follow the links provided (API Documentation/Console) to generate an API key on the platform's official website.
-    6.  Copy the generated API key.
-    7.  Paste the key into the API Key field in the extension's settings for that platform and click **Save Key**. The platform should now show a green checkmark in the Side Panel list.
-    8.  *(Optional)* Configure advanced parameters (temperature, max tokens, system prompt) for specific models in the Advanced Settings section.
-*   **Usage:**
-    1.  Open the **Side Panel** next to the content you want to discuss (using the Side Panel icon in the popup).
-    2.  The Side Panel will open. Select your desired **AI platform and Model** from the dropdowns at the top.
-    3.  **Type your prompt** in the input box at the bottom, or select a saved prompt using the 'P' button.
-    4.  **Toggle Content Extraction:** Use the "Extract content" toggle below the welcome message (when the chat is empty) to control whether the current page's content is automatically included with your *first* message in a new chat session for that tab.
-    5.  Press **Enter** to send your message. The AI response will appear directly in the Side Panel.
-    6.  **Switch Models Mid-Chat:** You can change the selected model using the dropdown at the top of the Side Panel at any time during your conversation. Your chat history for the current tab will be preserved.
-    7.  **Restart Conversation:** Click the **Refresh Chat** in the Side Panel header at any time to clear the current chat history and token counts for that tab, allowing you to start a fresh conversation.
-*   **Side Panel Benefits:**
-    *   Leverage **free API usage options** available from platforms like Gemini and Mistral.
-    *   Maintains conversation history per tab.
-    *   Tracks token usage and estimates costs.
+1.  **Install** the extension and pin it to your toolbar for easy access.
+2.  **Choose your interaction method:**
+    *   **For Quick Actions (Web UI):** Click the extension icon (Popup) or right-click the page (Context Menu). Select a platform, enter/select a prompt (popup only for custom prompt entry), and send. This opens the platform's website. Ensure you are logged into the respective platform's website in your browser.
+    *   **For Direct Chat (API):**
+        *   First, open the extension's **Settings** page (Options) and navigate to **API Settings**. Enter and save your API key(s) for the platforms you wish to use in the Side Panel.
+        *   Open the **Side Panel** (via the icon in the popup or right-click context menu).
+        *   Select the desired AI Platform and Model (only platforms with saved keys are available).
+        *   Type your prompt or select a saved one. Toggle content extraction for the first message if needed. Chat directly within the panel.
 
 ## Usage Tips
 
-*   **Inputting Prompts:** When typing in the prompt input box (in either Popup or Side Panel), press **Enter** to send your message. To add a new line without sending, use **Shift+Enter**.
-*   **Loading YouTube/Reddit Comments:** If you want comments from YouTube videos or Reddit posts to be included in the extracted content, ensure you scroll down the page first to load them in your browser before using the extension.
-
-## Usage Notes
-
-*   **Web Page Extraction Reliability:** The strategy used for extracting content from general web pages works well for most standard layouts but may occasionally fail to capture content accurately on pages with very complex or non-standard HTML structures.
-*   **YouTube Transcript Unavailability:** If a YouTube video does not have a transcript available, the extension cannot extract the spoken content. In these cases, only the video's metadata (title, description) and any loaded comments will be included in the extracted content sent to the AI.
-*   **Platform Website Updates (Popup Mode):** AI platform websites (like ChatGPT, Claude, etc.) sometimes update their interface. Such updates can temporarily break the automatic copy-and-paste feature used by the **Popup** mode. We actively monitor these platforms and aim to release extension updates promptly to restore compatibility when breaks occur.
-*   **Token Estimation Accuracy (Side Panel):** The Side Panel displays *estimated* token counts and potential costs based on the `gpt-tokenizer` library (`cl100k_base` encoding). While generally accurate for OpenAI models, estimates for other platforms (like Claude) might differ from actual billed usage by roughly ±20% due to different tokenization methods. Always refer to the official platform dashboards for definitive usage and billing information. The estimates are provided for guidance only. (Expand the token counter section in the Side Panel for a detailed note.)
+*   **Inputting Prompts:** Press **Enter** to send your message. To add a new line without sending, use **Shift+Enter**.
+*   **Loading Dynamic Content:** For YouTube/Reddit comments, scroll down the page first to ensure comments are loaded in the browser before using the extension if you want them included in the extracted content.
 
 ---
 
-AI Insightr is a versatile tool for anyone looking to leverage AI for deeper content understanding and interaction. Install now and enhance your browsing experience!
+## Usage Notes
+
+*   **Content Extraction:** The extraction process works well for standard web layouts, YouTube transcripts (if provided by the creator), Reddit posts/comments, and searchable PDFs. Complex or non-standard page structures might yield incomplete results.
+*   **Popup/Context Menu (Web UI) Reliability:** The function that automatically pastes content into AI platform websites depends on their specific web interface structure. Updates to these websites (e.g., ChatGPT, Claude) can temporarily break this feature. Updates to the extension will be released to address such changes when possible.
+*   **Token Estimation (Side Panel API Mode):** Token counts and cost estimations displayed in the Side Panel are based on the `gpt-tokenizer` library. While generally accurate for OpenAI models, estimates for other platforms may differ from official billing due to varying tokenization methods. Always refer to the AI provider's dashboard for definitive usage data.
+
