@@ -2,13 +2,12 @@
 import { useEffect, useState, useRef } from 'react'; // Added useRef
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform';
-import { AppHeader, StatusMessage, IconButton, InfoIcon } from '../components'; // Added IconButton
+import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip } from '../components'; // Updated to include Tooltip
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';
 import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
-import InfoPopover from './components/InfoPopover'; // Added InfoPopover import
 import { robustSendMessage } from '../shared/utils/message-utils';
 import { getContentTypeIconSvg } from '../shared/utils/icon-utils'; // Added getContentTypeIconSvg import
 
@@ -31,6 +30,22 @@ export function Popup() {
   const [inputText, setInputText] = useState('');
   const [isInfoVisible, setIsInfoVisible] = useState(false); // Added state for popover
   const infoButtonRef = useRef(null); // Added ref for info button
+
+  const tooltipMessage = (
+    <div className="text-xs text-theme-primary max-w-xs">
+      <p className="mb-1.5">
+        Extract this{' '}
+        <span className="font-medium">{contentTypeLabel || 'content'}</span>{' '}
+        and send it with your prompt to your selected AI platform.
+      </p>
+      <p>
+        Open the{' '}
+        <span className="font-medium">Side Panel</span>
+        <span dangerouslySetInnerHTML={{ __html: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/><line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/></svg>` }} />
+        to have your AI conversation directly alongside the page.
+      </p>
+    </div>
+  );
 
   // Listen for messages from background script
   useEffect(() => {
@@ -237,13 +252,12 @@ export function Popup() {
       {/* Status Message */}
       <StatusMessage message={statusMessage} context="popup" className="py-3" />
 
-      {/* Info Popover (Position doesn't matter in JSX) */}
-      <InfoPopover
+      {/* Replace InfoPopover with Tooltip */}
+      <Tooltip
         show={isInfoVisible}
         targetRef={infoButtonRef}
-        contentTypeLabel={contentTypeLabel}
-        contentType={contentType}
-        position="bottom" // Or adjust as needed
+        message={tooltipMessage}
+        position="bottom"
       />
     </div>
   );

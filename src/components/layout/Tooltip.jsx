@@ -1,5 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 
+/**
+ * Tooltip component for displaying messages.
+ * @param {boolean} show - Whether to show the tooltip.
+ * @param {React.ReactNode} message - Tooltip content (string or JSX).
+ * @param {string} [position='top'] - Position of the tooltip.
+ * @param {number} [offset=8] - Offset from the target.
+ * @param {string|number} [width='auto'] - Width of the tooltip.
+ * @param {number} [delay=0] - Delay before showing.
+ * @param {object} targetRef - Reference to the target element.
+ */
 export function Tooltip({ show, message, position = 'top', offset = 8, width = 'auto', delay = 0, targetRef }) {
   const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef(null);
