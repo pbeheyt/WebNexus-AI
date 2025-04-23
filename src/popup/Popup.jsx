@@ -188,7 +188,7 @@ export function Popup() {
       </AppHeader>
 
       {/* Platform Selector */}
-      <div className="mt-2 mb-5"> {/* Use mt-auto to push down, pt for spacing */}
+      <div className="mt-1.5 mb-3"> {/* Use mt-auto to push down, pt for spacing */}
          <PlatformSelector disabled={isProcessingContent || isProcessing} />
       </div>
 

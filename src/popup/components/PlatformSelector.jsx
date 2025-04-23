@@ -18,7 +18,7 @@ export function PlatformSelector({ disabled }) {
   };
   
   return (
-    <div className="flex items-end justify-center py-3 min-h-[50px] transition-opacity duration-200 {disabled ? 'opacity-50' : ''}">
+    <div className={`platform-selector-container transition-opacity duration-200 ${disabled ? 'opacity-50' : ''}`}>
       {platforms.map((platform) => (
         <PlatformLogoItem
           key={platform.id}
