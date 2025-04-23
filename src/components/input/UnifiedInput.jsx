@@ -97,7 +97,7 @@ export function UnifiedInput({
 
   // --- Define styles with rem units ---
   const sidebarStyle = { minHeight: '5rem', maxHeight: '12rem' };
-  const popupStyle = { minHeight: '4.5rem', maxHeight: '6rem' };
+  const popupStyle = { minHeight: '4.5rem', maxHeight: '12rem' };
 
   // --- Render Logic ---
   if (layoutVariant === 'sidebar') {
