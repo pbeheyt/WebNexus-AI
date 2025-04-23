@@ -40,7 +40,7 @@ export async function robustSendMessage(message, attempt = 1) {
 
         // Check if it's a retryable scenario (connection error and retries left)
         if (isConnectionError && attempt <= MAX_RETRIES) {
-           // Calculate delay (optional: implement exponential backoff)
+           // Calculate delay
            const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1); // Exponential backoff
 
            logger.message.warn(`robustSendMessage: Connection error for action "${message.action}" on attempt ${attempt}. Retrying in ${delay}ms...`);
