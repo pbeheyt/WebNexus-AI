@@ -162,6 +162,20 @@ export const MessageBubble = memo(forwardRef(({
         const [userCopyState, setUserCopyState] = useState('idle'); // Added state for user copy
         const { rerunMessage, editAndRerunMessage } = useSidebarChat();
 
+        const handleKeyDown = (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault(); // Prevent newline
+                if (editedContent.trim()) { // Check if content is not just whitespace
+                    editAndRerunMessage(id, editedContent);
+                    setIsEditing(false);
+                }
+            } else if (event.key === 'Escape') {
+                event.preventDefault(); // Prevent potential browser/modal escape actions
+                setIsEditing(false); // Cancel editing
+            }
+            // No need to handle Shift+Enter explicitly, allow default behavior
+        };
+
         // Added handler for user copy
         const handleUserCopyToClipboard = async () => {
             if (!content) return; // Only copy if content exists
@@ -190,16 +204,24 @@ export const MessageBubble = memo(forwardRef(({
                         </>
                     )}
                     {isEditing && (
-                        <div className="flex flex-col w-full">
+                        <div className="flex flex-col w-full space-y-3">
                             <TextArea
                                 value={editedContent}
                                 onChange={(e) => setEditedContent(e.target.value)}
-                                className="w-full text-sm border border-primary rounded-md p-2 mb-2 bg-white dark:bg-gray-800"
+                                onKeyDown={handleKeyDown}
+                                className="w-full text-sm border border-primary rounded-md p-2 bg-white dark:bg-gray-800"
                                 style={{ minHeight: '4rem' }}
                                 autoFocus
                             />
                             <div className="flex justify-end gap-2">
-                                <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
+                                <Button 
+                                    variant="secondary" 
+                                    size="sm" 
+                                    onClick={() => setIsEditing(false)}
+                                    className="px-4"
+                                >
+                                    Cancel
+                                </Button>
                                 <Button
                                     variant="primary"
                                     size="sm"
@@ -208,6 +230,7 @@ export const MessageBubble = memo(forwardRef(({
                                         setIsEditing(false);
                                     }}
                                     disabled={!editedContent.trim()}
+                                    className="px-4"
                                 >
                                     Save & Rerun
                                 </Button>
