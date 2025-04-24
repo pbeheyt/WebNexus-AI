@@ -9,6 +9,7 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
   const [prompts, setPrompts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const dropdownRef = useRef(null);
 
   // Fetch relevant prompts when the dropdown opens
@@ -20,11 +21,13 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
         .then(loadedPrompts => {
           setPrompts(loadedPrompts);
           setIsLoading(false);
+          setIsInitialLoad(false);
         })
         .catch(err => {
           console.error("Error loading prompts in dropdown:", err);
           setError("Failed to load prompts.");
           setIsLoading(false);
+          setIsInitialLoad(false);
         });
     } else {
       // Reset state when closed
@@ -54,6 +57,11 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
   }, [isOpen, onClose, anchorRef]);
 
   if (!isOpen) {
+    return null;
+  }
+
+  // Don't render anything during initial load to prevent flash
+  if (isLoading && isInitialLoad) {
     return null;
   }
 
