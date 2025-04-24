@@ -422,6 +422,14 @@ export function SidebarChatProvider({ children }) {
     setStreamingMessageId(assistantMessageId);
     batchedStreamingContentRef.current = ''; // Reset buffer
 
+    // Preserve current stats BEFORE the API call (similar to rerun logic)
+    const currentAccumulatedCost = tokenStats.accumulatedCost || 0;
+    const currentOutputTokens = tokenStats.outputTokens || 0;
+    rerunStatsRef.current = {
+        preTruncationCost: currentAccumulatedCost,
+        preTruncationOutput: currentOutputTokens
+    };
+
     // Determine if this is the first message (before adding the current user message)
     const isFirstMessage = messages.length === 0;
     // Determine if the current page is injectable
