@@ -4,48 +4,14 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
-import { CopyIcon } from './icons/CopyIcon'; // Added
-import { CheckIcon } from './icons/CheckIcon'; // Added
-import { XMarkIcon } from './icons/XMarkIcon'; // Added
-// import CopyButtonIcon from './icons/CopyButtonIcon'; // Removed
 import EnhancedCodeBlock from './EnhancedCodeBlock';
 import MathFormulaBlock from './MathFormulaBlock';
 import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 import logger from '../../../shared/logger';
-import { TextArea, Button, IconButton } from '../../../components'; // Corrected import path
+import { TextArea, Button, IconButton, EditIcon, RerunIcon, CopyIcon, CheckIcon, XMarkIcon } from '../../../components'; // Corrected import path
 import { useSidebarChat } from '../../contexts/SidebarChatContext'; // Added
-
-// Define Icon Components using provided SVGs
-const EditIcon = ({ className = 'w-4 h-4', ...props }) => (
-    <svg 
-        className={`${className} stroke-[2] size-4`}
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
-    >
-        <path d="M18.25 5.75C16.8693 4.36929 14.6307 4.36929 13.25 5.75L10.125 8.875L5.52404 13.476C4.86236 14.1376 4.45361 15.0104 4.36889 15.9423L4 20.0001L8.0578 19.6311C8.98967 19.5464 9.86234 19.1377 10.524 18.476L18.25 10.75C19.6307 9.36929 19.6307 7.13071 18.25 5.75V5.75Z" stroke="currentColor"></path>
-        <path d="M12.5 7.5L16.5 11.5" stroke="currentColor"></path>
-    </svg>
-);
-
-const RerunIcon = ({ className = 'w-4 h-4', ...props }) => (
-    <svg 
-        className={`${className} stroke-[2] size-4`}
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
-    >
-        <path d="M4 20V15H4.31241M4.31241 15H9M4.31241 15C5.51251 18.073 8.50203 20.25 12 20.25C15.8582 20.25 19.0978 17.6016 20 14.0236M20 4V9H19.6876M19.6876 9H15M19.6876 9C18.4875 5.92698 15.498 3.75 12 3.75C8.14184 3.75 4.90224 6.3984 4 9.9764" stroke="currentColor"></path>
-    </svg>
-);
 
 // Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
 const MATH_PLACEHOLDER_REGEX = /@@MATH_(BLOCK|INLINE)_(\d+)@@/g;

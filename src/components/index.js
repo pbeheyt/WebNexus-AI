@@ -22,6 +22,13 @@ export { Tooltip } from './layout/Tooltip';
 
 // Icon components
 export { InfoIcon } from './icons/InfoIcon';
+export { CopyIcon } from './icons/CopyIcon';
+export { EditIcon } from './icons/EditIcon';
+export { RerunIcon } from './icons/RerunIcon';
+export { ArrowUpIcon } from './icons/ArrowUpIcon';
+export { XIcon } from './icons/XIcon';
+export { CheckIcon } from './icons/CheckIcon';
+export { XMarkIcon } from './icons/XMarkIcon';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';

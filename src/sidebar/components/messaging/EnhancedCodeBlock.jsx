@@ -2,8 +2,8 @@
 import React, { useState, memo, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import CopyButtonIcon from './icons/CopyButtonIcon';
 import { copyToClipboard } from './utils/clipboard';
+import { IconButton, CopyIcon } from '../../../components';
 
 /**
  * Enhanced CodeBlock with syntax highlighting and copy functionality.
@@ -76,18 +76,15 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
 
         {/* Copy button - Only show when not streaming */}
         {!isStreaming && (
-          <button
+          <IconButton
+            icon={() => <CopyIcon state={copyState} />} // Pass CopyIcon with state
+            iconClassName="w-3 h-3" // Define icon size
             onClick={copyCodeToClipboard}
-            className={`rounded transition-all duration-200 px-1.5 py-0.5 text-xs
-                      ${copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
-                        copyState === 'error' ? 'text-red-500 dark:text-red-400' :
-                        'text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary'}`}
+            disabled={copyState !== 'idle'}
             aria-label="Copy code to clipboard"
             title="Copy code to clipboard"
-            disabled={copyState !== 'idle'}
-          >
-            <CopyButtonIcon state={copyState} />
-          </button>
+            className={`p-1 rounded-md transition-opacity duration-200 z-10 ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : 'opacity-100'} ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 focus:bg-gray-200 dark:focus:bg-gray-700'}`} // Apply dynamic classes here
+          />
         )}
       </div>
 

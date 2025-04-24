@@ -1,13 +1,13 @@
 import React, { memo } from 'react';
 
 /**
- * Reusable Copy Button Icon component
+ * Reusable Copy Icon component
  * Provides consistent SVG icons for different copy states
  * @param {Object} props - Component props
  * @param {string} props.state - Current copy state ('idle', 'copied', or 'error')
  * @returns {JSX.Element} - The appropriate icon based on state
  */
-const CopyButtonIcon = memo(({ state = 'idle' }) => {
+export const CopyIcon = memo(({ state = 'idle' }) => {
   switch (state) {
     case 'copied':
       // Checkmark icon for copied state
@@ -34,4 +34,4 @@ const CopyButtonIcon = memo(({ state = 'idle' }) => {
   }
 });
 
-export default CopyButtonIcon;
+// Note: Changed export from default to named export 'CopyIcon'
