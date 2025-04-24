@@ -138,7 +138,7 @@ const PromptList = ({
                   />
                 </div>
                 {item.id === defaultPromptIds[item.contentType] && (
-                  <span className="default-badge text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full select-none">Default</span>
+                  <span className="default-badge text-xs bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-full select-none">Default</span>
                 )}
               </small>
             </div>
