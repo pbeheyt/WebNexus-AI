@@ -690,6 +690,102 @@ export function SidebarChatProvider({ children }) {
 
   }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing]);
 
+  const rerunAssistantMessage = useCallback(async (assistantMessageId) => {
+    // Guard Clauses
+    if (!tabId || !selectedPlatformId || !selectedModel || isProcessing) return;
+
+    // Find Indices
+    const assistantIndex = messages.findIndex(msg => msg.id === assistantMessageId);
+    const userIndex = assistantIndex - 1;
+
+    if (assistantIndex <= 0 || userIndex < 0 || messages[userIndex].role !== MESSAGE_ROLES.USER) {
+        console.error('Cannot rerun assistant message: Invalid message structure or preceding user message not found.', { assistantIndex, userIndex });
+        return;
+    }
+
+    // Preserve Stats
+    const preTruncationCost = tokenStats.accumulatedCost || 0;
+    const preTruncationOutput = tokenStats.outputTokens || 0;
+    rerunStatsRef.current = { preTruncationCost, preTruncationOutput };
+
+    // Truncate History (up to the preceding user message)
+    const truncatedMessages = messages.slice(0, userIndex + 1);
+
+    // Update UI immediately
+    setMessages(truncatedMessages);
+
+    // Get User Prompt
+    const promptContent = truncatedMessages[userIndex].content;
+
+    // Get History (before the user prompt)
+    const conversationHistory = truncatedMessages.slice(0, userIndex)
+        .filter(msg => (msg.role === MESSAGE_ROLES.USER || msg.role === MESSAGE_ROLES.ASSISTANT) && !msg.isStreaming)
+        .map(msg => ({ role: msg.role, content: msg.content, timestamp: msg.timestamp }));
+
+    // Create Placeholder
+    const assistantPlaceholderId = `msg_${Date.now() + 1}`;
+    const assistantPlaceholder = {
+        id: assistantPlaceholderId,
+        role: MESSAGE_ROLES.ASSISTANT,
+        content: '',
+        model: selectedModel,
+        platformIconUrl: selectedPlatform.iconUrl,
+        timestamp: new Date().toISOString(),
+        isStreaming: true,
+        inputTokens: 0,
+        outputTokens: 0
+    };
+
+    // Add Placeholder to UI
+    setMessages(prev => [...prev, assistantPlaceholder]);
+
+    // Set Streaming ID
+    setStreamingMessageId(assistantPlaceholderId);
+
+    // Reset Buffer
+    batchedStreamingContentRef.current = '';
+
+    // API Call
+    try {
+        const result = await processContentViaApi({
+            platformId: selectedPlatformId,
+            modelId: selectedModel,
+            promptContent,
+            conversationHistory,
+            streaming: true,
+            options: {
+                tabId,
+                source: INTERFACE_SOURCES.SIDEBAR,
+                preTruncationCost, // Pass preserved stats
+                preTruncationOutput // Pass preserved stats
+            }
+        });
+
+        if (!result || !result.success) {
+            throw new Error(result?.error || 'Failed to initialize streaming for assistant rerun');
+        }
+    } catch (error) {
+        console.error('Error processing assistant rerun message:', error);
+        // Handle error: Restore truncated messages and add a system error message
+        const errorMessages = truncatedMessages; // Start with the state before adding the placeholder
+        const systemErrorMessage = {
+            id: assistantPlaceholderId, // Reuse the placeholder ID for the error message
+            role: MESSAGE_ROLES.SYSTEM,
+            content: `Error: ${error.message || 'Failed to process assistant rerun request'}`,
+            timestamp: new Date().toISOString(),
+            isStreaming: false
+        };
+        setMessages([...errorMessages, systemErrorMessage]);
+        setStreamingMessageId(null);
+        rerunStatsRef.current = null; // Clear stats ref on error
+        resetContentProcessing();
+    }
+  }, [
+      tabId, selectedPlatformId, selectedModel, isProcessing, messages, tokenStats,
+      setMessages, processContentViaApi, setStreamingMessageId, resetContentProcessing,
+      selectedPlatform.iconUrl
+  ]);
+
   // --- End Rerun/Edit Logic ---
 
 
@@ -937,8 +1033,9 @@ export function SidebarChatProvider({ children }) {
       isContentExtractionEnabled,
       setIsContentExtractionEnabled,
       modelConfigData,
-      rerunMessage, // Added
-      editAndRerunMessage // Added
+      rerunMessage,
+      editAndRerunMessage,
+      rerunAssistantMessage // Added
     }}>
       {children}
     </SidebarChatContext.Provider>

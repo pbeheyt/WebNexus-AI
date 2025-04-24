@@ -142,6 +142,7 @@ export const MessageBubble = memo(forwardRef(({
     style = {}
 }, ref) => {
     const [copyState, setCopyState] = useState('idle');
+    const { rerunAssistantMessage } = useSidebarChat(); // Added for assistant rerun
 
     const handleCopyToClipboard = async () => {
         if (!content || isStreaming) return;
@@ -153,6 +154,13 @@ export const MessageBubble = memo(forwardRef(({
             logger.sidebar.error('Failed to copy text: ', error);
             setCopyState('error');
             setTimeout(() => setCopyState('idle'), 2000);
+        }
+    };
+
+    // Added for assistant rerun
+    const handleRerunAssistant = () => {
+        if (id && rerunAssistantMessage) {
+            rerunAssistantMessage(id);
         }
     };
 
@@ -234,7 +242,7 @@ export const MessageBubble = memo(forwardRef(({
                             }}
                             aria-label="Edit message"
                             title="Edit message"
-                            className="p-1 rounded-full opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                         <IconButton
                             icon={RerunIcon}
@@ -242,7 +250,7 @@ export const MessageBubble = memo(forwardRef(({
                             onClick={() => rerunMessage(id)}
                             aria-label="Rerun message"
                             title="Rerun message"
-                            className="p-1 rounded-full opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                     </div>
                 )}
@@ -427,16 +435,26 @@ export const MessageBubble = memo(forwardRef(({
                             </div>
                         )}
                     </div>
-                    {/* Copy Button Container */}
-                    <div className="w-7 h-7 flex items-center justify-center">
+                    {/* Buttons Container (Rerun + Copy) */}
+                    <div className="flex items-center justify-center gap-1"> {/* Adjusted container for multiple buttons */}
                         {!isStreaming && content && content.trim() && (
-                            <button
-                                onClick={handleCopyToClipboard}
+                            <> {/* Use fragment to group buttons */}
+                                <IconButton
+                                    icon={RerunIcon}
+                                    iconClassName="w-4 h-4"
+                                    onClick={handleRerunAssistant}
+                                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    aria-label="Rerun generation"
+                                    title="Rerun generation"
+                                />
+                                <button
+                                    onClick={handleCopyToClipboard}
                                 className={`p-1 rounded-md transition-opacity duration-200 z-10 ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : 'opacity-100'} ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 focus:bg-gray-200 dark:focus:bg-gray-700'}`}
                                 aria-label="Copy to clipboard" title="Copy to clipboard"
                             >
-                                <CopyButtonIcon state={copyState} />
-                            </button>
+                                    <CopyButtonIcon state={copyState} />
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
