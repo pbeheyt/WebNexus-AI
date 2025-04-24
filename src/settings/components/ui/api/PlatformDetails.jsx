@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, useNotification } from '../../../../components';
+import { Button, useNotification, PlatformIcon } from '../../../../components';
 import AdvancedSettings from './AdvancedSettings';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 
@@ -266,10 +266,11 @@ const PlatformDetails = ({
       {/* Platform header */}
       <div className="platform-header flex items-center mb-6">
         {platform.iconUrl ? (
-          <img
-            src={platform.iconUrl}
-            alt={platform.name}
-            className={`platform-icon-large w-12 h-12 mr-4 object-contain ${platform.id === 'chatgpt' ? 'invert dark:invert-0' : ''}`}
+          <PlatformIcon 
+            platformId={platform.id} 
+            iconUrl={platform.iconUrl} 
+            altText={platform.name} 
+            className="platform-icon-large w-12 h-12 mr-4" 
           />
         ) : (
           <div className="platform-icon-placeholder-large w-12 h-12 mr-4 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">

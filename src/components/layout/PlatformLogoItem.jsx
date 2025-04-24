@@ -1,4 +1,5 @@
 import React from 'react';
+import PlatformIcon from './PlatformIcon';
 
 /**
  * Renders a single platform logo item for selection.
@@ -41,10 +42,11 @@ export function PlatformLogoItem({
       disabled={disabled}
     >
       {/* Logo Image */}
-      <img
-        src={iconUrl}
-        alt={name}
-        className={`platform-logo-img-fixed ${id === 'chatgpt' ? 'invert dark:invert-0' : ''}`}
+      <PlatformIcon 
+        platformId={id} 
+        iconUrl={iconUrl} 
+        altText={name} 
+        className="platform-logo-img-fixed" 
       />
     </button>
   );

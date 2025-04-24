@@ -1,4 +1,5 @@
 import React from 'react';
+import { PlatformIcon } from '../../../../components';
 
 const PlatformSidebar = ({ 
   platforms, 
@@ -22,10 +23,11 @@ const PlatformSidebar = ({
             onClick={() => onSelectPlatform(platform.id)}
           >
             {platform.iconUrl ? (
-              <img 
-                className="platform-icon w-6 h-6 mr-3 object-contain" 
-                src={platform.iconUrl} 
-                alt={`${platform.name} icon`} 
+              <PlatformIcon 
+                platformId={platform.id} 
+                iconUrl={platform.iconUrl} 
+                altText={`${platform.name} icon`} 
+                className="platform-icon w-6 h-6 mr-3" 
               />
             ) : (
               <div className="platform-icon-placeholder w-6 h-6 mr-3 rounded-full bg-primary text-white text-sm flex items-center justify-center font-bold">

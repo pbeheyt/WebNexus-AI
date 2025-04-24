@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, createContext } from 'react';
 import { useSidebarPlatform } from '../../contexts/platform';
 import ModelSelector from './ModelSelector';
+import { PlatformIcon } from '../../components';
 
 // Create a context for dropdown state coordination
 export const DropdownContext = createContext({
@@ -115,10 +116,11 @@ function Header() {
                       aria-haspopup="true"
                       aria-expanded={isPlatformDropdownOpen}
                     >
-            <img
-              src={selectedPlatformForDisplay?.iconUrl}
-              alt={selectedPlatformForDisplay?.name}
-              className={`w-4 h-4 object-contain mr-1 ${selectedPlatformForDisplay?.id === 'chatgpt' ? 'invert dark:invert-0' : ''}`}
+            <PlatformIcon 
+              platformId={selectedPlatformForDisplay?.id} 
+              iconUrl={selectedPlatformForDisplay?.iconUrl} 
+              altText={selectedPlatformForDisplay?.name || ''} 
+              className="w-4 h-4 mr-1" 
             />
                       <span className="text-theme-secondary">
                         <ChevronIcon />
@@ -149,7 +151,12 @@ function Header() {
                         >
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2">
-                              <img src={platform.iconUrl} alt="" className="w-4 h-4 object-contain" />
+                              <PlatformIcon 
+                                platformId={platform.id} 
+                                iconUrl={platform.iconUrl} 
+                                altText="" 
+                                className="w-4 h-4" 
+                              />
                               <span className="text-sm">{platform.name}</span>
                             </div>
                           </div>

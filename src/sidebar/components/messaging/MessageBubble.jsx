@@ -10,7 +10,7 @@ import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 import logger from '../../../shared/logger';
-import { TextArea, Button, IconButton, EditIcon, RerunIcon, CopyIcon, CheckIcon, XMarkIcon } from '../../../components';
+import { TextArea, Button, IconButton, EditIcon, RerunIcon, CopyIcon, CheckIcon, XMarkIcon, PlatformIcon } from '../../../components';
 import { useSidebarChat } from '../../contexts/SidebarChatContext';
 
 // Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
@@ -443,11 +443,11 @@ export const MessageBubble = memo(forwardRef(({
                 <div className="flex justify-between items-center -mt-3 pb-3">
                     <div className="text-xs opacity-70 flex items-center space-x-2">
                         {platformIconUrl && (
-                            // --- Apply conditional invert class here ---
-                            <img
-                                src={platformIconUrl}
-                                alt="AI Platform"
-                                className={`w-3.5 h-3.5 object-contain ${platformId === 'chatgpt' ? 'invert dark:invert-0' : ''}`}
+                            <PlatformIcon 
+                              platformId={platformId} 
+                              iconUrl={platformIconUrl} 
+                              altText="AI Platform" 
+                              className="w-3.5 h-3.5" 
                             />
                         )}
                         {model && (
