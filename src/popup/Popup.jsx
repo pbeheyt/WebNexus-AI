@@ -227,17 +227,18 @@ export function Popup() {
                 </div>
 
                 {/* Info Button */}
-                <div className="">
-                  <IconButton
-                    ref={infoButtonRef}
-                    icon={InfoIcon}
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseEnter={() => setIsInfoVisible(true)}
-                    onMouseLeave={() => setIsInfoVisible(false)}
-                    onFocus={() => setIsInfoVisible(true)}
-                    onBlur={() => setIsInfoVisible(false)}
-                    ariaLabel="More information"
-                  />
+                <div className="flex-shrink-0">
+                <IconButton
+                  ref={infoButtonRef}
+                  icon={InfoIcon}
+                  className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseEnter={() => setIsInfoVisible(true)}
+                  onMouseLeave={() => setIsInfoVisible(false)}
+                  onFocus={() => setIsInfoVisible(true)}
+                  onBlur={() => setIsInfoVisible(false)}
+                  ariaLabel="More information"
+                />
                 </div>
               </>
             ) : (
