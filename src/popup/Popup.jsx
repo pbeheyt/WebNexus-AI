@@ -12,7 +12,7 @@ import { robustSendMessage } from '../shared/utils/message-utils';
 import { getContentTypeIconSvg } from '../shared/utils/icon-utils';
 
 export function Popup() {
-  const { contentType, currentTab, isSupported, isLoading: contentLoading } = useContent();
+  const { contentType, currentTab, isSupported, isLoading: contentLoading, isInjectable } = useContent();
   const { selectedPlatformId } = usePopupPlatform();
   const {
     statusMessage,
@@ -121,8 +121,11 @@ export function Popup() {
 
   // Handler for UnifiedInput submission
   const handleProcessWithText = async (text) => {
-    if (isProcessingContent || isProcessing || !isSupported || contentLoading || !currentTab?.id || !text.trim()) {
-      if (!isSupported) updateStatus('Error: Extension cannot access this page.');
+    const combinedDisabled = !isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable;
+    
+    if (combinedDisabled || !currentTab?.id || !text.trim()) {
+      if (!isInjectable) updateStatus('Cannot process content from this page.');
+      else if (!isSupported) updateStatus('Error: Extension cannot access this page.');
       else if (contentLoading) updateStatus('Page content still loading...');
       else if (!text.trim()) updateStatus('Please enter a prompt.');
       return;
@@ -189,52 +192,71 @@ export function Popup() {
 
       {/* Platform Selector */}
       <div className="my-3">
-         <PlatformSelector disabled={isProcessingContent || isProcessing} />
+         <PlatformSelector disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable} />
       </div>
 
       {/* Unified Input */}
       <div className="mt-6">
-        {/* Container for badge and info button */}
-        <div className="flex justify-between items-center mb-1.5 px-3">
-          {/* Content Type Indicator */}
-          {!contentLoading && contentTypeLabel && (
-            <div className="flex items-center gap-1">
-              {/* Icon */}
-              {(() => {
-                const iconSvg = getContentTypeIconSvg(contentType);
-                const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : '';
-                return modifiedIconSvg ? (
-                  <span
-                    className="mr-1 flex-shrink-0 w-4 h-4"
-                    dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
+        {/* Container for badge/info OR non-injectable message */}
+        <div className="flex justify-between items-center mb-1.5 px-3 min-h-[28px]">
+          {!contentLoading && (
+            isInjectable ? (
+              <>
+                {/* Content Type Indicator */}
+                <div className="flex items-center gap-1 flex-grow min-w-0">
+                  {contentTypeLabel ? (
+                    <>
+                      {/* Icon */}
+                      {(() => {
+                        const iconSvg = getContentTypeIconSvg(contentType);
+                        const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : '';
+                        return modifiedIconSvg ? (
+                          <span
+                            className="mr-1 flex-shrink-0 w-4 h-4"
+                            dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
+                          />
+                        ) : null;
+                      })()}
+                      {/* Label */}
+                      <span className="text-xs font-medium truncate">{contentTypeLabel}</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-theme-secondary">Detecting type...</span>
+                  )}
+                </div>
+
+                {/* Info Button */}
+                <div className="flex-shrink-0">
+                  <IconButton
+                    ref={infoButtonRef}
+                    icon={InfoIcon}
+                    className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseEnter={() => setIsInfoVisible(true)}
+                    onMouseLeave={() => setIsInfoVisible(false)}
+                    onFocus={() => setIsInfoVisible(true)}
+                    onBlur={() => setIsInfoVisible(false)}
+                    ariaLabel="More information"
                   />
-                ) : null;
-              })()}
-              {/* Label */}
-              <span className="text-xs font-medium">{contentTypeLabel}</span>
-            </div>
+                </div>
+              </>
+            ) : (
+              // Message for Non-Injectable Pages
+              <div className="text-xs text-theme-secondary font-medium w-full text-left">
+                Cannot extract from this page.
+              </div>
+            )
           )}
-          {/* Info Button (Moved) */}
-          <div className="flex-shrink-0">
-            <IconButton
-              ref={infoButtonRef}
-              icon={InfoIcon}
-              className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6" 
-              onClick={(e) => e.stopPropagation()}
-              onMouseEnter={() => setIsInfoVisible(true)}
-              onMouseLeave={() => setIsInfoVisible(false)}
-              onFocus={() => setIsInfoVisible(true)}
-              onBlur={() => setIsInfoVisible(false)}
-              ariaLabel="More information"
-            />
-          </div>
+          {contentLoading && (
+             <div className="text-xs text-theme-secondary w-full text-left">Loading...</div>
+          )}
         </div>
 
         <UnifiedInput
           value={inputText}
           onChange={setInputText}
           onSubmit={handleProcessWithText}
-          disabled={!isSupported || contentLoading || isProcessingContent || isProcessing}
+          disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable}
           isProcessing={isProcessingContent || isProcessing}
           contentType={contentType}
           showTokenInfo={false}

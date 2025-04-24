@@ -1,6 +1,6 @@
 // src/components/content/ContentContext.jsx
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { determineContentType } from '../shared/utils/content-utils';
+import { determineContentType, isInjectablePage } from '../shared/utils/content-utils';
 
 const ContentContext = createContext(null);
 
@@ -19,6 +19,7 @@ export function ContentProvider({
   const [contentType, setContentType] = useState(null);
   const [isSupported, setIsSupported] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInjectable, setIsInjectable] = useState(true);
   
   /**
    * Detect the current tab and content type
@@ -42,6 +43,8 @@ export function ContentProvider({
         throw new Error("Cannot access current tab");
       }
       
+      const injectable = isInjectablePage(tab.url);
+      setIsInjectable(injectable);
       setCurrentTab(tab);
       
       // Determine content type based solely on URL
@@ -74,6 +77,8 @@ export function ContentProvider({
 
   // Function to update context from external events (like page navigation)
   const updateContentContext = useCallback((newUrl, newContentType) => {
+    const injectable = isInjectablePage(newUrl);
+    setIsInjectable(injectable);
     setCurrentTab(prevTab => ({ ...(prevTab || {}), url: newUrl }));
     setContentType(newContentType);
   }, []);
@@ -84,10 +89,11 @@ export function ContentProvider({
         currentTab,
         contentType,
         isSupported,
-         isLoading,
-         refreshContent,
-         setContentType: setManualContentType,
-         updateContentContext
+        isLoading,
+        isInjectable,
+        refreshContent,
+        setContentType: setManualContentType,
+        updateContentContext
        }}
      >
       {children}
