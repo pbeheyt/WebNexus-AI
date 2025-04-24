@@ -67,7 +67,7 @@ export function SliderInput ({
           value={displayValue} // Use displayValue to ensure consistency
           onChange={handleInputChange}
           disabled={disabled}
-          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:border-primary sm:text-sm dark:bg-gray-800 dark:text-gray-200 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:border-primary sm:text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
           // Prevent scrolling from changing the value
           onWheel={(e) => e.target.blur()}
         />

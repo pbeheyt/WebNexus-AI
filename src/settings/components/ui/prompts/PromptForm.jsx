@@ -196,7 +196,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
           type="text"
           id="name"
           name="name"
-          className="w-full p-2.5 bg-theme-surface text-sm text-theme-primary border border-theme rounded-md focus-primary"
+          className="w-full p-2.5 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md focus-primary"
           placeholder="Give your prompt a descriptive name"
           value={formData.name}
           onChange={handleChange}
@@ -215,7 +215,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
         <textarea
           id="content"
           name="content"
-          className="w-full p-3 bg-theme-surface text-sm text-theme-primary border border-theme rounded-md min-h-[220px] focus-primary"
+          className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md min-h-[220px] focus-primary"
           placeholder="Enter your prompt content here..."
           value={formData.content}
           onChange={handleChange}
