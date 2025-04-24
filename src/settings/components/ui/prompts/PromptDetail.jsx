@@ -177,14 +177,13 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
 
       {/* Action Buttons */}
       <div className="prompt-detail-actions flex justify-end gap-3">
-        {!isDefaultForType && (
-          <Button
-            variant="secondary"
-            onClick={handleSetAsDefault}
-          >
-            Set as Default
-          </Button>
-        )}
+        <Button
+          variant="secondary"
+          onClick={handleSetAsDefault}
+          className={`${isDefaultForType ? 'invisible' : ''}`}
+        >
+          Set as Default
+        </Button>
         <Button
           variant="secondary"
           onClick={onEdit}
