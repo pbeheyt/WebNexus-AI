@@ -171,10 +171,10 @@ export const MessageBubble = memo(forwardRef(({
             } else if (event.key === 'Escape') {
                 event.preventDefault(); // Prevent potential browser/modal escape actions
                 setIsEditing(false); // Cancel editing
+                setEditedContent(content); // Optionally reset changes on escape
             }
         };
 
-        // Added handler for user copy
         const handleUserCopyToClipboard = async () => {
             if (!content) return; // Only copy if content exists
             try {
@@ -188,6 +188,18 @@ export const MessageBubble = memo(forwardRef(({
             }
         };
 
+        const handleSaveAndRerun = () => {
+            if (editedContent.trim()) {
+                editAndRerunMessage(id, editedContent);
+                setIsEditing(false);
+            }
+        }
+
+        const handleCancelEdit = () => {
+            setIsEditing(false);
+            setEditedContent(content); // Reset content to original
+        }
+
         return (
             <div
                 ref={ref}
@@ -195,27 +207,40 @@ export const MessageBubble = memo(forwardRef(({
                 style={style}
                 className={`group px-5 py-2 w-full flex flex-col items-end message-group user-message relative ${className}`}
             >
-                <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%]">
+                {/* Bubble container with conditional width */}
+                <div
+                    className={`
+                        bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white
+                        rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl
+                        p-3 max-w-[85%]
+                        transition-all duration-150 ease-in-out {/* Optional: Smooth transition */}
+                        ${isEditing ? 'w-full' : ''} {/* <-- CONDITIONAL WIDTH CLASS */}
+                    `}
+                >
+                    {/* Display Mode */}
                     {!isEditing && (
                         <>
                             <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
                         </>
                     )}
+
+                    {/* Editing Mode */}
                     {isEditing && (
                         <div className="flex flex-col w-full space-y-3">
                             <TextArea
                                 value={editedContent}
                                 onChange={(e) => setEditedContent(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                className="w-full text-sm border border-primary rounded-md p-2 bg-white dark:bg-gray-800"
-                                style={{ minHeight: '4rem' }}
+                                className="w-full text-sm border border-primary rounded-md p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary" // Added focus styles and text colors
+                                style={{ minHeight: '4rem' }} // Keep min-height for consistency
                                 autoFocus
+                                aria-label="Edit message content"
                             />
                             <div className="flex justify-end gap-2">
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => setIsEditing(false)}
+                                    onClick={handleCancelEdit}
                                     className="px-4"
                                 >
                                     Cancel
@@ -223,10 +248,7 @@ export const MessageBubble = memo(forwardRef(({
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    onClick={() => {
-                                        editAndRerunMessage(id, editedContent);
-                                        setIsEditing(false);
-                                    }}
+                                    onClick={handleSaveAndRerun}
                                     disabled={!editedContent.trim()}
                                     className="px-4"
                                 >
@@ -236,6 +258,8 @@ export const MessageBubble = memo(forwardRef(({
                         </div>
                     )}
                 </div>
+
+                {/* Action buttons below bubble (only show when not editing) */}
                 {!isEditing && (
                     <div className="flex items-center gap-1 mt-1">
                         <IconButton
@@ -243,7 +267,7 @@ export const MessageBubble = memo(forwardRef(({
                             iconClassName="w-4 h-4 select-none"
                             onClick={() => {
                                 setIsEditing(true);
-                                setEditedContent(content);
+                                setEditedContent(content); // Ensure editor starts with current content
                             }}
                             aria-label="Edit message"
                             title="Edit message"
@@ -257,7 +281,6 @@ export const MessageBubble = memo(forwardRef(({
                             title="Rerun message"
                             className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                         />
-                        {/* New Copy IconButton for User Message */}
                         <IconButton
                             onClick={handleUserCopyToClipboard}
                             className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
