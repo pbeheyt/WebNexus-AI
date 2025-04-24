@@ -109,7 +109,7 @@ const PromptList = ({
       </div>
 
       {filteredPrompts.length === 0 ? (
-        <div className="empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme">
+        <div className="empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg">
           <p className="text-sm">No prompts available{filterValue !== 'all' ? ` for ${contentTypeLabels[filterValue]}` : ''}. Create a new prompt to get started.</p>
         </div>
       ) : (
@@ -117,18 +117,19 @@ const PromptList = ({
           {filteredPrompts.map((item) => (
             <div
               key={item.id}
-              className={`prompt-item border border-theme rounded-lg p-5 mb-4 bg-theme-surface cursor-pointer transition-all hover:bg-theme-hover hover:border-primary select-none ${
-                selectedPromptId === item.id ? 'border-primary bg-theme-active shadow-sm' : ''
-              }`}
+              className={`prompt-item rounded-lg p-5 mb-4 cursor-pointer select-none transition-all
+                ${selectedPromptId === item.id
+                  ? ' bg-gray-100 dark:bg-gray-700 shadow-md'
+                  : ' bg-white dark:bg-theme-surface'}
+              `}
               onClick={() => onSelectPrompt(item)}
-              style={{ cursor: 'pointer' }} // Explicitly set cursor to pointer
             >
               <div className="prompt-header flex justify-between items-center mb-3">
-                <h3 className="prompt-title font-medium text-base truncate text-theme-primary select-none">
+                <h3 className="prompt-title font-medium text-base truncate text-gray-800 dark:text-gray-100 select-none">
                   {item.prompt.name}
                 </h3>
               </div>
-              <small className="flex items-center justify-between text-theme-secondary text-xs select-none">
+              <small className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs select-none">
                 <div className="flex items-center">
                   {item.contentTypeLabel}
                   <span
@@ -136,9 +137,8 @@ const PromptList = ({
                     dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(item.contentType) }}
                   />
                 </div>
-                {/* Conditionally render the Default badge */}
                 {item.id === defaultPromptIds[item.contentType] && (
-                  <span className="default-badge text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full select-none">Default</span>
+                  <span className="default-badge text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full select-none">Default</span>
                 )}
               </small>
             </div>
