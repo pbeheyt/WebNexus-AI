@@ -167,7 +167,7 @@ export function UnifiedInput({
                   onSelectPrompt={handlePromptSelected}
                   contentType={contentType}
                   anchorRef={promptButtonRef}
-                  className={layoutVariant === 'popup' ? 'text-xs' : ''}
+                  className={'text-sm'}
                 />
               </div>
             </div>
@@ -236,7 +236,7 @@ export function UnifiedInput({
                    onSelectPrompt={handlePromptSelected}
                    contentType={contentType}
                    anchorRef={promptButtonRef}
-                   className={layoutVariant === 'popup' ? 'text-xs' : ''}
+                   className={'text-xs'}
                  />
                </div>
              </div>
