@@ -409,6 +409,7 @@ export function SidebarChatProvider({ children }) {
       content: '', // Empty initially, will be streamed
       model: selectedModel,
       platformIconUrl: selectedPlatform.iconUrl,
+      platformId: selectedPlatformId,
       timestamp: new Date().toISOString(),
       isStreaming: true,
       inputTokens: 0, // No input tokens for assistant messages

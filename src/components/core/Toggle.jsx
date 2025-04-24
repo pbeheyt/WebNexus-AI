@@ -1,8 +1,7 @@
-// src/components/core/Toggle.jsx
 import React from 'react';
 
 /**
- * Toggle switch component for boolean inputs.
+ * Toggle switch component for boolean inputs with button-like interaction.
  * 
  * @param {Object} props - Component props
  * @param {boolean} [props.checked=false] - Whether toggle is checked
@@ -18,24 +17,28 @@ export function Toggle({
   ...props
 }) {
   return (
-    <label className={`relative inline-block ${className}`}>
+    <div 
+      className={`relative inline-block ${className}`}
+      onClick={disabled ? undefined : onChange}
+      style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+    >
       <input
         type="checkbox"
-        className="opacity-0 w-0 h-0"
+        className="sr-only" // Using sr-only instead of opacity-0 w-0 h-0
         checked={checked}
-        onChange={onChange}
+        onChange={() => {}} // Empty onChange to prevent React warning
         disabled={disabled}
         {...props}
       />
-      <span className={`absolute cursor-pointer inset-0 rounded-full transition-all ${
+      <span className={`absolute inset-0 rounded-full transition-all select-none ${
           checked ? 'bg-primary' : 'bg-theme-hover'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+        } ${disabled ? 'opacity-50' : ''}`}>
         <span className={`absolute h-4 w-4 bg-white rounded-full transition-transform duration-200 ease-in-out transform ${
             checked ? 'translate-x-5' : 'translate-x-0.5'
-          } top-0.5 left-0`}
+          } top-0.5 left-0 select-none`}
         />
       </span>
-    </label>
+    </div>
   );
 }
 

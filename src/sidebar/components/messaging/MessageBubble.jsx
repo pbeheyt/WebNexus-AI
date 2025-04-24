@@ -104,6 +104,7 @@ export const MessageBubble = memo(forwardRef(({
     isStreaming = false,
     model = null,
     platformIconUrl = null,
+    platformId = null, // <-- Added platformId prop
     metadata = {},
     className = '',
     style = {}
@@ -211,9 +212,9 @@ export const MessageBubble = memo(forwardRef(({
                                 autoFocus
                             />
                             <div className="flex justify-end gap-2">
-                                <Button 
-                                    variant="secondary" 
-                                    size="sm" 
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
                                     onClick={() => setIsEditing(false)}
                                     className="px-4"
                                 >
@@ -264,14 +265,13 @@ export const MessageBubble = memo(forwardRef(({
                             title="Copy message"
                             icon={
                                 userCopyState === 'copied' ? CheckIcon :
-                                userCopyState === 'error' ? XMarkIcon :
-                                CopyIcon // Default idle state
+                                    userCopyState === 'error' ? XMarkIcon :
+                                        CopyIcon // Default idle state
                             }
-                            iconClassName={`w-4 h-4 ${
-                                userCopyState === 'copied' ? 'text-green-600 dark:text-green-400' :
+                            iconClassName={`w-4 h-4 ${userCopyState === 'copied' ? 'text-green-600 dark:text-green-400' :
                                 userCopyState === 'error' ? 'text-red-500 dark:text-red-400' :
-                                '' // Default color inherited from button style
-                            }`}
+                                    '' // Default color inherited from button style
+                                }`}
                         />
                     </div>
                 )}
@@ -443,7 +443,12 @@ export const MessageBubble = memo(forwardRef(({
                 <div className="flex justify-between items-center -mt-3 pb-3">
                     <div className="text-xs opacity-70 flex items-center space-x-2">
                         {platformIconUrl && (
-                            <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" />
+                            // --- Apply conditional invert class here ---
+                            <img
+                                src={platformIconUrl}
+                                alt="AI Platform"
+                                className={`w-3.5 h-3.5 object-contain ${platformId === 'chatgpt' ? 'invert dark:invert-0' : ''}`}
+                            />
                         )}
                         {model && (
                             <span title={model}>{model}</span>
@@ -476,14 +481,13 @@ export const MessageBubble = memo(forwardRef(({
                                     title="Copy to clipboard"
                                     icon={
                                         copyState === 'copied' ? CheckIcon :
-                                        copyState === 'error' ? XMarkIcon :
-                                        CopyIcon // Default idle state
+                                            copyState === 'error' ? XMarkIcon :
+                                                CopyIcon // Default idle state
                                     }
-                                    iconClassName={`w-4 h-4 ${
-                                        copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
+                                    iconClassName={`w-4 h-4 ${copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
                                         copyState === 'error' ? 'text-red-500 dark:text-red-400' :
-                                        '' // Default color inherited from button style
-                                    }`}
+                                            '' // Default color inherited from button style
+                                        }`}
                                 />
                             </>
                         )}
