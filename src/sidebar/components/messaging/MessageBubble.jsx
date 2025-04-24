@@ -183,7 +183,7 @@ export const MessageBubble = memo(forwardRef(({
                 style={style}
                 className={`group px-5 py-3 w-full flex flex-col items-end message-group user-message relative ${className}`} // Added relative positioning
             >
-                <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] w-full"> {/* Added w-full */}
+                <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%]"> {/* 'w-full' removed */}
                     {!isEditing && (
                         <>
                             <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
