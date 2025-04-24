@@ -175,31 +175,36 @@ export const MessageBubble = memo(forwardRef(({
                 style={style}
                 className={`group px-5 py-3 w-full flex justify-end items-start message-group user-message relative ${className}`} // Added relative positioning
             >
-                <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] overflow-hidden w-full"> {/* Added w-full */}
+                <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] w-full"> {/* Added w-full */}
                     {!isEditing && (
                         <>
                             <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
-                            {/* Edit/Rerun Icons */}
-                            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                                <IconButton
-                                    icon={EditIcon} // Corrected: Pass component reference
-                                    onClick={() => {
-                                        setIsEditing(true);
-                                        setEditedContent(content); // Reset edit content on opening
-                                    }}
-                                    aria-label="Edit message"
-                                    tooltip="Edit message"
-                                    size="xs" // Use a smaller size if available/needed
-                                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                                />
-                                <IconButton
-                                    icon={RerunIcon} // Corrected: Pass component reference
-                                    onClick={() => rerunMessage(id)}
-                                    aria-label="Rerun message"
-                                    tooltip="Rerun message"
-                                    size="xs" // Use a smaller size if available/needed
-                                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                                />
+                            {/* Footer section for User Message */}
+                            <div className="flex justify-end items-center pt-1 -mr-1">
+                                {/* Icon Button Container */}
+                                <div className="flex items-center gap-1">
+                                    {!isEditing && (
+                                        <>
+                                            <IconButton
+                                                icon={EditIcon}
+                                                onClick={() => {
+                                                    setIsEditing(true);
+                                                    setEditedContent(content);
+                                                }}
+                                                aria-label="Edit message"
+                                                title="Edit message"
+                                                className="p-1 rounded opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                                            />
+                                            <IconButton
+                                                icon={RerunIcon}
+                                                onClick={() => rerunMessage(id)}
+                                                aria-label="Rerun message"
+                                                title="Rerun message"
+                                                className="p-1 rounded opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                                            />
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </>
                     )}
