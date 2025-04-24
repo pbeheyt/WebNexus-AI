@@ -35,7 +35,7 @@ export function SidebarChatProvider({ children }) {
   const [modelConfigData, setModelConfigData] = useState(null);
   const batchedStreamingContentRef = useRef('');
   const rafIdRef = useRef(null);
-  const rerunStatsRef = useRef(null); // Added ref for rerun stats
+  const rerunStatsRef = useRef(null);
 
   // Use the token tracking hook
   const {
@@ -388,7 +388,7 @@ export function SidebarChatProvider({ children }) {
     // Original checks remain
     if (!text.trim() || isProcessing || !tabId) return;
 
-    // Estimate tokens for the user message - Removed await
+    // Estimate tokens for the user message
     const inputTokens = TokenManagementService.estimateTokens(text.trim());
     const userMessageId = `msg_${Date.now()}`;
 
@@ -453,7 +453,7 @@ export function SidebarChatProvider({ children }) {
         conversationHistory,
         streaming: true,
         // Determine if extraction should be skipped for the first message
-        skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true, // Updated logic
+        skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true,
         // Pass tabId and source explicitly if needed by the hook/API
         options: { tabId, source: INTERFACE_SOURCES.SIDEBAR }
       });

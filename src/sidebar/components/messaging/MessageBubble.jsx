@@ -1,5 +1,5 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
-import React, { useState, memo, forwardRef } from 'react'; // Keep useState here
+import React, { useState, memo, forwardRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
@@ -10,15 +10,13 @@ import { copyToClipboard as copyUtil } from './utils/clipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 import logger from '../../../shared/logger';
-import { TextArea, Button, IconButton, EditIcon, RerunIcon, CopyIcon, CheckIcon, XMarkIcon } from '../../../components'; // Corrected import path
-import { useSidebarChat } from '../../contexts/SidebarChatContext'; // Added
+import { TextArea, Button, IconButton, EditIcon, RerunIcon, CopyIcon, CheckIcon, XMarkIcon } from '../../../components';
+import { useSidebarChat } from '../../contexts/SidebarChatContext';
 
 // Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
 const MATH_PLACEHOLDER_REGEX = /@@MATH_(BLOCK|INLINE)_(\d+)@@/g;
 // Regex for checking if *any* placeholder exists (used for optimization)
 const HAS_MATH_PLACEHOLDER_REGEX = /@@MATH_(BLOCK|INLINE)_\d+@@/;
-
-// Removed duplicated icon and regex definitions that were here
 
 /**
  * Utility function to check if processed children contain a block-level element (div).
@@ -111,7 +109,7 @@ export const MessageBubble = memo(forwardRef(({
     style = {}
 }, ref) => {
     const [copyState, setCopyState] = useState('idle');
-    const { rerunAssistantMessage } = useSidebarChat(); // Added for assistant rerun
+    const { rerunAssistantMessage } = useSidebarChat();
 
     const handleCopyToClipboard = async () => {
         if (!content || isStreaming) return;
@@ -126,7 +124,7 @@ export const MessageBubble = memo(forwardRef(({
         }
     };
 
-    // Added for assistant rerun
+    // For assistant rerun
     const handleRerunAssistant = () => {
         if (id && rerunAssistantMessage) {
             rerunAssistantMessage(id);
@@ -140,7 +138,7 @@ export const MessageBubble = memo(forwardRef(({
                 ref={ref}
                 id={id}
                 style={style}
-                className={`px-5 py-3 w-full ${className}`}
+                className={`px-5 py-2 w-full ${className}`}
             >
                 <div // Intermediate container: Provides the red background around the text ONLY
                     className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3"
@@ -159,7 +157,7 @@ export const MessageBubble = memo(forwardRef(({
     if (role === MESSAGE_ROLES.USER) {
         const [isEditing, setIsEditing] = useState(false);
         const [editedContent, setEditedContent] = useState(content);
-        const [userCopyState, setUserCopyState] = useState('idle'); // Added state for user copy
+        const [userCopyState, setUserCopyState] = useState('idle');
         const { rerunMessage, editAndRerunMessage } = useSidebarChat();
 
         const handleKeyDown = (event) => {
@@ -173,7 +171,6 @@ export const MessageBubble = memo(forwardRef(({
                 event.preventDefault(); // Prevent potential browser/modal escape actions
                 setIsEditing(false); // Cancel editing
             }
-            // No need to handle Shift+Enter explicitly, allow default behavior
         };
 
         // Added handler for user copy
@@ -195,9 +192,9 @@ export const MessageBubble = memo(forwardRef(({
                 ref={ref}
                 id={id}
                 style={style}
-                className={`group px-5 py-3 w-full flex flex-col items-end message-group user-message relative ${className}`} // Added relative positioning
+                className={`group px-5 py-2 w-full flex flex-col items-end message-group user-message relative ${className}`}
             >
-                <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%]"> {/* 'w-full' removed */}
+                <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%]">
                     {!isEditing && (
                         <>
                             <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
@@ -430,7 +427,7 @@ export const MessageBubble = memo(forwardRef(({
                 ref={ref}
                 id={id}
                 style={style}
-                className={`group px-5 py-3 w-full message-group assistant-message relative ${className}`}
+                className={`group px-5 py-2 w-full message-group assistant-message relative ${className}`}
             >
                 {/* Prose container for Markdown styling */}
                 <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}>
@@ -460,7 +457,7 @@ export const MessageBubble = memo(forwardRef(({
                         )}
                     </div>
                     {/* Buttons Container (Rerun + Copy) */}
-                    <div className="flex items-center justify-center gap-1"> {/* Adjusted container for multiple buttons */}
+                    <div className="flex items-center justify-center gap-1">
                         {!isStreaming && content && content.trim() && (
                             <> {/* Use fragment to group buttons */}
                                 <IconButton

@@ -69,7 +69,7 @@ class TokenManagementService {
    * @param {string} systemPrompt - System prompt text (optional)
    * @returns {Object} - Token statistics focused on the last API call. (Made synchronous again)
    */
-  static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') { // Removed async
+  static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') {
 
     let outputTokens = 0;
     let promptTokensInLastApiCall = 0;
@@ -95,7 +95,6 @@ class TokenManagementService {
 
     // Process system prompt if present
     if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
-      // Removed await as estimateTokens is now sync
       const systemPromptTokensCount = this.estimateTokens(systemPrompt);
 
       // Assign tokens *only* from the initial system prompt provided.
@@ -126,7 +125,6 @@ class TokenManagementService {
           }
         }
       } else if (msg.role === 'assistant') {
-        // Removed await as estimateTokens is now sync
         const msgOutputTokens = typeof msg.outputTokens === 'number'
             ? msg.outputTokens
             : this.estimateTokens(msg.content);
@@ -211,7 +209,6 @@ class TokenManagementService {
       const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId);
 
       // 3. Calculate base token statistics from messages (includes input/output tokens for last call)
-      // Removed await as calculateTokenStatisticsFromMessages is now sync
       const baseStats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt);
 
       // 4. Calculate Cost of the Last Call
