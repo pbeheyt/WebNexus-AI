@@ -88,10 +88,10 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
             tabIndex="0"
           >
-            <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-3 h-3 mr-1 select-none" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 18V6M7 11l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span>{inputTokensInLastApiCall.toLocaleString()}</span>
+            <span className="select-none">{inputTokensInLastApiCall.toLocaleString()}</span>
             <Tooltip show={hoveredElement === 'inputTokens'} message={tooltipContent.inputTokens} targetRef={inputTokensRef} />
           </div>
 
@@ -105,10 +105,10 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
             tabIndex="0"
           >
-            <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-3 h-3 mr-1 select-none" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 6v12M7 13l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span>{outputTokens.toLocaleString()}</span>
+            <span className="select-none">{outputTokens.toLocaleString()}</span>
             <Tooltip show={hoveredElement === 'outputTokens'} message={tooltipContent.outputTokens} targetRef={outputTokensRef} />
           </div>
         </div>
@@ -124,7 +124,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
             tabIndex="0"
           >
-            <span>({formatCost(lastApiCallCost)})</span>
+            <span className="select-none">({formatCost(lastApiCallCost)})</span>
             <Tooltip show={hoveredElement === 'lastCost'} message={tooltipContent.lastCost} targetRef={lastCostRef} />
           </div>
 
@@ -138,7 +138,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
             tabIndex="0"
           >
-            <span>{formattedCost}</span>
+            <span className="select-none">{formattedCost}</span>
             <Tooltip show={hoveredElement === 'cost'} message={tooltipContent.cost} targetRef={costRef} />
           </div>
 
@@ -148,7 +148,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             className="ml-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none"
             title="Toggle token details"
           >
-          <svg className={`w-3 h-3 transition-transform ${showDetails ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg className={`w-3 h-3 transition-transform select-none ${showDetails ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M19 15l-7 -7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           </button>
@@ -170,8 +170,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onBlur={() => setHoveredElement(null)}
               tabIndex="0"
             >
-              <span className="text-xs font-medium">Prompt</span>
-              <span>{promptTokensInLastApiCall.toLocaleString()}</span>
+              <span className="text-xs font-medium select-none">Prompt</span>
+              <span className="select-none">{promptTokensInLastApiCall.toLocaleString()}</span>
               <Tooltip show={hoveredElement === 'prompt'} message={tooltipContent.prompt} targetRef={promptRef} />
             </div>
 
@@ -185,8 +185,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onBlur={() => setHoveredElement(null)}
               tabIndex="0"
             >
-              <span className="text-xs font-medium">History</span>
-              <span>{historyTokensSentInLastApiCall.toLocaleString()}</span>
+              <span className="text-xs font-medium select-none">History</span>
+              <span className="select-none">{historyTokensSentInLastApiCall.toLocaleString()}</span>
               <Tooltip show={hoveredElement === 'historySent'} message={tooltipContent.historySent} targetRef={historySentRef} />
             </div>
 
@@ -200,8 +200,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onBlur={() => setHoveredElement(null)}
               tabIndex="0"
             >
-              <span className="text-xs font-medium">System</span>
-              <span>{systemTokensInLastApiCall.toLocaleString()}</span>
+              <span className="text-xs font-medium select-none">System</span>
+              <span className="select-none">{systemTokensInLastApiCall.toLocaleString()}</span>
               <Tooltip show={hoveredElement === 'system'} message={tooltipContent.system} targetRef={systemRef} />
             </div>
           </div>
@@ -227,7 +227,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
                   style={{ width: `${Math.min(100, contextData.percentage || 0)}%` }}
                 ></div>
               </div>
-              <span className="text-xs whitespace-nowrap">
+              <span className="text-xs whitespace-nowrap select-none">
                 {Math.min(100, contextData.percentage || 0).toFixed(1)}%
               </span>
               <Tooltip show={hoveredElement === 'contextWindow'} message={tooltipContent.contextWindow} position="bottom" targetRef={contextWindowRef} />

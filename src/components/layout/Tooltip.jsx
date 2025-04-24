@@ -95,7 +95,7 @@ const [isVisible, setIsVisible] = useState(false);
         position: 'fixed',
         visibility: Object.keys(tooltipStyle).length ? 'visible' : 'hidden'
       }}
-      className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 opacity-100`}
+      className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 opacity-100 select-none`}
     >
       {message}
     </div>

@@ -17,6 +17,7 @@ export function PlatformIcon({ platformId, iconUrl, altText, className = '' }) {
   // Combine base classes, passed classes, and conditional invert class
   const finalClassName = `
     object-contain 
+    select-none 
     ${className} 
     ${needsInvert ? 'invert dark:invert-0' : ''}
   `.trim().replace(/\s+/g, ' '); // Trim and remove extra spaces

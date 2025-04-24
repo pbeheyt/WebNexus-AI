@@ -81,7 +81,7 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
           <button
             key={prompt.id}
             onClick={() => onSelectPrompt(prompt)}
-            className={`block w-full text-left px-3 py-1.5 ${className} text-theme-base hover:bg-theme-hover rounded cursor-pointer whitespace-nowrap`}
+            className={`block w-full text-left px-3 py-1.5 ${className} text-theme-base hover:bg-theme-hover rounded cursor-pointer whitespace-nowrap select-none`}
             role="option"
             aria-selected="false"
           >

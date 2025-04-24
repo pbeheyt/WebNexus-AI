@@ -19,7 +19,7 @@ export function StatusMessage({ message, type = 'info', context = 'default', cla
   };
 
   return (
-    <div className={`text-xs px-3 rounded bg-opacity-5 min-h-[1rem] transition-all ${typeClasses[type]} ${className}`}>
+    <div className={`text-xs px-3 rounded bg-opacity-5 min-h-[1rem] transition-all select-none ${typeClasses[type]} ${className}`}>
       {message || '\u00A0'} {/* Use non-breaking space to maintain height when empty */}
     </div>
   );

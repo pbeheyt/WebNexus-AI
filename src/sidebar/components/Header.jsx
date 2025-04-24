@@ -122,7 +122,7 @@ function Header() {
               altText={selectedPlatformForDisplay?.name || ''} 
               className="w-4 h-4 mr-1" 
             />
-                      <span className="text-theme-secondary">
+                      <span className="text-theme-secondary select-none">
                         <ChevronIcon />
                       </span>
                     </button>
@@ -157,7 +157,7 @@ function Header() {
                                 altText="" 
                                 className="w-4 h-4" 
                               />
-                              <span className="text-sm">{platform.name}</span>
+                              <span className="text-sm select-none">{platform.name}</span>
                             </div>
                           </div>
                         </button>
@@ -196,7 +196,7 @@ function Header() {
               title="Refresh platforms and credentials"
             >
               <svg xmlns="http://www.w3.org/2000/svg"
-                className={`w-4 h-4 ${showAnimation ? 'animate-spin' : ''}`}
+                className={`w-4 h-4 select-none ${showAnimation ? 'animate-spin' : ''}`}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

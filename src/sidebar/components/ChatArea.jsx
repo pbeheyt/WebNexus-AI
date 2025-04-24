@@ -39,7 +39,7 @@ const FreeTierIcon = () => (
     </svg>
 );
 const ScrollDownIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 select-none" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
     </svg>
 );
@@ -355,12 +355,12 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                         className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark"
                         aria-label="Configure API Credentials in Settings"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-3 text-theme-secondary select-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1.51-1V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1H15a1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
-                        <h3 className="text-base font-semibold mb-2">API Credentials Required</h3>
-                        <p className="text-sm">
+                        <h3 className="text-base font-semibold mb-2 select-none">API Credentials Required</h3>
+                        <p className="text-sm select-none">
                             Click here to configure API keys in settings.
                         </p>
                     </button>
@@ -370,7 +370,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
         if (hasAnyPlatformCredentials && !hasCompletedInitialLoad) {
             return (
                 <div className={`flex items-center justify-center h-full`}>
-                    <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status" aria-label="Loading model information"></div>
+                    <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin select-none" role="status" aria-label="Loading model information"></div>
                 </div>
             );
         }
@@ -382,25 +382,25 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                      {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
                      <div className="flex flex-col items-center py-3 w-full min-h-[120px]">
                          {displayPlatformConfig ? (
-                             <img
+                              <img
                                  src={displayPlatformConfig.iconUrl}
                                  alt={`${displayPlatformConfig.name || 'Platform'} logo`}
-                                 className="w-8 h-8 mb-2 object-contain"
-                             />
-                         ) : (
-                             <div className="w-8 h-8 mb-2 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                                 className="w-8 h-8 mb-2 object-contain select-none"
+                              />
+                          ) : (
+                              <div className="w-8 h-8 mb-2 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse select-none"></div>
                          )}
-                         {modelReady ? (
-                             <>
-                                 <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium" title={displayModelConfig.id}>
-                                     {displayModelConfig.name || displayModelConfig.id}
-                                 </div>
-                                 {displayModelConfig.description && (
-                                     <p className="text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto">
-                                         {displayModelConfig.description}
-                                     </p>
-                                 )}
-                                 <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-1">
+                          {modelReady ? (
+                              <>
+                                  <div className="text-sm text-theme-primary dark:text-theme-primary-dark font-medium select-none" title={displayModelConfig.id}>
+                                      {displayModelConfig.name || displayModelConfig.id}
+                                  </div>
+                                  {displayModelConfig.description && (
+                                      <p className="text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto select-none">
+                                          {displayModelConfig.description}
+                                      </p>
+                                  )}
+                                 <div className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-theme-secondary mt-1 select-none">
                                       {displayModelConfig.inputTokenPrice === 0 && displayModelConfig.outputTokenPrice === 0 ? (
                                          <div ref={freeTierRef} className="flex items-center relative cursor-help" onMouseEnter={() => setHoveredElement('freeTier')} onMouseLeave={() => setHoveredElement(null)} onFocus={() => setHoveredElement('freeTier')} onBlur={() => setHoveredElement(null)} tabIndex="0">
                                              <FreeTierIcon /> <span>Free</span>
@@ -446,8 +446,8 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
 
                      {/* SECTION 2: Start a conversation message Section */}
                      <div className="flex flex-col items-center py-3 w-full">
-                         <h3 className="text-base font-semibold mb-2">Start a conversation</h3>
-                         <p className="text-xs max-w-xs mx-auto">
+                         <h3 className="text-base font-semibold mb-2 select-none">Start a conversation</h3>
+                         <p className="text-xs max-w-xs mx-auto select-none">
                              {getWelcomeMessage(contentType, isPageInjectable)}
                          </p>
                      </div>
@@ -463,18 +463,18 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                              aria-label={`Current content type: ${getContentTypeName(contentType)}`}
                                          >
                                              <div
-                                                 className="mr-3 flex-shrink-0 w-5 h-5"
+                                                 className="mr-3 flex-shrink-0 w-5 h-5 select-none"
                                                  dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
                                                  aria-hidden="true"
                                              />
-                                             <span className="text-sm font-medium">
+                                             <span className="text-sm font-medium select-none">
                                                  {getContentTypeName(contentType)}
                                              </span>
                                          </div>
                                      </div>
                                  )}
                                  <div className="flex items-center gap-3 text-xs text-theme-secondary">
-                                     <label htmlFor="content-extract-toggle" className="cursor-pointer">Extract content</label>
+                                     <label htmlFor="content-extract-toggle" className="cursor-pointer select-none">Extract content</label>
                                      <Toggle
                                          id="content-extract-toggle"
                                          checked={isContentExtractionEnabled}
@@ -486,7 +486,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                              </>
                          ) : (
                              <div className="mb-2">
-                                 <span className="text-xs text-theme-secondary">
+                                 <span className="text-xs text-theme-secondary select-none">
                                      This page content cannot be extracted.
                                  </span>
                              </div>

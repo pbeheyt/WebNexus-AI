@@ -142,7 +142,7 @@ export const MessageBubble = memo(forwardRef(({
                 className={`px-5 py-2 w-full ${className}`}
             >
                 <div // Intermediate container: Provides the red background around the text ONLY
-                    className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3"
+                    className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3 select-none"
                 >
                     <div
                         className="whitespace-pre-wrap break-words leading-relaxed text-sm"
@@ -240,7 +240,7 @@ export const MessageBubble = memo(forwardRef(({
                     <div className="flex items-center gap-1 mt-1">
                         <IconButton
                             icon={EditIcon}
-                            iconClassName="w-4 h-4"
+                            iconClassName="w-4 h-4 select-none"
                             onClick={() => {
                                 setIsEditing(true);
                                 setEditedContent(content);
@@ -251,7 +251,7 @@ export const MessageBubble = memo(forwardRef(({
                         />
                         <IconButton
                             icon={RerunIcon}
-                            iconClassName="w-4 h-4"
+                            iconClassName="w-4 h-4 select-none"
                             onClick={() => rerunMessage(id)}
                             aria-label="Rerun message"
                             title="Rerun message"
@@ -268,7 +268,7 @@ export const MessageBubble = memo(forwardRef(({
                                     userCopyState === 'error' ? XMarkIcon :
                                         CopyIcon // Default idle state
                             }
-                            iconClassName={`w-4 h-4 ${userCopyState === 'copied' ? 'text-green-600 dark:text-green-400' :
+                            iconClassName={`w-4 h-4 select-none ${userCopyState === 'copied' ? 'text-green-600 dark:text-green-400' :
                                 userCopyState === 'error' ? 'text-red-500 dark:text-red-400' :
                                     '' // Default color inherited from button style
                                 }`}
@@ -451,7 +451,7 @@ export const MessageBubble = memo(forwardRef(({
                             />
                         )}
                         {model && (
-                            <span title={model}>{model}</span>
+                            <span title={model} className="select-none">{model}</span>
                         )}
                         {isStreaming && (
                             <div className="flex gap-1 items-center">
@@ -467,7 +467,7 @@ export const MessageBubble = memo(forwardRef(({
                             <> {/* Use fragment to group buttons */}
                                 <IconButton
                                     icon={RerunIcon}
-                                    iconClassName="w-4 h-4"
+                                    iconClassName="w-4 h-4 select-none"
                                     onClick={handleRerunAssistant}
                                     className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     aria-label="Rerun generation"
@@ -484,7 +484,7 @@ export const MessageBubble = memo(forwardRef(({
                                             copyState === 'error' ? XMarkIcon :
                                                 CopyIcon // Default idle state
                                     }
-                                    iconClassName={`w-4 h-4 ${copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
+                                    iconClassName={`w-4 h-4 select-none ${copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
                                         copyState === 'error' ? 'text-red-500 dark:text-red-400' :
                                             '' // Default color inherited from button style
                                         }`}

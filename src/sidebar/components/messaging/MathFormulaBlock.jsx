@@ -31,7 +31,7 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
   // If there was an error, show original content with error styling
   if (renderError) {
     return (
-      <div className="p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded my-4 font-mono text-sm whitespace-pre-wrap">
+      <div className="p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded my-4 font-mono text-sm whitespace-pre-wrap select-none">
         <div className="mb-2 text-xs text-red-600 dark:text-red-400 font-semibold">Unable to render formula - showing LaTeX source:</div>
         <code className='text-red-700 dark:text-red-300'>{content}</code>
       </div>

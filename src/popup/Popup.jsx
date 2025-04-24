@@ -32,7 +32,7 @@ export function Popup() {
   const infoButtonRef = useRef(null);
 
   const tooltipMessage = (
-    <div className="text-xs text-theme-primary max-w-xs">
+    <div className="text-xs text-theme-primary max-w-xs select-none">
       <p className="mb-1.5">
         Extract this{' '}
         <span className="font-medium">{contentTypeLabel || 'content'}</span>{' '}
@@ -174,7 +174,7 @@ export function Popup() {
   };
 
   return (
-    <div className="min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme">
+    <div className="min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme select-none cursor-default">
       <AppHeader onClose={closePopup} className="py-2">
         {/* Sidebar toggle button */}
         <button
@@ -183,7 +183,7 @@ export function Popup() {
           title="Toggle Sidebar"
           disabled={!currentTab?.id} // Disable if no tab context
         >
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" stroke="currentColor">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 select-none" stroke="currentColor">
             <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
             <line x1="15" y1="3" x2="15" y2="21" stroke="currentColor" strokeWidth="2"/>
           </svg>
@@ -218,10 +218,10 @@ export function Popup() {
                         ) : null;
                       })()}
                       {/* Label */}
-                      <span className="text-xs font-medium truncate">{contentTypeLabel}</span>
+                      <span className="text-xs font-medium truncate select-none">{contentTypeLabel}</span>
                     </>
                   ) : (
-                    <span className="text-xs text-theme-secondary">Detecting type...</span>
+                    <span className="text-xs text-theme-secondary select-none">Detecting type...</span>
                   )}
                 </div>
 
@@ -230,7 +230,7 @@ export function Popup() {
                   <IconButton
                     ref={infoButtonRef}
                     icon={InfoIcon}
-                    className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6"
+                    className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6 select-none" // Added select-none here, assuming IconButton passes it down or applies it to the icon
                     onClick={(e) => e.stopPropagation()}
                     onMouseEnter={() => setIsInfoVisible(true)}
                     onMouseLeave={() => setIsInfoVisible(false)}
@@ -242,13 +242,13 @@ export function Popup() {
               </>
             ) : (
               // Message for Non-Injectable Pages
-              <div className="text-xs text-theme-secondary font-medium w-full text-left">
+              <div className="text-xs text-theme-secondary font-medium w-full text-left select-none">
                 Cannot extract from this page.
               </div>
             )
           )}
           {contentLoading && (
-             <div className="text-xs text-theme-secondary w-full text-left">Loading...</div>
+             <div className="text-xs text-theme-secondary w-full text-left select-none">Loading...</div>
           )}
         </div>
 
@@ -266,7 +266,7 @@ export function Popup() {
       </div>
 
       {/* Status Message */}
-      <StatusMessage message={statusMessage} context="popup" className="py-3"/>
+      <StatusMessage message={statusMessage} context="popup" className="py-3 select-none"/>
 
       {/* Tooltip */}
       <Tooltip

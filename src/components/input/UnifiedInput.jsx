@@ -137,7 +137,7 @@ export function UnifiedInput({
               {/* Send/Cancel Button */}
               <IconButton
                 icon={isStreamingActive ? XIcon : ArrowUpIcon}
-                iconClassName={sidebarIconSize}
+                iconClassName={`${sidebarIconSize} select-none`} // Apply select-none to icon
                 className={`${sidebarButtonStyle} ${sidebarButtonSize} ${isCanceling ? 'opacity-70' : ''}`}
                 onClick={handleSubmit}
                 disabled={sidebarButtonDisabled}
@@ -158,7 +158,7 @@ export function UnifiedInput({
                   title="Select a custom prompt"
                 >
                   {/* Adjust text size/weight as needed */}
-                  <span className="font-semibold text-sm leading-none">P</span>
+                  <span className="font-semibold text-sm leading-none select-none">P</span>
                 </button>
 
                 <PromptDropdown
@@ -208,7 +208,7 @@ export function UnifiedInput({
                {/* Send Button */}
                <IconButton
                  icon={ArrowUpIcon}
-                 iconClassName={popupIconSize}
+                 iconClassName={`${popupIconSize} select-none`} // Apply select-none to icon
                  className={`${popupSendButtonStyle} ${popupButtonSize}`}
                  onClick={handleSubmit}
                  disabled={popupSendButtonDisabled}
@@ -227,7 +227,7 @@ export function UnifiedInput({
                    aria-label="Select prompt"
                    title="Select a custom prompt"
                  >
-                   <span className="font-semibold text-xs leading-none">P</span>
+                   <span className="font-semibold text-xs leading-none select-none">P</span>
                  </button>
 
                  <PromptDropdown
