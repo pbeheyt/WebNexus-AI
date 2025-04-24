@@ -61,7 +61,7 @@ const formatContextWindow = (value) => {
 // --- Constants ---
 const MIN_ASSISTANT_BUBBLE_HEIGHT_REM = 2; // Equivalent to 2rem minimum height
 
-function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculation }) { // <-- ADD PROP HERE
+function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculation }) {
     const {
         messages,
         isContentExtractionEnabled,
@@ -178,8 +178,6 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
             if (showScrollDownButton) setShowScrollDownButton(false);
             return;
         }
-
-        const scrollContainer = scrollContainerRef.current;
 
         // --- Condition 1: Reset flag when assistant finishes ---
         const assistantJustFinished = lastMessage &&
