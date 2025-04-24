@@ -3,7 +3,7 @@ import React, { useState, memo, useEffect } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { copyToClipboard } from './utils/clipboard';
-import { IconButton, CopyIcon } from '../../../components';
+import { IconButton, CopyIcon, CheckIcon, XMarkIcon } from '../../../components';
 
 /**
  * Enhanced CodeBlock with syntax highlighting and copy functionality.
@@ -68,22 +68,30 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
   const syntaxTheme = isDarkMode ? oneDark : vs;
 
   return (
-    <div className="relative rounded-lg overflow-visible border border-gray-200 dark:border-gray-700 my-4 shadow-sm">
+    <div className="relative group rounded-lg overflow-visible border border-gray-200 dark:border-gray-700 my-4 shadow-sm">
       {/* Minimal header with language display */}
-      <div className="bg-gray-200 dark:bg-gray-800 px-3 py-1.5 flex justify-between items-center rounded-t-lg">
+      <div className="relative bg-gray-200 dark:bg-gray-800 px-3 py-1.5 flex justify-between items-center rounded-t-lg">
         {/* Language name */}
         <span className="text-gray-600 dark:text-gray-400 font-mono text-xs">{displayLanguage}</span>
 
         {/* Copy button - Only show when not streaming */}
         {!isStreaming && (
           <IconButton
-            icon={() => <CopyIcon state={copyState} />} // Pass CopyIcon with state
-            iconClassName="w-3 h-3" // Define icon size
+            icon={
+              copyState === 'copied' ? CheckIcon :
+              copyState === 'error' ? XMarkIcon :
+              CopyIcon
+            }
+            iconClassName={`w-3 h-3 ${
+              copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
+              copyState === 'error' ? 'text-red-500 dark:text-red-400' :
+              ''
+            }`}
             onClick={copyCodeToClipboard}
             disabled={copyState !== 'idle'}
             aria-label="Copy code to clipboard"
             title="Copy code to clipboard"
-            className={`p-1 rounded-md transition-opacity duration-200 z-10 ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : 'opacity-100'} ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 focus:bg-gray-200 dark:focus:bg-gray-700'}`} // Apply dynamic classes here
+            className={`absolute top-1/2 right-3 -translate-y-1/2 p-1 rounded-md transition-opacity duration-200 z-10 ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : 'opacity-100'} ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20' : copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20' : 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700'}`}
           />
         )}
       </div>
