@@ -68,9 +68,10 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
   return (
     <div
       ref={dropdownRef}
-      className={`absolute bottom-full mb-2 right-0 z-50 max-h-56 overflow-y-auto bg-theme-surface border border-theme rounded-md shadow-lg p-1 min-w-48 ${className}`}
+      className={`absolute bottom-full mb-2 right-0 z-50 overflow-y-auto bg-theme-surface border border-theme rounded-md shadow-lg p-1 min-w-48 ${className}`}
       role="listbox"
       aria-label="Select a prompt"
+      style={{ maxHeight: '150px' }}
     >
       {error && <div className="px-3 py-1.5 text-sm text-red-500">{error}</div>}
       {!isLoading && !error && prompts.length === 0 && (
