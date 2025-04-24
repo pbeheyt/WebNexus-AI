@@ -16,15 +16,31 @@ import { useSidebarChat } from '../../contexts/SidebarChatContext'; // Added
 
 // Define Icon Components using provided SVGs
 const EditIcon = ({ className = 'w-4 h-4', ...props }) => (
-    <svg className={className} viewBox="0 0 20 20" fill="currentColor" {...props}>
-        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-        <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+    <svg 
+        className={`${className} stroke-[2] size-4`}
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+    >
+        <path d="M18.25 5.75C16.8693 4.36929 14.6307 4.36929 13.25 5.75L10.125 8.875L5.52404 13.476C4.86236 14.1376 4.45361 15.0104 4.36889 15.9423L4 20.0001L8.0578 19.6311C8.98967 19.5464 9.86234 19.1377 10.524 18.476L18.25 10.75C19.6307 9.36929 19.6307 7.13071 18.25 5.75V5.75Z" stroke="currentColor"></path>
+        <path d="M12.5 7.5L16.5 11.5" stroke="currentColor"></path>
     </svg>
 );
 
 const RerunIcon = ({ className = 'w-4 h-4', ...props }) => (
-    <svg className={className} viewBox="0 0 20 20" fill="currentColor" {...props}>
-        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm1 14a1 1 0 011-1h5a1 1 0 110 2H6a1 1 0 01-1-1zm7.116-4.666a5.002 5.002 0 00-9.666-3.249 1 1 0 11-1.886-.666A7.002 7.002 0 0114.001 9H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a5.004 5.004 0 00-1.884-3.565z" clipRule="evenodd" />
+    <svg 
+        className={`${className} stroke-[2] size-4`}
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+    >
+        <path d="M4 20V15H4.31241M4.31241 15H9M4.31241 15C5.51251 18.073 8.50203 20.25 12 20.25C15.8582 20.25 19.0978 17.6016 20 14.0236M20 4V9H19.6876M19.6876 9H15M19.6876 9C18.4875 5.92698 15.498 3.75 12 3.75C8.14184 3.75 4.90224 6.3984 4 9.9764" stroke="currentColor"></path>
     </svg>
 );
 
@@ -218,7 +234,7 @@ export const MessageBubble = memo(forwardRef(({
                             }}
                             aria-label="Edit message"
                             title="Edit message"
-                            className="p-1 rounded opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                            className="p-1 rounded-full opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                         <IconButton
                             icon={RerunIcon}
@@ -226,7 +242,7 @@ export const MessageBubble = memo(forwardRef(({
                             onClick={() => rerunMessage(id)}
                             aria-label="Rerun message"
                             title="Rerun message"
-                            className="p-1 rounded opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                            className="p-1 rounded-full opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                     </div>
                 )}
