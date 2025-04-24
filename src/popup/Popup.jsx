@@ -188,12 +188,12 @@ export function Popup() {
       </AppHeader>
 
       {/* Platform Selector */}
-      <div className="my-2">
+      <div className="my-3">
          <PlatformSelector disabled={isProcessingContent || isProcessing} />
       </div>
 
       {/* Unified Input */}
-      <div className="mt-5">
+      <div className="mt-6">
         {/* Container for badge and info button */}
         <div className="flex justify-between items-center mb-1.5 px-3">
           {/* Content Type Indicator */}
@@ -244,7 +244,7 @@ export function Popup() {
       </div>
 
       {/* Status Message */}
-      <StatusMessage message={statusMessage} context="popup" className="pt-2 pb-3" />
+      <StatusMessage message={statusMessage} context="popup" className="py-3"/>
 
       {/* Tooltip */}
       <Tooltip

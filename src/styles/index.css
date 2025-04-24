@@ -103,12 +103,12 @@
 
   ::-webkit-scrollbar-track {
     @apply bg-theme-primary rounded;
-    cursor: default; /* <-- Added cursor default */
+    cursor: default;
   }
 
   ::-webkit-scrollbar-thumb {
     @apply bg-gray-300 dark:bg-theme-hover rounded; /* Base style */
-    cursor: default; /* <-- Added cursor default */
+    cursor: default;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -145,8 +145,8 @@
 
   /* Fixed size logo image */
   .platform-logo-img-fixed {
-    width: 30px; /* Fixed width */
-    height: 30px; /* Fixed height */
+    width: 25px;
+    height: 25px;
     object-fit: contain;
     opacity: 1;
     transition: opacity 300ms ease-out, transform 300ms ease-out;
@@ -154,7 +154,7 @@
 
   /* Dim unselected logo images */
   .platform-logo-btn-fixed:not([aria-pressed="true"]) .platform-logo-img-fixed {
-    opacity: 0.6;
+    opacity: 0.5;
   }
 
   /* Restore opacity on hover/focus for unselected items */
@@ -165,7 +165,7 @@
 
   /* Fixed size logo button container */
   .platform-logo-btn-fixed {
-    height: 40px; /* Fixed height */
+    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -175,12 +175,12 @@
     transition: all 300ms ease-in-out; /* Keep other transitions */
     user-select: none;
     cursor: pointer;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 8px;
+    padding-right: 8px;
   }
   .platform-logo-btn-fixed[aria-pressed="true"] {
-    padding-left: 24px;
-    padding-right: 24px;
+    padding-left: 28px;
+    padding-right: 28px;
   }
   .platform-logo-btn-fixed:disabled {
     opacity: 0.5;
@@ -189,10 +189,10 @@
 
   /* Scaling effect for the image within the fixed button on hover/selection */
   .platform-logo-btn-fixed.group:hover .platform-logo-img-fixed {
-    transform: scale(2); /* Adjust scale factor if needed */
+    transform: scale(1.75);
   }
   .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed {
-    transform: scale(2); /* Adjust scale factor if needed */
+    transform: scale(1.75);
   }
 
   /* Container for the platform selector in the popup */
@@ -200,9 +200,9 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding-top: 12px; /* Fixed padding */
-    padding-bottom: 12px; /* Fixed padding */
-    min-height: 50px; /* Retain min-height */
+    padding-top: 12px;
+    padding-bottom: 12px;
+    min-height: 50px;
     transition: opacity 200ms; /* Retain transition */
   }
 }
