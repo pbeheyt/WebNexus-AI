@@ -194,15 +194,18 @@ class TokenManagementService {
    * @param {number} tabId - Tab identifier
    * @param {Array} messages - Chat messages
    * @param {Object} modelConfig - Model configuration
+   * @param {Object} [options={}] - Optional parameters like initial stats for reruns.
+   * @param {number} [options.initialAccumulatedCost=0] - Starting cost for calculation (used in reruns).
+   * @param {number} [options.initialOutputTokens=0] - Starting output tokens for calculation (used in reruns).
    * @returns {Promise<Object>} - Token statistics
    */
-  static async calculateAndUpdateStatistics(tabId, messages, modelConfig = null) {
+  static async calculateAndUpdateStatistics(tabId, messages, modelConfig = null, options = {}) {
     if (!tabId) return this._getEmptyStats();
 
+    const { initialAccumulatedCost = 0, initialOutputTokens = 0 } = options;
+
     try {
-      // 1. Get existing accumulated cost BEFORE calculating new stats
-      const currentStats = await this.getTokenStatistics(tabId);
-      const existingAccumulatedCost = currentStats.accumulatedCost || 0;
+      // 1. Get existing accumulated cost is NOT needed here anymore, use initialAccumulatedCost from options
 
       // 2. Get the actual system prompt string
       const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId);
@@ -223,16 +226,16 @@ class TokenManagementService {
         currentCallCost = costInfo.totalCost || 0;
       }
 
-      // 5. Calculate New Accumulated Cost
-      const newAccumulatedCost = existingAccumulatedCost + currentCallCost;
+      // 5. Calculate New Accumulated Cost using the initial value + cost of this specific call
+      const newAccumulatedCost = initialAccumulatedCost + currentCallCost;
 
       // 6. Prepare Final Stats Object to Save (Explicitly matching _getEmptyStats structure)
       const finalStatsObject = {
-        // Cumulative stats (take latest calculated/updated values)
-        outputTokens: baseStats.outputTokens || 0,
+        // Cumulative stats (use initial output tokens + tokens from this specific call)
+        outputTokens: initialOutputTokens + (baseStats.outputTokensInLastApiCall || 0),
         accumulatedCost: newAccumulatedCost,
 
-        // Last API call stats (from base calculation)
+        // Last API call stats (from base calculation - these reflect ONLY the last call)
         promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
         historyTokensSentInLastApiCall: baseStats.historyTokensSentInLastApiCall || 0,
         systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,

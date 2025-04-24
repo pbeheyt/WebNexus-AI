@@ -156,6 +156,14 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       if (conversationHistory?.length > 0) request.conversationHistory = conversationHistory;
       if (streaming && onStreamChunk) request.streaming = true;
 
+      // Add pre-truncation stats if provided (for reruns/edits)
+      if (options.options?.preTruncationCost !== undefined) { // Check within nested options object
+        request.preTruncationCost = options.options.preTruncationCost;
+      }
+      if (options.options?.preTruncationOutput !== undefined) { // Check within nested options object
+        request.preTruncationOutput = options.options.preTruncationOutput;
+      }
+
       const response = await robustSendMessage(request);
 
       if (!response || !response.success) {

@@ -63,9 +63,12 @@ class ChatHistoryService {
    * @param {number} tabId - The tab ID
    * @param {Array} messages - Chat history messages
    * @param {Object} modelConfig - Model configuration (optional, for token tracking)
+   * @param {Object} [options={}] - Optional parameters like initial stats for reruns.
+   * @param {number} [options.initialAccumulatedCost] - Starting cost for calculation (used in reruns).
+   * @param {number} [options.initialOutputTokens] - Starting output tokens for calculation (used in reruns).
    * @returns {Promise<boolean>} Success status
    */
-  static async saveHistory(tabId, messages, modelConfig = null) {
+  static async saveHistory(tabId, messages, modelConfig = null, options = {}) {
     try {
       if (!tabId) {
         console.error('TabChatHistory: No tabId provided for saveHistory');
@@ -85,8 +88,8 @@ class ChatHistoryService {
       // Save updated histories
       await chrome.storage.local.set({ [this.STORAGE_KEY]: allTabHistories });
       
-      // Calculate and save token statistics using TokenManagementService
-      await TokenManagementService.calculateAndUpdateStatistics(tabId, limitedMessages, modelConfig);
+      // Calculate and save token statistics using TokenManagementService, passing options
+      await TokenManagementService.calculateAndUpdateStatistics(tabId, limitedMessages, modelConfig, options);
       
       return true;
     } catch (error) {

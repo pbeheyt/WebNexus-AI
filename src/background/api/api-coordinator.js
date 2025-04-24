@@ -126,7 +126,10 @@ export async function processContentViaApi(params) {
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null,
     streaming = false, // Note: streaming is forced to true later
-    conversationHistory = []
+    conversationHistory = [],
+    // Extract pre-truncation stats (passed from frontend, not used directly here)
+    preTruncationCost,
+    preTruncationOutput
   } = params;
 
   if (!platformId || !modelId) {
