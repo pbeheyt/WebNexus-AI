@@ -4,7 +4,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
-import CopyButtonIcon from './icons/CopyButtonIcon';
+import { CopyIcon } from './icons/CopyIcon'; // Added
+import { CheckIcon } from './icons/CheckIcon'; // Added
+import { XMarkIcon } from './icons/XMarkIcon'; // Added
+// import CopyButtonIcon from './icons/CopyButtonIcon'; // Removed
 import EnhancedCodeBlock from './EnhancedCodeBlock';
 import MathFormulaBlock from './MathFormulaBlock';
 import { copyToClipboard as copyUtil } from './utils/clipboard';
@@ -190,7 +193,22 @@ export const MessageBubble = memo(forwardRef(({
     if (role === MESSAGE_ROLES.USER) {
         const [isEditing, setIsEditing] = useState(false);
         const [editedContent, setEditedContent] = useState(content);
+        const [userCopyState, setUserCopyState] = useState('idle'); // Added state for user copy
         const { rerunMessage, editAndRerunMessage } = useSidebarChat();
+
+        // Added handler for user copy
+        const handleUserCopyToClipboard = async () => {
+            if (!content) return; // Only copy if content exists
+            try {
+                await copyUtil(content);
+                setUserCopyState('copied');
+                setTimeout(() => setUserCopyState('idle'), 2000);
+            } catch (error) {
+                logger.sidebar.error('Failed to copy user text: ', error);
+                setUserCopyState('error');
+                setTimeout(() => setUserCopyState('idle'), 2000);
+            }
+        };
 
         return (
             <div
@@ -251,6 +269,23 @@ export const MessageBubble = memo(forwardRef(({
                             aria-label="Rerun message"
                             title="Rerun message"
                             className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        {/* New Copy IconButton for User Message */}
+                        <IconButton
+                            onClick={handleUserCopyToClipboard}
+                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            aria-label="Copy message"
+                            title="Copy message"
+                            icon={
+                                userCopyState === 'copied' ? CheckIcon :
+                                userCopyState === 'error' ? XMarkIcon :
+                                CopyIcon // Default idle state
+                            }
+                            iconClassName={`w-4 h-4 ${
+                                userCopyState === 'copied' ? 'text-green-600 dark:text-green-400' :
+                                userCopyState === 'error' ? 'text-red-500 dark:text-red-400' :
+                                '' // Default color inherited from button style
+                            }`}
                         />
                     </div>
                 )}
@@ -447,13 +482,23 @@ export const MessageBubble = memo(forwardRef(({
                                     aria-label="Rerun generation"
                                     title="Rerun generation"
                                 />
-                                <button
+                                {/* New Copy IconButton */}
+                                <IconButton
                                     onClick={handleCopyToClipboard}
-                                className={`p-1 rounded-md transition-opacity duration-200 z-10 ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : 'opacity-100'} ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' : copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 focus:bg-gray-200 dark:focus:bg-gray-700'}`}
-                                aria-label="Copy to clipboard" title="Copy to clipboard"
-                            >
-                                    <CopyButtonIcon state={copyState} />
-                                </button>
+                                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    aria-label="Copy to clipboard"
+                                    title="Copy to clipboard"
+                                    icon={
+                                        copyState === 'copied' ? CheckIcon :
+                                        copyState === 'error' ? XMarkIcon :
+                                        CopyIcon // Default idle state
+                                    }
+                                    iconClassName={`w-4 h-4 ${
+                                        copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
+                                        copyState === 'error' ? 'text-red-500 dark:text-red-400' :
+                                        '' // Default color inherited from button style
+                                    }`}
+                                />
                             </>
                         )}
                     </div>

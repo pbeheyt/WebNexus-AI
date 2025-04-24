@@ -81,7 +81,7 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
             className={`rounded transition-all duration-200 px-1.5 py-0.5 text-xs
                       ${copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
                         copyState === 'error' ? 'text-red-500 dark:text-red-400' :
-                        'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                        'text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary'}`}
             aria-label="Copy code to clipboard"
             title="Copy code to clipboard"
             disabled={copyState !== 'idle'}
