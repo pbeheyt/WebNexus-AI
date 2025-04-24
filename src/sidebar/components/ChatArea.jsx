@@ -61,7 +61,7 @@ const formatContextWindow = (value) => {
 // --- Constants ---
 const MIN_ASSISTANT_BUBBLE_HEIGHT_REM = 2; // Equivalent to 2rem minimum height
 
-function ChatArea({ className = '', otherUIHeight = 160 }) {
+function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculation }) { // <-- ADD PROP HERE
     const {
         messages,
         isContentExtractionEnabled,
@@ -265,16 +265,17 @@ function ChatArea({ className = '', otherUIHeight = 160 }) {
         if (isTargetScenario && precedingUserMessageRef.current) {
             rafIdHeightCalc.current = requestAnimationFrame(() => {
                 if (precedingUserMessageRef.current) {
+                    requestHeightRecalculation();
                     const height = precedingUserMessageRef.current.offsetHeight;
                     if (height !== precedingUserMessageHeight) {
-                        setPrecedingUserMessageHeight(height);
+                         setPrecedingUserMessageHeight(height);
                     }
                 }
                 rafIdHeightCalc.current = null;
             });
         } else {
             if (precedingUserMessageHeight !== 0) {
-                setPrecedingUserMessageHeight(0);
+                 setPrecedingUserMessageHeight(0);
             }
         }
 

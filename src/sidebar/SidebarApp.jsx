@@ -155,7 +155,6 @@ export default function SidebarApp() {
         const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
         const buffer = 2; // Small buffer
         setOtherUIHeight(totalHeight + buffer);
-        // logger.sidebar.debug(`Calculated otherUIHeight: ${totalHeight + buffer} (App: ${appHeaderHeight}, Collapsible: ${collapsibleHeight}, Input: ${inputHeight})`);
       } else {
         // logger.sidebar.warn('Could not read all element heights for calculation.');
       }
@@ -216,7 +215,11 @@ export default function SidebarApp() {
           </div>
 
           {/* Ensure ChatArea takes remaining space */}
-          <ChatArea className="flex-1 min-h-0 relative z-0" otherUIHeight={otherUIHeight} />
+          <ChatArea
+            className="flex-1 min-h-0 relative z-0"
+            otherUIHeight={otherUIHeight}
+            requestHeightRecalculation={calculateAndSetHeight}
+          />
 
           {/* User input at the bottom - Wrap to attach ref */}
           <div ref={userInputRef} className="flex-shrink-0 relative z-10 border-t border-theme">
