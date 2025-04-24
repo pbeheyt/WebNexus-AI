@@ -168,7 +168,7 @@ function Header() {
               </div>
   
               {/* 2. Model Selector - constrained width, allows truncation */}
-              <div className="min-w-0">
+              <div className="w-48 truncate"> {/* Adjust w-48 if necessary */}
                 <ModelSelector 
                   selectedPlatformId={selectedPlatformId}
                 />

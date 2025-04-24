@@ -163,43 +163,19 @@ export default function SidebarApp() {
     });
   }, [headerExpanded, textSize]); // Recalculate if header state or text size changes
 
-  // Effect for ResizeObserver and initial calculation
+  // Effect to trigger height calculation based on specific state changes
   useEffect(() => {
-    // Initial calculation after a short delay
-    const initialCalcTimer = setTimeout(calculateAndSetHeight, 100); // Slightly increased delay
-
-    const elementsToObserve = [
-      appHeaderRef.current,
-      collapsibleHeaderRef.current,
-      userInputRef.current,
-    ].filter(Boolean);
-
-    if (elementsToObserve.length === 0) {
-        return () => clearTimeout(initialCalcTimer);
+    if (isReady) { // Only calculate when the app is ready
+      calculateAndSetHeight();
     }
-
-    // Use ResizeObserver to recalculate whenever relevant elements change size
-    const resizeObserver = new ResizeObserver(() => {
-      calculateAndSetHeight();
-    });
-
-    elementsToObserve.forEach(el => resizeObserver.observe(el));
-
-    // Cleanup function
+    // Cleanup function for the requestAnimationFrame ref used in calculateAndSetHeight
     return () => {
-      clearTimeout(initialCalcTimer);
-      if (rafIdHeightCalc.current) { // Cancel pending frame on cleanup
-        cancelAnimationFrame(rafIdHeightCalc.current);
-        rafIdHeightCalc.current = null;
-      }
-      resizeObserver.disconnect();
-    };
-  }, [calculateAndSetHeight]); // Depend only on the memoized calculation function
-
-  // Effect to recalculate specifically when headerExpanded changes
-  useEffect(() => {
-      calculateAndSetHeight();
-  }, [headerExpanded, calculateAndSetHeight]);
+       if (rafIdHeightCalc.current) {
+          cancelAnimationFrame(rafIdHeightCalc.current);
+          rafIdHeightCalc.current = null;
+       }
+    }
+  }, [isReady, headerExpanded, textSize, calculateAndSetHeight]); // Dependencies
 
   // --- Render Logic ---
   // Apply textSize class to the root div
