@@ -43,8 +43,8 @@ export function PlatformLogoItem({
       {/* Logo Image */}
       <img
         src={iconUrl}
-        alt={`${name} logo`}
-        className="platform-logo-img-fixed"
+        alt={name}
+        className={`platform-logo-img-fixed ${id === 'chatgpt' ? 'invert dark:invert-0' : ''}`}
       />
     </button>
   );

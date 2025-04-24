@@ -115,11 +115,11 @@ function Header() {
                       aria-haspopup="true"
                       aria-expanded={isPlatformDropdownOpen}
                     >
-                      <img
-                        src={selectedPlatformForDisplay.iconUrl}
-                        alt={`${selectedPlatformForDisplay.name} logo`}
-                        className="w-4 h-4 object-contain mr-1"
-                      />
+            <img
+              src={selectedPlatformForDisplay?.iconUrl}
+              alt={selectedPlatformForDisplay?.name}
+              className={`w-4 h-4 object-contain mr-1 ${selectedPlatformForDisplay?.id === 'chatgpt' ? 'invert dark:invert-0' : ''}`}
+            />
                       <span className="text-theme-secondary">
                         <ChevronIcon />
                       </span>

@@ -104,6 +104,7 @@ export const MessageBubble = memo(forwardRef(({
   isStreaming = false,
   model = null,
   platformIconUrl = null,
+  platformId = null,
   metadata = {},
   className = '',
   style = {}
@@ -326,7 +327,7 @@ export const MessageBubble = memo(forwardRef(({
         <div className="flex justify-between items-center -mt-3 pb-3">
            <div className="text-xs opacity-70 flex items-center space-x-2">
             {platformIconUrl && (
-              <img src={platformIconUrl} alt="AI Platform" className="w-3.5 h-3.5 object-contain" />
+              <img src={platformIconUrl} alt="AI Platform" className={`w-3.5 h-3.5 object-contain ${platformId === 'chatgpt' ? 'invert dark:invert-0' : ''}`} />
             )}
             {model && (
               <span title={model}>{model}</span>
