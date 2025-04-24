@@ -231,7 +231,7 @@ export function Popup() {
                 <IconButton
                   ref={infoButtonRef}
                   icon={InfoIcon}
-                  className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6"
+                  className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-7 h-7 p-1"
                   onClick={(e) => e.stopPropagation()}
                   onMouseEnter={() => setIsInfoVisible(true)}
                   onMouseLeave={() => setIsInfoVisible(false)}

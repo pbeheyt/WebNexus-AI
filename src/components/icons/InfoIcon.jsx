@@ -1,10 +1,20 @@
+// src/components/InfoIcon.jsx (or wherever you define it)
 import React from 'react';
 
+/**
+ * Renders an information icon based on the provided SVG path data.
+ * Accepts Tailwind classes (especially for size and color) via the className prop.
+ */
 export function InfoIcon({ className, ...props }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
-      <line x1="12" y1="16" x2="12" y2="12" />
-      <line x1="12" y1="8" x2="12.01" y2="8" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 50 50"
+      fill="currentColor"
+      className={className}
+      {...props}
+    >
+      <path d="M25,2C12.297,2,2,12.297,2,25s10.297,23,23,23s23-10.297,23-23S37.703,2,25,2z M25,11c1.657,0,3,1.343,3,3s-1.343,3-3,3 s-3-1.343-3-3S23.343,11,25,11z M29,38h-2h-4h-2v-2h2V23h-2v-2h2h4v2v13h2V38z"></path>
     </svg>
   );
-};
+}
