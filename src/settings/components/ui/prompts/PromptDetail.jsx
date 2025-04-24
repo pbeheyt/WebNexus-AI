@@ -145,12 +145,12 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       {/* Header with Conditional Badge */}
       <div className="prompt-detail-header flex items-center justify-between mb-4 pb-3 border-b border-theme">
         <div className="flex items-center"> {/* Wrapper for title and badge */}
-          <h3 className="prompt-detail-title text-lg font-medium text-theme-primary">
+          <h3 className="prompt-detail-title text-lg font-medium text-theme-primary select-none">
             {prompt.prompt.name}
           </h3>
           {/* Conditionally render the Default badge */}
           {isDefaultForType && (
-            <span className="default-badge ml-3 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+            <span className="default-badge ml-3 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium select-none">
               Default
             </span>
           )}
@@ -158,12 +158,12 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       </div>
 
       {/* Content Type Display */}
-      <div className="prompt-detail-meta mb-4 text-base text-theme-secondary">
+      <div className="prompt-detail-meta mb-4 text-base text-theme-secondary select-none">
         <div className="inline-flex items-center gap-2">
           <span>{prompt.contentTypeLabel}</span>
           {iconSvg && (
             <span
-              className="w-4 h-4 flex items-center justify-center"
+              className="w-4 h-4 flex items-center justify-center select-none"
               dangerouslySetInnerHTML={{ __html: iconSvg }}
             />
           )}
@@ -171,7 +171,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       </div>
 
       {/* Prompt Content */}
-      <div className="prompt-detail-content whitespace-pre-wrap bg-theme-hover/20 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary">
+      <div className="prompt-detail-content whitespace-pre-wrap bg-theme-hover/20 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary select-none">
         {prompt.prompt.content}
       </div>
 
@@ -180,13 +180,14 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         <Button
           variant="secondary"
           onClick={handleSetAsDefault}
-          className={`${isDefaultForType ? 'invisible' : ''}`}
+          className={`${isDefaultForType ? 'invisible' : ''} select-none`}
         >
           Set as Default
         </Button>
         <Button
           variant="secondary"
           onClick={onEdit}
+          className="select-none"
         >
           Edit
         </Button>
@@ -194,6 +195,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         <Button
           variant="danger"
           onClick={handleDelete}
+          className="select-none"
         >
           Delete
         </Button>

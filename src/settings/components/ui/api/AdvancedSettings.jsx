@@ -256,7 +256,7 @@ const AdvancedSettings = ({
   return (
     <div className="settings-section bg-theme-surface p-6 rounded-lg border border-theme">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="section-title text-xl font-semibold text-theme-primary">Advanced Settings</h3>
+        <h3 className="section-title text-xl font-semibold text-theme-primary select-none">Advanced Settings</h3>
 
         <Button
           variant={isAtDefaults ? 'inactive' : 'danger'}
@@ -288,6 +288,7 @@ const AdvancedSettings = ({
             setIsAtDefaults(true);
             onResetToDefaults(selectedModelId); 
           }}
+          className="select-none"
         >
           Reset to Configuration Defaults
         </Button>
@@ -296,7 +297,7 @@ const AdvancedSettings = ({
       <div className="form-group mb-6">
         <label
           htmlFor={`${platform.id}-settings-model-selector`}
-          className="block mb-3 text-base font-medium text-theme-secondary"
+          className="block mb-3 text-base font-medium text-theme-secondary select-none"
         >
           Model to Configure
         </label>
@@ -314,26 +315,26 @@ const AdvancedSettings = ({
       <form onSubmit={handleSubmit} className="model-advanced-settings">
         {/* Model specifications */}
         <div className="model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8">
-          <h4 className="specs-title text-base font-semibold mb-3 text-theme-primary">Model Specifications</h4>
+          <h4 className="specs-title text-base font-semibold mb-3 text-theme-primary select-none">Model Specifications</h4>
           <div className="specs-info space-y-2.5">
             <div className="spec-item flex justify-between text-sm">
-              <span className="spec-label font-medium text-theme-secondary">Context window</span>
-              <span className="spec-value font-mono">
+              <span className="spec-label font-medium text-theme-secondary select-none">Context window</span>
+              <span className="spec-value font-mono select-none">
                 {formValues.contextWindow?.toLocaleString() || modelConfig?.contextWindow?.toLocaleString() || "16,000"} tokens
               </span>
             </div>
             {modelConfig && modelConfig.inputTokenPrice !== undefined && (
               <div className="spec-item flex justify-between text-sm">
-                <span className="spec-label font-medium text-theme-secondary">Input tokens</span>
-                <span className="spec-value font-mono">
+                <span className="spec-label font-medium text-theme-secondary select-none">Input tokens</span>
+                <span className="spec-value font-mono select-none">
                   {Math.abs(modelConfig.inputTokenPrice) < 0.0001 ? "Free" : `$${formatPrice(modelConfig.inputTokenPrice)} per 1M tokens`}
                 </span>
               </div>
             )}
             {modelConfig && modelConfig.outputTokenPrice !== undefined && (
               <div className="spec-item flex justify-between text-sm">
-                <span className="spec-label font-medium text-theme-secondary">Output tokens</span>
-                <span className="spec-value font-mono">
+                <span className="spec-label font-medium text-theme-secondary select-none">Output tokens</span>
+                <span className="spec-value font-mono select-none">
                   {Math.abs(modelConfig.outputTokenPrice) < 0.0001 ? "Free" : `$${formatPrice(modelConfig.outputTokenPrice)} per 1M tokens`}
                 </span>
               </div>
@@ -344,9 +345,9 @@ const AdvancedSettings = ({
         {/* Max tokens setting */}
         <div className="mb-7">
           <div className="mb-2">
-            <span className="block mb-3 text-base font-semibold text-theme-secondary">Max Tokens</span>
+            <span className="block mb-3 text-base font-semibold text-theme-secondary select-none">Max Tokens</span>
           </div>
-          <p className="help-text text-sm text-theme-secondary mb-3">
+          <p className="help-text text-sm text-theme-secondary mb-3 select-none">
             Maximum number of tokens to generate in the response.
           </p>
           <SliderInput
@@ -366,7 +367,7 @@ const AdvancedSettings = ({
           <div className="form-group mb-7">
             {/* Temperature Toggle - Always visible */}
             <div className="mb-3 flex items-center">
-              <span className="text-base font-semibold text-theme-secondary mr-3">Temperature</span>
+              <span className="text-base font-semibold text-theme-secondary mr-3 select-none">Temperature</span>
               <Toggle
                 checked={formValues.includeTemperature}
                 onChange={(e) => handleChange('includeTemperature', e.target.checked)}
@@ -376,7 +377,7 @@ const AdvancedSettings = ({
             </div>
             
             {/* Help text - Always visible */}
-            <p className="help-text text-sm text-theme-secondary mb-3">
+            <p className="help-text text-sm text-theme-secondary mb-3 select-none">
               Controls randomness: lower values are more deterministic, higher values more creative.
             </p>
             
@@ -401,7 +402,7 @@ const AdvancedSettings = ({
           <div className="form-group mb-7">
             {/* Top P Toggle - Always visible */}
             <div className="mb-3 flex items-center">
-              <span className="text-base font-semibold text-theme-secondary mr-3">Top P</span>
+              <span className="text-base font-semibold text-theme-secondary mr-3 select-none">Top P</span>
               <Toggle
                 checked={formValues.includeTopP}
                 onChange={(e) => handleChange('includeTopP', e.target.checked)}
@@ -411,7 +412,7 @@ const AdvancedSettings = ({
             </div>
             
             {/* Help text - Always visible */}
-            <p className="help-text text-sm text-theme-secondary mb-3">
+            <p className="help-text text-sm text-theme-secondary mb-3 select-none">
               Alternative to temperature, controls diversity via nucleus sampling.
             </p>
             
@@ -436,7 +437,7 @@ const AdvancedSettings = ({
           modelConfig?.supportsTopP === true &&
           formValues.includeTemperature &&
           formValues.includeTopP && (
-            <p className="text-amber-600 text-sm -mt-4 mb-10">
+            <p className="text-amber-600 text-sm -mt-4 mb-10 select-none">
               It is generally recommended to alter Temperature or Top P, but not both.
             </p>
         )}
@@ -446,11 +447,11 @@ const AdvancedSettings = ({
           <div className="form-group mb-4">
             <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
-              className="block mb-3 text-base font-semibold text-theme-secondary"
+              className="block mb-3 text-base font-semibold text-theme-secondary select-none"
             >
               System Prompt
             </label>
-            <p className="help-text text-sm text-theme-secondary mb-4">
+            <p className="help-text text-sm text-theme-secondary mb-4 select-none">
               Optional system prompt to provide context for API requests.
             </p>
             <textarea
@@ -469,7 +470,7 @@ const AdvancedSettings = ({
             type="submit"
             disabled={isSaving || !hasChanges}
             variant={!hasChanges ? 'inactive' : 'primary'}
-            className="px-5 py-2"
+            className="px-5 py-2 select-none"
           >
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>

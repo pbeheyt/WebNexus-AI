@@ -155,12 +155,12 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
     <form onSubmit={handleSubmit} className="add-prompt-form bg-theme-surface rounded-lg p-6 border border-theme">
       {/* Title Section with Conditional Badge */}
       <div className="flex items-center mb-5 pb-3 border-b border-theme">
-        <h3 className="type-heading text-xl font-semibold text-theme-primary">
+        <h3 className="type-heading text-xl font-semibold text-theme-primary select-none">
           {isEditing ? 'Edit Prompt' : 'Create New Prompt'}
         </h3>
         {/* Conditionally render the Default badge only in edit mode */}
         {isEditing && isDefaultForType && (
-          <span className="default-badge ml-3 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+          <span className="default-badge ml-3 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium select-none">
             Default
           </span>
         )}
@@ -170,7 +170,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
       {/* Content Type Selection using CustomSelect */}
       <div className="form-group mb-6">
         <label
-          className="block mb-3 text-base font-medium text-theme-secondary"
+          className="block mb-3 text-base font-medium text-theme-secondary select-none"
         >
           Content Type
         </label>
@@ -188,7 +188,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
       <div className="form-group mb-6">
         <label
           htmlFor="name"
-          className="block mb-3 text-base font-medium text-theme-secondary"
+          className="block mb-3 text-base font-medium text-theme-secondary select-none"
         >
           Prompt Name
         </label>
@@ -208,7 +208,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
       <div className="form-group mb-6">
         <label
           htmlFor="content"
-          className="block mb-3 text-base font-medium text-theme-secondary"
+          className="block mb-3 text-base font-medium text-theme-secondary select-none"
         >
           Prompt Content
         </label>
@@ -228,7 +228,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
         <Button
           type="button"
           variant="secondary"
-          className="px-5 py-2"
+          className="px-5 py-2 select-none"
           onClick={onCancel}
         >
           Cancel
@@ -236,7 +236,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
 
         <Button
           type="submit"
-          className="px-5 py-2"
+          className="px-5 py-2 select-none"
           disabled={isSaving}
           variant={isSaving ? 'inactive' : 'primary'}
         >

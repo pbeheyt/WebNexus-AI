@@ -260,13 +260,13 @@ const PlatformDetails = ({
         )}
 
         <div className="platform-header-info min-w-0">
-          <h3 className="platform-title text-xl font-medium mb-2 text-theme-primary truncate">{platform.name}</h3> 
+          <h3 className="platform-title text-xl font-medium mb-2 text-theme-primary truncate select-none">{platform.name}</h3> 
           <div className="platform-actions flex flex-wrap gap-x-3 gap-y-1">
             <a
               href={platform.consoleApiLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="platform-link text-primary hover:underline text-sm"
+              className="platform-link text-primary hover:underline text-sm cursor-pointer select-none"
             >
               API Console
             </a>
@@ -274,7 +274,7 @@ const PlatformDetails = ({
               href={platform.docApiLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="platform-link text-primary hover:underline text-sm"
+              className="platform-link text-primary hover:underline text-sm cursor-pointer select-none"
             >
               API Documentation
             </a>
@@ -282,7 +282,7 @@ const PlatformDetails = ({
               href={platform.modelApiLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="platform-link text-primary hover:underline text-sm"
+              className="platform-link text-primary hover:underline text-sm cursor-pointer select-none"
             >
               Model Documentation
             </a>
@@ -290,7 +290,7 @@ const PlatformDetails = ({
               href={platform.keyApiLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="platform-link text-primary hover:underline text-sm"
+              className="platform-link text-primary hover:underline text-sm cursor-pointer select-none"
             >
               API Keys
             </a>
@@ -300,12 +300,12 @@ const PlatformDetails = ({
 
       {/* API credentials section */}
       <div className="settings-section bg-theme-surface p-5 rounded-lg border border-theme mb-6">
-        <h4 className="section-subtitle text-lg font-medium mb-4 text-theme-primary">API Credentials</h4>
+        <h4 className="section-subtitle text-lg font-medium mb-4 text-theme-primary select-none">API Credentials</h4>
 
         <div className="form-group mb-4">
           <label
             htmlFor={`${platform.id}-api-key`}
-            className="block mb-2 text-sm font-medium text-theme-secondary"
+            className="block mb-2 text-sm font-medium text-theme-secondary select-none"
           >
             API Key:
           </label>
@@ -320,7 +320,7 @@ const PlatformDetails = ({
             />
             <button
               type="button"
-              className="show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded"
+              className="show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded select-none"
               onClick={() => setShowApiKey(!showApiKey)}
               aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
             >
@@ -334,6 +334,7 @@ const PlatformDetails = ({
             <Button
               variant="danger"
               onClick={handleRemoveCredentials}
+              className="select-none"
             >
               Remove Key
             </Button>
@@ -343,6 +344,7 @@ const PlatformDetails = ({
             onClick={handleSaveCredentials}
             disabled={isSaving || !hasApiKeyChanges}
             variant={!hasApiKeyChanges ? 'inactive' : 'primary'}
+            className="select-none"
           >
             {isSaving ? 'Saving...' : (credentials ? 'Update Key' : 'Save Key')}
           </Button>
