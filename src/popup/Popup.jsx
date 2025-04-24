@@ -227,7 +227,7 @@ export function Popup() {
                 </div>
 
                 {/* Info Button */}
-                <div className="flex-shrink-0">
+                <div className="">
                   <IconButton
                     ref={infoButtonRef}
                     icon={InfoIcon}
@@ -266,7 +266,7 @@ export function Popup() {
       </div>
 
       {/* Status Message */}
-      <StatusMessage message={statusMessage} context="popup" className="py-3 select-none"/>
+      <StatusMessage message={statusMessage} context="popup" className="py-4 select-none"/>
 
       {/* Tooltip */}
       <Tooltip
