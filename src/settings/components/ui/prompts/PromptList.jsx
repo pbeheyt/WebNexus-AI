@@ -103,13 +103,13 @@ const PromptList = ({
         <CustomSelect
           options={filterOptions}
           selectedValue={filterValue}
-          onChange={onFilterChange} 
+          onChange={onFilterChange}
           placeholder="Filter by Content Type"
         />
       </div>
 
       {filteredPrompts.length === 0 ? (
-        <div className="empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg">
+        <div className="empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme"> {/* Added border here too for consistency */}
           <p className="text-sm">No prompts available{filterValue !== 'all' ? ` for ${contentTypeLabels[filterValue]}` : ''}. Create a new prompt to get started.</p>
         </div>
       ) : (
@@ -117,7 +117,7 @@ const PromptList = ({
           {filteredPrompts.map((item) => (
             <div
               key={item.id}
-              className={`prompt-item rounded-lg p-5 mb-4 cursor-pointer select-none transition-all
+              className={`prompt-item rounded-lg p-5 mb-4 cursor-pointer select-none transition-all border border-theme
                 ${selectedPromptId === item.id
                   ? ' bg-gray-100 dark:bg-gray-700 shadow-md'
                   : ' bg-white dark:bg-theme-surface'}
