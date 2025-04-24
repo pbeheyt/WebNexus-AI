@@ -173,39 +173,12 @@ export const MessageBubble = memo(forwardRef(({
                 ref={ref}
                 id={id}
                 style={style}
-                className={`group px-5 py-3 w-full flex justify-end items-start message-group user-message relative ${className}`} // Added relative positioning
+                className={`group px-5 py-3 w-full flex flex-col items-end message-group user-message relative ${className}`} // Added relative positioning
             >
                 <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl p-3 max-w-[85%] w-full"> {/* Added w-full */}
                     {!isEditing && (
                         <>
                             <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm">{content}</div>
-                            {/* Footer section for User Message */}
-                            <div className="flex justify-end items-center pt-1 -mr-1">
-                                {/* Icon Button Container */}
-                                <div className="flex items-center gap-1">
-                                    {!isEditing && (
-                                        <>
-                                            <IconButton
-                                                icon={EditIcon}
-                                                onClick={() => {
-                                                    setIsEditing(true);
-                                                    setEditedContent(content);
-                                                }}
-                                                aria-label="Edit message"
-                                                title="Edit message"
-                                                className="p-1 rounded opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-                                            />
-                                            <IconButton
-                                                icon={RerunIcon}
-                                                onClick={() => rerunMessage(id)}
-                                                aria-label="Rerun message"
-                                                title="Rerun message"
-                                                className="p-1 rounded opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-                                            />
-                                        </>
-                                    )}
-                                </div>
-                            </div>
                         </>
                     )}
                     {isEditing && (
@@ -234,6 +207,29 @@ export const MessageBubble = memo(forwardRef(({
                         </div>
                     )}
                 </div>
+                {!isEditing && (
+                    <div className="flex items-center gap-1 mt-1">
+                        <IconButton
+                            icon={EditIcon}
+                            iconClassName="w-4 h-4"
+                            onClick={() => {
+                                setIsEditing(true);
+                                setEditedContent(content);
+                            }}
+                            aria-label="Edit message"
+                            title="Edit message"
+                            className="p-1 rounded opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                        />
+                        <IconButton
+                            icon={RerunIcon}
+                            iconClassName="w-4 h-4"
+                            onClick={() => rerunMessage(id)}
+                            aria-label="Rerun message"
+                            title="Rerun message"
+                            className="p-1 rounded opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                        />
+                    </div>
+                )}
             </div>
         );
     }
