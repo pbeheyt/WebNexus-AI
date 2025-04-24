@@ -1,7 +1,7 @@
 // src/popup/Popup.jsx
 import { useEffect, useState, useRef } from 'react';
 import { useStatus } from './contexts/StatusContext';
-import { usePopupPlatform } from '../contexts/platform';
+import { usePopupPlatform } from '../contexts/platform'; 
 import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
@@ -13,7 +13,7 @@ import { getContentTypeIconSvg } from '../shared/utils/icon-utils';
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading, isInjectable } = useContent();
-  const { selectedPlatformId } = usePopupPlatform();
+  const { selectedPlatformId, platforms } = usePopupPlatform(); 
   const {
     statusMessage,
     updateStatus,
@@ -133,8 +133,9 @@ export function Popup() {
 
     const promptContent = text.trim();
     setIsProcessing(true);
-    // Immediately update status to show processing has started
-    updateStatus(`Processing with ${selectedPlatformId}...`, true); 
+    
+    const platformName = platforms.find(p => p.id === selectedPlatformId)?.name || selectedPlatformId; 
+    updateStatus(`Processing with ${platformName}...`, true); 
 
     try {
       // Clear previous state
@@ -230,7 +231,6 @@ export function Popup() {
                   <IconButton
                     ref={infoButtonRef}
                     icon={InfoIcon}
-                    className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6 select-none" // Added select-none here, assuming IconButton passes it down or applies it to the icon
                     onClick={(e) => e.stopPropagation()}
                     onMouseEnter={() => setIsInfoVisible(true)}
                     onMouseLeave={() => setIsInfoVisible(false)}
