@@ -112,7 +112,7 @@ export function AppHeader({
           <button
             onClick={typeof onRefreshClick === 'function' ? onRefreshClick : undefined}
             className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
-            title="Refresh chat"
+            title="Clear chat"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M23 4v6h-6"></path>
