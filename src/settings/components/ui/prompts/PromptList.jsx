@@ -117,27 +117,28 @@ const PromptList = ({
           {filteredPrompts.map((item) => (
             <div
               key={item.id}
-              className={`prompt-item border border-theme rounded-lg p-5 mb-4 bg-theme-surface cursor-pointer transition-all hover:bg-theme-hover hover:border-primary ${
+              className={`prompt-item border border-theme rounded-lg p-5 mb-4 bg-theme-surface cursor-pointer transition-all hover:bg-theme-hover hover:border-primary select-none ${
                 selectedPromptId === item.id ? 'border-primary bg-theme-active shadow-sm' : ''
               }`}
               onClick={() => onSelectPrompt(item)}
+              style={{ cursor: 'pointer' }} // Explicitly set cursor to pointer
             >
               <div className="prompt-header flex justify-between items-center mb-3">
-                <h3 className="prompt-title font-medium text-base truncate text-theme-primary">
+                <h3 className="prompt-title font-medium text-base truncate text-theme-primary select-none">
                   {item.prompt.name}
                 </h3>
               </div>
-              <small className="flex items-center justify-between text-theme-secondary text-xs">
+              <small className="flex items-center justify-between text-theme-secondary text-xs select-none">
                 <div className="flex items-center">
                   {item.contentTypeLabel}
                   <span
-                    className="flex items-center justify-center ml-2 w-4 h-4"
+                    className="flex items-center justify-center ml-2 w-4 h-4 select-none"
                     dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(item.contentType) }}
                   />
                 </div>
                 {/* Conditionally render the Default badge */}
                 {item.id === defaultPromptIds[item.contentType] && (
-                  <span className="default-badge text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Default</span>
+                  <span className="default-badge text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full select-none">Default</span>
                 )}
               </small>
             </div>
