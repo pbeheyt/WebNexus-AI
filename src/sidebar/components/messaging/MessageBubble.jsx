@@ -213,8 +213,8 @@ export const MessageBubble = memo(forwardRef(({
                         bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white
                         rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl
                         p-3 max-w-[85%]
-                        transition-all duration-150 ease-in-out {/* Optional: Smooth transition */}
-                        ${isEditing ? 'w-full' : ''} {/* <-- CONDITIONAL WIDTH CLASS */}
+                        transition-all duration-150 ease-in-out
+                        ${isEditing ? 'w-full' : ''}
                     `}
                 >
                     {/* Display Mode */}
