@@ -195,11 +195,11 @@
     filter: drop-shadow(0 0 7px rgba(75, 75, 75, 0.6));
   }
 
-  /* Override for selected chatgpt/grok in LIGHT mode (add invert) */
+  /* Override for selected chatgpt/grok in LIGHT mode */
   .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="chatgpt"],
   .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="grok"] {
-    /* Combined filter with updated light mode glow */
-    filter: invert(1) drop-shadow(0 0 7px rgba(75, 75, 75, 0.6));
+    /* Keep only drop-shadow */
+    filter: drop-shadow(0 0 7px rgba(75, 75, 75, 0.6));
   }
 
   /* Base selected state in DARK mode (dark glow) - applies to all platforms */
@@ -209,26 +209,15 @@
     filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
   }
 
-  /* Override for selected chatgpt/grok in DARK mode (NO invert + dark glow) */
+  /* Override for selected chatgpt/grok in DARK mode */
   .dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="chatgpt"],
   .dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="grok"] {
     /* Inherits transform: scale(2) */
-    /* Combined filter with dark mode glow */
-    filter: invert(0) drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
+    /* Keep only drop-shadow */
+    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
   }
 
-  /* Apply invert(1) to UNSELECTED chatgpt/grok in LIGHT mode */
-  .platform-logo-btn-fixed:not([aria-pressed="true"]) .platform-logo-img-fixed[data-platform-id="chatgpt"],
-  .platform-logo-btn-fixed:not([aria-pressed="true"]) .platform-logo-img-fixed[data-platform-id="grok"] {
-    filter: invert(1); /* Apply only invert */
-  }
-
-  /* Apply invert(0) to UNSELECTED chatgpt/grok in DARK mode */
-  /* This overrides the light mode rule above when dark mode is active */
-  .dark .platform-logo-btn-fixed:not([aria-pressed="true"]) .platform-logo-img-fixed[data-platform-id="chatgpt"],
-  .dark .platform-logo-btn-fixed:not([aria-pressed="true"]) .platform-logo-img-fixed[data-platform-id="grok"] {
-    filter: invert(0); /* Apply only invert(0) */
-  }
+  /* No inversion needed for unselected logos - handled by PlatformIcon component */
 
   /* Container for the platform selector in the popup */
   .platform-selector-container {

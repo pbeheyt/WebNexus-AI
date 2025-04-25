@@ -1,5 +1,6 @@
 // src/components/layout/PlatformIcon.jsx
 import React from 'react';
+import { useUI } from '../../contexts/UIContext';
 
 /**
  * Reusable component for displaying platform icons.
@@ -11,10 +12,15 @@ import React from 'react';
  * @param {string} [props.className=''] - Optional additional CSS classes for the img tag.
  */
 export function PlatformIcon({ platformId, iconUrl, altText, className = '', ...props }) {
+  const { theme } = useUI();
+  const needsInvert = theme === 'light' && (platformId === 'chatgpt' || platformId === 'grok');
+  const invertClass = needsInvert ? 'invert' : '';
+
   // Combine base classes with passed classes
   const finalClassName = `
     object-contain
     select-none
+    ${invertClass}
     ${className}
   `.trim().replace(/\s+/g, ' ');
 
