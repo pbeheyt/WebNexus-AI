@@ -30,6 +30,12 @@ export { ArrowUpIcon } from './icons/ArrowUpIcon';
 export { XIcon } from './icons/XIcon';
 export { CheckIcon } from './icons/CheckIcon';
 export { XMarkIcon } from './icons/XMarkIcon';
+export { TextSizeIcon } from './icons/TextSizeIcon';
+export { SunIcon } from './icons/SunIcon';
+export { MoonIcon } from './icons/MoonIcon';
+export { SettingsIcon } from './icons/SettingsIcon';
+export { RefreshIcon } from './icons/RefreshIcon';
+export { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';

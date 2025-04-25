@@ -5,7 +5,7 @@ import React from 'react';
  * Renders an information icon based on the provided SVG path data.
  * Accepts Tailwind classes (especially for size and color) via the className prop.
  */
-export function InfoIcon({ className, ...props }) {
+export function InfoIcon({ className = 'w-4 h-4', ...props }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
