@@ -26,14 +26,6 @@ export function PlatformLogoItem({
   onClick,
   disabled = false,
 }) {
-  const { theme } = useUI();
-  // Determine the shadow class based on selection for the glow effect
-  let shadowClass = '';
-  if (isSelected) {
-    shadowClass = theme === 'dark'
-      ? 'drop-shadow-[0_4px_8px_rgba(255,255,255,0.4)]'
-      : 'drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]'; 
-  }
   const altText = `${name} logo`;
   const handleClick = () => {
     // Prevent action if disabled
@@ -56,7 +48,7 @@ export function PlatformLogoItem({
         platformId={id}
         iconUrl={iconUrl}
         altText={altText}
-        className={`platform-logo-img-fixed ${shadowClass}`}
+        className={`platform-logo-img-fixed`}
       />
     </button>
   );

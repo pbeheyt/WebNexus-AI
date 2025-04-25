@@ -145,8 +145,8 @@
 
   /* Fixed size logo image */
   .platform-logo-img-fixed {
-    width: 30px;
-    height: 30px;
+    width: 35px;
+    height: 35px;
     object-fit: contain;
     opacity: 1;
     transition: opacity 300ms ease-out, transform 300ms ease-out;
@@ -175,12 +175,12 @@
     transition: all 300ms ease-in-out; /* Keep other transitions */
     user-select: none;
     cursor: pointer;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding-left: 2px;
+    padding-right: 2px;
   }
   .platform-logo-btn-fixed[aria-pressed="true"] {
-    padding-left: 25px;
-    padding-right: 25px;
+    padding-left: 30px;
+    padding-right: 30px;
     background-color: var(--theme-active);
   }
   .platform-logo-btn-fixed:disabled {
