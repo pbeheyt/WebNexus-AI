@@ -145,8 +145,8 @@
 
   /* Fixed size logo image */
   .platform-logo-img-fixed {
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
     opacity: 1;
     transition: opacity 300ms ease-out, transform 300ms ease-out;
@@ -165,7 +165,7 @@
 
   /* Fixed size logo button container */
   .platform-logo-btn-fixed {
-    height: 50px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -179,8 +179,8 @@
     padding-right: 3px;
   }
   .platform-logo-btn-fixed[aria-pressed="true"] {
-    padding-left: 30px;
-    padding-right: 30px;
+    padding-left: 25px;
+    padding-right: 25px;
     background-color: var(--theme-active);
   }
   .platform-logo-btn-fixed:disabled {
