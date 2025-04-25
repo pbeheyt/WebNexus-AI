@@ -29,7 +29,7 @@ export function AppHeader({
   onInfoMouseLeave,
   onInfoFocus,
   onInfoBlur,
-  infoButtonAriaLabel = 'More information',
+  infoButtonAriaLabel,
 }) {
   const { theme, toggleTheme, textSize, toggleTextSize } = useUI();
 
@@ -63,11 +63,13 @@ export function AppHeader({
         </span>
       </h1>
 
-      {showInfoButton && (
-        <div className="ml-2">
+      <div className="flex items-center gap-1">
+        {/* Info button */}
+        {showInfoButton && (
           <IconButton
             ref={infoButtonRef}
             icon={InfoIcon}
+            iconClassName="w-4 h-4"
             className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={onInfoMouseEnter}
@@ -75,12 +77,10 @@ export function AppHeader({
             onFocus={onInfoFocus}
             onBlur={onInfoBlur}
             ariaLabel={infoButtonAriaLabel}
-            title={infoButtonAriaLabel}
+            // title={infoButtonAriaLabel}
           />
-        </div>
-      )}
+        )}
 
-      <div className="flex items-center gap-1">
         {/* Text size toggle button */}
         <button
           onClick={toggleTextSize}

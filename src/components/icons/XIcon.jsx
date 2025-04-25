@@ -1,7 +1,7 @@
 // src/components/icons/XIcon.jsx
 import React from 'react';
 
-export function XIcon({ className = '', ...props }) {
+export function XIcon({ className = 'w-4 h-4', ...props }) {
   return (
     <svg
       viewBox="0 0 24 24"

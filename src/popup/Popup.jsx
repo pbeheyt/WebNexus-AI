@@ -32,7 +32,7 @@ export function Popup() {
   const infoButtonRef = useRef(null);
 
   const tooltipMessage = (
-    <div className="text-xs text-theme-primary max-w-xs select-none">
+    <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
       <p className="mb-1.5">
         Extract this{' '}
         <span className="font-medium">{contentTypeLabel || 'content'}</span>{' '}
