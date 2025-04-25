@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform'; 
-import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip } from '../components';
+import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip, SidebarIcon } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';
@@ -194,10 +194,7 @@ export function Popup() {
           title="Toggle Sidebar"
           disabled={!currentTab?.id} // Disable if no tab context
         >
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 select-none" stroke="currentColor">
-            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
-            <line x1="15" y1="3" x2="15" y2="21" stroke="currentColor" strokeWidth="2"/>
-          </svg>
+          <SidebarIcon className="w-4 h-4 select-none" />
         </button>
       </AppHeader>
 

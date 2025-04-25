@@ -7,7 +7,7 @@ import { useUI } from '../contexts/UIContext';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
-import { AppHeader } from '../components';
+import { AppHeader, ErrorIcon } from '../components';
 import logger from '../shared/logger';
 
 export default function SidebarApp() {
@@ -230,9 +230,7 @@ export default function SidebarApp() {
         // ----- Error State -----
          <div className="flex flex-col h-full w-full items-center justify-center p-4">
            <div className="text-center text-error">
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto mb-2 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-             </svg>
+             <ErrorIcon className="h-10 w-10 mx-auto mb-2 text-error" />
              <p className="font-semibold">Initialization Error</p>
              <p className="text-sm">Sidebar context could not be determined.</p>
              <p className="text-xs mt-2">(Missing or invalid tabId)</p>

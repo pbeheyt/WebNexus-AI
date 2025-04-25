@@ -36,6 +36,14 @@ export { MoonIcon } from './icons/MoonIcon';
 export { SettingsIcon } from './icons/SettingsIcon';
 export { RefreshIcon } from './icons/RefreshIcon';
 export { ChevronDownIcon } from './icons/ChevronDownIcon';
+export { SidebarIcon } from './icons/SidebarIcon';
+export { InputTokenIcon } from './icons/InputTokenIcon';
+export { OutputTokenIcon } from './icons/OutputTokenIcon';
+export { ContextWindowIcon } from './icons/ContextWindowIcon';
+export { FreeTierIcon } from './icons/FreeTierIcon';
+export { ScrollDownIcon } from './icons/ScrollDownIcon';
+export { NoCredentialsIcon } from './icons/NoCredentialsIcon';
+export { ErrorIcon } from './icons/ErrorIcon';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';
