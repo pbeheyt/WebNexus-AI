@@ -1022,6 +1022,21 @@ export function SidebarChatProvider({ children }) {
     }
   }, [tabId, setExtractedContentAdded]);
 
+  // Add global keydown listener for Escape key cancellation
+  useEffect(() => {
+    const handleGlobalKeyDown = (event) => {
+      if (event.key === 'Escape' && isProcessing && !isCanceling) {
+        cancelStream();
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [isProcessing, isCanceling, cancelStream]);
+
   return (
     <SidebarChatContext.Provider value={{
       messages: visibleMessages,
