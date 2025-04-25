@@ -147,7 +147,7 @@ export const MessageBubble = memo(forwardRef(({
                 ref={ref}
                 id={id}
                 style={style}
-                className={`px-5 py-2 w-full ${className}`}
+                className={`px-5 pt-4 w-full ${className}`}
             >
                 <div // Intermediate container: Provides the red background around the text ONLY
                     className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3 select-none"
@@ -219,7 +219,7 @@ export const MessageBubble = memo(forwardRef(({
                 ref={ref}
                 id={id}
                 style={style}
-                className={`group px-5 py-2 w-full flex flex-col items-end message-group user-message relative ${className}`}
+                className={`group px-5 pt-4 w-full flex flex-col items-end message-group user-message relative ${className}`}
             >
                 {/* Bubble container with conditional width */}
                 <div
@@ -275,7 +275,7 @@ export const MessageBubble = memo(forwardRef(({
 
                 {/* Action buttons below bubble (only show when not editing) */}
                 {!isEditing && (
-                    <div className="flex items-center gap-1 mt-1">
+                    <div className="flex items-center gap-1 mt-1.5">
                         <IconButton
                             icon={EditIcon}
                             iconClassName="w-4 h-4 select-none"
@@ -467,7 +467,7 @@ export const MessageBubble = memo(forwardRef(({
                 ref={ref}
                 id={id}
                 style={style}
-                className={`group px-5 py-2 w-full message-group assistant-message relative ${className}`}
+                className={`group px-5 pt-4 w-full message-group assistant-message relative ${className}`}
             >
                 {/* Prose container for Markdown styling */}
                 <div className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}>
