@@ -24,7 +24,7 @@ const PlatformSidebar = ({
             onClick={() => onSelectPlatform(platform.id)}
           >
             {/* Icon and Name container */}
-            <div className="flex items-center flex-grow min-w-0 mr-2">
+            <div className="flex items-center flex-grow min-w-0 mr-3">
               {platform.iconUrl ? (
                 <PlatformIcon
                   platformId={platform.id}
@@ -46,7 +46,7 @@ const PlatformSidebar = ({
 
             {/* Conditionally rendered CheckIcon */}
             {credentials[platform.id] && (
-              <CheckIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary w-4 h-4 flex-shrink-0" />
+              <CheckIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary w-5 h-5 flex-shrink-0" />
             )}
           </li>
         ))}

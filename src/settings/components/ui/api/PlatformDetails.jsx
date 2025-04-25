@@ -251,10 +251,10 @@ const PlatformDetails = ({
             platformId={platform.id}
             iconUrl={platform.iconUrl}
             altText={platform.name}
-            className="platform-icon-large w-12 h-12 mr-4 flex-shrink-0"
+            className="platform-icon-large w-12 h-12 mr-6 flex-shrink-0"
           />
         ) : (
-          <div className="platform-icon-placeholder-large w-12 h-12 mr-4 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
+          <div className="platform-icon-placeholder-large w-12 h-12 mr-6 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
             {platform.name.charAt(0)}
           </div>
         )}
