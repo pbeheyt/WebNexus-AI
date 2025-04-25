@@ -109,26 +109,25 @@ export const MessageBubble = memo(forwardRef(({
     className = '',
     style = {}
 }, ref) => {
-    const assistantCopyButtonRef = useRef(null);
-    const userCopyButtonRef = useRef(null);
-    const [copyState, setCopyState] = useState('idle');
+    const copyButtonRef = useRef(null);
+    const [copyStatus, setCopyStatus] = useState('idle');
     const { rerunAssistantMessage, isProcessing, isCanceling } = useSidebarChat();
 
-    const handleCopyToClipboard = async () => {
-        if (!content || isStreaming) return;
+    const handleCopy = async () => {
+        if (!content) return; // Only copy if content exists
         try {
             await copyUtil(content);
-            setCopyState('copied');
+            setCopyStatus('copied');
             setTimeout(() => {
-                setCopyState('idle');
-                assistantCopyButtonRef.current?.blur();
+                setCopyStatus('idle');
+                copyButtonRef.current?.blur();
             }, 500);
         } catch (error) {
-            logger.sidebar.error('Failed to copy text: ', error);
-            setCopyState('error');
+            logger.sidebar.error('Failed to copy message text: ', error);
+            setCopyStatus('error');
             setTimeout(() => {
-                setCopyState('idle');
-                assistantCopyButtonRef.current?.blur();
+                setCopyStatus('idle');
+                copyButtonRef.current?.blur();
             }, 500);
         }
     };
@@ -166,7 +165,6 @@ export const MessageBubble = memo(forwardRef(({
     if (role === MESSAGE_ROLES.USER) {
         const [isEditing, setIsEditing] = useState(false);
         const [editedContent, setEditedContent] = useState(content);
-        const [userCopyState, setUserCopyState] = useState('idle');
         const { rerunMessage, editAndRerunMessage } = useSidebarChat();
 
         const handleKeyDown = (event) => {
@@ -183,24 +181,6 @@ export const MessageBubble = memo(forwardRef(({
             }
         };
 
-        const handleUserCopyToClipboard = async () => {
-            if (!content) return; // Only copy if content exists
-            try {
-                await copyUtil(content);
-            setUserCopyState('copied');
-            setTimeout(() => {
-                setUserCopyState('idle');
-                userCopyButtonRef.current?.blur();
-            }, 500);
-            } catch (error) {
-                logger.sidebar.error('Failed to copy user text: ', error);
-            setUserCopyState('error');
-            setTimeout(() => {
-                setUserCopyState('idle');
-                userCopyButtonRef.current?.blur();
-            }, 500);
-            }
-        };
 
         const handleSaveAndRerun = () => {
             if (editedContent.trim()) {
@@ -298,18 +278,18 @@ export const MessageBubble = memo(forwardRef(({
                             disabled={isProcessing || isCanceling}
                         />
                         <IconButton
-                            onClick={handleUserCopyToClipboard}
+                            onClick={handleCopy}
                             className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                             aria-label="Copy message"
                             title="Copy message"
-                            ref={userCopyButtonRef}
+                            ref={copyButtonRef}
                             icon={
-                                userCopyState === 'copied' ? CheckIcon :
-                                    userCopyState === 'error' ? XMarkIcon :
+                                copyStatus === 'copied' ? CheckIcon :
+                                    copyStatus === 'error' ? XMarkIcon :
                                         CopyIcon // Default idle state
                             }
-                            iconClassName={`w-4 h-4 select-none ${userCopyState === 'copied' ? 'text-green-600 dark:text-green-400' :
-                                userCopyState === 'error' ? 'text-red-500 dark:text-red-400' :
+                            iconClassName={`w-4 h-4 select-none ${copyStatus === 'copied' ? 'text-green-600 dark:text-green-400' :
+                                copyStatus === 'error' ? 'text-red-500 dark:text-red-400' :
                                     '' // Default color inherited from button style
                                 }`}
                         />
@@ -516,18 +496,19 @@ export const MessageBubble = memo(forwardRef(({
                                 />
                                 {/* New Copy IconButton */}
                                 <IconButton
-                                    onClick={handleCopyToClipboard}
+                                    onClick={handleCopy}
                                     className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     aria-label="Copy to clipboard"
                                     title="Copy to clipboard"
-                                    ref={assistantCopyButtonRef}
+                                    ref={copyButtonRef}
+                                    disabled={isStreaming}
                                     icon={
-                                        copyState === 'copied' ? CheckIcon :
-                                            copyState === 'error' ? XMarkIcon :
+                                        copyStatus === 'copied' ? CheckIcon :
+                                            copyStatus === 'error' ? XMarkIcon :
                                                 CopyIcon // Default idle state
                                     }
-                                    iconClassName={`w-4 h-4 select-none ${copyState === 'copied' ? 'text-green-600 dark:text-green-400' :
-                                        copyState === 'error' ? 'text-red-500 dark:text-red-400' :
+                                    iconClassName={`w-4 h-4 select-none ${copyStatus === 'copied' ? 'text-green-600 dark:text-green-400' :
+                                        copyStatus === 'error' ? 'text-red-500 dark:text-red-400' :
                                             '' // Default color inherited from button style
                                         }`}
                                 />
