@@ -5,20 +5,11 @@ export function TextSizeIcon({ className = 'w-4 h-4', ...props }) {
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
       className={className} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
+      viewBox="0 0 1024 1024" 
+      fill="currentColor"
       {...props}
     >
-      <path d="M4 7V6h16v1"/>
-      <path d="M10 18h4"/>
-      <path d="M12 6v12"/>
-      <path d="M17 11l-1-1-1 1"/>
-      <path d="M7 11l1-1 1 1"/>
-      <path d="M15 15H9"/>
+      <path d="M64 512h384v128H320v384H192V640H64z m896-256H708.26v768h-136.5V256H320.02V128h640z"/>
     </svg>
   );
 }
