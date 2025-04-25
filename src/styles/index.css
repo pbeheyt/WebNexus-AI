@@ -175,8 +175,8 @@
     transition: all 300ms ease-in-out; /* Keep other transitions */
     user-select: none;
     cursor: pointer;
-    padding-left: 2px;
-    padding-right: 2px;
+    padding-left: 3px;
+    padding-right: 3px;
   }
   .platform-logo-btn-fixed[aria-pressed="true"] {
     padding-left: 30px;
