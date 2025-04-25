@@ -176,7 +176,17 @@ export function Popup() {
 
   return (
     <div className="min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme select-none cursor-default">
-      <AppHeader onClose={closePopup} className="py-2">
+      <AppHeader 
+        onClose={closePopup} 
+        className="py-2"
+        showInfoButton={!contentLoading && isInjectable}
+        infoButtonRef={infoButtonRef}
+        onInfoMouseEnter={() => setIsInfoVisible(true)}
+        onInfoMouseLeave={() => setIsInfoVisible(false)}
+        onInfoFocus={() => setIsInfoVisible(true)}
+        onInfoBlur={() => setIsInfoVisible(false)}
+        infoButtonAriaLabel="More information about content extraction"
+      >
         {/* Sidebar toggle button */}
         <button
           onClick={toggleSidebar}
@@ -226,20 +236,6 @@ export function Popup() {
                   )}
                 </div>
 
-                {/* Info Button */}
-                <div className="flex-shrink-0">
-                <IconButton
-                  ref={infoButtonRef}
-                  icon={InfoIcon}
-                  className="text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors w-6 h-6 p-1"
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseEnter={() => setIsInfoVisible(true)}
-                  onMouseLeave={() => setIsInfoVisible(false)}
-                  onFocus={() => setIsInfoVisible(true)}
-                  onBlur={() => setIsInfoVisible(false)}
-                  ariaLabel="More information"
-                />
-                </div>
               </>
             ) : (
               // Message for Non-Injectable Pages

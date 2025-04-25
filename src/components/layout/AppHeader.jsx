@@ -1,5 +1,6 @@
 import React from 'react';
 import { useUI } from '../../contexts/UIContext';
+import { IconButton, InfoIcon } from '../';
 
 export function AppHeader({
   children,
@@ -12,6 +13,13 @@ export function AppHeader({
   showExpandToggle = false,
   className = '',
   showBorder = true,
+  showInfoButton = false,
+  infoButtonRef,
+  onInfoMouseEnter,
+  onInfoMouseLeave,
+  onInfoFocus,
+  onInfoBlur,
+  infoButtonAriaLabel = 'More information',
 }) {
   const { theme, toggleTheme, textSize, toggleTextSize } = useUI();
 
@@ -44,6 +52,23 @@ export function AppHeader({
           AI Insightr
         </span>
       </h1>
+
+      {showInfoButton && (
+        <div className="ml-2">
+          <IconButton
+            ref={infoButtonRef}
+            icon={InfoIcon}
+            className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            onMouseEnter={onInfoMouseEnter}
+            onMouseLeave={onInfoMouseLeave}
+            onFocus={onInfoFocus}
+            onBlur={onInfoBlur}
+            ariaLabel={infoButtonAriaLabel}
+            title={infoButtonAriaLabel}
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-1">
         {/* Text size toggle button */}
