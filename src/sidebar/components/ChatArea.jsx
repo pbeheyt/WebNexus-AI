@@ -380,7 +380,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
             return (
                 <div className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3`}>
                      {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
-                     <div className="flex flex-col items-center py-3 w-full min-h-[120px]">
+                     <div className="flex flex-col items-center py-3 w-full min-h-[120px] select-none">
                          {displayPlatformConfig ? (
                               <img
                                  src={displayPlatformConfig.iconUrl}

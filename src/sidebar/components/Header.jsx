@@ -111,7 +111,7 @@ function Header() {
                   <div ref={triggerRef}>
                     <button
                       onClick={() => setOpenDropdown(openDropdown === 'platform' ? null : 'platform')}
-                      className="flex items-center h-9 px-2 py-2 rounded focus:outline-none transition-colors"
+                      className="flex items-center h-9 px-2 py-2 rounded focus:outline-none transition-colors select-none"
                       aria-label="Change Platform"
                       aria-haspopup="true"
                       aria-expanded={isPlatformDropdownOpen}
