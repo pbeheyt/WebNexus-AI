@@ -165,7 +165,7 @@
 
   /* Fixed size logo button container */
   .platform-logo-btn-fixed {
-    height: 70px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -192,12 +192,12 @@ export function Popup() {
       </AppHeader>
 
       {/* Platform Selector */}
-      <div className="my-3">
+      <div className="mt-2">
          <PlatformSelector disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable} />
       </div>
 
       {/* Unified Input */}
-      <div className="mt-5">
+      <div className="mt-4">
         {/* Container for badge/info OR non-injectable message */}
         <div className="flex justify-between items-center mb-1.5 px-3 min-h-[28px]">
           {!contentLoading && (
