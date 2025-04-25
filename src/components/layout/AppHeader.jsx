@@ -124,7 +124,7 @@ export function AppHeader({
             className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors"
             title="Clear chat"
           >
-            <RefreshIcon className="select-none" />
+              <RefreshIcon className="w-4 h-4 select-none" />
           </button>
         )}
 
