@@ -10,23 +10,20 @@ import React from 'react';
  * @param {string} props.altText - The alt text for the image.
  * @param {string} [props.className=''] - Optional additional CSS classes for the img tag.
  */
-export function PlatformIcon({ platformId, iconUrl, altText, className = '' }) {
-  // Determine if inversion is needed
-  const needsInvert = platformId === 'chatgpt' || platformId === 'grok';
-  
-  // Combine base classes, passed classes, and conditional invert class
+export function PlatformIcon({ platformId, iconUrl, altText, className = '', ...props }) {
+  // Combine base classes with passed classes
   const finalClassName = `
-    object-contain 
-    select-none 
-    ${className} 
-    ${needsInvert ? 'invert dark:invert-0' : ''}
-  `.trim().replace(/\s+/g, ' '); // Trim and remove extra spaces
+    object-contain
+    select-none
+    ${className}
+  `.trim().replace(/\s+/g, ' ');
 
   return (
     <img
       src={iconUrl}
       alt={altText}
       className={finalClassName}
+      {...props}
     />
   );
 }

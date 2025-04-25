@@ -46,7 +46,8 @@ export function PlatformLogoItem({
         platformId={id} 
         iconUrl={iconUrl} 
         altText={name} 
-        className="platform-logo-img-fixed" 
+        className="platform-logo-img-fixed"
+        data-platform-id={id}
       />
     </button>
   );
