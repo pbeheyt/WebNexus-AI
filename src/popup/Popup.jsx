@@ -192,12 +192,12 @@ export function Popup() {
       </AppHeader>
 
       {/* Platform Selector */}
-      <div className="my-5">
+      <div className="my-3">
          <PlatformSelector disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable} />
       </div>
 
       {/* Unified Input */}
-      <div className="mt-4">
+      <div className="mt-5">
         {/* Container for badge/info OR non-injectable message */}
         <div className="flex justify-between items-center mb-1.5 px-3 min-h-[28px]">
           {!contentLoading && (
@@ -267,7 +267,7 @@ export function Popup() {
       </div>
 
       {/* Status Message */}
-      <StatusMessage message={statusMessage} context="popup" className="py-4 select-none"/>
+      <StatusMessage message={statusMessage} context="popup" className="py-3 select-none"/>
 
       {/* Tooltip */}
       <Tooltip
