@@ -171,7 +171,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       </div>
 
       {/* Prompt Content */}
-      <div className="prompt-detail-content whitespace-pre-wrap bg-theme-hover/20 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary select-none">
+      <div className="prompt-detail-content whitespace-pre-wrap bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary select-none">
         {prompt.prompt.content}
       </div>
 
