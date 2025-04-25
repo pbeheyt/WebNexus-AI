@@ -29,6 +29,7 @@ export function AppHeader({
   const headerClasses = `
     flex items-center justify-between
     ${showBorder ? 'border-b border-theme' : ''}
+    select-none
     ${className} // Append any custom classes passed via props
   `.trim().replace(/\s+/g, ' '); // Trim whitespace and normalize spaces
 
