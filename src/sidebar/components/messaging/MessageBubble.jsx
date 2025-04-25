@@ -122,14 +122,14 @@ export const MessageBubble = memo(forwardRef(({
             setTimeout(() => {
                 setCopyState('idle');
                 assistantCopyButtonRef.current?.blur();
-            }, 2000);
+            }, 500);
         } catch (error) {
             logger.sidebar.error('Failed to copy text: ', error);
             setCopyState('error');
             setTimeout(() => {
                 setCopyState('idle');
                 assistantCopyButtonRef.current?.blur();
-            }, 2000);
+            }, 500);
         }
     };
 
@@ -191,14 +191,14 @@ export const MessageBubble = memo(forwardRef(({
             setTimeout(() => {
                 setUserCopyState('idle');
                 userCopyButtonRef.current?.blur();
-            }, 2000);
+            }, 500);
             } catch (error) {
                 logger.sidebar.error('Failed to copy user text: ', error);
             setUserCopyState('error');
             setTimeout(() => {
                 setUserCopyState('idle');
                 userCopyButtonRef.current?.blur();
-            }, 2000);
+            }, 500);
             }
         };
 
@@ -275,7 +275,7 @@ export const MessageBubble = memo(forwardRef(({
 
                 {/* Action buttons below bubble (only show when not editing) */}
                 {!isEditing && (
-                    <div className="flex items-center gap-1 mt-1.5">
+                    <div className={`flex items-center gap-1 mt-1.5 ${isProcessing ? 'invisible' : ''}`}>
                         <IconButton
                             icon={EditIcon}
                             iconClassName="w-4 h-4 select-none"
@@ -502,7 +502,7 @@ export const MessageBubble = memo(forwardRef(({
                         )}
                     </div>
                     {/* Buttons Container (Rerun + Copy) */}
-                    <div className="flex items-center justify-center gap-1">
+                    <div className={`flex items-center justify-center gap-1 ${isProcessing ? 'invisible' : ''}`}>
                         {!isStreaming && content && content.trim() && (
                             <> {/* Use fragment to group buttons */}
                                 <IconButton
