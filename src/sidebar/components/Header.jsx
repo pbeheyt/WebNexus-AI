@@ -105,7 +105,7 @@ function Header() {
         <div className="flex items-center w-full min-w-0">
           {hasAnyPlatformCredentials ? (
             <>
-              {/* 1. Platform Selector - fixed width, non-shrinkable */}
+              {/* 1. Platform Selector */}
               <div className="relative flex items-center h-9 flex-shrink-0 mr-2">
                 {selectedPlatformForDisplay && (
                   <div ref={triggerRef}>
@@ -167,13 +167,12 @@ function Header() {
                 )}
               </div>
   
-              {/* 2. Model Selector - constrained width, allows truncation */}
-              <div className="w-48 truncate"> {/* Adjust w-48 if necessary */}
-                <ModelSelector 
+              {/* 2. Model Selector */}
+              <div className="flex-grow min-w-0">
+                <ModelSelector
                   selectedPlatformId={selectedPlatformId}
                 />
               </div>
-  
               {/* 3. Spacer Element */}
               <div className="flex-grow" style={{ pointerEvents: 'none' }}></div>
             </>
@@ -184,13 +183,12 @@ function Header() {
             </div>
           )}
           
-          {/* 4. Refresh Button - updated with rotation animation */}
+          {/* 4. Refresh Button */}
           <div className="flex-shrink-0 ml-2 h-9 flex items-center justify-center">
             <button
               ref={refreshButtonRef}
               onClick={refreshPlatformData}
               disabled={isRefreshing || isLoading}
-              // The button's classes remain the same
               className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Refresh platforms and credentials"
               title="Refresh platforms and credentials"
