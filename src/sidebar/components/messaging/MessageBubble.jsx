@@ -110,7 +110,7 @@ export const MessageBubble = memo(forwardRef(({
     style = {}
 }, ref) => {
     const [copyState, setCopyState] = useState('idle');
-    const { rerunAssistantMessage } = useSidebarChat();
+    const { rerunAssistantMessage, isProcessing, isCanceling } = useSidebarChat();
 
     const handleCopyToClipboard = async () => {
         if (!content || isStreaming) return;
@@ -272,6 +272,7 @@ export const MessageBubble = memo(forwardRef(({
                             aria-label="Edit message"
                             title="Edit message"
                             className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            disabled={isProcessing || isCanceling}
                         />
                         <IconButton
                             icon={RerunIcon}
@@ -280,6 +281,7 @@ export const MessageBubble = memo(forwardRef(({
                             aria-label="Rerun message"
                             title="Rerun message"
                             className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            disabled={isProcessing || isCanceling}
                         />
                         <IconButton
                             onClick={handleUserCopyToClipboard}
@@ -495,6 +497,7 @@ export const MessageBubble = memo(forwardRef(({
                                     className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     aria-label="Rerun generation"
                                     title="Rerun generation"
+                                    disabled={isProcessing || isCanceling}
                                 />
                                 {/* New Copy IconButton */}
                                 <IconButton
