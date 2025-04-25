@@ -188,29 +188,33 @@
     cursor: not-allowed;
   }
 
-/* Base selected state (scale + light glow) - applies to all platforms */
-.platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed {
-  transform: scale(2);
-  filter: drop-shadow(0 0 5px rgba(100, 100, 100, 0.6));
-}
+  /* Base selected state (scale + light glow) - applies to all platforms */
+  .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed {
+    transform: scale(2);
+    /* Updated light mode glow to darker neutral gray */
+    filter: drop-shadow(0 0 7px rgba(75, 75, 75, 0.6));
+  }
 
-/* Override for selected chatgpt/grok in LIGHT mode (add invert) */
-.platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="chatgpt"],
-.platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="grok"] {
-  filter: invert(1) drop-shadow(0 0 5px rgba(100, 100, 100, 0.6)); /* Combined filter */
-}
+  /* Override for selected chatgpt/grok in LIGHT mode (add invert) */
+  .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="chatgpt"],
+  .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="grok"] {
+    /* Combined filter with updated light mode glow */
+    filter: invert(1) drop-shadow(0 0 7px rgba(75, 75, 75, 0.6));
+  }
 
-/* Base selected state in DARK mode (dark glow) - applies to all platforms */
-.dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed {
-  /* Inherits transform: scale(2) */
-  filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
-}
+  /* Base selected state in DARK mode (dark glow) - applies to all platforms */
+  .dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed {
+    /* Inherits transform: scale(2) */
+    /* Dark mode glow remains unchanged (white) */
+    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
+  }
 
   /* Override for selected chatgpt/grok in DARK mode (NO invert + dark glow) */
   .dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="chatgpt"],
   .dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="grok"] {
     /* Inherits transform: scale(2) */
-    filter: invert(0) drop-shadow(0 0 7px rgba(255, 255, 255, 0.7)); /* Combined filter */
+    /* Combined filter with dark mode glow */
+    filter: invert(0) drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
   }
 
   /* Apply invert(1) to UNSELECTED chatgpt/grok in LIGHT mode */
