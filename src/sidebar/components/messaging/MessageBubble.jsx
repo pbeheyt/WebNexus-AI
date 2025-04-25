@@ -1,5 +1,5 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
-import React, { useState, memo, forwardRef } from 'react';
+import React, { useState, memo, forwardRef, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
@@ -109,6 +109,8 @@ export const MessageBubble = memo(forwardRef(({
     className = '',
     style = {}
 }, ref) => {
+    const assistantCopyButtonRef = useRef(null);
+    const userCopyButtonRef = useRef(null);
     const [copyState, setCopyState] = useState('idle');
     const { rerunAssistantMessage, isProcessing, isCanceling } = useSidebarChat();
 
@@ -117,11 +119,17 @@ export const MessageBubble = memo(forwardRef(({
         try {
             await copyUtil(content);
             setCopyState('copied');
-            setTimeout(() => setCopyState('idle'), 2000);
+            setTimeout(() => {
+                setCopyState('idle');
+                assistantCopyButtonRef.current?.blur();
+            }, 2000);
         } catch (error) {
             logger.sidebar.error('Failed to copy text: ', error);
             setCopyState('error');
-            setTimeout(() => setCopyState('idle'), 2000);
+            setTimeout(() => {
+                setCopyState('idle');
+                assistantCopyButtonRef.current?.blur();
+            }, 2000);
         }
     };
 
@@ -179,12 +187,18 @@ export const MessageBubble = memo(forwardRef(({
             if (!content) return; // Only copy if content exists
             try {
                 await copyUtil(content);
-                setUserCopyState('copied');
-                setTimeout(() => setUserCopyState('idle'), 2000);
+            setUserCopyState('copied');
+            setTimeout(() => {
+                setUserCopyState('idle');
+                userCopyButtonRef.current?.blur();
+            }, 2000);
             } catch (error) {
                 logger.sidebar.error('Failed to copy user text: ', error);
-                setUserCopyState('error');
-                setTimeout(() => setUserCopyState('idle'), 2000);
+            setUserCopyState('error');
+            setTimeout(() => {
+                setUserCopyState('idle');
+                userCopyButtonRef.current?.blur();
+            }, 2000);
             }
         };
 
@@ -288,6 +302,7 @@ export const MessageBubble = memo(forwardRef(({
                             className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                             aria-label="Copy message"
                             title="Copy message"
+                            ref={userCopyButtonRef}
                             icon={
                                 userCopyState === 'copied' ? CheckIcon :
                                     userCopyState === 'error' ? XMarkIcon :
@@ -505,6 +520,7 @@ export const MessageBubble = memo(forwardRef(({
                                     className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     aria-label="Copy to clipboard"
                                     title="Copy to clipboard"
+                                    ref={assistantCopyButtonRef}
                                     icon={
                                         copyState === 'copied' ? CheckIcon :
                                             copyState === 'error' ? XMarkIcon :

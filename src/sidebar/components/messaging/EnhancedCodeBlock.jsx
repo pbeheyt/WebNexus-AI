@@ -1,5 +1,5 @@
 // src/components/EnhancedCodeBlock.jsx
-import React, { useState, memo, useEffect } from 'react';
+import React, { useState, memo, useEffect, useRef } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { copyToClipboard } from './utils/clipboard';
@@ -15,6 +15,7 @@ import { IconButton, CopyIcon, CheckIcon, XMarkIcon } from '../../../components'
  * @returns {JSX.Element} - A formatted code block with syntax highlighting
  */
 const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) => {
+  const copyButtonRef = useRef(null);
   const [copyState, setCopyState] = useState('idle'); // idle, copied, error
   const codeContent = String(children).replace(/\n$/, '');
   const [isDarkMode, setIsDarkMode] = useState(
@@ -55,11 +56,17 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
     try {
       await copyToClipboard(codeContent);
       setCopyState('copied');
-      setTimeout(() => setCopyState('idle'), 2000);
+      setTimeout(() => {
+        setCopyState('idle');
+        copyButtonRef.current?.blur();
+      }, 2000);
     } catch (error) {
       console.error('Copy method failed: ', error);
       setCopyState('error');
-      setTimeout(() => setCopyState('idle'), 2000);
+      setTimeout(() => {
+        setCopyState('idle');
+        copyButtonRef.current?.blur();
+      }, 2000);
     }
   };
 
@@ -92,6 +99,7 @@ const EnhancedCodeBlock = memo(({ className, children, isStreaming = false }) =>
             aria-label="Copy code to clipboard"
             title="Copy code to clipboard"
             className={`absolute top-1/2 right-3 -translate-y-1/2 p-1 rounded-md transition-opacity duration-200 z-10 ${copyState === 'idle' ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : 'opacity-100'} ${copyState === 'copied' ? 'bg-green-100 dark:bg-green-900/20' : copyState === 'error' ? 'bg-red-100 dark:bg-red-900/20' : 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700'}`}
+            ref={copyButtonRef}
           />
         )}
       </div>
