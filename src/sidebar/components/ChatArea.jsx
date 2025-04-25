@@ -7,6 +7,7 @@ import { useUI } from '../../contexts/UIContext';
 import { MessageBubble } from './messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle';
 import { Tooltip } from '../../components/layout/Tooltip';
+import { PlatformIcon } from '../../components/layout/PlatformIcon';
 import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
 import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
@@ -382,9 +383,10 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                      {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
                      <div className="flex flex-col items-center py-3 w-full min-h-[120px] select-none">
                          {displayPlatformConfig ? (
-                              <img
-                                 src={displayPlatformConfig.iconUrl}
-                                 alt={`${displayPlatformConfig.name || 'Platform'} logo`}
+                              <PlatformIcon
+                                 platformId={displayPlatformConfig.id}
+                                 iconUrl={displayPlatformConfig.iconUrl}
+                                 altText={`${displayPlatformConfig.name || 'Platform'} logo`}
                                  className="w-8 h-8 mb-2 object-contain select-none"
                               />
                           ) : (
@@ -569,6 +571,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                     isStreaming={message.isStreaming}
                                     model={message.model}
                                     platformIconUrl={message.platformIconUrl}
+                                    platformId={message.platformId}
                                     style={dynamicStyle}
                                 />
                             );
