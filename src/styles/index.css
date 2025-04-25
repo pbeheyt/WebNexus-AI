@@ -145,8 +145,8 @@
 
   /* Fixed size logo image */
   .platform-logo-img-fixed {
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
     opacity: 1;
     transition: opacity 300ms ease-out, transform 300ms ease-out;
@@ -165,7 +165,7 @@
 
   /* Fixed size logo button container */
   .platform-logo-btn-fixed {
-    height: 25px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -188,36 +188,10 @@
     cursor: not-allowed;
   }
 
-  /* Base selected state (scale + light glow) - applies to all platforms */
+  /* Base selected state (scale only) - applies to all platforms */
   .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed {
     transform: scale(2);
-    /* Updated light mode glow to darker neutral gray */
-    filter: drop-shadow(0 0 7px rgba(75, 75, 75, 0.6));
   }
-
-  /* Override for selected chatgpt/grok in LIGHT mode */
-  .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="chatgpt"],
-  .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="grok"] {
-    /* Keep only drop-shadow */
-    filter: drop-shadow(0 0 7px rgba(75, 75, 75, 0.6));
-  }
-
-  /* Base selected state in DARK mode (dark glow) - applies to all platforms */
-  .dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed {
-    /* Inherits transform: scale(2) */
-    /* Dark mode glow remains unchanged (white) */
-    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
-  }
-
-  /* Override for selected chatgpt/grok in DARK mode */
-  .dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="chatgpt"],
-  .dark .platform-logo-btn-fixed[aria-pressed="true"] .platform-logo-img-fixed[data-platform-id="grok"] {
-    /* Inherits transform: scale(2) */
-    /* Keep only drop-shadow */
-    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
-  }
-
-  /* No inversion needed for unselected logos - handled by PlatformIcon component */
 
   /* Container for the platform selector in the popup */
   .platform-selector-container {

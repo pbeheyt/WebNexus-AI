@@ -1,4 +1,5 @@
 import React from 'react';
+import { useUI } from '../../contexts/UIContext';
 import PlatformIcon from './PlatformIcon';
 
 /**
@@ -25,6 +26,15 @@ export function PlatformLogoItem({
   onClick,
   disabled = false,
 }) {
+  const { theme } = useUI();
+  // Determine the shadow class based on selection for the glow effect
+  let shadowClass = '';
+  if (isSelected) {
+    shadowClass = theme === 'dark'
+      ? 'drop-shadow-[0_4px_8px_rgba(255,255,255,0.4)]'
+      : 'drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]'; 
+  }
+  const altText = `${name} logo`;
   const handleClick = () => {
     // Prevent action if disabled
     if (!disabled) {
@@ -42,12 +52,11 @@ export function PlatformLogoItem({
       disabled={disabled}
     >
       {/* Logo Image */}
-      <PlatformIcon 
-        platformId={id} 
-        iconUrl={iconUrl} 
-        altText={name} 
-        className="platform-logo-img-fixed"
-        data-platform-id={id}
+      <PlatformIcon
+        platformId={id}
+        iconUrl={iconUrl}
+        altText={altText}
+        className={`platform-logo-img-fixed ${shadowClass}`}
       />
     </button>
   );
