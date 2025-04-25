@@ -6,6 +6,8 @@
       "maxTemperature": 2.0,
       "temperature": 0.7,
       "topP": 0.9,
+      "minTopP": 0.0,
+      "maxTopP": 1.0,
       "models": [
         {
           "id": "gemini-2.5-pro-exp-03-25",
@@ -72,6 +74,8 @@
       "maxTemperature": 2.0,
       "temperature": 0.5,
       "topP": 0.9,
+      "minTopP": 0.0,
+      "maxTopP": 1.0,
       "models": [
         {
           "id": "gpt-4.1",
@@ -146,6 +150,8 @@
       "maxTemperature": 1.0,
       "temperature": 0.5,
       "topP": 0.7,
+      "minTopP": 0.0,
+      "maxTopP": 1.0,
       "models": [
         {
           "id": "claude-3-7-sonnet-latest",
@@ -308,6 +314,8 @@
       "maxTemperature": 1.5,
       "temperature": 0.3,
       "topP": 0.7,
+      "minTopP": 0.0,
+      "maxTopP": 1.0,
       "models": [
         {
           "id": "mistral-large-latest",

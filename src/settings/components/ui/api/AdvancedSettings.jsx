@@ -71,6 +71,8 @@ const AdvancedSettings = ({
     includeTopP: settings.includeTopP ?? false, // Default to false
   });
 
+  console.log('Initial formValues:', formValues); // Log initial formValues
+
   // Original values reference for comparison
   const [originalValues, setOriginalValues] = useState({...formValues});
 
@@ -132,6 +134,8 @@ const AdvancedSettings = ({
       includeTopP: currentSettings.includeTopP ?? false,
     };
 
+    console.log('Updated formValues:', newFormValues); // Log updated formValues
+
     setFormValues(newFormValues);
     setOriginalValues(newFormValues);
     setHasChanges(false);
@@ -170,6 +174,9 @@ const AdvancedSettings = ({
     } else if (name === 'temperature' || name === 'topP') {
       const parsedValue = parseFloat(newValue);
       updatedValues[name] = isNaN(parsedValue) ? formValues[name] : parsedValue;
+      if (name === 'topP') {
+        console.log(`Top P value changed to:`, parsedValue); // Log topP value change
+      }
     } else if (name === 'systemPrompt') {
        updatedValues[name] = newValue;
     } else if (name === 'includeTemperature' || name === 'includeTopP') {
@@ -177,6 +184,8 @@ const AdvancedSettings = ({
     } else {
        updatedValues[name] = newValue;
     }
+
+    console.log(`Updated formValues:`, updatedValues); // Log updated formValues
 
     setFormValues(updatedValues);
     setHasChanges(checkForChanges(updatedValues, originalValues));
@@ -209,6 +218,7 @@ const AdvancedSettings = ({
         if (formValues.topP < minTopP || formValues.topP > maxTopP) {
           throw new Error(`Top P must be between ${minTopP} and ${maxTopP}`);
         }
+        console.log(`Top P value on submit:`, formValues.topP); // Log topP value on submit
       }
 
       // Create settings object including new toggles
@@ -280,6 +290,8 @@ const AdvancedSettings = ({
             if (platform.apiConfig?.hasSystemPrompt !== false && 'systemPrompt' in defaults) {
               resetValues.systemPrompt = defaults.systemPrompt;
             }
+
+            console.log('Reset formValues:', resetValues); // Log reset formValues
 
             setFormValues(resetValues);
             setOriginalValues(resetValues);
