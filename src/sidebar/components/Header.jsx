@@ -168,7 +168,7 @@ function Header() {
               </div>
   
               {/* 2. Model Selector */}
-              <div className="flex-grow min-w-0">
+              <div className="min-w-0">
                 <ModelSelector
                   selectedPlatformId={selectedPlatformId}
                 />
