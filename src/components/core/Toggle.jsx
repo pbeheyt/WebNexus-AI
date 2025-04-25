@@ -19,7 +19,7 @@ export function Toggle({
   return (
     <div 
       className={`relative inline-block ${className}`}
-      onClick={disabled ? undefined : onChange}
+      onClick={disabled ? undefined : () => onChange(!checked)}
       style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
     >
       <input

@@ -153,7 +153,6 @@ const AdvancedSettings = ({
       if (typeof currentValues[key] === 'number' && !Object.is(currentValues[key], originalVals[key])) {
         return true;
       }
-      // Add check for boolean toggles
       if (typeof currentValues[key] === 'boolean' && currentValues[key] !== originalVals[key]) {
         return true;
       }
@@ -174,7 +173,7 @@ const AdvancedSettings = ({
     } else if (name === 'systemPrompt') {
        updatedValues[name] = newValue;
     } else if (name === 'includeTemperature' || name === 'includeTopP') {
-       updatedValues[name] = newValue; // Directly use the boolean value
+       updatedValues[name] = newValue;
     } else {
        updatedValues[name] = newValue;
     }
@@ -286,7 +285,7 @@ const AdvancedSettings = ({
             setOriginalValues(resetValues);
             setHasChanges(false);
             setIsAtDefaults(true);
-            onResetToDefaults(selectedModelId); 
+            onResetToDefaults(selectedModelId);
           }}
           className="select-none"
         >
@@ -370,17 +369,17 @@ const AdvancedSettings = ({
               <span className="text-base font-semibold text-theme-secondary mr-3 select-none">Temperature</span>
               <Toggle
                 checked={formValues.includeTemperature}
-                onChange={(e) => handleChange('includeTemperature', e.target.checked)}
+                onChange={(newCheckedState) => handleChange('includeTemperature', newCheckedState)}
                 disabled={isSaving}
                 id={`${platform.id}-${selectedModelId}-include-temperature`}
               />
             </div>
-            
+
             {/* Help text - Always visible */}
             <p className="help-text text-sm text-theme-secondary mb-3 select-none">
               Controls randomness: lower values are more deterministic, higher values more creative.
             </p>
-            
+
             {/* Conditionally render Temperature Slider */}
             {formValues.includeTemperature && (
               <SliderInput
@@ -405,17 +404,17 @@ const AdvancedSettings = ({
               <span className="text-base font-semibold text-theme-secondary mr-3 select-none">Top P</span>
               <Toggle
                 checked={formValues.includeTopP}
-                onChange={(e) => handleChange('includeTopP', e.target.checked)}
+                onChange={(newCheckedState) => handleChange('includeTopP', newCheckedState)}
                 disabled={isSaving}
                 id={`${platform.id}-${selectedModelId}-include-topp`}
               />
             </div>
-            
+
             {/* Help text - Always visible */}
             <p className="help-text text-sm text-theme-secondary mb-3 select-none">
               Alternative to temperature, controls diversity via nucleus sampling.
             </p>
-            
+
             {/* Conditionally render Top P Slider */}
             {formValues.includeTopP && (
               <SliderInput
