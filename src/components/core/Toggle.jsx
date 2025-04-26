@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Toggle switch component for boolean inputs with button-like interaction.
+ * Toggle switch component with properly scaled circle that adapts to Tailwind classes.
  * 
  * @param {Object} props - Component props
  * @param {boolean} [props.checked=false] - Whether toggle is checked
@@ -24,20 +24,28 @@ export function Toggle({
     >
       <input
         type="checkbox"
-        className="sr-only" // Using sr-only instead of opacity-0 w-0 h-0
+        className="sr-only"
         checked={checked}
-        onChange={() => {}} // Empty onChange to prevent React warning
+        onChange={() => {}} 
         disabled={disabled}
         {...props}
       />
-      <span className={`absolute inset-0 rounded-full transition-all select-none ${
+      <span 
+        className={`absolute inset-0 rounded-full transition-all select-none ${
           checked ? 'bg-primary' : 'bg-theme-hover'
-        } ${disabled ? 'opacity-50' : ''}`}>
-        <span className={`absolute h-4 w-4 bg-white rounded-full transition-transform duration-200 ease-in-out transform ${
-            checked ? 'translate-x-5' : 'translate-x-0.5'
-          } top-0.5 left-0 select-none`}
-        />
-      </span>
+        } ${disabled ? 'opacity-50' : ''}`}
+      />
+      <span 
+        className="absolute bg-white rounded-full transition-transform duration-200 ease-in-out"
+        style={{
+          top: '10%',
+          left: '4%',
+          width: '42%',
+          height: '80%',
+          aspectRatio: '1',
+          transform: checked ? 'translateX(120%)' : 'translateX(0)'
+        }}
+      />
     </div>
   );
 }

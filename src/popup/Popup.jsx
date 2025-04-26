@@ -217,12 +217,21 @@ export function Popup() {
       {/* Unified Input */}
       <div className="mt-5">
         {/* Container for badge/info/toggle OR non-injectable message */}
-        <div className="flex justify-between items-center mb-1.5 px-3 min-h-[28px]"> {/* Ensure flex justify-between */}
+        <div className="flex justify-between items-center mb-1.5 px-3 min-h-[28px]">
           {!contentLoading && (
             isInjectable ? (
               <>
-                {/* Left Side: Content Type Indicator */}
-                <div className="flex items-center gap-1 flex-grow min-w-0">
+                {/* Content Type with Include Toggle inline */}
+                <div 
+                  className="flex items-center gap-1 w-full"
+                  ref={includeContextRef}
+                  onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
+                  onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
+                  onFocus={() => setIsIncludeContextTooltipVisible(true)}
+                  onBlur={() => setIsIncludeContextTooltipVisible(false)}
+                  tabIndex={0}
+                  aria-describedby="include-context-tooltip"
+                >
                   {contentTypeLabel ? (
                     <>
                       {/* Icon */}
@@ -236,35 +245,24 @@ export function Popup() {
                           />
                         ) : null;
                       })()}
+                      
                       {/* Label */}
                       <span className="text-xs font-medium truncate select-none">{contentTypeLabel}</span>
+                      
+                      {/* Include Text and Toggle in same font/style */}
+                      <span className="text-xs font-medium select-none ml-2">-</span>
+                      <span className="text-xs font-medium select-none ml-2">Include</span>
+                      <Toggle
+                        id="include-context-toggle"
+                        checked={includeContext}
+                        onChange={setIncludeContext}
+                        disabled={!isInjectable || !isSupported || contentLoading || isProcessingContent || isProcessing}
+                        className='ml-1.5 w-8 h-4'
+                      />
                     </>
                   ) : (
                     <span className="text-xs text-theme-secondary select-none">Detecting type...</span>
                   )}
-                </div>
-
-                {/* Right Side: Include Context Toggle */}
-                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                  <span className="text-xs text-theme-secondary select-none"> - Include </span>
-                  <span
-                    ref={includeContextRef}
-                    onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
-                    onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
-                    onFocus={() => setIsIncludeContextTooltipVisible(true)}
-                    onBlur={() => setIsIncludeContextTooltipVisible(false)}
-                    className="inline-block"
-                    tabIndex={0}
-                    aria-describedby="include-context-tooltip"
-                  >
-                    <Toggle
-                      id="include-context-toggle"
-                      checked={includeContext}
-                      onChange={setIncludeContext}
-                      disabled={!isInjectable || !isSupported || contentLoading || isProcessingContent || isProcessing}
-                      className="w-8 h-4"
-                    />
-                  </span>
                 </div>
               </>
             ) : (
