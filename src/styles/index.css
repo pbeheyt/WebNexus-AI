@@ -189,8 +189,8 @@
     padding-right: 3px;
   }
   .platform-logo-btn-fixed[aria-pressed="true"] {
-    padding-left: 25px;
-    padding-right: 25px;
+    padding-left: 20px;
+    padding-right: 20px;
     background-color: var(--theme-active);
   }
   .platform-logo-btn-fixed:disabled {

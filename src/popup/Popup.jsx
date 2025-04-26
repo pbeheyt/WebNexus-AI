@@ -58,7 +58,7 @@ export function Popup() {
     } else if (!isInjectable) {
       return (
         <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
-          <p>
+          <p className="mb-1.5">
             Content extraction is not supported for this page.
             You can still send your prompt to the selected AI platform.
           </p>
@@ -254,7 +254,7 @@ export function Popup() {
       {/* Unified Input */}
       <div className="mt-5">
         {/* Container for badge/info/toggle OR non-injectable message */}
-        <div className="flex justify-between items-center mb-1.5 px-3 min-h-[28px]">
+        <div className="flex justify-between items-center mb-1.5 px-3">
           {!contentLoading && (
             isInjectable ? (
               <>
@@ -307,9 +307,7 @@ export function Popup() {
               </>
             ) : (
               // Message for Non-Injectable Pages (Toggle is not shown here)
-              <div className="text-sm text-theme-secondary font-medium w-full text-left select-none cursor-default">
-                Cannot extract from this page
-              </div>
+              <div></div>
             )
           )}
           {contentLoading && (
