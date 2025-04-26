@@ -40,7 +40,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   const processContent = useCallback(async (options = {}) => {
     const {
       platformId,
-      promptContent
+      promptContent,
+      includeContext = true // Default to true if not provided
     } = options;
 
     if (!currentTab?.id) {
@@ -76,7 +77,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         promptContent,
         contentType,
         source,
-        useApi: false
+        useApi: false,
+        includeContext: includeContext // <-- Add this line
       });
 
       // The background script now consistently returns { success: boolean, ... }

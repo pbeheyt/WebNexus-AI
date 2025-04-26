@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform'; 
-import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip, SidebarIcon } from '../components';
+import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip, SidebarIcon, Toggle } from '../components'; // Added Toggle
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';
@@ -29,6 +29,7 @@ export function Popup() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isInfoVisible, setIsInfoVisible] = useState(false);
+  const [includeContext, setIncludeContext] = useState(true); // Added state
   const infoButtonRef = useRef(null);
 
   const tooltipMessage = (
@@ -153,6 +154,7 @@ export function Popup() {
       const result = await processContent({
         platformId: selectedPlatformId,
         promptContent: promptContent,
+        includeContext: includeContext // <-- Pass the state here
         // useApi: false is handled by the hook itself
       });
 
@@ -205,12 +207,12 @@ export function Popup() {
 
       {/* Unified Input */}
       <div className="mt-5">
-        {/* Container for badge/info OR non-injectable message */}
-        <div className="flex justify-between items-center mb-1.5 px-3 min-h-[28px]">
+        {/* Container for badge/info/toggle OR non-injectable message */}
+        <div className="flex justify-between items-center mb-1.5 px-3 min-h-[28px]"> {/* Ensure flex justify-between */}
           {!contentLoading && (
             isInjectable ? (
               <>
-                {/* Content Type Indicator */}
+                {/* Left Side: Content Type Indicator */}
                 <div className="flex items-center gap-1 flex-grow min-w-0">
                   {contentTypeLabel ? (
                     <>
@@ -233,9 +235,22 @@ export function Popup() {
                   )}
                 </div>
 
+                {/* Right Side: Include Context Toggle */}
+                <div className="flex items-center gap-1.5 flex-shrink-0 ml-2"> {/* Added ml-2 for spacing */}
+                  <label htmlFor="include-context-toggle" className="text-xs text-theme-secondary select-none cursor-pointer">
+                    Include Context
+                  </label>
+                  <Toggle
+                    id="include-context-toggle"
+                    checked={includeContext}
+                    onChange={setIncludeContext}
+                    disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable}
+                    className="w-8 h-4" // Slightly smaller toggle
+                  />
+                </div>
               </>
             ) : (
-              // Message for Non-Injectable Pages
+              // Message for Non-Injectable Pages (Toggle is not shown here)
               <div className="text-xs text-theme-secondary font-medium w-full text-left select-none">
                 Cannot extract from this page.
               </div>

@@ -18,69 +18,85 @@ import ContentFormatter from '../../services/ContentFormatter.js';
 export async function processContent(params) {
   const { 
     tabId, 
-    url, 
+    url,
     platformId = null,
     promptContent = null,
-    useApi = false
+    useApi = false,
+    includeContext // <-- Destructure here
   } = params;
-  
+
+  let formattedContentString = null; // Initialize to null
+
   try {
     logger.background.info('Starting web UI content processing', {
-      tabId, url, platformId
+      tabId, url, platformId, includeContext // Log includeContext
     });
     
     // If API mode requested, use API path
     if (useApi) {
-      return await processContentViaApi(params);
+      return await processContentViaApi(params); // API path handles context internally if needed
     }
 
-    // Check if page is injectable BEFORE attempting extraction
-    if (!isInjectablePage(url)) {
-      logger.background.warn(`processContent: Page is not injectable (${url}). Skipping extraction.`);
-      return {
-        success: false,
-        error: 'Content extraction not supported on this page.',
-        code: 'EXTRACTION_NOT_SUPPORTED'
-      };
-    }
-    
-    // Check for prompt content
-    if (!promptContent) {
-      logger.background.warn('processContent: No prompt content provided.');
-      return {
-        success: false,
-        error: 'No prompt content provided.' // Consistent error message
-      };
-    }
-    
-    // 1. Reset previous state
-    await resetExtractionState();
-    
-    // 2. Extract content
-    const contentType = determineContentType(url);
-    logger.background.info(`Content type determined: ${contentType}`);
-    
-    const extractionResult = await extractContent(tabId, url);
-    if (!extractionResult) {
-      logger.background.warn('Content extraction completed with issues');
+    // --- Context Handling Logic ---
+    if (includeContext) {
+        logger.background.info('Include context requested, proceeding with extraction.');
+        // Check if page is injectable BEFORE attempting extraction
+        if (!isInjectablePage(url)) {
+          logger.background.warn(`processContent: Page is not injectable (${url}). Skipping extraction despite request.`);
+          // Return specific error if context was requested but page isn't injectable
+           return {
+              success: false,
+              error: 'Content extraction not supported on this page, but context was requested.',
+              code: 'EXTRACTION_NOT_SUPPORTED'
+           };
+        }
+
+        // 1. Reset previous state (Only if extracting)
+        await resetExtractionState();
+
+        // 2. Extract content (Only if extracting)
+        const contentType = determineContentType(url);
+        logger.background.info(`Content type determined: ${contentType}`);
+        const extractionResult = await extractContent(tabId, url);
+        if (!extractionResult) {
+          logger.background.warn('Content extraction completed with issues');
+          // Decide if this should be a hard failure or proceed without content
+          // For now, proceed but content will be null
+        }
+
+        // 3. Get extracted content (Only if extracting)
+        const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
+
+        if (!extractedContent) {
+          logger.background.error('processContent: Failed to retrieve extracted content from storage after extraction attempt.');
+          // Consider returning error or proceeding with null content
+           return {
+              success: false,
+              error: 'Failed to extract content from the page.'
+           };
+        }
+
+        // 4. Format content (Only if extracting and content exists)
+        // Assign to the outer scope variable
+        formattedContentString = ContentFormatter.formatContent(extractedContent, contentType);
+
+    } else {
+        logger.background.info('Include context not requested, skipping extraction.');
+        // formattedContentString is already null from initialization
     }
 
-    // 3. Get extracted content and check for specific errors
-    const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
+    // --- Continue with the rest of the function ---
 
-    if (!extractedContent) {
-      logger.background.error('processContent: Failed to retrieve extracted content from storage.');
-      // Return failure object directly instead of throwing
-      return {
-        success: false,
-        error: 'Failed to extract content from the page.'
-      };
-    }
+    // Check for prompt content (should happen regardless of context)
+     if (!promptContent) {
+       logger.background.warn('processContent: No prompt content provided.');
+       return {
+         success: false,
+         error: 'No prompt content provided.'
+       };
+     }
 
-    // 4. Format content
-    const formattedContentString = ContentFormatter.formatContent(extractedContent, contentType);
-    
-    // 5. Get platform and open it with content
+    // 5. Get platform and open it with content (or just prompt)
     const effectivePlatformId = platformId;
     
     const aiPlatformTabId = await openAiPlatformWithContent(effectivePlatformId);
@@ -94,13 +110,16 @@ export async function processContent(params) {
       };
     }
     
-    // Save tab information for later, including the formatted content
+    // Save tab information for later, using the potentially null formattedContentString
     await savePlatformTabInfo(aiPlatformTabId, effectivePlatformId, promptContent, formattedContentString);
-    
+
+    // Determine contentType only if context was included, otherwise it's irrelevant
+    const finalContentType = includeContext ? determineContentType(url) : null;
+
     return {
       success: true,
       aiPlatformTabId,
-      contentType
+      contentType: finalContentType // Return null if context wasn't included
     };
   } catch (error) {
     logger.background.error('Error during web UI content processing:', error);
@@ -119,9 +138,10 @@ export async function processContent(params) {
  */
 export async function handleProcessContentRequest(message, sendResponse) {
   try {
-    const { tabId, platformId, url, promptContent, useApi } = message;
+    // Destructure includeContext along with other properties
+    const { tabId, platformId, url, promptContent, useApi, includeContext } = message; 
     logger.background.info(`Process content request for tab ${tabId}`, {
-      platformId, useApi
+      platformId, useApi, includeContext // Log includeContext as well
     });
 
     // Call appropriate processing function based on API flag

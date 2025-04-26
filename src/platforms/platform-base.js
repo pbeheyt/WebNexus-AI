@@ -155,17 +155,17 @@ class BasePlatform extends PlatformInterface {
           });
 
           const prePrompt = result[STORAGE_KEYS.PRE_PROMPT];
-          const formattedContentString = result[STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION];
+          const formattedContentString = result[STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION]; // Keep retrieval
 
           if (!prePrompt) {
+            // Keep the check for prePrompt, as it's always required
             throw new Error('Missing prompt data in storage');
           }
-          if (!formattedContentString) {
-            throw new Error('Missing formatted content data in storage');
-          }
+          // Removed the check: if (!formattedContentString) { ... }
 
+          // Pass the potentially null formattedContentString
           const fullText = this.createStructuredPrompt(prePrompt, formattedContentString);
-          this.logger.info(`[${this.platformId}] Combined prompt and content`);
+          this.logger.info(`[${this.platformId}] Combined prompt and content (content may be null)`);
 
           // --- Template Method Steps ---
           // 1. Find Editor
@@ -233,11 +233,17 @@ class BasePlatform extends PlatformInterface {
    * @returns {string} The full structured prompt
    */
   createStructuredPrompt(prePrompt, formattedContent) {
-    // Use a simple structural approach that preserves the entire prePrompt
+    // Check if formattedContent is null, undefined, or an empty string
+    if (!formattedContent) {
+      this.logger.info(`[${this.platformId}] No formatted content provided, returning only the prompt.`);
+      return prePrompt; // Return only the instruction/prompt
+    }
+    // If content exists, return the structured prompt
+    this.logger.info(`[${this.platformId}] Formatting prompt with included content.`);
     return `# INSTRUCTION
 ${prePrompt}
 # EXTRACTED CONTENT
-${formattedContent}`
+${formattedContent}`;
   }
 }
 
