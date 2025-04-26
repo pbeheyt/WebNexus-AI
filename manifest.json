@@ -62,5 +62,21 @@
         "<all_urls>"
         ]
     }
-  ]
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+I",
+        "mac": "Alt+I"
+      },
+      "description": "Open the AI Insightr popup"
+    },
+    "process-default-prompt": {
+      "suggested_key": {
+        "default": "Alt+U",
+        "mac": "Alt+U"
+      },
+      "description": "Process page content with default prompt in Web UI"
+    }
+  }
 }

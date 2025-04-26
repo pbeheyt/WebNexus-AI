@@ -5,6 +5,7 @@ import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
 import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-state-listener.js';
 import { setupContextMenuListener } from './listeners/context-menu-listener.js';
+import { processWithDefaultPromptWebUI } from './services/content-processing.js';
 import SidebarStateManager from '../services/SidebarStateManager.js';
 import logger from '../shared/logger.js';
 
@@ -28,6 +29,9 @@ async function startBackgroundService() {
     // Set up context menu listener
     setupContextMenuListener();
 
+    // Set up command listener
+    await setupCommandListener();
+
     // This runs every time the service worker starts (initial load, wake-up, after browser start)
     // It complements the onStartup listener.
     logger.background.info('Running stale tab cleanup on service worker start...');
@@ -38,7 +42,7 @@ async function startBackgroundService() {
       logger.background.error('Error during service worker start stale tab cleanup:', cleanupError);
     }
 
-    // 4. Add the onStartup listener for cleanup (Keep this!)
+    // 4. Add the onStartup listener for cleanup
     // This listener persists across service worker restarts.
     chrome.runtime.onStartup.addListener(async () => {
       logger.background.info('Browser startup detected via onStartup listener. Running stale tab cleanup...');
@@ -61,8 +65,32 @@ async function startBackgroundService() {
 /**
  * Sets up the listener for runtime connections (e.g., from side panel).
  */
+/**
+ * Sets up the listener for keyboard commands
+ */
+async function setupCommandListener() {
+  chrome.commands.onCommand.addListener(async (command) => {
+    logger.background.info(`Command received: ${command}`);
+    if (command === 'process-default-prompt') {
+      try {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (activeTab && activeTab.id && activeTab.url) {
+          logger.background.info(`Triggering default web UI processing for active tab ${activeTab.id} via command.`);
+          await processWithDefaultPromptWebUI(activeTab);
+        } else {
+          logger.background.warn('No active tab found to execute command:', command);
+        }
+      } catch (error) {
+        logger.background.error(`Error handling command ${command}:`, error);
+      }
+    }
+    // Note: No need to handle _execute_action here, Chrome does it automatically
+  });
+  logger.background.info('Command listener registered.');
+}
+
 function setupConnectionListener() {
-  // This listener also persists across service worker restarts.
+  // This listener also persists across service worker restarts
   chrome.runtime.onConnect.addListener((port) => {
     logger.background.info(`Connection received: ${port.name}`);
 

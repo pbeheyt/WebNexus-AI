@@ -10,6 +10,67 @@ import { STORAGE_KEYS } from '../../shared/constants.js';
 import ContentFormatter from '../../services/ContentFormatter.js';
 
 /**
+ * Process content with default prompt in Web UI
+ * @param {Object} tab - Browser tab object
+ * @returns {Promise<void>}
+ */
+export async function processWithDefaultPromptWebUI(tab) {
+  if (!tab || !tab.id || !tab.url) {
+    logger.background.error('processWithDefaultPromptWebUI: Missing tab information.');
+    return;
+  }
+
+  try {
+    const contentType = determineContentType(tab.url);
+    logger.background.info(`Determined content type: ${contentType} for URL: ${tab.url}`);
+
+    // 1. Get the default prompt ID for this content type
+    const defaultsResult = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE);
+    const defaultPrompts = defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
+    const defaultPromptId = defaultPrompts[contentType];
+
+    if (!defaultPromptId) {
+      logger.background.warn(`No default prompt set for content type: ${contentType}. Aborting quick process.`);
+      return;
+    }
+    logger.background.info(`Found default prompt ID: ${defaultPromptId}`);
+
+    // 2. Get the actual prompt content
+    const promptsResult = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+    const promptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+    const promptObject = promptsByType[contentType]?.prompts?.[defaultPromptId];
+
+    if (!promptObject || !promptObject.content) {
+      logger.background.error(`Default prompt object or content not found for ID: ${defaultPromptId} under type ${contentType}`);
+      return;
+    }
+    const promptContent = promptObject.content;
+    logger.background.info(`Found default prompt content (length: ${promptContent.length}).`);
+
+    // 3. Get the last used popup platform
+    const platformResult = await chrome.storage.sync.get(STORAGE_KEYS.POPUP_PLATFORM);
+    const platformId = platformResult[STORAGE_KEYS.POPUP_PLATFORM] || 'chatgpt';
+    logger.background.info(`Using platform: ${platformId} for popup flow.`);
+
+    // 4. Call processContent
+    logger.background.info(`Calling processContent for tab ${tab.id} with default prompt.`);
+    await processContent({
+      tabId: tab.id,
+      url: tab.url,
+      platformId: platformId,
+      promptContent: promptContent,
+      useApi: false, // Explicitly use the Web UI interaction flow
+      includeContext: true // Always include context for default processing
+    });
+    logger.background.info(`processContent call initiated via default prompt processing.`);
+
+  } catch (error) {
+    logger.background.error('Error in processWithDefaultPromptWebUI:', error);
+    throw error; // Re-throw to allow callers to handle
+  }
+}
+
+/**
  * Process content using web AI interface (non-API path)
  * Used by popup to extract content and send to web UI
  * @param {Object} params - Processing parameters
@@ -22,14 +83,14 @@ export async function processContent(params) {
     platformId = null,
     promptContent = null,
     useApi = false,
-    includeContext // <-- Destructure here
+    includeContext
   } = params;
 
   let formattedContentString = null; // Initialize to null
 
   try {
     logger.background.info('Starting web UI content processing', {
-      tabId, url, platformId, includeContext // Log includeContext
+      tabId, url, platformId, includeContext
     });
     
     // If API mode requested, use API path
@@ -60,8 +121,6 @@ export async function processContent(params) {
         const extractionResult = await extractContent(tabId, url);
         if (!extractionResult) {
           logger.background.warn('Content extraction completed with issues');
-          // Decide if this should be a hard failure or proceed without content
-          // For now, proceed but content will be null
         }
 
         // 3. Get extracted content (Only if extracting)
@@ -84,8 +143,6 @@ export async function processContent(params) {
         logger.background.info('Include context not requested, skipping extraction.');
         // formattedContentString is already null from initialization
     }
-
-    // --- Continue with the rest of the function ---
 
     // Check for prompt content (should happen regardless of context)
      if (!promptContent) {
