@@ -144,6 +144,8 @@ export async function processContent(params) {
         // formattedContentString is already null from initialization
     }
 
+    // --- Continue with the rest of the function ---
+
     // Check for prompt content (should happen regardless of context)
      if (!promptContent) {
        logger.background.warn('processContent: No prompt content provided.');
