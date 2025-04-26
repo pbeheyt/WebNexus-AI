@@ -294,9 +294,9 @@ const AdvancedSettings = ({
       <div className="flex justify-between items-center mb-6">
         <h3 className="section-title text-xl font-semibold text-theme-primary select-none">Advanced Settings</h3>
 
-        <IconButton
+          <IconButton
           icon={RefreshIcon}
-          iconClassName={`w-6 h-6 select-none transition-transform duration-500 ${isAnimatingReset ? 'rotate-180' : ''}`}
+          iconClassName={`w-6 h-6 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''}`}
           className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleResetClick}
           disabled={isAtDefaults}

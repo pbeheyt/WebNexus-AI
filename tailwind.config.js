@@ -47,11 +47,16 @@ module.exports = {
       },
       animation: {
         'bounce': 'bounce 1s infinite',
+        'rotate-180-once': 'rotate-180-once 0.5s ease-in-out',
       },
       keyframes: {
         bounce: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-4px)' },
+        },
+        'rotate-180-once': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(180deg)' },
         }
       }
     },
