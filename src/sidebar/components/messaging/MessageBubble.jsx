@@ -109,7 +109,16 @@ export const MessageBubble = memo(forwardRef(({
     className = '',
     style = {}
 }, ref) => {
-    const { rerunAssistantMessage, isProcessing, isCanceling } = useSidebarChat();
+    // All hooks moved to top level
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedContent, setEditedContent] = useState(content);
+    const {
+        rerunMessage,
+        editAndRerunMessage,
+        rerunAssistantMessage,
+        isProcessing,
+        isCanceling
+    } = useSidebarChat();
     const { copyState, handleCopy, IconComponent, iconClassName, disabled } = useCopyToClipboard(content);
 
     // For assistant rerun
@@ -143,9 +152,6 @@ export const MessageBubble = memo(forwardRef(({
 
     // User messages
     if (role === MESSAGE_ROLES.USER) {
-        const [isEditing, setIsEditing] = useState(false);
-        const [editedContent, setEditedContent] = useState(content);
-        const { rerunMessage, editAndRerunMessage } = useSidebarChat();
 
         const handleKeyDown = (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
@@ -274,7 +280,12 @@ export const MessageBubble = memo(forwardRef(({
 
     // Assistant Message Rendering
     if (role === MESSAGE_ROLES.ASSISTANT) {
-        const { copyState: assistantCopyState, handleCopy: handleAssistantCopy, IconComponent: AssistantIconComponent, iconClassName: assistantIconClassName, disabled: assistantCopyDisabled } = useCopyToClipboard(content);
+        // Use the same copy functionality from top level hook
+        const assistantCopyState = copyState;
+        const handleAssistantCopy = handleCopy;
+        const AssistantIconComponent = IconComponent;
+        const assistantIconClassName = iconClassName;
+        const assistantCopyDisabled = disabled;
 
         // --- Preprocessing Step ---
         const mathMap = new Map();
