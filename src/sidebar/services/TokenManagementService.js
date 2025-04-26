@@ -1,7 +1,7 @@
 // src/sidebar/services/TokenManagementService.js
 
 import { encode } from 'gpt-tokenizer';
-import { STORAGE_KEYS } from "../../shared/constants";
+import { STORAGE_KEYS, MESSAGE_ROLES } from "../../shared/constants";
 import ChatHistoryService from "./ChatHistoryService";
 
 /**
@@ -213,7 +213,11 @@ class TokenManagementService {
 
       // 4. Calculate Cost of the Last Call
       let currentCallCost = 0;
-      if (modelConfig) {
+      // Check if the last message indicates an error
+      const lastMessage = messages[messages.length - 1];
+      const isLastError = lastMessage && lastMessage.role === MESSAGE_ROLES.SYSTEM;
+
+      if (modelConfig && !isLastError) { // Only calculate cost if modelConfig exists AND the last message wasn't an error
         // Use the specific input/output tokens for the *last call*
         const costInfo = this.calculateCost(
           baseStats.inputTokensInLastApiCall,
@@ -222,6 +226,7 @@ class TokenManagementService {
         );
         currentCallCost = costInfo.totalCost || 0;
       }
+      // If isLastError is true, currentCallCost remains 0 (its initial value)
 
       // 5. Calculate New Accumulated Cost using the initial value + cost of this specific call
       const newAccumulatedCost = initialAccumulatedCost + currentCallCost;
