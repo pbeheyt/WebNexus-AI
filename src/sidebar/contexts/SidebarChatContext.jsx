@@ -580,6 +580,7 @@ export function SidebarChatProvider({ children }) {
         promptContent,
         conversationHistory,
         streaming: true,
+        skipInitialExtraction: true,
         options: {
           tabId,
           source: INTERFACE_SOURCES.SIDEBAR,
@@ -669,6 +670,7 @@ export function SidebarChatProvider({ children }) {
         promptContent,
         conversationHistory,
         streaming: true,
+        skipInitialExtraction: true,
         options: {
           tabId,
           source: INTERFACE_SOURCES.SIDEBAR,
@@ -762,6 +764,7 @@ export function SidebarChatProvider({ children }) {
             promptContent,
             conversationHistory,
             streaming: true,
+            skipInitialExtraction: true,
             options: {
                 tabId,
                 source: INTERFACE_SOURCES.SIDEBAR,
