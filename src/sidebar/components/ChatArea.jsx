@@ -481,7 +481,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                      message="Send content along with your prompt."
                                      position="top"
                                      id="include-context-tooltip-sidebar"
-                                 /> {/* Add Tooltip */}
+                                 />
                              </>
                          ) : (
                              <div className="mb-2">

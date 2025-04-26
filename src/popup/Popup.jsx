@@ -225,7 +225,6 @@ export function Popup() {
             isInjectable ? (
               <>
                 {/* Content Type with Include Toggle inline */}
-                {/* Modify Container Div */}
                 <div
                   className={`flex items-center gap-1 w-full cursor-default`} // Append dynamic classes
                 >
@@ -248,7 +247,7 @@ export function Popup() {
 
                       {/* Include Text and Toggle in same font/style */}
                       <span className="text-xs font-medium select-none ml-2 cursor-default">-</span>
-                      {/* New wrapper div for Include Text and Toggle */}
+                      {/* Wrapper div for Include Text and Toggle */}
                       <div
                         className="flex items-center"
                         ref={includeContextRef}
