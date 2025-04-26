@@ -1,5 +1,5 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
-import React, { useState, memo, forwardRef, useRef } from 'react';
+import React, { useState, memo, forwardRef, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
@@ -110,25 +110,26 @@ export const MessageBubble = memo(forwardRef(({
     style = {}
 }, ref) => {
     const copyButtonRef = useRef(null);
+    const resetTimeoutRef = useRef(null);
     const [copyStatus, setCopyStatus] = useState('idle');
     const { rerunAssistantMessage, isProcessing, isCanceling } = useSidebarChat();
 
     const handleCopy = async () => {
         if (!content) return; // Only copy if content exists
         try {
+            if (resetTimeoutRef.current) {
+                clearTimeout(resetTimeoutRef.current);
+                resetTimeoutRef.current = null;
+            }
             await copyUtil(content);
             setCopyStatus('copied');
-            setTimeout(() => {
-                setCopyStatus('idle');
-                copyButtonRef.current?.blur();
-            }, 500);
         } catch (error) {
+            if (resetTimeoutRef.current) {
+                clearTimeout(resetTimeoutRef.current);
+                resetTimeoutRef.current = null;
+            }
             logger.sidebar.error('Failed to copy message text: ', error);
             setCopyStatus('error');
-            setTimeout(() => {
-                setCopyStatus('idle');
-                copyButtonRef.current?.blur();
-            }, 500);
         }
     };
 
@@ -292,6 +293,34 @@ export const MessageBubble = memo(forwardRef(({
                                 copyStatus === 'error' ? 'text-red-500 dark:text-red-400' :
                                     '' // Default color inherited from button style
                                 }`}
+                            onMouseEnter={() => {
+                                if (resetTimeoutRef.current) {
+                                    clearTimeout(resetTimeoutRef.current);
+                                    resetTimeoutRef.current = null;
+                                }
+                            }}
+                            onFocus={() => {
+                                if (resetTimeoutRef.current) {
+                                    clearTimeout(resetTimeoutRef.current);
+                                    resetTimeoutRef.current = null;
+                                }
+                            }}
+                            onMouseLeave={() => {
+                                if (copyStatus === 'copied' || copyStatus === 'error') {
+                                    resetTimeoutRef.current = setTimeout(() => {
+                                        setCopyStatus('idle');
+                                        resetTimeoutRef.current = null;
+                                    }, 500);
+                                }
+                            }}
+                            onBlur={() => {
+                                if (copyStatus === 'copied' || copyStatus === 'error') {
+                                    resetTimeoutRef.current = setTimeout(() => {
+                                        setCopyStatus('idle');
+                                        resetTimeoutRef.current = null;
+                                    }, 500);
+                                }
+                            }}
                         />
                     </div>
                 )}
@@ -442,6 +471,15 @@ export const MessageBubble = memo(forwardRef(({
         };
         // --- End Component Overrides ---
 
+        // Add cleanup effect for timeout ref
+        useEffect(() => {
+            return () => {
+                if (resetTimeoutRef.current) {
+                    clearTimeout(resetTimeoutRef.current);
+                }
+            };
+        }, []);
+
         return (
             <div
                 ref={ref}
@@ -511,6 +549,34 @@ export const MessageBubble = memo(forwardRef(({
                                         copyStatus === 'error' ? 'text-red-500 dark:text-red-400' :
                                             '' // Default color inherited from button style
                                         }`}
+                                    onMouseEnter={() => {
+                                        if (resetTimeoutRef.current) {
+                                            clearTimeout(resetTimeoutRef.current);
+                                            resetTimeoutRef.current = null;
+                                        }
+                                    }}
+                                    onFocus={() => {
+                                        if (resetTimeoutRef.current) {
+                                            clearTimeout(resetTimeoutRef.current);
+                                            resetTimeoutRef.current = null;
+                                        }
+                                    }}
+                                    onMouseLeave={() => {
+                                        if (copyStatus === 'copied' || copyStatus === 'error') {
+                                            resetTimeoutRef.current = setTimeout(() => {
+                                                setCopyStatus('idle');
+                                                resetTimeoutRef.current = null;
+                                            }, 500);
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        if (copyStatus === 'copied' || copyStatus === 'error') {
+                                            resetTimeoutRef.current = setTimeout(() => {
+                                                setCopyStatus('idle');
+                                                resetTimeoutRef.current = null;
+                                            }, 500);
+                                        }
+                                    }}
                                 />
                             </>
                         )}
