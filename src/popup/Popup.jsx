@@ -247,7 +247,7 @@ export function Popup() {
       </AppHeader>
 
       {/* Platform Selector */}
-      <div className="mt-3">
+      <div className="mt-4">
          <PlatformSelector disabled={!isSupported || contentLoading || isProcessingContent || isProcessing} />
       </div>
 
