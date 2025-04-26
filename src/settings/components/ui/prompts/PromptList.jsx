@@ -119,7 +119,7 @@ const PromptList = ({
               key={item.id}
               className={`prompt-item rounded-lg p-5 mb-4 cursor-pointer select-none transition-all border border-theme
                 ${selectedPromptId === item.id
-                  ? ' bg-gray-100 dark:bg-gray-700 shadow-md'
+                  ? ' bg-gray-100 dark:bg-gray-700 shadow-sm'
                   : ' bg-white dark:bg-theme-surface'}
               `}
               onClick={() => onSelectPrompt(item)}
