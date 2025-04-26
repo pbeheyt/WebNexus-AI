@@ -450,7 +450,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                         dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
                                         aria-hidden="true"
                                     />
-                                    <span className="text-sm font-medium select-none">
+                                    <span className="text-base font-medium select-none">
                                         {getContentTypeName(contentType)}
                                     </span>
                                     <Toggle
@@ -458,7 +458,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                         checked={isContentExtractionEnabled}
                                         onChange={(newCheckedState) => { if (hasAnyPlatformCredentials) setIsContentExtractionEnabled(newCheckedState); }}
                                         disabled={!hasAnyPlatformCredentials}
-                                        className='w-10 h-5 ml-2'
+                                        className='w-10 h-5 ml-3'
                                     />
                                 </div>
                                 {/* Render Tooltip */}
@@ -472,7 +472,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                             </>
                         ) : (
                             <div className="mb-2">
-                                <span className="text-xs text-theme-secondary select-none">
+                                <span className="text-base text-theme-secondary select-none">
                                     This page content cannot be extracted.
                                 </span>
                             </div>

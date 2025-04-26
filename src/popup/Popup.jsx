@@ -250,7 +250,7 @@ export function Popup() {
                       })()}
 
                       {/* Label */}
-                      <span className="text-xs font-medium truncate select-none cursor-default">{contentTypeLabel}</span>
+                      <span className="text-sm font-medium truncate select-none cursor-default">{contentTypeLabel}</span>
 
                       {/* Toggle */}
                       <Toggle
@@ -263,23 +263,23 @@ export function Popup() {
                           }
                         }}
                         disabled={isToggleDisabled}
-                        className='w-8 h-4 ml-2'
+                        className='w-8 h-4 ml-3'
                       />
                     </>
                   ) : (
-                    <span className="text-xs text-theme-secondary select-none cursor-default">Detecting type...</span>
+                    <span className="text-sm text-theme-secondary select-none cursor-default">Detecting type...</span>
                   )}
                 </div>
               </>
             ) : (
               // Message for Non-Injectable Pages (Toggle is not shown here)
-              <div className="text-xs text-theme-secondary font-medium w-full text-left select-none cursor-default">
+              <div className="text-sm sm-theme-secondary font-medium w-full text-left select-none cursor-default">
                 Cannot extract from this page.
               </div>
             )
           )}
           {contentLoading && (
-             <div className="text-xs text-theme-secondary w-full text-left select-none cursor-default">Loading...</div>
+             <div className="text-sm text-theme-secondary w-full text-left select-none cursor-default">Loading...</div>
           )}
         </div>
 

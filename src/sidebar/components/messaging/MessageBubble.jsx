@@ -447,7 +447,7 @@ export const MessageBubble = memo(forwardRef(({
 
                 {/* Footer section */}
                 <div className="flex justify-between items-center pb-4">
-                    <div className="text-xs opacity-70 flex items-center space-x-2">
+                    <div className="text-xs opacity-70 flex items-center space-x-2 select-none">
                         {platformIconUrl && (
                             <PlatformIcon 
                               platformId={platformId} 
