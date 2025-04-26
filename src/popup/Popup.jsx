@@ -29,8 +29,17 @@ export function Popup() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isInfoVisible, setIsInfoVisible] = useState(false);
-  const [includeContext, setIncludeContext] = useState(true); // Added state
+  const [includeContext, setIncludeContext] = useState(true);
+  const [isIncludeContextTooltipVisible, setIsIncludeContextTooltipVisible] = useState(false);
   const infoButtonRef = useRef(null);
+  const includeContextRef = useRef(null);
+
+  // Automatically disable includeContext for non-injectable pages
+  useEffect(() => {
+    if (!isInjectable) {
+      setIncludeContext(false);
+    }
+  }, [isInjectable]);
 
   const tooltipMessage = (
     <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
@@ -122,10 +131,10 @@ export function Popup() {
 
   // Handler for UnifiedInput submission
   const handleProcessWithText = async (text) => {
-    const combinedDisabled = !isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable;
+    const combinedDisabled = !isSupported || contentLoading || isProcessingContent || isProcessing || (includeContext && !isInjectable);
     
     if (combinedDisabled || !currentTab?.id || !text.trim()) {
-      if (!isInjectable) updateStatus('Cannot process content from this page.');
+      if (!isInjectable && includeContext) updateStatus('Cannot include context from this page.');
       else if (!isSupported) updateStatus('Error: Extension cannot access this page.');
       else if (contentLoading) updateStatus('Page content still loading...');
       else if (!text.trim()) updateStatus('Please enter a prompt.');
@@ -202,7 +211,7 @@ export function Popup() {
 
       {/* Platform Selector */}
       <div className="mt-5">
-         <PlatformSelector disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable} />
+         <PlatformSelector disabled={!isSupported || contentLoading || isProcessingContent || isProcessing} />
       </div>
 
       {/* Unified Input */}
@@ -236,17 +245,26 @@ export function Popup() {
                 </div>
 
                 {/* Right Side: Include Context Toggle */}
-                <div className="flex items-center gap-1.5 flex-shrink-0 ml-2"> {/* Added ml-2 for spacing */}
-                  <label htmlFor="include-context-toggle" className="text-xs text-theme-secondary select-none cursor-pointer">
-                    Include Context
-                  </label>
-                  <Toggle
-                    id="include-context-toggle"
-                    checked={includeContext}
-                    onChange={setIncludeContext}
-                    disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable}
-                    className="w-8 h-4" // Slightly smaller toggle
-                  />
+                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                  <span className="text-xs text-theme-secondary select-none"> - Include </span>
+                  <span
+                    ref={includeContextRef}
+                    onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
+                    onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
+                    onFocus={() => setIsIncludeContextTooltipVisible(true)}
+                    onBlur={() => setIsIncludeContextTooltipVisible(false)}
+                    className="inline-block"
+                    tabIndex={0}
+                    aria-describedby="include-context-tooltip"
+                  >
+                    <Toggle
+                      id="include-context-toggle"
+                      checked={includeContext}
+                      onChange={setIncludeContext}
+                      disabled={!isInjectable || !isSupported || contentLoading || isProcessingContent || isProcessing}
+                      className="w-8 h-4"
+                    />
+                  </span>
                 </div>
               </>
             ) : (
@@ -265,7 +283,7 @@ export function Popup() {
           value={inputText}
           onChange={setInputText}
           onSubmit={handleProcessWithText}
-          disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || !isInjectable}
+          disabled={!isSupported || contentLoading || isProcessingContent || isProcessing || (includeContext && !isInjectable)}
           isProcessing={isProcessingContent || isProcessing}
           contentType={contentType}
           showTokenInfo={false}
@@ -277,12 +295,21 @@ export function Popup() {
       {/* Status Message */}
       <StatusMessage message={statusMessage} context="popup" className="py-3 select-none"/>
 
-      {/* Tooltip */}
+      {/* Tooltip for Info Button */}
       <Tooltip
         show={isInfoVisible}
         targetRef={infoButtonRef}
         message={tooltipMessage}
         position="bottom"
+      />
+
+      {/* Tooltip for Include Context */}
+      <Tooltip
+        show={isIncludeContextTooltipVisible}
+        targetRef={includeContextRef}
+        message="Send page content along with your prompt."
+        position="top"
+        id="include-context-tooltip"
       />
     </div>
   );
