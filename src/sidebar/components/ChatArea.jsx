@@ -6,7 +6,7 @@ import { useSidebarPlatform } from '../../contexts/platform';
 import { useUI } from '../../contexts/UIContext';
 import { MessageBubble } from './messaging/MessageBubble';
 import { Toggle } from '../../components/core/Toggle';
-import { Tooltip } from '../../components/layout/Tooltip';
+import { Tooltip } from '../../components'; // Import Tooltip
 import { PlatformIcon } from '../../components/layout/PlatformIcon';
 import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
@@ -62,6 +62,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
     } = useSidebarPlatform();
 
     // --- State ---
+    const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false); // Add State
     const [showScrollDownButton, setShowScrollDownButton] = useState(false);
     const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
     const [displayModelConfig, setDisplayModelConfig] = useState(null);
@@ -70,6 +71,9 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
     const precedingUserMessageRef = useRef(null);
     const [initialScrollCompletedForResponse, setInitialScrollCompletedForResponse] = useState(true);
     const rafIdHeightCalc = useRef(null);
+
+    // --- Add Ref ---
+    const includeToggleRef = useRef(null); // Add Ref
 
     // --- Effect for Platform/Model Display ---
     useEffect(() => {
@@ -448,16 +452,33 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                          </div>
                                      </div>
                                  )}
-                                 <div className="flex items-center gap-3 text-xs text-theme-secondary">
-                                     <label htmlFor="content-extract-toggle" className="cursor-pointer select-none">Extract content</label>
+                                 <div
+                                     className="flex items-center gap-3 text-xs text-theme-secondary cursor-pointer select-none" 
+                                     ref={includeToggleRef}
+                                     onMouseEnter={() => setIsIncludeTooltipVisible(true)}
+                                     onMouseLeave={() => setIsIncludeTooltipVisible(false)}
+                                     onFocus={() => setIsIncludeTooltipVisible(true)}
+                                     onBlur={() => setIsIncludeTooltipVisible(false)}
+                                     tabIndex={0}
+                                     aria-describedby="include-context-tooltip-sidebar"
+                                     onClick={() => setIsContentExtractionEnabled(prev => !prev)}
+                                 >
+                                     <label htmlFor="content-extract-toggle" className="cursor-pointer select-none">Include</label>
                                      <Toggle
                                          id="content-extract-toggle"
                                          checked={isContentExtractionEnabled}
-                                         onChange={() => setIsContentExtractionEnabled(prev => !prev)}
                                          disabled={!hasAnyPlatformCredentials}
-                                         className='w-10 h-5'
+                                         className='w-8 h-4'
                                      />
                                  </div>
+                                 {/* Render Tooltip */}
+                                 <Tooltip
+                                     show={isIncludeTooltipVisible}
+                                     targetRef={includeToggleRef}
+                                     message="Send page content along with your prompt."
+                                     position="top"
+                                     id="include-context-tooltip-sidebar"
+                                 /> {/* Add Tooltip */}
                              </>
                          ) : (
                              <div className="mb-2">

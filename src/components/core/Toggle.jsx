@@ -17,25 +17,28 @@ export function Toggle({
   ...props
 }) {
   return (
-    <div 
+    <div
       className={`relative inline-block ${className}`}
-      onClick={disabled ? undefined : () => onChange(!checked)}
+      onClick={disabled ? undefined : (event) => { // Add event parameter
+        event.stopPropagation(); // Add this line
+        onChange(!checked);
+      }}
       style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
     >
       <input
         type="checkbox"
         className="sr-only"
         checked={checked}
-        onChange={() => {}} 
+        onChange={() => {}}
         disabled={disabled}
         {...props}
       />
-      <span 
+      <span
         className={`absolute inset-0 rounded-full transition-all select-none ${
           checked ? 'bg-primary' : 'bg-theme-hover'
         } ${disabled ? 'opacity-50' : ''}`}
       />
-      <span 
+      <span
         className="absolute bg-white rounded-full transition-transform duration-200 ease-in-out"
         style={{
           top: '10%',

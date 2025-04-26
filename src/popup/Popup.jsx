@@ -41,6 +41,9 @@ export function Popup() {
     }
   }, [isInjectable]);
 
+  // Define Disabled State
+  const isToggleDisabled = !isInjectable || !isSupported || contentLoading || isProcessingContent || isProcessing; // Define Disabled State
+
   const tooltipMessage = (
     <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
       <p className="mb-1.5">
@@ -222,8 +225,9 @@ export function Popup() {
             isInjectable ? (
               <>
                 {/* Content Type with Include Toggle inline */}
+                {/* Modify Container Div */}
                 <div 
-                  className="flex items-center gap-1 w-full"
+                  className={`flex items-center gap-1 w-full ${isToggleDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`} // Append dynamic classes
                   ref={includeContextRef}
                   onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
                   onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
@@ -231,6 +235,11 @@ export function Popup() {
                   onBlur={() => setIsIncludeContextTooltipVisible(false)}
                   tabIndex={0}
                   aria-describedby="include-context-tooltip"
+                  onClick={() => { // Add onClick handler
+                    if (!isToggleDisabled) {
+                      setIncludeContext(prev => !prev);
+                    }
+                  }}
                 >
                   {contentTypeLabel ? (
                     <>
@@ -255,8 +264,8 @@ export function Popup() {
                       <Toggle
                         id="include-context-toggle"
                         checked={includeContext}
-                        onChange={setIncludeContext}
-                        disabled={!isInjectable || !isSupported || contentLoading || isProcessingContent || isProcessing}
+                        onChange={() => {}} // Remove onChange handler here
+                        disabled={isToggleDisabled} // Use defined disabled state
                         className='ml-1.5 w-8 h-4'
                       />
                     </>
