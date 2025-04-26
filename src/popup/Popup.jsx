@@ -305,12 +305,13 @@ export function Popup() {
         targetRef={infoButtonRef}
         message={tooltipMessage}
         position="bottom"
+        delay = {250}
       />
 
       {/* Tooltip for Include Context (Content Type Label + Toggle) */}
       <Tooltip
         show={isIncludeContextTooltipVisible}
-        targetRef={includeContextRef} // Still targets the same ref, which now points to the parent div
+        targetRef={includeContextRef}
         message="Send content along with your prompt."
         position="top"
         id="include-context-tooltip"
