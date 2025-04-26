@@ -49,43 +49,78 @@ class GeneralExtractorStrategy extends BaseExtractor {
    * @private
    */
   _isElementVisible(element) {
+    // 1. Basic existence and capability checks
     if (!element || typeof window.getComputedStyle !== 'function') {
         this.logger.debug('Visibility check failed: No element or getComputedStyle unavailable.');
-        return false; // Basic checks
+        return false;
     }
+
+    // 2. Node type check
     if (element.nodeType !== Node.ELEMENT_NODE) {
         this.logger.debug('Visibility check failed: Not an element node.');
-        return false; // Only check element nodes
-    }
-
-    // Check HTML attributes first (quick checks)
-    if (element.hasAttribute('hidden') || element.getAttribute('aria-hidden') === 'true') {
-        this.logger.debug(`Element hidden by attribute: ${element.tagName}`);
         return false;
     }
 
-    // Check inline style (another quick check)
-    if (element.style?.display === 'none' || element.style?.visibility === 'hidden' || element.style?.opacity === '0') {
-        this.logger.debug(`Element hidden by inline style: ${element.tagName}`);
+    // 3. Attribute checks
+    if (element.hasAttribute('hidden')) {
+        this.logger.debug(`Element hidden by 'hidden' attribute: ${element.tagName}`);
+        return false;
+    }
+    if (element.getAttribute('aria-hidden') === 'true') {
+        this.logger.debug(`Element hidden by 'aria-hidden' attribute: ${element.tagName}`);
         return false;
     }
 
-    // Check computed style (more definitive)
+    // 4. Inline style checks
+    if (element.style?.display === 'none') {
+        this.logger.debug(`Element hidden by inline display:none: ${element.tagName}`);
+        return false;
+    }
+    if (element.style?.visibility === 'hidden') {
+        this.logger.debug(`Element hidden by inline visibility:hidden: ${element.tagName}`);
+        return false;
+    }
+    if (element.style?.opacity === '0') {
+        this.logger.debug(`Element hidden by inline opacity:0: ${element.tagName}`);
+        return false;
+    }
+
+    // 5. Computed style checks (wrapped in try-catch)
     try {
         const style = window.getComputedStyle(element);
         if (!style) {
-             this.logger.debug(`Could not get computed style for: ${element.tagName}`);
-             return false; // Cannot determine visibility
+            this.logger.debug(`Could not get computed style for: ${element.tagName}`);
+            return false;
         }
-        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
-            this.logger.debug(`Element hidden by computed style (${style.display}, ${style.visibility}, ${style.opacity}): ${element.tagName}`);
+
+        if (style.display === 'none') {
+            this.logger.debug(`Element hidden by computed display:none: ${element.tagName}`);
+            return false;
+        }
+        if (style.visibility === 'hidden') {
+            this.logger.debug(`Element hidden by computed visibility:hidden: ${element.tagName}`);
+            return false;
+        }
+        if (style.opacity === '0') {
+            this.logger.debug(`Element hidden by computed opacity:0: ${element.tagName}`);
+            return false;
+        }
+
+        // Additional checks for elements with zero dimensions
+        if (style.width === '0px' && style.height === '0px') {
+            this.logger.debug(`Element has zero dimensions: ${element.tagName}`);
             return false;
         }
 
     } catch (e) {
-        // This can happen for pseudo-elements or elements in detached iframes
         this.logger.warn(`Error getting computed style for ${element.tagName}: ${e.message}`);
-        return false; // Assume hidden if we can't compute style
+        return false;
+    }
+
+    // 6. Parent visibility check (recursive)
+    if (element.parentElement && !this._isElementVisible(element.parentElement)) {
+        this.logger.debug(`Element hidden by parent visibility: ${element.tagName}`);
+        return false;
     }
 
     this.logger.debug(`Element considered visible: ${element.tagName}`);
@@ -103,29 +138,35 @@ class GeneralExtractorStrategy extends BaseExtractor {
 
     // --- Case 1: Text Node ---
     if (node.nodeType === Node.TEXT_NODE) {
-        // Important: Check visibility of the *parent* element
+        // Find the closest parent element
         let parentElement = node.parentElement;
-        // Traverse up if the immediate parent isn't an element (rare, but possible)
         while (parentElement && parentElement.nodeType !== Node.ELEMENT_NODE) {
             parentElement = parentElement.parentElement;
         }
 
-        if (parentElement && !this._isElementVisible(parentElement)) {
-            return ''; // Parent is hidden, so this text is effectively hidden
-        }
-        // Also check if parent is a noise tag (e.g., text directly inside <script>)
-        if (parentElement && this.noiseTags.has(parentElement.tagName)) {
+        if (!parentElement) {
+            this.logger.debug('Text node has no parent element');
             return '';
         }
 
-        // Return the text content, trimming might remove intentional spacing,
-        // let _moderateCleanText handle collapsing later.
+        // Check parent visibility
+        if (!this._isElementVisible(parentElement)) {
+            this.logger.debug(`Text node hidden by parent visibility: ${parentElement.tagName}`);
+            return '';
+        }
+
+        // Check if parent is a noise tag
+        if (this.noiseTags.has(parentElement.tagName)) {
+            this.logger.debug(`Text node skipped due to noise tag parent: ${parentElement.tagName}`);
+            return '';
+        }
+
         return node.textContent || '';
     }
 
     // --- Case 2: Element Node ---
     if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node; // Alias for clarity
+        const element = node;
 
         // Skip noise tags entirely
         if (this.noiseTags.has(element.tagName)) {
@@ -139,39 +180,45 @@ class GeneralExtractorStrategy extends BaseExtractor {
             return '';
         }
 
-        // Recursively process child nodes
         let visibleText = '';
+
         // Handle Shadow DOM if present and open
         if (element.shadowRoot && element.shadowRoot.mode === 'open') {
             this.logger.debug(`Traversing open Shadow DOM for: ${element.tagName}`);
             for (const childNode of element.shadowRoot.childNodes) {
-                visibleText += this._extractVisibleText(childNode);
+                const childText = this._extractVisibleText(childNode);
+                if (childText) {
+                    visibleText += childText;
+                }
             }
         } else {
             // Traverse regular children
             for (const childNode of element.childNodes) {
-                visibleText += this._extractVisibleText(childNode);
+                const childText = this._extractVisibleText(childNode);
+                if (childText) {
+                    visibleText += childText;
+                }
             }
         }
 
-        // Add a space after block-level elements to simulate paragraph breaks better
-        // This helps _moderateCleanText separate text from different blocks.
+        // Add spacing for block elements if needed
         try {
-            const displayStyle = window.getComputedStyle(element).display;
-            if (displayStyle === 'block' || displayStyle === 'list-item' || displayStyle.includes('table')) {
-                 // Append space only if visibleText isn't empty and doesn't end with space
-                 if (visibleText.length > 0 && !/\s$/.test(visibleText)) {
-                     visibleText += ' ';
-                 }
+            const style = window.getComputedStyle(element);
+            const display = style.display;
+            const isBlock = display === 'block' || display === 'list-item' || display.includes('table');
+            
+            if (isBlock && visibleText && !/\s$/.test(visibleText)) {
+                visibleText += ' ';
+                this.logger.debug(`Added spacing after block element: ${element.tagName}`);
             }
-        } catch(e) { /* ignore errors getting style here */ }
-
+        } catch (e) {
+            this.logger.debug(`Could not check display style for ${element.tagName}: ${e.message}`);
+        }
 
         return visibleText;
     }
 
     // --- Case 3: Other Node Types ---
-    // Ignore comments, processing instructions, etc.
     return '';
   }
 
@@ -227,33 +274,57 @@ class GeneralExtractorStrategy extends BaseExtractor {
         // *** Extract content using DOM traversal for VISIBLE elements ***
         this.logger.info('No selection, extracting visible content using DOM traversal.');
         content = ''; // Initialize content variable
+        
+        // Primary extraction attempt with enhanced DOM traversal
         try {
-          // *** Extract text only from visible elements starting from body ***
           const rawVisibleText = this._extractVisibleText(document.body);
-
-          // *** Apply moderate cleaning ***
           content = this._moderateCleanText(rawVisibleText);
-          this.logger.info(`DOM traversal extracted and moderately cleaned ${content.length} characters.`);
-
+          
+          if (!content.trim()) {
+            throw new Error('DOM traversal returned empty content');
+          }
+          
+          this.logger.info(`Successfully extracted ${content.length} characters using DOM traversal.`);
+          
         } catch (domError) {
           this.logger.error('Error during DOM traversal for visible text:', domError);
-          content = 'Error extracting visible content using DOM traversal: ' + domError.message;
-          // Fallback to basic text extraction on error
+          
+          // Construct error message
+          content = `Error extracting visible content: ${domError.message}`;
+          
+          // First fallback: Try document.body.textContent
           try {
-            this.logger.warn('Attempting fallback to document.body.textContent...');
-            let bodyText = document.body.textContent || '';
-            // Append to existing error message or replace if empty
-            let fallbackContent = this._moderateCleanText(bodyText);
-            if (fallbackContent) {
-                 content += (content ? ' ' : '') + ` [Fallback content: ${fallbackContent}]`;
-                 this.logger.warn(`Fallback (all text) extracted and cleaned ${fallbackContent.length} characters after DOM traversal error.`);
+            this.logger.warn('Attempting first fallback to document.body.textContent');
+            const fallbackText = document.body.textContent || '';
+            const cleanedFallback = this._moderateCleanText(fallbackText);
+            
+            if (cleanedFallback) {
+              content += ` [Fallback content: ${cleanedFallback}]`;
+              this.logger.warn(`First fallback extracted ${cleanedFallback.length} characters`);
             } else {
-                 content += ' Fallback extraction failed to get text.';
-                 this.logger.warn('Fallback extraction yielded no text content.');
+              throw new Error('First fallback returned empty content');
             }
-          } catch (fallbackError) {
-            this.logger.error('Fallback text extraction failed after DOM traversal error:', fallbackError);
-            content = 'Content extraction failed completely after DOM traversal error and fallback attempt.';
+            
+          } catch (fallbackError1) {
+            this.logger.error('First fallback failed:', fallbackError1);
+            
+            // Second fallback: Try document.body.innerText
+            try {
+              this.logger.warn('Attempting second fallback to document.body.innerText');
+              const innerText = document.body.innerText || '';
+              const cleanedInnerText = this._moderateCleanText(innerText);
+              
+              if (cleanedInnerText) {
+                content += ` [InnerText fallback: ${cleanedInnerText}]`;
+                this.logger.warn(`Second fallback extracted ${cleanedInnerText.length} characters`);
+              } else {
+                throw new Error('Second fallback returned empty content');
+              }
+              
+            } catch (fallbackError2) {
+              this.logger.error('Second fallback failed:', fallbackError2);
+              content += ' All fallback attempts failed.';
+            }
           }
         }
       }
