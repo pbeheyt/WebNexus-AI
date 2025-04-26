@@ -118,6 +118,16 @@
 
 /* Utility classes */
 @layer utilities {
+  /* Define the CSS variable for the general icon fill color */
+  :root {
+    --icon-general-fill-color: #6B7280; /* Default gray for light mode */
+  }
+
+  /* Override the variable for dark mode */
+  .dark {
+    --icon-general-fill-color: #FFFFFF; /* White for dark mode */
+  }
+
   .focus-primary {
     @apply focus:ring-2 focus:ring-primary focus:ring-opacity-50 focus:border-primary focus:outline-none;
   }
