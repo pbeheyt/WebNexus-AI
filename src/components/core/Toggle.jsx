@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Toggle switch component with properly scaled circle that adapts to Tailwind classes.
+ * Toggle switch component with a properly positioned circle.
  *
  * @param {Object} props - Component props
  * @param {boolean} [props.checked=false] - Whether toggle is checked
@@ -40,12 +40,12 @@ export function Toggle({
       <span
         className="absolute bg-white rounded-full transition-transform duration-200 ease-in-out"
         style={{
-          top: '10%',
-          left: '4%',
-          width: '42%',
-          height: '80%',
-          aspectRatio: '1',
-          transform: checked ? 'translateX(120%)' : 'translateX(0)'
+          height: '70%',
+          aspectRatio: '1/1',
+          width: 'auto',
+          top: '15%',
+          left: '10%',
+          transform: checked ? 'translateX(130%)' : 'translateX(0)'
         }}
       />
     </div>
