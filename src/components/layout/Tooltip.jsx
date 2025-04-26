@@ -1,28 +1,52 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 /**
- * Tooltip component for displaying messages.
+ * Tooltip component for displaying messages with configurable delay.
  * @param {boolean} show - Whether to show the tooltip.
  * @param {React.ReactNode} message - Tooltip content (string or JSX).
  * @param {string} [position='top'] - Position of the tooltip.
  * @param {number} [offset=8] - Offset from the target.
  * @param {string|number} [width='auto'] - Width of the tooltip.
- * @param {number} [delay=0] - Delay before showing.
+ * @param {number} [delay=500] - Delay in ms before showing tooltip (default: 500ms).
  * @param {object} targetRef - Reference to the target element.
  */
-export function Tooltip({ show, message, position = 'top', offset = 8, width = 'auto', delay = 0, targetRef }) {
-const [isVisible, setIsVisible] = useState(false);
+export function Tooltip({ 
+  show, 
+  message, 
+  position = 'top', 
+  offset = 8, 
+  width = 'auto', 
+  delay = 500, // Default delay of 500ms
+  targetRef 
+}) {
+  const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef(null);
   const [tooltipStyle, setTooltipStyle] = useState({});
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
-    let timeout;
+    // Clear previous timeout if exists
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     if (show) {
-      timeout = setTimeout(() => setIsVisible(true), delay);
+      // Set timeout for the specified delay
+      timeoutRef.current = setTimeout(() => {
+        setIsVisible(true);
+      }, delay);
     } else {
+      // Hide immediately when show becomes false
       setIsVisible(false);
     }
-    return () => clearTimeout(timeout);
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [show, delay]);
 
   useEffect(() => {
@@ -45,14 +69,13 @@ const [isVisible, setIsVisible] = useState(false);
           break;
         case 'left':
           top = rect.top + rect.height / 2 - tooltipHeight / 2;
-          left = rect.left - offset;
+          left = rect.left - offset - tooltipWidth;
           break;
         case 'right':
           top = rect.top + rect.height / 2 - tooltipHeight / 2;
-          left = rect.right + offset - tooltipWidth;
+          left = rect.right + offset;
           break;
         default:
-          // Default to bottom positioning
           top = rect.bottom + offset;
           left = rect.left + rect.width / 2 - tooltipWidth / 2;
           break;
@@ -60,18 +83,14 @@ const [isVisible, setIsVisible] = useState(false);
 
       // Adjust for viewport overflow
       if (top < 0) {
-        // Overflow at the top
         top = rect.bottom + offset;
       } else if (top + tooltipHeight > window.innerHeight) {
-        // Overflow at the bottom
         top = rect.top - offset - tooltipHeight;
       }
 
       if (left < 0) {
-        // Overflow to the left
         left = 0;
       } else if (left + tooltipWidth > window.innerWidth) {
-        // Overflow to the right
         left = window.innerWidth - tooltipWidth;
       }
 
@@ -79,7 +98,7 @@ const [isVisible, setIsVisible] = useState(false);
     }
   }, [isVisible, position, offset, targetRef]);
 
-  // First rendering with opacity 0 to get dimensions
+  // Don't render anything if not visible
   if (!isVisible) {
     return null;
   }
