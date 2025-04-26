@@ -1,16 +1,16 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
-import React, { useState, memo, forwardRef, useRef, useEffect } from 'react';
+import React, { useState, memo, forwardRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
 import EnhancedCodeBlock from './EnhancedCodeBlock';
 import MathFormulaBlock from './MathFormulaBlock';
-import { copyToClipboard as copyUtil } from './utils/clipboard';
+import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 import logger from '../../../shared/logger';
-import { TextArea, Button, IconButton, EditIcon, RerunIcon, CopyIcon, CheckIcon, XMarkIcon, PlatformIcon } from '../../../components';
+import { TextArea, Button, IconButton, EditIcon, RerunIcon, PlatformIcon } from '../../../components';
 import { useSidebarChat } from '../../contexts/SidebarChatContext';
 
 // Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
@@ -109,29 +109,8 @@ export const MessageBubble = memo(forwardRef(({
     className = '',
     style = {}
 }, ref) => {
-    const copyButtonRef = useRef(null);
-    const resetTimeoutRef = useRef(null);
-    const [copyStatus, setCopyStatus] = useState('idle');
     const { rerunAssistantMessage, isProcessing, isCanceling } = useSidebarChat();
-
-    const handleCopy = async () => {
-        if (!content) return; // Only copy if content exists
-        try {
-            if (resetTimeoutRef.current) {
-                clearTimeout(resetTimeoutRef.current);
-                resetTimeoutRef.current = null;
-            }
-            await copyUtil(content);
-            setCopyStatus('copied');
-        } catch (error) {
-            if (resetTimeoutRef.current) {
-                clearTimeout(resetTimeoutRef.current);
-                resetTimeoutRef.current = null;
-            }
-            logger.sidebar.error('Failed to copy message text: ', error);
-            setCopyStatus('error');
-        }
-    };
+    const { copyState, handleCopy, IconComponent, iconClassName, disabled } = useCopyToClipboard(content);
 
     // For assistant rerun
     const handleRerunAssistant = () => {
@@ -283,44 +262,9 @@ export const MessageBubble = memo(forwardRef(({
                             className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                             aria-label="Copy message"
                             title="Copy message"
-                            ref={copyButtonRef}
-                            icon={
-                                copyStatus === 'copied' ? CheckIcon :
-                                    copyStatus === 'error' ? XMarkIcon :
-                                        CopyIcon // Default idle state
-                            }
-                            iconClassName={`w-4 h-4 select-none ${copyStatus === 'copied' ? 'text-green-600 dark:text-green-400' :
-                                copyStatus === 'error' ? 'text-red-500 dark:text-red-400' :
-                                    '' // Default color inherited from button style
-                                }`}
-                            onMouseEnter={() => {
-                                if (resetTimeoutRef.current) {
-                                    clearTimeout(resetTimeoutRef.current);
-                                    resetTimeoutRef.current = null;
-                                }
-                            }}
-                            onFocus={() => {
-                                if (resetTimeoutRef.current) {
-                                    clearTimeout(resetTimeoutRef.current);
-                                    resetTimeoutRef.current = null;
-                                }
-                            }}
-                            onMouseLeave={() => {
-                                if (copyStatus === 'copied' || copyStatus === 'error') {
-                                    resetTimeoutRef.current = setTimeout(() => {
-                                        setCopyStatus('idle');
-                                        resetTimeoutRef.current = null;
-                                    }, 500);
-                                }
-                            }}
-                            onBlur={() => {
-                                if (copyStatus === 'copied' || copyStatus === 'error') {
-                                    resetTimeoutRef.current = setTimeout(() => {
-                                        setCopyStatus('idle');
-                                        resetTimeoutRef.current = null;
-                                    }, 500);
-                                }
-                            }}
+                            icon={IconComponent}
+                            iconClassName={`w-4 h-4 select-none ${iconClassName}`}
+                            disabled={disabled}
                         />
                     </div>
                 )}
@@ -330,6 +274,7 @@ export const MessageBubble = memo(forwardRef(({
 
     // Assistant Message Rendering
     if (role === MESSAGE_ROLES.ASSISTANT) {
+        const { copyState: assistantCopyState, handleCopy: handleAssistantCopy, IconComponent: AssistantIconComponent, iconClassName: assistantIconClassName, disabled: assistantCopyDisabled } = useCopyToClipboard(content);
 
         // --- Preprocessing Step ---
         const mathMap = new Map();
@@ -471,14 +416,6 @@ export const MessageBubble = memo(forwardRef(({
         };
         // --- End Component Overrides ---
 
-        // Add cleanup effect for timeout ref
-        useEffect(() => {
-            return () => {
-                if (resetTimeoutRef.current) {
-                    clearTimeout(resetTimeoutRef.current);
-                }
-            };
-        }, []);
 
         return (
             <div
@@ -534,49 +471,13 @@ export const MessageBubble = memo(forwardRef(({
                                 />
                                 {/* New Copy IconButton */}
                                 <IconButton
-                                    onClick={handleCopy}
+                                    onClick={handleAssistantCopy}
                                     className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     aria-label="Copy to clipboard"
                                     title="Copy to clipboard"
-                                    ref={copyButtonRef}
-                                    disabled={isStreaming}
-                                    icon={
-                                        copyStatus === 'copied' ? CheckIcon :
-                                            copyStatus === 'error' ? XMarkIcon :
-                                                CopyIcon // Default idle state
-                                    }
-                                    iconClassName={`w-4 h-4 select-none ${copyStatus === 'copied' ? 'text-green-600 dark:text-green-400' :
-                                        copyStatus === 'error' ? 'text-red-500 dark:text-red-400' :
-                                            '' // Default color inherited from button style
-                                        }`}
-                                    onMouseEnter={() => {
-                                        if (resetTimeoutRef.current) {
-                                            clearTimeout(resetTimeoutRef.current);
-                                            resetTimeoutRef.current = null;
-                                        }
-                                    }}
-                                    onFocus={() => {
-                                        if (resetTimeoutRef.current) {
-                                            clearTimeout(resetTimeoutRef.current);
-                                            resetTimeoutRef.current = null;
-                                        }
-                                    }}
-                                    onMouseLeave={() => {
-                                        if (copyStatus === 'copied' || copyStatus === 'error') {
-                                            resetTimeoutRef.current = setTimeout(() => {
-                                                setCopyStatus('idle');
-                                                resetTimeoutRef.current = null;
-                                            }, 500);
-                                        }
-                                    }}
-                                    onBlur={() => {
-                                        if (copyStatus === 'copied' || copyStatus === 'error') {
-                                            resetTimeoutRef.current = setTimeout(() => {
-                                                setCopyStatus('idle');
-                                                resetTimeoutRef.current = null;
-                                            }, 500);
-                                        }
-                                    }}
+                                    icon={AssistantIconComponent}
+                                    iconClassName={`w-4 h-4 select-none ${assistantIconClassName}`}
+                                    disabled={isStreaming || assistantCopyDisabled}
                                 />
                             </>
                         )}
