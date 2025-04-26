@@ -226,7 +226,7 @@ export function Popup() {
               <>
                 {/* Container for Content Type, Toggle, and Tooltip Trigger */}
                 <div
-                  className={`flex items-center gap-1 w-full cursor-default`} // gap-1 provides space between icon and label
+                  className={`flex items-center gap-1 w-full cursor-default`}
                   ref={includeContextRef} // Ref for tooltip target
                   onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
                   onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
@@ -243,7 +243,7 @@ export function Popup() {
                         const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : '';
                         return modifiedIconSvg ? (
                           <span
-                            className="mr-1 flex-shrink-0 w-4 h-4 cursor-default" // mr-1 adds space before label
+                            className="mr-1 flex-shrink-0 w-4 h-4 cursor-default"
                             dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
                           />
                         ) : null;
@@ -252,13 +252,18 @@ export function Popup() {
                       {/* Label */}
                       <span className="text-xs font-medium truncate select-none cursor-default">{contentTypeLabel}</span>
 
-                      {/* Toggle (directly next to label) */}
+                      {/* Toggle */}
                       <Toggle
                         id="include-context-toggle"
                         checked={includeContext}
-                        onChange={(newCheckedState) => { if (!isToggleDisabled) setIncludeContext(newCheckedState); }}
-                        disabled={isToggleDisabled} // Use defined disabled state
-                        className='w-8 h-4 ml-2' // Added ml-2 for spacing after the label
+                        onChange={(newCheckedState) => { 
+                          if (!isToggleDisabled) {
+                            setIncludeContext(newCheckedState);
+                            updateStatus(`Content inclusion ${newCheckedState ? 'enabled' : 'disabled'}`);
+                          }
+                        }}
+                        disabled={isToggleDisabled}
+                        className='w-8 h-4 ml-2'
                       />
                     </>
                   ) : (

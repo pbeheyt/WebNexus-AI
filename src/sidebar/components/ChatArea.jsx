@@ -435,60 +435,47 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                      <div className="flex flex-col items-center py-3 w-full">
                          {isPageInjectable ? (
                              <>
-                                 {getContentTypeIconSvg(contentType) && (
-                                     <div className="mb-3">
-                                         <div
-                                             className="inline-flex items-center px-4 py-2 rounded-full shadow-sm bg-gray-100 dark:bg-gray-800 text-theme-primary dark:text-theme-primary-dark"
-                                             aria-label={`Current content type: ${getContentTypeName(contentType)}`}
-                                         >
-                                             <div
-                                                 className="mr-3 flex-shrink-0 w-5 h-5 select-none"
-                                                 dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
-                                                 aria-hidden="true"
-                                             />
-                                             <span className="text-sm font-medium select-none">
-                                                 {getContentTypeName(contentType)}
-                                             </span>
-                                         </div>
-                                     </div>
-                                 )}
-                                 <div
-                                     className="flex items-center gap-3 text-xs text-theme-secondary cursor-default select-none"
-                                     ref={includeToggleRef}
-                                     onMouseEnter={() => setIsIncludeTooltipVisible(true)}
-                                     onMouseLeave={() => setIsIncludeTooltipVisible(false)}
-                                     onFocus={() => setIsIncludeTooltipVisible(true)}
-                                     onBlur={() => setIsIncludeTooltipVisible(false)}
-                                     tabIndex={0}
-                                     aria-describedby="include-context-tooltip-sidebar"
-                                 >
-                                     <label
-                                         htmlFor="content-extract-toggle"
-                                         className={`select-none cursor-default`}
-                                     >Include</label>
-                                     <Toggle
-                                         id="content-extract-toggle"
-                                         checked={isContentExtractionEnabled}
-                                         onChange={(newCheckedState) => { if (hasAnyPlatformCredentials) setIsContentExtractionEnabled(newCheckedState); }}
-                                         disabled={!hasAnyPlatformCredentials}
-                                         className='w-8 h-4'
-                                     />
-                                 </div>
-                                 {/* Render Tooltip */}
-                                 <Tooltip
-                                     show={isIncludeTooltipVisible}
-                                     targetRef={includeToggleRef}
-                                     message="Send content along with your prompt."
-                                     position="top"
-                                     id="include-context-tooltip-sidebar"
-                                 />
-                             </>
-                         ) : (
-                             <div className="mb-2">
-                                 <span className="text-xs text-theme-secondary select-none">
-                                     This page content cannot be extracted.
-                                 </span>
-                             </div>
+                                <div
+                                    className="flex items-center gap-1 text-xs text-theme-secondary cursor-default select-none"
+                                    ref={includeToggleRef}
+                                    onMouseEnter={() => setIsIncludeTooltipVisible(true)}
+                                    onMouseLeave={() => setIsIncludeTooltipVisible(false)}
+                                    onFocus={() => setIsIncludeTooltipVisible(true)}
+                                    onBlur={() => setIsIncludeTooltipVisible(false)}
+                                    tabIndex={0}
+                                    aria-describedby="include-context-tooltip-sidebar"
+                                >
+                                    <div
+                                        className="mr-1 flex-shrink-0 w-5 h-5 select-none"
+                                        dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
+                                        aria-hidden="true"
+                                    />
+                                    <span className="text-sm font-medium select-none">
+                                        {getContentTypeName(contentType)}
+                                    </span>
+                                    <Toggle
+                                        id="content-extract-toggle"
+                                        checked={isContentExtractionEnabled}
+                                        onChange={(newCheckedState) => { if (hasAnyPlatformCredentials) setIsContentExtractionEnabled(newCheckedState); }}
+                                        disabled={!hasAnyPlatformCredentials}
+                                        className='w-10 h-5 ml-2'
+                                    />
+                                </div>
+                                {/* Render Tooltip */}
+                                <Tooltip
+                                    show={isIncludeTooltipVisible}
+                                    targetRef={includeToggleRef}
+                                    message="Send content along with your prompt."
+                                    position="top"
+                                    id="include-context-tooltip-sidebar"
+                                />
+                            </>
+                        ) : (
+                            <div className="mb-2">
+                                <span className="text-xs text-theme-secondary select-none">
+                                    This page content cannot be extracted.
+                                </span>
+                            </div>
                          )}
                      </div>
                  </div>
