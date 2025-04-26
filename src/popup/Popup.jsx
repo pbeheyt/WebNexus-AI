@@ -252,15 +252,15 @@ export function Popup() {
       </div>
 
       {/* Unified Input */}
-      <div className="mt-5">
+      <div className="mt-4">
         {/* Container for badge/info/toggle OR non-injectable message */}
-        <div className="flex justify-between items-center mb-1.5 px-3">
+        <div className="flex justify-between items-center mb-2 px-3">
           {!contentLoading && (
             isInjectable ? (
               <>
                 {/* Container for Content Type, Toggle, and Tooltip Trigger */}
                 <div
-                  className={`flex items-center gap-1 w-full cursor-default`}
+                  className={`flex items-center gap-1 w-full mt-1 cursor-default`}
                   ref={includeContextRef} // Ref for tooltip target
                   onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
                   onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
