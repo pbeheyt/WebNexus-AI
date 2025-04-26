@@ -478,7 +478,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                  <Tooltip
                                      show={isIncludeTooltipVisible}
                                      targetRef={includeToggleRef}
-                                     message="Send page content along with your prompt."
+                                     message="Send content along with your prompt."
                                      position="top"
                                      id="include-context-tooltip-sidebar"
                                  /> {/* Add Tooltip */}

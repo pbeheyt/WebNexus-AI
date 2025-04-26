@@ -228,13 +228,6 @@ export function Popup() {
                 {/* Modify Container Div */}
                 <div
                   className={`flex items-center gap-1 w-full cursor-default`} // Append dynamic classes
-                  ref={includeContextRef}
-                  onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
-                  onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
-                  onFocus={() => setIsIncludeContextTooltipVisible(true)}
-                  onBlur={() => setIsIncludeContextTooltipVisible(false)}
-                  tabIndex={0}
-                  aria-describedby="include-context-tooltip"
                 >
                   {contentTypeLabel ? (
                     <>
@@ -255,14 +248,26 @@ export function Popup() {
 
                       {/* Include Text and Toggle in same font/style */}
                       <span className="text-xs font-medium select-none ml-2 cursor-default">-</span>
-                      <span className="text-xs font-medium select-none ml-2 cursor-default">Include</span>
-                      <Toggle
-                        id="include-context-toggle"
-                        checked={includeContext}
-                        onChange={(newCheckedState) => { if (!isToggleDisabled) setIncludeContext(newCheckedState); }}
-                        disabled={isToggleDisabled} // Use defined disabled state
-                        className='ml-1.5 w-8 h-4'
-                      />
+                      {/* New wrapper div for Include Text and Toggle */}
+                      <div
+                        className="flex items-center"
+                        ref={includeContextRef}
+                        onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
+                        onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
+                        onFocus={() => setIsIncludeContextTooltipVisible(true)}
+                        onBlur={() => setIsIncludeContextTooltipVisible(false)}
+                        tabIndex={0}
+                        aria-describedby="include-context-tooltip"
+                      >
+                        <span className="text-xs font-medium select-none ml-2 cursor-default">Include</span>
+                        <Toggle
+                          id="include-context-toggle"
+                          checked={includeContext}
+                          onChange={(newCheckedState) => { if (!isToggleDisabled) setIncludeContext(newCheckedState); }}
+                          disabled={isToggleDisabled} // Use defined disabled state
+                          className='w-8 h-4 ml-2'
+                        />
+                      </div>
                     </>
                   ) : (
                     <span className="text-xs text-theme-secondary select-none cursor-default">Detecting type...</span>
@@ -309,7 +314,7 @@ export function Popup() {
       <Tooltip
         show={isIncludeContextTooltipVisible}
         targetRef={includeContextRef}
-        message="Send page content along with your prompt."
+        message="Send content along with your prompt."
         position="top"
         id="include-context-tooltip"
       />
