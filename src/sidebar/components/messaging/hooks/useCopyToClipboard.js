@@ -4,7 +4,9 @@ import { CopyIcon, CheckIcon, XMarkIcon } from '../../../../components/index.js'
 
 export const useCopyToClipboard = (textToCopy) => {
   const [copyState, setCopyState] = useState('idle');
+  const [displayIconState, setDisplayIconState] = useState('idle');
   const timeoutRef = useRef(null);
+  const visualResetTimeoutRef = useRef(null);
 
   const handleCopy = useCallback(async () => {
     if (timeoutRef.current) {
@@ -14,20 +16,42 @@ export const useCopyToClipboard = (textToCopy) => {
     try {
       await copyToClipboard(textToCopy);
       setCopyState('copied');
+      setDisplayIconState('copied');
     } catch (error) {
       console.error('Failed to copy text:', error);
       setCopyState('error');
+      setDisplayIconState('error');
     }
 
     timeoutRef.current = setTimeout(() => {
       setCopyState('idle');
-    }, 1000);
+    }, 1500);
   }, [textToCopy]);
+
+  useEffect(() => {
+    if (copyState === 'idle') {
+      if (visualResetTimeoutRef.current) {
+        clearTimeout(visualResetTimeoutRef.current);
+      }
+      visualResetTimeoutRef.current = setTimeout(() => {
+        setDisplayIconState('idle');
+      }, 300);
+    }
+
+    return () => {
+      if (visualResetTimeoutRef.current) {
+        clearTimeout(visualResetTimeoutRef.current);
+      }
+    };
+  }, [copyState]);
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      if (visualResetTimeoutRef.current) {
+        clearTimeout(visualResetTimeoutRef.current);
       }
     };
   }, []);
@@ -35,10 +59,10 @@ export const useCopyToClipboard = (textToCopy) => {
   let IconComponent = CopyIcon;
   let iconClassName = '';
 
-  if (copyState === 'copied') {
+  if (displayIconState === 'copied') {
     IconComponent = CheckIcon;
     iconClassName = 'text-green-600 dark:text-green-400';
-  } else if (copyState === 'error') {
+  } else if (displayIconState === 'error') {
     IconComponent = XMarkIcon;
     iconClassName = 'text-red-500 dark:text-red-400';
   }
