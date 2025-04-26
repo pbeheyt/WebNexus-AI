@@ -453,7 +453,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                      </div>
                                  )}
                                  <div
-                                     className="flex items-center gap-3 text-xs text-theme-secondary cursor-pointer select-none" 
+                                     className="flex items-center gap-3 text-xs text-theme-secondary cursor-default select-none"
                                      ref={includeToggleRef}
                                      onMouseEnter={() => setIsIncludeTooltipVisible(true)}
                                      onMouseLeave={() => setIsIncludeTooltipVisible(false)}
@@ -461,12 +461,15 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                      onBlur={() => setIsIncludeTooltipVisible(false)}
                                      tabIndex={0}
                                      aria-describedby="include-context-tooltip-sidebar"
-                                     onClick={() => setIsContentExtractionEnabled(prev => !prev)}
                                  >
-                                     <label htmlFor="content-extract-toggle" className="cursor-pointer select-none">Include</label>
+                                     <label
+                                         htmlFor="content-extract-toggle"
+                                         className={`select-none cursor-default`}
+                                     >Include</label>
                                      <Toggle
                                          id="content-extract-toggle"
                                          checked={isContentExtractionEnabled}
+                                         onChange={(newCheckedState) => { if (hasAnyPlatformCredentials) setIsContentExtractionEnabled(newCheckedState); }}
                                          disabled={!hasAnyPlatformCredentials}
                                          className='w-8 h-4'
                                      />

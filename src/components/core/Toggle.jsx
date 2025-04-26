@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * Toggle switch component with properly scaled circle that adapts to Tailwind classes.
- * 
+ *
  * @param {Object} props - Component props
  * @param {boolean} [props.checked=false] - Whether toggle is checked
  * @param {Function} props.onChange - Change handler
@@ -19,8 +19,7 @@ export function Toggle({
   return (
     <div
       className={`relative inline-block ${className}`}
-      onClick={disabled ? undefined : (event) => { // Add event parameter
-        event.stopPropagation(); // Add this line
+      onClick={disabled ? undefined : () => {
         onChange(!checked);
       }}
       style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}

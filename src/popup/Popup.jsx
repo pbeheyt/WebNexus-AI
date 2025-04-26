@@ -1,7 +1,7 @@
 // src/popup/Popup.jsx
 import { useEffect, useState, useRef } from 'react';
 import { useStatus } from './contexts/StatusContext';
-import { usePopupPlatform } from '../contexts/platform'; 
+import { usePopupPlatform } from '../contexts/platform';
 import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip, SidebarIcon, Toggle } from '../components'; // Added Toggle
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
@@ -13,7 +13,7 @@ import { getContentTypeIconSvg } from '../shared/utils/icon-utils';
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading, isInjectable } = useContent();
-  const { selectedPlatformId, platforms } = usePopupPlatform(); 
+  const { selectedPlatformId, platforms } = usePopupPlatform();
   const {
     statusMessage,
     updateStatus,
@@ -47,12 +47,12 @@ export function Popup() {
   const tooltipMessage = (
     <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
       <p className="mb-1.5">
-        Extract this{' '}
-        <span className="font-medium">{contentTypeLabel || 'content'}</span>{' '}
+        Extract this
+        <span className="font-medium">{contentTypeLabel || 'content'}</span>
         and send it with your prompt to the selected AI platform.
       </p>
       <p>
-        Open the{' '}
+        Open the
         <span className="font-medium">Side Panel</span>
         <span dangerouslySetInnerHTML={{ __html: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/><line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/></svg>` }} />
         to have your AI conversation directly alongside the page.
@@ -135,7 +135,7 @@ export function Popup() {
   // Handler for UnifiedInput submission
   const handleProcessWithText = async (text) => {
     const combinedDisabled = !isSupported || contentLoading || isProcessingContent || isProcessing || (includeContext && !isInjectable);
-    
+
     if (combinedDisabled || !currentTab?.id || !text.trim()) {
       if (!isInjectable && includeContext) updateStatus('Cannot include context from this page.');
       else if (!isSupported) updateStatus('Error: Extension cannot access this page.');
@@ -146,9 +146,9 @@ export function Popup() {
 
     const promptContent = text.trim();
     setIsProcessing(true);
-    
-    const platformName = platforms.find(p => p.id === selectedPlatformId)?.name || selectedPlatformId; 
-    updateStatus(`Processing with ${platformName}...`, true); 
+
+    const platformName = platforms.find(p => p.id === selectedPlatformId)?.name || selectedPlatformId;
+    updateStatus(`Processing with ${platformName}...`, true);
 
     try {
       // Clear previous state
@@ -173,7 +173,7 @@ export function Popup() {
       // Check the result from the background script
       if (result && result.success) {
         // Close the popup ONLY if the background script confirmed success
-        window.close(); 
+        window.close();
       } else {
         // Background reported an error, display it
         updateStatus(`Error: ${result?.error || 'Processing failed'}`, false);
@@ -190,8 +190,8 @@ export function Popup() {
 
   return (
     <div className="min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme select-none cursor-default">
-      <AppHeader 
-        onClose={closePopup} 
+      <AppHeader
+        onClose={closePopup}
         className="py-2"
         showInfoButton={!contentLoading && isInjectable}
         infoButtonRef={infoButtonRef}
@@ -226,8 +226,8 @@ export function Popup() {
               <>
                 {/* Content Type with Include Toggle inline */}
                 {/* Modify Container Div */}
-                <div 
-                  className={`flex items-center gap-1 w-full ${isToggleDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`} // Append dynamic classes
+                <div
+                  className={`flex items-center gap-1 w-full cursor-default`} // Append dynamic classes
                   ref={includeContextRef}
                   onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
                   onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
@@ -235,11 +235,6 @@ export function Popup() {
                   onBlur={() => setIsIncludeContextTooltipVisible(false)}
                   tabIndex={0}
                   aria-describedby="include-context-tooltip"
-                  onClick={() => { // Add onClick handler
-                    if (!isToggleDisabled) {
-                      setIncludeContext(prev => !prev);
-                    }
-                  }}
                 >
                   {contentTypeLabel ? (
                     <>
@@ -249,40 +244,40 @@ export function Popup() {
                         const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : '';
                         return modifiedIconSvg ? (
                           <span
-                            className="mr-1 flex-shrink-0 w-4 h-4"
+                            className="mr-1 flex-shrink-0 w-4 h-4 cursor-default"
                             dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
                           />
                         ) : null;
                       })()}
-                      
+
                       {/* Label */}
-                      <span className="text-xs font-medium truncate select-none">{contentTypeLabel}</span>
-                      
+                      <span className="text-xs font-medium truncate select-none cursor-default">{contentTypeLabel}</span>
+
                       {/* Include Text and Toggle in same font/style */}
-                      <span className="text-xs font-medium select-none ml-2">-</span>
-                      <span className="text-xs font-medium select-none ml-2">Include</span>
+                      <span className="text-xs font-medium select-none ml-2 cursor-default">-</span>
+                      <span className="text-xs font-medium select-none ml-2 cursor-default">Include</span>
                       <Toggle
                         id="include-context-toggle"
                         checked={includeContext}
-                        onChange={() => {}} // Remove onChange handler here
+                        onChange={(newCheckedState) => { if (!isToggleDisabled) setIncludeContext(newCheckedState); }}
                         disabled={isToggleDisabled} // Use defined disabled state
                         className='ml-1.5 w-8 h-4'
                       />
                     </>
                   ) : (
-                    <span className="text-xs text-theme-secondary select-none">Detecting type...</span>
+                    <span className="text-xs text-theme-secondary select-none cursor-default">Detecting type...</span>
                   )}
                 </div>
               </>
             ) : (
               // Message for Non-Injectable Pages (Toggle is not shown here)
-              <div className="text-xs text-theme-secondary font-medium w-full text-left select-none">
+              <div className="text-xs text-theme-secondary font-medium w-full text-left select-none cursor-default">
                 Cannot extract from this page.
               </div>
             )
           )}
           {contentLoading && (
-             <div className="text-xs text-theme-secondary w-full text-left select-none">Loading...</div>
+             <div className="text-xs text-theme-secondary w-full text-left select-none cursor-default">Loading...</div>
           )}
         </div>
 
