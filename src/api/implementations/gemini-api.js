@@ -1,4 +1,3 @@
-// src/api/implementations/gemini-api.js
 const BaseApiService = require('../api-base');
 
 /**
@@ -14,8 +13,8 @@ class GeminiApiService extends BaseApiService {
     if (!model || !method) {
       throw new Error("Model and method are required to build Gemini endpoint.");
     }
-    const isExperimental = model.includes('-exp-');
-    const apiVersion = isExperimental ? 'v1beta' : 'v1';
+    const isPreviewOrExperimental = model.includes('-exp-') || model.includes('-preview-');
+    const apiVersion = isPreviewOrExperimental ? 'v1beta' : 'v1';
     this.logger.info(`[${this.platformId}] Using API version '${apiVersion}' for model '${model}'`);
     return baseTemplate
       .replace('{version}', apiVersion)
@@ -67,67 +66,43 @@ class GeminiApiService extends BaseApiService {
     };
   }
 
-  /**
-   * Parse a single line/chunk from the Gemini API stream.
-   * Handles potentially fragmented JSON objects/arrays within the stream.
-   * If a complete JSON structure is an array, iterates through its elements.
-   * Extracts the text from each part as an individual chunk.
-   * @override
-   * @protected
-   * @param {string} line - A single line string chunk received from the base class stream loop, OR an empty string to process the internal buffer.
-   * @returns {Object} Parsed result: { type: 'content', chunks: string[] } | { type: 'error', error: string } | { type: 'ignore' }.
-   *                   Returns 'ignore' if the buffer doesn't contain a complete JSON object yet.
-   */
   _parseStreamChunk(line) {
     if (!line || !line.startsWith('data: ')) {
-      // Ignore empty lines or lines not starting with 'data: '
-      // Also handles potential 'event:' lines if Gemini SSE uses them.
-      // Check for potential [DONE] signal if Gemini SSE uses it.
       if (line === 'data: [DONE]') {
-         // Update log call
          this.logger.info(`[${this.platformId}] SSE stream signal [DONE] received.`);
          return { type: 'done' };
       }
       return { type: 'ignore' };
     }
 
-    // Extract the JSON string part after 'data: '
-    const jsonString = line.substring(5).trim(); // Get content after 'data: '
+    const jsonString = line.substring(5).trim();
 
     if (!jsonString) {
-      return { type: 'ignore' }; // Ignore if data part is empty
+      return { type: 'ignore' };
     }
 
     try {
       const data = JSON.parse(jsonString);
 
-      // Extract text content - assuming the same structure as the previous JSON stream
-      // Check candidates -> content -> parts -> text
       const textChunk = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (textChunk && typeof textChunk === 'string') {
-        // Return the extracted text chunk
         return { type: 'content', chunk: textChunk };
       } else {
-        // If structure is valid but no text found, or if error field exists
         if (data?.error) {
             const errorMessage = data.error.message || JSON.stringify(data.error);
             this.logger.error(`[${this.platformId}] SSE stream returned an error: ${errorMessage}`, data.error);
             return { type: 'error', error: `API Error in stream: ${errorMessage}` };
         }
-        // Log other valid structures without text for debugging
         if (data?.candidates?.[0]?.finishReason) {
             this.logger.info(`[${this.platformId}] SSE stream finished with reason: ${data.candidates[0].finishReason}`);
-            // We might treat specific finish reasons differently later if needed.
-            // For now, ignore finish reason markers unless they contain an error.
         } else {
             this.logger.warn(`[${this.platformId}] Parsed SSE data, but no text chunk found or structure mismatch.`, data);
         }
-        return { type: 'ignore' }; // Ignore chunks without usable text content
+        return { type: 'ignore' };
       }
     } catch (parseError) {
       this.logger.error(`[${this.platformId}] Error parsing SSE JSON chunk:`, parseError, 'Raw JSON String:', jsonString);
-      // Return error type on JSON parsing failure
       return { type: 'error', error: `Error parsing stream data: ${parseError.message}` };
     }
   }
