@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
-import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils.js';
+import { getContentTypeIconSvg } from '../../../../shared/utils/content-icon-utils.js';
 import { CustomSelect } from '../../../../components/core/CustomSelect';
 
 const PromptList = ({

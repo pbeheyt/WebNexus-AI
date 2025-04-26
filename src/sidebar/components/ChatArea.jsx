@@ -10,7 +10,7 @@ import { Tooltip } from '../../components'; // Import Tooltip
 import { PlatformIcon } from '../../components/layout/PlatformIcon';
 import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
-import { getContentTypeIconSvg } from '../../shared/utils/icon-utils';
+import { getContentTypeIconSvg } from '../../shared/utils/content-icon-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import logger from '../../shared/logger';
 import {

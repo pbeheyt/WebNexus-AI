@@ -9,7 +9,7 @@ import { UnifiedInput } from '../components/input/UnifiedInput';
 import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
 import { robustSendMessage } from '../shared/utils/message-utils';
-import { getContentTypeIconSvg } from '../shared/utils/icon-utils';
+import { getContentTypeIconSvg } from '../shared/utils/content-icon-utils';
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading, isInjectable } = useContent();

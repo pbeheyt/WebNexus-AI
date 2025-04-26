@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
-import { getContentTypeIconSvg } from '../../../../shared/utils/icon-utils';
+import { getContentTypeIconSvg } from '../../../../shared/utils/content-icon-utils';
 
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();
