@@ -58,6 +58,14 @@ class GeminiApiService extends BaseApiService {
       formattedRequest.generationConfig.topP = params.topP;
     }
 
+    // Add thinkingMode to the request body
+    if ('thinkingMode' in params && params.thinkingMode) {
+      formattedRequest.thinkingMode = {
+        type: params.thinkingMode.type,
+        budget: params.thinkingMode.budgetTokens ? { tokens: params.thinkingMode.budgetTokens } : undefined
+      };
+    }
+
     return {
       url: url.toString(),
       method: 'POST',

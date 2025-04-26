@@ -21,28 +21,40 @@ class ClaudeApiService extends BaseApiService {
     const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
     this.logger.info(`[${this.platformId}] Building API request for model: ${params.model}`);
 
-    const requestPayload = {
+    let requestPayload = {
       model: params.model,
       max_tokens: params.maxTokens,
-      messages: [{ role: 'user', content: [{ type: "text", text: prompt }] }], // Start with current prompt
       stream: true
     };
 
-    // Apply optional parameters
-    if ('temperature' in params) {
-      requestPayload.temperature = params.temperature;
-    }
-    if ('topP' in params) {
-      requestPayload.top_p = params.topP;
-    }
-    if (params.systemPrompt) {
-      requestPayload.system = params.systemPrompt;
+    // Add thinking if applicable
+    if (params.useExtendedThinking && params.model.startsWith('claude-3-7-sonnet')) {
+      if (!params.thinkingBudgetTokens) {
+        throw new Error("thinkingBudgetTokens must be provided when useExtendedThinking is true");
+      }
+      requestPayload.thinking = {
+        budget_tokens: params.thinkingBudgetTokens
+      };
+    } else {
+      // Add temperature and top_p only if not using extended thinking
+      if ('temperature' in params) {
+        requestPayload.temperature = params.temperature;
+      }
+      if ('topP' in params) {
+        requestPayload.top_p = params.topP;
+      }
     }
 
-    // Prepend conversation history if available
+    // Set messages
     if (params.conversationHistory && params.conversationHistory.length > 0) {
-      // Use the helper to format history and add the current prompt correctly
       requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, prompt);
+    } else {
+      requestPayload.messages = [{ role: 'user', content: [{ type: "text", text: prompt }] }];
+    }
+
+    // Add system prompt if supported
+    if (params.systemPrompt) {
+      requestPayload.system = params.systemPrompt;
     }
 
     return {
