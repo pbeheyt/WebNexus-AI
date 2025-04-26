@@ -44,21 +44,53 @@ export function Popup() {
   // Define Disabled State
   const isToggleDisabled = !isInjectable || !isSupported || contentLoading || isProcessingContent || isProcessing; // Define Disabled State
 
-  const tooltipMessage = (
-    <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
-      <p className="mb-1.5">
-        Extract this{' '}
-        <span className="font-medium">{contentTypeLabel || 'content'}</span>
-        {' '}and send it with your prompt to the selected AI platform.
-      </p>
-      <p>
-        Open the{' '}
-        <span className="font-medium">Side Panel</span>
-        <span dangerouslySetInnerHTML={{ __html: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/><line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/></svg>` }} />
-        {' '}to have your AI conversation directly alongside the page.
-      </p>
-    </div>
-  );
+  // Dynamic tooltip message based on page state
+  const getTooltipMessage = () => {
+    if (!isSupported) {
+      return (
+        <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
+          <p>
+            This extension cannot access the current page.
+            You can still send your prompt to the selected AI platform.
+          </p>
+        </div>
+      );
+    } else if (!isInjectable) {
+      return (
+        <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
+          <p>
+            Content extraction is not supported for this page.
+            You can still send your prompt to the selected AI platform.
+          </p>
+          <p>
+            Open the{' '}
+            <span className="font-medium">Side Panel</span>
+            <span dangerouslySetInnerHTML={{ __html: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/><line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/></svg>` }} />
+            {' '}to have your AI conversation directly alongside the page.
+          </p>
+        </div>
+      );
+    } else {
+      return (
+        <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
+          <p className="mb-1.5">
+            Extract this{' '}
+            <span className="font-medium">{contentTypeLabel || 'content'}</span>
+            {' '}and send it with your prompt to the selected AI platform.
+          </p>
+          <p>
+            Open the{' '}
+            <span className="font-medium">Side Panel</span>
+            <span dangerouslySetInnerHTML={{ __html: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/><line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/></svg>` }} />
+            {' '}to have your AI conversation directly alongside the page.
+          </p>
+        </div>
+      );
+    }
+  };
+
+  // Get the appropriate tooltip message
+  const tooltipMessage = getTooltipMessage();
 
   // Listen for messages from background script
   useEffect(() => {
@@ -193,13 +225,15 @@ export function Popup() {
       <AppHeader
         onClose={closePopup}
         className="py-2"
-        showInfoButton={!contentLoading && isInjectable}
+        showInfoButton={true} // Always show the info button
         infoButtonRef={infoButtonRef}
         onInfoMouseEnter={() => setIsInfoVisible(true)}
         onInfoMouseLeave={() => setIsInfoVisible(false)}
         onInfoFocus={() => setIsInfoVisible(true)}
         onInfoBlur={() => setIsInfoVisible(false)}
-        infoButtonAriaLabel="More information about content extraction"
+        infoButtonAriaLabel={isInjectable 
+          ? "More information about content extraction" 
+          : "More information about using this extension"}
       >
         {/* Sidebar toggle button */}
         <button
@@ -273,8 +307,8 @@ export function Popup() {
               </>
             ) : (
               // Message for Non-Injectable Pages (Toggle is not shown here)
-              <div className="text-sm sm-theme-secondary font-medium w-full text-left select-none cursor-default">
-                Cannot extract from this page.
+              <div className="text-sm text-theme-secondary font-medium w-full text-left select-none cursor-default">
+                Cannot extract from this page
               </div>
             )
           )}
@@ -312,7 +346,9 @@ export function Popup() {
       <Tooltip
         show={isIncludeContextTooltipVisible}
         targetRef={includeContextRef}
-        message="Send content along with your prompt."
+        message={isInjectable 
+          ? "Send content along with your prompt." 
+          : "Content extraction not available for this page."}
         position="top"
         id="include-context-tooltip"
       />
