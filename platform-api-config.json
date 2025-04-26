@@ -92,7 +92,7 @@
       "models": [
         {
           "id": "gpt-4.1",
-          "description": "Flagship GPT model for complex tasks.",
+          "description": "Flagship model for complex tasks.",
           "maxTokens": 32768,
           "parameterStyle": "standard",
           "contextWindow": 1047576,
@@ -116,7 +116,7 @@
         },
         {
           "id": "gpt-4.1-nano",
-          "description": "Fastest, most cost-effective GPT-4.1 model.",
+          "description": "Fastest, most cost-effective model.",
           "maxTokens": 32768,
           "parameterStyle": "standard",
           "contextWindow": 1047576,
@@ -168,7 +168,7 @@
       "models": [
         {
           "id": "claude-3-7-sonnet-latest",
-          "description": "Most intelligent model, first hybrid reasoning model. Features deep thinking.",
+          "description": "Most intelligent model, first hybrid reasoning model.",
           "maxTokens": 8192,
           "parameterStyle": "standard",
           "contextWindow": 200000,
