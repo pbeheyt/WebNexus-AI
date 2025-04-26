@@ -180,17 +180,16 @@ const PlatformDetails = ({
         settingsChanged = true;
       }
 
-      // Only save and notify if changes were made
+      // Only save if changes were made
       if (settingsChanged) {
         await chrome.storage.sync.set({
           [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings
         });
-        onAdvancedSettingsUpdated(platform.id, modelId, {});
-        success('Advanced settings reset to defaults');
-      } else {
-         onAdvancedSettingsUpdated(platform.id, modelId, {});
-         success('Settings already at defaults');
       }
+      
+      // Always notify and show success message
+      onAdvancedSettingsUpdated(platform.id, modelId, {});
+      success('Advanced settings reset to defaults');
 
       return true;
     } catch (err) {

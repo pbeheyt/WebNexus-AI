@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, useNotification, SliderInput, Toggle } from '../../../../components';
+import { Button, useNotification, SliderInput, Toggle, IconButton, RefreshIcon } from '../../../../components';
 import { CustomSelect } from '../../../../components/core/CustomSelect';
 
 const AdvancedSettings = ({
@@ -14,6 +14,7 @@ const AdvancedSettings = ({
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [isAtDefaults, setIsAtDefaults] = useState(true);
+  const [isAnimatingReset, setIsAnimatingReset] = useState(false);
   const models = platform.apiConfig?.models || [];
 
   // Get model config for selected model
@@ -70,8 +71,6 @@ const AdvancedSettings = ({
     includeTemperature: settings.includeTemperature ?? true,
     includeTopP: settings.includeTopP ?? false, // Default to false
   });
-
-  console.log('Initial formValues:', formValues); // Log initial formValues
 
   // Original values reference for comparison
   const [originalValues, setOriginalValues] = useState({...formValues});
@@ -134,8 +133,6 @@ const AdvancedSettings = ({
       includeTopP: currentSettings.includeTopP ?? false,
     };
 
-    console.log('Updated formValues:', newFormValues); // Log updated formValues
-
     setFormValues(newFormValues);
     setOriginalValues(newFormValues);
     setHasChanges(false);
@@ -174,9 +171,6 @@ const AdvancedSettings = ({
     } else if (name === 'temperature' || name === 'topP') {
       const parsedValue = parseFloat(newValue);
       updatedValues[name] = isNaN(parsedValue) ? formValues[name] : parsedValue;
-      if (name === 'topP') {
-        console.log(`Top P value changed to:`, parsedValue); // Log topP value change
-      }
     } else if (name === 'systemPrompt') {
        updatedValues[name] = newValue;
     } else if (name === 'includeTemperature' || name === 'includeTopP') {
@@ -184,8 +178,6 @@ const AdvancedSettings = ({
     } else {
        updatedValues[name] = newValue;
     }
-
-    console.log(`Updated formValues:`, updatedValues); // Log updated formValues
 
     setFormValues(updatedValues);
     setHasChanges(checkForChanges(updatedValues, originalValues));
@@ -218,7 +210,6 @@ const AdvancedSettings = ({
         if (formValues.topP < minTopP || formValues.topP > maxTopP) {
           throw new Error(`Top P must be between ${minTopP} and ${maxTopP}`);
         }
-        console.log(`Top P value on submit:`, formValues.topP); // Log topP value on submit
       }
 
       // Create settings object including new toggles
@@ -258,6 +249,42 @@ const AdvancedSettings = ({
     }
   };
 
+  const handleResetClick = () => {
+    if (isAtDefaults) return; // Prevent action if disabled
+
+    setIsAnimatingReset(true); // Start animation
+
+    // Existing reset logic (copied from the old button's onClick)
+    const defaults = getDefaultSettings();
+    const currentModelConfig = models.find(m => m.id === selectedModelId);
+    const resetValues = {
+      maxTokens: defaults.maxTokens,
+      contextWindow: defaults.contextWindow,
+    };
+    if (currentModelConfig?.supportsTemperature !== false && 'temperature' in defaults) {
+      resetValues.temperature = defaults.temperature;
+      resetValues.includeTemperature = defaults.includeTemperature ?? true;
+    }
+    if (currentModelConfig?.supportsTopP === true && 'topP' in defaults) {
+      resetValues.topP = defaults.topP;
+      resetValues.includeTopP = defaults.includeTopP ?? false;
+    }
+    if (platform.apiConfig?.hasSystemPrompt !== false && 'systemPrompt' in defaults) {
+      resetValues.systemPrompt = defaults.systemPrompt;
+    }
+
+    setFormValues(resetValues);
+    setOriginalValues(resetValues); // Ensure original values are also reset
+    setHasChanges(false);
+    setIsAtDefaults(true);
+    onResetToDefaults(selectedModelId); // Call the prop function
+
+    // Stop animation after duration
+    setTimeout(() => {
+      setIsAnimatingReset(false);
+    }, 500); // Match duration in iconClassName
+  };
+
   const formatPrice = (price) => {
     return typeof price === 'number' ? price.toFixed(2) : price;
   };
@@ -267,42 +294,15 @@ const AdvancedSettings = ({
       <div className="flex justify-between items-center mb-6">
         <h3 className="section-title text-xl font-semibold text-theme-primary select-none">Advanced Settings</h3>
 
-        <Button
-          variant={isAtDefaults ? 'inactive' : 'danger'}
-          size="base"
+        <IconButton
+          icon={RefreshIcon}
+          iconClassName={`w-6 h-6 select-none transition-transform duration-500 ${isAnimatingReset ? 'rotate-180' : ''}`}
+          className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleResetClick}
           disabled={isAtDefaults}
-          onClick={() => {
-            const defaults = getDefaultSettings();
-            const currentModelConfig = models.find(m => m.id === selectedModelId);
-
-            const resetValues = {
-              maxTokens: defaults.maxTokens,
-              contextWindow: defaults.contextWindow,
-            };
-            if (currentModelConfig?.supportsTemperature !== false && 'temperature' in defaults) {
-              resetValues.temperature = defaults.temperature;
-              resetValues.includeTemperature = defaults.includeTemperature ?? true;
-            }
-            if (currentModelConfig?.supportsTopP === true && 'topP' in defaults) {
-              resetValues.topP = defaults.topP;
-              resetValues.includeTopP = defaults.includeTopP ?? false;
-            }
-            if (platform.apiConfig?.hasSystemPrompt !== false && 'systemPrompt' in defaults) {
-              resetValues.systemPrompt = defaults.systemPrompt;
-            }
-
-            console.log('Reset formValues:', resetValues); // Log reset formValues
-
-            setFormValues(resetValues);
-            setOriginalValues(resetValues);
-            setHasChanges(false);
-            setIsAtDefaults(true);
-            onResetToDefaults(selectedModelId);
-          }}
-          className="select-none"
-        >
-          Reset to Configuration Defaults
-        </Button>
+          ariaLabel="Reset settings to configuration defaults"
+          title="Reset settings to configuration defaults"
+        />
       </div>
 
       <div className="form-group mb-6">
