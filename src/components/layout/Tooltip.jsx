@@ -16,7 +16,7 @@ export function Tooltip({
   position = 'top', 
   offset = 8, 
   width = 'auto', 
-  delay = 1000, // Default delay of 500ms
+  delay = 750, // Default delay of 750ms
   targetRef 
 }) {
   const [isVisible, setIsVisible] = useState(false);
