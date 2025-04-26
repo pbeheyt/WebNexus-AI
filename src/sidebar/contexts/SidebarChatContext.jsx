@@ -559,13 +559,14 @@ export function SidebarChatProvider({ children }) {
     const assistantMessage = {
       id: assistantMessageId,
       role: MESSAGE_ROLES.ASSISTANT,
-      content: '',
+      content: '', // Empty initially, will be streamed
       model: selectedModel,
       platformIconUrl: selectedPlatform.iconUrl,
+      platformId: selectedPlatformId,
       timestamp: new Date().toISOString(),
       isStreaming: true,
-      inputTokens: 0,
-      outputTokens: 0
+      inputTokens: 0, // No input tokens for assistant messages
+      outputTokens: 0 // Will be updated when streaming completes
     };
 
     // Add placeholder AFTER setting truncated messages
@@ -649,13 +650,14 @@ export function SidebarChatProvider({ children }) {
     const assistantMessage = {
       id: assistantMessageId,
       role: MESSAGE_ROLES.ASSISTANT,
-      content: '',
+      content: '', // Empty initially, will be streamed
       model: selectedModel,
       platformIconUrl: selectedPlatform.iconUrl,
+      platformId: selectedPlatformId,
       timestamp: new Date().toISOString(),
       isStreaming: true,
-      inputTokens: 0,
-      outputTokens: 0
+      inputTokens: 0, // No input tokens for assistant messages
+      outputTokens: 0 // Will be updated when streaming completes
     };
 
     // Add placeholder AFTER setting truncated messages
@@ -741,6 +743,7 @@ export function SidebarChatProvider({ children }) {
         content: '',
         model: selectedModel,
         platformIconUrl: selectedPlatform.iconUrl,
+        platformId: selectedPlatformId,
         timestamp: new Date().toISOString(),
         isStreaming: true,
         inputTokens: 0,
