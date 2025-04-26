@@ -32,7 +32,7 @@ export function Popup() {
   const [includeContext, setIncludeContext] = useState(true);
   const [isIncludeContextTooltipVisible, setIsIncludeContextTooltipVisible] = useState(false);
   const infoButtonRef = useRef(null);
-  const includeContextRef = useRef(null);
+  const includeContextRef = useRef(null); // This ref will now point to the div containing label and toggle
 
   // Automatically disable includeContext for non-injectable pages
   useEffect(() => {
@@ -47,15 +47,15 @@ export function Popup() {
   const tooltipMessage = (
     <div className="text-xs text-theme-primary text-left w-full p-1.5 select-none">
       <p className="mb-1.5">
-        Extract this
+        Extract this{' '}
         <span className="font-medium">{contentTypeLabel || 'content'}</span>
-        and send it with your prompt to the selected AI platform.
+        {' '}and send it with your prompt to the selected AI platform.
       </p>
       <p>
-        Open the
+        Open the{' '}
         <span className="font-medium">Side Panel</span>
         <span dangerouslySetInnerHTML={{ __html: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/><line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/></svg>` }} />
-        to have your AI conversation directly alongside the page.
+        {' '}to have your AI conversation directly alongside the page.
       </p>
     </div>
   );
@@ -224,9 +224,16 @@ export function Popup() {
           {!contentLoading && (
             isInjectable ? (
               <>
-                {/* Content Type with Include Toggle inline */}
+                {/* Container for Content Type, Toggle, and Tooltip Trigger */}
                 <div
-                  className={`flex items-center gap-1 w-full cursor-default`} // Append dynamic classes
+                  className={`flex items-center gap-1 w-full cursor-default`} // gap-1 provides space between icon and label
+                  ref={includeContextRef} // Ref for tooltip target
+                  onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
+                  onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
+                  onFocus={() => setIsIncludeContextTooltipVisible(true)}
+                  onBlur={() => setIsIncludeContextTooltipVisible(false)}
+                  tabIndex={0} // Make it focusable for accessibility
+                  aria-describedby="include-context-tooltip"
                 >
                   {contentTypeLabel ? (
                     <>
@@ -236,7 +243,7 @@ export function Popup() {
                         const modifiedIconSvg = iconSvg ? iconSvg.replace('w-5 h-5', 'w-4 h-4') : '';
                         return modifiedIconSvg ? (
                           <span
-                            className="mr-1 flex-shrink-0 w-4 h-4 cursor-default"
+                            className="mr-1 flex-shrink-0 w-4 h-4 cursor-default" // mr-1 adds space before label
                             dangerouslySetInnerHTML={{ __html: modifiedIconSvg }}
                           />
                         ) : null;
@@ -245,28 +252,14 @@ export function Popup() {
                       {/* Label */}
                       <span className="text-xs font-medium truncate select-none cursor-default">{contentTypeLabel}</span>
 
-                      {/* Include Text and Toggle in same font/style */}
-                      <span className="text-xs font-medium select-none ml-2 cursor-default">-</span>
-                      {/* Wrapper div for Include Text and Toggle */}
-                      <div
-                        className="flex items-center"
-                        ref={includeContextRef}
-                        onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
-                        onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
-                        onFocus={() => setIsIncludeContextTooltipVisible(true)}
-                        onBlur={() => setIsIncludeContextTooltipVisible(false)}
-                        tabIndex={0}
-                        aria-describedby="include-context-tooltip"
-                      >
-                        <span className="text-xs font-medium select-none ml-2 cursor-default">Include</span>
-                        <Toggle
-                          id="include-context-toggle"
-                          checked={includeContext}
-                          onChange={(newCheckedState) => { if (!isToggleDisabled) setIncludeContext(newCheckedState); }}
-                          disabled={isToggleDisabled} // Use defined disabled state
-                          className='w-8 h-4 ml-2'
-                        />
-                      </div>
+                      {/* Toggle (directly next to label) */}
+                      <Toggle
+                        id="include-context-toggle"
+                        checked={includeContext}
+                        onChange={(newCheckedState) => { if (!isToggleDisabled) setIncludeContext(newCheckedState); }}
+                        disabled={isToggleDisabled} // Use defined disabled state
+                        className='w-8 h-4 ml-2' // Added ml-2 for spacing after the label
+                      />
                     </>
                   ) : (
                     <span className="text-xs text-theme-secondary select-none cursor-default">Detecting type...</span>
@@ -309,10 +302,10 @@ export function Popup() {
         position="bottom"
       />
 
-      {/* Tooltip for Include Context */}
+      {/* Tooltip for Include Context (Content Type Label + Toggle) */}
       <Tooltip
         show={isIncludeContextTooltipVisible}
-        targetRef={includeContextRef}
+        targetRef={includeContextRef} // Still targets the same ref, which now points to the parent div
         message="Send content along with your prompt."
         position="top"
         id="include-context-tooltip"

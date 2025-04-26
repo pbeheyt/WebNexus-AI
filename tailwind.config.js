@@ -70,7 +70,7 @@ module.exports = {
         // Light theme (default)
         '.bg-theme-primary': { backgroundColor: '#F8F8F8' },
         '.bg-theme-surface': { backgroundColor: '#FFFFFF' },
-        '.bg-theme-hover': { backgroundColor: '#F2F2F2' },
+        '.bg-theme-hover': { backgroundColor: '#E6E6E6' },
         '.bg-theme-active': { backgroundColor: 'rgba(255, 123, 0, 0.05)' },
 
         '.text-theme-primary': { color: '#333333' },
