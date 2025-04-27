@@ -53,17 +53,17 @@ export function Toast({
   };
   
   const positionClasses = {
-    'bottom-left': 'bottom-4 left-4 right-4 sm:right-auto sm:w-96',
-    'bottom-right': 'bottom-4 right-4 left-4 sm:left-auto sm:w-96',
-    'top-left': 'top-4 left-4 right-4 sm:right-auto sm:w-96',
-    'top-right': 'top-4 right-4 left-4 sm:left-auto sm:w-96',
-    'top-center': 'top-4 left-1/2 transform -translate-x-1/2 w-96',
-    'bottom-center': 'bottom-4 left-1/2 transform -translate-x-1/2 w-96'
+    'bottom-left': 'bottom-4 left-4',
+    'bottom-right': 'bottom-4 right-4',
+    'top-left': 'top-4 left-4',
+    'top-right': 'top-4 right-4',
+    'top-center': 'top-4 left-1/2 transform -translate-x-1/2',
+    'bottom-center': 'bottom-4 left-1/2 transform -translate-x-1/2'
   };
   
   return (
     <div 
-      className={`fixed p-3 bg-theme-surface border-l-4 ${typeClasses[notification?.type || type]} ${positionClasses[position]} rounded shadow-medium transform transition-all duration-300 z-50 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}
+      className={`fixed p-3 bg-theme-surface border-l-4 ${typeClasses[notification?.type || type]} ${positionClasses[position]} rounded shadow-medium transform transition-all duration-300 z-50 inline-block max-w-md ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}
     >
       <div className="flex justify-between items-center">
         <div>{notification?.message || message}</div>
