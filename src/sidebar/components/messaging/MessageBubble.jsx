@@ -104,7 +104,7 @@ export const MessageBubble = memo(forwardRef(({
     isStreaming = false,
     model = null,
     platformIconUrl = null,
-    platformId = null, // <-- Added platformId prop
+    platformId = null,
     metadata = {},
     className = '',
     style = {}
@@ -128,6 +128,21 @@ export const MessageBubble = memo(forwardRef(({
         }
     };
 
+    // Define System Message Component Overrides:
+    const systemMessageComponents = {
+      p: ({ node, children }) => <p classname="leading-relaxed text-sm">{children}</p>,
+      a: ({ node, children, ...props }) => (
+        <a
+          {...props} // Pass through href, etc.
+          target="_blank" // Open links in new tab
+          rel="noopener noreferrer" // Security best practice
+          className="text-red-700 dark:text-red-300 underline hover:text-red-800 dark:hover:text-red-200"
+        >
+          {children}
+        </a>
+      ),
+    };
+
     // System messages
     if (role === MESSAGE_ROLES.SYSTEM) {
         return (
@@ -138,13 +153,15 @@ export const MessageBubble = memo(forwardRef(({
                 className={`px-5 py-4 w-full ${className}`}
             >
                 <div // Intermediate container: Provides the red background around the text ONLY
-                    className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3 select-none"
+                    className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3"
                 >
-                    <div
-                        className="whitespace-pre-wrap break-words leading-relaxed text-sm"
-                    >
+                      <ReactMarkdown
+                        components={systemMessageComponents} // Use the specific overrides
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[]}
+                      >
                         {content}
-                    </div>
+                      </ReactMarkdown>
                 </div>
             </div>
         );
