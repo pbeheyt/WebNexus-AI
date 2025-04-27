@@ -130,7 +130,7 @@ export const MessageBubble = memo(forwardRef(({
 
     // Define System Message Component Overrides:
     const systemMessageComponents = {
-      p: ({ node, children }) => <p classname="leading-relaxed text-sm">{children}</p>,
+      p: ({ node, children }) => <p className="leading-relaxed text-sm">{children}</p>,
       a: ({ node, children, ...props }) => (
         <a
           {...props} // Pass through href, etc.
