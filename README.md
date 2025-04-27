@@ -1,58 +1,74 @@
-# AI Content Assistant
+# AI Insightr: Web Content Assistant
 
-AI Content Assistant enhances your browsing by integrating powerful AI capabilities directly into Chrome. Choose how you interact: use the **Sidebar** for direct API-driven chat about page content, or use the **Popup** to quickly send content to an AI platform's standard web interface.
+AI Insightr enhances your browsing by integrating powerful AI capabilities directly into Chrome. Interact with web pages, YouTube videos, PDFs, and Reddit posts using your favorite AI models. Choose your workflow:
+
+1.  **Side Panel (API Mode):** Chat directly with AI APIs (ChatGPT, Claude, Gemini, etc.) in a sidebar alongside your content. Requires API key configuration.
+2.  **Popup/Context Menu (Web UI Mode):** Quickly send content and prompts to the AI platforms' standard web interfaces. Requires website login, not API keys for interaction.
 
 ## Key Features
 
-*   **Two Ways to Interact:**
-    *   **Sidebar (Direct API Chat):** Open a persistent sidebar on any tab. Chat directly with AI models (like ChatGPT, Claude, Gemini, etc.) about the page's content. Responses are generated via the AI's official API and displayed *within the sidebar*. **Requires configuring API keys in Settings.**
-    *   **Popup (Web Interface Interaction):** Use the quick-action popup to select an AI platform. The extension extracts page content, opens the chosen platform's **website** in a new tab, and attempts to paste the content and your prompt into *that website's* chat interface. **Does not use API keys for the interaction itself.**
+*   **Dual Interaction Modes:**
+    *   **Side Panel (Direct API Chat):**
+        *   Persistent sidebar for direct API communication.
+        *   Requires API keys configured in **Settings > API Settings**.
+        *   Select specific AI Platforms and Models.
+        *   Maintains separate conversation history per tab.
+        *   Provides estimated token usage and API cost tracking (estimates may vary).
+        *   Supports system prompts for advanced control.
+        *   Toggle inclusion of page content for the first message.
+        *   Supports message editing and rerunning for conversation refinement.
+    *   **Popup & Context Menu (Web Interface Interaction):**
+        *   Uses the AI platform's **website** in a new tab.
+        *   Does **not** use API keys for the interaction itself (relies on website login).
+        *   **Popup:** Select platform, enter/select prompt, toggle context inclusion.
+        *   **Context Menu:** Right-click -> "Process in Web UI..." uses the default prompt for the content type.
+        *   Attempts to auto-fill content/prompt on the target website.
 *   **Multi-Platform Support:**
-    *   **Sidebar (API):** Integrates with APIs from Claude, ChatGPT, DeepSeek, Mistral, Gemini, and Grok.
-    *   **Popup (Web UI):** Supports sending content to the web interfaces of the same platforms.
-*   **Versatile Content Extraction:** Automatically extracts key information for AI processing from:
-    *   General Web Pages (main text, metadata)
-    *   YouTube Videos (transcripts, comments, metadata)
-    *   Reddit Posts (post content, comments, metadata)
-    *   PDF Documents (text content, metadata)
-*   **Interactive Sidebar Features (API Mode):**
-    *   Select specific AI platforms and models for API interactions.
-    *   Maintains separate conversation histories for each browser tab.
-    *   Provides estimated token usage and accumulated API cost tracking per tab.
-    *   Supports system prompts for advanced API control.
-*   **Custom Prompt Management:** Create, edit, and manage custom prompts for different content types or shared use across both Popup and Sidebar modes via the Settings page.
-*   **API Configuration (for Sidebar Mode):**
-    *   Manage API keys obtained from AI providers, stored in the browser's local storage. Includes validation checks.
-    *   Fine-tune API request parameters (temperature, max tokens, etc.) for sidebar interactions.
-*   **Theme Support:** Adapts to your system's Light or Dark mode.
-*   **Quick Access:** Use keyboard shortcuts or the right-click context menu to activate the popup or toggle the sidebar.
+    *   **Side Panel (via API):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
+    *   **Popup/Context Menu (via Web UI):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
+*   **Versatile Content Extraction:** Automatically extracts key information from:
+    *   General Web Pages (articles, blogs)
+    *   YouTube Videos (transcripts if available)
+    *   Reddit Posts (post content, comments)
+    *   PDF Documents (text content)
+*   **Custom Prompt Management:** Create, edit, delete, and set default prompts per content type in **Settings > Prompts**. Usable in both Sidebar and Popup.
+*   **API Configuration (for Side Panel):**
+    *   Manage API keys (stored locally). Includes validation check.
+    *   Fine-tune API parameters (temperature, max tokens, etc.) per model.
+*   **UI Customization:** Light/Dark themes and adjustable text sizes (Small/Base/Large).
+*   **Quick Access:**
+    *   **Context Menu:** Right-click page for Sidebar toggle or Web UI processing.
+    *   **Keyboard Shortcuts:** `Alt+I` (Popup), `Alt+U` (Default Web UI Process). *Configurable in Chrome settings.*
 
 ## Supported Platforms
 
-*   **Sidebar (via API):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
-    *   *Requires API key configuration in Settings for functionality.*
-*   **Popup (via Web Interface):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
-    *   *Opens the platform's website. API keys are not used for this interaction.*
+*   **Side Panel (via API):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
+    *   *Requires API key configuration in Settings.*
+*   **Popup/Context Menu (via Web Interface):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
+    *   *Opens the platform's website. Does not use API keys for interaction.*
 
 ## How to Use
 
-1.  **Installation:** Load the extension into Chrome (see Installation section below).
-2.  **Configure API Keys (Strongly Recommended for Sidebar):**
-    *   To use the **Sidebar chat feature**, you **must** configure API keys. Open the extension's **Settings** page (Right-click extension icon > Options, or via Popup).
-    *   Go to the **API Settings** tab. Select each AI platform you want to use *in the sidebar* and enter its API key. Save and validate the key (✓ indicates success).
-    *   You can skip this step if you only plan to use the Popup mode.
-3.  **Using the Sidebar (Direct API Chat):**
-    *   Toggle the sidebar using `Ctrl+Shift+Q` (or your shortcut) or the right-click context menu.
-    *   Select an AI Platform and Model from the dropdowns. **Only platforms with configured API keys will work here.**
-    *   Type your prompt about the current page content. The AI response appears directly **within the sidebar**, using the configured API key.
-    *   Token usage and cost estimates are tracked for these API calls.
-4.  **Using the Popup (Web Interface Interaction):**
-    *   Click the extension icon in your browser toolbar.
+1.  **Installation:** Load the extension into Chrome (see below). Pin the icon.
+2.  **Configure API Keys (Required for Side Panel):**
+    *   Open **Settings** (Right-click extension icon > Options, or via Popup/Sidebar).
+    *   Go to **API Settings**. Select each platform and enter its API key. Save & Validate.
+    *   *Skip if only using Popup/Context Menu mode.*
+3.  **Using the Side Panel (API Chat):**
+    *   Toggle sidebar via Popup icon or right-click context menu.
+    *   Select an AI Platform and Model (only platforms with valid keys work).
+    *   Type your prompt or select one using the 'P' button. Toggle content inclusion if needed.
+    *   Chat directly; responses appear in the sidebar.
+4.  **Using the Popup (Web UI):**
+    *   Click the extension icon.
     *   Select an AI platform.
-    *   Enter your prompt.
-    *   Click the send button.
-    *   The extension opens the chosen AI platform's **website** in a new tab and attempts to paste the page content and your prompt into **that website's input field.** No API keys are used for this process.
-5.  **Managing Prompts:** Configure custom prompts in **Settings > Prompts** for use in either the Sidebar or Popup.
+    *   Enter/select prompt, toggle context via the switch.
+    *   Click send (arrow button).
+    *   The platform's **website** opens; content/prompt are auto-filled (if possible).
+5.  **Using the Context Menu (Web UI):**
+    *   Right-click on a page -> "Process in Web UI (Default Prompt)".
+    *   Opens preferred platform website with content + default prompt auto-filled (if possible).
+6.  **Managing Prompts:** Configure custom prompts in **Settings > Prompts**.
 
 ## Installation
 
@@ -66,18 +82,20 @@ AI Content Assistant enhances your browsing by integrating powerful AI capabilit
 
 1.  Requires Node.js and npm.
 2.  Install dependencies: `npm install`
-3.  Build: `npm run build`
-4.  Watch for changes: `npm run watch`
-5.  Load/reload the extension in Chrome as described above.
+3.  Build for development (with source maps): `npm run build:dev`
+4.  Watch for changes and rebuild: `npm run watch`
+5.  Build for production (minified, no source maps): `npm run build`
+6.  Load/reload the extension in Chrome using the `dist` directory after building.
 
 ## Permissions Required
 
-*   **`activeTab` & `scripting`:** To read and interact with the current tab's content.
-*   **`storage`:** To save settings, API keys (in local storage), prompts, chat history, etc.
-*   **`tabs`:** To get tab info (URLs), create tabs (for Popup mode), and manage the sidebar.
-*   **`webRequest`:** (Verify specific usage in `manifest.json`).
-*   **`contextMenus`:** To add the "Open Sidebar" right-click option.
+*   **`activeTab` & `scripting`:** To read and interact with the current tab's content (extraction, sidebar injection).
+*   **`storage`:** To save settings (sync), API keys (local), prompts (sync), chat history (local), etc.
+*   **`tabs`:** To get tab info (URLs), create tabs (for Popup mode), manage side panel per tab.
+*   **`webRequest`:** (Verify - likely not needed based on current structure, could be leftover. Consider removing if unused).
+*   **`contextMenus`:** To add the right-click menu options.
+*   **`sidePanel`:** To manage and display the extension's side panel UI.
 *   **`host_permissions`:** Needed for:
-    *   Popup Mode: Interacting with AI platform websites (e.g., `chatgpt.com`).
-    *   Sidebar Mode: Calling AI platform API endpoints (e.g., `api.openai.com`).
-    *   Both Modes: Extracting content from various websites (`<all_urls>`).
+    *   Popup Mode: Interacting with AI platform websites (e.g., `chatgpt.com`, `claude.ai`, etc.).
+    *   Sidebar Mode: Calling AI platform API endpoints (e.g., `api.openai.com`, `api.anthropic.com`, etc.).
+    *   Content Extraction: Accessing content from various websites (`<all_urls>`), YouTube, Reddit, PDFs (`file://*.pdf`).
