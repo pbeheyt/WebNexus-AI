@@ -138,7 +138,7 @@ export const MessageBubble = memo(forwardRef(({
                 className={`px-5 py-4 w-full ${className}`}
             >
                 <div // Intermediate container: Provides the red background around the text ONLY
-                    className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3 select-none"
+                    className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3"
                 >
                     <div
                         className="whitespace-pre-wrap break-words leading-relaxed text-sm"
