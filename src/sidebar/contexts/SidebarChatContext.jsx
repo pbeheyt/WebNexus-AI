@@ -177,11 +177,10 @@ export function SidebarChatProvider({ children }) {
      * @param {boolean} [isCancelled=false] - Flag indicating if the stream was cancelled by the user.
      */
     const handleStreamComplete = async (messageId, finalContentInput, model, isError = false, isCancelled = false) => {
-      // Retrieve and clear rerun stats *before* saving history
+      // Retrieve rerun stats *before* saving history
       const savedStats = rerunStatsRef.current;
       const retrievedPreTruncationCost = savedStats?.preTruncationCost || 0;
       const retrievedPreTruncationOutput = savedStats?.preTruncationOutput || 0;
-      rerunStatsRef.current = null; // Clear the ref after reading
 
       try {
         // Calculate output tokens using the potentially modified finalContent - Removed await
@@ -255,11 +254,14 @@ export function SidebarChatProvider({ children }) {
         }
       } catch (error) {
         console.error('Error handling stream completion:', error);
+      } finally {
+        // Clear the ref after saving history, regardless of success or error
+        rerunStatsRef.current = null;
       }
     };
 
-    /**
-     * Processes incoming message chunks from the background script during an active stream.
+  /**
+   * Processes incoming message chunks from the background script during an active stream.
      * Handles error chunks, completion chunks (including cancellation), and intermediate content chunks.
      * Updates the UI live and calls `handleStreamComplete` to finalize the message state.
      * Resets streaming-related state variables upon stream completion, error, or cancellation.
@@ -606,6 +608,12 @@ export function SidebarChatProvider({ children }) {
       };
       setMessages([...errorMessages, systemErrorMessage]);
       setStreamingMessageId(null);
+      // Save error state to history, passing the preserved stats
+      if (tabId) {
+        const savedStats = rerunStatsRef.current;
+        const historyOptions = savedStats ? { initialAccumulatedCost: savedStats.preTruncationCost || 0, initialOutputTokens: savedStats.preTruncationOutput || 0 } : {};
+        await ChatHistoryService.saveHistory(tabId, [...errorMessages, systemErrorMessage], modelConfigData, historyOptions);
+      }
       rerunStatsRef.current = null; // Clear stats ref on error
       resetContentProcessing();
     }
@@ -697,6 +705,12 @@ export function SidebarChatProvider({ children }) {
       };
       setMessages([...errorMessages, systemErrorMessage]);
       setStreamingMessageId(null);
+      // Save error state to history, passing the preserved stats
+      if (tabId) {
+        const savedStats = rerunStatsRef.current;
+        const historyOptions = savedStats ? { initialAccumulatedCost: savedStats.preTruncationCost || 0, initialOutputTokens: savedStats.preTruncationOutput || 0 } : {};
+        await ChatHistoryService.saveHistory(tabId, [...errorMessages, systemErrorMessage], modelConfigData, historyOptions);
+      }
       rerunStatsRef.current = null; // Clear stats ref on error
       resetContentProcessing();
     }
@@ -792,6 +806,12 @@ export function SidebarChatProvider({ children }) {
         };
         setMessages([...errorMessages, systemErrorMessage]);
         setStreamingMessageId(null);
+        // Save error state to history, passing the preserved stats
+        if (tabId) {
+          const savedStats = rerunStatsRef.current;
+          const historyOptions = savedStats ? { initialAccumulatedCost: savedStats.preTruncationCost || 0, initialOutputTokens: savedStats.preTruncationOutput || 0 } : {};
+          await ChatHistoryService.saveHistory(tabId, [...errorMessages, systemErrorMessage], modelConfigData, historyOptions);
+        }
         rerunStatsRef.current = null; // Clear stats ref on error
         resetContentProcessing();
     }

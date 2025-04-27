@@ -200,12 +200,23 @@ class TokenManagementService {
   static async calculateAndUpdateStatistics(tabId, messages, modelConfig = null, options = {}) {
     if (!tabId) return this._getEmptyStats();
 
-    const { initialAccumulatedCost = 0, initialOutputTokens = 0 } = options;
+    let initialAccumulatedCost;
+    let initialOutputTokens;
+
+    // Determine initial values: use options if valid, otherwise fetch current stats
+    if (typeof options.initialAccumulatedCost === 'number' && options.initialAccumulatedCost >= 0 &&
+        typeof options.initialOutputTokens === 'number' && options.initialOutputTokens >= 0) {
+      initialAccumulatedCost = options.initialAccumulatedCost;
+      initialOutputTokens = options.initialOutputTokens;
+    } else {
+      // Fetch currently stored statistics if options are not valid
+      const currentStats = await this.getTokenStatistics(tabId);
+      initialAccumulatedCost = currentStats.accumulatedCost || 0;
+      initialOutputTokens = currentStats.outputTokens || 0;
+    }
 
     try {
-      // 1. Get existing accumulated cost is NOT needed here anymore, use initialAccumulatedCost from options
-
-      // 2. Get the actual system prompt string
+      // 1. Get the actual system prompt string
       const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId);
 
       // 3. Calculate base token statistics from messages (includes input/output tokens for last call)
