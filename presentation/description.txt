@@ -1,6 +1,6 @@
-# WebNexus AI: Interact on Web, PDFs, YouTube w/ ChatGPT, Gemini+ | SidePanel or Web UI
+# WebNexus AI: Interact on Web, PDFs, YouTube with AI | SidePanel or Web UI
 
-WebNexus AI acts as a central hub utilizing diverse AI models directly on encountered web content. It supports interaction methods for both in-depth analysis via direct API chat in the Side Panel, and quick actions sending content to AI websites through the Popup/Context Menu (Web UI Mode). You can interact with web pages, PDFs, YouTube videos, and Reddit Posts, using the selected AI tools.
+WebNexus AI acts as a central hub utilizing diverse AI models directly on encountered web content. It supports interaction methods for both in-depth analysis via direct API chat in the Side Panel, and quick actions sending content to AI websites through the Popup/Context Menu (Web UI Mode). You can interact with web pages, PDFs, YouTube videos, and Reddit Posts, using the selected AI Platform.
 
 ---
 
