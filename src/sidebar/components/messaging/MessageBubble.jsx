@@ -104,7 +104,7 @@ export const MessageBubble = memo(forwardRef(({
     isStreaming = false,
     model = null,
     platformIconUrl = null,
-    platformId = null, // <-- Added platformId prop
+    platformId = null,
     metadata = {},
     className = '',
     style = {}
@@ -130,18 +130,17 @@ export const MessageBubble = memo(forwardRef(({
 
     // Define System Message Component Overrides:
     const systemMessageComponents = {
-      p: ({ node, children }) => <p >{children}</p>, // Basic paragraph with no extra margins
+      p: ({ node, children }) => <p classname="leading-relaxed text-sm">{children}</p>,
       a: ({ node, children, ...props }) => (
         <a
           {...props} // Pass through href, etc.
           target="_blank" // Open links in new tab
           rel="noopener noreferrer" // Security best practice
-          className="text-red-700 dark:text-red-300 underline hover:text-red-800 dark:hover:text-red-200" // Style links appropriately for system messages
+          className="text-red-700 dark:text-red-300 underline hover:text-red-800 dark:hover:text-red-200"
         >
           {children}
         </a>
       ),
-      // Add other overrides if necessary (e.g., for lists), but start with p and a.
     };
 
     // System messages
@@ -156,15 +155,13 @@ export const MessageBubble = memo(forwardRef(({
                 <div // Intermediate container: Provides the red background around the text ONLY
                     className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3"
                 >
-                    <div className="whitespace-pre-wrap break-words text-sm"> {/* Container to maintain text flow */}
                       <ReactMarkdown
                         components={systemMessageComponents} // Use the specific overrides
-                        remarkPlugins={[remarkGfm]} // <--- ENSURE remarkGfm IS INCLUDED HERE
+                        remarkPlugins={[remarkGfm]}
                         rehypePlugins={[]}
                       >
                         {content}
                       </ReactMarkdown>
-                    </div>
                 </div>
             </div>
         );
