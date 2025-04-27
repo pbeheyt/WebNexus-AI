@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "AI Insightr: Web Content Assistant",
-  "description": "Interact with, analyze, and summarize web pages, YouTube videos, PDFs, and Reddit posts using ChatGPT, Claude, Gemini and other AI platforms. Choose between direct API integration via side panel or seamless transfer to web UIs without copying and pasting",
+  "name": "WebNexus AI",
+  "description": "Interact on Web, PDFs, YouTube w/ ChatGPT, Gemini+ | SidePanel or Web UI",
   "version": "1.0.0",
   "permissions": [
     "activeTab",
@@ -16,14 +16,14 @@
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "host_permissions": [
-  "https://.youtube.com/",
-  "https://.reddit.com/",
+  "https://*.youtube.com/",
+  "https://*.reddit.com/",
   "https://claude.ai/",
   "https://chatgpt.com/",
   "https://chat.deepseek.com/",
   "https://chat.mistral.ai/",
   "https://gemini.google.com/",
-  "file://.pdf",
+  "file://*.pdf",
   "<all_urls>",
   "https://api.anthropic.com/",
   "https://api.openai.com/",
@@ -69,14 +69,14 @@
         "default": "Alt+I",
         "mac": "Alt+I"
       },
-      "description": "Open the AI Insightr popup"
+      "description": "Open the WebNexus AI popup"
     },
     "process-default-prompt": {
       "suggested_key": {
         "default": "Alt+U",
         "mac": "Alt+U"
       },
-      "description": "Process page content with default prompt in Web UI"
+      "description": "Process page content with default prompt in Web UI via WebNexus AI"
     }
   }
 }

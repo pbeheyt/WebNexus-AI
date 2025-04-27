@@ -59,7 +59,7 @@ export function AppHeader({
            <img src={chrome.runtime.getURL('images/icon128.png')} alt="AI Content Assistant logo" className="w-5 h-5 mr-2" />
         )}
         <span className="truncate overflow-hidden whitespace-nowrap max-w-[150px]">
-          AI Insightr
+          WebNexus AI
         </span>
       </h1>
 

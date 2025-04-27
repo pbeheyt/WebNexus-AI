@@ -1,101 +1,68 @@
-# AI Insightr: Web Content Assistant
+# WebNexus AI: Interact on Web, PDFs, YouTube w/ ChatGPT, Gemini+ | SidePanel or Web UI
 
-AI Insightr enhances your browsing by integrating powerful AI capabilities directly into Chrome. Interact with web pages, YouTube videos, PDFs, and Reddit posts using your favorite AI models. Choose your workflow:
+WebNexus AI acts as a central hub utilizing diverse AI models directly on encountered web content. It supports interaction methods for both in-depth analysis via direct API chat in the Side Panel, and quick actions sending content to AI websites through the Popup/Context Menu (Web UI Mode). You can interact with web pages, PDFs, YouTube videos, and Reddit Posts, using the selected AI tools.
 
-1.  **Side Panel (API Mode):** Chat directly with AI APIs (ChatGPT, Claude, Gemini, etc.) in a sidebar alongside your content. Requires API key configuration.
-2.  **Popup/Context Menu (Web UI Mode):** Quickly send content and prompts to the AI platforms' standard web interfaces. Requires website login, not API keys for interaction.
+---
 
-## Key Features
+This extension uses various AI models to analyze and interact with online content. It offers two distinct methods:
 
-*   **Dual Interaction Modes:**
-    *   **Side Panel (Direct API Chat):**
-        *   Persistent sidebar for direct API communication.
-        *   Requires API keys configured in **Settings > API Settings**.
-        *   Select specific AI Platforms and Models.
-        *   Maintains separate conversation history per tab.
-        *   Provides estimated token usage and API cost tracking (estimates may vary).
-        *   Supports system prompts for advanced control.
-        *   Toggle inclusion of page content for the first message.
-        *   Supports message editing and rerunning for conversation refinement.
-    *   **Popup & Context Menu (Web Interface Interaction):**
-        *   Uses the AI platform's **website** in a new tab.
-        *   Does **not** use API keys for the interaction itself (relies on website login).
-        *   **Popup:** Select platform, enter/select prompt, toggle context inclusion.
-        *   **Context Menu:** Right-click -> "Process in Web UI..." uses the default prompt for the content type.
-        *   Attempts to auto-fill content/prompt on the target website.
-*   **Multi-Platform Support:**
-    *   **Side Panel (via API):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
-    *   **Popup/Context Menu (via Web UI):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
-*   **Versatile Content Extraction:** Automatically extracts key information from:
-    *   General Web Pages (articles, blogs)
-    *   YouTube Videos (transcripts if available)
-    *   Reddit Posts (post content, comments)
-    *   PDF Documents (text content)
-*   **Custom Prompt Management:** Create, edit, delete, and set default prompts per content type in **Settings > Prompts**. Usable in both Sidebar and Popup.
-*   **API Configuration (for Side Panel):**
-    *   Manage API keys (stored locally). Includes validation check.
-    *   Fine-tune API parameters (temperature, max tokens, etc.) per model.
-*   **UI Customization:** Light/Dark themes and adjustable text sizes (Small/Base/Large).
-*   **Quick Access:**
-    *   **Context Menu:** Right-click page for Sidebar toggle or Web UI processing.
-    *   **Keyboard Shortcuts:** `Alt+I` (Popup), `Alt+U` (Default Web UI Process). *Configurable in Chrome settings.*
+1.  **Side Panel (API Mode):** A persistent panel alongside web content for direct chat conversations using the selected platform's official API. Requires API key configuration in Settings.
+2.  **Popup/Context Menu (Web UI Mode):** Quick actions to send extracted content and prompts to the AI platform's website in a new tab. Does *not* use API keys for the interaction itself but requires you to be logged into the respective platform's website.
 
 ## Supported Platforms
 
-*   **Side Panel (via API):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
-    *   *Requires API key configuration in Settings.*
-*   **Popup/Context Menu (via Web Interface):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
-    *   *Opens the platform's website. Does not use API keys for interaction.*
+WebNexus AI supports interaction with the following AI platforms:
 
-## How to Use
+*   Gemini (Google)
+*   ChatGPT (OpenAI)
+*   Claude (Anthropic)
+*   DeepSeek
+*   Grok (xAI)
+*   Mistral
 
-1.  **Installation:** Load the extension into Chrome (see below). Pin the icon.
-2.  **Configure API Keys (Required for Side Panel):**
-    *   Open **Settings** (Right-click extension icon > Options, or via Popup/Sidebar).
-    *   Go to **API Settings**. Select each platform and enter its API key. Save & Validate.
-    *   *Skip if only using Popup/Context Menu mode.*
-3.  **Using the Side Panel (API Chat):**
-    *   Toggle sidebar via Popup icon or right-click context menu.
-    *   Select an AI Platform and Model (only platforms with valid keys work).
-    *   Type your prompt or select one using the 'P' button. Toggle content inclusion if needed.
-    *   Chat directly; responses appear in the sidebar.
-4.  **Using the Popup (Web UI):**
-    *   Click the extension icon.
-    *   Select an AI platform.
-    *   Enter/select prompt, toggle context via the switch.
-    *   Click send (arrow button).
-    *   The platform's **website** opens; content/prompt are auto-filled (if possible).
-5.  **Using the Context Menu (Web UI):**
-    *   Right-click on a page -> "Process in Web UI (Default Prompt)".
-    *   Opens preferred platform website with content + default prompt auto-filled (if possible).
-6.  **Managing Prompts:** Configure custom prompts in **Settings > Prompts**.
+Both API access (Side Panel) and Web UI interaction (Popup/Context Menu) are supported for these platforms.
 
-## Installation
+---
 
-1.  Clone or download this repository.
-2.  Open Chrome and go to `chrome://extensions/`.
-3.  Enable "Developer mode" (top-right).
-4.  Click "Load unpacked".
-5.  Select the directory containing `manifest.json`.
+## Core Functionality
 
-## Development
+*   **Analyze Diverse Content:** Extracts key information from standard web pages, YouTube video transcripts, Reddit posts & comments, and PDF documents.
+*   **Side Panel (API Mode):**
+    *   Direct chat with AI models via API.
+    *   Requires API key configuration in **Settings > API Settings**.
+    *   Selection of specific AI platforms and models.
+    *   Maintains separate conversation history per browser tab.
+    *   Provides estimated token usage and API cost tracking (based on OpenAI tokenizer, may differ from official billing).
+    *   Supports system prompts (where applicable by the model).
+    *   Toggle to include/exclude page content on the first message.
+*   **Popup & Context Menu (Web UI Mode):**
+    *   Send content and prompts to the AI platform's *website*.
+    *   **Popup:** Platform selection, prompt entry/selection, context inclusion toggle.
+    *   **Context Menu:** Right-click page -> "Process in Web UI (Default Prompt)" sends content with the default prompt for that content type to the preferred platform.
+    *   Does *not* require API keys for interaction (relies on website login).
+    *   Attempts to auto-fill the platform's website input.
+*   **Prompt Management:** Create, save, edit, delete, and set default prompts for different content types via **Settings > Prompts**. Prompts are accessible in both Side Panel and Popup.
+*   **API Configuration (for Side Panel):**
+    *   **API Key Storage:** API keys are stored locally within the browser by the extension (via **Settings > API Settings**).
+    *   **Parameter Tuning:** Fine-tuning parameters (e.g., temperature, max tokens, system prompts) can be adjusted per model (**Settings > API Settings**) and are also stored locally.
+*   **UI Customization:** Light/Dark themes and adjustable text sizes (Small, Base, Large) available in headers.
+*   **Keyboard Shortcuts:**
+    *   `Alt+I` (or configured key): Open Popup.
+    *   `Alt+U` (or configured key): Process page with default prompt via Web UI (like Context Menu).
 
-1.  Requires Node.js and npm.
-2.  Install dependencies: `npm install`
-3.  Build for development (with source maps): `npm run build:dev`
-4.  Watch for changes and rebuild: `npm run watch`
-5.  Build for production (minified, no source maps): `npm run build`
-6.  Load/reload the extension in Chrome using the `dist` directory after building.
+---
 
-## Permissions Required
+## Usage Overview
 
-*   **`activeTab` & `scripting`:** To read and interact with the current tab's content (extraction, sidebar injection).
-*   **`storage`:** To save settings (sync), API keys (local), prompts (sync), chat history (local), etc.
-*   **`tabs`:** To get tab info (URLs), create tabs (for Popup mode), manage side panel per tab.
-*   **`webRequest`:** (Verify - likely not needed based on current structure, could be leftover. Consider removing if unused).
-*   **`contextMenus`:** To add the right-click menu options.
-*   **`sidePanel`:** To manage and display the extension's side panel UI.
-*   **`host_permissions`:** Needed for:
-    *   Popup Mode: Interacting with AI platform websites (e.g., `chatgpt.com`, `claude.ai`, etc.).
-    *   Sidebar Mode: Calling AI platform API endpoints (e.g., `api.openai.com`, `api.anthropic.com`, etc.).
-    *   Content Extraction: Accessing content from various websites (`<all_urls>`), YouTube, Reddit, PDFs (`file://*.pdf`).
+1.  **Install** and pin the extension.
+2.  **(For Side Panel):** Open **Settings > API Settings**. Enter and save API keys for the platforms intended for Side Panel use.
+3.  **Choose Interaction Method:**
+    *   **Popup (Web UI):** Click extension icon, select platform, write/select prompt, toggle context, click send. Opens platform website.
+    *   **Context Menu (Web UI):** Right-click page, select "Process in Web UI". Opens platform website with default prompt.
+    *   **Side Panel (API):** Toggle via Popup icon or context menu. Select platform/model (API key required), chat directly.
+
+## Usage Notes
+
+*   **Content Extraction Notes:** Extraction performs well on standard website layouts. However, on highly complex or non-standard sites, some page context might not be fully captured. **Pro Tip for Dynamic Content:** To ensure comprehensive extraction of comment sections (e.g., YouTube, Reddit), scroll down the page to fully load all desired comments *before* activating WebNexus AI on the content.
+*   **Web UI Automation (Popup/Context Menu):** Auto-filling functionality depends on the AI platform's website structure and may require updates if the site changes. Extension updates will aim to address this.
+*   **Token Estimation (Side Panel):** Estimates are based on OpenAI tokenizer and may differ from official provider billing. Use provider dashboards for accurate cost/usage.
