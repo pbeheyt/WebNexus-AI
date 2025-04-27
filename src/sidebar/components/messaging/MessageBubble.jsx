@@ -128,6 +128,22 @@ export const MessageBubble = memo(forwardRef(({
         }
     };
 
+    // Define System Message Component Overrides:
+    const systemMessageComponents = {
+      p: ({ node, children }) => <p >{children}</p>, // Basic paragraph with no extra margins
+      a: ({ node, children, ...props }) => (
+        <a
+          {...props} // Pass through href, etc.
+          target="_blank" // Open links in new tab
+          rel="noopener noreferrer" // Security best practice
+          className="text-red-700 dark:text-red-300 underline hover:text-red-800 dark:hover:text-red-200" // Style links appropriately for system messages
+        >
+          {children}
+        </a>
+      ),
+      // Add other overrides if necessary (e.g., for lists), but start with p and a.
+    };
+
     // System messages
     if (role === MESSAGE_ROLES.SYSTEM) {
         return (
@@ -140,10 +156,14 @@ export const MessageBubble = memo(forwardRef(({
                 <div // Intermediate container: Provides the red background around the text ONLY
                     className="bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3"
                 >
-                    <div
-                        className="whitespace-pre-wrap break-words leading-relaxed text-sm"
-                    >
+                    <div className="whitespace-pre-wrap break-words text-sm"> {/* Container to maintain text flow */}
+                      <ReactMarkdown
+                        components={systemMessageComponents} // Use the specific overrides
+                        remarkPlugins={[remarkGfm]} // <--- ENSURE remarkGfm IS INCLUDED HERE
+                        rehypePlugins={[]}
+                      >
                         {content}
+                      </ReactMarkdown>
                     </div>
                 </div>
             </div>
