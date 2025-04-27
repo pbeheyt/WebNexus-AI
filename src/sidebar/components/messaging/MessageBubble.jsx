@@ -136,7 +136,7 @@ export const MessageBubble = memo(forwardRef(({
           {...props} // Pass through href, etc.
           target="_blank" // Open links in new tab
           rel="noopener noreferrer" // Security best practice
-          className="text-red-700 dark:text-red-300 underline hover:text-red-800 dark:hover:text-red-200"
+          className="text-red-700 dark:text-red-300 underline hover:text-red-800 dark:hover:text-red-200 break-words"
         >
           {children}
         </a>
@@ -298,7 +298,6 @@ export const MessageBubble = memo(forwardRef(({
     // Assistant Message Rendering
     if (role === MESSAGE_ROLES.ASSISTANT) {
         // Use the same copy functionality from top level hook
-        const assistantCopyState = copyState;
         const handleAssistantCopy = handleCopy;
         const AssistantIconComponent = IconComponent;
         const assistantIconClassName = iconClassName;
