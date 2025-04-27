@@ -47,8 +47,9 @@ Both API access (Side Panel) and Web UI interaction (Popup/Context Menu) are sup
     *   **Parameter Tuning:** Fine-tuning parameters (e.g., temperature, max tokens, system prompts) can be adjusted per model (**Settings > API Settings**) and are also stored locally.
 *   **UI Customization:** Light/Dark themes and adjustable text sizes (Small, Base, Large) available in headers.
 *   **Keyboard Shortcuts:**
-    *   `Alt+I` (or configured key): Open Popup.
-    *   `Alt+U` (or configured key): Process page with default prompt via Web UI (like Context Menu).
+    *   `Alt+W` : Open WebNexus AI Popup.
+    *   `Alt+Q` : Quick page content process with default prompt via Web UI (like Context Menu).
+    *   To customize these shortcuts, visit chrome://extensions/shortcuts in your Chrome browser or go to Chrome Settings → Extensions → Keyboard Shortcuts. Look for WebNexus AI in the list to modify its assigned keys.
 
 ---
 
