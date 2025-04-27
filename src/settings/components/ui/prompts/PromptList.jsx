@@ -105,6 +105,7 @@ const PromptList = ({
           selectedValue={filterValue}
           onChange={onFilterChange}
           placeholder="Filter by Content Type"
+          buttonClassName='bg-white'
         />
       </div>
 
