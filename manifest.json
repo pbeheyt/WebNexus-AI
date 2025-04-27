@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WebNexus AI",
-  "description": "Interact on Web, PDFs, YouTube w/ ChatGPT, Gemini+ | SidePanel or Web UI",
+  "description": "Summarize & Interact with Web Content, PDFs & YouTube Videos using AI | Side Panel or Web UI",
   "version": "1.0.0",
   "permissions": [
     "activeTab",
@@ -66,17 +66,17 @@
   "commands": {
     "_execute_action": {
       "suggested_key": {
-        "default": "Alt+I",
-        "mac": "Alt+I"
+        "default": "Alt+W",
+        "mac": "Alt+W"
       },
       "description": "Open the WebNexus AI popup"
     },
     "process-default-prompt": {
       "suggested_key": {
-        "default": "Alt+U",
-        "mac": "Alt+U"
+        "default": "Alt+Q",
+        "mac": "Alt+Q"
       },
-      "description": "Process page content with default prompt in Web UI via WebNexus AI"
+      "description": "Quick page content process with default prompt via Web UI"
     }
   }
 }

@@ -1,10 +1,10 @@
-# WebNexus AI: Interact on Web, PDFs, YouTube with AI | SidePanel or Web UI
+# WebNexus AI: Summarize & Interact with Web Content, PDFs & YouTube Videos using AI | Side Panel or Web UI
 
 WebNexus AI acts as a central hub utilizing diverse AI models directly on encountered web content. It supports interaction methods for both in-depth analysis via direct API chat in the Side Panel, and quick actions sending content to AI websites through the Popup/Context Menu (Web UI Mode). You can interact with web pages, PDFs, YouTube videos, and Reddit Posts, using the selected AI Platform.
 
 ---
 
-This extension uses various AI models to analyze and interact with online content. It offers two distinct methods:
+This extension uses latest AI models to analyze and interact with online content. It offers two distinct methods:
 
 1.  **Side Panel (API Mode):** A persistent panel alongside web content for direct chat conversations using the selected platform's official API. Requires API key configuration in Settings.
 2.  **Popup/Context Menu (Web UI Mode):** Quick actions to send extracted content and prompts to the AI platform's website in a new tab. Does *not* use API keys for the interaction itself but requires you to be logged into the respective platform's website.
@@ -47,8 +47,9 @@ Both API access (Side Panel) and Web UI interaction (Popup/Context Menu) are sup
     *   **Parameter Tuning:** Fine-tuning parameters (e.g., temperature, max tokens, system prompts) can be adjusted per model (**Settings > API Settings**) and are also stored locally.
 *   **UI Customization:** Light/Dark themes and adjustable text sizes (Small, Base, Large) available in headers.
 *   **Keyboard Shortcuts:**
-    *   `Alt+I` (or configured key): Open Popup.
-    *   `Alt+U` (or configured key): Process page with default prompt via Web UI (like Context Menu).
+    *   `Alt+W` : Open WebNexus AI Popup.
+    *   `Alt+Q` : Quick page content process with default prompt via Web UI (like Context Menu).
+    *   To customize these shortcuts, visit chrome://extensions/shortcuts in your Chrome browser or go to Chrome Settings → Extensions → Keyboard Shortcuts. Look for WebNexus AI in the list to modify its assigned keys.
 
 ---
 
