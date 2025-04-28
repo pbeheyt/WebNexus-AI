@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Neural network/circuit pattern - scaled up and centered -->
+  <!-- Nodes -->
+  <circle cx="44" cy="72" r="10" fill="#ff7b00"/>
+  <circle cx="100" cy="58" r="10" fill="#ff7b00"/>
+  <circle cx="156" cy="72" r="10" fill="#ff7b00"/>
+  <circle cx="58" cy="114" r="10" fill="#ff7b00"/>
+  <circle cx="114" cy="100" r="10" fill="#ff7b00"/>
+  <circle cx="142" cy="128" r="10" fill="#ff7b00"/>
+  <circle cx="86" cy="142" r="10" fill="#ff7b00"/>
+  
+  <!-- Connections -->
+  <line x1="44" y1="72" x2="100" y2="58" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="100" y1="58" x2="156" y2="72" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="44" y1="72" x2="58" y2="114" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="44" y1="72" x2="114" y2="100" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="100" y1="58" x2="114" y2="100" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="100" y1="58" x2="58" y2="114" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="156" y1="72" x2="114" y2="100" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="156" y1="72" x2="142" y2="128" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="58" y1="114" x2="86" y2="142" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="114" y1="100" x2="142" y2="128" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="114" y1="100" x2="86" y2="142" stroke="#ff7b00" stroke-width="3"/>
+  <line x1="142" y1="128" x2="86" y2="142" stroke="#ff7b00" stroke-width="3"/>
+</svg>
