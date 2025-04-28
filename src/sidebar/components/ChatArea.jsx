@@ -472,7 +472,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                             </>
                         ) : (
                             <div className="mb-2">
-                                <span className="text-base text-theme-secondary select-none">
+                                <span className="text-xs text-theme-secondary select-none">
                                     This page content cannot be extracted.
                                 </span>
                             </div>
