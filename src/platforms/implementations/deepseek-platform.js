@@ -61,80 +61,71 @@ class DeepSeekPlatform extends BasePlatform {
   }
 
   /**
-   * Insert text into DeepSeek's editor and submit
-   * @param {string} text - The text to insert
-   * @returns {Promise<boolean>} Success status
+   * Override: Insert text into DeepSeek's editor.
+   * Uses the base implementation as it targets a standard textarea.
+   * @param {HTMLElement} editorElement - The editor element (textarea).
+   * @param {string} text - The text to insert.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
    */
-  async insertAndSubmitText(text) {
-    const editorElement = this.findEditorElement();
+  async _insertTextIntoEditor(editorElement, text) {
+    this.logger.info(`[${this.platformId}] Using base _insertTextIntoEditor for Deepseek.`);
+    return super._insertTextIntoEditor(editorElement, text); // Call base class method
+  }
 
-    if (!editorElement) {
-      this.logger.error(`[${this.platformId}] Textarea element not found`);
-      return false;
-    }
-
+  /**
+   * Override: Click DeepSeek's submit button, attempting to enable if necessary.
+   * @param {HTMLElement} buttonElement - The submit button element.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
+   */
+  async _clickSubmitButton(buttonElement) {
     try {
-      // Focus on the textarea
-      editorElement.focus();
+      this.logger.info(`[${this.platformId}] Attempting to click submit button for Deepseek.`);
 
-      // Set the value directly
-      editorElement.value = text;
+      let currentButton = buttonElement; // Use a local variable
 
-      // Trigger input event to activate the UI
-      const inputEvent = new Event('input', { bubbles: true });
-      editorElement.dispatchEvent(inputEvent);
+      // Check if button is initially disabled
+      if (currentButton.getAttribute('aria-disabled') === 'true') {
+        this.logger.warn(`[${this.platformId}] Submit button is initially disabled. Attempting to trigger editor input event...`);
 
-      // Wait a short moment for the UI to update
-      return new Promise(resolve => {
-        setTimeout(() => {
-          // Look for the send button
-          const sendButton = this.findSubmitButton();
+        // Find the editor again to dispatch the event
+        const editorElement = this.findEditorElement();
+        if (editorElement) {
+          const inputEvent = new Event('input', { bubbles: true });
+          editorElement.dispatchEvent(inputEvent);
+          await this._wait(300); // Wait a bit for potential UI update
 
-          if (!sendButton) {
-            // Enhanced logging to help troubleshoot button selector issues
-            this.logger.warn(`[${this.platformId}] Send button not found initially. DOM structure may have changed or requires more time.`);
-            this.logger.info(`[${this.platformId}] Available button elements:`,
-              document.querySelectorAll('div[role="button"]').length);
-            resolve(false);
-            return;
+          // Re-find the button after triggering event
+          currentButton = this.findSubmitButton(); // Re-fetch the button state
+
+          if (!currentButton) {
+             this.logger.error(`[${this.platformId}] Failed to re-find submit button after triggering input event.`);
+             return false;
           }
 
-          // Check if button is disabled
-          const isDisabled = sendButton.getAttribute('aria-disabled') === 'true';
-
-          if (isDisabled) {
-            this.logger.warn(`[${this.platformId}] Send button is currently disabled`);
-            // Try enabling the button by triggering another input event
-            editorElement.dispatchEvent(inputEvent);
-
-            // Wait a bit more and try again
-            setTimeout(() => {
-              const updatedButton = this.findSubmitButton();
-
-              if (updatedButton && updatedButton.getAttribute('aria-disabled') !== 'true') {
-                updatedButton.click();
-                this.logger.info(`[${this.platformId}] Text submitted successfully after enabling button`);
-                resolve(true);
-              } else {
-                this.logger.error(`[${this.platformId}] Send button remained disabled after retry`);
-                resolve(false);
-              }
-            }, 300);
-          } else {
-            // Click the send button if it's not disabled
-            sendButton.click();
-            this.logger.info(`[${this.platformId}] Text submitted successfully`);
-            resolve(true);
+          if (currentButton.getAttribute('aria-disabled') === 'true') {
+            this.logger.error(`[${this.platformId}] Submit button remained disabled after triggering input event.`);
+            return false; // Failed to enable
           }
-        }, 500);
-      });
+          this.logger.info(`[${this.platformId}] Submit button appears enabled after triggering input event.`);
+        } else {
+          this.logger.error(`[${this.platformId}] Could not find editor element to trigger enabling event.`);
+          return false; // Cannot attempt enabling
+        }
+      }
+
+      // Proceed to click the (potentially updated) button
+      this.logger.info(`[${this.platformId}] Dispatching click event to submit button.`);
+      currentButton.click(); // Use the potentially re-found button
+      this.logger.info(`[${this.platformId}] Successfully dispatched click event.`);
+      return true;
+
     } catch (error) {
-      this.logger.error(`[${this.platformId}] Error inserting text:`, error);
+      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
       return false;
     }
   }
-  // No override needed for _insertTextIntoEditor - default implementation works
-  // No override needed for _clickSubmitButton - default implementation works
 }
 
 module.exports = DeepSeekPlatform;

@@ -121,41 +121,44 @@ class ClaudePlatform extends BasePlatform {
 
   /**
    * Find Claude's submit button using more robust strategies.
-   * Checks for visibility and enabled state.
-   * @returns {HTMLElement|null} The submit button or null if not found
+   * Checks for visibility and enabled state. Returns null if checks fail, allowing retry.
+   * @returns {HTMLElement|null} The submit button or null if not found/ready
    */
   findSubmitButton() {
     this.logger.info(`[${this.platformId}] Attempting to find submit button using selector...`);
 
-    // Strategy: Find button by aria-label containing "message" (case-insensitive) that has an SVG inside
     const selector = 'button[aria-label*="message" i] svg';
-    let button = null;
+    let buttonElement = null;
 
     try {
       const svgElement = document.querySelector(selector);
       if (svgElement) {
-        button = svgElement.closest('button');
+        buttonElement = svgElement.closest('button');
       }
     } catch (e) {
-      this.logger.warn(`[${this.platformId}] Error during submit button search:`, e);
+      this.logger.warn(`[${this.platformId}] Error during submit button search with selector (${selector}):`, e);
+      return null; // Return null on error
+    }
+
+    // Check if the button element itself was found
+    if (!buttonElement) {
+      // Log error only if the element wasn't found by the selector *on this attempt*
+      this.logger.error(`[${this.platformId}] Submit button element not found using selector (${selector}) on this attempt.`);
       return null;
     }
 
-    // Check if the button was found and if it's ready
-    if (button && this._isButtonEnabled(button) && this.isVisibleElement(button)) {
-      this.logger.info(`[${this.platformId}] Found valid submit button using selector.`);
-      return button;
-    } else if (button) {
-      // Log why it wasn't returned (disabled or hidden)
-      this.logger.warn(`[${this.platformId}] Found button element with selector, but it's not enabled or visible.`, {
-          isDisabled: !this._isButtonEnabled(button),
-          isHidden: !this.isVisibleElement(button),
-          element: button
-      });
-      return null; // Return null if found but not ready
+    // If button element is found, perform checks
+    this.logger.info(`[${this.platformId}] Found button element via selector. Performing visibility and enabled checks...`);
+    const isEnabled = this._isButtonEnabled(buttonElement);
+    const isVisible = this.isVisibleElement(buttonElement);
+
+    if (isEnabled && isVisible) {
+      this.logger.info(`[${this.platformId}] Found valid (visible and enabled) submit button.`);
+      return buttonElement; // Return the valid button
     } else {
-      this.logger.error(`[${this.platformId}] Submit button not found using selector (${selector}).`);
-      return null;
+      // Log detailed warning if checks fail, but still return null for retry mechanism
+      this.logger.warn(`[${this.platformId}] Button element found, but failed checks: Visible=${isVisible}, Enabled=${isEnabled}. Returning null for retry.`, { element: buttonElement });
+      return null; // IMPORTANT: Return null so platform-base retry logic continues
     }
   }
 

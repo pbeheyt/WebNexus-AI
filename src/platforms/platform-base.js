@@ -128,9 +128,11 @@ class BasePlatform extends PlatformInterface {
     try {
       this.logger.info(`[${this.platformId}] Attempting to click submit button`);
       if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-        this.logger.warn(`[${this.platformId}] Submit button is disabled.`);
-        return false;
+        this.logger.warn(`[${this.platformId}] Submit button is disabled, cannot click.`);
+        return false; // Indicate failure
       }
+      
+      // Dispatch click event
       buttonElement.click();
       this.logger.info(`[${this.platformId}] Successfully clicked submit button.`);
       return true;
@@ -188,13 +190,37 @@ class BasePlatform extends PlatformInterface {
           await this._wait(800); // Allow time for UI updates or checks
           this.logger.info(`[${this.platformId}] Wait step completed.`);
 
-          // 4. Find Submit Button
-          const submitButton = this.findSubmitButton();
-          if (!submitButton) {
-            this.logger.error(`[${this.platformId}] Submit button not found.`);
-            throw new Error(`Could not find the submit button on ${this.platformId}.`);
+          // 4. Find Submit Button (with retries)
+          this.logger.info(`[${this.platformId}] Attempting to find submit button with retries...`);
+          let submitButton = null;
+          const maxButtonRetries = 3;
+          const buttonRetryDelay = 600; // ms
+
+          for (let attempt = 1; attempt <= maxButtonRetries; attempt++) {
+            submitButton = this.findSubmitButton();
+            if (submitButton) {
+              // Check if button is actually enabled now before breaking
+              if (!submitButton.disabled && submitButton.getAttribute('aria-disabled') !== 'true') {
+                this.logger.info(`[${this.platformId}] Found enabled submit button on attempt ${attempt}.`);
+                break; // Exit loop only if found AND enabled
+              } else {
+                this.logger.warn(`[${this.platformId}] Found submit button on attempt ${attempt}, but it's disabled. Continuing retries...`);
+                submitButton = null; // Reset submitButton so loop continues
+              }
+            }
+            // If button not found OR found but disabled, wait before next attempt
+            if (attempt < maxButtonRetries) {
+              this.logger.info(`[${this.platformId}] Submit button not ready/found on attempt ${attempt}. Retrying in ${buttonRetryDelay}ms...`);
+              await this._wait(buttonRetryDelay);
+            }
           }
-          this.logger.info(`[${this.platformId}] Found submit button.`);
+
+          // Check if button was found and ready after retries
+          if (!submitButton) {
+            this.logger.error(`[${this.platformId}] Submit button not found or not enabled after ${maxButtonRetries} attempts.`);
+            throw new Error(`Could not find an enabled submit button on ${this.platformId} after multiple attempts.`);
+          }
+          this.logger.info(`[${this.platformId}] Submit button finding step completed successfully.`);
 
           // 5. Click Submit Button
           const clickSuccess = await this._clickSubmitButton(submitButton);
@@ -208,6 +234,7 @@ class BasePlatform extends PlatformInterface {
           this.logger.info(`[${this.platformId}] Content successfully processed and submitted`);
           // Clear the data after successful processing
           chrome.storage.local.remove([
+            STORAGE_KEYS.EXTRACTED_CONTENT,
             STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
             STORAGE_KEYS.PRE_PROMPT,
             STORAGE_KEYS.CONTENT_READY
@@ -219,8 +246,7 @@ class BasePlatform extends PlatformInterface {
             action: 'notifyError',
             error: `Error interacting with ${this.platformId}: ${error.message}`
           }).catch(err => this.logger.error('Failed to send notifyError message:', err));
-          // Optionally clear storage even on error? Depends on desired retry behavior.
-          // chrome.storage.local.remove([STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION, STORAGE_KEYS.PRE_PROMPT, STORAGE_KEYS.CONTENT_READY]);
+          chrome.storage.local.remove([STORAGE_KEYS.EXTRACTED_CONTENT, STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION, STORAGE_KEYS.PRE_PROMPT, STORAGE_KEYS.CONTENT_READY]);
         }
       }
     );
