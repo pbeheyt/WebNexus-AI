@@ -54,6 +54,9 @@ class DeepSeekPlatform extends BasePlatform {
       document.querySelector('div[role="button"].f6d670.bcc55ca1') ||
       document.querySelector('div[role="button"].f6d670');
 
+    if (!sendButton) {
+        this.logger.error(`[${this.platformId}] Submit button not found using any strategy.`);
+    }
     return sendButton;
   }
 
@@ -89,7 +92,7 @@ class DeepSeekPlatform extends BasePlatform {
 
           if (!sendButton) {
             // Enhanced logging to help troubleshoot button selector issues
-            this.logger.error(`[${this.platformId}] Send button not found. DOM structure may have changed.`);
+            this.logger.warn(`[${this.platformId}] Send button not found initially. DOM structure may have changed or requires more time.`);
             this.logger.info(`[${this.platformId}] Available button elements:`,
               document.querySelectorAll('div[role="button"]').length);
             resolve(false);

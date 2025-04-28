@@ -11,14 +11,22 @@ class MistralPlatform extends BasePlatform {
 
   findEditorElement() {
     // Updated selector based on actual textarea attributes
-    return document.querySelector('textarea[name="message.text"][placeholder*="Demander au Chat"]') || // French placeholder
-           document.querySelector('textarea[name="message.text"][placeholder*="Ask the Chat"]') || // English placeholder
-           document.querySelector('textarea.border-default.ring-offset-background'); // Fallback
+    const editor = document.querySelector('textarea[name="message.text"][placeholder*="Demander au Chat"]') || // French placeholder
+                   document.querySelector('textarea[name="message.text"][placeholder*="Ask the Chat"]') || // English placeholder
+                   document.querySelector('textarea.border-default.ring-offset-background'); // Fallback
+    if (!editor) {
+        this.logger.error(`[${this.platformId}] Editor element not found using selectors.`);
+    }
+    return editor;
   }
 
   findSubmitButton() {
     // More specific selector including aria-label and class structure
-    return document.querySelector('button[aria-label*="Send question"][class*="bg-inverted"]'); // Match partial class
+    const button = document.querySelector('button[aria-label*="Send question"][class*="bg-inverted"]'); // Match partial class
+    if (!button) {
+        this.logger.error(`[${this.platformId}] Submit button not found using selector.`);
+    }
+    return button;
   }
 
   /**
@@ -59,18 +67,17 @@ class MistralPlatform extends BasePlatform {
     try {
       this.logger.info(`[${this.platformId}] Attempting to click submit button`);
       // Remove disabled attribute if present
-      if (buttonElement.disabled) {
-        this.logger.warn(`[${this.platformId}] Submit button is disabled, attempting to enable.`);
+      if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
+        this.logger.warn(`[${this.platformId}] Submit button is initially disabled.`);
+        // Keep the enabling attempt logic here...
+        this.logger.info(`[${this.platformId}] Attempting to remove 'disabled' attribute.`);
         buttonElement.removeAttribute('disabled');
         // Re-check after attempting to enable
-        if (buttonElement.disabled) {
-            this.logger.error(`[${this.platformId}] Submit button remained disabled.`);
-            return false;
+        if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
+            this.logger.error(`[${this.platformId}] Submit button remained disabled after attempting to enable.`);
+            return false; // Return failure if still disabled
         }
-      }
-       // Also check aria-disabled just in case
-      if (buttonElement.getAttribute('aria-disabled') === 'true') {
-         this.logger.warn(`[${this.platformId}] Submit button is aria-disabled.`);
+        this.logger.info(`[${this.platformId}] Submit button successfully enabled.`);
       }
 
 

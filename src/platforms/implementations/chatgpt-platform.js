@@ -26,7 +26,7 @@ class ChatGptPlatform extends BasePlatform {
     // The div now has the ID
     const editor = document.querySelector('div#prompt-textarea[contenteditable="true"]');
     if (!editor) {
-        this.logger.warn(`[${this.platformId}] Editor element (div#prompt-textarea) not found.`);
+        this.logger.error(`[${this.platformId}] Editor element (div#prompt-textarea) not found.`);
     } else {
         this.logger.info(`[${this.platformId}] Found editor element (div#prompt-textarea).`);
     }

@@ -12,12 +12,20 @@ class GeminiPlatform extends BasePlatform {
 
   findEditorElement() {
     // Exact selector based on provided HTML
-    return document.querySelector('div.ql-editor[contenteditable="true"][aria-multiline="true"]');
+    const editor = document.querySelector('div.ql-editor[contenteditable="true"][aria-multiline="true"]');
+    if (!editor) {
+        this.logger.error(`[${this.platformId}] Editor element not found using selector.`);
+    }
+    return editor;
   }
 
   findSubmitButton() {
     // Exact selector based on provided HTML
-    return document.querySelector('button.send-button');
+    const button = document.querySelector('button.send-button');
+    if (!button) {
+        this.logger.error(`[${this.platformId}] Submit button not found using selector.`);
+    }
+    return button;
   }
 
   /**
@@ -76,18 +84,22 @@ class GeminiPlatform extends BasePlatform {
       this.logger.info(`[${this.platformId}] Attempting to click submit button`);
       // Check and potentially remove disabled state
       if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-        this.logger.warn(`[${this.platformId}] Submit button is disabled, attempting to enable.`);
+        this.logger.warn(`[${this.platformId}] Submit button is initially disabled.`);
+        // Keep the enabling attempt logic here...
         if (buttonElement.hasAttribute('disabled')) {
+            this.logger.info(`[${this.platformId}] Attempting to remove 'disabled' attribute.`);
             buttonElement.disabled = false;
         }
         if (buttonElement.hasAttribute('aria-disabled')) {
+            this.logger.info(`[${this.platformId}] Attempting to remove 'aria-disabled' attribute.`);
             buttonElement.removeAttribute('aria-disabled');
         }
         // Re-check after attempting to enable
         if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-            this.logger.error(`[${this.platformId}] Submit button remained disabled.`);
-            return false;
+            this.logger.error(`[${this.platformId}] Submit button remained disabled after attempting to enable.`);
+            return false; // Return failure if still disabled
         }
+        this.logger.info(`[${this.platformId}] Submit button successfully enabled.`);
       }
 
       // Click the button with multiple events

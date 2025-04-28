@@ -154,7 +154,7 @@ class ClaudePlatform extends BasePlatform {
       });
       return null; // Return null if found but not ready
     } else {
-      this.logger.warn(`[${this.platformId}] Submit button not found using selector (${selector}).`);
+      this.logger.error(`[${this.platformId}] Submit button not found using selector (${selector}).`);
       return null;
     }
   }
@@ -219,19 +219,22 @@ class ClaudePlatform extends BasePlatform {
     try {
       this.logger.info(`[${this.platformId}] Attempting to click submit button for Claude with event sequence`);
       if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-        // Attempt to enable if possible, otherwise warn
+        this.logger.warn(`[${this.platformId}] Submit button is initially disabled.`);
+        // Keep the enabling attempt logic here...
         if (buttonElement.hasAttribute('disabled')) {
-           this.logger.warn(`[${this.platformId}] Submit button is disabled, attempting to enable.`);
+           this.logger.info(`[${this.platformId}] Attempting to remove 'disabled' attribute.`);
            buttonElement.disabled = false;
-        } else {
-           this.logger.warn(`[${this.platformId}] Submit button is aria-disabled.`);
-           // Cannot directly change aria-disabled usually, proceed but might fail
+        }
+        if (buttonElement.hasAttribute('aria-disabled')) {
+           this.logger.info(`[${this.platformId}] Attempting to remove 'aria-disabled' attribute.`);
+           buttonElement.removeAttribute('aria-disabled');
         }
         // Re-check after attempting to enable
         if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-            this.logger.error(`[${this.platformId}] Submit button remains disabled.`);
-            return false;
+            this.logger.error(`[${this.platformId}] Submit button remained disabled after attempting to enable.`);
+            return false; // Return failure if still disabled
         }
+        this.logger.info(`[${this.platformId}] Submit button successfully enabled.`);
       }
 
       // Create and dispatch multiple events for better compatibility
