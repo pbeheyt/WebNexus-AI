@@ -2,10 +2,9 @@
 
 /**
  * Parses text and math expressions from a given string.
- * It identifies LaTeX-style math expressions using $$...$$, \[...\], and \(...\) delimiters
- * and separates them from regular text. Single dollar sign ($...$) delimiters are ignored
- * to prevent misinterpretation of currency, code variables, etc.
- *
+ * It identifies LaTeX-style math expressions and separates them from regular text.
+ * Uses a stricter regex for inline math ($...$) to avoid misinterpreting currency,
+ * template literals (`${...}`), or other text.
  * @param {string} text - The input string containing text and math expressions.
  * @returns {Array} - An array of objects representing the parsed content.
  * Each object has a 'type' property ('text' or 'math') and a 'value' property containing the content.
@@ -19,9 +18,14 @@ export const parseTextAndMath = (text) => {
   // Updated Regex:
   // 1. \$\$[\s\S]*?\$\$  : Matches block math delimited by double dollar signs.
   // 2. \\\[[\s\S]*?\\]  : Matches block math delimited by \[ ... \].
-  // 3. \\\(.+?\)     : Matches inline math delimited by \( ... \).
-  // Note: Single dollar sign ($...$) detection has been removed.
-  const regex = /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\]|\\\(.+?\\\))/g;
+  // 3. (?<![\w$])\$(?![\s{])((?:[^$\\]|\\.)+?)(?<!\s)\$(?![\w$]) : Matches inline math $...$ with stricter rules:
+  //    - (?<![\w$])   : Negative lookbehind - Not preceded by a word character or $.
+  //    - \$(?![\s{]) : Opening $ not followed by space OR {. <--- Key change here
+  //    - ((?:[^$\\]|\\.)+?) : Captures content - any char except $ or \, or escaped chars. Non-greedy.
+  //    - (?<!\s)\$   : Closing $ not preceded by space.
+  //    - (?![\w$])    : Negative lookahead - Not followed by a word character or $.
+  // 4. \\\(.+?\)       : Matches inline math delimited by \( ... \).
+  const regex = /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\]|(?<![\w$])\$(?![\s{])((?:[^$\\]|\\.)+?)(?<!\s)\$(?![\w$])|\\\(.+?\\\))/g;
 
   const result = [];
   let lastIndex = 0;
@@ -45,7 +49,10 @@ export const parseTextAndMath = (text) => {
     } else if (part.startsWith('\\[')) { // Block math \[ ... \]
       mathContent = part.slice(2, -2);
       inline = false;
-    // Removed the check for single dollar signs ($...$)
+    } else if (part.startsWith('$') && part.endsWith('$')) { // Inline math $ ... $
+      // Use the captured group from the stricter regex (match[1])
+      mathContent = match[1]; // Content is in the first capture group
+      inline = true;
     } else if (part.startsWith('\\(')) { // Inline math \( ... \)
       mathContent = part.slice(2, -2);
       inline = true;
