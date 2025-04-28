@@ -178,9 +178,9 @@ function Header() {
             </>
           ) : (
             // When no credentials, show message
-            <div className="flex-grow py-1.5 h-9"> 
-              <span className="text-theme-secondary text-sm">No API credentials configured.</span>
-            </div>
+    <div className="flex-grow py-1.5 h-9 flex items-center"> 
+      <span className="text-theme-secondary text-sm select-none">No API credentials configured.</span>
+    </div>
           )}
           
           {/* 4. Refresh Button */}

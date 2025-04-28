@@ -331,17 +331,17 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
          if (!hasAnyPlatformCredentials) {
             return (
                 <div className={`flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}>
-                    <button
-                        onClick={openApiSettings}
-                        className="flex flex-col items-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark"
-                        aria-label="Configure API Credentials in Settings"
-                    >
-                        <NoCredentialsIcon className="w-8 h-8 mb-3 text-theme-secondary select-none" />
-                        <h3 className="text-base font-semibold mb-2 select-none">API Credentials Required</h3>
-                        <p className="text-sm select-none">
-                            Click here to configure API keys in settings.
-                        </p>
-                    </button>
+     <button
+        onClick={openApiSettings}
+        className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-theme-hover transition-colors w-full text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-primary-dark"
+        aria-label="Configure API Credentials in Settings"
+     >
+        <NoCredentialsIcon className="w-8 h-8 mb-3 text-theme-secondary select-none" />
+        <h3 className="text-base font-semibold mb-2 select-none">API Credentials Required</h3>
+        <p className="text-sm select-none">
+            Click here to configure API keys in settings.
+        </p>
+     </button>
                 </div>
             );
         }
