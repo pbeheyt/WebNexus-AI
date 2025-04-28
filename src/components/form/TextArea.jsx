@@ -13,6 +13,7 @@ export const TextArea = forwardRef(({
   className = '',
   autoResize = true,
   style = {},
+  focusAtEnd = false,
   ...props
 }, ref) => {
   const textareaRef = useRef(null);
@@ -46,6 +47,16 @@ export const TextArea = forwardRef(({
     }
     // Rerun effect if value, autoResize, or style-based heights change
   }, [value, autoResize, style.minHeight, style.maxHeight]);
+
+  // Focus cursor at end when focusAtEnd is true
+  useEffect(() => {
+    if (focusAtEnd && textareaRef.current) {
+      const length = value.length;
+      const element = textareaRef.current;
+      element.setSelectionRange(length, length);
+      element.focus();
+    }
+  }, [focusAtEnd, value]);
 
   return (
     <textarea

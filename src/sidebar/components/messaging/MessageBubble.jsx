@@ -228,9 +228,10 @@ export const MessageBubble = memo(forwardRef(({
                                 value={editedContent}
                                 onChange={(e) => setEditedContent(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                className="w-full text-sm border border-primary rounded-md p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary" // Added focus styles and text colors
-                                style={{ minHeight: '4rem' }} // Keep min-height for consistency
+                                className="w-full text-sm border border-primary rounded-md p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary" 
+                                style={{ minHeight: '4rem' }}
                                 autoFocus
+                                focusAtEnd={isEditing}
                                 aria-label="Edit message content"
                             />
                             <div className="flex justify-end gap-2">
