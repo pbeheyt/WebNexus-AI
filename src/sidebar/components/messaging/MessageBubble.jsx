@@ -259,7 +259,7 @@ export const MessageBubble = memo(forwardRef(({
 
                 {/* Action buttons below bubble (only show when not editing) */}
                 {!isEditing && (
-                    <div className={`flex items-center gap-1 mt-1.5 ${isProcessing ? 'invisible' : ''}`}>
+                    <div className={`flex items-center gap-1 mt-1.5 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}>
                         <IconButton
                             icon={EditIcon}
                             iconClassName="w-4 h-4 select-none"
