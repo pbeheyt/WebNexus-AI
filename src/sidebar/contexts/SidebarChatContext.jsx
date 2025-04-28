@@ -500,6 +500,12 @@ export function SidebarChatProvider({ children }) {
     } catch (error) {
       console.error('Error processing streaming message:', error);
 
+      // Determine error content based on port closure
+      const isPortClosedError = error.isPortClosed;
+      const systemErrorMessageContent = isPortClosedError
+        ? '[System: The connection was interrupted. Please try sending your message again.]'
+        : `Error: ${error.message || 'Failed to process request'}`;
+
       // Update streaming message to show error
       const errorMessages = messages.map(msg => // Use 'messages' which doesn't include the placeholder yet
         msg.id === userMessageId // Find the user message we just added
@@ -511,7 +517,7 @@ export function SidebarChatProvider({ children }) {
       const systemErrorMessage = {
         id: assistantMessageId, // Reuse the ID intended for the assistant
         role: MESSAGE_ROLES.SYSTEM,
-        content: `Error: ${error.message || 'Failed to process request'}`,
+        content: systemErrorMessageContent, // Use determined content
         timestamp: new Date().toISOString(),
         isStreaming: false // Turn off streaming state
       };
@@ -597,17 +603,25 @@ export function SidebarChatProvider({ children }) {
       }
     } catch (error) {
       console.error('Error processing rerun message:', error);
+
+      // Determine error content based on port closure
+      const isPortClosedError = error.isPortClosed;
+      const systemErrorMessageContent = isPortClosedError
+        ? '[System: The connection was interrupted during rerun. Please try again.]'
+        : `Error: ${error.message || 'Failed to process rerun request'}`;
+
       // Handle error similar to sendMessage error handling
       const errorMessages = truncatedMessages; // Start with the truncated messages
       const systemErrorMessage = {
         id: assistantMessageId,
         role: MESSAGE_ROLES.SYSTEM,
-        content: `Error: ${error.message || 'Failed to process rerun request'}`,
+        content: systemErrorMessageContent, // Use determined content
         timestamp: new Date().toISOString(),
         isStreaming: false
       };
       setMessages([...errorMessages, systemErrorMessage]);
       setStreamingMessageId(null);
+
       // Save error state to history, passing the preserved stats
       if (tabId) {
         const savedStats = rerunStatsRef.current;
@@ -617,8 +631,7 @@ export function SidebarChatProvider({ children }) {
       rerunStatsRef.current = null; // Clear stats ref on error
       resetContentProcessing();
     }
-
-  }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing]);
+  }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing, modelConfigData]); // Added modelConfigData dependency
 
 
   const editAndRerunMessage = useCallback(async (messageId, newContent) => {
@@ -694,17 +707,25 @@ export function SidebarChatProvider({ children }) {
       }
     } catch (error) {
       console.error('Error processing edit/rerun message:', error);
+
+      // Determine error content based on port closure
+      const isPortClosedError = error.isPortClosed;
+      const systemErrorMessageContent = isPortClosedError
+        ? '[System: The connection was interrupted during edit/rerun. Please try again.]'
+        : `Error: ${error.message || 'Failed to process edit/rerun request'}`;
+
       // Handle error similar to sendMessage error handling
       const errorMessages = truncatedMessages; // Start with the truncated messages
       const systemErrorMessage = {
         id: assistantMessageId,
         role: MESSAGE_ROLES.SYSTEM,
-        content: `Error: ${error.message || 'Failed to process edit/rerun request'}`,
+        content: systemErrorMessageContent, // Use determined content
         timestamp: new Date().toISOString(),
         isStreaming: false
       };
       setMessages([...errorMessages, systemErrorMessage]);
       setStreamingMessageId(null);
+
       // Save error state to history, passing the preserved stats
       if (tabId) {
         const savedStats = rerunStatsRef.current;
@@ -714,8 +735,7 @@ export function SidebarChatProvider({ children }) {
       rerunStatsRef.current = null; // Clear stats ref on error
       resetContentProcessing();
     }
-
-  }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing]);
+  }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing, modelConfigData]); // Added modelConfigData dependency
 
   const rerunAssistantMessage = useCallback(async (assistantMessageId) => {
     // Guard Clauses
@@ -794,31 +814,39 @@ export function SidebarChatProvider({ children }) {
             throw new Error(result?.error || 'Failed to initialize streaming for assistant rerun');
         }
     } catch (error) {
-        console.error('Error processing assistant rerun message:', error);
-        // Handle error: Restore truncated messages and add a system error message
-        const errorMessages = truncatedMessages; // Start with the state before adding the placeholder
-        const systemErrorMessage = {
-            id: assistantPlaceholderId, // Reuse the placeholder ID for the error message
-            role: MESSAGE_ROLES.SYSTEM,
-            content: `Error: ${error.message || 'Failed to process assistant rerun request'}`,
-            timestamp: new Date().toISOString(),
-            isStreaming: false
-        };
-        setMessages([...errorMessages, systemErrorMessage]);
-        setStreamingMessageId(null);
-        // Save error state to history, passing the preserved stats
-        if (tabId) {
-          const savedStats = rerunStatsRef.current;
-          const historyOptions = savedStats ? { initialAccumulatedCost: savedStats.preTruncationCost || 0, initialOutputTokens: savedStats.preTruncationOutput || 0 } : {};
-          await ChatHistoryService.saveHistory(tabId, [...errorMessages, systemErrorMessage], modelConfigData, historyOptions);
-        }
-        rerunStatsRef.current = null; // Clear stats ref on error
-        resetContentProcessing();
+      console.error('Error processing assistant rerun message:', error);
+
+      // Determine error content based on port closure
+      const isPortClosedError = error.isPortClosed;
+      const systemErrorMessageContent = isPortClosedError
+        ? '[System: The connection was interrupted during assistant rerun. Please try again.]'
+        : `Error: ${error.message || 'Failed to process assistant rerun request'}`;
+
+      // Handle error: Restore truncated messages and add a system error message
+      const errorMessages = truncatedMessages; // Start with the state before adding the placeholder
+      const systemErrorMessage = {
+        id: assistantPlaceholderId, // Reuse the placeholder ID for the error message
+        role: MESSAGE_ROLES.SYSTEM,
+        content: systemErrorMessageContent, // Use determined content
+        timestamp: new Date().toISOString(),
+        isStreaming: false
+      };
+      setMessages([...errorMessages, systemErrorMessage]);
+      setStreamingMessageId(null);
+
+      // Save error state to history, passing the preserved stats
+      if (tabId) {
+        const savedStats = rerunStatsRef.current;
+        const historyOptions = savedStats ? { initialAccumulatedCost: savedStats.preTruncationCost || 0, initialOutputTokens: savedStats.preTruncationOutput || 0 } : {};
+        await ChatHistoryService.saveHistory(tabId, [...errorMessages, systemErrorMessage], modelConfigData, historyOptions);
+      }
+      rerunStatsRef.current = null; // Clear stats ref on error
+      resetContentProcessing();
     }
   }, [
       tabId, selectedPlatformId, selectedModel, isProcessing, messages, tokenStats,
       setMessages, processContentViaApi, setStreamingMessageId, resetContentProcessing,
-      selectedPlatform.iconUrl
+      selectedPlatform.iconUrl, modelConfigData // Added modelConfigData dependency
   ]);
 
   // --- End Rerun/Edit Logic ---

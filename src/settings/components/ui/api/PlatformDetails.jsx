@@ -98,10 +98,18 @@ const PlatformDetails = ({
       setOriginalApiKey(apiKey);
       setHasApiKeyChanges(false);
     } catch (err) {
-      console.error('Error saving API key:', err);
-      error(`Failed to save API key: ${err.message}`);
+      if (err.isPortClosed) {
+        // Handle specific port closed error during validation/saving
+        console.warn('handleSaveCredentials: Port closed during credential validation/saving.');
+        error('Validation timed out or connection lost. Please try again.');
+        // No specific validation state to set here, just notify and stop saving
+      } else {
+        // Handle other errors during validation or saving
+        console.error('Error saving API key:', err);
+        error(`Failed to save API key: ${err.message}`);
+      }
     } finally {
-      setIsSaving(false);
+      setIsSaving(false); // Ensure saving state is always reset
     }
   };
 

@@ -94,13 +94,22 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       }
       
       // Return the actual response object received from the background script
-      return response; 
+      return response;
     } catch (error) {
       // Catch errors from robustSendMessage itself (e.g., port closed)
-      console.error('Error sending message to background:', error);
-      setError(error); // Store the communication error
-      setProcessingStatus('error');
-      throw error;
+      if (error.isPortClosed) {
+        // Handle port closed specifically for the popup flow
+        console.warn('processContent: Port closed during background processing (likely popup closed).');
+        // Don't set global error state, return specific status
+        setProcessingStatus('idle'); // Reset status as the operation was interrupted, not failed
+        return { success: false, error: 'PORT_CLOSED', message: 'Popup closed before background task could respond.' };
+      } else {
+        // Handle other communication or unexpected errors
+        console.error('Error sending message to background:', error);
+        setError(error); // Store the communication error
+        setProcessingStatus('error');
+        throw error; // Re-throw for potential higher-level handling if needed
+      }
     }
   }, [currentTab, contentType, source]);
 
