@@ -109,6 +109,8 @@ export const MessageBubble = memo(forwardRef(({
     className = '',
     style = {}
 }, ref) => {
+    // Common button styling classes
+    const actionButtonClasses = 'p-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary';
     // All hooks moved to top level
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(content);
@@ -259,7 +261,7 @@ export const MessageBubble = memo(forwardRef(({
 
                 {/* Action buttons below bubble (only show when not editing) */}
                 {!isEditing && (
-                    <div className={`flex items-center gap-1 mt-1.5 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}>
+                    <div className={`flex items-center gap-1 mt-1.5 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : copyState === 'copied' || copyState === 'error' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}>
                         <IconButton
                             icon={EditIcon}
                             iconClassName="w-4 h-4 select-none"
@@ -269,7 +271,7 @@ export const MessageBubble = memo(forwardRef(({
                             }}
                             aria-label="Edit message"
                             title="Edit message"
-                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className={actionButtonClasses}
                             disabled={isProcessing || isCanceling}
                         />
                         <IconButton
@@ -278,12 +280,12 @@ export const MessageBubble = memo(forwardRef(({
                             onClick={() => rerunMessage(id)}
                             aria-label="Rerun message"
                             title="Rerun message"
-                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className={actionButtonClasses}
                             disabled={isProcessing || isCanceling}
                         />
                         <IconButton
                             onClick={handleCopy}
-                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className={actionButtonClasses}
                             aria-label="Copy message"
                             title="Copy message"
                             icon={IconComponent}
@@ -485,14 +487,14 @@ export const MessageBubble = memo(forwardRef(({
                         )}
                     </div>
                     {/* Buttons Container (Rerun + Copy) */}
-                    <div className={`flex items-center justify-center gap-1 ${isProcessing ? 'invisible' : ''}`}>
+                    <div className={`flex items-center justify-center gap-1 transition-opacity duration-150 ${isProcessing ? 'invisible' : copyState === 'copied' || copyState === 'error' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}>
                         {!isStreaming && content && content.trim() && (
                             <> {/* Use fragment to group buttons */}
                                 <IconButton
                                     icon={RerunIcon}
                                     iconClassName="w-4 h-4 select-none"
                                     onClick={handleRerunAssistant}
-                                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    className={actionButtonClasses}
                                     aria-label="Rerun generation"
                                     title="Rerun generation"
                                     disabled={isProcessing || isCanceling}
@@ -500,7 +502,7 @@ export const MessageBubble = memo(forwardRef(({
                                 {/* New Copy IconButton */}
                                 <IconButton
                                     onClick={handleAssistantCopy}
-                                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    className={actionButtonClasses}
                                     aria-label="Copy to clipboard"
                                     title="Copy to clipboard"
                                     icon={AssistantIconComponent}
