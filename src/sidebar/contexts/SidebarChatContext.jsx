@@ -437,7 +437,10 @@ export function SidebarChatProvider({ children }) {
     // Determine if this is the first message (before adding the current user message)
     const isFirstMessage = messages.length === 0;
     // Determine if the current page is injectable
-    const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false; // Added injectability check
+    const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
+
+    // Decide whether to effectively enable content extraction based on page injectability
+    const effectiveContentExtractionEnabled = isPageInjectable ? isContentExtractionEnabled : false;
 
     try {
       // Format conversation history for the API - Filter out streaming messages and extracted content messages
@@ -457,7 +460,7 @@ export function SidebarChatProvider({ children }) {
         conversationHistory,
         streaming: true,
         // Pass the toggle state directly
-        isContentExtractionEnabled: isContentExtractionEnabled, // <-- ADD THIS LINE
+        isContentExtractionEnabled: effectiveContentExtractionEnabled, // Use the calculated value based on page injectability
         // Remove the old skipInitialExtraction line:
         // skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true, // <-- REMOVE THIS LINE
         // Pass tabId and source explicitly if needed by the hook/API
