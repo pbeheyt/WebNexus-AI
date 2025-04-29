@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import logger from '../shared/logger';
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform';
-import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip, SidebarIcon, Toggle } from '../components'; // Added Toggle
+import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip, SidebarIcon, Toggle } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { PlatformSelector } from './components/PlatformSelector';
 import { UnifiedInput } from '../components/input/UnifiedInput';

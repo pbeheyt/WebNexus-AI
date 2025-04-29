@@ -181,7 +181,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
    */
   async extractAndSaveContent() {
     try {
-      // Updated log message
       this.logger.info('Starting general content extraction (DOM Traversal - Visible Only)...');
       const pageData = await this.extractData();
       await this.saveToStorage(pageData);

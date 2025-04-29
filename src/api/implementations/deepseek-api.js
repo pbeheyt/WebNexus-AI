@@ -122,7 +122,6 @@ class DeepSeekApiService extends BaseApiService {
    */
   _formatDeepSeekMessages(history) {
     const formattedMessages = [];
-    // Update log call
     this.logger.info(`[${this.platformId}] Formatting ${history.length} history messages, merging consecutive roles.`);
 
     for (const msg of history) {
@@ -153,7 +152,6 @@ class DeepSeekApiService extends BaseApiService {
     // Final check for alternation (optional, but good for debugging)
     for (let i = 0; i < formattedMessages.length - 1; i++) {
         if (formattedMessages[i].role === formattedMessages[i+1].role) {
-            // Update log call
             this.logger.error(`[${this.platformId}] Formatting failed: Consecutive roles found after merge at index ${i}. Role: ${formattedMessages[i].role}`);
             // Handle error case if needed, e.g., return only valid prefix
         }

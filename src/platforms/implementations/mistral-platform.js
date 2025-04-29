@@ -10,7 +10,6 @@ class MistralPlatform extends BasePlatform {
   }
 
   findEditorElement() {
-    // Updated selector based on actual textarea attributes
     const editor = document.querySelector('textarea[name="message.text"][placeholder*="Demander au Chat"]') || // French placeholder
                    document.querySelector('textarea[name="message.text"][placeholder*="Ask the Chat"]') || // English placeholder
                    document.querySelector('textarea.border-default.ring-offset-background'); // Fallback

@@ -105,7 +105,6 @@ class ClaudeApiService extends BaseApiService {
         return { type: 'ignore' };
 
       } catch (e) {
-        // Update log call
         this.logger.error(`[${this.platformId}] Error parsing stream chunk:`, e, 'Line:', line);
         return { type: 'error', error: `Error parsing stream data: ${e.message}` };
       }

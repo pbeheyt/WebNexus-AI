@@ -320,7 +320,7 @@ export function createTabAwarePlatformContext(options = {}) {
         // Optionally revert state or show error
         return false;
       }
-}, [tabId, interfaceType, selectedPlatformId, selectedModelId, models]); // Added models dependency
+}, [tabId, interfaceType, selectedPlatformId, selectedModelId, models]);
 
 // Function to get API config for a specific platform
 const getPlatformApiConfig = useCallback((platformId) => {

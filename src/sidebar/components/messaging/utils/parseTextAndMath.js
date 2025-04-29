@@ -15,7 +15,7 @@ export const parseTextAndMath = (text) => {
       return [];
   }
 
-  // Updated Regex:
+  // Regex:
   // Group 1: Content of $$...$$
   // Group 2: Content of \[...\]
   // Group 3: Content of $...$ (Stricter: no digit before, no space/{ inside, no newline/}/space before closing $)

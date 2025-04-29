@@ -20,7 +20,6 @@ class BaseApiService extends ApiInterface {
   async initialize(credentials) {
     this.credentials = credentials;
     this.config = await ConfigService.getPlatformApiConfig(this.platformId);
-    // Update log call to include platformId
     this.logger.info(`[${this.platformId}] API service initialized`);
   }
 
@@ -38,7 +37,6 @@ class BaseApiService extends ApiInterface {
       }
 
       const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent);
-      // Update log call
       this.logger.info(`[${this.platformId}] Processing request for model ${model} with${formattedContent ? ' included' : 'out'} content.`);
       const fetchOptions = await this._buildApiRequest(structuredPrompt, resolvedParams, apiKey);
       const streamSuccess = await this._executeStreamingRequest(fetchOptions, onChunk, abortSignal, model);
@@ -186,13 +184,11 @@ class BaseApiService extends ApiInterface {
     let buffer = ""; // Buffer for non-Gemini platforms
 
     if (typeof this._resetStreamState === 'function') {
-      // Update log call
       this.logger.info(`[${this.platformId}] Resetting stream state`);
       this._resetStreamState();
     }
 
     try {
-      // Update log call
       this.logger.info(`[${this.platformId}] Executing streaming request to ${fetchOptions.url} for model ${model}`);
       const response = await fetch(fetchOptions.url, {
         method: fetchOptions.method,
@@ -203,7 +199,6 @@ class BaseApiService extends ApiInterface {
 
       if (!response.ok) {
         const errorMessage = await extractApiErrorMessage(response);
-        // Update log call
         this.logger.error(`[${this.platformId}] API Error (${response.status}) for model ${model}: ${errorMessage}`, response);
         onChunk({ done: true, error: errorMessage, model });
         return false; // Indicate failure to the caller
@@ -216,11 +211,9 @@ class BaseApiService extends ApiInterface {
         const { done, value } = await reader.read();
 
         if (done) {
-          // Update log call
           this.logger.info(`[${this.platformId}] Stream finished naturally for model ${model}.`);
           // Final buffer processing for all platforms
           if (buffer.trim()) {
-            // Update log call
             this.logger.warn(`[${this.platformId}] Processing remaining buffer content after stream end for model ${model}: "${buffer}"`);
             try {
               const parsedResult = this._parseStreamChunk(buffer.trim());
@@ -230,7 +223,6 @@ class BaseApiService extends ApiInterface {
                 return false;
               }
             } catch (parseError) {
-              // Update log call
               this.logger.error(`[${this.platformId}] Error parsing final buffer chunk for model ${model}:`, parseError, 'Buffer:', buffer);
               onChunk({ done: true, error: `Error parsing final stream data: ${parseError.message}`, model });
               return false;
@@ -255,14 +247,12 @@ class BaseApiService extends ApiInterface {
             accumulatedContent = this._handleParsedChunk(parsedResult, onChunk, model, accumulatedContent);
 
             if (parsedResult.type === 'error') {
-              // Update log call
               this.logger.error(`[${this.platformId}] Parsed stream error for model ${model}: ${parsedResult.error}`);
               onChunk({ done: true, error: parsedResult.error, model });
               return false; // Stop processing loop
             }
             // Ignore 'done' and 'ignore' types here
           } catch (parseError) {
-            // Update log call
             this.logger.error(`[${this.platformId}] Error parsing stream chunk for model ${model}:`, parseError, 'Line:', line);
             onChunk({ done: true, error: `Error parsing stream data: ${parseError.message}`, model });
             return false; // Stop processing loop
@@ -300,7 +290,6 @@ class BaseApiService extends ApiInterface {
         }
         // No need for releaseLock() as cancel() handles it.
       } else {
-        // Update log call
         this.logger.info(`[${this.platformId}] No active reader found in finally block for model ${model}.`);
       }
     }

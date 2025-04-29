@@ -645,7 +645,7 @@ export function SidebarChatProvider({ children }) {
       rerunStatsRef.current = null; // Clear stats ref on error
       resetContentProcessing();
     }
-  }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing, modelConfigData]); // Added modelConfigData dependency
+  }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing, modelConfigData]);
 
 
   const editAndRerunMessage = useCallback(async (messageId, newContent) => {
@@ -749,7 +749,7 @@ export function SidebarChatProvider({ children }) {
       rerunStatsRef.current = null; // Clear stats ref on error
       resetContentProcessing();
     }
-  }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing, modelConfigData]); // Added modelConfigData dependency
+  }, [messages, tokenStats, setMessages, processContentViaApi, selectedPlatformId, selectedModel, setStreamingMessageId, tabId, isProcessing, selectedPlatform.iconUrl, resetContentProcessing, modelConfigData]);
 
   const rerunAssistantMessage = useCallback(async (assistantMessageId) => {
     // Guard Clauses
@@ -860,7 +860,7 @@ export function SidebarChatProvider({ children }) {
   }, [
       tabId, selectedPlatformId, selectedModel, isProcessing, messages, tokenStats,
       setMessages, processContentViaApi, setStreamingMessageId, resetContentProcessing,
-      selectedPlatform.iconUrl, modelConfigData // Added modelConfigData dependency
+      selectedPlatform.iconUrl, modelConfigData
   ]);
 
   // --- End Rerun/Edit Logic ---
@@ -1127,7 +1127,7 @@ export function SidebarChatProvider({ children }) {
       modelConfigData,
       rerunMessage,
       editAndRerunMessage,
-      rerunAssistantMessage // Added
+      rerunAssistantMessage
     }}>
       {children}
     </SidebarChatContext.Provider>
