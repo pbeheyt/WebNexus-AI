@@ -1,4 +1,4 @@
-const BaseApiService = require('../api-base');
+import BaseApiService from '../api-base.js';
 
 /**
  * Gemini API implementation
@@ -181,4 +181,4 @@ class GeminiApiService extends BaseApiService {
   }
 }
 
-module.exports = GeminiApiService;
+export default GeminiApiService;

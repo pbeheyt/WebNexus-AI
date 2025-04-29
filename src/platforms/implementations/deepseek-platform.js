@@ -1,5 +1,5 @@
 // src/platforms/implementations/deepseek-platform.js
-const BasePlatform = require('../platform-base');
+import BasePlatform from '../platform-base.js';
 
 /**
  * DeepSeek AI platform implementation
@@ -155,4 +155,4 @@ class DeepSeekPlatform extends BasePlatform {
   }
 }
 
-module.exports = DeepSeekPlatform;
+export default DeepSeekPlatform;

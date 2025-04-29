@@ -2,6 +2,7 @@
 
 import logger from '../../shared/logger';
 import { STORAGE_KEYS } from '../../shared/constants';
+
 import TokenManagementService from './TokenManagementService';
 
 /**

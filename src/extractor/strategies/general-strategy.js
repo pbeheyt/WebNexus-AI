@@ -1,5 +1,5 @@
 // src/extractor/strategies/general-strategy.js
-const BaseExtractor = require('../base-extractor');
+import BaseExtractor from '../base-extractor.js';
 
 class GeneralExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -436,4 +436,4 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 }
 
-module.exports = GeneralExtractorStrategy;
+export default GeneralExtractorStrategy;

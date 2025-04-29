@@ -1,4 +1,4 @@
-const BaseApiService = require('../api-base');
+import BaseApiService from '../api-base.js';
 
 /**
  * Mistral API implementation
@@ -161,4 +161,4 @@ class MistralApiService extends BaseApiService {
   }
 }
 
-module.exports = MistralApiService;
+export default MistralApiService;

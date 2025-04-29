@@ -1,5 +1,5 @@
-const logger = require('../shared/logger.js').service;
-const { STORAGE_KEYS } = require('../shared/constants');
+import logger from '../shared/logger.js';
+import { STORAGE_KEYS } from '../shared/constants.js';
 
 /**
  * Service for managing tab-specific sidebar state
@@ -36,7 +36,7 @@ class SidebarStateManager {
       [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates,
     });
 
-    logger.info(`Tab ${tabId} sidebar visibility set to ${visible}`);
+    logger.service.info(`Tab ${tabId} sidebar visibility set to ${visible}`);
   }
 
   /**
@@ -78,7 +78,7 @@ class SidebarStateManager {
         const activeTab = tabs[0];
 
         if (!activeTab || !activeTab.id) {
-          logger.warn('No active tab found for getSidebarState');
+          logger.service.warn('No active tab found for getSidebarState');
           return {
             visible: false,
             platform: null,
@@ -91,7 +91,7 @@ class SidebarStateManager {
 
       return this._getStateForTab(tabId);
     } catch (error) {
-      logger.error(`Error getting sidebar state for tab ${tabId}:`, error);
+      logger.service.error(`Error getting sidebar state for tab ${tabId}:`, error);
       return {
         visible: false,
         platform: null,
@@ -112,7 +112,7 @@ class SidebarStateManager {
 
       return tabStates[tabId.toString()] === true;
     } catch (error) {
-      logger.error(`Error getting sidebar visibility for tab ${tabId}:`, error);
+      logger.service.error(`Error getting sidebar visibility for tab ${tabId}:`, error);
       return false;
     }
   }
@@ -128,7 +128,7 @@ class SidebarStateManager {
       await this._toggleForTab(tabId, visible);
       return true;
     } catch (error) {
-      logger.error(`Error setting sidebar visibility for tab ${tabId}:`, error);
+      logger.service.error(`Error setting sidebar visibility for tab ${tabId}:`, error);
       return false;
     }
   }
@@ -157,7 +157,7 @@ class SidebarStateManager {
           updatedStates[tabId] = state;
         } else {
           stateChanged = true;
-          logger.info(`Removing sidebar state for closed tab ${tabId}`);
+          logger.service.info(`Removing sidebar state for closed tab ${tabId}`);
         }
       });
 
@@ -166,12 +166,12 @@ class SidebarStateManager {
         await chrome.storage.local.set({
           [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates,
         });
-        logger.info('Tab sidebar states cleaned up');
+        logger.service.info('Tab sidebar states cleaned up');
       }
     } catch (error) {
-      logger.error('Error cleaning up tab sidebar states:', error);
+      logger.service.error('Error cleaning up tab sidebar states:', error);
     }
   }
 }
 
-module.exports = new SidebarStateManager();
+export default new SidebarStateManager();

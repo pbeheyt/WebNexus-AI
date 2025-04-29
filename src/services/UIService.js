@@ -1,5 +1,5 @@
-const { STORAGE_KEYS } = require('../shared/constants');
-const logger = require('../shared/logger.js').service;
+import { STORAGE_KEYS } from '../shared/constants.js';
+import logger from '../shared/logger.js';
 
 class UIService {
   #theme = 'light';
@@ -52,7 +52,7 @@ class UIService {
         textSize: this.#textSize,
       };
     } catch (error) {
-      logger.error('UI service initialization error:', error);
+      logger.service.error('UI service initialization error:', error);
       return {
         theme: 'light',
         textSize: 'sm',
@@ -76,7 +76,7 @@ class UIService {
 
       return newTheme;
     } catch (error) {
-      logger.error('Error toggling theme:', error);
+      logger.service.error('Error toggling theme:', error);
       return this.#theme;
     }
   }
@@ -106,7 +106,7 @@ class UIService {
 
       return newTextSize;
     } catch (error) {
-      logger.error('Error toggling text size:', error);
+      logger.service.error('Error toggling text size:', error);
       return this.#textSize;
     }
   }
@@ -157,7 +157,7 @@ class UIService {
           textSize: this.#textSize,
         });
       } catch (error) {
-        logger.error('Error in UI observer callback:', error);
+        logger.service.error('Error in UI observer callback:', error);
       }
     }
   }
@@ -192,4 +192,4 @@ class UIService {
 
 // Export singleton instance
 const uiService = new UIService();
-module.exports = uiService;
+export default uiService;

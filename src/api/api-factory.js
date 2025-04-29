@@ -1,12 +1,12 @@
 // src/api/api-factory.js
 
-const BaseApiService = require('./api-base');
-const ChatGptApiService = require('./implementations/chatgpt-api');
-const ClaudeApiService = require('./implementations/claude-api');
-const GeminiApiService = require('./implementations/gemini-api');
-const MistralApiService = require('./implementations/mistral-api');
-const DeepSeekApiService = require('./implementations/deepseek-api');
-const GrokApiService = require('./implementations/grok-api');
+import BaseApiService from './api-base.js';
+import ChatGptApiService from './implementations/chatgpt-api.js';
+import ClaudeApiService from './implementations/claude-api.js';
+import GeminiApiService from './implementations/gemini-api.js';
+import MistralApiService from './implementations/mistral-api.js';
+import DeepSeekApiService from './implementations/deepseek-api.js';
+import GrokApiService from './implementations/grok-api.js';
 
 /**
  * Factory class for creating API service instances
@@ -38,4 +38,4 @@ class ApiFactory {
   }
 }
 
-module.exports = ApiFactory;
+export default ApiFactory;

@@ -1,10 +1,10 @@
 // src/extractor/strategies/pdf-strategy.js
-const pdfjs = require('pdfjs-dist/build/pdf');
+import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 
-const BaseExtractor = require('../base-extractor');
+import BaseExtractor from '../base-extractor.js';
 
 // Set worker source path - make sure webpack is configured to handle this
-pdfjs.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(
+pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(
   'dist/pdf.worker.bundle.js'
 );
 
@@ -52,7 +52,7 @@ class PdfExtractorStrategy extends BaseExtractor {
 
       // Load the PDF document WITHOUT CMap options
       this.logger.info('Loading PDF document without external CMaps...');
-      const loadingTask = pdfjs.getDocument({
+      const loadingTask = pdfjsLib.getDocument({ // Changed pdfjs to pdfjsLib
         data: pdfData,
       });
 
@@ -168,4 +168,4 @@ class PdfExtractorStrategy extends BaseExtractor {
   }
 }
 
-module.exports = PdfExtractorStrategy;
+export default PdfExtractorStrategy;

@@ -1,5 +1,5 @@
 // src/platforms/implementations/grok-platform.js
-const BasePlatform = require('../platform-base');
+import BasePlatform from '../platform-base.js';
 
 /**
  * Grok AI platform implementation
@@ -344,4 +344,4 @@ class GrokPlatform extends BasePlatform {
   }
 }
 
-module.exports = GrokPlatform;
+export default GrokPlatform;

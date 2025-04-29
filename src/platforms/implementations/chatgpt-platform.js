@@ -1,5 +1,5 @@
 // src/platforms/implementations/chatgpt-platform.js
-const BasePlatform = require('../platform-base');
+import BasePlatform from '../platform-base.js';
 
 /**
  * ChatGPT AI platform implementation
@@ -178,4 +178,4 @@ class ChatGptPlatform extends BasePlatform {
   }
 }
 
-module.exports = ChatGptPlatform;
+export default ChatGptPlatform;

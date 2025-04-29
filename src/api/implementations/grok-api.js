@@ -1,4 +1,4 @@
-const BaseApiService = require('../api-base');
+import BaseApiService from '../api-base.js';
 
 /**
  * Grok API implementation
@@ -158,4 +158,4 @@ class GrokApiService extends BaseApiService {
   }
 }
 
-module.exports = GrokApiService;
+export default GrokApiService;

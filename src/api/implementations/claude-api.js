@@ -1,4 +1,4 @@
-const BaseApiService = require('../api-base');
+import BaseApiService from '../api-base.js';
 
 /**
  * Claude API implementation
@@ -215,4 +215,4 @@ class ClaudeApiService extends BaseApiService {
   }
 }
 
-module.exports = ClaudeApiService;
+export default ClaudeApiService;

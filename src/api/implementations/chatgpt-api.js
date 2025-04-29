@@ -1,4 +1,4 @@
-const BaseApiService = require('../api-base');
+import BaseApiService from '../api-base.js';
 
 /**
  * ChatGPT API implementation
@@ -159,4 +159,4 @@ class ChatGptApiService extends BaseApiService {
   }
 }
 
-module.exports = ChatGptApiService;
+export default ChatGptApiService;

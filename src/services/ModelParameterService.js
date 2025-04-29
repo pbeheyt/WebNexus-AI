@@ -1,8 +1,8 @@
 // src/services/ModelParameterService.js
-const { STORAGE_KEYS, INTERFACE_SOURCES } = require('../shared/constants');
-const logger = require('../shared/logger.js').service;
+import { STORAGE_KEYS, INTERFACE_SOURCES } from '../shared/constants.js';
+import logger from '../shared/logger.js';
 
-const ConfigService = require('./ConfigService');
+import ConfigService from './ConfigService.js';
 
 /**
  * Service for managing model-specific parameters
@@ -34,11 +34,11 @@ class ModelParameterService {
 
         if (tabModels[tabId] && tabModels[tabId][platformId]) {
           modelId = tabModels[tabId][platformId];
-          logger.info(`Using tab-specific model for ${platformId}: ${modelId}`);
+          logger.service.info(`Using tab-specific model for ${platformId}: ${modelId}`);
           return modelId;
         }
       } catch (error) {
-        logger.error('Error getting tab-specific model:', error);
+        logger.service.error('Error getting tab-specific model:', error);
       }
     }
 
@@ -52,13 +52,13 @@ class ModelParameterService {
 
         if (sourcePref[platformId]) {
           modelId = sourcePref[platformId];
-          logger.info(
+          logger.service.info(
             `Using ${source} model preference for ${platformId}: ${modelId}`
           );
           return modelId;
         }
       } catch (error) {
-        logger.error(`Error getting ${source} model preference:`, error);
+        logger.service.error(`Error getting ${source} model preference:`, error);
       }
     }
   }
@@ -81,7 +81,7 @@ class ModelParameterService {
         ? modelIdOrObject.id || modelIdOrObject.model || String(modelIdOrObject)
         : modelIdOrObject;
 
-    logger.info(`Resolving model config for: ${platformId}/${modelId}`);
+    logger.service.info(`Resolving model config for: ${platformId}/${modelId}`);
 
     const platformApiConfig = config.aiPlatforms[platformId];
 
@@ -113,14 +113,14 @@ class ModelParameterService {
         platformSettings.default ||
         {};
 
-      logger.info(
+      logger.service.info(
         `User settings retrieved for ${platformId}/${modelId}:`,
         modelSettings
       );
 
       return modelSettings;
     } catch (error) {
-      logger.error('Error getting user model settings:', error);
+      logger.service.error('Error getting user model settings:', error);
       return {};
     }
   }
@@ -153,12 +153,12 @@ class ModelParameterService {
         [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: tabModels,
       });
 
-      logger.info(
+      logger.service.info(
         `Saved tab model preference: Tab ${tabId}, Platform ${platformId}, Model ${modelId}`
       );
       return true;
     } catch (error) {
-      logger.error('Error saving tab model preference:', error);
+      logger.service.error('Error saving tab model preference:', error);
       return false;
     }
   }
@@ -173,7 +173,7 @@ class ModelParameterService {
   async saveSourceModelPreference(source, platformId, modelId) {
     // Only save for sidebar, popup uses last selected via settings or default
     if (source !== INTERFACE_SOURCES.SIDEBAR) {
-      logger.warn(
+      logger.service.warn(
         `Not saving model preference for non-sidebar source: ${source}`
       );
       return false;
@@ -192,12 +192,12 @@ class ModelParameterService {
       // Save updated preferences
       await chrome.storage.sync.set({ [storageKey]: modelPrefs });
 
-      logger.info(
+      logger.service.info(
         `Saved ${source} model preference: Platform ${platformId}, Model ${modelId}`
       );
       return true;
     } catch (error) {
-      logger.error(`Error saving ${source} model preference:`, error);
+      logger.service.error(`Error saving ${source} model preference:`, error);
       return false;
     }
   }
@@ -220,7 +220,7 @@ class ModelParameterService {
 
     try {
       const { tabId, source, conversationHistory } = options;
-      logger.info(
+      logger.service.info(
         `Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`
       );
 
@@ -295,18 +295,18 @@ class ModelParameterService {
       // Add system prompt ONLY if effectively supported AND user provided one
       if (params.modelSupportsSystemPrompt && userSettings.systemPrompt) {
         params.systemPrompt = userSettings.systemPrompt;
-        logger.info(`Adding system prompt for ${platformId}/${modelId}.`);
+        logger.service.info(`Adding system prompt for ${platformId}/${modelId}.`);
       } else if (userSettings.systemPrompt) {
         if (!platformSupportsSystemPrompt) {
-          logger.warn(
+          logger.service.warn(
             `System prompt provided but platform ${platformId} does not support it.`
           );
         } else if (modelExplicitlyForbidsSystemPrompt) {
-          logger.warn(
+          logger.service.warn(
             `System prompt provided but model ${modelId} explicitly forbids it.`
           );
         } else {
-          logger.warn(
+          logger.service.warn(
             `System prompt provided but effective support is false for ${platformId}/${modelId}.`
           );
         }
@@ -326,12 +326,12 @@ class ModelParameterService {
         params.tabId = tabId;
       }
 
-      logger.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, {
+      logger.service.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, {
         ...params,
       });
       return params;
     } catch (error) {
-      logger.error(
+      logger.service.error(
         `Error resolving parameters for ${platformId}/${modelId}:`,
         error
       );
@@ -340,4 +340,4 @@ class ModelParameterService {
   }
 }
 
-module.exports = new ModelParameterService();
+export default new ModelParameterService();

@@ -1,11 +1,11 @@
 // src/extractor/base-extractor.js
-const logger = require('../shared/logger').extractor;
+import logger from '../shared/logger.js';
 
 class BaseExtractor {
   constructor(contentType) {
     this.contentType = contentType;
     this.contentScriptReady = false;
-    this.logger = logger;
+    this.logger = logger.extractor;
     this.messageListener = null;
   }
 
@@ -122,4 +122,4 @@ class BaseExtractor {
   }
 }
 
-module.exports = BaseExtractor;
+export default BaseExtractor;

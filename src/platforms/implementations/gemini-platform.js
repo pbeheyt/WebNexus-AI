@@ -1,5 +1,5 @@
 // src/platforms/implementations/gemini-platform.js
-const BasePlatform = require('../platform-base');
+import BasePlatform from '../platform-base.js';
 
 class GeminiPlatform extends BasePlatform {
   constructor() {
@@ -158,4 +158,4 @@ class GeminiPlatform extends BasePlatform {
   }
 }
 
-module.exports = GeminiPlatform;
+export default GeminiPlatform;

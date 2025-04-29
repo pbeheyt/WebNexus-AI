@@ -1,6 +1,7 @@
 // src/services/CredentialManager.js
-const { STORAGE_KEYS } = require('../shared/constants');
-const logger = require('../shared/logger.js').service;
+import ApiFactory from '../api/api-factory.js';
+import { STORAGE_KEYS } from '../shared/constants.js';
+import logger from '../shared/logger.js';
 
 /**
  * Service for secure API credential management
@@ -8,7 +9,7 @@ const logger = require('../shared/logger.js').service;
 class CredentialManager {
   constructor() {
     this.STORAGE_KEY = STORAGE_KEYS.API_CREDENTIALS;
-    this.logger = logger;
+    this.logger = logger.service;
   }
 
   /**
@@ -94,7 +95,6 @@ class CredentialManager {
     try {
       this.logger.info(`Validating credentials for ${platformId}`);
 
-      const ApiFactory = require('../api/api-factory');
       const apiService = ApiFactory.createApiService(platformId);
 
       if (!apiService) {
@@ -121,4 +121,4 @@ class CredentialManager {
 }
 
 const credentialManager = new CredentialManager();
-module.exports = credentialManager;
+export default credentialManager;

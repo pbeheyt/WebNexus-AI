@@ -1,5 +1,5 @@
 // src/services/ConfigService.js
-const logger = require('../shared/logger.js'); // Changed from import to require
+import logger from '../shared/logger.js';
 
 let cachedApiConfig = null;
 let cachedDisplayConfig = null;
@@ -173,4 +173,4 @@ const ConfigService = {
   clearConfigCache,
 };
 
-module.exports = ConfigService;
+export default ConfigService;

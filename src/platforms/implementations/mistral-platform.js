@@ -1,4 +1,4 @@
-const BasePlatform = require('../platform-base');
+import BasePlatform from '../platform-base.js';
 
 class MistralPlatform extends BasePlatform {
   constructor() {
@@ -138,4 +138,4 @@ class MistralPlatform extends BasePlatform {
   }
 }
 
-module.exports = MistralPlatform;
+export default MistralPlatform;

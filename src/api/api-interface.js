@@ -36,4 +36,4 @@ class ApiInterface {
   }
 }
 
-module.exports = ApiInterface;
+export default ApiInterface;

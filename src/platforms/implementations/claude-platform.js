@@ -1,5 +1,5 @@
 // src/platforms/implementations/claude-platform.js
-const BasePlatform = require('../platform-base');
+import BasePlatform from '../platform-base.js';
 
 /**
  * Claude AI platform implementation
@@ -347,4 +347,4 @@ class ClaudePlatform extends BasePlatform {
   }
 }
 
-module.exports = ClaudePlatform;
+export default ClaudePlatform;

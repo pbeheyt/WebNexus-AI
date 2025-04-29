@@ -1,5 +1,5 @@
 // src/services/ContentFormatter.js
-const logger = require('../shared/logger.js').service;
+import logger from '../shared/logger.js';
 
 class ContentFormatter {
   /**
@@ -10,11 +10,11 @@ class ContentFormatter {
    */
   static formatContent(contentData, contentType) {
     if (!contentData) {
-      logger.error('No content data available for formatting');
+      logger.service.error('No content data available for formatting');
       return '[Error: No content data available]'; // Clear error indication
     }
 
-    logger.info(`Formatting content of type: ${contentType}`);
+    logger.service.info(`Formatting content of type: ${contentType}`);
 
     let formatted = '';
     try {
@@ -33,7 +33,7 @@ class ContentFormatter {
           break;
       }
     } catch (error) {
-      logger.error(`Error formatting content type ${contentType}:`, error);
+      logger.service.error(`Error formatting content type ${contentType}:`, error);
       formatted = `[Error: Failed to format content of type ${contentType}]`;
     }
 
@@ -173,7 +173,7 @@ class ContentFormatter {
         const contentObj = JSON.parse(contentText);
         contentText = this._getData(contentObj.content, contentText); // Fallback to original if parse is empty
       } catch (e) {
-        logger.warn(
+        logger.service.warn(
           'Failed to parse potential JSON in PDF content, using raw string.'
         );
       }
@@ -186,7 +186,7 @@ class ContentFormatter {
         .replace(/\n{3,}/g, '\n') // Consolidate excessive newlines
         .trim();
     } else {
-      logger.warn('PDF content is not a string after processing, converting.');
+      logger.service.warn('PDF content is not a string after processing, converting.');
       contentText = String(contentText); // Ensure it's a string
     }
 
@@ -196,4 +196,4 @@ class ContentFormatter {
   }
 }
 
-module.exports = ContentFormatter;
+export default ContentFormatter;

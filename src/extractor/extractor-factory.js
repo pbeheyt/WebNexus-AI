@@ -1,11 +1,11 @@
 // src/extractor/extractor-factory.js
-const { CONTENT_TYPES } = require('../shared/constants');
-const { determineContentType } = require('../shared/utils/content-utils.js');
+import { CONTENT_TYPES } from '../shared/constants.js';
+import { determineContentType } from '../shared/utils/content-utils.js';
 
-const GeneralExtractorStrategy = require('./strategies/general-strategy');
-const RedditExtractorStrategy = require('./strategies/reddit-strategy');
-const YoutubeExtractorStrategy = require('./strategies/youtube-strategy');
-const PdfExtractorStrategy = require('./strategies/pdf-strategy');
+import GeneralExtractorStrategy from './strategies/general-strategy.js';
+import RedditExtractorStrategy from './strategies/reddit-strategy.js';
+import YoutubeExtractorStrategy from './strategies/youtube-strategy.js';
+import PdfExtractorStrategy from './strategies/pdf-strategy.js';
 
 /**
  * Factory to create the appropriate content extractor
@@ -84,4 +84,4 @@ class ExtractorFactory {
   }
 }
 
-module.exports = ExtractorFactory;
+export default ExtractorFactory;

@@ -1,4 +1,4 @@
-const BaseApiService = require('../api-base');
+import BaseApiService from '../api-base.js';
 
 /**
  * DeepSeek API implementation
@@ -221,4 +221,4 @@ class DeepSeekApiService extends BaseApiService {
   }
 }
 
-module.exports = DeepSeekApiService;
+export default DeepSeekApiService;

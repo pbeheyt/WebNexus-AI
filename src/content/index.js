@@ -1,6 +1,6 @@
 // src/content/index.js - Modify existing or create new
-const ExtractorFactory = require('../extractor/extractor-factory');
-const logger = require('../shared/logger.js').content;
+import ExtractorFactory from '../extractor/extractor-factory.js';
+import logger from '../shared/logger.js';
 
 // Track active extraction process
 let currentExtractionId = null;
@@ -57,7 +57,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       );
       if (handled) return true;
     } catch (error) {
-      logger.error('Error in extractor message handler:', error);
+      logger.content.error('Error in extractor message handler:', error);
     }
   }
 

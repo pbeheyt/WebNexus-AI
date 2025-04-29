@@ -1,13 +1,11 @@
 // src/services/ApiServiceManager.js
 
-const ApiFactory = require('../api/api-factory');
+import ApiFactory from '../api/api-factory.js';
+import logger from '../shared/logger.js';
 
-const CredentialManager = require('./CredentialManager');
-const ModelParameterService = require('./ModelParameterService');
-
-const logger = require('../shared/logger.js').service;
-
-const ConfigService = require('./ConfigService');
+import CredentialManager from './CredentialManager.js';
+import ModelParameterService from './ModelParameterService.js';
+import ConfigService from './ConfigService.js';
 
 /**
  * Centralized manager for API service operations
@@ -36,7 +34,7 @@ class ApiServiceManager {
    */
   async processWithUnifiedConfig(platformId, requestConfig) {
     try {
-      logger.info(
+      logger.service.info(
         `Processing content through ${platformId} API with unified config:`,
         {
           hasStreaming: !!requestConfig.streaming,
@@ -77,7 +75,7 @@ class ApiServiceManager {
       // Process the request using the unified interface
       return await apiService.processRequest(requestConfig);
     } catch (error) {
-      logger.error(
+      logger.service.error(
         `Error processing content through ${platformId} API:`,
         error
       );
@@ -104,7 +102,7 @@ class ApiServiceManager {
         (await this.credentialManager.getCredentials(platformId));
 
       if (!credentialsToUse) {
-        logger.warn(`No credentials available for ${platformId}`);
+        logger.service.warn(`No credentials available for ${platformId}`);
         return false;
       }
 
@@ -120,7 +118,7 @@ class ApiServiceManager {
       // Use lightweight validation method
       return await apiService.validateCredentials();
     } catch (error) {
-      logger.error(`Error validating credentials for ${platformId}:`, error);
+      logger.service.error(`Error validating credentials for ${platformId}:`, error);
       return false;
     }
   }
@@ -138,7 +136,7 @@ class ApiServiceManager {
 
       return !!(settings && hasCredentials);
     } catch (error) {
-      logger.error(
+      logger.service.error(
         `Error checking API mode availability for ${platformId}:`,
         error
       );
@@ -156,7 +154,7 @@ class ApiServiceManager {
       const settings = await ConfigService.getPlatformApiConfig(platformId);
       return settings?.models || null;
     } catch (error) {
-      logger.error(`Error getting available models for ${platformId}:`, error);
+      logger.service.error(`Error getting available models for ${platformId}:`, error);
       return null;
     }
   }
@@ -164,4 +162,4 @@ class ApiServiceManager {
 
 // Export singleton instance
 const apiServiceManager = new ApiServiceManager();
-module.exports = apiServiceManager;
+export default apiServiceManager;

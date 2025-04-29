@@ -46,4 +46,4 @@ class PlatformInterface {
   }
 }
 
-module.exports = PlatformInterface;
+export default PlatformInterface;

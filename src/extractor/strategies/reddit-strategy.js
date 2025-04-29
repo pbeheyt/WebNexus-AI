@@ -1,5 +1,5 @@
 // src/extractor/strategies/reddit-strategy.js
-const BaseExtractor = require('../base-extractor');
+import BaseExtractor from '../base-extractor.js';
 
 class RedditExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -432,4 +432,4 @@ class RedditExtractorStrategy extends BaseExtractor {
   }
 }
 
-module.exports = RedditExtractorStrategy;
+export default RedditExtractorStrategy;

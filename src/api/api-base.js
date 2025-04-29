@@ -1,9 +1,9 @@
 // src/api/api-base.js
-const ApiInterface = require('./api-interface');
+import { extractApiErrorMessage } from '../shared/utils/error-utils.js';
+import ConfigService from '../services/ConfigService.js';
+import logger from '../shared/logger.js';
 
-const { extractApiErrorMessage } = require('../shared/utils/error-utils');
-const ConfigService = require('../services/ConfigService');
-const logger = require('../shared/logger').api;
+import ApiInterface from './api-interface.js';
 
 /**
  * Base class with shared API functionality
@@ -13,7 +13,7 @@ class BaseApiService extends ApiInterface {
     super();
     this.platformId = platformId;
     // Assign the shared logger directly
-    this.logger = logger;
+    this.logger = logger.api;
     this.credentials = null;
     this.config = null;
   }
@@ -77,7 +77,7 @@ class BaseApiService extends ApiInterface {
     } catch (error) {
       // This catch block now primarily handles SETUP errors before the fetch call
       const setupErrorMsg = `Setup Error: ${error.message}`;
-      logger.error(
+      this.logger.error(
         `[${this.platformId}] Error during API request setup for model ${model}:`,
         error
       );
@@ -400,4 +400,4 @@ class BaseApiService extends ApiInterface {
   }
 }
 
-module.exports = BaseApiService;
+export default BaseApiService;

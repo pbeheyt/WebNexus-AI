@@ -1,7 +1,7 @@
 // src/extractor/strategies/youtube-strategy.js
-const { YoutubeTranscript } = require('youtube-transcript');
+import { YoutubeTranscript } from 'youtube-transcript';
 
-const BaseExtractor = require('../base-extractor');
+import BaseExtractor from '../base-extractor.js';
 
 class YoutubeExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -474,4 +474,4 @@ class YoutubeExtractorStrategy extends BaseExtractor {
   }
 }
 
-module.exports = YoutubeExtractorStrategy;
+export default YoutubeExtractorStrategy;

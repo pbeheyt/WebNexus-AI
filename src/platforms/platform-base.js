@@ -1,9 +1,9 @@
 // src/platforms/platform-base.js
-const PlatformInterface = require('./platform-interface');
+import { STORAGE_KEYS } from '../shared/constants.js';
+import { robustSendMessage } from '../shared/utils/message-utils.js';
+import logger from '../shared/logger.js';
 
-const STORAGE_KEYS = require('../shared/constants').STORAGE_KEYS;
-const logger = require('../shared/logger').platform;
-const { robustSendMessage } = require('../shared/utils/message-utils');
+import PlatformInterface from './platform-interface.js';
 
 /**
  * Base implementation with shared functionality for all AI platforms
@@ -15,7 +15,7 @@ class BasePlatform extends PlatformInterface {
   constructor(platformId) {
     super();
     this.platformId = platformId;
-    this.logger = logger;
+    this.logger = logger.platform;
     this.maxRetries = 20;
     this.processingStarted = false;
   }
@@ -356,4 +356,4 @@ ${formattedContent}`;
   }
 }
 
-module.exports = BasePlatform;
+export default BasePlatform;
