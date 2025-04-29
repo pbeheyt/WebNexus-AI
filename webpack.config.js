@@ -30,7 +30,7 @@ module.exports = {
             presets: [
               ['@babel/preset-env', {
                 targets: {
-                  chrome: "135"
+                  chrome: "130"
                 },
                 useBuiltIns: "usage",
                 corejs: 3
