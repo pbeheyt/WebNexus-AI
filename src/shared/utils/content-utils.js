@@ -88,7 +88,11 @@ export function isInjectablePage(url) {
 export function isSidePanelAllowedPage(url) {
   if (!url) return false;
   try {
-    // Block side panel on Chrome internal pages, extension pages, and other special schemes
+    // Explicitly allow Chrome New Tab Page
+    if (url === 'chrome://newtab/') {
+      return true;
+    }
+    // Block side panel on Chrome internal pages (except newtab), extension pages, and other special schemes
     if (url.startsWith('chrome://') || 
         url.startsWith('chrome-extension://') || 
         url.startsWith('about:') || 
