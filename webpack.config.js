@@ -65,7 +65,7 @@ module.exports = {
         new TerserPlugin({
           terserOptions: {
             compress: {
-              drop_console: false, // This explicitly removes console.* statements
+              drop_console: true, // This explicitly removes console.* statements
             },
           },
         }),
