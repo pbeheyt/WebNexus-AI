@@ -446,11 +446,11 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                     aria-describedby="include-context-tooltip-sidebar"
                                 >
                                     <div
-                                        className="mr-1 flex-shrink-0 w-5 h-5 select-none"
+                                        className="flex-shrink-0 w-5 h-5 select-none"
                                         dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
                                         aria-hidden="true"
                                     />
-                                    <span className="text-base font-medium select-none">
+                                    <span className="text-base font-medium ml-2 select-none">
                                         {getContentTypeName(contentType)}
                                     </span>
                                     <Toggle

@@ -283,7 +283,7 @@ export function Popup() {
                       })()}
 
                       {/* Label */}
-                      <span className="text-sm font-medium truncate select-none cursor-default">{contentTypeLabel}</span>
+                      <span className="text-sm font-medium truncate ml-1 select-none cursor-default">{contentTypeLabel}</span>
 
                       {/* Toggle */}
                       <Toggle
