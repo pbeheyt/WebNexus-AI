@@ -274,29 +274,6 @@ export async function processContentViaApi(params) {
       }
     }
 
-    // 9. Notify the content script about streaming start ONLY if possible and from sidebar
-    if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
-      if (isInjectablePage(url)) {
-        try {
-          await chrome.tabs.sendMessage(tabId, {
-            action: 'streamStart',
-            streamId,
-            platformId: platformId,
-            model: resolvedParams.model
-          });
-          logger.background.info(`Sent streamStart notification to content script in tab ${tabId}.`);
-        } catch (err) {
-          if (err.message && (err.message.includes('Could not establish connection') || err.message.includes('Receiving end does not exist'))) {
-             // Log the warning, but don't treat it as a fatal error for the API call itself.
-             logger.background.warn(`Failed to send streamStart to tab ${tabId}: Content script likely not running or injected.`);
-          } else {
-             logger.background.error('Error notifying content script about stream start:', err);
-          }
-        }
-      } else {
-        logger.background.info(`Skipped sending streamStart notification to tab ${tabId} (URL: ${url}) as it's not an injectable page.`);
-      }
-    }
 
     // 10. Create unified request configuration
     const requestConfig = {
