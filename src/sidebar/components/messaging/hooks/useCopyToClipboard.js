@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-import logger from '../../../../shared/logger';
+import { logger } from '../../../../shared/logger';
 import { copyToClipboard } from '../utils/clipboard.js';
 import { CopyIcon, CheckIcon, XIcon } from '../../../../components/index.js';
 

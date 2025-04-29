@@ -1,5 +1,5 @@
 // src/shared/utils/message-utils.js
-import logger from '../logger';
+import { logger } from '../logger';
 
 const INITIAL_RETRY_DELAY = 250; // ms
 const MAX_RETRIES = 2; // Total attempts = 1 initial + 2 retries = 3

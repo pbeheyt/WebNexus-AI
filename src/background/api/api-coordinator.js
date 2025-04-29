@@ -20,7 +20,7 @@ import {
   getFormattedContentForTab,
   storeSystemPromptForTab,
 } from '../core/state-manager.js';
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 
 const activeAbortControllers = new Map();
 

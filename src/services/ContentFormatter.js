@@ -1,5 +1,5 @@
 // src/services/ContentFormatter.js
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 class ContentFormatter {
   /**

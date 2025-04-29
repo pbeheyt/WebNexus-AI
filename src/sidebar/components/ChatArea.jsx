@@ -19,7 +19,7 @@ import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
 import { ContentTypeIcon } from '../../components/layout/ContentTypeIcon';
 import { isInjectablePage } from '../../shared/utils/content-utils';
-import logger from '../../shared/logger';
+import { logger } from '../../shared/logger';
 import {
   InputTokenIcon,
   OutputTokenIcon,

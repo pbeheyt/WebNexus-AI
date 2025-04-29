@@ -1,5 +1,5 @@
 // src/services/ConfigService.js
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 let cachedApiConfig = null;
 let cachedDisplayConfig = null;

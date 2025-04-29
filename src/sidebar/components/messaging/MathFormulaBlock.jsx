@@ -2,7 +2,7 @@
 import React, { memo, useState } from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 
-import logger from '../../../shared/logger';
+import { logger } from '../../../shared/logger';
 import 'katex/dist/katex.min.css';
 
 /**

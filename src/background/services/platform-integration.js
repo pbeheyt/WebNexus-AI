@@ -1,7 +1,7 @@
 // src/background/services/platform-integration.js - AI platform interactions
 
 import { AI_PLATFORMS } from '../../shared/constants.js';
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 import ConfigService from '../../services/ConfigService.js';
 
 /**

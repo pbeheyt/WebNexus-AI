@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 
 import { INTERFACE_SOURCES } from '../shared/constants';
-import logger from '../shared/logger';
+import { logger } from '../shared/logger';
 import { useContent } from '../contexts/ContentContext';
 import { robustSendMessage } from '../shared/utils/message-utils';
 

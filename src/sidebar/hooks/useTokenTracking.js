@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import logger from '../../shared/logger';
+import { logger } from '../../shared/logger';
 import TokenManagementService from '../services/TokenManagementService';
 import { STORAGE_KEYS } from '../../shared/constants';
 

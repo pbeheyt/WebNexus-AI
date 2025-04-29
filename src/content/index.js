@@ -1,6 +1,6 @@
 // src/content/index.js - Modify existing or create new
 import ExtractorFactory from '../extractor/extractor-factory.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 // Track active extraction process
 let currentExtractionId = null;

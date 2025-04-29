@@ -1,7 +1,7 @@
 // src/platforms/platform-base.js
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { robustSendMessage } from '../shared/utils/message-utils.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 import PlatformInterface from './platform-interface.js';
 

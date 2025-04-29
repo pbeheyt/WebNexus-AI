@@ -9,7 +9,7 @@ import {
   savePlatformTabInfo,
 } from '../core/state-manager.js';
 import { processContentViaApi } from '../api/api-coordinator.js';
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import ContentFormatter from '../../services/ContentFormatter.js';
 

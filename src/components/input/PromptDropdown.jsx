@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import { loadRelevantPrompts } from '../../shared/utils/prompt-utils.js';
-import logger from '../../shared/logger';
+import { logger } from '../../shared/logger';
 
 /**
  * A dropdown component to display and select relevant custom prompts.

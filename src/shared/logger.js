@@ -38,7 +38,7 @@ function log(context, level, message, data = null) {
   }
 }
 
-const logger = {
+export const logger = {
   api: {
     debug: (message, data) => log('api', 'debug', message, data),
     info: (message, data) => log('api', 'info', message, data),
@@ -100,5 +100,3 @@ const logger = {
     error: (message, data) => log('sidebar', 'error', message, data),
   },
 };
-
-export default logger;

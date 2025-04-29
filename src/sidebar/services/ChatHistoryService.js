@@ -1,6 +1,6 @@
 // src/sidebar/services/ChatHistoryService.js
 
-import logger from '../../shared/logger';
+import { logger } from '../../shared/logger';
 import { STORAGE_KEYS } from '../../shared/constants';
 
 import TokenManagementService from './TokenManagementService';

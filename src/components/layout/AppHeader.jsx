@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useUI } from '../../contexts/UIContext';
-import logger from '../../shared/logger';
+import { logger } from '../../shared/logger';
 import {
   IconButton,
   InfoIcon,

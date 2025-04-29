@@ -1,7 +1,7 @@
 // src/settings/components/ui/PromptDetail.jsx
 import React, { useState, useEffect } from 'react';
 
-import logger from '../../../../shared/logger';
+import { logger } from '../../../../shared/logger';
 import { Button, useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';

@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
-import logger from '../../../shared/logger';
+import { logger } from '../../../shared/logger';
 import { IconButton, RerunIcon, PlatformIcon } from '../../../components';
 import { useSidebarChat } from '../../contexts/SidebarChatContext';
 

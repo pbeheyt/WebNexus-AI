@@ -10,7 +10,7 @@ import {
   updateScriptInjectionStatus,
 } from '../core/state-manager.js';
 import SidebarStateManager from '../../services/SidebarStateManager.js';
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import {
   determineContentType,

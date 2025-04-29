@@ -1,6 +1,6 @@
 // src/background/core/message-router.js - Centralized message handling
 
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 import {
   determineContentType,
   isSidePanelAllowedPage,

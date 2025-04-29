@@ -1,5 +1,5 @@
 // src/shared/utils/prompt-utils.js
-import logger from '../logger';
+import { logger } from '../logger';
 import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
 
 /**

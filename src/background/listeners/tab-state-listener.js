@@ -2,7 +2,7 @@
 
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import SidebarStateManager from '../../services/SidebarStateManager.js';
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 
 // List of tab-specific storage keys to clear on manual refresh (excluding sidebar visibility)
 const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR = [

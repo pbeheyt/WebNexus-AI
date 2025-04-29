@@ -10,7 +10,7 @@ import React, {
   useRef,
 } from 'react';
 
-import logger from '../../shared/logger';
+import { logger } from '../../shared/logger';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';

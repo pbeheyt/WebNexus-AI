@@ -1,4 +1,4 @@
-import logger from '../../../../shared/logger';
+import { logger } from '../../../../shared/logger';
 
 /**
  * Utility function for clipboard operations

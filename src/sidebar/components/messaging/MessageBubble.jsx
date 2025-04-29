@@ -1,7 +1,7 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
 import React, { memo, forwardRef } from 'react';
 
-import logger from '../../../shared/logger';
+import { logger } from '../../../shared/logger';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 
 // Import role-specific components

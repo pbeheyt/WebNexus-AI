@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from '../shared/constants.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 class UIService {
   #theme = 'light';

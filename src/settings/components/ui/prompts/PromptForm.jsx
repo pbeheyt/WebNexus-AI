@@ -1,7 +1,7 @@
 // src/settings/components/ui/prompts/PromptForm.jsx
 import React, { useState, useEffect } from 'react';
 
-import logger from '../../../../shared/logger';
+import { logger } from '../../../../shared/logger';
 import { Button, useNotification, CustomSelect } from '../../../../components';
 import {
   STORAGE_KEYS,

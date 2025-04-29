@@ -1,7 +1,7 @@
 // src/services/ApiServiceManager.js
 
 import ApiFactory from '../api/api-factory.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 import CredentialManager from './CredentialManager.js';
 import ModelParameterService from './ModelParameterService.js';

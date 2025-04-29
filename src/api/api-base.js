@@ -1,7 +1,7 @@
 // src/api/api-base.js
 import { extractApiErrorMessage } from '../shared/utils/error-utils.js';
 import ConfigService from '../services/ConfigService.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 import ApiInterface from './api-interface.js';
 
@@ -12,7 +12,7 @@ class BaseApiService extends ApiInterface {
   constructor(platformId) {
     super();
     this.platformId = platformId;
-    // Assign the shared logger directly
+    // Assign the shared logger directlylog
     this.logger = logger.api;
     this.credentials = null;
     this.config = null;
@@ -58,13 +58,13 @@ class BaseApiService extends ApiInterface {
       );
 
       if (streamSuccess) {
-        logger.info(
+       this.logger.info(
           `[${this.platformId}] Streaming request for model ${model} completed successfully.`
         );
         return { success: true, model: model };
       } else {
         // Error was already handled by onChunk within _executeStreamingRequest
-        logger.warn(
+       this.logger.warn(
           `[${this.platformId}] Streaming request for model ${model} failed (error handled via onChunk).`
         );
         // Return a failure object, but the specific error is already in the chat via onChunk.

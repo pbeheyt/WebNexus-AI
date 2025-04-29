@@ -11,7 +11,7 @@ import { useSidebarPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
 import { AppHeader, ErrorIcon } from '../components';
-import logger from '../shared/logger';
+import { logger } from '../shared/logger';
 import { debounce } from '../shared/utils/debounce';
 
 import Header from './components/Header';

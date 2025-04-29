@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
-import logger from '../../shared/logger';
+import { logger } from '../../shared/logger';
 import ModelParameterService from '../../services/ModelParameterService';
 import ConfigService from '../../services/ConfigService';
 import { robustSendMessage } from '../../shared/utils/message-utils';

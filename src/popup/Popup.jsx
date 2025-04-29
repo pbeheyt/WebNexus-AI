@@ -1,7 +1,7 @@
 // src/popup/Popup.jsx
 import { useEffect, useState, useRef } from 'react';
 
-import logger from '../shared/logger';
+import { logger } from '../shared/logger';
 import { usePopupPlatform } from '../contexts/platform';
 import {
   AppHeader,

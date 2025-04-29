@@ -1,7 +1,7 @@
 // src/background/services/sidebar-manager.js - Tab-specific native side panel management
 
 import SidebarStateManager from '../../services/SidebarStateManager.js';
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
 
 /**

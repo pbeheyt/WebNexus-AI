@@ -2,7 +2,7 @@
 
 import { encode } from 'gpt-tokenizer';
 
-import logger from '../../shared/logger';
+import { logger } from '../../shared/logger';
 import { STORAGE_KEYS, MESSAGE_ROLES } from '../../shared/constants';
 
 import ChatHistoryService from './ChatHistoryService';

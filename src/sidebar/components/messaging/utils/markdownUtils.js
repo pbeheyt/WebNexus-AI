@@ -1,7 +1,7 @@
 import React from 'react';
 
 import MathFormulaBlock from '../MathFormulaBlock';
-import logger from '../../../../shared/logger';
+import { logger } from '../../../../shared/logger';
 
 // Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
 export const MATH_PLACEHOLDER_REGEX = /@@MATH_(BLOCK|INLINE)_(\d+)@@/g;

@@ -1,7 +1,7 @@
 // src/settings/components/ui/platforms/PlatformDetails.jsx
 import React, { useState, useEffect } from 'react';
 
-import logger from '../../../../shared/logger';
+import { logger } from '../../../../shared/logger';
 import { Button, useNotification, PlatformIcon } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 

@@ -1,6 +1,6 @@
 // src/background/initialization.js - Handles extension initialization
 
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { ensureDefaultPrompts } from '../shared/utils/prompt-utils.js';
 import ConfigService from '../services/ConfigService.js';

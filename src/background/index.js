@@ -1,7 +1,7 @@
 // src/background/index.js - Entry point for background service worker
 
 import SidebarStateManager from '../services/SidebarStateManager.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';

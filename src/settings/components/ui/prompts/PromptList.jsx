@@ -1,7 +1,7 @@
 // src/settings/components/ui/prompts/PromptList.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 
-import logger from '../../../../shared/logger';
+import { logger } from '../../../../shared/logger';
 import { useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ContentTypeIcon } from '../../../../components/layout/ContentTypeIcon';

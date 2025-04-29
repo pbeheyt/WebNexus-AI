@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import uiService from '../services/UIService';
-import logger from '../shared/logger';
+import { logger } from '../shared/logger';
 
 const UIContext = createContext({
   theme: 'light',

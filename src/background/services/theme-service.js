@@ -1,7 +1,7 @@
 // src/background/services/theme-service.js - Theme synchronization services
 
 import { STORAGE_KEYS } from '../../shared/constants.js';
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 
 /**
  * Handle theme operation requests

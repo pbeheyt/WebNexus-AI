@@ -1,6 +1,6 @@
 // src/content/platform-content.js
 import PlatformFactory from '../platforms/platform-factory.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 /**
  * Entry point for platform integration

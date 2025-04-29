@@ -11,7 +11,7 @@ import {
   determineContentType,
   isInjectablePage,
 } from '../shared/utils/content-utils';
-import logger from '../shared/logger';
+import { logger } from '../shared/logger';
 
 const ContentContext = createContext(null);
 

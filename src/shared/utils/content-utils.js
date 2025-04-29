@@ -1,6 +1,6 @@
 // src/shared/utils/content-utils.js
 import { CONTENT_TYPES } from '../constants.js';
-import logger from '../logger';
+import { logger } from '../logger';
 
 /**
  * Determine content type based on URL and selection state

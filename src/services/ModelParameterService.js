@@ -1,6 +1,6 @@
 // src/services/ModelParameterService.js
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../shared/constants.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 import ConfigService from './ConfigService.js';
 

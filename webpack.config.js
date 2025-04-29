@@ -1,8 +1,15 @@
 const path = require('path');
+const webpack = require('webpack');
 const isProduction = process.env.NODE_ENV === 'production';
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
+  plugins: [
+    new webpack.DefinePlugin({
+      // Ensure process.env.NODE_ENV is available, default to 'development' if not set
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+    })
+  ],
   entry: {
     background: './src/background/index.js',
     popup: './src/popup/index.jsx',

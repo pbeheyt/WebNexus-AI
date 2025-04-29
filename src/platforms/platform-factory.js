@@ -5,7 +5,7 @@ import DeepSeekPlatform from './implementations/deepseek-platform.js';
 import MistralPlatform from './implementations/mistral-platform.js';
 import GeminiPlatform from './implementations/gemini-platform.js';
 import GrokPlatform from './implementations/grok-platform.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 /**
  * Factory to create the appropriate platform implementation

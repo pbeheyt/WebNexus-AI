@@ -5,7 +5,7 @@ import {
   isInjectablePage,
 } from '../../shared/utils/content-utils.js'; // Import isInjectablePage
 import { STORAGE_KEYS } from '../../shared/constants.js';
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 
 /**
  * Extract content from a tab

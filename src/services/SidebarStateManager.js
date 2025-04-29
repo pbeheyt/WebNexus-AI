@@ -1,4 +1,4 @@
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 
 /**

@@ -1,7 +1,7 @@
 // src/services/CredentialManager.js
 import ApiFactory from '../api/api-factory.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 /**
  * Service for secure API credential management

@@ -1,5 +1,5 @@
 // src/extractor/base-extractor.js
-import logger from '../shared/logger.js';
+import { logger } from '../shared/logger.js';
 
 class BaseExtractor {
   constructor(contentType) {
