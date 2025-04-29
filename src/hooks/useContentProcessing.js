@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { INTERFACE_SOURCES } from '../shared/constants';
+import logger from '../shared/logger';
 import { useContent } from '../contexts/ContentContext';
 import { robustSendMessage } from '../shared/utils/message-utils';
 
@@ -27,7 +28,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         robustSendMessage({
           action: 'cancelStream',
           streamId
-        }).catch(err => console.error('Error canceling stream:', err));
+        }).catch(err => logger.popup.error('Error canceling stream:', err));
       }
     };
   }, [streamId]);
@@ -97,20 +98,20 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     } catch (error) {
       // Catch errors from robustSendMessage itself (e.g., port closed)
       if (error.isPortClosed) {
-        // Handle port closed specifically for the popup flow
-        console.warn('processContent: Port closed during background processing (likely popup closed).');
-        // Don't set global error state, return specific status
-        setProcessingStatus('idle'); // Reset status as the operation was interrupted, not failed
-        return { success: false, error: 'PORT_CLOSED', message: 'Popup closed before background task could respond.' };
-      } else {
-        // Handle other communication or unexpected errors
-        console.error('Error sending message to background:', error);
-        setError(error); // Store the communication error
-        setProcessingStatus('error');
-        throw error; // Re-throw for potential higher-level handling if needed
-      }
+      // Handle port closed specifically for the popup flow
+      logger.popup.warn('processContent: Port closed during background processing (likely popup closed).');
+      // Don't set global error state, return specific status
+      setProcessingStatus('idle'); // Reset status as the operation was interrupted, not failed
+      return { success: false, error: 'PORT_CLOSED', message: 'Popup closed before background task could respond.' };
+    } else {
+      // Handle other communication or unexpected errors
+      logger.popup.error('Error sending message to background:', error);
+      setError(error); // Store the communication error
+      setProcessingStatus('error');
+      throw error; // Re-throw for potential higher-level handling if needed
     }
-  }, [currentTab, contentType, source]);
+  }
+}, [currentTab, contentType, source]);
 
   /**
    * Process content directly with API (API path)
@@ -206,7 +207,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       setProcessingStatus('success');
       return response;
     } catch (error) {
-      console.error('API processing error:', error);
+      logger.popup.error('API processing error:', error);
       setError(error);
       setProcessingStatus('error');
       throw error;

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
+import logger from '../../shared/logger';
 import ModelParameterService from '../../services/ModelParameterService';
 import ConfigService from '../../services/ConfigService';
 import { robustSendMessage } from '../../shared/utils/message-utils';
@@ -44,11 +45,11 @@ export function createTabAwarePlatformContext(options = {}) {
           if (tabs && tabs[0]) {
             setTabId(tabs[0].id);
           } else {
-            console.warn('Could not get active tab ID.');
+            logger.sidebar.warn('Could not get active tab ID.');
             setIsLoading(false); // Stop loading if no tab ID
           }
         } catch (error) {
-          console.error('Error getting current tab:', error);
+          logger.sidebar.error('Error getting current tab:', error);
           setIsLoading(false); // Stop loading on error
         }
       };
@@ -81,7 +82,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
             if (preferredModelId && response.models.some(m => m.id === preferredModelId)) {
               finalModelIdToUse = preferredModelId;
-              console.info(`Using preferred model for ${platformId}: ${finalModelIdToUse}`);
+              logger.sidebar.info(`Using preferred model for ${platformId}: ${finalModelIdToUse}`);
             } else {
               // Get default model from config if preference is invalid
               const platformApiConfig = await ConfigService.getPlatformApiConfig(platformId);
@@ -89,15 +90,15 @@ export function createTabAwarePlatformContext(options = {}) {
               
               if (defaultModelId && response.models.some(m => m.id === defaultModelId)) {
                 finalModelIdToUse = defaultModelId;
-                console.info(`No valid preference found, using default model for ${platformId}: ${finalModelIdToUse}`);
+                logger.sidebar.info(`No valid preference found, using default model for ${platformId}: ${finalModelIdToUse}`);
               } else if (response.models.length > 0) {
                 // Fallback to first available model
                 finalModelIdToUse = response.models[0].id;
-                console.warn(`No valid default model, falling back to first available for ${platformId}: ${finalModelIdToUse}`);
+                logger.sidebar.warn(`No valid default model, falling back to first available for ${platformId}: ${finalModelIdToUse}`);
               }
             }
           } catch (error) {
-            console.error(`Error resolving model for ${platformId}:`, error);
+            logger.sidebar.error(`Error resolving model for ${platformId}:`, error);
             // Attempt to use default model on error
             const platformApiConfig = await ConfigService.getPlatformApiConfig(platformId);
             const defaultModelId = platformApiConfig?.defaultModel;
@@ -110,12 +111,12 @@ export function createTabAwarePlatformContext(options = {}) {
 
           setSelectedModelId(finalModelIdToUse);
         } else {
-           console.warn(`Failed to load models for ${platformId}:`, response?.error);
+           logger.sidebar.warn(`Failed to load models for ${platformId}:`, response?.error);
            setModels([]); // Clear models on failure
            setSelectedModelId(null);
         }
       } catch (error) {
-        console.error(`Error loading models for ${platformId}:`, error);
+        logger.sidebar.error(`Error loading models for ${platformId}:`, error);
         setModels([]); // Clear models on error
         setSelectedModelId(null);
       }
@@ -123,7 +124,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
     const _loadAndCheckPlatforms = useCallback(async (setLoadingState) => {
        if (!tabId) {
-         console.warn('Attempted to load platforms without tabId.');
+         logger.sidebar.warn('Attempted to load platforms without tabId.');
          return;
        }
       setLoadingState(true);
@@ -149,7 +150,7 @@ export function createTabAwarePlatformContext(options = {}) {
               operation: 'get',
               platformId: platform.id
             }).catch(err => {
-              console.error(`Credential check failed for ${platform.id}:`, err);
+              logger.sidebar.error(`Credential check failed for ${platform.id}:`, err);
               return { success: false }; // Treat errors as no credentials
             })
           );
@@ -228,7 +229,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
 
       } catch (error) {
-        console.error('Error loading platforms:', error);
+        logger.sidebar.error('Error loading platforms:', error);
         setPlatforms([]);
         setHasAnyPlatformCredentials(false);
         setSelectedPlatformId(null);
@@ -288,7 +289,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
         return true;
       } catch (error) {
-        console.error('Error setting platform preference:', error);
+        logger.sidebar.error('Error setting platform preference:', error);
         return false;
       }
     }, [tabId, selectedPlatformId, interfaceType, globalStorageKey, platforms, onStatusUpdate, loadModels]);
@@ -297,7 +298,7 @@ export function createTabAwarePlatformContext(options = {}) {
     const selectModel = useCallback(async (modelId) => {
       // Add validation check
       if (!models.some(m => m.id === modelId)) {
-        console.error('Attempted to select invalid model:', modelId);
+        logger.sidebar.error('Attempted to select invalid model:', modelId);
         return false;
       }
       if (!tabId || interfaceType !== INTERFACE_SOURCES.SIDEBAR ||

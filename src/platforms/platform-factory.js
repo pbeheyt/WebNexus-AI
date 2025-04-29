@@ -5,6 +5,7 @@ const DeepSeekPlatform = require('./implementations/deepseek-platform');
 const MistralPlatform = require('./implementations/mistral-platform');
 const GeminiPlatform = require('./implementations/gemini-platform');
 const GrokPlatform = require('./implementations/grok-platform');
+const logger = require('../shared/logger').platform;
 
 /**
  * Factory to create the appropriate platform implementation
@@ -48,7 +49,7 @@ class PlatformFactory {
       case 'grok':
         return new GrokPlatform();
       default:
-        console.error(`Unknown platform ID: ${platformId}`);
+        logger.error(`Unknown platform ID: ${platformId}`);
         return null;
     }
   }

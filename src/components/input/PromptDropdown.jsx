@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { loadRelevantPrompts } from '../../shared/utils/prompt-utils.js';
+import logger from '../../shared/logger';
 
 /**
  * A dropdown component to display and select relevant custom prompts.
@@ -24,7 +25,7 @@ export function PromptDropdown({ isOpen, onClose, onSelectPrompt, contentType, a
           setIsInitialLoad(false);
         })
         .catch(err => {
-          console.error("Error loading prompts in dropdown:", err);
+          logger.popup.error("Error loading prompts in dropdown:", err);
           setError("Failed to load prompts.");
           setIsLoading(false);
           setIsInitialLoad(false);

@@ -1,6 +1,7 @@
 // src/contexts/UIContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import uiService from '../services/UIService';
+import logger from '../shared/logger';
 
 const UIContext = createContext({
   theme: 'light',
@@ -31,7 +32,7 @@ export function UIProvider({ children }) {
           setTextSize(newTextSize);
         });
       } catch (error) {
-        console.error('Error initializing UI:', error);
+        logger.popup.error('Error initializing UI:', error);
         setInitialized(true); // Still mark as initialized to render UI
       }
     };
@@ -52,7 +53,7 @@ export function UIProvider({ children }) {
       const newTheme = await uiService.toggleTheme();
       setTheme(newTheme);
     } catch (error) {
-      console.error('Error toggling theme:', error);
+      logger.popup.error('Error toggling theme:', error);
     }
   };
 
@@ -62,7 +63,7 @@ export function UIProvider({ children }) {
       const newTextSize = await uiService.toggleTextSize();
       setTextSize(newTextSize);
     } catch (error) {
-      console.error('Error toggling text size:', error);
+      logger.popup.error('Error toggling text size:', error);
     }
   };
   

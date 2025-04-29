@@ -1,6 +1,7 @@
 // src/components/content/ContentContext.jsx
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { determineContentType, isInjectablePage } from '../shared/utils/content-utils';
+import logger from '../shared/logger';
 
 const ContentContext = createContext(null);
 
@@ -52,7 +53,7 @@ export function ContentProvider({
       setContentType(detectedType);
       setIsSupported(true);
     } catch (error) {
-      console.error('Content detection error:', error);
+      logger.popup.error('Content detection error:', error);
       setIsSupported(false);
     } finally {
       setIsLoading(false);

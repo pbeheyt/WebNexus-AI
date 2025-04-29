@@ -1,5 +1,6 @@
 import React from 'react';
 import { useUI } from '../../contexts/UIContext';
+import logger from '../../shared/logger';
 import { 
   IconButton, 
   InfoIcon,
@@ -37,7 +38,7 @@ export function AppHeader({
     try {
       chrome.runtime.openOptionsPage();
     } catch (error) {
-      console.error('Could not open options page:', error);
+      logger.popup.error('Could not open options page:', error);
       // Fallback for environments where openOptionsPage might not be available or fail
       chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
     }

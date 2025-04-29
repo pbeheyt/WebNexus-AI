@@ -1,5 +1,6 @@
 // src/content/platform-content.js
 const PlatformFactory = require('../platforms/platform-factory');
+const logger = require('../shared/logger').platform;
 
 /**
  * Entry point for platform integration
@@ -14,9 +15,9 @@ const PlatformFactory = require('../platforms/platform-factory');
       // Initialize the platform
       await platform.initialize();
     } else {
-      console.warn('No matching AI platform found for the current page');
+      logger.warn('No matching AI platform found for the current page');
     }
   } catch (error) {
-    console.error('Error initializing AI platform integration:', error);
+    logger.error('Error initializing AI platform integration:', error);
   }
 })();
