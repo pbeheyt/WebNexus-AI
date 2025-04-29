@@ -160,7 +160,7 @@ async function cleanupTabStorage(storageKey, tabId, validTabIds = null) {
       // Single Tab Cleanup Mode (onRemoved) ---
       // Remove the entry specifically for the closed tab ID.
       const tabIdStr = tabId.toString();
-      if (updatedData.hasOwnProperty(tabIdStr)) {
+        if (Object.hasOwn(updatedData, tabIdStr)) {
         delete updatedData[tabIdStr];
         hasChanges = true;
         logger.background.info(

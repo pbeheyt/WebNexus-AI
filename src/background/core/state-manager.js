@@ -71,7 +71,7 @@ export async function storeSystemPromptForTab(tabId, systemPrompt) {
       }
     } else {
       // If prompt is invalid (null, undefined, empty), remove the key if it exists
-      if (allTabSystemPrompts.hasOwnProperty(key)) {
+        if (Object.hasOwn(allTabSystemPrompts, key)) {
         delete allTabSystemPrompts[key];
         logger.background.info(
           `Removed system prompt entry for tab ${tabId} as new prompt is absent/empty.`
@@ -360,7 +360,7 @@ export async function hasFormattedContentForTab(tabId) {
     if (
       allFormattedContent &&
       typeof allFormattedContent === 'object' &&
-      allFormattedContent.hasOwnProperty(key)
+        Object.hasOwn(allFormattedContent, key)
     ) {
       logger.background.info(`Formatted content found for tab ${tabId}.`);
       return true;
@@ -449,7 +449,7 @@ export async function getFormattedContentForTab(tabId) {
     if (
       allFormattedContent &&
       typeof allFormattedContent === 'object' &&
-      allFormattedContent.hasOwnProperty(key)
+        Object.hasOwn(allFormattedContent, key)
     ) {
       logger.background.info(`Retrieved formatted content for tab ${tabId}.`);
       return allFormattedContent[key]; // Return the stored string

@@ -1339,7 +1339,7 @@ export function SidebarChatProvider({ children }) {
         result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
 
       // Check if the key exists before deleting
-      if (allFormattedContent.hasOwnProperty(tabIdKey)) {
+        if (Object.hasOwn(allFormattedContent, tabIdKey)) {
         // Create a mutable copy to avoid modifying the original object directly from storage result
         const updatedFormattedContent = { ...allFormattedContent };
 
