@@ -109,6 +109,29 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
 
         // Check if the content type has changed during the edit
         if (prompt.contentType !== formData.contentType) {
+          // --- BEGIN VALIDATION FOR CONTENT TYPE CHANGE ON LAST DEFAULT ---
+          // Content type has changed, check if it's allowed
+          
+          // Fetch the current default prompts map
+          const defaultsResult = await chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE);
+          const currentDefaults = defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
+          
+          // Check if the prompt being edited IS the default for its ORIGINAL content type
+          const isCurrentDefaultForOriginalType = currentDefaults[prompt.contentType] === prompt.id;
+          
+          // Check if the prompt being edited IS the ONLY prompt for its ORIGINAL content type
+          // Use the customPromptsByType variable already fetched at the start of handleSubmit
+          const promptsForOriginalType = customPromptsByType[prompt.contentType]?.prompts || {};
+          const isLastPromptForOriginalType = Object.keys(promptsForOriginalType).length === 1 && promptsForOriginalType[prompt.id];
+          
+          // If it was the default AND the last one, prevent the change
+          if (isCurrentDefaultForOriginalType && isLastPromptForOriginalType) {
+            const originalContentTypeLabel = CONTENT_TYPE_LABELS[prompt.contentType] || prompt.contentType;
+            throw new Error(
+              `Cannot change content type. This is the last default prompt for "${originalContentTypeLabel}". Create another prompt for this type first, or change the default.`
+            );
+          }
+          // --- END VALIDATION ---
           // If changed, remove the prompt from its original content type location
           if (customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
             delete customPromptsByType[prompt.contentType].prompts[prompt.id];
