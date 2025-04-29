@@ -13,7 +13,7 @@ export async function handleThemeOperation(message, sendResponse) {
     const { action, theme } = message;
 
     switch (action) {
-      case 'getTheme':
+      case 'getTheme': {
         const result = await chrome.storage.sync.get(
           STORAGE_KEYS.THEME_PREFERENCE
         );
@@ -22,8 +22,8 @@ export async function handleThemeOperation(message, sendResponse) {
           theme: result[STORAGE_KEYS.THEME_PREFERENCE] || 'light',
         });
         break;
-
-      case 'setTheme':
+      }
+      case 'setTheme': {
         if (!theme) {
           throw new Error('Theme value is required for setTheme operation');
         }
@@ -83,7 +83,7 @@ export async function handleThemeOperation(message, sendResponse) {
           theme,
         });
         break;
-
+      }
       default:
         throw new Error(`Unknown theme operation: ${action}`);
     }

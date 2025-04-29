@@ -13,7 +13,7 @@ export async function handleCredentialOperation(message, sendResponse) {
     const { operation, platformId, credentials } = message;
 
     switch (operation) {
-      case 'get':
+      case 'get': {
         const storedCredentials =
           await CredentialManagerService.getCredentials(platformId);
         sendResponse({
@@ -21,8 +21,8 @@ export async function handleCredentialOperation(message, sendResponse) {
           credentials: storedCredentials,
         });
         break;
-
-      case 'store':
+      }
+      case 'store': {
         const storeResult = await CredentialManagerService.storeCredentials(
           platformId,
           credentials
@@ -31,16 +31,16 @@ export async function handleCredentialOperation(message, sendResponse) {
           success: storeResult,
         });
         break;
-
-      case 'remove':
+      }
+      case 'remove': {
         const removeResult =
           await CredentialManagerService.removeCredentials(platformId);
         sendResponse({
           success: removeResult,
         });
         break;
-
-      case 'validate':
+      }
+      case 'validate': {
         const validationResult =
           await CredentialManagerService.validateCredentials(
             platformId,
@@ -51,7 +51,7 @@ export async function handleCredentialOperation(message, sendResponse) {
           validationResult,
         });
         break;
-
+      }
       default:
         throw new Error(`Unknown credential operation: ${operation}`);
     }
