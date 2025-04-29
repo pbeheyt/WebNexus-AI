@@ -118,15 +118,6 @@ function registerCoreHandlers() {
  * Register API-related message handlers
  */
 function registerApiHandlers() {
-  // API mode availability check
-  messageHandlers.set(
-    'checkApiModeAvailable',
-    (message, sender, sendResponse) => {
-      handleApiModelRequest('checkApiModeAvailable', message, sendResponse);
-      return true; // Keep channel open for async response
-    }
-  );
-
   // Get API models
   messageHandlers.set('getApiModels', (message, sender, sendResponse) => {
     handleApiModelRequest('getApiModels', message, sendResponse);

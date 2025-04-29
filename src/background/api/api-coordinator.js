@@ -37,20 +37,6 @@ export async function handleApiModelRequest(
 ) {
   try {
     switch (requestType) {
-      case 'checkApiModeAvailable': {
-        const platformId =
-          message.platformId || (await getPreferredAiPlatform());
-        const isAvailable =
-          await ApiServiceManager.isApiModeAvailable(platformId);
-
-        sendResponse({
-          success: true,
-          isAvailable,
-          platformId,
-        });
-        break;
-      }
-
       case 'getApiModels': {
         const platformId = message.platformId;
         if (!platformId) {
