@@ -87,7 +87,7 @@ export function createTabAwarePlatformContext(options = {}) {
               // Get default model from config if preference is invalid
               const platformApiConfig = await ConfigService.getPlatformApiConfig(platformId);
               const defaultModelId = platformApiConfig?.defaultModel;
-              
+
               if (defaultModelId && response.models.some(m => m.id === defaultModelId)) {
                 finalModelIdToUse = defaultModelId;
                 logger.sidebar.info(`No valid preference found, using default model for ${platformId}: ${finalModelIdToUse}`);
@@ -255,11 +255,11 @@ export function createTabAwarePlatformContext(options = {}) {
     // Select platform and save preference
     const selectPlatform = useCallback(async (platformId) => {
       // Add validation check
-      if (!platforms.some(p => p.id === platformId)) {
-        console.error('Attempted to select invalid platform:', platformId);
-        return false;
-      }
-      if (!tabId || platformId === selectedPlatformId) return true; // No change needed
+        if (!platforms.some(p => p.id === platformId)) {
+          logger.sidebar.error('Attempted to select invalid platform:', platformId);
+          return false;
+        }
+        if (!tabId || platformId === selectedPlatformId) return true; // No change needed
 
       try {
         // Update state immediately
@@ -316,7 +316,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
         return true;
       } catch (error) {
-        console.error('Error setting model preference:', error);
+        logger.sidebar.error('Error setting model preference:', error);
         // Optionally revert state or show error
         return false;
       }

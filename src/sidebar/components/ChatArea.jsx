@@ -317,10 +317,10 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
             if (chrome && chrome.tabs && chrome.runtime) {
                 chrome.tabs.create({ url: chrome.runtime.getURL('settings.html#api-settings') });
             } else {
-                console.warn("Chrome APIs not available. Cannot open settings tab.");
+                logger.sidebar.warn("Chrome APIs not available. Cannot open settings tab.");
             }
         } catch (error) {
-            console.error('Could not open API options page:', error);
+            logger.sidebar.error('Could not open API options page:', error);
         }
     };
 
