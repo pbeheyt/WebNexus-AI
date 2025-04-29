@@ -37,24 +37,6 @@ function log(context, level, message, data = null) {
   }
 }
 
-/**
- * Stub function for backward compatibility
- * Returns empty array since we're not storing logs
- * @returns {Promise<Array>} Empty array
- */
-async function getLogs() {
-  // Log this message even in production, as it's informational about the logger itself
-  console.log('[Logger] getLogs called - logs are not being stored in this version');
-  return [];
-}
-
-/**
- * Stub function for backward compatibility
- */
-async function clearLogs() {
-  // Log this message even in production
-  console.log('[Logger] clearLogs called - logs are not being stored in this version');
-}
 
 const logger = {
   api: {
@@ -117,8 +99,6 @@ const logger = {
     warn: (message, data) => log('sidebar', 'warn', message, data),
     error: (message, data) => log('sidebar', 'error', message, data)
   },
-  getLogs,
-  clearLogs
 };
 
 module.exports = logger;
