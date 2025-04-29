@@ -19,6 +19,7 @@ export { SliderInput } from './form/SliderInput';
 export { PlatformLogoItem } from './layout/PlatformLogoItem';
 export { AppHeader } from './layout/AppHeader';
 export { Tooltip } from './layout/Tooltip';
+export { ContentTypeIcon } from './layout/ContentTypeIcon';
 export { PlatformIcon } from './layout/PlatformIcon';
 
 // Icon components

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
-import { getContentTypeIconSvg } from '../../../../shared/utils/content-icon-utils';
+import { ContentTypeIcon } from '../../../../components/layout/ContentTypeIcon';
 
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();
@@ -137,9 +137,6 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     }
   };
 
-  // Get the SVG icon string
-  const iconSvg = getContentTypeIconSvg(prompt.contentType);
-
   return (
     <div className="prompt-detail bg-theme-surface rounded-lg p-5 border border-theme">
       {/* Header with Conditional Badge */}
@@ -161,12 +158,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       <div className="prompt-detail-meta mb-4 text-base text-theme-secondary select-none">
         <div className="inline-flex items-center gap-2">
           <span>{prompt.contentTypeLabel}</span>
-          {iconSvg && (
-            <span
-              className="w-4 h-4 flex items-center justify-center select-none"
-              dangerouslySetInnerHTML={{ __html: iconSvg }}
-            />
-          )}
+          <ContentTypeIcon contentType={prompt.contentType} className="w-4 h-4 flex items-center justify-center select-none" />
         </div>
       </div>
 

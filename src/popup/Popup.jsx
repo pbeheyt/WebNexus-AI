@@ -9,7 +9,7 @@ import { UnifiedInput } from '../components/input/UnifiedInput';
 import { STORAGE_KEYS, INTERFACE_SOURCES, CONTENT_TYPE_LABELS } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
 import { robustSendMessage } from '../shared/utils/message-utils';
-import { getContentTypeIconSvg } from '../shared/utils/content-icon-utils';
+import { ContentTypeIcon } from '../components';
 
 export function Popup() {
   const { contentType, currentTab, isSupported, isLoading: contentLoading, isInjectable } = useContent();
@@ -272,15 +272,7 @@ export function Popup() {
                   {contentTypeLabel ? (
                     <>
                       {/* Icon */}
-                      {(() => {
-                        const iconSvg = getContentTypeIconSvg(contentType);
-                        return iconSvg ? (
-                          <span
-                            className="flex items-center flex-shrink-0 cursor-default"
-                            dangerouslySetInnerHTML={{ __html: iconSvg }}
-                          />
-                        ) : null;
-                      })()}
+                      <ContentTypeIcon contentType={contentType} className="w-5 h-5 text-current" />
 
                       {/* Label */}
                       <span className="text-sm font-medium truncate ml-1 select-none cursor-default">{contentTypeLabel}</span>

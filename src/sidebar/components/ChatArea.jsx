@@ -10,7 +10,7 @@ import { Tooltip } from '../../components'; // Import Tooltip
 import { PlatformIcon } from '../../components/layout/PlatformIcon';
 import { useContent } from '../../contexts/ContentContext';
 import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
-import { getContentTypeIconSvg } from '../../shared/utils/content-icon-utils';
+import { ContentTypeIcon } from '../../components/layout/ContentTypeIcon';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import logger from '../../shared/logger';
 import {
@@ -445,11 +445,7 @@ function ChatArea({ className = '', otherUIHeight = 160, requestHeightRecalculat
                                     tabIndex={0}
                                     aria-describedby="include-context-tooltip-sidebar"
                                 >
-                                    <div
-                                        className="flex-shrink-0 w-5 h-5 select-none"
-                                        dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(contentType) }}
-                                        aria-hidden="true"
-                                    />
+                                    <ContentTypeIcon contentType={contentType} className="w-6 h-6 text-current" />
                                     <span className="text-base font-medium ml-2 select-none">
                                         {getContentTypeName(contentType)}
                                     </span>

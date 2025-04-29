@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
-import { getContentTypeIconSvg } from '../../../../shared/utils/content-icon-utils.js';
+import { ContentTypeIcon } from '../../../../components/layout/ContentTypeIcon';
 import { CustomSelect } from '../../../../components/core/CustomSelect';
 
 const PromptList = ({
@@ -110,7 +110,7 @@ const PromptList = ({
       </div>
 
       {filteredPrompts.length === 0 ? (
-        <div className="empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme"> {/* Added border here too for consistency */}
+        <div className="empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme">
           <p className="text-sm">No prompts available{filterValue !== 'all' ? ` for ${contentTypeLabels[filterValue]}` : ''}. Create a new prompt to get started.</p>
         </div>
       ) : (
@@ -131,12 +131,9 @@ const PromptList = ({
                 </h3>
               </div>
               <small className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs select-none">
-                <div className="flex items-center select-none"> {/* Added select-none here */}
+                <div className="flex items-center select-none">
                   {item.contentTypeLabel}
-                  <span
-                    className="flex items-center justify-center ml-2 w-4 h-4 select-none"
-                    dangerouslySetInnerHTML={{ __html: getContentTypeIconSvg(item.contentType) }}
-                  />
+                  <ContentTypeIcon contentType={item.contentType} className="ml-2 w-4 h-4 flex items-center justify-center select-none" />
                 </div>
                 {item.id === defaultPromptIds[item.contentType] && (
                   <span className="default-badge text-xs bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-full select-none">Default</span>
