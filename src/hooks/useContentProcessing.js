@@ -14,7 +14,6 @@ import { robustSendMessage } from '../shared/utils/message-utils';
 export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   // Processing states
   const [processingStatus, setProcessingStatus] = useState('idle');
-  const [processedContent, setProcessedContent] = useState(null);
   const [streamId, setStreamId] = useState(null);
   const [error, setError] = useState(null);
 
@@ -145,7 +144,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
 
     setProcessingStatus('loading');
     setError(null);
-    setProcessedContent(null);
 
     try {
       // Prepare unified request configuration
@@ -202,7 +200,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       } 
       
       // Handle non-streaming response
-      setProcessedContent(response.response);
       setProcessingStatus('success');
       return response;
     } catch (error) {
@@ -218,7 +215,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
    */
   const reset = useCallback(() => {
     setProcessingStatus('idle');
-    setProcessedContent(null);
     setStreamId(null);
     setError(null);
   }, []);
@@ -231,7 +227,6 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
     // State management
     reset,
     processingStatus,
-    processedContent,
     error,
     streamId,
 
