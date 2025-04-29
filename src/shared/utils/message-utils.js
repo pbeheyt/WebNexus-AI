@@ -38,7 +38,7 @@ export async function robustSendMessage(message, attempt = 1) {
           if (isConnectionError && attempt <= MAX_RETRIES) {
               // --- Retry Logic ---
               const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1); // Exponential backoff
-              logger.message.warn(`robustSendMessage: Connection error for action "${message.action}" on attempt ${attempt}. Retrying in ${delay}ms...`);
+              logger.message.info(`robustSendMessage: Connection error for action "${message.action}" on attempt ${attempt}. Retrying in ${delay}ms...`);
 
               setTimeout(() => {
                   robustSendMessage(message, attempt + 1) // Recursive call with incremented attempt count
