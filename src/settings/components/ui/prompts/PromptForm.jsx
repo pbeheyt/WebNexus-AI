@@ -162,7 +162,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
       onSuccess();
     } catch (err) {
       console.error('Error saving prompt:', err);
-      error(`Error saving prompt: ${err.message}`);
+      error(`Error saving prompt: ${err.message}`, 10000);
     } finally {
       setIsSaving(false);
     }
