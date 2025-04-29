@@ -1,7 +1,7 @@
 // src/background/core/message-router.js - Centralized message handling
 
 import logger from '../../shared/logger.js';
-import { determineContentType } from '../../shared/utils/content-utils.js';
+import { determineContentType, isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
 import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
@@ -77,6 +77,18 @@ function registerCoreHandlers() {
   // Error notification handler
   messageHandlers.set('notifyError', (message, sender, sendResponse) => {
     logger.background.error('Error from content script:', message.error);
+    return false;
+  });
+
+  // Side panel allowed check
+  messageHandlers.set('isSidePanelAllowedPage', (message, sender, sendResponse) => {
+    try {
+      const isAllowed = isSidePanelAllowedPage(message.url);
+      sendResponse(isAllowed);
+    } catch (error) {
+      logger.background.error('Error checking side panel allowance:', error);
+      sendResponse(false);
+    }
     return false;
   });
   

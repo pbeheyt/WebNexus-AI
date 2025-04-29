@@ -6,7 +6,7 @@ import { getPlatformTabInfo, updateScriptInjectionStatus } from '../core/state-m
 import SidebarStateManager from '../../services/SidebarStateManager.js';
 import logger from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
-import { determineContentType } from '../../shared/utils/content-utils.js';
+import { determineContentType, isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
 
 /**
  * Set up tab update and activation listeners
@@ -107,9 +107,23 @@ async function handleTabActivation(activeInfo) {
   logger.background.info(`Tab activation handler running for tabId: ${tabId}`);
 
   try {
+    // Get the full tab object to check URL
+    const activatedTab = await chrome.tabs.get(tabId);
+    if (!activatedTab || !activatedTab.url) {
+      logger.background.warn(`Could not get URL for activated tab ${tabId}`);
+      return;
+    }
+
+    // Check if side panel is allowed on this page
+    const isAllowed = isSidePanelAllowedPage(activatedTab.url);
+    if (!isAllowed) {
+      logger.background.info(`Tab ${tabId} activated on restricted page (${activatedTab.url}). Forcing side panel disable.`);
+      await chrome.sidePanel.setOptions({ tabId: tabId, enabled: false });
+      return;
+    }
+
     // Retrieve the intended visibility state for the activated tab
     const isVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
-    // Removed log printing retrieved visibility state
 
     // Conditionally set side panel options based on stored visibility
     if (isVisible) {
@@ -119,7 +133,7 @@ async function handleTabActivation(activeInfo) {
         path: `sidepanel.html?tabId=${tabId}`,
         enabled: true
       });
-      logger.background.info(`Side panel enabled for activated tab ${tabId}`); // Simplified log
+      logger.background.info(`Side panel enabled for activated tab ${tabId}`);
     } else {
       // Disable the panel if it shouldn't be visible
       await chrome.sidePanel.setOptions({

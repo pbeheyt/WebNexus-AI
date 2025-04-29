@@ -2,6 +2,7 @@
 
 import SidebarStateManager from '../../services/SidebarStateManager.js';
 import logger from '../../shared/logger.js';
+import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
 
 /**
  * Toggle native side panel visibility for a specific tab.
@@ -27,6 +28,31 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
       targetTabId = activeTab.id;
     }
     logger.background.info(`Targeting tab ${targetTabId} for side panel operation.`);
+
+    // Get the full tab object to check URL
+    const targetTab = await chrome.tabs.get(targetTabId);
+    if (!targetTab || !targetTab.url) {
+      throw new Error('Could not determine tab URL for side panel operation');
+    }
+
+    // Check if side panel is allowed on this page
+    const isAllowed = isSidePanelAllowedPage(targetTab.url);
+    if (!isAllowed) {
+      logger.background.warn(`Attempted to toggle sidebar on restricted page: ${targetTab.url}`);
+      // Force state to closed and disable panel
+      newState = false;
+      await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, false);
+      await chrome.sidePanel.setOptions({ tabId: targetTabId, enabled: false });
+      
+      sendResponse({
+        success: false,
+        error: 'Sidebar cannot be opened on this page.',
+        tabId: targetTabId,
+        visible: false,
+        code: 'RESTRICTED_PAGE'
+      });
+      return;
+    }
 
     // Read the current *intended* state from storage
     const currentState = await SidebarStateManager.getSidebarVisibilityForTab(targetTabId);

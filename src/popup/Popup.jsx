@@ -124,6 +124,32 @@ export function Popup() {
       return;
     }
 
+    // Get the full tab object to check URL
+    let tabUrl;
+    try {
+      const tab = await chrome.tabs.get(currentTab.id);
+      if (!tab || !tab.url) {
+        updateStatus('Error: Could not determine tab URL.');
+        return;
+      }
+      tabUrl = tab.url;
+    } catch (error) {
+      logger.popup.error('Error getting tab info:', error);
+      updateStatus('Error: Could not check tab information.');
+      return;
+    }
+
+    // Check if side panel is allowed on this page
+    const isAllowed = await robustSendMessage({
+      action: 'isSidePanelAllowedPage',
+      url: tabUrl
+    });
+
+    if (!isAllowed) {
+      updateStatus('Sidebar cannot be opened on this type of page.', 'warning');
+      return;
+    }
+
     updateStatus('Toggling sidebar...', true);
     try {
       // Send message to background to toggle the native side panel state (enable/disable)
