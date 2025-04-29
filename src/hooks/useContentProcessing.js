@@ -125,7 +125,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       streaming = false,
       onStreamChunk = null,
       conversationHistory = [],
-      skipInitialExtraction = false
+      isContentExtractionEnabled, // <-- Destructure here
+      // Remove skipInitialExtraction if it's destructured here
     } = options;
 
     if (!currentTab?.id) {
@@ -155,11 +156,13 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         promptId,
         contentType,
         source,
-        streaming
+        streaming,
+        isContentExtractionEnabled // <-- Ensure it's included here
+        // Ensure skipInitialExtraction is NOT included here
       };
 
       // Add optional parameters if provided
-      if (skipInitialExtraction !== undefined) request.skipInitialExtraction = skipInitialExtraction;
+      // Ensure skipInitialExtraction logic is removed here
       if (modelId) request.modelId = modelId;
       if (promptContent) request.customPrompt = promptContent;
       if (conversationHistory?.length > 0) request.conversationHistory = conversationHistory;

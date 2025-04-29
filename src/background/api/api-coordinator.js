@@ -125,9 +125,10 @@ export async function processContentViaApi(params) {
     modelId,
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null,
-    streaming = false, // Note: streaming is forced to true later
+    // streaming = false, // Note: streaming is forced to true later (Keep this comment or remove if desired)
     conversationHistory = [],
-    // Extract pre-truncation stats (passed from frontend, not used directly here)
+    isContentExtractionEnabled, // <-- ADD THIS
+    // Remove skipInitialExtraction parameter if present (It wasn't here, but ensuring it's not added)
     preTruncationCost,
     preTruncationOutput
   } = params;
@@ -141,7 +142,7 @@ export async function processContentViaApi(params) {
 
   try {
     logger.background.info(`Starting API-based content processing from ${source}`, {
-      tabId, url, promptId, platformId, modelId, streaming
+      tabId, url, promptId, platformId, modelId
     });
 
     let extractedContent = null;
@@ -153,12 +154,13 @@ export async function processContentViaApi(params) {
 
     // 1. Decide whether to extract content based on existence, user request, and message history
     const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
-    // Extraction only happens on the first message, if not skipped, if content doesn't already exist, and if page is injectable.
+    // Extraction depends on toggle state, content existence, and injectability.
     const canInject = isInjectablePage(url); // Check if page allows injection
-    const shouldExtract = isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && canInject;
+    // NEW:
+    const shouldExtract = isContentExtractionEnabled && !initialFormattedContentExists && canInject;
 
-    // Log if extraction is skipped specifically due to non-injectable URL on first message
-    if (isFirstUserMessage && !initialFormattedContentExists && !skipExtractionRequested && !canInject) {
+    // Log if extraction is skipped specifically due to non-injectable URL (even if toggle is on)
+    if (isContentExtractionEnabled && !initialFormattedContentExists && !canInject) {
         logger.background.info(`First message: Skipping extraction for tab ${tabId} because URL (${url}) is not injectable.`);
         // Return immediately indicating context was skipped, preventing further processing for this message
         return {
@@ -169,8 +171,9 @@ export async function processContentViaApi(params) {
         };
     }
 
+    // Example log update:
     if (shouldExtract) {
-        logger.background.info(`First message: Extraction will proceed for tab ${tabId} (no existing content, not skipped).`);
+        logger.background.info(`Extraction enabled and content needed: Extraction will proceed for tab ${tabId} (injectable: ${canInject}, exists: ${initialFormattedContentExists}).`);
         // Reset previous extraction state (ensure this happens ONLY if extracting)
         await resetExtractionState();
 
@@ -195,17 +198,15 @@ export async function processContentViaApi(params) {
              extractedContent = null;
         }
     } else {
-        // Log the reason why extraction was skipped
-        if (!isFirstUserMessage) {
-            logger.background.info(`Not first message: Skipping extraction for tab ${tabId}.`);
-        } else if (skipExtractionRequested) {
-            logger.background.info(`First message: Extraction skipped for tab ${tabId} by user request.`);
+        // Log the reason why extraction was skipped based on the new logic
+        if (!isContentExtractionEnabled) {
+            logger.background.info(`Extraction skipped for tab ${tabId}: Toggle is OFF.`);
         } else if (initialFormattedContentExists) {
-            logger.background.info(`First message: Formatted content already exists for tab ${tabId}, skipping extraction.`);
-        } else if (isFirstUserMessage && !canInject) {
+            logger.background.info(`Extraction skipped for tab ${tabId}: Formatted content already exists.`);
+        } else if (!canInject) {
+            logger.background.info(`Extraction skipped for tab ${tabId}: Page is not injectable (${url}).`);
         } else {
-             // Should not happen based on shouldExtract logic, but log just in case
-             logger.background.warn(`Extraction skipped for unknown reason for tab ${tabId}. Conditions: isFirst=${isFirstUserMessage}, skipped=${skipExtractionRequested}, exists=${initialFormattedContentExists}, canInject=${canInject}`);
+            logger.background.warn(`Extraction skipped for tab ${tabId} for unknown reason. Conditions: enabled=${isContentExtractionEnabled}, exists=${initialFormattedContentExists}, canInject=${canInject}`);
         }
         // Ensure these are null if extraction didn't happen
         extractedContent = null;
@@ -238,36 +239,30 @@ export async function processContentViaApi(params) {
     // 7. Initialize streaming response (using platformId from params)
     await initializeStreamResponse(streamId, platformId, resolvedParams.model); // Include model
 
-    // 8. Determine the formatted content to include in the request (only for the first message under specific conditions)
+    // 8. Determine the formatted content to include in the request based on the toggle state and content availability
+    // --- Start Replacement ---
     let formattedContentForRequest = null;
 
-    if (isFirstUserMessage) {
-        logger.background.info(`Processing first user message for content inclusion.`);
-        if (!skipExtractionRequested) {
-            logger.background.info(`Extraction was allowed for this first message.`);
-            if (shouldExtract && newlyFormattedContent) {
-                // Extraction was triggered now and succeeded
-                formattedContentForRequest = newlyFormattedContent;
-                logger.background.info(`Using newly extracted/formatted content for tab ${tabId}.`);
-            } else if (initialFormattedContentExists) {
-                // Extraction wasn't triggered now (because content existed), but it was allowed and content exists
-                formattedContentForRequest = await getFormattedContentForTab(tabId);
-                logger.background.info(`Using pre-existing formatted content for tab ${tabId}.`);
-            } else {
-                // Extraction was allowed, but either failed or wasn't triggered (and no pre-existing content)
-                logger.background.info(`No content available (extraction allowed but failed, or content didn't exist) for tab ${tabId}.`);
-                formattedContentForRequest = null;
-            }
+    if (!isContentExtractionEnabled) {
+        logger.background.info(`Content inclusion skipped: Toggle is OFF.`);
+        formattedContentForRequest = null;
+    } else {
+        // Toggle is ON, check if content is available
+        if (shouldExtract && newlyFormattedContent) {
+            // Extraction happened now and succeeded
+            formattedContentForRequest = newlyFormattedContent;
+            logger.background.info(`Including newly extracted/formatted content for tab ${tabId}.`);
+        } else if (initialFormattedContentExists) {
+            // Content existed before this run
+            formattedContentForRequest = await getFormattedContentForTab(tabId);
+            logger.background.info(`Including pre-existing formatted content for tab ${tabId}.`);
         } else {
-            // Extraction was explicitly skipped by the user for the first message
-            logger.background.info(`Extraction was skipped by user request for this first message. No content included.`);
+            // Toggle ON, but no content available (extraction didn't run, failed, or page not injectable)
+            logger.background.info(`Content inclusion skipped: Toggle is ON, but no content available for tab ${tabId}.`);
             formattedContentForRequest = null;
         }
-    } else {
-        // Not the first message, never include content
-        logger.background.info(`Not the first user message: Skipping content inclusion.`);
-        formattedContentForRequest = null;
     }
+    // --- End Replacement ---
 
     if (tabId) {
       try {

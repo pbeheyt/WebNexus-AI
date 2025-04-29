@@ -455,10 +455,20 @@ export function SidebarChatProvider({ children }) {
         promptContent: text.trim(),
         conversationHistory,
         streaming: true,
-        // Determine if extraction should be skipped for the first message
-        skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true,
+        // Pass the toggle state directly
+        isContentExtractionEnabled: isContentExtractionEnabled, // <-- ADD THIS LINE
+        // Remove the old skipInitialExtraction line:
+        // skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true, // <-- REMOVE THIS LINE
         // Pass tabId and source explicitly if needed by the hook/API
-        options: { tabId, source: INTERFACE_SOURCES.SIDEBAR }
+        options: {
+          tabId,
+          source: INTERFACE_SOURCES.SIDEBAR,
+          // Keep pre-truncation stats if they exist
+          ...(rerunStatsRef.current && {
+            preTruncationCost: rerunStatsRef.current.preTruncationCost,
+            preTruncationOutput: rerunStatsRef.current.preTruncationOutput
+          })
+        }
       });
 
       // Handle case where context extraction was skipped (e.g., non-injectable page)
@@ -589,7 +599,7 @@ export function SidebarChatProvider({ children }) {
         promptContent,
         conversationHistory,
         streaming: true,
-        skipInitialExtraction: true,
+        isContentExtractionEnabled: false, // Reruns don't re-extract based on toggle
         options: {
           tabId,
           source: INTERFACE_SOURCES.SIDEBAR,
@@ -693,7 +703,7 @@ export function SidebarChatProvider({ children }) {
         promptContent,
         conversationHistory,
         streaming: true,
-        skipInitialExtraction: true,
+        isContentExtractionEnabled: false, // Edit/Reruns don't re-extract based on toggle
         options: {
           tabId,
           source: INTERFACE_SOURCES.SIDEBAR,
@@ -801,7 +811,7 @@ export function SidebarChatProvider({ children }) {
             promptContent,
             conversationHistory,
             streaming: true,
-            skipInitialExtraction: true,
+            isContentExtractionEnabled: false, // Assistant reruns don't re-extract based on toggle
             options: {
                 tabId,
                 source: INTERFACE_SOURCES.SIDEBAR,
