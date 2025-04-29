@@ -23,8 +23,10 @@ class DeepSeekPlatform extends BasePlatform {
    */
   findEditorElement() {
     // Keep existing selectors with fallbacks
-    return document.querySelector('#chat-input') ||
-           document.querySelector('.c92459f0');
+    return (
+      document.querySelector('#chat-input') ||
+      document.querySelector('.c92459f0')
+    );
   }
 
   /**
@@ -34,28 +36,33 @@ class DeepSeekPlatform extends BasePlatform {
   findSubmitButton() {
     // Primary selectors - target specific UI patterns unique to the send button
     const sendButton =
-
       // Target by class combinations (current approach with additions)
       document.querySelector('div[role="button"]._7436101.bcc55ca1') ||
       document.querySelector('div[role="button"]._7436101') ||
-      document.querySelector('div[role="button"] ._6f28693')?.closest('div[role="button"]') ||
-
+      document
+        .querySelector('div[role="button"] ._6f28693')
+        ?.closest('div[role="button"]') ||
       // Position-based fallbacks (rightmost button in the input container)
       document.querySelector('.ec4f5d61 > div[role="button"]:last-child') ||
-      document.querySelector('.bf38813a > div:last-child > div[role="button"]') ||
-
+      document.querySelector(
+        '.bf38813a > div:last-child > div[role="button"]'
+      ) ||
       // Attribute-based fallbacks
       document.querySelector('div[role="button"][aria-disabled]') ||
-
       // Icon-based detection
-      document.querySelector('div[role="button"] .ds-icon svg[width="14"][height="16"]')?.closest('div[role="button"]') ||
-
+      document
+        .querySelector(
+          'div[role="button"] .ds-icon svg[width="14"][height="16"]'
+        )
+        ?.closest('div[role="button"]') ||
       // Original fallbacks
       document.querySelector('div[role="button"].f6d670.bcc55ca1') ||
       document.querySelector('div[role="button"].f6d670');
 
     if (!sendButton) {
-        this.logger.error(`[${this.platformId}] Submit button not found using any strategy.`);
+      this.logger.error(
+        `[${this.platformId}] Submit button not found using any strategy.`
+      );
     }
     return sendButton;
   }
@@ -69,7 +76,9 @@ class DeepSeekPlatform extends BasePlatform {
    * @protected
    */
   async _insertTextIntoEditor(editorElement, text) {
-    this.logger.info(`[${this.platformId}] Using base _insertTextIntoEditor for Deepseek.`);
+    this.logger.info(
+      `[${this.platformId}] Using base _insertTextIntoEditor for Deepseek.`
+    );
     return super._insertTextIntoEditor(editorElement, text); // Call base class method
   }
 
@@ -81,13 +90,17 @@ class DeepSeekPlatform extends BasePlatform {
    */
   async _clickSubmitButton(buttonElement) {
     try {
-      this.logger.info(`[${this.platformId}] Attempting to click submit button for Deepseek.`);
+      this.logger.info(
+        `[${this.platformId}] Attempting to click submit button for Deepseek.`
+      );
 
       let currentButton = buttonElement; // Use a local variable
 
       // Check if button is initially disabled
       if (currentButton.getAttribute('aria-disabled') === 'true') {
-        this.logger.warn(`[${this.platformId}] Submit button is initially disabled. Attempting to trigger editor input event...`);
+        this.logger.warn(
+          `[${this.platformId}] Submit button is initially disabled. Attempting to trigger editor input event...`
+        );
 
         // Find the editor again to dispatch the event
         const editorElement = this.findEditorElement();
@@ -100,29 +113,43 @@ class DeepSeekPlatform extends BasePlatform {
           currentButton = this.findSubmitButton(); // Re-fetch the button state
 
           if (!currentButton) {
-             this.logger.error(`[${this.platformId}] Failed to re-find submit button after triggering input event.`);
-             return false;
+            this.logger.error(
+              `[${this.platformId}] Failed to re-find submit button after triggering input event.`
+            );
+            return false;
           }
 
           if (currentButton.getAttribute('aria-disabled') === 'true') {
-            this.logger.error(`[${this.platformId}] Submit button remained disabled after triggering input event.`);
+            this.logger.error(
+              `[${this.platformId}] Submit button remained disabled after triggering input event.`
+            );
             return false; // Failed to enable
           }
-          this.logger.info(`[${this.platformId}] Submit button appears enabled after triggering input event.`);
+          this.logger.info(
+            `[${this.platformId}] Submit button appears enabled after triggering input event.`
+          );
         } else {
-          this.logger.error(`[${this.platformId}] Could not find editor element to trigger enabling event.`);
+          this.logger.error(
+            `[${this.platformId}] Could not find editor element to trigger enabling event.`
+          );
           return false; // Cannot attempt enabling
         }
       }
 
       // Proceed to click the (potentially updated) button
-      this.logger.info(`[${this.platformId}] Dispatching click event to submit button.`);
+      this.logger.info(
+        `[${this.platformId}] Dispatching click event to submit button.`
+      );
       currentButton.click(); // Use the potentially re-found button
-      this.logger.info(`[${this.platformId}] Successfully dispatched click event.`);
+      this.logger.info(
+        `[${this.platformId}] Successfully dispatched click event.`
+      );
       return true;
-
     } catch (error) {
-      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
+      this.logger.error(
+        `[${this.platformId}] Failed to click submit button:`,
+        error
+      );
       return false;
     }
   }

@@ -1,6 +1,7 @@
 // src/services/ModelParameterService.js
 const { STORAGE_KEYS, INTERFACE_SOURCES } = require('../shared/constants');
 const logger = require('../shared/logger.js').service;
+
 const ConfigService = require('./ConfigService');
 
 /**
@@ -26,7 +27,9 @@ class ModelParameterService {
     // 1. Try tab-specific model preference (highest priority)
     if (tabId) {
       try {
-        const tabPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
+        const tabPrefs = await chrome.storage.local.get(
+          STORAGE_KEYS.TAB_MODEL_PREFERENCES
+        );
         const tabModels = tabPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
 
         if (tabModels[tabId] && tabModels[tabId][platformId]) {
@@ -49,7 +52,9 @@ class ModelParameterService {
 
         if (sourcePref[platformId]) {
           modelId = sourcePref[platformId];
-          logger.info(`Using ${source} model preference for ${platformId}: ${modelId}`);
+          logger.info(
+            `Using ${source} model preference for ${platformId}: ${modelId}`
+          );
           return modelId;
         }
       } catch (error) {
@@ -71,16 +76,19 @@ class ModelParameterService {
     if (!config?.aiPlatforms?.[platformId]?.models) return null;
 
     // Normalize input - handle both string IDs and model objects
-    const modelId = typeof modelIdOrObject === 'object' && modelIdOrObject !== null
-      ? modelIdOrObject.id || modelIdOrObject.model || String(modelIdOrObject)
-      : modelIdOrObject;
+    const modelId =
+      typeof modelIdOrObject === 'object' && modelIdOrObject !== null
+        ? modelIdOrObject.id || modelIdOrObject.model || String(modelIdOrObject)
+        : modelIdOrObject;
 
     logger.info(`Resolving model config for: ${platformId}/${modelId}`);
 
     const platformApiConfig = config.aiPlatforms[platformId];
 
     // Find model in array of objects within the API config
-    return platformApiConfig.models.find(model => model.id === modelId) || null;
+    return (
+      platformApiConfig.models.find((model) => model.id === modelId) || null
+    );
   }
 
   /**
@@ -91,7 +99,9 @@ class ModelParameterService {
    */
   async getUserModelSettings(platformId, modelId) {
     try {
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const result = await chrome.storage.sync.get(
+        STORAGE_KEYS.API_ADVANCED_SETTINGS
+      );
       const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
 
       // Get platform settings
@@ -103,7 +113,10 @@ class ModelParameterService {
         platformSettings.default ||
         {};
 
-      logger.info(`User settings retrieved for ${platformId}/${modelId}:`, modelSettings);
+      logger.info(
+        `User settings retrieved for ${platformId}/${modelId}:`,
+        modelSettings
+      );
 
       return modelSettings;
     } catch (error) {
@@ -122,7 +135,9 @@ class ModelParameterService {
   async saveTabModelPreference(tabId, platformId, modelId) {
     try {
       // Get current tab preferences
-      const tabPrefs = await chrome.storage.local.get(STORAGE_KEYS.TAB_MODEL_PREFERENCES);
+      const tabPrefs = await chrome.storage.local.get(
+        STORAGE_KEYS.TAB_MODEL_PREFERENCES
+      );
       const tabModels = tabPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
 
       // Initialize tab entry if needed
@@ -138,7 +153,9 @@ class ModelParameterService {
         [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: tabModels,
       });
 
-      logger.info(`Saved tab model preference: Tab ${tabId}, Platform ${platformId}, Model ${modelId}`);
+      logger.info(
+        `Saved tab model preference: Tab ${tabId}, Platform ${platformId}, Model ${modelId}`
+      );
       return true;
     } catch (error) {
       logger.error('Error saving tab model preference:', error);
@@ -156,8 +173,10 @@ class ModelParameterService {
   async saveSourceModelPreference(source, platformId, modelId) {
     // Only save for sidebar, popup uses last selected via settings or default
     if (source !== INTERFACE_SOURCES.SIDEBAR) {
-        logger.warn(`Not saving model preference for non-sidebar source: ${source}`);
-        return false;
+      logger.warn(
+        `Not saving model preference for non-sidebar source: ${source}`
+      );
+      return false;
     }
 
     try {
@@ -173,7 +192,9 @@ class ModelParameterService {
       // Save updated preferences
       await chrome.storage.sync.set({ [storageKey]: modelPrefs });
 
-      logger.info(`Saved ${source} model preference: Platform ${platformId}, Model ${modelId}`);
+      logger.info(
+        `Saved ${source} model preference: Platform ${platformId}, Model ${modelId}`
+      );
       return true;
     } catch (error) {
       logger.error(`Error saving ${source} model preference:`, error);
@@ -199,17 +220,23 @@ class ModelParameterService {
 
     try {
       const { tabId, source, conversationHistory } = options;
-      logger.info(`Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`);
+      logger.info(
+        `Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`
+      );
 
       // Get the full platform config first
       const config = await ConfigService.getApiConfig();
       const platformApiConfig = config?.aiPlatforms?.[platformId];
       if (!platformApiConfig) {
-        throw new Error(`Platform API configuration not found for ${platformId}`);
+        throw new Error(
+          `Platform API configuration not found for ${platformId}`
+        );
       }
 
       // Get model config directly from the platform's API config
-      const modelConfig = platformApiConfig?.models?.find(model => model.id === modelId);
+      const modelConfig = platformApiConfig?.models?.find(
+        (model) => model.id === modelId
+      );
       if (!modelConfig) {
         throw new Error(`Model configuration not found for ${modelId}`);
       }
@@ -218,7 +245,8 @@ class ModelParameterService {
       const userSettings = await this.getUserModelSettings(platformId, modelId);
 
       // Determine effective toggle values, defaulting to true if not set
-      const effectiveIncludeTemperature = userSettings.includeTemperature ?? true;
+      const effectiveIncludeTemperature =
+        userSettings.includeTemperature ?? true;
       const effectiveIncludeTopP = userSettings.includeTopP ?? false; // TopP default to false
 
       // Start with base parameters
@@ -226,64 +254,87 @@ class ModelParameterService {
         model: modelId,
         parameterStyle: modelConfig.parameterStyle,
         tokenParameter: modelConfig.tokenParameter,
-        maxTokens: userSettings.maxTokens !== undefined ? userSettings.maxTokens : (modelConfig.maxTokens),
+        maxTokens:
+          userSettings.maxTokens !== undefined
+            ? userSettings.maxTokens
+            : modelConfig.maxTokens,
         contextWindow: modelConfig.contextWindow,
         modelSupportsSystemPrompt: modelConfig?.supportsSystemPrompt ?? false,
       };
 
       // Add temperature ONLY if model supports it AND user included it
-      const modelSupportsTemperature = modelConfig?.supportsTemperature !== false;
+      const modelSupportsTemperature =
+        modelConfig?.supportsTemperature !== false;
       if (modelSupportsTemperature && effectiveIncludeTemperature) {
-        params.temperature = userSettings.temperature !== undefined
-          ? userSettings.temperature
-          : platformApiConfig.temperature;
+        params.temperature =
+          userSettings.temperature !== undefined
+            ? userSettings.temperature
+            : platformApiConfig.temperature;
       }
 
       // Add topP ONLY if model supports it AND user included it
       const modelSupportsTopP = modelConfig?.supportsTopP === true;
       if (modelSupportsTopP && effectiveIncludeTopP) {
-        params.topP = userSettings.topP !== undefined
-          ? userSettings.topP
-          : platformApiConfig.topP;
+        params.topP =
+          userSettings.topP !== undefined
+            ? userSettings.topP
+            : platformApiConfig.topP;
       }
 
       // Calculate effective system prompt support
-      const platformSupportsSystemPrompt = platformApiConfig?.hasSystemPrompt !== false;
-      const modelExplicitlyForbidsSystemPrompt = modelConfig?.supportsSystemPrompt === false;
-      const effectiveModelSupportsSystemPrompt = platformSupportsSystemPrompt && !modelExplicitlyForbidsSystemPrompt;
+      const platformSupportsSystemPrompt =
+        platformApiConfig?.hasSystemPrompt !== false;
+      const modelExplicitlyForbidsSystemPrompt =
+        modelConfig?.supportsSystemPrompt === false;
+      const effectiveModelSupportsSystemPrompt =
+        platformSupportsSystemPrompt && !modelExplicitlyForbidsSystemPrompt;
 
       // Update modelSupportsSystemPrompt with the calculated value
       params.modelSupportsSystemPrompt = effectiveModelSupportsSystemPrompt;
 
       // Add system prompt ONLY if effectively supported AND user provided one
       if (params.modelSupportsSystemPrompt && userSettings.systemPrompt) {
-          params.systemPrompt = userSettings.systemPrompt;
-          logger.info(`Adding system prompt for ${platformId}/${modelId}.`);
+        params.systemPrompt = userSettings.systemPrompt;
+        logger.info(`Adding system prompt for ${platformId}/${modelId}.`);
       } else if (userSettings.systemPrompt) {
-          if (!platformSupportsSystemPrompt) {
-              logger.warn(`System prompt provided but platform ${platformId} does not support it.`);
-          } else if (modelExplicitlyForbidsSystemPrompt) {
-              logger.warn(`System prompt provided but model ${modelId} explicitly forbids it.`);
-          } else {
-               logger.warn(`System prompt provided but effective support is false for ${platformId}/${modelId}.`);
-          }
+        if (!platformSupportsSystemPrompt) {
+          logger.warn(
+            `System prompt provided but platform ${platformId} does not support it.`
+          );
+        } else if (modelExplicitlyForbidsSystemPrompt) {
+          logger.warn(
+            `System prompt provided but model ${modelId} explicitly forbids it.`
+          );
+        } else {
+          logger.warn(
+            `System prompt provided but effective support is false for ${platformId}/${modelId}.`
+          );
+        }
       }
 
       // Add conversation history if provided in options
-      if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+      if (
+        conversationHistory &&
+        Array.isArray(conversationHistory) &&
+        conversationHistory.length > 0
+      ) {
         params.conversationHistory = conversationHistory;
       }
 
       // Include tabId if provided (useful for downstream token tracking)
       if (tabId) {
-          params.tabId = tabId;
+        params.tabId = tabId;
       }
 
-      logger.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, { ...params });
+      logger.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, {
+        ...params,
+      });
       return params;
-
     } catch (error) {
-      logger.error(`Error resolving parameters for ${platformId}/${modelId}:`, error);
+      logger.error(
+        `Error resolving parameters for ${platformId}/${modelId}:`,
+        error
+      );
       throw error;
     }
   }

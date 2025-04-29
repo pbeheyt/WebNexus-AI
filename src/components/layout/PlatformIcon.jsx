@@ -1,5 +1,6 @@
 // src/components/layout/PlatformIcon.jsx
 import React from 'react';
+
 import { useUI } from '../../contexts/UIContext';
 
 /**
@@ -11,9 +12,16 @@ import { useUI } from '../../contexts/UIContext';
  * @param {string} props.altText - The alt text for the image.
  * @param {string} [props.className=''] - Optional additional CSS classes for the img tag.
  */
-export function PlatformIcon({ platformId, iconUrl, altText, className = '', ...props }) {
+export function PlatformIcon({
+  platformId,
+  iconUrl,
+  altText,
+  className = '',
+  ...props
+}) {
   const { theme } = useUI();
-  const needsInvert = theme === 'light' && (platformId === 'chatgpt' || platformId === 'grok');
+  const needsInvert =
+    theme === 'light' && (platformId === 'chatgpt' || platformId === 'grok');
   const invertClass = needsInvert ? 'invert' : '';
 
   // Combine base classes with passed classes
@@ -22,15 +30,12 @@ export function PlatformIcon({ platformId, iconUrl, altText, className = '', ...
     select-none
     ${invertClass}
     ${className}
-  `.trim().replace(/\s+/g, ' ');
+  `
+    .trim()
+    .replace(/\s+/g, ' ');
 
   return (
-    <img
-      src={iconUrl}
-      alt={altText}
-      className={finalClassName}
-      {...props}
-    />
+    <img src={iconUrl} alt={altText} className={finalClassName} {...props} />
   );
 }
 

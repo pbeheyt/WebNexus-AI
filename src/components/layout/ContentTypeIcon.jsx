@@ -1,13 +1,14 @@
 // src/components/layout/ContentTypeIcon.jsx
 import React from 'react';
+
 import { CONTENT_TYPES } from '../../shared/constants'; // Import constants
 
 // --- SVG Generation Logic (Moved from utils) ---
 function getContentTypeIconSvgInternal(contentType) {
   let iconSvg = '';
   // Define colors used within SVGs
-  const redditColor = '#FF4500';  // Brand color
-  const pdfColor = '#F40F02';     // Custom red for PDF
+  const redditColor = '#FF4500'; // Brand color
+  const pdfColor = '#F40F02'; // Custom red for PDF
 
   switch (contentType) {
     case CONTENT_TYPES.YOUTUBE:
@@ -77,7 +78,7 @@ export function ContentTypeIcon({ contentType, className = '' }) {
     <div
       className={`flex items-center justify-center ${className}`} // Combine base classes with passed classes
       dangerouslySetInnerHTML={{ __html: iconSvg }}
-      aria-hidden="true" // Indicate it's decorative
+      aria-hidden='true' // Indicate it's decorative
     />
   );
 }

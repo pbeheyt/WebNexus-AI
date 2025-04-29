@@ -14,7 +14,7 @@ module.exports = {
   },
   output: {
     filename: '[name].bundle.js',
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(__dirname, 'dist'),
   },
   mode: isProduction ? 'production' : 'development',
   devtool: isProduction ? false : 'source-map', // Disable source maps for production
@@ -28,54 +28,56 @@ module.exports = {
           loader: 'babel-loader',
           options: {
             presets: [
-              ['@babel/preset-env', {
-                targets: {
-                  chrome: "130"
+              [
+                '@babel/preset-env',
+                {
+                  targets: {
+                    chrome: '130',
+                  },
+                  useBuiltIns: 'usage',
+                  corejs: 3,
                 },
-                useBuiltIns: "usage",
-                corejs: 3
-              }],
-              ['@babel/preset-react', { runtime: 'automatic' }]
-            ]
-          }
-        }
+              ],
+              ['@babel/preset-react', { runtime: 'automatic' }],
+            ],
+          },
+        },
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader', 'postcss-loader']
-      }
-    ]
+        use: ['style-loader', 'css-loader', 'postcss-loader'],
+      },
+    ],
   },
   resolve: {
     extensions: ['.js', '.jsx'],
-    modules: [
-      'node_modules',
-      path.resolve(__dirname, 'src')
-    ],
+    modules: ['node_modules', path.resolve(__dirname, 'src')],
     fallback: {
-      "path": false,
-      "fs": false
-    }
+      path: false,
+      fs: false,
+    },
   },
   optimization: {
     minimize: isProduction,
     minimizer: [
       // Only add Terser config if in production
-      ...(isProduction ? [
-        new TerserPlugin({
-          terserOptions: {
-            compress: {
-              drop_console: true, // This explicitly removes console.* statements
-            },
-          },
-        }),
-      ] : []),
+      ...(isProduction
+        ? [
+            new TerserPlugin({
+              terserOptions: {
+                compress: {
+                  drop_console: true, // This explicitly removes console.* statements
+                },
+              },
+            }),
+          ]
+        : []),
     ],
   },
   performance: {
-    hints: isProduction ? 'warning' : false
+    hints: isProduction ? 'warning' : false,
   },
   performance: {
-    hints: isProduction ? 'warning' : false // Show hints only in production
-  }
+    hints: isProduction ? 'warning' : false, // Show hints only in production
+  },
 };

@@ -14,20 +14,27 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
   let targetTabId;
   let newState; // To store the final state (true for open, false for closed)
   try {
-    logger.background.info('Handling native side panel toggle request (Refactored)');
+    logger.background.info(
+      'Handling native side panel toggle request (Refactored)'
+    );
 
     // Determine the target tab ID
     const explicitTabId = message?.tabId || sender?.tab?.id;
     if (explicitTabId) {
       targetTabId = explicitTabId;
     } else {
-      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const [activeTab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
       if (!activeTab?.id) {
         throw new Error('No active tab found to target for side panel toggle.');
       }
       targetTabId = activeTab.id;
     }
-    logger.background.info(`Targeting tab ${targetTabId} for side panel operation.`);
+    logger.background.info(
+      `Targeting tab ${targetTabId} for side panel operation.`
+    );
 
     // Get the full tab object to check URL
     const targetTab = await chrome.tabs.get(targetTabId);
@@ -38,46 +45,57 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
     // Check if side panel is allowed on this page
     const isAllowed = isSidePanelAllowedPage(targetTab.url);
     if (!isAllowed) {
-      logger.background.warn(`Attempted to toggle sidebar on restricted page: ${targetTab.url}`);
+      logger.background.warn(
+        `Attempted to toggle sidebar on restricted page: ${targetTab.url}`
+      );
       // Force state to closed and disable panel
       newState = false;
       await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, false);
       await chrome.sidePanel.setOptions({ tabId: targetTabId, enabled: false });
-      
+
       sendResponse({
         success: false,
         error: 'Sidebar cannot be opened on this page.',
         tabId: targetTabId,
         visible: false,
-        code: 'RESTRICTED_PAGE'
+        code: 'RESTRICTED_PAGE',
       });
       return;
     }
 
     // Read the current *intended* state from storage
-    const currentState = await SidebarStateManager.getSidebarVisibilityForTab(targetTabId);
-    logger.background.info(`Current stored visibility for tab ${targetTabId}: ${currentState}`);
+    const currentState =
+      await SidebarStateManager.getSidebarVisibilityForTab(targetTabId);
+    logger.background.info(
+      `Current stored visibility for tab ${targetTabId}: ${currentState}`
+    );
 
     // Determine the new state and perform actions
     if (currentState === false) {
       // Current state is closed, so we intend to open (enable) it
       newState = true;
-      logger.background.info(`Action: Enable side panel for tab ${targetTabId}`);
+      logger.background.info(
+        `Action: Enable side panel for tab ${targetTabId}`
+      );
       await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, true);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         path: `sidepanel.html?tabId=${targetTabId}`, // Pass tabId via URL
-        enabled: true
+        enabled: true,
       });
-      logger.background.info(`Side panel enabled and path set for tab ${targetTabId}.`);
+      logger.background.info(
+        `Side panel enabled and path set for tab ${targetTabId}.`
+      );
     } else {
       // Current state is open, so we intend to close (disable) it
       newState = false;
-      logger.background.info(`Action: Disable side panel for tab ${targetTabId}`);
+      logger.background.info(
+        `Action: Disable side panel for tab ${targetTabId}`
+      );
       await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, false);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
-        enabled: false
+        enabled: false,
       });
       logger.background.info(`Side panel disabled for tab ${targetTabId}.`);
     }
@@ -86,22 +104,23 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
       success: true,
       visible: newState, // Send back the new intended state
       tabId: targetTabId,
-      message: `Side panel state updated for tab ${targetTabId}. Intended visibility: ${newState}.`
+      message: `Side panel state updated for tab ${targetTabId}. Intended visibility: ${newState}.`,
     });
-
   } catch (error) {
-    logger.background.error(`Error handling native side panel toggle for tab ${targetTabId || 'unknown'}:`, error);
+    logger.background.error(
+      `Error handling native side panel toggle for tab ${targetTabId || 'unknown'}:`,
+      error
+    );
     // If an error occurred, the actual panel state might not match the intended state.
     // We send back the intended newState if determined, otherwise report failure.
     sendResponse({
       success: false,
       error: error.message,
       tabId: targetTabId,
-      visible: newState // Include intended state if available, even on error
+      visible: newState, // Include intended state if available, even on error
     });
   }
 }
-
 
 /**
  * Handles the 'toggleNativeSidePanelAction' message request.
@@ -110,14 +129,19 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
  * @param {function} sendResponse - Function to call to send the response.
  * @returns {boolean} - True to indicate an asynchronous response.
  */
-export function handleToggleNativeSidePanelAction(message, sender, sendResponse) {
-  logger.background.info('Received toggleNativeSidePanelAction request via message router');
+export function handleToggleNativeSidePanelAction(
+  message,
+  sender,
+  sendResponse
+) {
+  logger.background.info(
+    'Received toggleNativeSidePanelAction request via message router'
+  );
   // Call the actual function which handles the logic and response
   toggleNativeSidePanel(message, sender, sendResponse);
   // toggleNativeSidePanel is async and handles sendResponse itself
   return true; // Keep channel open for async response
 }
-
 
 /**
  * Get sidebar state for specific tab
@@ -130,30 +154,36 @@ export async function getSidebarState(message, sender, sendResponse) {
     // Get target tab ID (same logic as toggle)
     const tabId = message.tabId || (sender.tab && sender.tab.id);
     let targetTabId;
-    
+
     if (!tabId) {
       // Get active tab if no tab ID specified
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabs = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
       const activeTab = tabs[0];
-      
+
       if (!activeTab || !activeTab.id) {
         throw new Error('No active tab found');
       }
-      
+
       targetTabId = activeTab.id;
     } else {
       targetTabId = tabId;
     }
-    
+
     const state = await SidebarStateManager.getSidebarState(targetTabId);
-    
+
     sendResponse({
       success: true,
       state,
-      tabId: targetTabId
+      tabId: targetTabId,
     });
   } catch (error) {
-    logger.background.error('Error handling tab-specific sidebar state query:', error);
+    logger.background.error(
+      'Error handling tab-specific sidebar state query:',
+      error
+    );
     sendResponse({ success: false, error: error.message });
   }
 }

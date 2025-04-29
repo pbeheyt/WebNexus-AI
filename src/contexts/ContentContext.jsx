@@ -1,53 +1,63 @@
 // src/components/content/ContentContext.jsx
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { determineContentType, isInjectablePage } from '../shared/utils/content-utils';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
+
+import {
+  determineContentType,
+  isInjectablePage,
+} from '../shared/utils/content-utils';
 import logger from '../shared/logger';
 
 const ContentContext = createContext(null);
 
 /**
  * Provider component for content detection and type management.
- * 
+ *
  * @param {Object} props - Component props
  * @param {React.ReactNode} props.children - Child components
  * @param {boolean} [props.detectOnMount=true] - Whether to detect content type on mount
  */
-export function ContentProvider({ 
-  children, 
-  detectOnMount = true
-}) {
+export function ContentProvider({ children, detectOnMount = true }) {
   const [currentTab, setCurrentTab] = useState(null);
   const [contentType, setContentType] = useState(null);
   const [isSupported, setIsSupported] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isInjectable, setIsInjectable] = useState(true);
-  
+
   /**
    * Detect the current tab and content type
    */
   const detectContent = useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       // Check if chrome API is available
       if (!chrome?.tabs?.query) {
         setIsSupported(false);
-        throw new Error("Chrome extension API not available");
+        throw new Error('Chrome extension API not available');
       }
-      
+
       // Get current tab
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabs = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
       const tab = tabs[0];
-      
+
       if (!tab || !tab.url) {
         setIsSupported(false);
-        throw new Error("Cannot access current tab");
+        throw new Error('Cannot access current tab');
       }
-      
+
       const injectable = isInjectablePage(tab.url);
       setIsInjectable(injectable);
       setCurrentTab(tab);
-      
+
       // Determine content type based solely on URL
       const detectedType = determineContentType(tab.url);
       setContentType(detectedType);
@@ -59,34 +69,34 @@ export function ContentProvider({
       setIsLoading(false);
     }
   }, []);
-  
+
   // Initialize content detection
   useEffect(() => {
     if (detectOnMount) {
       detectContent();
     }
   }, [detectOnMount, detectContent]);
-  
+
   // Public methods
   const refreshContent = useCallback(() => {
     detectContent();
   }, [detectContent]);
-  
+
   const setManualContentType = useCallback((type) => {
-     setContentType(type);
-   }, []);
+    setContentType(type);
+  }, []);
 
   // Function to update context from external events (like page navigation)
   const updateContentContext = useCallback((newUrl, newContentType) => {
     const injectable = isInjectablePage(newUrl);
     setIsInjectable(injectable);
-    setCurrentTab(prevTab => ({ ...(prevTab || {}), url: newUrl }));
+    setCurrentTab((prevTab) => ({ ...(prevTab || {}), url: newUrl }));
     setContentType(newContentType);
   }, []);
-   
-   return (
-     <ContentContext.Provider 
-       value={{ 
+
+  return (
+    <ContentContext.Provider
+      value={{
         currentTab,
         contentType,
         isSupported,
@@ -94,9 +104,9 @@ export function ContentProvider({
         isInjectable,
         refreshContent,
         setContentType: setManualContentType,
-        updateContentContext
-       }}
-     >
+        updateContentContext,
+      }}
+    >
       {children}
     </ContentContext.Provider>
   );

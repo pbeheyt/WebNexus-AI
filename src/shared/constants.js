@@ -7,7 +7,7 @@ export const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
   YOUTUBE: 'youtube',
-  PDF: 'pdf'
+  PDF: 'pdf',
 };
 
 /**
@@ -17,7 +17,7 @@ export const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.GENERAL]: 'Web Content',
   [CONTENT_TYPES.REDDIT]: 'Reddit Post',
   [CONTENT_TYPES.YOUTUBE]: 'YouTube Video',
-  [CONTENT_TYPES.PDF]: 'PDF Document'
+  [CONTENT_TYPES.PDF]: 'PDF Document',
 };
 
 /**
@@ -42,7 +42,7 @@ export const STORAGE_KEYS = {
   POPUP_PLATFORM: 'popup_platform_preference',
   SIDEBAR_PLATFORM: 'sidebar_platform_preference',
   SIDEBAR_MODEL: 'sidebar_model_preference',
-  
+
   // Settings
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
   API_CREDENTIALS: 'api_credentials',
@@ -60,14 +60,14 @@ export const STORAGE_KEYS = {
   FORMATTED_CONTENT_FOR_INJECTION: 'formatted_content_for_injection',
   INJECTION_PLATFORM: 'injectionPlatform',
   INJECTION_PLATFORM_TAB_ID: 'injectionPlatformTabId',
-  
+
   // API
   API_PROCESSING_STATUS: 'apiProcessingStatus',
   API_RESPONSE: 'apiResponse',
   API_PROCESSING_ERROR: 'apiProcessingError',
   API_RESPONSE_TIMESTAMP: 'apiResponseTimestamp',
   STREAM_ID: 'streamId',
-  
+
   // Sidebar
   TAB_FORMATTED_CONTENT: 'tab_formatted_content',
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
@@ -83,7 +83,7 @@ export const STORAGE_KEYS = {
  */
 export const INTERFACE_SOURCES = {
   POPUP: 'popup',
-  SIDEBAR: 'sidebar'
+  SIDEBAR: 'sidebar',
 };
 
 /**
@@ -92,5 +92,5 @@ export const INTERFACE_SOURCES = {
 export const MESSAGE_ROLES = {
   USER: 'user',
   ASSISTANT: 'assistant',
-  SYSTEM: 'system'
-}
+  SYSTEM: 'system',
+};

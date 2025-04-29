@@ -5,6 +5,7 @@ const DeepSeekPlatform = require('./implementations/deepseek-platform');
 const MistralPlatform = require('./implementations/mistral-platform');
 const GeminiPlatform = require('./implementations/gemini-platform');
 const GrokPlatform = require('./implementations/grok-platform');
+
 const logger = require('../shared/logger').platform;
 
 /**
@@ -22,13 +23,13 @@ class PlatformFactory {
       new DeepSeekPlatform(),
       new MistralPlatform(),
       new GeminiPlatform(),
-      new GrokPlatform()
+      new GrokPlatform(),
     ];
-    
+
     // Find the first platform that matches the current URL
-    return platforms.find(platform => platform.isCurrentPlatform()) || null;
+    return platforms.find((platform) => platform.isCurrentPlatform()) || null;
   }
-  
+
   /**
    * Create a platform by ID regardless of current URL
    * @param {string} platformId - The platform ID to create

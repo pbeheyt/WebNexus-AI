@@ -33,8 +33,8 @@ class ContentFormatter {
           break;
       }
     } catch (error) {
-        logger.error(`Error formatting content type ${contentType}:`, error);
-        formatted = `[Error: Failed to format content of type ${contentType}]`;
+      logger.error(`Error formatting content type ${contentType}:`, error);
+      formatted = `[Error: Failed to format content of type ${contentType}]`;
     }
 
     // Basic cleanup: ensure consistent line breaks and trim whitespace
@@ -43,7 +43,9 @@ class ContentFormatter {
 
   /** Helper to safely get data or return a placeholder */
   static _getData(value, placeholder = 'Not Available') {
-    return value !== null && value !== undefined && value !== '' ? String(value) : placeholder;
+    return value !== null && value !== undefined && value !== ''
+      ? String(value)
+      : placeholder;
   }
 
   /**
@@ -52,7 +54,10 @@ class ContentFormatter {
    */
   static _formatYouTubeData(data) {
     const videoId = this._getData(data.videoId);
-    const url = videoId !== 'Not Available' ? `https://www.youtube.com/watch?v=${videoId}` : 'Not Available';
+    const url =
+      videoId !== 'Not Available'
+        ? `https://www.youtube.com/watch?v=${videoId}`
+        : 'Not Available';
 
     let formatted = `## METADATA\n`;
     formatted += `- Title: ${this._getData(data.videoTitle)}\n`;
@@ -65,7 +70,11 @@ class ContentFormatter {
     formatted += `## TRANSCRIPT\n`;
     formatted += `${this._getData(data.transcript, 'No transcript available.')}\n`;
 
-    if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
+    if (
+      data.comments &&
+      Array.isArray(data.comments) &&
+      data.comments.length > 0
+    ) {
       formatted += `## COMMENTS\n`;
       data.comments.forEach((comment, index) => {
         formatted += `${index + 1}. Author: ${this._getData(comment.author, 'Anonymous')}\n`;
@@ -94,7 +103,11 @@ class ContentFormatter {
     formatted += `## POST CONTENT\n`;
     formatted += `${this._getData(data.postContent, 'No post body content.')}\n`;
 
-    if (data.comments && Array.isArray(data.comments) && data.comments.length > 0) {
+    if (
+      data.comments &&
+      Array.isArray(data.comments) &&
+      data.comments.length > 0
+    ) {
       formatted += `## COMMENTS\n`;
       data.comments.forEach((comment, index) => {
         formatted += `${index + 1}. Author: ${this._getData(comment.author, 'u/Anonymous')}\n`;
@@ -146,27 +159,35 @@ class ContentFormatter {
     formatted += `\n`; // End metadata section
 
     formatted += `## PDF CONTENT\n`;
-    let contentText = this._getData(data.content, 'No content extracted from PDF.');
+    let contentText = this._getData(
+      data.content,
+      'No content extracted from PDF.'
+    );
 
     // Attempt to clean JSON artifacts if necessary (keep existing logic)
-    if (typeof contentText === 'string' && contentText.startsWith('{"content":"')) {
-        try {
-            const contentObj = JSON.parse(contentText);
-            contentText = this._getData(contentObj.content, contentText); // Fallback to original if parse is empty
-        } catch (e) {
-            logger.warn('Failed to parse potential JSON in PDF content, using raw string.');
-        }
+    if (
+      typeof contentText === 'string' &&
+      contentText.startsWith('{"content":"')
+    ) {
+      try {
+        const contentObj = JSON.parse(contentText);
+        contentText = this._getData(contentObj.content, contentText); // Fallback to original if parse is empty
+      } catch (e) {
+        logger.warn(
+          'Failed to parse potential JSON in PDF content, using raw string.'
+        );
+      }
     }
 
     // Standardize page markers (keep existing logic, ensure it works)
     if (typeof contentText === 'string') {
-        contentText = contentText
-            .replace(/--- Page (\d+) ---\n*/g, '\n## PAGE $1\n') // Ensure separation
-            .replace(/\n{3,}/g, '\n') // Consolidate excessive newlines
-            .trim();
+      contentText = contentText
+        .replace(/--- Page (\d+) ---\n*/g, '\n## PAGE $1\n') // Ensure separation
+        .replace(/\n{3,}/g, '\n') // Consolidate excessive newlines
+        .trim();
     } else {
-        logger.warn('PDF content is not a string after processing, converting.');
-        contentText = String(contentText); // Ensure it's a string
+      logger.warn('PDF content is not a string after processing, converting.');
+      contentText = String(contentText); // Ensure it's a string
     }
 
     formatted += `${contentText}\n`;

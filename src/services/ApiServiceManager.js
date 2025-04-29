@@ -1,9 +1,12 @@
 // src/services/ApiServiceManager.js
 
 const ApiFactory = require('../api/api-factory');
+
 const CredentialManager = require('./CredentialManager');
 const ModelParameterService = require('./ModelParameterService');
+
 const logger = require('../shared/logger.js').service;
+
 const ConfigService = require('./ConfigService');
 
 /**
@@ -33,23 +36,31 @@ class ApiServiceManager {
    */
   async processWithUnifiedConfig(platformId, requestConfig) {
     try {
-
-      logger.info(`Processing content through ${platformId} API with unified config:`, {
-        hasStreaming: !!requestConfig.streaming,
-        hasHistory: Array.isArray(requestConfig.resolvedParams?.conversationHistory) && 
-           requestConfig.resolvedParams?.conversationHistory.length > 0,
-        model: requestConfig.resolvedParams?.model || 'N/A',
-        tabId: requestConfig.resolvedParams?.tabId || 'N/A',
-        hasFormattedContent: requestConfig.formattedContent !== null && requestConfig.formattedContent !== undefined
-      });
+      logger.info(
+        `Processing content through ${platformId} API with unified config:`,
+        {
+          hasStreaming: !!requestConfig.streaming,
+          hasHistory:
+            Array.isArray(requestConfig.resolvedParams?.conversationHistory) &&
+            requestConfig.resolvedParams?.conversationHistory.length > 0,
+          model: requestConfig.resolvedParams?.model || 'N/A',
+          tabId: requestConfig.resolvedParams?.tabId || 'N/A',
+          hasFormattedContent:
+            requestConfig.formattedContent !== null &&
+            requestConfig.formattedContent !== undefined,
+        }
+      );
 
       // Ensure we have the necessary configuration
       if (!requestConfig || !requestConfig.resolvedParams) {
-        throw new Error('Request configuration with resolvedParams is required');
+        throw new Error(
+          'Request configuration with resolvedParams is required'
+        );
       }
 
       // Get credentials
-      const credentials = await this.credentialManager.getCredentials(platformId);
+      const credentials =
+        await this.credentialManager.getCredentials(platformId);
       if (!credentials) {
         throw new Error(`No API credentials found for ${platformId}`);
       }
@@ -66,12 +77,15 @@ class ApiServiceManager {
       // Process the request using the unified interface
       return await apiService.processRequest(requestConfig);
     } catch (error) {
-      logger.error(`Error processing content through ${platformId} API:`, error);
+      logger.error(
+        `Error processing content through ${platformId} API:`,
+        error
+      );
       return {
         success: false,
         error: error.message,
         platformId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -85,7 +99,9 @@ class ApiServiceManager {
   async validateCredentials(platformId, credentials = null) {
     try {
       // Get credentials if not provided
-      const credentialsToUse = credentials || await this.credentialManager.getCredentials(platformId);
+      const credentialsToUse =
+        credentials ||
+        (await this.credentialManager.getCredentials(platformId));
 
       if (!credentialsToUse) {
         logger.warn(`No credentials available for ${platformId}`);
@@ -117,11 +133,15 @@ class ApiServiceManager {
   async isApiModeAvailable(platformId) {
     try {
       const settings = await this.getApiSettings(platformId);
-      const hasCredentials = await this.credentialManager.hasCredentials(platformId);
+      const hasCredentials =
+        await this.credentialManager.hasCredentials(platformId);
 
       return !!(settings && hasCredentials);
     } catch (error) {
-      logger.error(`Error checking API mode availability for ${platformId}:`, error);
+      logger.error(
+        `Error checking API mode availability for ${platformId}:`,
+        error
+      );
       return false;
     }
   }

@@ -19,14 +19,18 @@ export function Toggle({
   return (
     <div
       className={`relative inline-block ${className}`}
-      onClick={disabled ? undefined : () => {
-        onChange(!checked);
-      }}
+      onClick={
+        disabled
+          ? undefined
+          : () => {
+              onChange(!checked);
+            }
+      }
       style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
     >
       <input
-        type="checkbox"
-        className="sr-only"
+        type='checkbox'
+        className='sr-only'
         checked={checked}
         onChange={() => {}}
         disabled={disabled}
@@ -38,14 +42,14 @@ export function Toggle({
         } ${disabled ? 'opacity-50' : ''}`}
       />
       <span
-        className="absolute bg-white rounded-full transition-transform duration-200 ease-in-out"
+        className='absolute bg-white rounded-full transition-transform duration-200 ease-in-out'
         style={{
           height: '70%',
           aspectRatio: '1/1',
           width: 'auto',
           top: '15%',
           left: '10%',
-          transform: checked ? 'translateX(130%)' : 'translateX(0)'
+          transform: checked ? 'translateX(130%)' : 'translateX(0)',
         }}
       />
     </div>

@@ -16,7 +16,9 @@ async function _loadConfig(urlPath, cacheRef) {
     return cacheRef;
   }
 
-  logger.service.info(`ConfigService: Loading configuration from ${urlPath}...`);
+  logger.service.info(
+    `ConfigService: Loading configuration from ${urlPath}...`
+  );
   try {
     const response = await fetch(chrome.runtime.getURL(urlPath));
     if (!response.ok) {
@@ -28,7 +30,10 @@ async function _loadConfig(urlPath, cacheRef) {
     logger.service.info(`ConfigService: Successfully loaded ${urlPath}.`);
     return config;
   } catch (error) {
-    logger.service.error(`ConfigService: Error loading configuration from ${urlPath}:`, error);
+    logger.service.error(
+      `ConfigService: Error loading configuration from ${urlPath}:`,
+      error
+    );
     throw error; // Re-throw to be handled by the caller
   }
 }
@@ -39,7 +44,10 @@ async function _loadConfig(urlPath, cacheRef) {
  */
 async function getApiConfig() {
   if (!cachedApiConfig) {
-    cachedApiConfig = await _loadConfig('platform-api-config.json', cachedApiConfig);
+    cachedApiConfig = await _loadConfig(
+      'platform-api-config.json',
+      cachedApiConfig
+    );
   }
   return cachedApiConfig;
 }
@@ -50,7 +58,10 @@ async function getApiConfig() {
  */
 async function getDisplayConfig() {
   if (!cachedDisplayConfig) {
-    cachedDisplayConfig = await _loadConfig('platform-display-config.json', cachedDisplayConfig);
+    cachedDisplayConfig = await _loadConfig(
+      'platform-display-config.json',
+      cachedDisplayConfig
+    );
   }
   return cachedDisplayConfig;
 }
@@ -65,7 +76,10 @@ async function getPlatformApiConfig(platformId) {
     const config = await getApiConfig();
     return config?.aiPlatforms?.[platformId] || null;
   } catch (error) {
-    logger.service.error(`ConfigService: Error getting API config for platform ${platformId}:`, error);
+    logger.service.error(
+      `ConfigService: Error getting API config for platform ${platformId}:`,
+      error
+    );
     return null;
   }
 }
@@ -80,7 +94,10 @@ async function getPlatformDisplayConfig(platformId) {
     const config = await getDisplayConfig();
     return config?.aiPlatforms?.[platformId] || null;
   } catch (error) {
-    logger.service.error(`ConfigService: Error getting display config for platform ${platformId}:`, error);
+    logger.service.error(
+      `ConfigService: Error getting display config for platform ${platformId}:`,
+      error
+    );
     return null;
   }
 }
@@ -94,38 +111,47 @@ async function getAllPlatformConfigs() {
   try {
     const [displayConfig, apiConfigData] = await Promise.all([
       getDisplayConfig(),
-      getApiConfig()
+      getApiConfig(),
     ]);
 
     if (!displayConfig?.aiPlatforms || !apiConfigData?.aiPlatforms) {
-      throw new Error('AI platforms configuration not found in one or both files');
+      throw new Error(
+        'AI platforms configuration not found in one or both files'
+      );
     }
 
-    const platformList = Object.keys(displayConfig.aiPlatforms).map((id) => {
-      const displayInfo = displayConfig.aiPlatforms[id];
-      const apiInfo = apiConfigData.aiPlatforms[id];
+    const platformList = Object.keys(displayConfig.aiPlatforms)
+      .map((id) => {
+        const displayInfo = displayConfig.aiPlatforms[id];
+        const apiInfo = apiConfigData.aiPlatforms[id];
 
-      if (!displayInfo || !apiInfo) {
-        logger.service.warn(`ConfigService: Missing config for platform ID: ${id} during getAllPlatformConfigs`);
-        return null; // Skip if data is incomplete
-      }
+        if (!displayInfo || !apiInfo) {
+          logger.service.warn(
+            `ConfigService: Missing config for platform ID: ${id} during getAllPlatformConfigs`
+          );
+          return null; // Skip if data is incomplete
+        }
 
-      return {
-        id,
-        name: displayInfo.name,
-        url: displayInfo.url,
-        iconUrl: chrome.runtime.getURL(displayInfo.icon),
-        docApiLink: displayInfo.docApiLink || '#',
-        modelApiLink: displayInfo.modelApiLink || '#',
-        consoleApiLink: displayInfo.consoleApiLink || '#',
-        keyApiLink: displayInfo.keyApiLink || '#',
-        apiConfig: apiInfo // Attach the whole API config object
-      };
-    }).filter(p => p !== null); // Filter out any null entries
+        return {
+          id,
+          name: displayInfo.name,
+          url: displayInfo.url,
+          iconUrl: chrome.runtime.getURL(displayInfo.icon),
+          docApiLink: displayInfo.docApiLink || '#',
+          modelApiLink: displayInfo.modelApiLink || '#',
+          consoleApiLink: displayInfo.consoleApiLink || '#',
+          keyApiLink: displayInfo.keyApiLink || '#',
+          apiConfig: apiInfo, // Attach the whole API config object
+        };
+      })
+      .filter((p) => p !== null); // Filter out any null entries
 
     return platformList;
   } catch (error) {
-    logger.service.error('ConfigService: Error getting all platform configs:', error);
+    logger.service.error(
+      'ConfigService: Error getting all platform configs:',
+      error
+    );
     return []; // Return empty array on error
   }
 }
@@ -144,7 +170,7 @@ const ConfigService = {
   getPlatformApiConfig,
   getPlatformDisplayConfig,
   getAllPlatformConfigs,
-  clearConfigCache
+  clearConfigCache,
 };
 
 module.exports = ConfigService;

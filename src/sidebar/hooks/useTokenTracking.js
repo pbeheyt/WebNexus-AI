@@ -1,20 +1,23 @@
 // src/sidebar/hooks/useTokenTracking.js
 
 import { useState, useEffect, useCallback } from 'react';
+
 import logger from '../../shared/logger';
 import TokenManagementService from '../services/TokenManagementService';
-import { STORAGE_KEYS } from "../../shared/constants";
+import { STORAGE_KEYS } from '../../shared/constants';
 
 /**
  * Hook for tracking token usage and providing token statistics in React components
  * Thin wrapper around TokenManagementService for React state management
- * 
+ *
  * @param {number} tabId - Tab ID
  * @returns {Object} - Token tracking capabilities and statistics
  */
 export function useTokenTracking(tabId) {
   // Initialize state using the updated structure from TokenManagementService
-  const [tokenStats, setTokenStats] = useState(TokenManagementService._getEmptyStats());
+  const [tokenStats, setTokenStats] = useState(
+    TokenManagementService._getEmptyStats()
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Load token data for the tab on mount and when tab changes
@@ -24,7 +27,7 @@ export function useTokenTracking(tabId) {
         setIsLoading(false);
         return;
       }
-      
+
       setIsLoading(true);
       try {
         // Load token stats using service
@@ -44,16 +47,19 @@ export function useTokenTracking(tabId) {
       if (area !== 'local' || !tabId) return;
 
       // Check if token statistics were updated directly in storage
-      if (changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS] &&
-          changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue) {
-        const allTokenStats = changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue;
+      if (
+        changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS] &&
+        changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue
+      ) {
+        const allTokenStats =
+          changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue;
         const tabStats = allTokenStats[tabId];
         if (tabStats) {
           // Ensure all fields, including new ones, are updated
-          setTokenStats(prevStats => ({
+          setTokenStats((prevStats) => ({
             ...TokenManagementService._getEmptyStats(), // Start with default empty stats
             ...tabStats, // Overwrite with values from storage
-            isCalculated: true // Mark as calculated
+            isCalculated: true, // Mark as calculated
           }));
         }
       }
@@ -73,19 +79,25 @@ export function useTokenTracking(tabId) {
    * @param {Object} modelConfig - Model configuration with context window size
    * @returns {Promise<Object>} - Context window status object
    */
-  const calculateContextStatus = useCallback(async (modelConfig) => {
-    if (!tabId || !modelConfig) {
-      return {
-        warningLevel: 'none',
-        percentage: 0,
-        tokensRemaining: 0,
-        exceeds: false
-      };
-    }
+  const calculateContextStatus = useCallback(
+    async (modelConfig) => {
+      if (!tabId || !modelConfig) {
+        return {
+          warningLevel: 'none',
+          percentage: 0,
+          tokensRemaining: 0,
+          exceeds: false,
+        };
+      }
 
-    // Use direct service call with current token stats
-    return TokenManagementService.calculateContextStatus(tokenStats, modelConfig);
-  }, [tabId, tokenStats]);
+      // Use direct service call with current token stats
+      return TokenManagementService.calculateContextStatus(
+        tokenStats,
+        modelConfig
+      );
+    },
+    [tabId, tokenStats]
+  );
 
   /**
    * Clear all token data for the current tab
@@ -115,33 +127,36 @@ export function useTokenTracking(tabId) {
    * @param {Object} modelConfig - Model configuration
    * @returns {Promise<Object>} - Updated token statistics
    */
-  const calculateStats = useCallback(async (messages, modelConfig = null) => {
-    if (!tabId) return tokenStats;
+  const calculateStats = useCallback(
+    async (messages, modelConfig = null) => {
+      if (!tabId) return tokenStats;
 
-    try {
-      const stats = await TokenManagementService.calculateAndUpdateStatistics(
-        tabId,
-        messages,
-        modelConfig
-      );
+      try {
+        const stats = await TokenManagementService.calculateAndUpdateStatistics(
+          tabId,
+          messages,
+          modelConfig
+        );
 
-      setTokenStats(stats);
-      return stats;
-    } catch (error) {
-      logger.sidebar.error('Error calculating token statistics:', error);
-      return tokenStats;
-    }
-  }, [tabId, tokenStats]);
+        setTokenStats(stats);
+        return stats;
+      } catch (error) {
+        logger.sidebar.error('Error calculating token statistics:', error);
+        return tokenStats;
+      }
+    },
+    [tabId, tokenStats]
+  );
 
   return {
-      tokenStats,
-      setTokenStats,
-      isLoading,
-      calculateContextStatus,
-      clearTokenData,
-      calculateStats,
-      estimateTokens: TokenManagementService.estimateTokens,
-      getPricingInfo: TokenManagementService.getPricingInfo,
-      calculateCost: TokenManagementService.calculateCost
+    tokenStats,
+    setTokenStats,
+    isLoading,
+    calculateContextStatus,
+    clearTokenData,
+    calculateStats,
+    estimateTokens: TokenManagementService.estimateTokens,
+    getPricingInfo: TokenManagementService.getPricingInfo,
+    calculateCost: TokenManagementService.calculateCost,
   };
 }

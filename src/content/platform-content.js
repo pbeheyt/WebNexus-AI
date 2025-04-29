@@ -10,7 +10,7 @@ const logger = require('../shared/logger').platform;
   try {
     // Create the appropriate platform for the current page
     const platform = PlatformFactory.createPlatform();
-    
+
     if (platform) {
       // Initialize the platform
       await platform.initialize();

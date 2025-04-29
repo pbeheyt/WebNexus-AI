@@ -10,7 +10,7 @@ class CredentialManager {
     this.STORAGE_KEY = STORAGE_KEYS.API_CREDENTIALS;
     this.logger = logger;
   }
-  
+
   /**
    * Get stored credentials for a platform
    * @param {string} platformId - Platform identifier
@@ -27,7 +27,7 @@ class CredentialManager {
       return null;
     }
   }
-  
+
   /**
    * Store credentials for a platform
    * @param {string} platformId - Platform identifier
@@ -39,10 +39,10 @@ class CredentialManager {
       this.logger.info(`Storing credentials for ${platformId}`);
       const result = await chrome.storage.local.get(this.STORAGE_KEY);
       const allCredentials = result[this.STORAGE_KEY] || {};
-      
+
       // Update credentials for this platform
       allCredentials[platformId] = credentials;
-      
+
       await chrome.storage.local.set({ [this.STORAGE_KEY]: allCredentials });
       return true;
     } catch (error) {
@@ -50,7 +50,7 @@ class CredentialManager {
       return false;
     }
   }
-  
+
   /**
    * Remove credentials for a platform
    * @param {string} platformId - Platform identifier
@@ -61,19 +61,19 @@ class CredentialManager {
       this.logger.info(`Removing credentials for ${platformId}`);
       const result = await chrome.storage.local.get(this.STORAGE_KEY);
       const allCredentials = result[this.STORAGE_KEY] || {};
-      
+
       if (allCredentials[platformId]) {
         delete allCredentials[platformId];
         await chrome.storage.local.set({ [this.STORAGE_KEY]: allCredentials });
       }
-      
+
       return true;
     } catch (error) {
       this.logger.error('Error removing credentials:', error);
       return false;
     }
   }
-  
+
   /**
    * Check if credentials exist for a platform
    * @param {string} platformId - Platform identifier
@@ -83,7 +83,7 @@ class CredentialManager {
     const credentials = await this.getCredentials(platformId);
     return !!credentials;
   }
-  
+
   /**
    * Validate credentials for a platform by making a test API call
    * @param {string} platformId - Platform identifier
@@ -93,26 +93,28 @@ class CredentialManager {
   async validateCredentials(platformId, credentials) {
     try {
       this.logger.info(`Validating credentials for ${platformId}`);
-      
+
       const ApiFactory = require('../api/api-factory');
       const apiService = ApiFactory.createApiService(platformId);
-      
+
       if (!apiService) {
         throw new Error(`No API service available for ${platformId}`);
       }
-      
+
       await apiService.initialize(credentials);
       const isValid = await apiService.validateCredentials();
-      
+
       return {
         isValid,
-        message: isValid ? 'Credentials validated successfully' : 'Invalid credentials'
+        message: isValid
+          ? 'Credentials validated successfully'
+          : 'Invalid credentials',
       };
     } catch (error) {
       this.logger.error('Validation error:', error);
       return {
         isValid: false,
-        message: `Validation error: ${error.message}`
+        message: `Validation error: ${error.message}`,
       };
     }
   }

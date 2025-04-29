@@ -1,10 +1,16 @@
 // src/background/core/message-router.js - Centralized message handling
 
 import logger from '../../shared/logger.js';
-import { determineContentType, isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
+import {
+  determineContentType,
+  isSidePanelAllowedPage,
+} from '../../shared/utils/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
-import { handleProcessContentRequest, handleProcessContentViaApiRequest } from '../services/content-processing.js';
+import {
+  handleProcessContentRequest,
+  handleProcessContentViaApiRequest,
+} from '../services/content-processing.js';
 import { handleToggleNativeSidePanelAction } from '../services/sidebar-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
@@ -20,40 +26,42 @@ export function setupMessageRouter() {
   registerCoreHandlers();
   registerApiHandlers();
   registerServiceHandlers();
-  
+
   // Set up the message listener
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Log the message for debugging
     logger.background.info('Message received in background', {
       message,
-      sender: sender.tab ? `Tab ${sender.tab.id}` : 'Extension'
+      sender: sender.tab ? `Tab ${sender.tab.id}` : 'Extension',
     });
-    
+
     // Handle the message based on its action
     const handler = messageHandlers.get(message.action);
-    
+
     if (handler) {
       // Call the handler and inform if it's async
       const result = handler(message, sender, sendResponse);
       return result === true; // Keep channel open for async response if needed
     }
-    
+
     // Default simple responses
     if (message.action === 'checkStatus') {
       sendResponse({ status: 'ok' });
       return false;
     }
-    
+
     // Handle getCurrentTabId for tab-specific sidebar functionality
     if (message.action === 'getCurrentTabId') {
       sendResponse({ tabId: sender.tab ? sender.tab.id : null });
       return false;
     }
-    
-    logger.background.warn(`No handler registered for message action: ${message.action}`);
+
+    logger.background.warn(
+      `No handler registered for message action: ${message.action}`
+    );
     return false;
   });
-  
+
   logger.background.info('Message router initialized');
 }
 
@@ -67,13 +75,13 @@ function registerCoreHandlers() {
     sendResponse({ contentType });
     return false;
   });
-  
+
   // Status check handler
   messageHandlers.set('checkStatus', (message, sender, sendResponse) => {
     sendResponse({ status: 'ok' });
     return false;
   });
-  
+
   // Error notification handler
   messageHandlers.set('notifyError', (message, sender, sendResponse) => {
     logger.background.error('Error from content script:', message.error);
@@ -81,17 +89,20 @@ function registerCoreHandlers() {
   });
 
   // Side panel allowed check
-  messageHandlers.set('isSidePanelAllowedPage', (message, sender, sendResponse) => {
-    try {
-      const isAllowed = isSidePanelAllowedPage(message.url);
-      sendResponse(isAllowed);
-    } catch (error) {
-      logger.background.error('Error checking side panel allowance:', error);
-      sendResponse(false);
+  messageHandlers.set(
+    'isSidePanelAllowedPage',
+    (message, sender, sendResponse) => {
+      try {
+        const isAllowed = isSidePanelAllowedPage(message.url);
+        sendResponse(isAllowed);
+      } catch (error) {
+        logger.background.error('Error checking side panel allowance:', error);
+        sendResponse(false);
+      }
+      return false;
     }
-    return false;
-  });
-  
+  );
+
   // Tab ID provider for content scripts
   messageHandlers.set('getCurrentTabId', (message, sender, sendResponse) => {
     if (sender.tab) {
@@ -108,29 +119,38 @@ function registerCoreHandlers() {
  */
 function registerApiHandlers() {
   // API mode availability check
-  messageHandlers.set('checkApiModeAvailable', (message, sender, sendResponse) => {
-    handleApiModelRequest('checkApiModeAvailable', message, sendResponse);
-    return true; // Keep channel open for async response
-  });
-  
+  messageHandlers.set(
+    'checkApiModeAvailable',
+    (message, sender, sendResponse) => {
+      handleApiModelRequest('checkApiModeAvailable', message, sendResponse);
+      return true; // Keep channel open for async response
+    }
+  );
+
   // Get API models
   messageHandlers.set('getApiModels', (message, sender, sendResponse) => {
     handleApiModelRequest('getApiModels', message, sendResponse);
     return true; // Keep channel open for async response
   });
-  
+
   // API credential operations
-  messageHandlers.set('credentialOperation', (message, sender, sendResponse) => {
-    handleCredentialOperation(message, sendResponse);
-    return true; // Keep channel open for async response
-  });
-  
+  messageHandlers.set(
+    'credentialOperation',
+    (message, sender, sendResponse) => {
+      handleCredentialOperation(message, sendResponse);
+      return true; // Keep channel open for async response
+    }
+  );
+
   // API content processing
-  messageHandlers.set('processContentViaApi', (message, sender, sendResponse) => {
-    handleProcessContentViaApiRequest(message, sendResponse);
-    return true; // Keep channel open for async response
-  });
-  
+  messageHandlers.set(
+    'processContentViaApi',
+    (message, sender, sendResponse) => {
+      handleProcessContentViaApiRequest(message, sendResponse);
+      return true; // Keep channel open for async response
+    }
+  );
+
   messageHandlers.set('cancelStream', (message, sender, sendResponse) => {
     handleApiModelRequest('cancelStream', message, sendResponse);
     return true; // Keep channel open for async response
@@ -163,5 +183,8 @@ function registerServiceHandlers() {
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
 
   // Handle requests to toggle the native side panel
-  messageHandlers.set('toggleNativeSidePanelAction', handleToggleNativeSidePanelAction);
+  messageHandlers.set(
+    'toggleNativeSidePanelAction',
+    handleToggleNativeSidePanelAction
+  );
 }

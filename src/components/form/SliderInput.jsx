@@ -39,29 +39,29 @@ export function SliderInput({
 
   return (
     <div className={`${className}`}>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 select-none">
+      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 select-none'>
         {label}
       </label>
-      <div className="flex items-center space-x-3 mt-1">
+      <div className='flex items-center space-x-3 mt-1'>
         <input
-          type="range"
+          type='range'
           min={min}
           max={max}
           step={step}
           value={displayValue}
           onChange={handleRangeChange}
           disabled={disabled}
-          className="custom-slider flex-grow h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 select-none"
+          className='custom-slider flex-grow h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 select-none'
         />
         <input
-          type="number"
+          type='number'
           min={min}
           max={max}
           step={step}
           value={displayValue}
           onChange={handleInputChange}
           disabled={disabled}
-          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:border-primary focus:ring-1 focus:ring-primary sm:text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+          className='w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:border-primary focus:ring-1 focus:ring-primary sm:text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70'
           onWheel={(e) => e.target.blur()}
         />
       </div>

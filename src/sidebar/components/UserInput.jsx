@@ -1,5 +1,6 @@
 // src/sidebar/components/UserInput.jsx
 import React from 'react';
+
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useSidebarChat } from '../contexts/SidebarChatContext';
 import { UnifiedInput } from '../../components/input/UnifiedInput';
@@ -16,7 +17,7 @@ export function UserInput({ className = '' }) {
     isProcessing,
     isCanceling,
     tokenStats,
-    contextStatus
+    contextStatus,
   } = useSidebarChat();
 
   const handleInputChange = (value) => {
@@ -40,7 +41,7 @@ export function UserInput({ className = '' }) {
       disabled={!hasAnyPlatformCredentials || (isProcessing && isCanceling)}
       isProcessing={isProcessing}
       isCanceling={isCanceling}
-      placeholder="Type a message or select a prompt..."
+      placeholder='Type a message or select a prompt...'
       contentType={contentType}
       showTokenInfo={true}
       tokenStats={tokenStats}

@@ -10,7 +10,7 @@ class ApiInterface {
   async initialize(credentials) {
     throw new Error('initialize must be implemented by subclasses');
   }
-  
+
   /**
    * Process unified API request with complete configuration
    * @param {Object} requestConfig - Unified request configuration
@@ -26,7 +26,7 @@ class ApiInterface {
   async processRequest(requestConfig) {
     throw new Error('processRequest must be implemented by subclasses');
   }
-  
+
   /**
    * Lightweight method to verify API credentials
    * @returns {Promise<boolean>} Validation result

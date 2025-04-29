@@ -1,20 +1,27 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
+
 import { useSidebarPlatform } from '../../contexts/platform';
+
 import { DropdownContext } from './Header';
 
 // SVG Icons
 const ChevronIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    viewBox='0 0 20 20'
+    fill='currentColor'
+    className='w-4 h-4'
+  >
+    <path
+      fillRule='evenodd'
+      d='M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 01.02-1.06z'
+      clipRule='evenodd'
+    />
   </svg>
 );
 
 function ModelSelector({ className = '', selectedPlatformId = null }) {
-  const {
-    models,
-    selectedModel,
-    selectModel,
-  } = useSidebarPlatform();
+  const { models, selectedModel, selectModel } = useSidebarPlatform();
 
   const [formattedModels, setFormattedModels] = useState([]);
   const { openDropdown, setOpenDropdown } = useContext(DropdownContext);
@@ -30,16 +37,16 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     }
 
     // Convert models to consistent format
-    const formatted = models.map(model => {
+    const formatted = models.map((model) => {
       if (typeof model === 'object' && model !== null) {
         return {
           id: model.id,
-          name: model.name || model.id
+          name: model.name || model.id,
         };
       } else {
         return {
           id: model,
-          name: model
+          name: model,
         };
       }
     });
@@ -53,8 +60,10 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
 
     const handleClickOutside = (event) => {
       if (
-        dropdownRef.current && !dropdownRef.current.contains(event.target) &&
-        modelTriggerRef.current && !modelTriggerRef.current.contains(event.target)
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        modelTriggerRef.current &&
+        !modelTriggerRef.current.contains(event.target)
       ) {
         setOpenDropdown(null);
       }
@@ -73,9 +82,10 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     }
   };
 
-  const selectedModelName = formattedModels.find(m => m.id === selectedModel)?.name
-                           || selectedModel
-                           || "Loading...";
+  const selectedModelName =
+    formattedModels.find((m) => m.id === selectedModel)?.name ||
+    selectedModel ||
+    'Loading...';
 
   const toggleDropdown = (e) => {
     e.stopPropagation();
@@ -87,12 +97,12 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       <button
         ref={modelTriggerRef}
         onClick={toggleDropdown}
-        className="flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full"
-        aria-haspopup="listbox"
+        className='flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full'
+        aria-haspopup='listbox'
         aria-expanded={isOpen}
       >
-        <span className="truncate mr-1 select-none">{selectedModelName}</span>
-        <span className="text-theme-secondary flex-shrink-0 select-none">
+        <span className='truncate mr-1 select-none'>{selectedModelName}</span>
+        <span className='text-theme-secondary flex-shrink-0 select-none'>
           <ChevronIcon />
         </span>
       </button>
@@ -101,20 +111,20 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto"
+          className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
           onClick={(e) => e.stopPropagation()}
-          role="listbox" // ARIA role
+          role='listbox' // ARIA role
           aria-labelledby={modelTriggerRef.current?.id || undefined} // Link to button if it has an ID
         >
           {formattedModels.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-theme-secondary">
+            <div className='px-3 py-2 text-sm text-theme-secondary'>
               No models available
             </div>
           ) : (
             formattedModels.map((model) => (
               <button
                 key={model.id}
-                role="option" // ARIA role for item
+                role='option' // ARIA role for item
                 aria-selected={selectedModel === model.id}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap select-none ${
                   selectedModel === model.id ? 'font-medium bg-theme-hover' : ''

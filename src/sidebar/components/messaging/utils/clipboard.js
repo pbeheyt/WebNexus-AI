@@ -13,7 +13,10 @@ export const copyToClipboard = async (text) => {
       await navigator.clipboard.writeText(text);
       return;
     } catch (error) {
-      logger.sidebar.warn('navigator.clipboard.writeText failed, falling back:', error);
+      logger.sidebar.warn(
+        'navigator.clipboard.writeText failed, falling back:',
+        error
+      );
       // Continue to fallback method
     }
   }
@@ -25,11 +28,11 @@ export const copyToClipboard = async (text) => {
   textarea.style.position = 'absolute';
   textarea.style.left = '-9999px';
   document.body.appendChild(textarea);
-  
+
   try {
     textarea.select();
     const successful = document.execCommand('copy');
-    
+
     if (!successful) {
       throw new Error('Fallback copy method (execCommand) failed');
     }

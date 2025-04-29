@@ -12,23 +12,23 @@ class RedditExtractorStrategy extends BaseExtractor {
   async extractAndSaveContent() {
     try {
       this.logger.info('Starting Reddit post data extraction...');
-      
+
       // Add small delay to ensure dynamic content is loaded
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Extract all post data
       const postData = await this.extractData();
-      
+
       // Save to Chrome storage
       await this.saveToStorage(postData);
     } catch (error) {
       this.logger.error('Error in Reddit content extraction:', error);
-      
+
       // Save error message to storage
       await this.saveToStorage({
         error: true,
         message: error.message || 'Unknown error occurred',
-        extractedAt: new Date().toISOString()
+        extractedAt: new Date().toISOString(),
       });
     }
   }
@@ -63,7 +63,7 @@ class RedditExtractorStrategy extends BaseExtractor {
         subreddit,
         comments,
         postUrl,
-        extractedAt: new Date().toISOString()
+        extractedAt: new Date().toISOString(),
       };
     } catch (error) {
       this.logger.error('Error extracting Reddit post data:', error);
@@ -78,7 +78,7 @@ class RedditExtractorStrategy extends BaseExtractor {
         comments: [],
         error: true,
         message: error.message || 'Unknown error occurred',
-        extractedAt: new Date().toISOString()
+        extractedAt: new Date().toISOString(),
       };
     }
   }
@@ -89,10 +89,7 @@ class RedditExtractorStrategy extends BaseExtractor {
    */
   extractPostTitle() {
     // Try multiple selectors to improve reliability
-    const selectors = [
-      'h1',
-      'h1.text-neutral-content'
-    ];
+    const selectors = ['h1', 'h1.text-neutral-content'];
 
     for (const selector of selectors) {
       const titleElement = document.querySelector(selector);
@@ -113,18 +110,18 @@ class RedditExtractorStrategy extends BaseExtractor {
     const selectors = [
       '.text-neutral-content[slot="text-body"] .mb-sm .md.text-14',
       '.RichTextJSON-root',
-      'div[data-testid="post-content"] div[data-click-id="text"]'
+      'div[data-testid="post-content"] div[data-click-id="text"]',
     ];
 
     for (const selector of selectors) {
       const contentElement = document.querySelector(selector);
       if (contentElement) {
         let postContent = '';
-        
+
         // Get all paragraphs
         const paragraphs = contentElement.querySelectorAll('p');
         if (paragraphs.length > 0) {
-          paragraphs.forEach(paragraph => {
+          paragraphs.forEach((paragraph) => {
             postContent += paragraph.textContent.trim() + '\n\n';
           });
           return postContent.trim();
@@ -141,31 +138,35 @@ class RedditExtractorStrategy extends BaseExtractor {
   extractPostScore() {
     const postElement = document.querySelector('shreddit-post');
     if (postElement && postElement.hasAttribute('score')) {
-        const score = postElement.getAttribute('score');
-        return score;
+      const score = postElement.getAttribute('score');
+      return score;
     }
 
     const scoreSelectors = [
-          'div[id^="vote-arrows-"] > div',
-          '[data-testid="post-score"]'
+      'div[id^="vote-arrows-"] > div',
+      '[data-testid="post-score"]',
     ];
 
     for (const selector of scoreSelectors) {
-        const scoreElement = document.querySelector(selector);
-        if (scoreElement && scoreElement.textContent) {
-            const scoreText = scoreElement.textContent.trim();
-            // Basic normalization (remove non-digits, handle 'k')
-            if (scoreText.toLowerCase().includes('k')) {
-                const score = String(Math.round(parseFloat(scoreText.replace(/k/i, '')) * 1000));
-                this.logger.info(`Post score found and normalized from text selector '${selector}': ${score}`);
-                return score;
-            } else {
-                const score = scoreText.replace(/[^\d]/g, ''); // Remove non-digits
-                if (score) {
-                      return score;
-                }
-            }
+      const scoreElement = document.querySelector(selector);
+      if (scoreElement && scoreElement.textContent) {
+        const scoreText = scoreElement.textContent.trim();
+        // Basic normalization (remove non-digits, handle 'k')
+        if (scoreText.toLowerCase().includes('k')) {
+          const score = String(
+            Math.round(parseFloat(scoreText.replace(/k/i, '')) * 1000)
+          );
+          this.logger.info(
+            `Post score found and normalized from text selector '${selector}': ${score}`
+          );
+          return score;
+        } else {
+          const score = scoreText.replace(/[^\d]/g, ''); // Remove non-digits
+          if (score) {
+            return score;
+          }
         }
+      }
     }
 
     return null;
@@ -181,7 +182,7 @@ class RedditExtractorStrategy extends BaseExtractor {
       'span[slot="authorName"] a.author-name',
       'a[data-testid="post_author_link"]',
       'a[data-click-id="user"]',
-      '.author-link'
+      '.author-link',
     ];
 
     for (const selector of selectors) {
@@ -203,7 +204,7 @@ class RedditExtractorStrategy extends BaseExtractor {
     const selectors = [
       'a[data-testid="subreddit-name"]',
       'a[data-click-id="subreddit"]',
-      '.subreddit-link'
+      '.subreddit-link',
     ];
 
     for (const selector of selectors) {
@@ -227,12 +228,12 @@ class RedditExtractorStrategy extends BaseExtractor {
    * @returns {Promise} Promise that resolves when comments are available
    */
   waitForComments() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       // If comments are already present, resolve immediately
       const selectors = [
         'shreddit-comment',
         'div[data-testid="comment"]',
-        '.Comment'
+        '.Comment',
       ];
 
       for (const selector of selectors) {
@@ -243,7 +244,7 @@ class RedditExtractorStrategy extends BaseExtractor {
       }
 
       // Otherwise, watch for changes
-      const observer = new MutationObserver(mutations => {
+      const observer = new MutationObserver((mutations) => {
         for (const selector of selectors) {
           if (document.querySelectorAll(selector).length > 0) {
             observer.disconnect();
@@ -255,7 +256,7 @@ class RedditExtractorStrategy extends BaseExtractor {
 
       observer.observe(document.body, {
         childList: true,
-        subtree: true
+        subtree: true,
       });
 
       // Timeout after 5 seconds to prevent infinite waiting
@@ -281,7 +282,7 @@ class RedditExtractorStrategy extends BaseExtractor {
       const commentSelectors = [
         'shreddit-comment',
         'div[data-testid="comment"]',
-        '.Comment'
+        '.Comment',
       ];
 
       let commentElements = [];
@@ -290,7 +291,9 @@ class RedditExtractorStrategy extends BaseExtractor {
         const elements = document.querySelectorAll(selector);
         if (elements && elements.length > 0) {
           commentElements = elements;
-          this.logger.info(`Found ${elements.length} comments using selector: ${selector}`);
+          this.logger.info(
+            `Found ${elements.length} comments using selector: ${selector}`
+          );
           break;
         }
       }
@@ -312,7 +315,7 @@ class RedditExtractorStrategy extends BaseExtractor {
           'a[data-testid="comment_author_link"]',
           'a[data-click-id="user"]',
           '[data-testid="comment_author_icon"]+a',
-          'a.author'
+          'a.author',
         ];
 
         for (const selector of authorSelectors) {
@@ -333,7 +336,7 @@ class RedditExtractorStrategy extends BaseExtractor {
         const contentSelectors = [
           '.md.text-14',
           '[data-testid="comment-content"]',
-          'div[data-click-id="text"]'
+          'div[data-click-id="text"]',
         ];
 
         for (const selector of contentSelectors) {
@@ -341,7 +344,7 @@ class RedditExtractorStrategy extends BaseExtractor {
           if (contentElement) {
             const paragraphs = contentElement.querySelectorAll('p');
             if (paragraphs.length > 0) {
-              paragraphs.forEach(paragraph => {
+              paragraphs.forEach((paragraph) => {
                 commentContent += paragraph.textContent.trim() + '\n\n';
               });
               commentContent = commentContent.trim();
@@ -357,14 +360,18 @@ class RedditExtractorStrategy extends BaseExtractor {
         let score = '0';
 
         // Method 1: Direct attribute access for shreddit-comment elements
-        if (commentElement.tagName &&
+        if (
+          commentElement.tagName &&
           commentElement.tagName.toLowerCase() === 'shreddit-comment' &&
-          commentElement.hasAttribute('score')) {
+          commentElement.hasAttribute('score')
+        ) {
           score = commentElement.getAttribute('score');
         }
         // Method 2: Access through action row with proper null checks
         else {
-          const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
+          const commentActionRow = commentElement.querySelector(
+            'shreddit-comment-action-row'
+          );
           if (commentActionRow && commentActionRow.hasAttribute('score')) {
             score = commentActionRow.getAttribute('score');
           }
@@ -379,7 +386,7 @@ class RedditExtractorStrategy extends BaseExtractor {
               '.text-neutral-content.text-12',
               'span[aria-label*="votes"]',
               'button[aria-label*="upvoted"]',
-              'faceplate-tracker[noun="upvote"] .text-neutral-content-weak'
+              'faceplate-tracker[noun="upvote"] .text-neutral-content-weak',
             ];
 
             for (const selector of scoreSelectors) {
@@ -396,7 +403,9 @@ class RedditExtractorStrategy extends BaseExtractor {
         if (score) {
           // Handle scores with "k" suffix (e.g., "1.2k")
           if (typeof score === 'string' && score.includes('k')) {
-            score = String(Math.round(parseFloat(score.replace('k', '')) * 1000));
+            score = String(
+              Math.round(parseFloat(score.replace('k', '')) * 1000)
+            );
           }
           // Remove non-numeric characters
           else if (typeof score === 'string') {
@@ -410,7 +419,7 @@ class RedditExtractorStrategy extends BaseExtractor {
           comments.push({
             author,
             content: commentContent,
-            popularity: score
+            popularity: score,
           });
         }
       }

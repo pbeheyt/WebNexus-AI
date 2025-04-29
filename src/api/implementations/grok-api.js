@@ -18,12 +18,15 @@ class GrokApiService extends BaseApiService {
    * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
   async _buildApiRequest(prompt, params, apiKey) {
-    const endpoint = this.config?.endpoint || 'https://api.x.ai/v1/chat/completions';
-    this.logger.info(`[${this.platformId}] Building API request for model: ${params.model}`);
+    const endpoint =
+      this.config?.endpoint || 'https://api.x.ai/v1/chat/completions';
+    this.logger.info(
+      `[${this.platformId}] Building API request for model: ${params.model}`
+    );
 
     const requestPayload = {
       model: params.model,
-      stream: true
+      stream: true,
     };
 
     const messages = [];
@@ -50,9 +53,9 @@ class GrokApiService extends BaseApiService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(requestPayload)
+      body: JSON.stringify(requestPayload),
     };
   }
 
@@ -84,13 +87,23 @@ class GrokApiService extends BaseApiService {
         } else {
           // Ignore chunks without content (like finish_reason markers)
           if (data.choices?.[0]?.finish_reason) {
-             this.logger.info(`[${this.platformId}] Stream finished with reason: ${data.choices[0].finish_reason}`);
+            this.logger.info(
+              `[${this.platformId}] Stream finished with reason: ${data.choices[0].finish_reason}`
+            );
           }
           return { type: 'ignore' };
         }
       } catch (e) {
-        this.logger.error(`[${this.platformId}] Error parsing stream chunk:`, e, 'Line:', line);
-        return { type: 'error', error: `Error parsing stream data: ${e.message}` };
+        this.logger.error(
+          `[${this.platformId}] Error parsing stream chunk:`,
+          e,
+          'Line:',
+          line
+        );
+        return {
+          type: 'error',
+          error: `Error parsing stream data: ${e.message}`,
+        };
       }
     }
 
@@ -103,7 +116,7 @@ class GrokApiService extends BaseApiService {
    * @returns {Array} Formatted messages for Grok API
    */
   _formatGrokMessages(history) {
-    return history.map(msg => {
+    return history.map((msg) => {
       // Map internal role names to Grok roles (same as OpenAI format)
       let role = 'user';
       if (msg.role === 'assistant') role = 'assistant';
@@ -111,7 +124,7 @@ class GrokApiService extends BaseApiService {
 
       return {
         role,
-        content: msg.content
+        content: msg.content,
       };
     });
   }
@@ -125,13 +138,12 @@ class GrokApiService extends BaseApiService {
    * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
   async _buildValidationRequest(apiKey, model) {
-    const endpoint = this.config?.endpoint || 'https://api.x.ai/v1/chat/completions';
+    const endpoint =
+      this.config?.endpoint || 'https://api.x.ai/v1/chat/completions';
     const validationPayload = {
       model: model,
-      messages: [
-        { role: 'user', content: 'API validation check' }
-      ],
-      max_tokens: 1 // Minimum tokens needed
+      messages: [{ role: 'user', content: 'API validation check' }],
+      max_tokens: 1, // Minimum tokens needed
     };
 
     return {
@@ -139,9 +151,9 @@ class GrokApiService extends BaseApiService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(validationPayload)
+      body: JSON.stringify(validationPayload),
     };
   }
 }

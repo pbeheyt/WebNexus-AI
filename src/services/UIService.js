@@ -11,10 +11,13 @@ class UIService {
   async initialize() {
     try {
       // Get preferences from storage
-      const result = await chrome.storage.sync.get([this.#storageKey, this.#textSizeStorageKey]);
+      const result = await chrome.storage.sync.get([
+        this.#storageKey,
+        this.#textSizeStorageKey,
+      ]);
       const savedTheme = result[this.#storageKey];
       const savedTextSize = result[this.#textSizeStorageKey];
-      
+
       // Set theme
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
         this.#theme = savedTheme;
@@ -24,28 +27,35 @@ class UIService {
       }
 
       // Set text size
-      if (savedTextSize && (savedTextSize === 'sm' || savedTextSize === 'base' || savedTextSize === 'lg')) {
+      if (
+        savedTextSize &&
+        (savedTextSize === 'sm' ||
+          savedTextSize === 'base' ||
+          savedTextSize === 'lg')
+      ) {
         this.#textSize = savedTextSize;
       } else {
         this.#textSize = 'sm'; // Default size
       }
 
       // Listen for storage changes from other contexts
-      chrome.storage.onChanged.addListener(this.#handleStorageChange.bind(this));
-      
+      chrome.storage.onChanged.addListener(
+        this.#handleStorageChange.bind(this)
+      );
+
       // Apply preferences immediately
       this.applyTheme(this.#theme);
       this.applyTextSize(this.#textSize);
-      
+
       return {
         theme: this.#theme,
-        textSize: this.#textSize
+        textSize: this.#textSize,
       };
     } catch (error) {
       logger.error('UI service initialization error:', error);
       return {
         theme: 'light',
-        textSize: 'sm'
+        textSize: 'sm',
       };
     }
   }
@@ -54,16 +64,16 @@ class UIService {
     try {
       const newTheme = this.#theme === 'dark' ? 'light' : 'dark';
       this.#theme = newTheme;
-      
+
       // Save to storage
       await chrome.storage.sync.set({ [this.#storageKey]: newTheme });
-      
+
       // Apply theme
       this.applyTheme(newTheme);
-      
+
       // Notify observers
       this.#notifyObservers();
-      
+
       return newTheme;
     } catch (error) {
       logger.error('Error toggling theme:', error);
@@ -82,16 +92,18 @@ class UIService {
         newTextSize = 'sm';
       }
       this.#textSize = newTextSize;
-      
+
       // Save to storage
-      await chrome.storage.sync.set({ [this.#textSizeStorageKey]: newTextSize });
-      
+      await chrome.storage.sync.set({
+        [this.#textSizeStorageKey]: newTextSize,
+      });
+
       // Apply text size
       this.applyTextSize(newTextSize);
-      
+
       // Notify observers
       this.#notifyObservers();
-      
+
       return newTextSize;
     } catch (error) {
       logger.error('Error toggling text size:', error);
@@ -109,7 +121,7 @@ class UIService {
 
   subscribe(callback) {
     this.#observers.add(callback);
-    
+
     // Return unsubscribe function
     return () => {
       this.#observers.delete(callback);
@@ -127,10 +139,13 @@ class UIService {
   }
 
   applyTextSize(size) {
-    document.documentElement.classList.remove('text-sm', 'text-base', 'text-lg');
-    const sizeClass = 
-      size === 'base' ? 'text-base' :
-      size === 'lg' ? 'text-lg' : 'text-sm';
+    document.documentElement.classList.remove(
+      'text-sm',
+      'text-base',
+      'text-lg'
+    );
+    const sizeClass =
+      size === 'base' ? 'text-base' : size === 'lg' ? 'text-lg' : 'text-sm';
     document.documentElement.classList.add(sizeClass);
   }
 
@@ -139,7 +154,7 @@ class UIService {
       try {
         callback({
           theme: this.#theme,
-          textSize: this.#textSize
+          textSize: this.#textSize,
         });
       } catch (error) {
         logger.error('Error in UI observer callback:', error);
@@ -168,7 +183,8 @@ class UIService {
   }
 
   #getSystemPreference() {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    return window.matchMedia &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
       : 'light';
   }

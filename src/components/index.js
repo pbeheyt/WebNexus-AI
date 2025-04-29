@@ -8,7 +8,10 @@ export { IconButton } from './core/IconButton';
 // Feedback components
 export { StatusMessage } from './feedback/StatusMessage';
 export { Toast } from './feedback/Toast';
-export { useNotification, NotificationProvider } from './feedback/NotificationContext';
+export {
+  useNotification,
+  NotificationProvider,
+} from './feedback/NotificationContext';
 
 // Form components
 export { TextArea } from './form/TextArea';

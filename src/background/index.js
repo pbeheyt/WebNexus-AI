@@ -1,13 +1,17 @@
 // src/background/index.js - Entry point for background service worker
 
+import SidebarStateManager from '../services/SidebarStateManager.js';
+import logger from '../shared/logger.js';
+
 import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
-import { setupTabStateListener, performStaleTabCleanup } from './listeners/tab-state-listener.js';
+import {
+  setupTabStateListener,
+  performStaleTabCleanup,
+} from './listeners/tab-state-listener.js';
 import { setupContextMenuListener } from './listeners/context-menu-listener.js';
 import { processWithDefaultPromptWebUI } from './services/content-processing.js';
-import SidebarStateManager from '../services/SidebarStateManager.js';
-import logger from '../shared/logger.js';
 
 /**
  * Main entry point for the background service worker
@@ -34,29 +38,43 @@ async function startBackgroundService() {
 
     // This runs every time the service worker starts (initial load, wake-up, after browser start)
     // It complements the onStartup listener.
-    logger.background.info('Running stale tab cleanup on service worker start...');
+    logger.background.info(
+      'Running stale tab cleanup on service worker start...'
+    );
     try {
       await performStaleTabCleanup(); // Call the cleanup function
-      logger.background.info('Service worker start stale tab cleanup completed.');
+      logger.background.info(
+        'Service worker start stale tab cleanup completed.'
+      );
     } catch (cleanupError) {
-      logger.background.error('Error during service worker start stale tab cleanup:', cleanupError);
+      logger.background.error(
+        'Error during service worker start stale tab cleanup:',
+        cleanupError
+      );
     }
 
     // 4. Add the onStartup listener for cleanup
     // This listener persists across service worker restarts.
     chrome.runtime.onStartup.addListener(async () => {
-      logger.background.info('Browser startup detected via onStartup listener. Running stale tab cleanup...');
+      logger.background.info(
+        'Browser startup detected via onStartup listener. Running stale tab cleanup...'
+      );
       try {
         // Call the cleanup function directly
         await performStaleTabCleanup();
         logger.background.info('Startup stale tab cleanup completed.');
       } catch (cleanupError) {
-        logger.background.error('Error during startup stale tab cleanup:', cleanupError);
+        logger.background.error(
+          'Error during startup stale tab cleanup:',
+          cleanupError
+        );
       }
     });
     logger.background.info('onStartup listener registered for cleanup.');
 
-    logger.background.info('Service worker started successfully and listeners are set up.');
+    logger.background.info(
+      'Service worker started successfully and listeners are set up.'
+    );
   } catch (error) {
     logger.background.error('Error starting background service:', error);
   }
@@ -73,12 +91,20 @@ async function setupCommandListener() {
     logger.background.info(`Command received: ${command}`);
     if (command === 'process-default-prompt') {
       try {
-        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [activeTab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
         if (activeTab && activeTab.id && activeTab.url) {
-          logger.background.info(`Triggering default web UI processing for active tab ${activeTab.id} via command.`);
+          logger.background.info(
+            `Triggering default web UI processing for active tab ${activeTab.id} via command.`
+          );
           await processWithDefaultPromptWebUI(activeTab);
         } else {
-          logger.background.warn('No active tab found to execute command:', command);
+          logger.background.warn(
+            'No active tab found to execute command:',
+            command
+          );
         }
       } catch (error) {
         logger.background.error(`Error handling command ${command}:`, error);
@@ -105,10 +131,15 @@ function setupConnectionListener() {
         // Mark sidebar as visible upon connection
         SidebarStateManager.setSidebarVisibilityForTab(tabId, true)
           .then(() => {
-            logger.background.info(`Set sidebar visibility to true for tab ${tabId}`);
+            logger.background.info(
+              `Set sidebar visibility to true for tab ${tabId}`
+            );
           })
-          .catch(error => {
-            logger.background.error(`Error setting sidebar visibility to true for tab ${tabId}:`, error);
+          .catch((error) => {
+            logger.background.error(
+              `Error setting sidebar visibility to true for tab ${tabId}:`,
+              error
+            );
           });
 
         // Handle disconnection
@@ -116,23 +147,33 @@ function setupConnectionListener() {
           logger.background.info(`Side panel disconnected for tab ${tabId}`);
           if (chrome.runtime.lastError) {
             // Log error but don't crash the extension
-            logger.background.error(`Port disconnect error for tab ${tabId}: ${chrome.runtime.lastError.message}`);
+            logger.background.error(
+              `Port disconnect error for tab ${tabId}: ${chrome.runtime.lastError.message}`
+            );
           }
           // Mark sidebar as not visible upon disconnection
           SidebarStateManager.setSidebarVisibilityForTab(tabId, false)
             .then(() => {
-              logger.background.info(`Set sidebar visibility to false for tab ${tabId}`);
+              logger.background.info(
+                `Set sidebar visibility to false for tab ${tabId}`
+              );
             })
-            .catch(error => {
-              logger.background.error(`Error setting sidebar visibility to false for tab ${tabId}:`, error);
+            .catch((error) => {
+              logger.background.error(
+                `Error setting sidebar visibility to false for tab ${tabId}:`,
+                error
+              );
             });
         });
-
       } else {
-        logger.background.error(`Could not parse tabId from port name: ${port.name}`);
+        logger.background.error(
+          `Could not parse tabId from port name: ${port.name}`
+        );
       }
     } else {
-      logger.background.info(`Ignoring connection from non-sidepanel source: ${port.name}`);
+      logger.background.info(
+        `Ignoring connection from non-sidepanel source: ${port.name}`
+      );
     }
   });
   logger.background.info('Runtime connection listener set up.');

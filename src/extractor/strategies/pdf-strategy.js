@@ -1,9 +1,12 @@
 // src/extractor/strategies/pdf-strategy.js
-const BaseExtractor = require('../base-extractor');
 const pdfjs = require('pdfjs-dist/build/pdf');
 
+const BaseExtractor = require('../base-extractor');
+
 // Set worker source path - make sure webpack is configured to handle this
-pdfjs.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('dist/pdf.worker.bundle.js');
+pdfjs.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(
+  'dist/pdf.worker.bundle.js'
+);
 
 class PdfExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -22,7 +25,7 @@ class PdfExtractorStrategy extends BaseExtractor {
       await this.saveToStorage({
         error: true,
         message: error.message || 'Unknown error occurred',
-        extractedAt: new Date().toISOString()
+        extractedAt: new Date().toISOString(),
       });
     }
   }
@@ -38,7 +41,7 @@ class PdfExtractorStrategy extends BaseExtractor {
       // Fetch the PDF document
       const response = await fetch(pdfUrl, {
         credentials: 'include',
-        cache: 'no-store'
+        cache: 'no-store',
       });
 
       if (!response.ok) {
@@ -50,7 +53,7 @@ class PdfExtractorStrategy extends BaseExtractor {
       // Load the PDF document WITHOUT CMap options
       this.logger.info('Loading PDF document without external CMaps...');
       const loadingTask = pdfjs.getDocument({
-        data: pdfData
+        data: pdfData,
       });
 
       const pdf = await loadingTask.promise;
@@ -75,7 +78,10 @@ class PdfExtractorStrategy extends BaseExtractor {
           let text = '';
 
           for (const item of textContent.items) {
-            if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
+            if (
+              lastY !== undefined &&
+              Math.abs(lastY - item.transform[5]) > 5
+            ) {
               text += '\n';
             }
 
@@ -97,7 +103,7 @@ class PdfExtractorStrategy extends BaseExtractor {
         metadata: metadata,
         pageCount: pageCount,
         extractedAt: new Date().toISOString(),
-        ocrRequired: !isSearchable
+        ocrRequired: !isSearchable,
       };
     } catch (error) {
       this.logger.error('PDF content extraction error:', error);
@@ -115,7 +121,7 @@ class PdfExtractorStrategy extends BaseExtractor {
       author: null,
       creationDate: null,
       title: null,
-      pageCount: pdf.numPages
+      pageCount: pdf.numPages,
     };
 
     try {
@@ -144,7 +150,9 @@ class PdfExtractorStrategy extends BaseExtractor {
     }
 
     // Try basic viewer elements
-    const titleElement = document.querySelector('#toolbar #file-name, .pdf-title, .document-title');
+    const titleElement = document.querySelector(
+      '#toolbar #file-name, .pdf-title, .document-title'
+    );
     if (titleElement) {
       return titleElement.textContent.trim();
     }

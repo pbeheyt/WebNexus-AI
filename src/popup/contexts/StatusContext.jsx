@@ -5,21 +5,26 @@ const StatusContext = createContext(null);
 
 export function StatusProvider({ children }) {
   const [statusMessage, setStatusMessage] = useState('Ready to process.');
-  
+
   const updateStatus = useCallback((message = false) => {
     setStatusMessage(message);
   }, []);
-  
-  const notifyPlatformChanged = useCallback((platformName) => {
-    updateStatus(`Platform set to ${platformName}`);
-  }, [updateStatus]);
-  
+
+  const notifyPlatformChanged = useCallback(
+    (platformName) => {
+      updateStatus(`Platform set to ${platformName}`);
+    },
+    [updateStatus]
+  );
+
   return (
-    <StatusContext.Provider value={{
-      statusMessage,
-      updateStatus,
-      notifyPlatformChanged,
-    }}>
+    <StatusContext.Provider
+      value={{
+        statusMessage,
+        updateStatus,
+        notifyPlatformChanged,
+      }}
+    >
       {children}
     </StatusContext.Provider>
   );

@@ -1,6 +1,9 @@
 // src/background/services/content-extraction.js - Content extraction coordination
 
-import { determineContentType, isInjectablePage } from '../../shared/utils/content-utils.js'; // Import isInjectablePage
+import {
+  determineContentType,
+  isInjectablePage,
+} from '../../shared/utils/content-utils.js'; // Import isInjectablePage
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import logger from '../../shared/logger.js';
 
@@ -13,8 +16,13 @@ import logger from '../../shared/logger.js';
 export async function extractContent(tabId, url) {
   // Check if the page is injectable before proceeding
   if (!isInjectablePage(url)) {
-    logger.background.warn(`Cannot extract content from non-injectable URL: ${url}`);
-    await chrome.storage.local.set({ [STORAGE_KEYS.CONTENT_READY]: false, [STORAGE_KEYS.EXTRACTED_CONTENT]: null });
+    logger.background.warn(
+      `Cannot extract content from non-injectable URL: ${url}`
+    );
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.CONTENT_READY]: false,
+      [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
+    });
     return false;
   }
 
@@ -22,30 +30,37 @@ export async function extractContent(tabId, url) {
   // Use a single content script for all types
   const scriptFile = 'dist/content-script.bundle.js';
 
-  logger.background.info(`Extracting content from tab ${tabId}, type: ${contentType}`);
+  logger.background.info(
+    `Extracting content from tab ${tabId}, type: ${contentType}`
+  );
 
   // Always inject the content script
   const result = await injectContentScript(tabId, scriptFile);
   if (!result) {
-    logger.background.error(`Failed to inject content script into tab ${tabId}`);
+    logger.background.error(
+      `Failed to inject content script into tab ${tabId}`
+    );
     return false; // Stop if injection fails
   }
 
   // Always reset previous extraction state after successful injection
   try {
-    await chrome.tabs.sendMessage(tabId, { 
-      action: 'resetExtractor'
+    await chrome.tabs.sendMessage(tabId, {
+      action: 'resetExtractor',
     });
     logger.background.info('Reset command sent to extractor');
   } catch (error) {
     // Log error but potentially continue if reset fails, as extraction might still work
-    logger.background.error('Error sending reset command:', error); 
+    logger.background.error('Error sending reset command:', error);
   }
-  
+
   // Return promise that resolves when content extraction completes
   return new Promise((resolve) => {
     const storageListener = (changes, area) => {
-      if (area === 'local' && changes[STORAGE_KEYS.CONTENT_READY]?.newValue === true) {
+      if (
+        area === 'local' &&
+        changes[STORAGE_KEYS.CONTENT_READY]?.newValue === true
+      ) {
         clearTimeout(timeoutId); // Ensure timeout is cleared on success
         chrome.storage.onChanged.removeListener(storageListener);
         resolve(true);
@@ -57,13 +72,15 @@ export async function extractContent(tabId, url) {
     // Send extraction command
     chrome.tabs.sendMessage(tabId, {
       action: 'extractContent',
-      contentType: contentType
-        });
+      contentType: contentType,
+    });
 
-        // Failsafe timeout
-        const timeoutId = setTimeout(() => {
-          chrome.storage.onChanged.removeListener(storageListener);
-          logger.background.warn(`Extraction timeout for ${contentType}, proceeding anyway`);
+    // Failsafe timeout
+    const timeoutId = setTimeout(() => {
+      chrome.storage.onChanged.removeListener(storageListener);
+      logger.background.warn(
+        `Extraction timeout for ${contentType}, proceeding anyway`
+      );
       resolve(false);
     }, 15000);
   });
@@ -77,12 +94,16 @@ export async function extractContent(tabId, url) {
  */
 export async function injectContentScript(tabId, scriptFile) {
   try {
-    logger.background.info(`Injecting script: ${scriptFile} into tab: ${tabId}`);
+    logger.background.info(
+      `Injecting script: ${scriptFile} into tab: ${tabId}`
+    );
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: [scriptFile]
+      files: [scriptFile],
     });
-    logger.background.info(`Successfully injected script: ${scriptFile} into tab: ${tabId}`);
+    logger.background.info(
+      `Successfully injected script: ${scriptFile} into tab: ${tabId}`
+    );
     return true;
   } catch (error) {
     logger.background.error(`Script injection error for tab ${tabId}:`, error);

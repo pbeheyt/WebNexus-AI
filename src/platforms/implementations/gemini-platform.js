@@ -12,9 +12,13 @@ class GeminiPlatform extends BasePlatform {
 
   findEditorElement() {
     // Exact selector based on provided HTML
-    const editor = document.querySelector('div.ql-editor[contenteditable="true"][aria-multiline="true"]');
+    const editor = document.querySelector(
+      'div.ql-editor[contenteditable="true"][aria-multiline="true"]'
+    );
     if (!editor) {
-        this.logger.error(`[${this.platformId}] Editor element not found using selector.`);
+      this.logger.error(
+        `[${this.platformId}] Editor element not found using selector.`
+      );
     }
     return editor;
   }
@@ -23,7 +27,9 @@ class GeminiPlatform extends BasePlatform {
     // Exact selector based on provided HTML
     const button = document.querySelector('button.send-button');
     if (!button) {
-        this.logger.error(`[${this.platformId}] Submit button not found using selector.`);
+      this.logger.error(
+        `[${this.platformId}] Submit button not found using selector.`
+      );
     }
     return button;
   }
@@ -37,7 +43,9 @@ class GeminiPlatform extends BasePlatform {
    */
   async _insertTextIntoEditor(editorElement, text) {
     try {
-      this.logger.info(`[${this.platformId}] Inserting text into Gemini editor (Quill)`);
+      this.logger.info(
+        `[${this.platformId}] Inserting text into Gemini editor (Quill)`
+      );
       // Focus the editor
       editorElement.focus();
 
@@ -46,7 +54,7 @@ class GeminiPlatform extends BasePlatform {
 
       // Create paragraph for each line
       const paragraphs = text.split('\n');
-      paragraphs.forEach(paragraph => {
+      paragraphs.forEach((paragraph) => {
         const p = document.createElement('p');
         if (paragraph.trim()) {
           p.textContent = paragraph;
@@ -65,10 +73,15 @@ class GeminiPlatform extends BasePlatform {
       // Trigger input events using base class helper
       this._dispatchEvents(editorElement, ['input', 'change']);
 
-      this.logger.info(`[${this.platformId}] Successfully inserted text into Gemini editor.`);
+      this.logger.info(
+        `[${this.platformId}] Successfully inserted text into Gemini editor.`
+      );
       return true;
     } catch (error) {
-      this.logger.error(`[${this.platformId}] Error inserting text into Gemini editor:`, error);
+      this.logger.error(
+        `[${this.platformId}] Error inserting text into Gemini editor:`,
+        error
+      );
       return false;
     }
   }
@@ -81,42 +94,65 @@ class GeminiPlatform extends BasePlatform {
    */
   async _clickSubmitButton(buttonElement) {
     try {
-      this.logger.info(`[${this.platformId}] Attempting to click submit button`);
+      this.logger.info(
+        `[${this.platformId}] Attempting to click submit button`
+      );
       // Check and potentially remove disabled state
-      if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-        this.logger.warn(`[${this.platformId}] Submit button is initially disabled.`);
+      if (
+        buttonElement.disabled ||
+        buttonElement.getAttribute('aria-disabled') === 'true'
+      ) {
+        this.logger.warn(
+          `[${this.platformId}] Submit button is initially disabled.`
+        );
         // Keep the enabling attempt logic here...
         if (buttonElement.hasAttribute('disabled')) {
-            this.logger.info(`[${this.platformId}] Attempting to remove 'disabled' attribute.`);
-            buttonElement.disabled = false;
+          this.logger.info(
+            `[${this.platformId}] Attempting to remove 'disabled' attribute.`
+          );
+          buttonElement.disabled = false;
         }
         if (buttonElement.hasAttribute('aria-disabled')) {
-            this.logger.info(`[${this.platformId}] Attempting to remove 'aria-disabled' attribute.`);
-            buttonElement.removeAttribute('aria-disabled');
+          this.logger.info(
+            `[${this.platformId}] Attempting to remove 'aria-disabled' attribute.`
+          );
+          buttonElement.removeAttribute('aria-disabled');
         }
         // Re-check after attempting to enable
-        if (buttonElement.disabled || buttonElement.getAttribute('aria-disabled') === 'true') {
-            this.logger.error(`[${this.platformId}] Submit button remained disabled after attempting to enable.`);
-            return false; // Return failure if still disabled
+        if (
+          buttonElement.disabled ||
+          buttonElement.getAttribute('aria-disabled') === 'true'
+        ) {
+          this.logger.error(
+            `[${this.platformId}] Submit button remained disabled after attempting to enable.`
+          );
+          return false; // Return failure if still disabled
         }
-        this.logger.info(`[${this.platformId}] Submit button successfully enabled.`);
+        this.logger.info(
+          `[${this.platformId}] Submit button successfully enabled.`
+        );
       }
 
       // Click the button with multiple events
-      ['mousedown', 'mouseup', 'click'].forEach(eventType => {
+      ['mousedown', 'mouseup', 'click'].forEach((eventType) => {
         const event = new MouseEvent(eventType, {
           view: window,
           bubbles: true,
           cancelable: true,
-          buttons: eventType === 'mousedown' ? 1 : 0 // Set buttons only for mousedown
+          buttons: eventType === 'mousedown' ? 1 : 0, // Set buttons only for mousedown
         });
         buttonElement.dispatchEvent(event);
       });
 
-      this.logger.info(`[${this.platformId}] Successfully clicked submit button.`);
+      this.logger.info(
+        `[${this.platformId}] Successfully clicked submit button.`
+      );
       return true;
     } catch (error) {
-      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
+      this.logger.error(
+        `[${this.platformId}] Failed to click submit button:`,
+        error
+      );
       return false;
     }
   }

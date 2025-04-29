@@ -33,42 +33,65 @@ export async function resetState() {
  */
 export async function storeSystemPromptForTab(tabId, systemPrompt) {
   if (typeof tabId !== 'number') {
-    logger.background.warn('storeSystemPromptForTab called with invalid tabId:', tabId);
+    logger.background.warn(
+      'storeSystemPromptForTab called with invalid tabId:',
+      tabId
+    );
     return;
   }
 
   const key = String(tabId);
   try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_SYSTEM_PROMPTS);
+    const result = await chrome.storage.local.get(
+      STORAGE_KEYS.TAB_SYSTEM_PROMPTS
+    );
     // Ensure we always work with an object, even if storage is empty/corrupt
-    const allTabSystemPrompts = (result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] && typeof result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] === 'object')
-                               ? { ...result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] } // Create a mutable copy
-                               : {};
+    const allTabSystemPrompts =
+      result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] &&
+      typeof result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] === 'object'
+        ? { ...result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] } // Create a mutable copy
+        : {};
 
     // Check if the provided prompt is a valid, non-empty string
     if (typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
       // Store the valid prompt
-      if (allTabSystemPrompts[key] !== systemPrompt) { // Only update if changed
-         allTabSystemPrompts[key] = systemPrompt;
-         logger.background.info(`Stored/Updated system prompt for tab ${tabId}.`);
-         await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: allTabSystemPrompts });
+      if (allTabSystemPrompts[key] !== systemPrompt) {
+        // Only update if changed
+        allTabSystemPrompts[key] = systemPrompt;
+        logger.background.info(
+          `Stored/Updated system prompt for tab ${tabId}.`
+        );
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: allTabSystemPrompts,
+        });
       } else {
-         logger.background.info(`System prompt for tab ${tabId} is unchanged. No storage update needed.`);
+        logger.background.info(
+          `System prompt for tab ${tabId} is unchanged. No storage update needed.`
+        );
       }
     } else {
       // If prompt is invalid (null, undefined, empty), remove the key if it exists
       if (allTabSystemPrompts.hasOwnProperty(key)) {
         delete allTabSystemPrompts[key];
-        logger.background.info(`Removed system prompt entry for tab ${tabId} as new prompt is absent/empty.`);
+        logger.background.info(
+          `Removed system prompt entry for tab ${tabId} as new prompt is absent/empty.`
+        );
         // Save the modified object back (only if a key was actually deleted)
-        await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: allTabSystemPrompts });
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: allTabSystemPrompts,
+        });
       } else {
         // Key doesn't exist, nothing to remove, no storage update needed.
-        logger.background.info(`No system prompt entry to remove for tab ${tabId}.`);
+        logger.background.info(
+          `No system prompt entry to remove for tab ${tabId}.`
+        );
       }
     }
   } catch (error) {
-    logger.background.error(`Error updating system prompt state for tab ${tabId}:`, error);
+    logger.background.error(
+      `Error updating system prompt state for tab ${tabId}:`,
+      error
+    );
   }
 }
 
@@ -80,7 +103,7 @@ export async function resetExtractionState() {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.CONTENT_READY]: false,
-      [STORAGE_KEYS.EXTRACTED_CONTENT]: null
+      [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
     });
     logger.background.info('Extraction state reset');
   } catch (error) {
@@ -97,7 +120,12 @@ export async function resetExtractionState() {
  * @param {string} formattedContentString - The formatted content string to save for injection.
  * @returns {Promise<boolean>} Success flag
  */
-export async function savePlatformTabInfo(tabId, platformId, promptContent, formattedContentString) {
+export async function savePlatformTabInfo(
+  tabId,
+  platformId,
+  promptContent,
+  formattedContentString
+) {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: tabId,
@@ -106,11 +134,17 @@ export async function savePlatformTabInfo(tabId, platformId, promptContent, form
       [STORAGE_KEYS.PRE_PROMPT]: promptContent,
       [STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION]: formattedContentString,
     });
-    
+
     // Verify the data was stored correctly
-    const verifyData = await chrome.storage.local.get([STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID, STORAGE_KEYS.INJECTION_PLATFORM, STORAGE_KEYS.SCRIPT_INJECTED]);
-    logger.background.info(`Storage verification: aiPlatformTabId=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]}, aiPlatform=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM]}, scriptInjected=${verifyData[STORAGE_KEYS.SCRIPT_INJECTED]}`);
-    
+    const verifyData = await chrome.storage.local.get([
+      STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID,
+      STORAGE_KEYS.INJECTION_PLATFORM,
+      STORAGE_KEYS.SCRIPT_INJECTED,
+    ]);
+    logger.background.info(
+      `Storage verification: aiPlatformTabId=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]}, aiPlatform=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM]}, scriptInjected=${verifyData[STORAGE_KEYS.SCRIPT_INJECTED]}`
+    );
+
     return true;
   } catch (error) {
     logger.background.error('Error saving platform tab info:', error);
@@ -125,7 +159,9 @@ export async function savePlatformTabInfo(tabId, platformId, promptContent, form
  */
 export async function updateScriptInjectionStatus(injected) {
   try {
-    await chrome.storage.local.set({ [STORAGE_KEYS.SCRIPT_INJECTED]: injected });
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.SCRIPT_INJECTED]: injected,
+    });
     logger.background.info(`Updated script injection status: ${injected}`);
   } catch (error) {
     logger.background.error('Error updating script injection status:', error);
@@ -139,9 +175,9 @@ export async function updateScriptInjectionStatus(injected) {
  */
 export async function saveExtractedContent(content) {
   try {
-    await chrome.storage.local.set({ 
+    await chrome.storage.local.set({
       [STORAGE_KEYS.EXTRACTED_CONTENT]: content,
-      [STORAGE_KEYS.CONTENT_READY]: true
+      [STORAGE_KEYS.CONTENT_READY]: true,
     });
     logger.background.info('Extracted content saved');
   } catch (error) {
@@ -163,13 +199,13 @@ export async function initializeStreamResponse(streamId, platformId) {
       status: 'streaming',
       platformId,
       timestamp: Date.now(),
-      content: '' // Will be populated as streaming progresses
+      content: '', // Will be populated as streaming progresses
     };
 
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: 'streaming',
       [STORAGE_KEYS.API_RESPONSE]: initialResponse,
-      [STORAGE_KEYS.STREAM_ID]: streamId
+      [STORAGE_KEYS.STREAM_ID]: streamId,
     });
     logger.background.info(`Stream response initialized: ${streamId}`);
   } catch (error) {
@@ -185,7 +221,12 @@ export async function initializeStreamResponse(streamId, platformId) {
  * @param {string|null} [error=null] - Optional error message if the stream failed
  * @returns {Promise<void>}
  */
-export async function completeStreamResponse(fullContent, model, platformId, error = null) {
+export async function completeStreamResponse(
+  fullContent,
+  model,
+  platformId,
+  error = null
+) {
   try {
     let finalResponse;
     let storageUpdate = {};
@@ -199,13 +240,13 @@ export async function completeStreamResponse(fullContent, model, platformId, err
         model,
         platformId,
         error: error, // Include the error message
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       storageUpdate = {
         [STORAGE_KEYS.API_PROCESSING_STATUS]: 'error',
         [STORAGE_KEYS.API_PROCESSING_ERROR]: error,
         [STORAGE_KEYS.API_RESPONSE]: finalResponse,
-        [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now()
+        [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now(),
       };
       logger.background.error(`Stream response completed with error: ${error}`);
     } else {
@@ -216,41 +257,51 @@ export async function completeStreamResponse(fullContent, model, platformId, err
         content: fullContent,
         model,
         platformId,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       storageUpdate = {
         [STORAGE_KEYS.API_PROCESSING_STATUS]: 'completed',
         [STORAGE_KEYS.API_RESPONSE]: finalResponse,
         [STORAGE_KEYS.API_RESPONSE_TIMESTAMP]: Date.now(),
-        [STORAGE_KEYS.API_PROCESSING_ERROR]: null
+        [STORAGE_KEYS.API_PROCESSING_ERROR]: null,
       };
       logger.background.info('Stream response completed successfully');
     }
-    
+
     // Update storage
     await chrome.storage.local.set(storageUpdate);
-    
+
     // Notify the popup and potentially other listeners
     try {
       // Send the final response object
       chrome.runtime.sendMessage({
         action: 'apiResponseReady',
-        response: finalResponse
+        response: finalResponse,
       });
     } catch (msgError) {
       // Ignore if popup isn't open or other listeners fail
-      logger.background.info('Could not notify listeners of API response completion/error:', msgError.message);
+      logger.background.info(
+        'Could not notify listeners of API response completion/error:',
+        msgError.message
+      );
     }
   } catch (catchError) {
-    logger.background.error('Error in completeStreamResponse function:', catchError);
+    logger.background.error(
+      'Error in completeStreamResponse function:',
+      catchError
+    );
     // Attempt to set a generic error state if something goes wrong here
     try {
       await chrome.storage.local.set({
         [STORAGE_KEYS.API_PROCESSING_STATUS]: 'error',
-        [STORAGE_KEYS.API_PROCESSING_ERROR]: 'Internal error completing stream response'
+        [STORAGE_KEYS.API_PROCESSING_ERROR]:
+          'Internal error completing stream response',
       });
     } catch (fallbackError) {
-       logger.background.error('Failed to set fallback error state:', fallbackError);
+      logger.background.error(
+        'Failed to set fallback error state:',
+        fallbackError
+      );
     }
   }
 }
@@ -264,15 +315,15 @@ export async function setApiProcessingError(error) {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: 'error',
-      [STORAGE_KEYS.API_PROCESSING_ERROR]: error
+      [STORAGE_KEYS.API_PROCESSING_ERROR]: error,
     });
     logger.background.error('API processing error set:', error);
-    
+
     // Notify popup if open
     try {
       chrome.runtime.sendMessage({
         action: 'apiProcessingError',
-        error
+        error,
       });
     } catch (msgError) {
       // Ignore if popup isn't open
@@ -291,17 +342,26 @@ export async function setApiProcessingError(error) {
  */
 export async function hasFormattedContentForTab(tabId) {
   if (typeof tabId !== 'number') {
-    logger.background.warn('hasFormattedContentForTab called with invalid tabId:', tabId);
+    logger.background.warn(
+      'hasFormattedContentForTab called with invalid tabId:',
+      tabId
+    );
     return false;
   }
   const key = String(tabId); // Ensure key is a string if needed
   try {
     // Note: The original request mentioned STORAGE_KEYS.TAB_FORMATTED_CONTENT
     // Adjust this key if the actual storage key is different.
-    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT);
+    const result = await chrome.storage.local.get(
+      STORAGE_KEYS.TAB_FORMATTED_CONTENT
+    );
     const allFormattedContent = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
-    
-    if (allFormattedContent && typeof allFormattedContent === 'object' && allFormattedContent.hasOwnProperty(key)) {
+
+    if (
+      allFormattedContent &&
+      typeof allFormattedContent === 'object' &&
+      allFormattedContent.hasOwnProperty(key)
+    ) {
       logger.background.info(`Formatted content found for tab ${tabId}.`);
       return true;
     } else {
@@ -309,7 +369,10 @@ export async function hasFormattedContentForTab(tabId) {
       return false;
     }
   } catch (error) {
-    logger.background.error(`Error checking formatted content for tab ${tabId}:`, error);
+    logger.background.error(
+      `Error checking formatted content for tab ${tabId}:`,
+      error
+    );
     return false; // Assume no content on error
   }
 }
@@ -324,25 +387,39 @@ export async function hasFormattedContentForTab(tabId) {
  */
 export async function storeFormattedContentForTab(tabId, formattedContent) {
   if (typeof tabId !== 'number') {
-    logger.background.warn('storeFormattedContentForTab called with invalid tabId:', tabId);
+    logger.background.warn(
+      'storeFormattedContentForTab called with invalid tabId:',
+      tabId
+    );
     return;
   }
   if (typeof formattedContent !== 'string') {
-    logger.background.warn('storeFormattedContentForTab called with non-string content for tabId:', tabId);
+    logger.background.warn(
+      'storeFormattedContentForTab called with non-string content for tabId:',
+      tabId
+    );
     return;
   }
 
   const key = String(tabId);
   try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT);
-    const allFormattedContent = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
+    const result = await chrome.storage.local.get(
+      STORAGE_KEYS.TAB_FORMATTED_CONTENT
+    );
+    const allFormattedContent =
+      result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
 
     allFormattedContent[key] = formattedContent;
 
-    await chrome.storage.local.set({ [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: allFormattedContent });
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: allFormattedContent,
+    });
     logger.background.info(`Stored formatted content for tab ${tabId}.`);
   } catch (error) {
-    logger.background.error(`Error storing formatted content for tab ${tabId}:`, error);
+    logger.background.error(
+      `Error storing formatted content for tab ${tabId}:`,
+      error
+    );
     throw error; // Re-throw error for the caller to handle
   }
 }
@@ -356,27 +433,40 @@ export async function storeFormattedContentForTab(tabId, formattedContent) {
  */
 export async function getFormattedContentForTab(tabId) {
   if (typeof tabId !== 'number') {
-    logger.background.warn('getFormattedContentForTab called with invalid tabId:', tabId);
+    logger.background.warn(
+      'getFormattedContentForTab called with invalid tabId:',
+      tabId
+    );
     return null;
   }
   const key = String(tabId);
   try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_FORMATTED_CONTENT);
+    const result = await chrome.storage.local.get(
+      STORAGE_KEYS.TAB_FORMATTED_CONTENT
+    );
     const allFormattedContent = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
 
-    if (allFormattedContent && typeof allFormattedContent === 'object' && allFormattedContent.hasOwnProperty(key)) {
+    if (
+      allFormattedContent &&
+      typeof allFormattedContent === 'object' &&
+      allFormattedContent.hasOwnProperty(key)
+    ) {
       logger.background.info(`Retrieved formatted content for tab ${tabId}.`);
       return allFormattedContent[key]; // Return the stored string
     } else {
-      logger.background.info(`No formatted content found for tab ${tabId} during retrieval.`);
+      logger.background.info(
+        `No formatted content found for tab ${tabId} during retrieval.`
+      );
       return null;
     }
   } catch (error) {
-    logger.background.error(`Error retrieving formatted content for tab ${tabId}:`, error);
+    logger.background.error(
+      `Error retrieving formatted content for tab ${tabId}:`,
+      error
+    );
     return null; // Return null on error
   }
 }
-
 
 /**
  * Get stored content extraction
@@ -384,7 +474,9 @@ export async function getFormattedContentForTab(tabId) {
  */
 export async function getExtractedContent() {
   try {
-    const { extractedContent } = await chrome.storage.local.get(STORAGE_KEYS.EXTRACTED_CONTENT);
+    const { extractedContent } = await chrome.storage.local.get(
+      STORAGE_KEYS.EXTRACTED_CONTENT
+    );
     return extractedContent;
   } catch (error) {
     logger.background.error('Error getting extracted content:', error);
@@ -398,18 +490,22 @@ export async function getExtractedContent() {
  */
 export async function getPlatformTabInfo() {
   try {
-    const result = await chrome.storage.local.get([STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID, STORAGE_KEYS.INJECTION_PLATFORM, STORAGE_KEYS.SCRIPT_INJECTED]);
+    const result = await chrome.storage.local.get([
+      STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID,
+      STORAGE_KEYS.INJECTION_PLATFORM,
+      STORAGE_KEYS.SCRIPT_INJECTED,
+    ]);
     return {
       tabId: result[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID],
       platformId: result[STORAGE_KEYS.INJECTION_PLATFORM],
-      scriptInjected: result[STORAGE_KEYS.SCRIPT_INJECTED]
+      scriptInjected: result[STORAGE_KEYS.SCRIPT_INJECTED],
     };
   } catch (error) {
     logger.background.error('Error getting platform tab info:', error);
     return {
       tabId: null,
       platformId: null,
-      scriptInjected: false
+      scriptInjected: false,
     };
   }
 }

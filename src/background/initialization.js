@@ -1,10 +1,11 @@
 // src/background/initialization.js - Handles extension initialization
 
-import { resetState } from './core/state-manager.js';
 import logger from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { ensureDefaultPrompts } from '../shared/utils/prompt-utils.js';
 import ConfigService from '../services/ConfigService.js';
+
+import { resetState } from './core/state-manager.js';
 
 /**
  * Initializes default prompts from prompt-config.json into sync storage
@@ -17,15 +18,21 @@ async function initializeDefaultPrompts() {
     // Fetch default prompts from config file
     const response = await fetch(chrome.runtime.getURL('prompt-config.json'));
     if (!response.ok) {
-      throw new Error(`Failed to fetch prompt-config.json: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch prompt-config.json: ${response.statusText}`
+      );
     }
     const defaultPromptsConfig = await response.json();
 
     // Fetch existing custom prompts from sync storage
-    const syncResult = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-    const promptsByType = typeof syncResult[STORAGE_KEYS.CUSTOM_PROMPTS] === 'object' && syncResult[STORAGE_KEYS.CUSTOM_PROMPTS] !== null
-      ? syncResult[STORAGE_KEYS.CUSTOM_PROMPTS]
-      : {};
+    const syncResult = await chrome.storage.sync.get(
+      STORAGE_KEYS.CUSTOM_PROMPTS
+    );
+    const promptsByType =
+      typeof syncResult[STORAGE_KEYS.CUSTOM_PROMPTS] === 'object' &&
+      syncResult[STORAGE_KEYS.CUSTOM_PROMPTS] !== null
+        ? syncResult[STORAGE_KEYS.CUSTOM_PROMPTS]
+        : {};
 
     let promptsAdded = false;
 
@@ -35,7 +42,10 @@ async function initializeDefaultPrompts() {
         // Ensure the content type exists in the sync storage structure
         if (!promptsByType[contentType]) {
           promptsByType[contentType] = { prompts: {} };
-        } else if (typeof promptsByType[contentType].prompts !== 'object' || promptsByType[contentType].prompts === null) {
+        } else if (
+          typeof promptsByType[contentType].prompts !== 'object' ||
+          promptsByType[contentType].prompts === null
+        ) {
           promptsByType[contentType].prompts = {};
         }
 
@@ -43,13 +53,19 @@ async function initializeDefaultPrompts() {
 
         // Iterate through prompts defined for this content type in the default config
         for (const defaultPromptName in defaultPromptsForType) {
-          if (Object.hasOwnProperty.call(defaultPromptsForType, defaultPromptName)) {
-            const defaultPromptContent = defaultPromptsForType[defaultPromptName];
+          if (
+            Object.hasOwnProperty.call(defaultPromptsForType, defaultPromptName)
+          ) {
+            const defaultPromptContent =
+              defaultPromptsForType[defaultPromptName];
 
             // Check if a prompt with the same name already exists in sync storage for this type
             const existingPrompts = promptsByType[contentType].prompts;
             const nameExists = Object.values(existingPrompts).some(
-              (prompt) => prompt && typeof prompt === 'object' && prompt.name === defaultPromptName
+              (prompt) =>
+                prompt &&
+                typeof prompt === 'object' &&
+                prompt.name === defaultPromptName
             );
 
             if (!nameExists) {
@@ -66,9 +82,13 @@ async function initializeDefaultPrompts() {
               };
               promptsByType[contentType].prompts[newPromptId] = newPrompt;
               promptsAdded = true;
-              logger.background.info(`Added default prompt: "${defaultPromptName}" for type "${contentType}"`);
+              logger.background.info(
+                `Added default prompt: "${defaultPromptName}" for type "${contentType}"`
+              );
             } else {
-              logger.background.info(`Default prompt "${defaultPromptName}" for type "${contentType}" already exists. Skipping.`);
+              logger.background.info(
+                `Default prompt "${defaultPromptName}" for type "${contentType}" already exists. Skipping.`
+              );
             }
           }
         }
@@ -77,19 +97,24 @@ async function initializeDefaultPrompts() {
 
     // Save the potentially updated custom prompts
     if (promptsAdded) {
-      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: promptsByType });
-      logger.background.info('Successfully added/updated custom prompts in sync storage.');
+      await chrome.storage.sync.set({
+        [STORAGE_KEYS.CUSTOM_PROMPTS]: promptsByType,
+      });
+      logger.background.info(
+        'Successfully added/updated custom prompts in sync storage.'
+      );
     } else {
       logger.background.info('No new custom prompts needed to be added.');
     }
 
     // Use centralized function to ensure default prompts are set correctly
     await ensureDefaultPrompts();
-    logger.background.info('Ensured default prompts are set after initialization.');
+    logger.background.info(
+      'Ensured default prompts are set after initialization.'
+    );
 
     // Return true indicating success (or at least completion without error)
     return true;
-
   } catch (error) {
     logger.background.error('Error initializing default prompts:', error);
     // Return false indicating failure
@@ -108,7 +133,9 @@ export async function initializeExtension() {
     logger.background.info('Volatile state reset complete');
 
     // Reset all tab sidebar visibility states to false
-    logger.background.info('Resetting all tab sidebar visibility states to false...');
+    logger.background.info(
+      'Resetting all tab sidebar visibility states to false...'
+    );
     const tabs = await chrome.tabs.query({});
     const initialSidebarStates = {};
     for (const tab of tabs) {
@@ -116,8 +143,8 @@ export async function initializeExtension() {
         initialSidebarStates[tab.id.toString()] = false;
       }
     }
-    await chrome.storage.local.set({ 
-      [STORAGE_KEYS.TAB_SIDEBAR_STATES]: initialSidebarStates 
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.TAB_SIDEBAR_STATES]: initialSidebarStates,
     });
     logger.background.info('All tab sidebar visibility states reset.');
 
@@ -137,47 +164,70 @@ export async function handleInstallation(details) {
 
   // --- Default Prompt Initialization Logic ---
   if (details.reason === 'install') {
-    logger.background.info('Reason is "install", checking default prompt initialization flag...');
+    logger.background.info(
+      'Reason is "install", checking default prompt initialization flag...'
+    );
     const flagKey = STORAGE_KEYS.DEFAULT_PROMPTS_INIT_FLAG;
     try {
       const flagResult = await chrome.storage.local.get(flagKey);
-      if (!flagResult[flagKey]) { // Only run if flag is not true
-        logger.background.info('Initialization flag not set. Proceeding with default prompt initialization.');
+      if (!flagResult[flagKey]) {
+        // Only run if flag is not true
+        logger.background.info(
+          'Initialization flag not set. Proceeding with default prompt initialization.'
+        );
         const promptInitSuccess = await initializeDefaultPrompts();
         if (promptInitSuccess) {
           // Set the flag only if initialization completed successfully
           await chrome.storage.local.set({ [flagKey]: true });
           logger.background.info('Set default prompts initialization flag.');
         } else {
-           logger.background.warn('Default prompt initialization failed. Flag not set.');
+          logger.background.warn(
+            'Default prompt initialization failed. Flag not set.'
+          );
         }
       } else {
-        logger.background.info('Default prompts initialization flag is already set. Skipping.');
+        logger.background.info(
+          'Default prompts initialization flag is already set. Skipping.'
+        );
       }
     } catch (error) {
-      logger.background.error('Error during default prompt initialization check:', error);
+      logger.background.error(
+        'Error during default prompt initialization check:',
+        error
+      );
     }
   } else {
-     logger.background.info(`Reason is "${details.reason}", skipping default prompt initialization.`);
+    logger.background.info(
+      `Reason is "${details.reason}", skipping default prompt initialization.`
+    );
   }
 
   // --- Set Default Popup Platform Preference ---
   if (details.reason === 'install') {
-    logger.background.info('Setting default popup platform preference on install...');
+    logger.background.info(
+      'Setting default popup platform preference on install...'
+    );
     try {
       const platformList = await ConfigService.getAllPlatformConfigs();
 
       if (platformList && platformList.length > 0) {
         const defaultPlatformId = platformList[0].id; // Use the ID of the first platform
         await chrome.storage.sync.set({
-          [STORAGE_KEYS.POPUP_PLATFORM]: defaultPlatformId
+          [STORAGE_KEYS.POPUP_PLATFORM]: defaultPlatformId,
         });
-        logger.background.info(`Default popup platform set to: ${defaultPlatformId}`);
+        logger.background.info(
+          `Default popup platform set to: ${defaultPlatformId}`
+        );
       } else {
-        logger.background.warn('No platforms found in config, cannot set default popup platform.');
+        logger.background.warn(
+          'No platforms found in config, cannot set default popup platform.'
+        );
       }
     } catch (error) {
-      logger.background.error('Error setting default popup platform preference:', error);
+      logger.background.error(
+        'Error setting default popup platform preference:',
+        error
+      );
     }
   }
   // --- End Set Default Popup Platform Preference ---
@@ -196,17 +246,18 @@ export async function handleInstallation(details) {
       await chrome.contextMenus.removeAll();
       // Create the new context menu item
       await chrome.contextMenus.create({
-        id: "menu-quick-process",
-        title: "Process in Web UI (Default Prompt)",
-        contexts: ["page"], // Show only when right-clicking on the page
+        id: 'menu-quick-process',
+        title: 'Process in Web UI (Default Prompt)',
+        contexts: ['page'], // Show only when right-clicking on the page
       });
       logger.background.info('Context menu created successfully.');
     } catch (menuError) {
       logger.background.error('Failed to create context menu:', menuError);
     }
-
-  } catch(error) {
-     logger.background.error('Failed to complete core extension initialization after install/update event.');
+  } catch (error) {
+    logger.background.error(
+      'Failed to complete core extension initialization after install/update event.'
+    );
   }
 }
 

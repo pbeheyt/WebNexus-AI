@@ -3,7 +3,7 @@ import React from 'react';
 
 /**
  * A reusable select list component that handles various data formats and states
- * 
+ *
  * @param {Object} props - Component props
  * @param {Array|Object} props.options - Options to display (array or object)
  * @param {string|null} props.selectedValue - Currently selected value
@@ -22,21 +22,25 @@ export function SelectList({
   loading = false,
   disabled = false,
   emptyMessage = 'No options available',
-  className = ''
+  className = '',
 }) {
   // Format options to a consistent array format regardless of input type
   const formatOptions = () => {
-    if (!options || (Array.isArray(options) && options.length === 0) || 
-        (!Array.isArray(options) && Object.keys(options).length === 0)) {
+    if (
+      !options ||
+      (Array.isArray(options) && options.length === 0) ||
+      (!Array.isArray(options) && Object.keys(options).length === 0)
+    ) {
       return [];
     }
 
     if (Array.isArray(options)) {
-      return options.map(option => {
+      return options.map((option) => {
         if (typeof option === 'object' && option !== null) {
-          return { 
-            id: option.id || option.value || '', 
-            name: option.name || option.label || option.id || option.value || '' 
+          return {
+            id: option.id || option.value || '',
+            name:
+              option.name || option.label || option.id || option.value || '',
           };
         }
         return { id: option, name: option };
@@ -45,9 +49,9 @@ export function SelectList({
 
     return Object.entries(options).map(([key, value]) => {
       if (typeof value === 'object' && value !== null) {
-        return { 
-          id: value.id || value.value || key, 
-          name: value.name || value.label || value.id || value.value || key 
+        return {
+          id: value.id || value.value || key,
+          name: value.name || value.label || value.id || value.value || key,
         };
       }
       return { id: key, name: value };
@@ -55,16 +59,19 @@ export function SelectList({
   };
 
   const formattedOptions = formatOptions();
-  
+
   // Handle loading state
   if (loading) {
     return (
       <div className={`relative w-full ${className}`}>
-        <select className="w-full p-2 border-0 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-not-allowed text-sm" disabled>
+        <select
+          className='w-full p-2 border-0 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-not-allowed text-sm'
+          disabled
+        >
           <option>{placeholder}</option>
         </select>
-        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+        <div className='absolute right-2 top-1/2 transform -translate-y-1/2'>
+          <div className='w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin'></div>
         </div>
       </div>
     );
@@ -74,7 +81,10 @@ export function SelectList({
   if (formattedOptions.length === 0) {
     return (
       <div className={`relative w-full ${className}`}>
-        <select className="w-full p-2 border-0 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-not-allowed text-sm" disabled>
+        <select
+          className='w-full p-2 border-0 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-not-allowed text-sm'
+          disabled
+        >
           <option>{emptyMessage}</option>
         </select>
       </div>
@@ -84,7 +94,8 @@ export function SelectList({
   // Normal state with options
   // Custom arrow SVG (URL encoded) using currentColor
   const customArrowStyle = {
-    backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'currentColor\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+    backgroundImage:
+      "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
     backgroundPosition: 'right 0.5rem center', // Position arrow
     backgroundSize: '1.5em 1.5em', // Size arrow
   };
@@ -98,8 +109,8 @@ export function SelectList({
         disabled={disabled}
         style={customArrowStyle} // Apply custom arrow style
       >
-        {!selectedValue && <option value="">{placeholder}</option>}
-        
+        {!selectedValue && <option value=''>{placeholder}</option>}
+
         {formattedOptions.map((option) => (
           <option key={option.id} value={option.id}>
             {option.name}
