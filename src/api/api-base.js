@@ -31,35 +31,44 @@ class BaseApiService extends ApiInterface {
 
     try {
       if (!requestConfig || !resolvedParams || !prompt || !onChunk) {
-        throw new Error(`[${this.platformId}] Invalid requestConfig provided to BaseApiService.processRequest`);
+        throw new Error(`Invalid requestConfig provided`);
       }
       if (!apiKey) {
-        throw new Error(`[${this.platformId}] API key not available in BaseApiService`);
+        throw new Error(`API key not available for ${this.platformId}`);
       }
 
       const structuredPrompt = this._createStructuredPrompt(prompt, formattedContent);
       // Update log call
       this.logger.info(`[${this.platformId}] Processing request for model ${model} with${formattedContent ? ' included' : 'out'} content.`);
       const fetchOptions = await this._buildApiRequest(structuredPrompt, resolvedParams, apiKey);
-      await this._executeStreamingRequest(fetchOptions, onChunk, abortSignal, model);
+      const streamSuccess = await this._executeStreamingRequest(fetchOptions, onChunk, abortSignal, model);
 
-      // Update log call
-      this.logger.info(`[${this.platformId}] Streaming request for model ${model} completed.`);
-      return { success: true, model: model };
+      if (streamSuccess) {
+          logger.info(`[${this.platformId}] Streaming request for model ${model} completed successfully.`);
+          return { success: true, model: model };
+      } else {
+          // Error was already handled by onChunk within _executeStreamingRequest
+          logger.warn(`[${this.platformId}] Streaming request for model ${model} failed (error handled via onChunk).`);
+          // Return a failure object, but the specific error is already in the chat via onChunk.
+          return { success: false, error: "Streaming failed (see chat for details)", model: model || 'unknown' };
+      }
 
     } catch (error) {
-      // Update log call
-      this.logger.error(`[${this.platformId}] Error in BaseApiService.processRequest for model ${model}:`, error);
+      // This catch block now primarily handles SETUP errors before the fetch call
+      const setupErrorMsg = `Setup Error: ${error.message}`;
+      logger.error(`[${this.platformId}] Error during API request setup for model ${model}:`, error);
+      // Ensure onChunk is only called if it's a valid function
       if (onChunk && typeof onChunk === 'function') {
         onChunk({
           done: true,
-          error: `API Request Setup Error: ${error.message}`,
+          error: setupErrorMsg, // Send the specific setup error
           model: model || 'unknown'
         });
       }
+      // Return a failure object indicating a setup error
       return {
         success: false,
-        error: `API Request Setup Error: ${error.message}`,
+        error: setupErrorMsg, // Return the setup error
         model: model || 'unknown'
       };
     }
@@ -197,7 +206,7 @@ class BaseApiService extends ApiInterface {
         // Update log call
         this.logger.error(`[${this.platformId}] API Error (${response.status}) for model ${model}: ${errorMessage}`, response);
         onChunk({ done: true, error: errorMessage, model });
-        throw new Error(`API request failed with status ${response.status}: ${errorMessage}`);
+        return false; // Indicate failure to the caller
       }
       if (!response.body) throw new Error('Response body is null or undefined.');
 
@@ -273,10 +282,10 @@ class BaseApiService extends ApiInterface {
         // No need to re-throw AbortError, it's handled.
       } else {
         // Handle other errors during fetch or reading
+        const networkOrStreamErrorMsg = `Network/Stream Error: ${error.message || 'An unknown streaming error occurred'}`;
         this.logger.error(`[${this.platformId}] Unhandled streaming error for model ${model}:`, error);
-        onChunk({ done: true, error: error.message || 'An unknown streaming error occurred', model });
-        // Re-throw other errors to be caught by the outer try/catch in processRequest
-        throw error;
+        onChunk({ done: true, error: networkOrStreamErrorMsg, model });
+        // Don't re-throw - error is already handled via onChunk
       }
       return false; // Indicate handled error (AbortError) or that an error occurred
     } finally {
