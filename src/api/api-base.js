@@ -262,7 +262,10 @@ class BaseApiService extends ApiInterface {
 
       reader = response.body.getReader();
 
-      while (true) {
+        // Disable rule because this is a standard pattern for reading streams
+        // until done or an error occurs, with explicit break conditions inside.
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
         const { done, value } = await reader.read();
 
         if (done) {

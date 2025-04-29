@@ -54,3 +54,5 @@ export const CopyIcon = memo(({ state = 'idle' }) => {
     </svg>
   );
 });
+
+CopyIcon.displayName = 'CopyIcon';

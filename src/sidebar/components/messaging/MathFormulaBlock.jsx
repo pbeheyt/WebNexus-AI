@@ -60,4 +60,6 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
   );
 });
 
+MathFormulaBlock.displayName = 'MathFormulaBlock';
+
 export default MathFormulaBlock;

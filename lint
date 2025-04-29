@@ -20,10 +20,9 @@
   26:24  warning  'requestConfig' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/background/api/api-coordinator.js
-   42:40  error    'getPreferredAiPlatform' is not defined                       no-undef
-  157:5   warning  'preTruncationCost' is assigned a value but never used        no-unused-vars
-  158:5   warning  'preTruncationOutput' is assigned a value but never used      no-unused-vars
-  183:11  warning  'skipExtractionRequested' is assigned a value but never used  no-unused-vars
+  143:5   warning  'preTruncationCost' is assigned a value but never used        no-unused-vars
+  144:5   warning  'preTruncationOutput' is assigned a value but never used      no-unused-vars
+  169:11  warning  'skipExtractionRequested' is assigned a value but never used  no-unused-vars
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/background/core/message-router.js
   86:48  warning  'sender' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
@@ -604,5 +603,5 @@
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/hooks/useTokenTracking.js
   59:26  warning  'prevStats' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
 
-✖ 453 problems (36 errors, 417 warnings)
+✖ 452 problems (35 errors, 417 warnings)
 

@@ -113,4 +113,6 @@ const EnhancedCodeBlock = memo(
   }
 );
 
+EnhancedCodeBlock.displayName = 'EnhancedCodeBlock';
+
 export default EnhancedCodeBlock;

@@ -29,5 +29,8 @@ export const IconButton = forwardRef(
         <IconComponent className={iconClassName} aria-hidden='true' />
       </button>
     );
+
   }
 );
+
+IconButton.displayName = 'IconButton';
