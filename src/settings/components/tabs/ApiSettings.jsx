@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import logger from '../../../shared/logger';
 import { useNotification } from '../../../components';
 import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
@@ -36,7 +37,7 @@ const ApiSettings = () => {
         const advancedResult = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
         setAdvancedSettings(advancedResult[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {});
       } catch (err) {
-        console.error('Error loading API settings:', err);
+        logger.settings.error('Error loading API settings:', err);
         error('Failed to load API settings');
       } finally {
         setIsLoading(false);

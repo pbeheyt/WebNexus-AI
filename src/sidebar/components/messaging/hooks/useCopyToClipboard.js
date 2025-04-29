@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import logger from '../../../../shared/logger';
 import { copyToClipboard } from '../utils/clipboard.js';
 import { CopyIcon, CheckIcon, XIcon } from '../../../../components/index.js';
 
@@ -18,7 +19,7 @@ export const useCopyToClipboard = (textToCopy) => {
       setCopyState('copied');
       setDisplayIconState('copied');
     } catch (error) {
-      console.error('Failed to copy text:', error);
+      logger.sidebar.error('Failed to copy text:', error);
       setCopyState('error');
       setDisplayIconState('error');
     }

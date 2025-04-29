@@ -1,4 +1,5 @@
 // src/shared/utils/prompt-utils.js
+import logger from '../logger';
 import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
 
 /**
@@ -55,7 +56,7 @@ export async function ensureDefaultPrompts() {
     return false;
 
   } catch (error) {
-    console.error('Error in ensureDefaultPrompts:', error);
+    logger.service.error('Error in ensureDefaultPrompts:', error);
     return false;
   }
 }
@@ -85,7 +86,7 @@ export async function loadRelevantPrompts(contentType) {
 
     return relevantPrompts;
   } catch (error) {
-    console.error("Error loading relevant prompts:", error);
+    logger.service.error("Error loading relevant prompts:", error);
     return []; // Return empty array on error
   }
 }

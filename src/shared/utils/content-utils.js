@@ -1,5 +1,6 @@
 // src/shared/utils/content-utils.js
 import { CONTENT_TYPES } from '../constants.js';
+import logger from '../logger';
 
 /**
  * Determine content type based on URL and selection state
@@ -34,7 +35,7 @@ export function determineContentType(url) {
     }
   } catch (e) {
     // Handle potential URL parsing errors (e.g., invalid URL format)
-    console.warn(`Could not parse URL for content type detection: ${url}`, e);
+    logger.service.warn(`Could not parse URL for content type detection: ${url}`, e);
     // Fallback to basic checks if URL parsing fails
     if (isPdf || containsPdfPath || containsPdfViewer || isChromeExtensionPdf) {
       return CONTENT_TYPES.PDF;
@@ -74,7 +75,7 @@ export function isInjectablePage(url) {
     }
     return false; // Block other schemes
   } catch (e) {
-    console.warn(`URL parsing failed or non-standard scheme for injection check: ${url}`, e.message);
+    logger.service.warn(`URL parsing failed or non-standard scheme for injection check: ${url}`, e.message);
     return false; // Disallow injection if URL parsing fails or scheme is unknown/disallowed
   }
 }

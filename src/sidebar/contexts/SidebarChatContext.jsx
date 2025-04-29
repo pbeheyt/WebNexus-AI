@@ -1,6 +1,7 @@
 // src/sidebar/contexts/SidebarChatContext.jsx
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import logger from '../../shared/logger';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';
@@ -65,7 +66,7 @@ export function SidebarChatProvider({ children }) {
         // Get API configuration using the new function (synchronous)
         const config = await getPlatformApiConfig(selectedPlatformId);
         if (!config || !config.models) {
-          console.warn('Platform API configuration missing required structure:', {
+          logger.sidebar.warn('Platform API configuration missing required structure:', {
             platformId: selectedPlatformId,
             hasModels: !!config?.models
           });
@@ -77,7 +78,7 @@ export function SidebarChatProvider({ children }) {
         const modelData = config.models.find(m => m.id === selectedModel);
         setModelConfigData(modelData);
       } catch (error) {
-        console.error('Failed to load or process platform API configuration:', error);
+        logger.sidebar.error('Failed to load or process platform API configuration:', error);
         setModelConfigData(null);
       }
     };
@@ -97,7 +98,7 @@ export function SidebarChatProvider({ children }) {
         const status = await calculateContextStatus(modelConfigData);
         setContextStatus(status);
       } catch (error) {
-        console.error('Error calculating context status:', error);
+        logger.sidebar.error('Error calculating context status:', error);
         setContextStatus({ warningLevel: 'none' });
       }
     };
@@ -123,7 +124,7 @@ export function SidebarChatProvider({ children }) {
         // Reset extracted content flag when tab changes
         setExtractedContentAdded(history.length > 0);
       } catch (error) {
-        console.error('Error loading tab chat history:', error);
+        logger.sidebar.error('Error loading tab chat history:', error);
       }
     };
 
@@ -309,7 +310,7 @@ export function SidebarChatProvider({ children }) {
 
           if (chunkData.cancelled === true) {
             // Handle Cancellation: Stream was cancelled by the user (via background script signal)
-            console.info(`Stream ${message.streamId} received cancellation signal.`);
+            logger.sidebar.info(`Stream ${message.streamId} received cancellation signal.`);
             // Use partial content received so far, mark as cancelled but not an error
             const finalContent = chunkData.fullContent || batchedStreamingContentRef.current; // Use buffered ref
             await handleStreamComplete(streamingMessageId, finalContent, chunkData.model, false, true); // isError=false, isCancelled=true
@@ -473,7 +474,7 @@ export function SidebarChatProvider({ children }) {
 
       // Handle case where context extraction was skipped (e.g., non-injectable page)
       if (result && result.skippedContext === true) {
-        console.info('Context extraction skipped by background:', result.reason);
+        logger.sidebar.info('Context extraction skipped by background:', result.reason);
 
         // Create the system message explaining why
         const systemMessage = {
@@ -1001,9 +1002,9 @@ export function SidebarChatProvider({ children }) {
     if (window.confirm("Are you sure you want to clear all chat history and data for this tab? This action cannot be undone.")) {
       try {
         if (streamingMessageId && isProcessing && !isCanceling) {
-          console.info('Refresh requested: Cancelling ongoing stream first...');
+          logger.sidebar.info('Refresh requested: Cancelling ongoing stream first...');
           await cancelStream(); // Wait for cancellation to attempt completion
-          console.info('Stream cancellation attempted.');
+          logger.sidebar.info('Stream cancellation attempted.');
         }
 
         const response = await robustSendMessage({
@@ -1055,7 +1056,7 @@ export function SidebarChatProvider({ children }) {
     }
 
     const tabIdKey = tabId.toString();
-    console.info(`Attempting to clear formatted content for tab: ${tabIdKey}`);
+    logger.sidebar.info(`Attempting to clear formatted content for tab: ${tabIdKey}`);
 
     try {
       // Retrieve the entire formatted content object
@@ -1072,14 +1073,14 @@ export function SidebarChatProvider({ children }) {
 
         // Save the modified object back to storage
         await chrome.storage.local.set({ [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: updatedFormattedContent });
-        console.info(`Successfully cleared formatted content for tab: ${tabIdKey}`);
+        logger.sidebar.info(`Successfully cleared formatted content for tab: ${tabIdKey}`);
       } else {
-        console.info(`No formatted content found in storage for tab: ${tabIdKey}. No action needed.`);
+        logger.sidebar.info(`No formatted content found in storage for tab: ${tabIdKey}. No action needed.`);
       }
 
       // Also reset the local flag indicating if extracted content was added to the current chat view
       setExtractedContentAdded(false);
-      console.info(`Reset extractedContentAdded flag for tab: ${tabIdKey}`);
+      logger.sidebar.info(`Reset extractedContentAdded flag for tab: ${tabIdKey}`);
 
     } catch (error) {
       console.error(`Error clearing formatted content for tab ${tabIdKey}:`, error);

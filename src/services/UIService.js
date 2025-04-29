@@ -1,4 +1,5 @@
 const { STORAGE_KEYS } = require('../shared/constants');
+const logger = require('../shared/logger.js').service;
 
 class UIService {
   #theme = 'light';
@@ -41,7 +42,7 @@ class UIService {
         textSize: this.#textSize
       };
     } catch (error) {
-      console.error('UI service initialization error:', error);
+      logger.error('UI service initialization error:', error);
       return {
         theme: 'light',
         textSize: 'sm'
@@ -65,7 +66,7 @@ class UIService {
       
       return newTheme;
     } catch (error) {
-      console.error('Error toggling theme:', error);
+      logger.error('Error toggling theme:', error);
       return this.#theme;
     }
   }
@@ -93,7 +94,7 @@ class UIService {
       
       return newTextSize;
     } catch (error) {
-      console.error('Error toggling text size:', error);
+      logger.error('Error toggling text size:', error);
       return this.#textSize;
     }
   }
@@ -141,7 +142,7 @@ class UIService {
           textSize: this.#textSize
         });
       } catch (error) {
-        console.error('Error in UI observer callback:', error);
+        logger.error('Error in UI observer callback:', error);
       }
     }
   }

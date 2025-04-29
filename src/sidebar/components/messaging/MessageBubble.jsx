@@ -1,5 +1,6 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
 import React, { memo, forwardRef } from 'react';
+import logger from '../../../shared/logger';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 
 // Import role-specific components
@@ -28,8 +29,8 @@ export const MessageBubble = memo(forwardRef(({
             // Pass the ref and all props down
             return <AssistantMessageBubble ref={ref} role={role} {...props} />;
         default:
-            // Log an error for unknown roles, consistent with original request
-            console.error(`Unknown message role: ${role}`);
-            return null; // Return null for unknown roles
+        // Log an error for unknown roles, consistent with original request
+        logger.sidebar.error(`Unknown message role: ${role}`);
+        return null; // Return null for unknown roles
     }
 })); // Close forwardRef

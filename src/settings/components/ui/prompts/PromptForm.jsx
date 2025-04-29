@@ -1,5 +1,6 @@
 // src/settings/components/ui/prompts/PromptForm.jsx
 import React, { useState, useEffect } from 'react';
+import logger from '../../../../shared/logger';
 import { Button, useNotification, CustomSelect } from '../../../../components';
 import {
   STORAGE_KEYS,
@@ -37,7 +38,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
         // Check if this prompt ID is the default for the *currently selected* content type in the form
         setIsDefaultForType(defaults[formData.contentType] === prompt.id);
       } catch (err) {
-        console.error('Error checking default prompt status in form:', err);
+        logger.settings.error('Error checking default prompt status in form:', err);
         setIsDefaultForType(false); // Assume not default on error
       }
     };
@@ -135,7 +136,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
           // If changed, remove the prompt from its original content type location
           if (customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
             delete customPromptsByType[prompt.contentType].prompts[prompt.id];
-            console.log(`Moved prompt ${prompt.id} from old content type ${prompt.contentType} to ${formData.contentType}`);
+            logger.settings.info(`Moved prompt ${prompt.id} from old content type ${prompt.contentType} to ${formData.contentType}`);
           }
         }
 
@@ -161,7 +162,7 @@ const PromptForm = ({ prompt = null, onCancel, onSuccess, initialContentType = C
       // Notify parent
       onSuccess();
     } catch (err) {
-      console.error('Error saving prompt:', err);
+      logger.settings.error('Error saving prompt:', err);
       error(`Error saving prompt: ${err.message}`, 10000);
     } finally {
       setIsSaving(false);

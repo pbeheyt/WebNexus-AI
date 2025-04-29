@@ -1,5 +1,6 @@
 // src/settings/components/ui/PromptDetail.jsx
 import React, { useState, useEffect } from 'react';
+import logger from '../../../../shared/logger';
 import { Button, useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
@@ -42,7 +43,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         delete customPromptsByType[prompt.contentType].prompts[prompt.id];
       } else {
         // Prompt might already be gone? Log a warning but proceed
-        console.warn(`Prompt ID ${prompt.id} not found in custom prompts during deletion.`);
+        logger.settings.warn(`Prompt ID ${prompt.id} not found in custom prompts during deletion.`);
       }
 
       // Clean up empty content type entry if no prompts remain
@@ -66,7 +67,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       onDelete(); // Notify parent component
 
     } catch (err) {
-      console.error('Error deleting prompt:', err);
+      logger.settings.error('Error deleting prompt:', err);
       // Display the specific error message from the check
       error(`Error deleting prompt: ${err.message}`, 10000);
     }
@@ -84,7 +85,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         const defaults = result[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
         setIsDefaultForType(defaults[prompt.contentType] === prompt.id);
       } catch (err) {
-        console.error('Error checking default prompt status:', err);
+        logger.settings.error('Error checking default prompt status:', err);
         setIsDefaultForType(false); // Assume not default on error
       }
     };
@@ -132,7 +133,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       success(`"${prompt.prompt.name}" is now the default for ${prompt.contentTypeLabel}.`);
 
     } catch (err) {
-      console.error('Error setting default prompt:', err);
+      logger.settings.error('Error setting default prompt:', err);
       error(`Failed to set default prompt: ${err.message}`);
     }
   };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import logger from '../../../../shared/logger';
 import { Button, useNotification, SliderInput, Toggle, IconButton, RefreshIcon } from '../../../../components';
 import { CustomSelect } from '../../../../components/core/CustomSelect';
 
@@ -242,7 +243,7 @@ const AdvancedSettings = ({
       setHasChanges(false);
       setIsAtDefaults(checkIfAtDefaults(formValues));
     } catch (err) {
-      console.error('Error saving settings:', err);
+      logger.settings.error('Error saving settings:', err);
       error(`Error: ${err.message}`);
     } finally {
       setIsSaving(false);

@@ -1,5 +1,6 @@
 // src/popup/Popup.jsx
 import { useEffect, useState, useRef } from 'react';
+import logger from '../shared/logger';
 import { useStatus } from './contexts/StatusContext';
 import { usePopupPlatform } from '../contexts/platform';
 import { AppHeader, StatusMessage, IconButton, InfoIcon, Tooltip, SidebarIcon, Toggle } from '../components'; // Added Toggle
@@ -144,7 +145,7 @@ export function Popup() {
             // Close popup *after* successful open attempt
             window.close();
           } catch (openError) {
-            console.error('Error opening side panel:', openError);
+            logger.popup.error('Error opening side panel:', openError);
             updateStatus(`Error opening sidebar: ${openError.message}`);
             // Keep popup open to show the error
           }
@@ -158,7 +159,7 @@ export function Popup() {
         throw new Error(response?.error || 'Failed to toggle sidebar state in background.');
       }
     } catch (error) {
-      console.error('Error in toggleSidebar:', error);
+      logger.popup.error('Error in toggleSidebar:', error);
       updateStatus(`Error: ${error.message}`, false); // Show error, stop loading indicator
       // Keep popup open to show the error
     }
@@ -212,7 +213,7 @@ export function Popup() {
       }
     } catch (error) {
       // Catch errors from the hook/message sending itself
-      console.error('Popup process error:', error);
+      logger.popup.error('Popup process error:', error);
       updateStatus(`Error: ${error.message || 'An unexpected error occurred'}`, false);
     } finally {
       // Ensure processing state is reset regardless of success or failure

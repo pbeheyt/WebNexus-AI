@@ -1,3 +1,5 @@
+import logger from '../../../../shared/logger';
+
 /**
  * Utility function for clipboard operations
  * Implements the modern clipboard API with fallback to document.execCommand
@@ -11,7 +13,7 @@ export const copyToClipboard = async (text) => {
       await navigator.clipboard.writeText(text);
       return;
     } catch (error) {
-      console.warn('navigator.clipboard.writeText failed, falling back:', error);
+      logger.sidebar.warn('navigator.clipboard.writeText failed, falling back:', error);
       // Continue to fallback method
     }
   }
@@ -32,7 +34,7 @@ export const copyToClipboard = async (text) => {
       throw new Error('Fallback copy method (execCommand) failed');
     }
   } catch (error) {
-    console.error('Fallback copy method failed:', error);
+    logger.sidebar.error('Fallback copy method failed:', error);
     throw error;
   } finally {
     document.body.removeChild(textarea);

@@ -1,5 +1,6 @@
 // src/components/MathFormulaBlock.jsx
 import React, { memo, useState } from 'react';
+import logger from '../../../shared/logger';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
@@ -22,7 +23,7 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
         <InlineMath math={content} /> :
         <BlockMath math={content} />;
     } catch (error) {
-      console.error('Math rendering error:', error);
+      logger.sidebar.error('Math rendering error:', error);
       setRenderError(true);
       return null;
     }

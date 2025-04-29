@@ -1,5 +1,6 @@
 // src/settings/components/ui/platforms/PlatformDetails.jsx
 import React, { useState, useEffect } from 'react';
+import logger from '../../../../shared/logger';
 import { Button, useNotification, PlatformIcon } from '../../../../components';
 import AdvancedSettings from './AdvancedSettings';
 import { STORAGE_KEYS } from '../../../../shared/constants';
@@ -100,12 +101,12 @@ const PlatformDetails = ({
     } catch (err) {
       if (err.isPortClosed) {
         // Handle specific port closed error during validation/saving
-        console.warn('handleSaveCredentials: Port closed during credential validation/saving.');
+        logger.settings.warn('handleSaveCredentials: Port closed during credential validation/saving.');
         error('Validation timed out or connection lost. Please try again.');
         // No specific validation state to set here, just notify and stop saving
       } else {
         // Handle other errors during validation or saving
-        console.error('Error saving API key:', err);
+        logger.settings.error('Error saving API key:', err);
         error(`Failed to save API key: ${err.message}`);
       }
     } finally {
@@ -137,7 +138,7 @@ const PlatformDetails = ({
       setOriginalApiKey('');
       setHasApiKeyChanges(false);
     } catch (err) {
-      console.error('Error removing API key:', err);
+      logger.settings.error('Error removing API key:', err);
       error(`Failed to remove API key: ${err.message}`);
     }
   };
@@ -201,7 +202,7 @@ const PlatformDetails = ({
 
       return true;
     } catch (err) {
-      console.error('Error resetting advanced settings:', err);
+      logger.settings.error('Error resetting advanced settings:', err);
       error(`Failed to reset advanced settings: ${err.message}`);
       return false;
     }
@@ -243,7 +244,7 @@ const PlatformDetails = ({
       success('Advanced settings saved');
       return true;
     } catch (err) {
-      console.error('Error saving advanced settings:', err);
+      logger.settings.error('Error saving advanced settings:', err);
       error(`Failed to save advanced settings: ${err.message}`);
       return false;
     }

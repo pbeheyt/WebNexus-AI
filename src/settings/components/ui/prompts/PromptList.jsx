@@ -1,5 +1,6 @@
 // src/settings/components/ui/prompts/PromptList.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import logger from '../../../../shared/logger';
 import { useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ContentTypeIcon } from '../../../../components/layout/ContentTypeIcon';
@@ -51,7 +52,7 @@ const PromptList = ({
         setDefaultPromptIds(defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {}); // Store the defaults object
 
       } catch (err) {
-        console.error('Error loading prompts or defaults:', err);
+        logger.settings.error('Error loading prompts or defaults:', err);
         error('Failed to load prompts or default settings');
       }
     };
@@ -71,7 +72,7 @@ const PromptList = ({
   useEffect(() => {
     const handleStorageChange = (changes, area) => {
       if (area === 'sync' && changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]) {
-        console.log('Default prompts changed, reloading defaults...');
+        logger.settings.info('Default prompts changed, reloading defaults...');
         const newDefaults = changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE].newValue || {};
         setDefaultPromptIds(newDefaults);
       }
