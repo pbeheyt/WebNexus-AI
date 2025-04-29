@@ -1,6 +1,7 @@
 // src/sidebar/hooks/useTokenTracking.js
 
 import { useState, useEffect, useCallback } from 'react';
+import logger from '../../shared/logger';
 import TokenManagementService from '../services/TokenManagementService';
 import { STORAGE_KEYS } from "../../shared/constants";
 
@@ -30,18 +31,18 @@ export function useTokenTracking(tabId) {
         const stats = await TokenManagementService.getTokenStatistics(tabId);
         setTokenStats(stats);
       } catch (error) {
-        console.error('Error loading token data:', error);
+        logger.sidebar.error('Error loading token data:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
-    
+
     // Set up a listener for storage changes to keep state in sync
     const handleStorageChange = (changes, area) => {
       if (area !== 'local' || !tabId) return;
-      
+
       // Check if token statistics were updated directly in storage
       if (changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS] &&
           changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue) {
@@ -57,10 +58,10 @@ export function useTokenTracking(tabId) {
         }
       }
     };
-    
+
     // Add storage change listener
     chrome.storage.onChanged.addListener(handleStorageChange);
-    
+
     // Clean up listener
     return () => {
       chrome.storage.onChanged.removeListener(handleStorageChange);
@@ -74,14 +75,14 @@ export function useTokenTracking(tabId) {
    */
   const calculateContextStatus = useCallback(async (modelConfig) => {
     if (!tabId || !modelConfig) {
-      return { 
+      return {
         warningLevel: 'none',
         percentage: 0,
         tokensRemaining: 0,
         exceeds: false
       };
     }
-    
+
     // Use direct service call with current token stats
     return TokenManagementService.calculateContextStatus(tokenStats, modelConfig);
   }, [tabId, tokenStats]);
@@ -92,18 +93,18 @@ export function useTokenTracking(tabId) {
    */
   const clearTokenData = useCallback(async () => {
     if (!tabId) return false;
-    
+
     try {
       const success = await TokenManagementService.clearTokenStatistics(tabId);
-      
+
       if (success) {
         // Reset state to empty stats
         setTokenStats(TokenManagementService._getEmptyStats());
       }
-      
+
       return success;
     } catch (error) {
-      console.error('Error clearing token data:', error);
+      logger.sidebar.error('Error clearing token data:', error);
       return false;
     }
   }, [tabId]);
@@ -116,18 +117,18 @@ export function useTokenTracking(tabId) {
    */
   const calculateStats = useCallback(async (messages, modelConfig = null) => {
     if (!tabId) return tokenStats;
-    
+
     try {
       const stats = await TokenManagementService.calculateAndUpdateStatistics(
         tabId,
         messages,
         modelConfig
       );
-      
+
       setTokenStats(stats);
       return stats;
     } catch (error) {
-      console.error('Error calculating token statistics:', error);
+      logger.sidebar.error('Error calculating token statistics:', error);
       return tokenStats;
     }
   }, [tabId, tokenStats]);

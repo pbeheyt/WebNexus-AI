@@ -1,6 +1,7 @@
 // src/sidebar/services/TokenManagementService.js
 
 import { encode } from 'gpt-tokenizer';
+import logger from '../../shared/logger';
 import { STORAGE_KEYS, MESSAGE_ROLES } from "../../shared/constants";
 import ChatHistoryService from "./ChatHistoryService";
 
@@ -29,7 +30,7 @@ class TokenManagementService {
       // Return merged stats, ensuring all default fields are present
       return { ...this._getEmptyStats(), ...tabStats };
     } catch (error) {
-      console.error('TokenManagementService: Error getting token statistics:', error);
+      logger.sidebar.error('TokenManagementService: Error getting token statistics:', error);
       return this._getEmptyStats();
     }
   }
@@ -58,7 +59,7 @@ class TokenManagementService {
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats });
       return true;
     } catch (error) {
-      console.error('TokenManagementService: Error updating token statistics:', error);
+      logger.sidebar.error('TokenManagementService: Error updating token statistics:', error);
       return false;
     }
   }
@@ -182,7 +183,7 @@ class TokenManagementService {
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats });
       return true;
     } catch (error) {
-      console.error('TokenManagementService: Error clearing token statistics:', error);
+      logger.sidebar.error('TokenManagementService: Error clearing token statistics:', error);
       return false;
     }
   }
@@ -264,7 +265,7 @@ class TokenManagementService {
       // 8. Return the final statistics object
       return finalStatsObject;
     } catch (error) {
-      console.error('TokenManagementService: Error calculating token statistics:', error);
+      logger.sidebar.error('TokenManagementService: Error calculating token statistics:', error);
       return this._getEmptyStats();
     }
   }
@@ -284,9 +285,9 @@ class TokenManagementService {
       const tokens = encode(text);
       return tokens.length;
     } catch (error) {
-      console.error("TokenManagementService: Error encoding text with gpt-tokenizer:", error);
+      logger.sidebar.error("TokenManagementService: Error encoding text with gpt-tokenizer:", error);
       // Fallback on encoding error
-      console.warn("TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.");
+      logger.sidebar.warn("TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.");
       return Math.ceil(text.length / 4); // Keep fallback or return 0
     }
   }

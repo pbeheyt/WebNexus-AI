@@ -238,7 +238,7 @@ export function SidebarChatProvider({ children }) {
               }
             }
           } catch (extractError) {
-            console.error('Error adding extracted content:', extractError);
+            logger.sidebar.error('Error adding extracted content:', extractError);
           }
         }
 
@@ -254,7 +254,7 @@ export function SidebarChatProvider({ children }) {
           });
         }
       } catch (error) {
-        console.error('Error handling stream completion:', error);
+        logger.sidebar.error('Error handling stream completion:', error);
       } finally {
         // Clear the ref after saving history, regardless of success or error
         rerunStatsRef.current = null;
@@ -277,14 +277,14 @@ export function SidebarChatProvider({ children }) {
 
         // Ensure chunkData is properly formatted
         if (!chunkData) {
-          console.error('Invalid chunk data received:', message);
+          logger.sidebar.error('Invalid chunk data received:', message);
           return;
         }
 
         // Handle stream error
         if (chunkData.error) {
           const errorMessage = chunkData.error;
-          console.error('Stream error:', errorMessage);
+          logger.sidebar.error('Stream error:', errorMessage);
 
           // Complete the stream with the error message
           await handleStreamComplete(streamingMessageId, errorMessage, chunkData.model || null, true);
@@ -318,7 +318,7 @@ export function SidebarChatProvider({ children }) {
           } else if (chunkData.error) {
             // Handle Error: Stream ended with an error (other than user cancellation)
             const errorMessage = chunkData.error;
-            console.error(`Stream ${message.streamId} error:`, errorMessage);
+            logger.sidebar.error(`Stream ${message.streamId} error:`, errorMessage);
             // Update the message with the error, mark as error, not cancelled
             // Use buffered ref as fallback for error message context if needed, though error message itself is primary
             const finalContentOnError = chunkData.fullContent || batchedStreamingContentRef.current;
@@ -509,7 +509,7 @@ export function SidebarChatProvider({ children }) {
       }
 
     } catch (error) {
-      console.error('Error processing streaming message:', error);
+      logger.sidebar.error('Error processing streaming message:', error);
 
       // Determine error content based on port closure
       const isPortClosedError = error.isPortClosed;
@@ -554,7 +554,7 @@ export function SidebarChatProvider({ children }) {
 
     const index = messages.findIndex(msg => msg.id === messageId);
     if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
-      console.error('Cannot rerun: Message not found or not a user message.');
+      logger.sidebar.error('Cannot rerun: Message not found or not a user message.');
       return;
     }
 
@@ -613,7 +613,7 @@ export function SidebarChatProvider({ children }) {
         throw new Error(result?.error || 'Failed to initialize streaming for rerun');
       }
     } catch (error) {
-      console.error('Error processing rerun message:', error);
+      logger.sidebar.error('Error processing rerun message:', error);
 
       // Determine error content based on port closure
       const isPortClosedError = error.isPortClosed;
@@ -650,7 +650,7 @@ export function SidebarChatProvider({ children }) {
 
     const index = messages.findIndex(msg => msg.id === messageId);
     if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
-      console.error('Cannot edit/rerun: Message not found or not a user message.');
+      logger.sidebar.error('Cannot edit/rerun: Message not found or not a user message.');
       return;
     }
 
@@ -717,7 +717,7 @@ export function SidebarChatProvider({ children }) {
         throw new Error(result?.error || 'Failed to initialize streaming for edit/rerun');
       }
     } catch (error) {
-      console.error('Error processing edit/rerun message:', error);
+      logger.sidebar.error('Error processing edit/rerun message:', error);
 
       // Determine error content based on port closure
       const isPortClosedError = error.isPortClosed;
@@ -757,7 +757,7 @@ export function SidebarChatProvider({ children }) {
     const userIndex = assistantIndex - 1;
 
     if (assistantIndex <= 0 || userIndex < 0 || messages[userIndex].role !== MESSAGE_ROLES.USER) {
-        console.error('Cannot rerun assistant message: Invalid message structure or preceding user message not found.', { assistantIndex, userIndex });
+        logger.sidebar.error('Cannot rerun assistant message: Invalid message structure or preceding user message not found.', { assistantIndex, userIndex });
         return;
     }
 
@@ -825,7 +825,7 @@ export function SidebarChatProvider({ children }) {
             throw new Error(result?.error || 'Failed to initialize streaming for assistant rerun');
         }
     } catch (error) {
-      console.error('Error processing assistant rerun message:', error);
+      logger.sidebar.error('Error processing assistant rerun message:', error);
 
       // Determine error content based on port closure
       const isPortClosedError = error.isPortClosed;
@@ -934,12 +934,12 @@ export function SidebarChatProvider({ children }) {
                 setExtractedContentAdded(true);
 
               } else {
-                 console.warn('Cancelled message not found, cannot insert extracted content correctly.');
+                 logger.sidebar.warn('Cancelled message not found, cannot insert extracted content correctly.');
               }
             }
           }
         } catch (extractError) {
-          console.error('Error adding extracted content during cancellation:', extractError);
+          logger.sidebar.error('Error adding extracted content during cancellation:', extractError);
         }
       }
 
@@ -968,7 +968,7 @@ export function SidebarChatProvider({ children }) {
       batchedStreamingContentRef.current = ''; // Clear buffer on cancellation
 
     } catch (error) {
-      console.error('Error cancelling stream:', error);
+      logger.sidebar.error('Error cancelling stream:', error);
       setStreamingMessageId(null);
     } finally {
       setIsCanceling(false);
@@ -995,7 +995,7 @@ export function SidebarChatProvider({ children }) {
    */
   const resetCurrentTabData = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
-      console.warn('resetCurrentTabData called without a valid tabId.');
+      logger.sidebar.warn('resetCurrentTabData called without a valid tabId.');
       return;
     }
 
@@ -1026,7 +1026,7 @@ export function SidebarChatProvider({ children }) {
           throw new Error(response?.error || 'Background script failed to clear data.');
         }
       } catch (error) {
-        console.error('Failed to reset tab data:', error);
+        logger.sidebar.error('Failed to reset tab data:', error);
         // Ensure canceling state is reset even on error
         setIsCanceling(false);
       }
@@ -1051,7 +1051,7 @@ export function SidebarChatProvider({ children }) {
    */
   const clearFormattedContentForTab = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
-      console.warn('clearFormattedContentForTab called without a valid tabId.');
+      logger.sidebar.warn('clearFormattedContentForTab called without a valid tabId.');
       return;
     }
 
@@ -1083,7 +1083,7 @@ export function SidebarChatProvider({ children }) {
       logger.sidebar.info(`Reset extractedContentAdded flag for tab: ${tabIdKey}`);
 
     } catch (error) {
-      console.error(`Error clearing formatted content for tab ${tabIdKey}:`, error);
+      logger.sidebar.error(`Error clearing formatted content for tab ${tabIdKey}:`, error);
     }
   }, [tabId, setExtractedContentAdded]);
 
