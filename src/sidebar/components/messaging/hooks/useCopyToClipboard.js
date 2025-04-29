@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { copyToClipboard } from '../utils/clipboard.js';
-import { CopyIcon, CheckIcon, XMarkIcon } from '../../../../components/index.js';
+import { CopyIcon, CheckIcon, XIcon } from '../../../../components/index.js';
 
 export const useCopyToClipboard = (textToCopy) => {
   const [copyState, setCopyState] = useState('idle');
@@ -63,7 +63,7 @@ export const useCopyToClipboard = (textToCopy) => {
     IconComponent = CheckIcon;
     iconClassName = 'text-green-600 dark:text-green-400';
   } else if (displayIconState === 'error') {
-    IconComponent = XMarkIcon;
+          IconComponent = XIcon;
     iconClassName = 'text-red-500 dark:text-red-400';
   }
 

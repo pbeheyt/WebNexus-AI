@@ -29,7 +29,6 @@ export { RerunIcon } from './icons/RerunIcon';
 export { ArrowUpIcon } from './icons/ArrowUpIcon';
 export { XIcon } from './icons/XIcon';
 export { CheckIcon } from './icons/CheckIcon';
-export { XMarkIcon } from './icons/XMarkIcon';
 export { TextSizeIcon } from './icons/TextSizeIcon';
 export { SunIcon } from './icons/SunIcon';
 export { MoonIcon } from './icons/MoonIcon';
