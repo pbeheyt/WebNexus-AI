@@ -1,5 +1,5 @@
 // src/sidebar/SidebarApp.jsx
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useSidebarPlatform } from '../contexts/platform';
 import { useSidebarChat } from './contexts/SidebarChatContext';
 import { useContent } from '../contexts/ContentContext';
@@ -9,6 +9,7 @@ import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
 import { AppHeader, ErrorIcon } from '../components';
 import logger from '../shared/logger';
+import { debounce } from '../shared/utils/debounce';
 
 export default function SidebarApp() {
   const { tabId, setTabId } = useSidebarPlatform();
@@ -162,6 +163,12 @@ export default function SidebarApp() {
     });
   }, [headerExpanded, textSize]); // Recalculate if header state or text size changes
 
+  // Create a debounced version of the height calculation function
+  const debouncedCalculateHeight = useMemo(
+    () => debounce(calculateAndSetHeight, 150),
+    [calculateAndSetHeight]
+  );
+
   // Effect to trigger height calculation based on specific state changes
   useEffect(() => {
     if (isReady) { // Only calculate when the app is ready
@@ -218,7 +225,7 @@ export default function SidebarApp() {
           <ChatArea
             className="flex-1 min-h-0 relative z-0"
             otherUIHeight={otherUIHeight}
-            requestHeightRecalculation={calculateAndSetHeight}
+            requestHeightRecalculation={debouncedCalculateHeight} // Pass the debounced function
           />
 
           {/* User input at the bottom - Wrap to attach ref */}

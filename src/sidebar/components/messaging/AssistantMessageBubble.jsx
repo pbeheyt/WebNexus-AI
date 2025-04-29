@@ -1,4 +1,4 @@
-import React, { memo, forwardRef } from 'react';
+import React, { memo, forwardRef, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
@@ -33,7 +33,6 @@ export const AssistantMessageBubble = memo(forwardRef(({
 
     // Hooks needed for Assistant functionality
     const { rerunAssistantMessage, isProcessing, isCanceling } = useSidebarChat();
-    // Use copy hook, renaming variables as suggested to avoid potential future conflicts if logic diverges
     const {
         copyState: assistantCopyState,
         handleCopy: handleAssistantCopy,
@@ -49,39 +48,42 @@ export const AssistantMessageBubble = memo(forwardRef(({
         }
     };
 
-    // --- Preprocessing Step ---
-    const mathMap = new Map();
-    let preprocessedContent = '';
-    // Check if content exists and potentially contains math delimiters
-    const potentialMath = content && /(\$\$|\\\[|\\\]|\$|\\\(|\\\))/.test(content);
-    if (potentialMath) {
-        let mathIndex = 0;
-        try {
-            const segments = parseTextAndMath(content || '');
-            const processedSegments = segments.map((segment) => {
-                if (segment.type === 'math') {
-                    const placeholder = `@@MATH_${segment.inline ? 'INLINE' : 'BLOCK'}_${mathIndex++}@@`;
-                    mathMap.set(placeholder, { content: segment.value, inline: segment.inline });
-                    return placeholder;
-                }
-                return segment.value;
-            });
-            preprocessedContent = processedSegments.join('');
-        } catch (error) {
-            logger.sidebar.error("Error during math preprocessing:", error);
-            preprocessedContent = content || ''; // Fallback
-        }
-    } else {
-        preprocessedContent = content || ''; // Skip preprocessing
-    }
-    // --- End Preprocessing ---
+    // --- Memoized Preprocessing Step ---
+    const { preprocessedContent, mathMap } = useMemo(() => {
+        const map = new Map();
+        let processed = '';
+        const potentialMath = content && /(\$\$|\\\[|\\\]|\$|\\\(|\\\))/.test(content);
 
-    // --- Optimization Check ---
-    const hasMathPlaceholders = HAS_MATH_PLACEHOLDER_REGEX.test(preprocessedContent);
+        if (potentialMath) {
+            let mathIndex = 0;
+            try {
+                const segments = parseTextAndMath(content || '');
+                const processedSegments = segments.map((segment) => {
+                    if (segment.type === 'math') {
+                        const placeholder = `@@MATH_${segment.inline ? 'INLINE' : 'BLOCK'}_${mathIndex++}@@`;
+                        map.set(placeholder, { content: segment.value, inline: segment.inline });
+                        return placeholder;
+                    }
+                    return segment.value;
+                });
+                processed = processedSegments.join('');
+            } catch (error) {
+                logger.sidebar.error("Error during math preprocessing:", error);
+                processed = content || ''; // Fallback
+            }
+        } else {
+            processed = content || ''; // Skip preprocessing
+        }
+        return { preprocessedContent: processed, mathMap: map };
+    }, [content]);
+    // --- End Memoized Preprocessing ---
+
+    // --- Optimization Check (after memoization) ---
+    const hasMathPlaceholders = useMemo(() => HAS_MATH_PLACEHOLDER_REGEX.test(preprocessedContent), [preprocessedContent]);
     // --- End Optimization Check ---
 
-    // --- Define Component Overrides ---
-    const markdownComponents = {
+    // --- Memoized Component Overrides ---
+    const markdownComponents = useMemo(() => ({
         h1: ({ node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders ? renderWithPlaceholdersRecursive(children, mathMap) : children;
             return <h1 className="text-xl font-semibold mt-6 mb-4" {...props}>{processedChildren}</h1>;
@@ -178,8 +180,8 @@ export const AssistantMessageBubble = memo(forwardRef(({
             const Tag = containsBlockElement ? 'span' : 'em';
             return <Tag className={commonClasses} {...props}>{processedChildren}</Tag>;
         },
-    };
-    // --- End Component Overrides ---
+    }), [hasMathPlaceholders, mathMap]); // Dependencies for markdownComponents memo
+    // --- End Memoized Component Overrides ---
 
     return (
         <div
