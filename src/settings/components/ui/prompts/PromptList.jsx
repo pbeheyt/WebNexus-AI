@@ -130,7 +130,7 @@ const PromptList = ({
                   {item.prompt.name}
                 </h3>
               </div>
-              <small className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs select-none">
+              <small className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs select-none min-h-5">
                 <div className="flex items-center select-none">
                   {item.contentTypeLabel}
                   <ContentTypeIcon contentType={item.contentType} className="ml-2 w-4 h-4 flex items-center justify-center select-none" />

@@ -68,7 +68,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     } catch (err) {
       console.error('Error deleting prompt:', err);
       // Display the specific error message from the check
-      error(`Error deleting prompt: ${err.message}`);
+      error(`Error deleting prompt: ${err.message}`, 10000);
     }
   };
 
