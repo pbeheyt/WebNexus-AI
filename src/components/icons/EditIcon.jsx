@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export const EditIcon = ({ className = 'w-4 h-4', ...props }) => (
   <svg
@@ -17,3 +18,7 @@ export const EditIcon = ({ className = 'w-4 h-4', ...props }) => (
     <path d='M12.5 7.5L16.5 11.5' stroke='currentColor'></path>
   </svg>
 );
+
+EditIcon.propTypes = {
+  className: PropTypes.string,
+};

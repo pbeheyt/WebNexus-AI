@@ -1,5 +1,6 @@
 // src/settings/components/ui/prompts/PromptList.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
 import { useNotification } from '../../../../components';
@@ -174,6 +175,14 @@ const PromptList = ({
       )}
     </>
   );
+};
+
+PromptList.propTypes = {
+  filterValue: PropTypes.string.isRequired,
+  contentTypeLabels: PropTypes.object.isRequired,
+  onSelectPrompt: PropTypes.func.isRequired,
+  selectedPromptId: PropTypes.string,
+  onFilterChange: PropTypes.func.isRequired,
 };
 
 export default PromptList;

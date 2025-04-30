@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function ChevronDownIcon({ className = 'w-4 h-4', ...props }) {
   return (
@@ -19,3 +20,7 @@ export function ChevronDownIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+ChevronDownIcon.propTypes = {
+  className: PropTypes.string,
+};

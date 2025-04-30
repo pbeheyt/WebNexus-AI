@@ -1,5 +1,6 @@
 // src/components/context/StatusContext.jsx
 import { createContext, useContext, useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 
 const StatusContext = createContext(null);
 
@@ -29,5 +30,9 @@ export function StatusProvider({ children }) {
     </StatusContext.Provider>
   );
 }
+
+StatusProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export const useStatus = () => useContext(StatusContext);

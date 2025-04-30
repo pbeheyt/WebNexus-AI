@@ -1,5 +1,6 @@
 // src/components/form/SelectList.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * A reusable select list component that handles various data formats and states
@@ -120,5 +121,16 @@ export function SelectList({
     </div>
   );
 }
+
+SelectList.propTypes = {
+  options: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
+  selectedValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+  loading: PropTypes.bool,
+  disabled: PropTypes.bool,
+  emptyMessage: PropTypes.string,
+  className: PropTypes.string,
+};
 
 export default SelectList;

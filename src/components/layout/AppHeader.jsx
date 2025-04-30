@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { useUI } from '../../contexts/UIContext';
 import { logger } from '../../shared/logger';
@@ -170,3 +171,23 @@ export function AppHeader({
     </header>
   );
 }
+
+AppHeader.propTypes = {
+  children: PropTypes.node,
+  showSettingsButton: PropTypes.bool,
+  showRefreshButton: PropTypes.bool,
+  onClose: PropTypes.func,
+  onRefreshClick: PropTypes.func,
+  isExpanded: PropTypes.bool,
+  onToggleExpand: PropTypes.func,
+  showExpandToggle: PropTypes.bool,
+  className: PropTypes.string,
+  showBorder: PropTypes.bool,
+  showInfoButton: PropTypes.bool,
+  infoButtonRef: PropTypes.object,
+  onInfoMouseEnter: PropTypes.func,
+  onInfoMouseLeave: PropTypes.func,
+  onInfoFocus: PropTypes.func,
+  onInfoBlur: PropTypes.func,
+  infoButtonAriaLabel: PropTypes.string,
+};

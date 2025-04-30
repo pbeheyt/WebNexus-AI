@@ -1,5 +1,6 @@
 // src/components/icons/ScrollDownIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function ScrollDownIcon({ className = 'h-4 w-4', ...props }) {
   return (
@@ -18,5 +19,9 @@ export function ScrollDownIcon({ className = 'h-4 w-4', ...props }) {
     </svg>
   );
 }
+
+ScrollDownIcon.propTypes = {
+  className: PropTypes.string,
+};
 
 export default ScrollDownIcon;

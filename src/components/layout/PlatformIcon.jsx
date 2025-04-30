@@ -1,5 +1,6 @@
 // src/components/layout/PlatformIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { useUI } from '../../contexts/UIContext';
 
@@ -38,5 +39,12 @@ export function PlatformIcon({
     <img src={iconUrl} alt={altText} className={finalClassName} {...props} />
   );
 }
+
+PlatformIcon.propTypes = {
+  platformId: PropTypes.string.isRequired,
+  iconUrl: PropTypes.string.isRequired,
+  altText: PropTypes.string.isRequired,
+  className: PropTypes.string,
+};
 
 export default PlatformIcon;

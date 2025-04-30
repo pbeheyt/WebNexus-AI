@@ -7,7 +7,8 @@ import React, {
     useMemo,
     useLayoutEffect,
   } from 'react';
-  
+  import PropTypes from 'prop-types';
+
   import { debounce } from '../../shared/utils/debounce';
   import { useSidebarChat } from '../contexts/SidebarChatContext';
   import { useSidebarPlatform } from '../../contexts/platform';
@@ -749,5 +750,11 @@ import React, {
       </div>
     );
   }
+  
+  ChatArea.propTypes = {
+    className: PropTypes.string,
+    otherUIHeight: PropTypes.number,
+    requestHeightRecalculation: PropTypes.func,
+  };
   
   export default ChatArea;

@@ -1,5 +1,6 @@
 // src/components/icons/ArrowUpIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function ArrowUpIcon({ className = '', ...props }) {
   return (
@@ -18,3 +19,7 @@ export function ArrowUpIcon({ className = '', ...props }) {
     </svg>
   );
 }
+
+ArrowUpIcon.propTypes = {
+  className: PropTypes.string,
+};

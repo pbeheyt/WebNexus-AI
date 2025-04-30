@@ -1,5 +1,6 @@
 // src/components/core/IconButton.jsx
 import React, { forwardRef } from 'react';
+import PropTypes from 'prop-types';
 
 export const IconButton = forwardRef(
   (
@@ -34,3 +35,13 @@ export const IconButton = forwardRef(
 );
 
 IconButton.displayName = 'IconButton';
+
+IconButton.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  iconClassName: PropTypes.string,
+  className: PropTypes.string,
+  onClick: PropTypes.func,
+  disabled: PropTypes.bool,
+  ariaLabel: PropTypes.string,
+  title: PropTypes.string,
+};

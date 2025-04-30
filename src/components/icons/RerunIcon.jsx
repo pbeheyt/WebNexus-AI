@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export const RerunIcon = ({ className = 'w-4 h-4', ...props }) => (
   <svg
@@ -16,3 +17,7 @@ export const RerunIcon = ({ className = 'w-4 h-4', ...props }) => (
     ></path>
   </svg>
 );
+
+RerunIcon.propTypes = {
+  className: PropTypes.string,
+};

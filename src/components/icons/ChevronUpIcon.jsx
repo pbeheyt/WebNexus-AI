@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Chevron Up Icon component.
@@ -25,3 +26,7 @@ export function ChevronUpIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+ChevronUpIcon.propTypes = {
+  className: PropTypes.string,
+};

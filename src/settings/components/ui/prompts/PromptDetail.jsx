@@ -1,5 +1,6 @@
 // src/settings/components/ui/PromptDetail.jsx
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
 import { Button, useNotification } from '../../../../components';
@@ -221,6 +222,12 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       </div>
     </div>
   );
+};
+
+PromptDetail.propTypes = {
+  prompt: PropTypes.object.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 export default PromptDetail;

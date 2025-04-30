@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function TextSizeIcon({ className = 'w-4 h-4', ...props }) {
   return (
@@ -13,3 +14,7 @@ export function TextSizeIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+TextSizeIcon.propTypes = {
+  className: PropTypes.string,
+};

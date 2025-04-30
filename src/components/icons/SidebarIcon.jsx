@@ -1,5 +1,6 @@
 // src/components/icons/SidebarIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function SidebarIcon({ className = 'w-4 h-4', ...props }) {
   return (
@@ -17,5 +18,9 @@ export function SidebarIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+SidebarIcon.propTypes = {
+  className: PropTypes.string,
+};
 
 export default SidebarIcon;

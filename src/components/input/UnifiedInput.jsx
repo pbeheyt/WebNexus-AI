@@ -1,5 +1,6 @@
 // src/components/input/UnifiedInput.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 import { TextArea } from '../form/TextArea';
 import TokenCounter from '../../sidebar/components/TokenCounter';
@@ -193,8 +194,8 @@ export function UnifiedInput({
           </div>
         </div>
       </div>
-    );
-  }
+  );
+}
 
   // --- Popup Variant ---
   else if (layoutVariant === 'popup') {
@@ -274,3 +275,19 @@ export function UnifiedInput({
     );
   }
 }
+
+UnifiedInput.propTypes = {
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func,
+  disabled: PropTypes.bool,
+  isProcessing: PropTypes.bool,
+  isCanceling: PropTypes.bool,
+  contentType: PropTypes.string,
+  showTokenInfo: PropTypes.bool,
+  tokenStats: PropTypes.object,
+  contextStatus: PropTypes.object,
+  layoutVariant: PropTypes.oneOf(['popup', 'sidebar']).isRequired,
+  className: PropTypes.string,
+};

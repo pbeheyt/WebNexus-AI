@@ -1,5 +1,6 @@
 // src/components/icons/ErrorIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function ErrorIcon({ className = 'h-10 w-10', ...props }) {
   return (
@@ -20,5 +21,9 @@ export function ErrorIcon({ className = 'h-10 w-10', ...props }) {
     </svg>
   );
 }
+
+ErrorIcon.propTypes = {
+  className: PropTypes.string,
+};
 
 export default ErrorIcon;

@@ -1,5 +1,6 @@
 // src/components/icons/XIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function XIcon({ className = 'w-4 h-4', ...props }) {
   return (
@@ -18,3 +19,7 @@ export function XIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+XIcon.propTypes = {
+  className: PropTypes.string,
+};

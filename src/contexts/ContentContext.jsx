@@ -2,6 +2,9 @@
 import {
   createContext,
   useContext,
+} from 'react';
+import PropTypes from 'prop-types';
+import {
   useEffect,
   useState,
   useCallback,
@@ -111,6 +114,11 @@ export function ContentProvider({ children, detectOnMount = true }) {
     </ContentContext.Provider>
   );
 }
+
+ContentProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+  detectOnMount: PropTypes.bool,
+};
 
 /**
  * Hook to access the content context

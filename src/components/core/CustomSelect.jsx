@@ -1,5 +1,6 @@
 // src/components/core/CustomSelect.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 import { ChevronDownIcon } from '../icons/ChevronDownIcon';
 
@@ -120,5 +121,15 @@ export function CustomSelect({
     </div>
   );
 }
+
+CustomSelect.propTypes = {
+  options: PropTypes.array,
+  selectedValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onChange: PropTypes.func,
+  placeholder: PropTypes.string,
+  disabled: PropTypes.bool,
+  className: PropTypes.string,
+  buttonClassName: PropTypes.string,
+};
 
 export default CustomSelect;

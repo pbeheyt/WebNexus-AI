@@ -1,5 +1,6 @@
 // src/settings/components/ui/platforms/PlatformDetails.jsx
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
 import { Button, useNotification, PlatformIcon } from '../../../../components';
@@ -403,6 +404,16 @@ const PlatformDetails = ({
       />
     </div>
   );
+};
+
+PlatformDetails.propTypes = {
+  platform: PropTypes.object.isRequired,
+  credentials: PropTypes.object,
+  advancedSettings: PropTypes.object,
+  onCredentialsUpdated: PropTypes.func.isRequired,
+  onCredentialsRemoved: PropTypes.func.isRequired,
+  onAdvancedSettingsUpdated: PropTypes.func.isRequired,
+  credentialsKey: PropTypes.string.isRequired,
 };
 
 export default PlatformDetails;

@@ -1,5 +1,6 @@
 // src/contexts/UIContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 
 import uiService from '../services/UIService';
 import { logger } from '../shared/logger';
@@ -88,5 +89,9 @@ export function UIProvider({ children }) {
     </UIContext.Provider>
   );
 }
+
+UIProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export const useUI = () => useContext(UIContext);

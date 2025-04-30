@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Toggle switch component with a properly positioned circle.
@@ -65,5 +66,12 @@ export function Toggle({
     </button>
   );
 }
+
+Toggle.propTypes = {
+  checked: PropTypes.bool,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  className: PropTypes.string,
+};
 
 export default Toggle;

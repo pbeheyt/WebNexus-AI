@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Tooltip component for displaying messages with configurable delay.
@@ -120,3 +121,13 @@ export function Tooltip({
     </div>
   );
 }
+
+Tooltip.propTypes = {
+  show: PropTypes.bool.isRequired,
+  message: PropTypes.node.isRequired,
+  position: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+  offset: PropTypes.number,
+  width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  delay: PropTypes.number,
+  targetRef: PropTypes.object,
+};

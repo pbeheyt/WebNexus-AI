@@ -1,5 +1,6 @@
 // src/components/icons/OutputTokenIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function OutputTokenIcon({ className = 'w-3 h-3', ...props }) {
   return (
@@ -20,5 +21,9 @@ export function OutputTokenIcon({ className = 'w-3 h-3', ...props }) {
     </svg>
   );
 }
+
+OutputTokenIcon.propTypes = {
+  className: PropTypes.string,
+};
 
 export default OutputTokenIcon;

@@ -1,5 +1,6 @@
 // src/components/feedback/Toast.jsx
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 
 import { XIcon } from '../icons/XIcon';
 
@@ -95,5 +96,15 @@ export function Toast({
     </div>
   );
 }
+
+Toast.propTypes = {
+  message: PropTypes.string,
+  type: PropTypes.oneOf(['info', 'success', 'warning', 'error']),
+  duration: PropTypes.number,
+  onClose: PropTypes.func,
+  visible: PropTypes.bool,
+  position: PropTypes.oneOf(['bottom-left', 'bottom-right', 'top-left', 'top-right', 'top-center', 'bottom-center']),
+  standalone: PropTypes.bool,
+};
 
 export default Toast;

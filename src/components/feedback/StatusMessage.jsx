@@ -1,5 +1,6 @@
 // src/components/feedback/StatusMessage.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Component for displaying inline status messages.
@@ -32,5 +33,12 @@ export function StatusMessage({
     </div>
   );
 }
+
+StatusMessage.propTypes = {
+  message: PropTypes.string,
+  type: PropTypes.oneOf(['info', 'success', 'warning', 'error']),
+  _context: PropTypes.string,
+  className: PropTypes.string,
+};
 
 export default StatusMessage;

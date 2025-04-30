@@ -1,5 +1,6 @@
 // src/components/InfoIcon.jsx (or wherever you define it)
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Renders an information icon based on the provided SVG path data.
@@ -18,3 +19,7 @@ export function InfoIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+InfoIcon.propTypes = {
+  className: PropTypes.string,
+};

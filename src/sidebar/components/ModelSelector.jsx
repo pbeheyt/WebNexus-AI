@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 import { useSidebarPlatform } from '../../contexts/platform';
 
@@ -142,5 +143,10 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     </div>
   );
 }
+
+ModelSelector.propTypes = {
+  className: PropTypes.string,
+  selectedPlatformId: PropTypes.string,
+};
 
 export default ModelSelector;

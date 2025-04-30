@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
 import {
@@ -577,6 +578,15 @@ const AdvancedSettings = ({
       </form>
     </div>
   );
+};
+
+AdvancedSettings.propTypes = {
+  platform: PropTypes.object.isRequired,
+  selectedModelId: PropTypes.string,
+  advancedSettings: PropTypes.object.isRequired,
+  onModelSelect: PropTypes.func.isRequired,
+  onSettingsUpdate: PropTypes.func.isRequired,
+  onResetToDefaults: PropTypes.func.isRequired,
 };
 
 export default AdvancedSettings;

@@ -1,4 +1,6 @@
 // src/popup/components/PlatformSelector.jsx
+import PropTypes from 'prop-types';
+
 import { usePopupPlatform } from '../../contexts/platform';
 import { useStatus } from '../contexts/StatusContext';
 import { PlatformLogoItem } from '../../components/layout/PlatformLogoItem';
@@ -36,3 +38,7 @@ export function PlatformSelector({ disabled }) {
     </div>
   );
 }
+
+PlatformSelector.propTypes = {
+  disabled: PropTypes.bool,
+};

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function SettingsIcon({ className = 'w-4 h-4', ...props }) {
   return (
@@ -18,3 +19,7 @@ export function SettingsIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+SettingsIcon.propTypes = {
+  className: PropTypes.string,
+};

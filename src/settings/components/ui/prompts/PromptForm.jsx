@@ -1,5 +1,6 @@
 // src/settings/components/ui/prompts/PromptForm.jsx
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
 import { Button, useNotification, CustomSelect } from '../../../../components';
@@ -304,6 +305,13 @@ const PromptForm = ({
       </div>
     </form>
   );
+};
+
+PromptForm.propTypes = {
+  prompt: PropTypes.object,
+  onCancel: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired,
+  initialContentType: PropTypes.string,
 };
 
 export default PromptForm;

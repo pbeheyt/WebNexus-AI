@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Reusable Copy Icon component
@@ -56,3 +57,8 @@ export const CopyIcon = memo(({ state = 'idle' }) => {
 });
 
 CopyIcon.displayName = 'CopyIcon';
+
+CopyIcon.propTypes = {
+  className: PropTypes.string,
+  state: PropTypes.oneOf(['idle', 'copied', 'error']),
+};

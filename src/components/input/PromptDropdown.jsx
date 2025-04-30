@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 import { loadRelevantPrompts } from '../../shared/utils/prompt-utils.js';
 import { logger } from '../../shared/logger';
@@ -107,3 +108,12 @@ export function PromptDropdown({
     </div>
   );
 }
+
+PromptDropdown.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSelectPrompt: PropTypes.func.isRequired,
+  contentType: PropTypes.string,
+  anchorRef: PropTypes.object,
+  className: PropTypes.string,
+};

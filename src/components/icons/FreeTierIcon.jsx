@@ -1,5 +1,6 @@
 // src/components/icons/FreeTierIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function FreeTierIcon({ className = 'w-3 h-3', ...props }) {
   return (
@@ -30,5 +31,9 @@ export function FreeTierIcon({ className = 'w-3 h-3', ...props }) {
     </svg>
   );
 }
+
+FreeTierIcon.propTypes = {
+  className: PropTypes.string,
+};
 
 export default FreeTierIcon;

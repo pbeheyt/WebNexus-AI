@@ -1,5 +1,6 @@
 // src/components/icons/NoCredentialsIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function NoCredentialsIcon({ className = 'w-8 h-8', ...props }) {
   return (
@@ -19,5 +20,9 @@ export function NoCredentialsIcon({ className = 'w-8 h-8', ...props }) {
     </svg>
   );
 }
+
+NoCredentialsIcon.propTypes = {
+  className: PropTypes.string,
+};
 
 export default NoCredentialsIcon;

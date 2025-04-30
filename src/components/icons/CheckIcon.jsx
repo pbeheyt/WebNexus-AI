@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export const CheckIcon = ({ className = 'w-4 h-4', ...props }) => (
   <svg
@@ -15,3 +16,7 @@ export const CheckIcon = ({ className = 'w-4 h-4', ...props }) => (
     <polyline points='20 6 9 17 4 12'></polyline>
   </svg>
 );
+
+CheckIcon.propTypes = {
+  className: PropTypes.string,
+};

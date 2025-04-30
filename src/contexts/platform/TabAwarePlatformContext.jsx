@@ -7,6 +7,7 @@ import React, {
   useState,
   useCallback,
 } from 'react';
+import PropTypes from 'prop-types';
 
 import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
 import { logger } from '../../shared/logger';
@@ -465,6 +466,10 @@ export function createTabAwarePlatformContext(options = {}) {
       </TabAwarePlatformContext.Provider>
     );
   }
+
+  TabAwarePlatformProvider.propTypes = {
+    children: PropTypes.node.isRequired,
+  };
 
   // Custom hook to use the context
   const useTabAwarePlatform = () => {

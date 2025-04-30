@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 import { Tooltip } from '../../components/layout/Tooltip';
 import { InputTokenIcon, OutputTokenIcon, ChevronUpIcon } from '../../components';
@@ -272,5 +273,11 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
     </div>
   );
 }
+
+TokenCounter.propTypes = {
+  tokenStats: PropTypes.object,
+  contextStatus: PropTypes.object,
+  className: PropTypes.string,
+};
 
 export default TokenCounter;

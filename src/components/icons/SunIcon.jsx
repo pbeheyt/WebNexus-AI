@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function SunIcon({ className = 'w-4 h-4', ...props }) {
   return (
@@ -25,3 +26,7 @@ export function SunIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+SunIcon.propTypes = {
+  className: PropTypes.string,
+};

@@ -1,5 +1,6 @@
 // src/components/layout/ContentTypeIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { CONTENT_TYPES } from '../../shared/constants'; // Import constants
 
@@ -84,3 +85,8 @@ export function ContentTypeIcon({ contentType, className = '' }) {
 }
 
 export default ContentTypeIcon; // Default export
+
+ContentTypeIcon.propTypes = {
+  contentType: PropTypes.string.isRequired,
+  className: PropTypes.string,
+};

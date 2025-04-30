@@ -1,5 +1,6 @@
 // src/settings/components/ui/platforms/PlatformSidebar.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { PlatformIcon, CheckIcon } from '../../../../components';
 
@@ -58,6 +59,13 @@ const PlatformSidebar = ({
       </ul>
     </div>
   );
+};
+
+PlatformSidebar.propTypes = {
+  platforms: PropTypes.array.isRequired,
+  selectedPlatformId: PropTypes.string,
+  credentials: PropTypes.object.isRequired,
+  onSelectPlatform: PropTypes.func.isRequired,
 };
 
 export default PlatformSidebar;

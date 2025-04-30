@@ -1,5 +1,6 @@
 // src/components/form/TextArea.jsx
 import React, { forwardRef, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Enhanced textarea component with auto-resize capability.
@@ -78,5 +79,16 @@ export const TextArea = forwardRef(
 );
 
 TextArea.displayName = 'TextArea';
+
+TextArea.propTypes = {
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+  maxLength: PropTypes.number,
+  className: PropTypes.string,
+  autoResize: PropTypes.bool,
+  style: PropTypes.object,
+  focusAtEnd: PropTypes.bool,
+};
 
 export default TextArea;

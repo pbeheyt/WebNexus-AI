@@ -1,5 +1,6 @@
 // src/components/core/Button.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Button component with support for multiple variants and sizes.
@@ -70,5 +71,14 @@ export function Button({
     </button>
   );
 }
+
+Button.propTypes = {
+  children: PropTypes.node.isRequired,
+  variant: PropTypes.oneOf(['primary', 'secondary', 'danger', 'success', 'inactive']),
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  disabled: PropTypes.bool,
+  className: PropTypes.string,
+  onClick: PropTypes.func.isRequired,
+};
 
 export default Button;

@@ -1,5 +1,5 @@
 import React from 'react';
-
+import PropTypes from 'prop-types';
 
 
 import PlatformIcon from './PlatformIcon';
@@ -55,5 +55,14 @@ export function PlatformLogoItem({
     </button>
   );
 }
+
+PlatformLogoItem.propTypes = {
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  iconUrl: PropTypes.string.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+};
 
 export default PlatformLogoItem;

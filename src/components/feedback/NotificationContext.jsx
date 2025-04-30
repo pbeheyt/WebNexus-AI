@@ -1,5 +1,6 @@
 // src/components/feedback/NotificationContext.jsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 
 const NotificationContext = createContext(null);
 
@@ -84,6 +85,10 @@ export const NotificationProvider = ({ children }) => {
       {children}
     </NotificationContext.Provider>
   );
+};
+
+NotificationProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default NotificationProvider;

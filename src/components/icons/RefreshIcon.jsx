@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function RefreshIcon({ className = 'w-4 h-4', ...props }) {
   return (
@@ -20,3 +21,7 @@ export function RefreshIcon({ className = 'w-4 h-4', ...props }) {
     </svg>
   );
 }
+
+RefreshIcon.propTypes = {
+  className: PropTypes.string,
+};

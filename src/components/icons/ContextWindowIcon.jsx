@@ -1,5 +1,6 @@
 // src/components/icons/ContextWindowIcon.jsx
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export function ContextWindowIcon({ className = 'w-3 h-3', ...props }) {
   return (
@@ -41,5 +42,9 @@ export function ContextWindowIcon({ className = 'w-3 h-3', ...props }) {
     </svg>
   );
 }
+
+ContextWindowIcon.propTypes = {
+  className: PropTypes.string,
+};
 
 export default ContextWindowIcon;
