@@ -109,13 +109,14 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
 
       {/* Dropdown menu */}
       {isOpen && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Click handler is for stopping propagation, not user interaction
+        // Removed eslint-disable comment
         <div
           ref={dropdownRef}
           className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
           onClick={(e) => e.stopPropagation()}
           role='listbox' // ARIA role
           aria-labelledby={modelTriggerRef.current?.id || undefined} // Link to button if it has an ID
+          tabIndex={0} // ADDED: Make listbox focusable
         >
           {formattedModels.length === 0 ? (
             <div className='px-3 py-2 text-sm text-theme-secondary'>

@@ -281,9 +281,8 @@
   36:29  warning  'text' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/popup/Popup.jsx
-    9:3   warning  'IconButton' is defined but never used                      no-unused-vars
-   10:3   warning  'InfoIcon' is defined but never used                        no-unused-vars
-  354:19  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
+   9:3  warning  'IconButton' is defined but never used  no-unused-vars
+  10:3  warning  'InfoIcon' is defined but never used    no-unused-vars
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/popup/components/PlatformSelector.jsx
   6:36  warning  'disabled' is missing in props validation  react/prop-types
@@ -483,71 +482,55 @@
   206:6   warning  React Hook useCallback has an unnecessary dependency: 'textSize'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/ChatArea.jsx
-   51:3   warning  'className' is missing in props validation                                                                                                                                                                                                                                 react/prop-types
-   52:3   warning  'otherUIHeight' is missing in props validation                                                                                                                                                                                                                             react/prop-types
-   53:3   warning  'requestHeightRecalculation' is missing in props validation                                                                                                                                                                                                                react/prop-types
-  183:6   warning  React Hook useCallback has an unnecessary dependency: 'textSize'. Either exclude it or remove the dependency array                                                                                                                                                         react-hooks/exhaustive-deps
-  270:6   warning  React Hook useLayoutEffect has missing dependencies: 'lastMessage', 'secondLastMessage', and 'showScrollDownButton'. Either include them or remove the dependency array                                                                                                    react-hooks/exhaustive-deps
-  317:6   warning  React Hook useLayoutEffect has a missing dependency: 'requestHeightRecalculation'. Either include it or remove the dependency array. If 'requestHeightRecalculation' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
-  470:23  error    `tabIndex` should only be declared on interactive elements                                                                                                                                                                                                                 jsx-a11y/no-noninteractive-tabindex
-  491:29  error    `tabIndex` should only be declared on interactive elements                                                                                                                                                                                                                 jsx-a11y/no-noninteractive-tabindex
-  515:29  error    `tabIndex` should only be declared on interactive elements                                                                                                                                                                                                                 jsx-a11y/no-noninteractive-tabindex
-  538:25  error    `tabIndex` should only be declared on interactive elements                                                                                                                                                                                                                 jsx-a11y/no-noninteractive-tabindex
-  590:19  error    `tabIndex` should only be declared on interactive elements                                                                                                                                                                                                                 jsx-a11y/no-noninteractive-tabindex
+   51:5  warning  'className' is missing in props validation                                                                                                      react/prop-types
+   52:5  warning  'otherUIHeight' is missing in props validation                                                                                                  react/prop-types
+   53:5  warning  'requestHeightRecalculation' is missing in props validation                                                                                     react/prop-types
+  183:8  warning  React Hook useCallback has an unnecessary dependency: 'textSize'. Either exclude it or remove the dependency array                              react-hooks/exhaustive-deps
+  270:8  warning  React Hook useLayoutEffect has missing dependencies: 'lastMessage' and 'secondLastMessage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/ModelSelector.jsx
-   23:26  warning  'className' is missing in props validation                      react/prop-types
-   23:42  warning  'selectedPlatformId' is missing in props validation             react/prop-types
-  113:9   error    Elements with the 'listbox' interactive role must be focusable  jsx-a11y/interactive-supports-focus
+   23:26  warning  'className' is missing in props validation                                                      react/prop-types
+   23:42  warning  'selectedPlatformId' is missing in props validation                                             react/prop-types
+  113:9   error    Visible, non-interactive elements with click handlers must have at least one keyboard listener  jsx-a11y/click-events-have-key-events
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/TokenCounter.jsx
-    5:25  warning  'tokenStats' is missing in props validation                 react/prop-types
-    5:37  warning  'contextStatus' is missing in props validation              react/prop-types
-    5:52  warning  'className' is missing in props validation                  react/prop-types
-   90:13  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
-  124:13  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
-  158:13  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
-  176:13  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
-  222:15  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
-  243:15  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
-  264:15  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
-  287:15  error    `tabIndex` should only be declared on interactive elements  jsx-a11y/no-noninteractive-tabindex
+  5:25  warning  'tokenStats' is missing in props validation     react/prop-types
+  5:37  warning  'contextStatus' is missing in props validation  react/prop-types
+  5:52  warning  'className' is missing in props validation      react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/UserInput.jsx
   9:29  warning  'className' is missing in props validation  react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/AssistantMessageBubble.jsx
-   27:9   warning  'id' is missing in props validation                                                                           react/prop-types
-   28:9   warning  'content' is missing in props validation                                                                      react/prop-types
-   29:9   warning  'isStreaming' is missing in props validation                                                                  react/prop-types
-   30:9   warning  'model' is missing in props validation                                                                        react/prop-types
-   31:9   warning  'platformIconUrl' is missing in props validation                                                              react/prop-types
-   32:9   warning  'platformId' is missing in props validation                                                                   react/prop-types
-   33:9   warning  'metadata' is missing in props validation                                                                     react/prop-types
-   34:9   warning  'className' is missing in props validation                                                                    react/prop-types
-   35:9   warning  'style' is missing in props validation                                                                        react/prop-types
-  101:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  111:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  121:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  131:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  141:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  151:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  164:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  164:24  warning  'ordered' is defined but never used. Allowed unused args must match /^_/u                                     no-unused-vars
-  167:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  167:24  warning  'ordered' is defined but never used. Allowed unused args must match /^_/u                                     no-unused-vars
-  170:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  170:34  warning  'ordered' is defined but never used. Allowed unused args must match /^_/u                                     no-unused-vars
-  180:17  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  219:20  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  219:34  warning  'className' is defined but never used. Allowed unused args must match /^_/u                                   no-unused-vars
-  237:17  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  256:26  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  269:22  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  283:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u                                        no-unused-vars
-  298:9   warning  React Hook useMemo has a missing dependency: 'isStreaming'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  317:15  error    Do not pass children as props. Instead, nest children between the opening and closing tags                    react/no-children-prop
-  355:51  warning  'content.trim' is missing in props validation                                                                 react/prop-types
+   27:9   warning  'id' is missing in props validation                                          react/prop-types
+   28:9   warning  'content' is missing in props validation                                     react/prop-types
+   29:9   warning  'isStreaming' is missing in props validation                                 react/prop-types
+   30:9   warning  'model' is missing in props validation                                       react/prop-types
+   31:9   warning  'platformIconUrl' is missing in props validation                             react/prop-types
+   32:9   warning  'platformId' is missing in props validation                                  react/prop-types
+   33:9   warning  'metadata' is missing in props validation                                    react/prop-types
+   34:9   warning  'className' is missing in props validation                                   react/prop-types
+   35:9   warning  'style' is missing in props validation                                       react/prop-types
+  101:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  111:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  121:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  131:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  141:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  151:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  164:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  164:24  warning  'ordered' is defined but never used. Allowed unused args must match /^_/u    no-unused-vars
+  167:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  167:24  warning  'ordered' is defined but never used. Allowed unused args must match /^_/u    no-unused-vars
+  170:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  170:34  warning  'ordered' is defined but never used. Allowed unused args must match /^_/u    no-unused-vars
+  180:17  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  219:20  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  219:34  warning  'className' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  237:17  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  256:26  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  269:22  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  283:18  warning  'node' is defined but never used. Allowed unused args must match /^_/u       no-unused-vars
+  357:51  warning  'content.trim' is missing in props validation                                react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/EnhancedCodeBlock.jsx
   20:6   warning  'className' is missing in props validation    react/prop-types
@@ -570,11 +553,10 @@
   29:9  warning  'style' is missing in props validation                                  react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/UserMessageBubble.jsx
-   22:9   warning  'id' is missing in props validation                                                            react/prop-types
-   23:9   warning  'content' is missing in props validation                                                       react/prop-types
-   24:9   warning  'className' is missing in props validation                                                     react/prop-types
-   25:9   warning  'style' is missing in props validation                                                         react/prop-types
-  102:19  error    The autoFocus prop should not be used, as it can reduce usability and accessibility for users  jsx-a11y/no-autofocus
+  22:9  warning  'id' is missing in props validation         react/prop-types
+  23:9  warning  'content' is missing in props validation    react/prop-types
+  24:9  warning  'className' is missing in props validation  react/prop-types
+  25:9  warning  'style' is missing in props validation      react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/contexts/SidebarChatContext.jsx
     27:39  warning  'children' is missing in props validation                                                                                                                                                       react/prop-types
@@ -589,5 +571,5 @@
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/hooks/useTokenTracking.js
   59:26  warning  'prevStats' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
 
-✖ 438 problems (21 errors, 417 warnings)
+✖ 420 problems (5 errors, 415 warnings)
 

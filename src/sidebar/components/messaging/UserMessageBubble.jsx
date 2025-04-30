@@ -99,7 +99,7 @@ export const UserMessageBubble = memo(
                   onKeyDown={handleKeyDown}
                   className='w-full text-sm border border-primary rounded-md p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary'
                   style={{ minHeight: '4rem' }}
-                  autoFocus
+                  // autoFocus // REMOVED autoFocus prop
                   focusAtEnd={isEditing}
                   aria-label='Edit message content'
                 />

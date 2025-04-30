@@ -351,7 +351,7 @@ export function Popup() {
                   onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
                   onFocus={() => setIsIncludeContextTooltipVisible(true)}
                   onBlur={() => setIsIncludeContextTooltipVisible(false)}
-                  tabIndex={0} // Make it focusable for accessibility
+                  // tabIndex={0} // REMOVED tabIndex
                   aria-describedby='include-context-tooltip'
                 >
                   {contentTypeLabel ? (

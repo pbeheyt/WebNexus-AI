@@ -295,7 +295,7 @@ export const AssistantMessageBubble = memo(
             );
           },
         }),
-        [hasMathPlaceholders, mathMap]
+        [hasMathPlaceholders, mathMap, isStreaming] // Added isStreaming dependency for EnhancedCodeBlock
       ); // Dependencies for markdownComponents memo
       // --- End Memoized Component Overrides ---
 
@@ -310,12 +310,14 @@ export const AssistantMessageBubble = memo(
           <div
             className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}
           >
+            {/* Changed from children prop to nesting */}
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[]}
               components={markdownComponents}
-              children={preprocessedContent}
-            />
+            >
+              {preprocessedContent}
+            </ReactMarkdown>
           </div>
 
           {/* Footer section */}

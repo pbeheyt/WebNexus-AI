@@ -87,7 +87,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onMouseLeave={() => setHoveredElement(null)}
             onFocus={() => setHoveredElement('inputTokens')}
             onBlur={() => setHoveredElement(null)}
-            tabIndex='0'
+            // REMOVED tabIndex='0'
           >
             <svg
               className='w-3 h-3 mr-1 select-none'
@@ -121,7 +121,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onMouseLeave={() => setHoveredElement(null)}
             onFocus={() => setHoveredElement('outputTokens')}
             onBlur={() => setHoveredElement(null)}
-            tabIndex='0'
+            // REMOVED tabIndex='0'
           >
             <svg
               className='w-3 h-3 mr-1 select-none'
@@ -155,7 +155,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onMouseLeave={() => setHoveredElement(null)}
             onFocus={() => setHoveredElement('lastCost')}
             onBlur={() => setHoveredElement(null)}
-            tabIndex='0'
+            // REMOVED tabIndex='0'
           >
             <span className='select-none'>({formatCost(lastApiCallCost)})</span>
             <Tooltip
@@ -173,7 +173,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onMouseLeave={() => setHoveredElement(null)}
             onFocus={() => setHoveredElement('cost')}
             onBlur={() => setHoveredElement(null)}
-            tabIndex='0'
+            // REMOVED tabIndex='0'
           >
             <span className='select-none'>{formattedCost}</span>
             <Tooltip
@@ -219,7 +219,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onMouseLeave={() => setHoveredElement(null)}
               onFocus={() => setHoveredElement('prompt')}
               onBlur={() => setHoveredElement(null)}
-              tabIndex='0'
+              // REMOVED tabIndex='0'
             >
               <span className='text-xs font-medium select-none'>Prompt</span>
               <span className='select-none'>
@@ -240,7 +240,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onMouseLeave={() => setHoveredElement(null)}
               onFocus={() => setHoveredElement('historySent')}
               onBlur={() => setHoveredElement(null)}
-              tabIndex='0'
+              // REMOVED tabIndex='0'
             >
               <span className='text-xs font-medium select-none'>History</span>
               <span className='select-none'>
@@ -261,7 +261,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onMouseLeave={() => setHoveredElement(null)}
               onFocus={() => setHoveredElement('system')}
               onBlur={() => setHoveredElement(null)}
-              tabIndex='0'
+              // REMOVED tabIndex='0'
             >
               <span className='text-xs font-medium select-none'>System</span>
               <span className='select-none'>
@@ -284,7 +284,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onMouseLeave={() => setHoveredElement(null)}
               onFocus={() => setHoveredElement('contextWindow')}
               onBlur={() => setHoveredElement(null)}
-              tabIndex='0'
+              // REMOVED tabIndex='0'
             >
               <div className='h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full mr-2'>
                 <div
