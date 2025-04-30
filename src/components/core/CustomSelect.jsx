@@ -1,22 +1,7 @@
 // src/components/core/CustomSelect.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { ChevronDownIcon } from '../icons/ChevronDownIcon';
 
-// SVG Icons
-const ChevronIcon = () => (
-  <svg
-    xmlns='http://www.w3.org/2000/svg'
-    viewBox='0 0 20 20'
-    fill='currentColor'
-    className='w-5 h-5 transition-transform duration-200 shrink-0 ml-2'
-  >
-    {' '}
-    <path
-      fillRule='evenodd'
-      d='M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 01.02-1.06z'
-      clipRule='evenodd'
-    />
-  </svg>
-);
 
 /**
  * A reusable custom select component that adjusts width to fit the selected content.
@@ -97,7 +82,7 @@ export function CustomSelect({
           {selectedOption ? selectedOption.name : placeholder}
         </span>
         {/* Chevron icon */}
-        <ChevronIcon />
+        <ChevronDownIcon className='w-5 h-5 transition-transform duration-200 shrink-0 ml-2' />
       </button>
 
       {/* Dropdown Panel */}

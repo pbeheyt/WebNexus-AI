@@ -39,6 +39,7 @@ export { MoonIcon } from './icons/MoonIcon';
 export { SettingsIcon } from './icons/SettingsIcon';
 export { RefreshIcon } from './icons/RefreshIcon';
 export { ChevronDownIcon } from './icons/ChevronDownIcon';
+export { ChevronUpIcon } from './icons/ChevronUpIcon';
 export { SidebarIcon } from './icons/SidebarIcon';
 export { InputTokenIcon } from './icons/InputTokenIcon';
 export { OutputTokenIcon } from './icons/OutputTokenIcon';

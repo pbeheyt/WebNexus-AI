@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 
 import { Tooltip } from '../../components/layout/Tooltip';
+import { InputTokenIcon, OutputTokenIcon, ChevronUpIcon } from '../../components';
 
 function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   const {
@@ -88,20 +89,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onFocus={() => setHoveredElement('inputTokens')}
             onBlur={() => setHoveredElement(null)}
           >
-            <svg
-              className='w-3 h-3 mr-1 select-none'
-              viewBox='0 0 24 24'
-              fill='none'
-              xmlns='http://www.w3.org/2000/svg'
-            >
-              <path
-                d='M12 18V6M7 11l5-5 5 5'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              />
-            </svg>
+            <InputTokenIcon className='w-3 h-3 mr-1 select-none' />
             <span className='select-none'>
               {inputTokensInLastApiCall.toLocaleString()}
             </span>
@@ -121,20 +109,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onFocus={() => setHoveredElement('outputTokens')}
             onBlur={() => setHoveredElement(null)}
           >
-            <svg
-              className='w-3 h-3 mr-1 select-none'
-              viewBox='0 0 24 24'
-              fill='none'
-              xmlns='http://www.w3.org/2000/svg'
-            >
-              <path
-                d='M12 6v12M7 13l5 5 5-5'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              />
-            </svg>
+            <OutputTokenIcon className='w-3 h-3 mr-1 select-none' />
             <span className='select-none'>{outputTokens.toLocaleString()}</span>
             <Tooltip
               show={hoveredElement === 'outputTokens'}
@@ -184,20 +159,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             className='ml-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none'
             title='Toggle token details'
           >
-            <svg
-              className={`w-3 h-3 transition-transform select-none ${showDetails ? 'rotate-180' : ''}`}
-              viewBox='0 0 24 24'
-              fill='none'
-              xmlns='http://www.w3.org/2000/svg'
-            >
-              <path
-                d='M19 15l-7 -7-7 7'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              />
-            </svg>
+            <ChevronUpIcon className={`w-3 h-3 transition-transform select-none ${showDetails ? 'rotate-180' : ''}`} />
           </button>
         </div>
       </div>
