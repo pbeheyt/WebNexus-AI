@@ -325,9 +325,11 @@
   background: theme('colors.gray.500');
 }
 
-/* Remove default focus outline specifically from the range input */
+/* Force removal of focus indicators specifically from the range input */
 .custom-slider:focus {
-  outline: none;
+  outline: none !important; /* Remove outline */
+  box-shadow: none !important; /* Remove ring/shadow */
+  border-color: transparent !important; /* Prevent border color change */
 }
 
 /* Hide spin buttons on ALL number inputs */
