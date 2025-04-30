@@ -4,10 +4,10 @@ import remarkGfm from 'remark-gfm';
 
 // Define System Message Component Overrides:
 const systemMessageComponents = {
-  p: ({ node, children }) => (
+  p: ({ node: _node, children }) => (
     <p className='leading-relaxed text-sm'>{children}</p>
   ),
-  a: ({ node, children, ...props }) => (
+  a: ({ node: _node, children, ...props }) => (
     <a
       {...props} // Pass through href, etc.
       target='_blank' // Open links in new tab

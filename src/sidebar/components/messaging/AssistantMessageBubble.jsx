@@ -98,7 +98,7 @@ export const AssistantMessageBubble = memo(
       // --- Memoized Component Overrides ---
       const markdownComponents = useMemo(
         () => ({
-          h1: ({ node, children, ...props }) => {
+          h1: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -108,7 +108,7 @@ export const AssistantMessageBubble = memo(
               </h1>
             );
           },
-          h2: ({ node, children, ...props }) => {
+          h2: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -118,7 +118,7 @@ export const AssistantMessageBubble = memo(
               </h2>
             );
           },
-          h3: ({ node, children, ...props }) => {
+          h3: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -128,7 +128,7 @@ export const AssistantMessageBubble = memo(
               </h3>
             );
           },
-          h4: ({ node, children, ...props }) => {
+          h4: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -138,7 +138,7 @@ export const AssistantMessageBubble = memo(
               </h4>
             );
           },
-          h5: ({ node, children, ...props }) => {
+          h5: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -148,7 +148,7 @@ export const AssistantMessageBubble = memo(
               </h5>
             );
           },
-          h6: ({ node, children, ...props }) => {
+          h6: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -161,13 +161,13 @@ export const AssistantMessageBubble = memo(
               </h6>
             );
           },
-          ul: ({ node, ordered, ...props }) => (
+          ul: ({ node: _node, ordered: _ordered, ...props }) => (
             <ul className='list-disc pl-5 my-4 space-y-2' {...props} />
           ),
-          ol: ({ node, ordered, ...props }) => (
+          ol: ({ node: _node, ordered: _ordered, ...props }) => (
             <ol className='list-decimal pl-5 my-4 space-y-2' {...props} />
           ),
-          li: ({ node, children, ordered, ...props }) => {
+          li: ({ node: _node, children, ordered: _ordered, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -177,7 +177,7 @@ export const AssistantMessageBubble = memo(
               </li>
             );
           },
-          p: ({ node, children, ...props }) => {
+          p: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -189,7 +189,7 @@ export const AssistantMessageBubble = memo(
               </div>
             );
           },
-          pre: ({ node, children, ...props }) => {
+          pre: ({ node: _node, children, ...props }) => {
             const codeChild = node?.children?.[0];
             const isFencedCodeBlock =
               codeChild?.tagName === 'code' &&
@@ -216,7 +216,7 @@ export const AssistantMessageBubble = memo(
               : children;
             return <pre {...props}>{processedChildren}</pre>;
           },
-          code: ({ node, inline, className, children, ...props }) => {
+          code: ({ node: _node, inline, className: _className, children, ...props }) => {
             if (inline) {
               const processedChildren = hasMathPlaceholders
                 ? renderWithPlaceholdersRecursive(children, mathMap)
@@ -234,7 +234,7 @@ export const AssistantMessageBubble = memo(
             }
             return <>{children}</>; // Let `pre` handle block code
           },
-          a: ({ node, children, ...props }) => {
+          a: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -253,7 +253,7 @@ export const AssistantMessageBubble = memo(
                 };
             return <Tag {...tagProps}>{processedChildren}</Tag>;
           },
-          blockquote: ({ node, children, ...props }) => {
+          blockquote: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -266,7 +266,7 @@ export const AssistantMessageBubble = memo(
               </blockquote>
             );
           },
-          strong: ({ node, children, ...props }) => {
+          strong: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
@@ -280,7 +280,7 @@ export const AssistantMessageBubble = memo(
               </Tag>
             );
           },
-          em: ({ node, children, ...props }) => {
+          em: ({ node: _node, children, ...props }) => {
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;

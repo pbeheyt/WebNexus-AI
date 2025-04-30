@@ -249,8 +249,7 @@ export async function processContent(params) {
 export async function handleProcessContentRequest(message, sendResponse) {
   try {
     // Destructure includeContext along with other properties
-    const { tabId, platformId, url, promptContent, useApi, includeContext } =
-      message;
+    const { tabId, platformId, url, promptContent, useApi, includeContext } = message;
     logger.background.info(`Process content request for tab ${tabId}`, {
       platformId,
       useApi,

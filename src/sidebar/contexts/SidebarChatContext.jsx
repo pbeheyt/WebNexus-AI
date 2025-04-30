@@ -1118,7 +1118,7 @@ export function SidebarChatProvider({ children }) {
 
     try {
       // Send cancellation message to background script
-      const result = await robustSendMessage({
+      await robustSendMessage({
         action: 'cancelStream',
         streamId: streamId,
       });

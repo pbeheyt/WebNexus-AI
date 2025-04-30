@@ -6,8 +6,6 @@ import { usePopupPlatform } from '../contexts/platform';
 import {
   AppHeader,
   StatusMessage,
-  IconButton,
-  InfoIcon,
   Tooltip,
   SidebarIcon,
   Toggle,
