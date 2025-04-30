@@ -169,9 +169,15 @@ class TokenManagementService {
     if (lastAssistantMsgIndex !== -1) {
       const lastAssistantMsg = messages[lastAssistantMsgIndex];
       // Sync estimateTokens
-      outputTokensInLastApiCall =
-        lastAssistantMsg.outputTokens ||
-        this.estimateTokens(lastAssistantMsg.content);
+      // Explicitly check if outputTokens is a number (even if 0)
+      if (typeof lastAssistantMsg.outputTokens === 'number') {
+        outputTokensInLastApiCall = lastAssistantMsg.outputTokens;
+      } else {
+        // Fallback to estimating only if the property doesn't exist or isn't a number
+        outputTokensInLastApiCall = this.estimateTokens(lastAssistantMsg.content);
+         // Optionally add a warning if we fall back unexpectedly
+         logger.sidebar.warn(`[TokenDebug] Falling back to estimating output tokens for message ID ${lastAssistantMsg.id} as 'outputTokens' property was missing or not a number.`);
+      }
     }
 
     return {

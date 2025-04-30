@@ -91,14 +91,26 @@ export function useChatStreaming({
       const retrievedPreTruncationOutput = savedStats?.preTruncationOutput || 0;
 
       try {
-        // Calculate output tokens using the potentially modified finalContent
-        const outputTokens =
-          TokenManagementService.estimateTokens(finalContentInput);
-        let finalContent = finalContentInput; // Use a mutable variable
+        let finalOutputTokensForMessage = 0; // Default to 0
+        let finalContent = finalContentInput; // Use mutable variable for content
+
         if (isCancelled) {
-          // Append cancellation notice if the stream was cancelled
-          finalContent += '\n\n_Stream cancelled by user._';
-          logger.sidebar.debug('[TokenDebug] handleStreamComplete: finalContent *after* cancel append (isCancelled=true):', finalContent);
+            // Calculate tokens based on content *before* adding notice
+            finalOutputTokensForMessage = TokenManagementService.estimateTokens(finalContentInput);
+            logger.sidebar.debug('[TokenDebug] handleStreamComplete (isCancelled): Tokens calculated before notice:', finalOutputTokensForMessage);
+            // Append notice for display
+            finalContent += '\n\n_Stream cancelled by user._';
+            logger.sidebar.debug('[TokenDebug] handleStreamComplete (isCancelled): finalContent after notice append:', finalContent);
+        } else if (isError) {
+            // Errors don't count towards output tokens
+            finalOutputTokensForMessage = 0;
+            // finalContent is already the error message passed in finalContentInput
+            logger.sidebar.debug('[TokenDebug] handleStreamComplete (isError): Setting output tokens to 0.');
+        } else {
+            // Normal completion: Calculate tokens from the final received content
+            finalOutputTokensForMessage = TokenManagementService.estimateTokens(finalContentInput);
+            logger.sidebar.debug('[TokenDebug] handleStreamComplete (Normal): Calculated output tokens:', finalOutputTokensForMessage);
+            // finalContent is already the complete content passed in finalContentInput
         }
 
         // Update message with final content (using the potentially modified finalContent)
@@ -106,13 +118,12 @@ export function useChatStreaming({
           msg.id === messageId
             ? {
                 ...msg,
-                content: finalContent,
-                isStreaming: false, // Explicitly mark as not streaming
+                content: finalContent, // Use the potentially modified content (with notice or error)
+                isStreaming: false,
                 model: model || selectedModel,
-                platformIconUrl: msg.platformIconUrl, // Keep existing icon URL
-                outputTokens,
-                // If this is an error, change the role to system
-                role: isError ? MESSAGE_ROLES.SYSTEM : msg.role,
+                platformIconUrl: msg.platformIconUrl,
+                outputTokens: finalOutputTokensForMessage, // Use the correctly calculated token count
+                role: isError ? MESSAGE_ROLES.SYSTEM : msg.role, // Keep error role handling
               }
             : msg
         );
@@ -336,95 +347,6 @@ export function useChatStreaming({
         action: 'cancelStream',
         streamId: streamId,
       });
-
-      const cancelledContent =
-        batchedStreamingContentRef.current + '\n\n_Stream cancelled by user._';
-      logger.sidebar.debug('[TokenDebug] cancelStream: Content *after* cancel append:', cancelledContent);
-      const outputTokens =
-        TokenManagementService.estimateTokens(cancelledContent);
-
-      let messagesAfterCancel = messages; // Start with current messages
-
-      if (!extractedContentAdded) {
-        try {
-          const result = await chrome.storage.local.get([
-            STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-          ]);
-          const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
-
-          if (allTabContents) {
-            const tabIdKey = tabId.toString();
-            const extractedContent = allTabContents[tabIdKey];
-
-            if (
-              extractedContent &&
-              typeof extractedContent === 'string' &&
-              extractedContent.trim()
-            ) {
-              const contentMessage = {
-                id: `extracted_${Date.now()}`,
-                role: MESSAGE_ROLES.USER,
-                content: extractedContent,
-                timestamp: new Date().toISOString(),
-                inputTokens:
-                  TokenManagementService.estimateTokens(extractedContent),
-                outputTokens: 0,
-                isExtractedContent: true,
-              };
-
-              const cancelledMsgIndex = messages.findIndex(
-                (msg) => msg.id === streamingMessageId
-              );
-
-              if (cancelledMsgIndex !== -1) {
-                const messagesWithContent = [
-                  ...messages.slice(0, cancelledMsgIndex),
-                  contentMessage,
-                  ...messages.slice(cancelledMsgIndex),
-                ];
-                messagesAfterCancel = messagesWithContent;
-                setMessages(messagesAfterCancel);
-                setExtractedContentAdded(true);
-              } else {
-                logger.sidebar.warn(
-                  'Cancelled message not found, cannot insert extracted content correctly.'
-                );
-              }
-            }
-          }
-        } catch (extractError) {
-          logger.sidebar.error(
-            'Error adding extracted content during cancellation:',
-            extractError
-          );
-        }
-      }
-
-      const finalMessages = messagesAfterCancel.map((msg) =>
-        msg.id === streamingMessageId
-          ? {
-              ...msg,
-              content: cancelledContent,
-              isStreaming: false,
-              outputTokens,
-            }
-          : msg
-      );
-
-      logger.sidebar.debug('[TokenDebug] cancelStream: finalMessages array before setMessages:', finalMessages);
-      setMessages(finalMessages);
-
-      if (tabId) {
-        logger.sidebar.debug('[TokenDebug] cancelStream: Calling ChatHistoryService.saveHistory with:', { tabId, finalMessages, modelConfigData });
-        await ChatHistoryService.saveHistory(
-          tabId,
-          finalMessages,
-          modelConfigData
-        );
-      }
-
-      setStreamingMessageId(null);
-      batchedStreamingContentRef.current = '';
     } catch (error) {
       logger.sidebar.error('Error cancelling stream:', error);
       setStreamingMessageId(null);
