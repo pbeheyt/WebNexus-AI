@@ -40,13 +40,13 @@
   21:3  warning  'onClick' is missing in props validation    react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/components/core/CustomSelect.jsx
-  33:3  warning  'options' is missing in props validation          react/prop-types
-  34:3  warning  'selectedValue' is missing in props validation    react/prop-types
-  35:3  warning  'onChange' is missing in props validation         react/prop-types
-  36:3  warning  'placeholder' is missing in props validation      react/prop-types
-  37:3  warning  'disabled' is missing in props validation         react/prop-types
-  38:3  warning  'className' is missing in props validation        react/prop-types
-  39:3  warning  'buttonClassName' is missing in props validation  react/prop-types
+  19:3  warning  'options' is missing in props validation          react/prop-types
+  20:3  warning  'selectedValue' is missing in props validation    react/prop-types
+  21:3  warning  'onChange' is missing in props validation         react/prop-types
+  22:3  warning  'placeholder' is missing in props validation      react/prop-types
+  23:3  warning  'disabled' is missing in props validation         react/prop-types
+  24:3  warning  'className' is missing in props validation        react/prop-types
+  25:3  warning  'buttonClassName' is missing in props validation  react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/components/core/IconButton.jsx
    7:7  warning  'icon' is missing in props validation           react/prop-types
@@ -74,14 +74,14 @@
   17:3  warning  'className' is missing in props validation    react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/components/feedback/Toast.jsx
-  12:3  warning  'message' is missing in props validation                                                                                                                                                            react/prop-types
-  13:3  warning  'type' is missing in props validation                                                                                                                                                               react/prop-types
-  14:3  warning  'duration' is missing in props validation                                                                                                                                                           react/prop-types
-  15:3  warning  'onClose' is missing in props validation                                                                                                                                                            react/prop-types
-  16:3  warning  'visible' is missing in props validation                                                                                                                                                            react/prop-types
-  17:3  warning  'position' is missing in props validation                                                                                                                                                           react/prop-types
-  18:3  warning  'standalone' is missing in props validation                                                                                                                                                         react/prop-types
-  24:9  warning  The 'notification' conditional could make the dependencies of useEffect Hook (at line 49) change on every render. To fix this, wrap the initialization of 'notification' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  14:3  warning  'message' is missing in props validation                                                                                                                                                            react/prop-types
+  15:3  warning  'type' is missing in props validation                                                                                                                                                               react/prop-types
+  16:3  warning  'duration' is missing in props validation                                                                                                                                                           react/prop-types
+  17:3  warning  'onClose' is missing in props validation                                                                                                                                                            react/prop-types
+  18:3  warning  'visible' is missing in props validation                                                                                                                                                            react/prop-types
+  19:3  warning  'position' is missing in props validation                                                                                                                                                           react/prop-types
+  20:3  warning  'standalone' is missing in props validation                                                                                                                                                         react/prop-types
+  26:9  warning  The 'notification' conditional could make the dependencies of useEffect Hook (at line 51) change on every render. To fix this, wrap the initialization of 'notification' in its own useMemo() Hook  react-hooks/exhaustive-deps
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/components/form/SelectList.jsx
   18:3   warning  'options' is missing in props validation         react/prop-types
@@ -114,6 +114,9 @@
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/components/icons/ChevronDownIcon.jsx
   3:35  warning  'className' is missing in props validation  react/prop-types
+
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/components/icons/ChevronUpIcon.jsx
+  9:33  warning  'className' is missing in props validation  react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/components/icons/ContextWindowIcon.jsx
   4:37  warning  'className' is missing in props validation  react/prop-types
@@ -489,9 +492,9 @@
   23:42  warning  'selectedPlatformId' is missing in props validation  react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/TokenCounter.jsx
-  5:25  warning  'tokenStats' is missing in props validation     react/prop-types
-  5:37  warning  'contextStatus' is missing in props validation  react/prop-types
-  5:52  warning  'className' is missing in props validation      react/prop-types
+  6:25  warning  'tokenStats' is missing in props validation     react/prop-types
+  6:37  warning  'contextStatus' is missing in props validation  react/prop-types
+  6:52  warning  'className' is missing in props validation      react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/UserInput.jsx
   9:29  warning  'className' is missing in props validation  react/prop-types
@@ -566,5 +569,5 @@
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/hooks/useTokenTracking.js
   59:26  warning  'prevStats' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
 
-✖ 415 problems (0 errors, 415 warnings)
+✖ 416 problems (0 errors, 416 warnings)
 

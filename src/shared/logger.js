@@ -9,28 +9,41 @@
 const isProduction = process.env.NODE_ENV === 'production';
 
 /**
- * Log a message to console, conditionally skipping 'info' logs in production.
+ * Log a message to console, conditionally skipping 'info' and 'debug' logs in production.
  * @param {string} context - The context (background, content, popup, etc.)
- * @param {string} level - Log level (info, warn, error)
+ * @param {string} level - Log level (info, warn, error, debug)
  * @param {string} message - The message to log
  * @param {any} [data=null] - Optional data to include
  */
 function log(context, level, message, data = null) {
   // --- Production Log Filtering ---
-  // Skip 'info' level logs when in production mode
-  if (isProduction && level === 'info') {
+  // Skip 'info' and 'debug' level logs when in production mode
+  if (isProduction && (level === 'info' || level === 'debug')) {
     return; // Exit early, do not log
   }
   // -----------------------------
 
-  // Map level to console method
-  const consoleMethod =
-    level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'; // Default to 'log' for 'info'
+  // Map level to allowed console method
+  let consoleMethod;
+  switch (level) {
+    case 'error':
+      consoleMethod = 'error';
+      break;
+    case 'warn':
+      consoleMethod = 'warn';
+      break;
+    case 'info':
+    case 'debug': // Map debug to info as console.debug is not explicitly allowed
+      consoleMethod = 'info';
+      break;
+    default:
+      consoleMethod = 'info'; // Default to info for unknown levels
+  }
 
   // Format prefix with context
   const prefix = `[${context}]`;
 
-  // Log to console with or without data
+  // Log to console with or without data using the determined allowed method
   if (data !== null) {
     console[consoleMethod](prefix, message, data);
   } else {
