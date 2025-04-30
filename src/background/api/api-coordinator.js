@@ -139,8 +139,6 @@ export async function processContentViaApi(params) {
     // streaming = false, // Note: streaming is forced to true later
     conversationHistory = [],
     isContentExtractionEnabled,
-    preTruncationCost,
-    preTruncationOutput,
   } = params;
 
   if (!platformId || !modelId) {
@@ -165,7 +163,6 @@ export async function processContentViaApi(params) {
     let extractedContent = null;
     let newlyFormattedContent = null; // To hold content formatted in this run
     const contentType = determineContentType(url);
-    const skipExtractionRequested = params.skipInitialExtraction === true;
     const isFirstUserMessage = conversationHistory.length === 0;
     logger.background.info(
       `Is this the first user message (history empty)? ${isFirstUserMessage}`

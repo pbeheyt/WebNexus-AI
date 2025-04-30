@@ -7,7 +7,7 @@ class ApiInterface {
    * @param {Object} credentials - API credentials
    * @returns {Promise<void>}
    */
-  async initialize(credentials) {
+  async initialize(_credentials) {
     throw new Error('initialize must be implemented by subclasses');
   }
 
@@ -23,7 +23,7 @@ class ApiInterface {
    * @param {number} [requestConfig.tabId] - Tab ID for token accounting
    * @returns {Promise<Object>} Standardized response object
    */
-  async processRequest(requestConfig) {
+  async processRequest(_requestConfig) {
     throw new Error('processRequest must be implemented by subclasses');
   }
 

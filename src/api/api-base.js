@@ -148,12 +148,12 @@ class BaseApiService extends ApiInterface {
     }
   }
 
-  async _validateWithModel(apiKey, model) {
+  async _validateWithModel(_apiKey, _model) {
     try {
       this.logger.info(
-        `[${this.platformId}] Attempting API key validation for model ${model}...`
+        `[${this.platformId}] Attempting API key validation for model ${_model}...`
       );
-      const fetchOptions = await this._buildValidationRequest(apiKey, model);
+      const fetchOptions = await this._buildValidationRequest(_apiKey, _model);
       const response = await fetch(fetchOptions.url, {
         method: fetchOptions.method,
         headers: fetchOptions.headers,
@@ -181,17 +181,17 @@ class BaseApiService extends ApiInterface {
     }
   }
 
-  async _buildValidationRequest(apiKey, model) {
+  async _buildValidationRequest(_apiKey, _model) {
     throw new Error(
       '_buildValidationRequest must be implemented by subclasses'
     );
   }
 
-  async _buildApiRequest(prompt, params, apiKey) {
+  async _buildApiRequest(_prompt, _params, _apiKey) {
     throw new Error('_buildApiRequest must be implemented by subclasses');
   }
 
-  _parseStreamChunk(line) {
+  _parseStreamChunk(_line) {
     throw new Error('_parseStreamChunk must be implemented by subclasses');
   }
 

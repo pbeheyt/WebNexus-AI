@@ -1,6 +1,5 @@
 // src/api/api-factory.js
 
-import BaseApiService from './api-base.js';
 import ChatGptApiService from './implementations/chatgpt-api.js';
 import ClaudeApiService from './implementations/claude-api.js';
 import GeminiApiService from './implementations/gemini-api.js';
