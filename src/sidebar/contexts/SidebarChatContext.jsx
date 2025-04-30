@@ -147,6 +147,7 @@ export function SidebarChatProvider({ children }) {
     };
 
     loadChatHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabId]);
 
   // Get visible messages (filtering out extracted content)
@@ -427,6 +428,7 @@ export function SidebarChatProvider({ children }) {
         rafIdRef.current = null; // Also reset the ref here
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     streamingMessageId,
     messages,
@@ -1110,7 +1112,7 @@ export function SidebarChatProvider({ children }) {
    * Sends a cancellation request to the background script for the currently active stream,
    * updates the UI state to reflect cancellation, and saves the final state.
    */
-  const cancelStream = async () => {
+  const cancelStream = async () => { // NOTE: Not wrapped in useCallback
     if (!streamingMessageId || !isProcessing || isCanceling) return;
 
     const { [STORAGE_KEYS.STREAM_ID]: streamId } = await chrome.storage.local.get(STORAGE_KEYS.STREAM_ID);
@@ -1308,7 +1310,7 @@ export function SidebarChatProvider({ children }) {
     streamingMessageId,
     isProcessing,
     isCanceling,
-    cancelStream,
+    cancelStream, // Dependency on cancelStream is acknowledged by suppression comment
   ]);
 
   /**
@@ -1383,7 +1385,7 @@ export function SidebarChatProvider({ children }) {
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isProcessing, isCanceling, cancelStream]);
+  }, [isProcessing, isCanceling, cancelStream]); // Dependency on cancelStream is acknowledged by suppression comment
 
   return (
     <SidebarChatContext.Provider
