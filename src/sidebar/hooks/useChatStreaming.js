@@ -84,6 +84,7 @@ export function useChatStreaming({
       isError = false,
       isCancelled = false
     ) => {
+      logger.sidebar.debug('[TokenDebug] handleStreamComplete: Received args:', { messageId, finalContentInput, model, isError, isCancelled });
       // Retrieve rerun stats *before* saving history
       const savedStats = rerunStatsRef.current;
       const retrievedPreTruncationCost = savedStats?.preTruncationCost || 0;
@@ -97,6 +98,7 @@ export function useChatStreaming({
         if (isCancelled) {
           // Append cancellation notice if the stream was cancelled
           finalContent += '\n\n_Stream cancelled by user._';
+          logger.sidebar.debug('[TokenDebug] handleStreamComplete: finalContent *after* cancel append (isCancelled=true):', finalContent);
         }
 
         // Update message with final content (using the potentially modified finalContent)
@@ -160,11 +162,13 @@ export function useChatStreaming({
         }
 
         // Set messages with all updates at once
+        logger.sidebar.debug('[TokenDebug] handleStreamComplete: updatedMessages array before setMessages:', updatedMessages);
         setMessages(updatedMessages);
         batchedStreamingContentRef.current = ''; // Clear buffer on completion
 
         // Save history, passing the retrieved initial stats
         if (tabId) {
+          logger.sidebar.debug('[TokenDebug] handleStreamComplete: Calling ChatHistoryService.saveHistory with:', { tabId, updatedMessages, modelConfigData, options: { initialAccumulatedCost: retrievedPreTruncationCost, initialOutputTokens: retrievedPreTruncationOutput } });
           await ChatHistoryService.saveHistory(
             tabId,
             updatedMessages,
@@ -319,6 +323,8 @@ export function useChatStreaming({
 
     const { [STORAGE_KEYS.STREAM_ID]: streamId } =
       await chrome.storage.local.get(STORAGE_KEYS.STREAM_ID);
+    logger.sidebar.debug('[TokenDebug] cancelStream: Initial batched content before cancel append:', batchedStreamingContentRef.current);
+    logger.sidebar.debug('[TokenDebug] cancelStream: Messages state *before* cancel append:', messages);
     setIsCanceling(true);
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
@@ -333,6 +339,7 @@ export function useChatStreaming({
 
       const cancelledContent =
         batchedStreamingContentRef.current + '\n\n_Stream cancelled by user._';
+      logger.sidebar.debug('[TokenDebug] cancelStream: Content *after* cancel append:', cancelledContent);
       const outputTokens =
         TokenManagementService.estimateTokens(cancelledContent);
 
@@ -404,9 +411,11 @@ export function useChatStreaming({
           : msg
       );
 
+      logger.sidebar.debug('[TokenDebug] cancelStream: finalMessages array before setMessages:', finalMessages);
       setMessages(finalMessages);
 
       if (tabId) {
+        logger.sidebar.debug('[TokenDebug] cancelStream: Calling ChatHistoryService.saveHistory with:', { tabId, finalMessages, modelConfigData });
         await ChatHistoryService.saveHistory(
           tabId,
           finalMessages,

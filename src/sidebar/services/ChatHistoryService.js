@@ -83,6 +83,7 @@ class ChatHistoryService {
    * @returns {Promise<boolean>} Success status
    */
   static async saveHistory(tabId, messages, modelConfig = null, options = {}) {
+    logger.service.debug('[TokenDebug] ChatHistoryService.saveHistory: Called with:', { tabId, messages, modelConfig, options });
     try {
       if (!tabId) {
         logger.sidebar.error(
@@ -111,6 +112,10 @@ class ChatHistoryService {
         modelConfig,
         options
       );
+
+      // Add this line just before returning true
+      const statsResult = await TokenManagementService.getTokenStatistics(tabId); // Re-fetch the latest stats
+      logger.service.debug('[TokenDebug] ChatHistoryService.saveHistory: Stats after calculateAndUpdateStatistics:', statsResult);
 
       return true;
     } catch (error) {
