@@ -158,30 +158,31 @@ import React, {
     const SCROLL_THRESHOLD = 10;
     const DEBOUNCE_DELAY = 100;
   
-    // --- Function to Check Scroll Position (for Scroll Down Button) ---
-    const checkScrollPosition = useCallback(() => {
-      const scrollContainer = scrollContainerRef.current;
-      if (!scrollContainer || messages.length === 0) {
-        if (showScrollDownButton) setShowScrollDownButton(false);
-        return;
-      }
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-      const scrollFromBottom = scrollHeight - scrollTop - clientHeight;
-      const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 10;
-  
-      const lastMsg = messages[messages.length - 1];
-      const forceHideButton =
-        lastMsg &&
-        (lastMsg.role === MESSAGE_ROLES.ASSISTANT ||
-          lastMsg.role === MESSAGE_ROLES.SYSTEM) &&
-        lastMsg.isStreaming === true &&
-        (!lastMsg.content || lastMsg.content.trim() === '');
-  
+  // --- Function to Check Scroll Position (for Scroll Down Button) ---
+  const checkScrollPosition = useCallback(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer || messages.length === 0) {
+      if (showScrollDownButton) setShowScrollDownButton(false);
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const scrollFromBottom = scrollHeight - scrollTop - clientHeight;
+    const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 10;
+    
+    const lastMsg = messages[messages.length - 1];
+    const forceHideButton =
+    lastMsg &&
+    (lastMsg.role === MESSAGE_ROLES.ASSISTANT ||
+      lastMsg.role === MESSAGE_ROLES.SYSTEM) &&
+      lastMsg.isStreaming === true &&
+      (!lastMsg.content || lastMsg.content.trim() === '');
+      
       const shouldShow = !isNearBottom && !forceHideButton;
       setShowScrollDownButton((prev) =>
         prev !== shouldShow ? shouldShow : prev
-      );
-    }, [messages, showScrollDownButton, SCROLL_THRESHOLD, textSize]); // Include textSize
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages, showScrollDownButton, SCROLL_THRESHOLD, textSize]);
   
     // --- Define last/secondLast message OUTSIDE the effect ---
     const lastMessage = messages[messages.length - 1];
@@ -279,6 +280,8 @@ import React, {
       checkScrollPosition, // Include checkScrollPosition
       initialScrollCompletedForResponse, // Include this state
       showScrollDownButton, // Include this state
+      lastMessage, // Add missing dependency
+      secondLastMessage, // Add missing dependency
     ]); // Ensure all relevant dependencies are listed
   
     // --- Layout Effect for Preceding User Message Height ---

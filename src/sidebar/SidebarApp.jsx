@@ -180,15 +180,15 @@ export default function SidebarApp() {
     if (rafIdHeightCalc.current) {
       cancelAnimationFrame(rafIdHeightCalc.current);
     }
-
+    
     // Schedule the height reading in the next animation frame
     rafIdHeightCalc.current = requestAnimationFrame(() => {
       const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
       const collapsibleHeight = headerExpanded
-        ? collapsibleHeaderRef.current?.offsetHeight || 0
-        : 0;
+      ? collapsibleHeaderRef.current?.offsetHeight || 0
+      : 0;
       const inputHeight = userInputRef.current?.offsetHeight || 0;
-
+      
       // Ensure all heights are valid numbers before calculating
       if (
         typeof appHeaderHeight === 'number' &&
@@ -203,8 +203,9 @@ export default function SidebarApp() {
       }
       rafIdHeightCalc.current = null; // Reset ref after execution
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerExpanded, textSize]); // Recalculate if header state or text size changes
-
+  
   // Create a debounced version of the height calculation function
   const debouncedCalculateHeight = useMemo(
     () => debounce(calculateAndSetHeight, 150),

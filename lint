@@ -17,18 +17,11 @@
   48:5  warning  Unexpected console statement  no-console
   50:5  warning  Unexpected console statement  no-console
 
-/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/SidebarApp.jsx
-  206:6  warning  React Hook useCallback has an unnecessary dependency: 'textSize'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
-
-/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/ChatArea.jsx
-  184:8  warning  React Hook useCallback has an unnecessary dependency: 'textSize'. Either exclude it or remove the dependency array                              react-hooks/exhaustive-deps
-  271:8  warning  React Hook useLayoutEffect has missing dependencies: 'lastMessage' and 'secondLastMessage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
-
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/contexts/SidebarChatContext.jsx
    150:6  warning  React Hook useEffect has missing dependencies: 'calculateStats' and 'modelConfigData'. Either include them or remove the dependency array                                                       react-hooks/exhaustive-deps
    430:6  warning  React Hook useEffect has a missing dependency: 'performStreamingStateUpdate'. Either include it or remove the dependency array                                                                  react-hooks/exhaustive-deps
   1113:9  warning  The 'cancelStream' function makes the dependencies of useCallback Hook (at line 1300) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook  react-hooks/exhaustive-deps
   1113:9  warning  The 'cancelStream' function makes the dependencies of useEffect Hook (at line 1386) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook    react-hooks/exhaustive-deps
 
-✖ 13 problems (0 errors, 13 warnings)
+✖ 10 problems (0 errors, 10 warnings)
 
