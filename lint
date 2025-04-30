@@ -19,6 +19,9 @@
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/settings/components/ui/api/AdvancedSettings.jsx
   168:6  warning  React Hook useEffect has missing dependencies: 'checkIfAtDefaults', 'getDefaultSettings', and 'getModelSettings'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
 
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/settings/contexts/TabContext.jsx
+  13:31  warning  'children' is missing in props validation  react/prop-types
+
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/shared/logger.js
   48:5  warning  Unexpected console statement  no-console
   50:5  warning  Unexpected console statement  no-console
@@ -31,14 +34,48 @@
   271:8  warning  React Hook useLayoutEffect has missing dependencies: 'lastMessage' and 'secondLastMessage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/AssistantMessageBubble.jsx
-  206:31  error  'node' is not defined  no-undef
+   27:9   warning  'id' is missing in props validation               react/prop-types
+   28:9   warning  'content' is missing in props validation          react/prop-types
+   29:9   warning  'isStreaming' is missing in props validation      react/prop-types
+   30:9   warning  'model' is missing in props validation            react/prop-types
+   31:9   warning  'platformIconUrl' is missing in props validation  react/prop-types
+   32:9   warning  'platformId' is missing in props validation       react/prop-types
+   33:9   warning  'metadata' is missing in props validation         react/prop-types
+   34:9   warning  'className' is missing in props validation        react/prop-types
+   35:9   warning  'style' is missing in props validation            react/prop-types
+  193:31  error    'node' is not defined                             no-undef
+  357:51  warning  'content.trim' is missing in props validation     react/prop-types
+
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/EnhancedCodeBlock.jsx
+  20:6   warning  'className' is missing in props validation    react/prop-types
+  20:17  warning  'children' is missing in props validation     react/prop-types
+  20:27  warning  'isStreaming' is missing in props validation  react/prop-types
+
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/MathFormulaBlock.jsx
+  16:34  warning  'content' is missing in props validation  react/prop-types
+  16:43  warning  'inline' is missing in props validation   react/prop-types
+
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/MessageBubble.jsx
+  20:9  warning  'role' is missing in props validation  react/prop-types
+
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/SystemMessageBubble.jsx
+  26:9  warning  'id' is missing in props validation         react/prop-types
+  27:9  warning  'content' is missing in props validation    react/prop-types
+  28:9  warning  'className' is missing in props validation  react/prop-types
+  29:9  warning  'style' is missing in props validation      react/prop-types
+
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/messaging/UserMessageBubble.jsx
+  22:9  warning  'id' is missing in props validation         react/prop-types
+  23:9  warning  'content' is missing in props validation    react/prop-types
+  24:9  warning  'className' is missing in props validation  react/prop-types
+  25:9  warning  'style' is missing in props validation      react/prop-types
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/contexts/SidebarChatContext.jsx
-     6:3  error    React.PropTypes is deprecated since React 15.5.0, use the npm module prop-types instead                                                                                                         react/no-deprecated
-   150:6  warning  React Hook useEffect has missing dependencies: 'calculateStats' and 'modelConfigData'. Either include them or remove the dependency array                                                       react-hooks/exhaustive-deps
-   430:6  warning  React Hook useEffect has a missing dependency: 'performStreamingStateUpdate'. Either include it or remove the dependency array                                                                  react-hooks/exhaustive-deps
-  1113:9  warning  The 'cancelStream' function makes the dependencies of useCallback Hook (at line 1300) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook  react-hooks/exhaustive-deps
-  1113:9  warning  The 'cancelStream' function makes the dependencies of useEffect Hook (at line 1386) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook    react-hooks/exhaustive-deps
+    27:39  warning  'children' is missing in props validation                                                                                                                                                       react/prop-types
+   145:6   warning  React Hook useEffect has missing dependencies: 'calculateStats' and 'modelConfigData'. Either include them or remove the dependency array                                                       react-hooks/exhaustive-deps
+   425:6   warning  React Hook useEffect has a missing dependency: 'performStreamingStateUpdate'. Either include it or remove the dependency array                                                                  react-hooks/exhaustive-deps
+  1108:9   warning  The 'cancelStream' function makes the dependencies of useCallback Hook (at line 1295) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook  react-hooks/exhaustive-deps
+  1108:9   warning  The 'cancelStream' function makes the dependencies of useEffect Hook (at line 1381) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook    react-hooks/exhaustive-deps
 
-✖ 19 problems (2 errors, 17 warnings)
+✖ 44 problems (1 error, 43 warnings)
 

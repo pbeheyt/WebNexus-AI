@@ -19,7 +19,7 @@ export function Button({
   size = 'md',
   disabled = false,
   className = '',
-  onClick,
+  onClick = () => {},
   ...props
 }) {
   // Base classes
@@ -78,7 +78,8 @@ Button.propTypes = {
   size: PropTypes.oneOf(['sm', 'md', 'lg']),
   disabled: PropTypes.bool,
   className: PropTypes.string,
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
 };
+
 
 export default Button;
