@@ -45,8 +45,10 @@ function log(context, level, message, data = null) {
 
   // Log to console with or without data using the determined allowed method
   if (data !== null) {
+    // eslint-disable-next-line no-console
     console[consoleMethod](prefix, message, data);
   } else {
+    // eslint-disable-next-line no-console
     console[consoleMethod](prefix, message);
   }
 }
