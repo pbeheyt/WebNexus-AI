@@ -8,7 +8,7 @@
   252:37  warning  'promptContent' is assigned a value but never used  no-unused-vars
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/contexts/platform/TabAwarePlatformContext.jsx
-  309:7  warning  React Hook useCallback has an unnecessary dependency: 'globalStorageKey'. Either exclude it or remove the dependency array. Outer scope values like 'globalStorageKey' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  378:7  warning  React Hook useCallback has an unnecessary dependency: 'onStatusUpdate'. Either exclude it or remove the dependency array. Outer scope values like 'onStatusUpdate' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/settings/components/ui/api/AdvancedSettings.jsx
   168:6  warning  React Hook useEffect has missing dependencies: 'checkIfAtDefaults', 'getDefaultSettings', and 'getModelSettings'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
