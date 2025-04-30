@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
+
 import { useSidebarPlatform } from '../../contexts/platform';
+
 import { DropdownContext } from './Header';
 
 // SVG Icons

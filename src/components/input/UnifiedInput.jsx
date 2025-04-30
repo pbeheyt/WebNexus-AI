@@ -100,7 +100,7 @@ export function UnifiedInput({
   const popupSendButtonDisabled = !value.trim() || disabled || isProcessing;
   const popupSendButtonStyle = popupSendButtonDisabled
     ? 'bg-gray-400 dark:bg-gray-600 text-white dark:text-gray-400' // Disabled state handled by IconButton
-    : 'bg-primary hover:bg-primary-dark text-white'; // Active state
+    : 'bg-primary hover:bg-primary-dark text-white';  // Active state
   const popupIconSize = 'w-3.5 h-3.5';
   const popupButtonSize = 'w-5 h-5 rounded';
 
@@ -127,14 +127,14 @@ export function UnifiedInput({
           <div
             ref={containerRef}
             onClick={handleContainerClick}
-            role='button' // Added role
-            tabIndex={0} // Added tabIndex
+            role='button'
+            tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 handleContainerClick(e);
               }
-            }} // Added onKeyDown
-            className='input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all cursor-text' // Added cursor-text for visual cue
+            }}
+            className='input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all cursor-text'
           >
             {/* Flex container for layout */}
             <div className='flex w-full'>
@@ -205,14 +205,14 @@ export function UnifiedInput({
           <div
             ref={containerRef}
             onClick={handleContainerClick}
-            role='button' // Added role
-            tabIndex={0} // Added tabIndex
+            role='button'
+            tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 handleContainerClick(e);
               }
-            }} // Added onKeyDown
-            className='input-container relative cursor-text' // Added cursor-text
+            }}
+            className='input-container relative cursor-text'
           >
             {/* Flex container for layout */}
             <div className='flex w-full'>

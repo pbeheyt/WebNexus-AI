@@ -478,12 +478,11 @@
   206:6   warning  React Hook useCallback has an unnecessary dependency: 'textSize'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/ChatArea.jsx
-   51:5   warning  'className' is missing in props validation                                                                                                      react/prop-types
-   52:5   warning  'otherUIHeight' is missing in props validation                                                                                                  react/prop-types
-   53:5   warning  'requestHeightRecalculation' is missing in props validation                                                                                     react/prop-types
-  183:8   warning  React Hook useCallback has an unnecessary dependency: 'textSize'. Either exclude it or remove the dependency array                              react-hooks/exhaustive-deps
-  270:8   warning  React Hook useLayoutEffect has missing dependencies: 'lastMessage' and 'secondLastMessage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
-  471:26  error    `tabIndex` should only be declared on interactive elements                                                                                      jsx-a11y/no-noninteractive-tabindex
+   51:5  warning  'className' is missing in props validation                                                                                                      react/prop-types
+   52:5  warning  'otherUIHeight' is missing in props validation                                                                                                  react/prop-types
+   53:5  warning  'requestHeightRecalculation' is missing in props validation                                                                                     react/prop-types
+  183:8  warning  React Hook useCallback has an unnecessary dependency: 'textSize'. Either exclude it or remove the dependency array                              react-hooks/exhaustive-deps
+  270:8  warning  React Hook useLayoutEffect has missing dependencies: 'lastMessage' and 'secondLastMessage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
 
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/components/ModelSelector.jsx
   23:26  warning  'className' is missing in props validation           react/prop-types
@@ -567,5 +566,5 @@
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/hooks/useTokenTracking.js
   59:26  warning  'prevStats' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
 
-✖ 416 problems (1 error, 415 warnings)
+✖ 415 problems (0 errors, 415 warnings)
 

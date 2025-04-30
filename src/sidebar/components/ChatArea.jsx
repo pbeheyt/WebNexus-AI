@@ -468,7 +468,6 @@ import React, {
                         onMouseLeave={() => setHoveredElement(null)}
                         onFocus={() => setHoveredElement('freeTier')}
                         onBlur={() => setHoveredElement(null)}
-                         tabIndex='0'
                       >
                         <FreeTierIcon /> <span className='ml-1'>Free</span>
                         <Tooltip
