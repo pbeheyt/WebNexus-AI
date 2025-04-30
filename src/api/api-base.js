@@ -162,19 +162,19 @@ class BaseApiService extends ApiInterface {
 
       if (response.ok) {
         this.logger.info(
-          `[${this.platformId}] API key validation successful for model ${model} (Status: ${response.status})`
+          `[${this.platformId}] API key validation successful for model ${_model} (Status: ${response.status})`
         );
         return true;
       } else {
         const errorMessage = await extractApiErrorMessage(response);
         this.logger.warn(
-          `[${this.platformId}] API key validation failed for model ${model} (Status: ${response.status}): ${errorMessage}`
+          `[${this.platformId}] API key validation failed for model ${_model} (Status: ${response.status}): ${errorMessage}`
         );
         return false;
       }
     } catch (error) {
       this.logger.error(
-        `[${this.platformId}] API key validation error for model ${model}:`,
+        `[${this.platformId}] API key validation error for model ${_model}:`,
         error
       );
       return false;

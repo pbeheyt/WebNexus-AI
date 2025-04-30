@@ -70,14 +70,14 @@ export function setupMessageRouter() {
  */
 function registerCoreHandlers() {
   // Content type detection handler
-  messageHandlers.set('getContentType', (message, _sender, _sendResponse) => {
+  messageHandlers.set('getContentType', (message, _sender, sendResponse) => {
     const contentType = determineContentType(message.url, message.hasSelection);
     sendResponse({ contentType });
     return false;
   });
 
   // Status check handler
-  messageHandlers.set('checkStatus', (message, _sender, _sendResponse) => {
+  messageHandlers.set('checkStatus', (_message, _sender, sendResponse) => {
     sendResponse({ status: 'ok' });
     return false;
   });
@@ -104,7 +104,7 @@ function registerCoreHandlers() {
   );
 
   // Tab ID provider for content scripts
-  messageHandlers.set('getCurrentTabId', (message, sender, sendResponse) => {
+  messageHandlers.set('getCurrentTabId', (_message, sender, sendResponse) => {
     if (sender.tab) {
       sendResponse({ tabId: sender.tab.id });
     } else {
