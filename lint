@@ -17,9 +17,5 @@
   48:5  warning  Unexpected console statement  no-console
   50:5  warning  Unexpected console statement  no-console
 
-/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/contexts/SidebarChatContext.jsx
-  1115:9  warning  The 'cancelStream' function makes the dependencies of useCallback Hook (at line 1302) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook  react-hooks/exhaustive-deps
-  1115:9  warning  The 'cancelStream' function makes the dependencies of useEffect Hook (at line 1388) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook    react-hooks/exhaustive-deps
-
-✖ 8 problems (0 errors, 8 warnings)
+✖ 6 problems (0 errors, 6 warnings)
 
