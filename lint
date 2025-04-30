@@ -7,9 +7,6 @@
   252:32  warning  'url' is assigned a value but never used            no-unused-vars
   252:37  warning  'promptContent' is assigned a value but never used  no-unused-vars
 
-/home/pbeheyt/Extensions/AI-Content-Assistant/src/contexts/platform/TabAwarePlatformContext.jsx
-  378:7  warning  React Hook useCallback has an unnecessary dependency: 'onStatusUpdate'. Either exclude it or remove the dependency array. Outer scope values like 'onStatusUpdate' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
-
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/settings/components/ui/api/AdvancedSettings.jsx
   168:6  warning  React Hook useEffect has missing dependencies: 'checkIfAtDefaults', 'getDefaultSettings', and 'getModelSettings'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
 
@@ -33,5 +30,5 @@
   1113:9  warning  The 'cancelStream' function makes the dependencies of useCallback Hook (at line 1300) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook  react-hooks/exhaustive-deps
   1113:9  warning  The 'cancelStream' function makes the dependencies of useEffect Hook (at line 1386) change on every render. To fix this, wrap the definition of 'cancelStream' in its own useCallback() Hook    react-hooks/exhaustive-deps
 
-✖ 14 problems (0 errors, 14 warnings)
+✖ 13 problems (0 errors, 13 warnings)
 

@@ -380,7 +380,6 @@ export function createTabAwarePlatformContext(options = {}) {
         selectedPlatformId,
         platforms,
         loadModels,
-        onStatusUpdate, // Added onStatusUpdate back as it was missing in the previous attempt's REPLACE block but present in the original code
       ]
     );
 
