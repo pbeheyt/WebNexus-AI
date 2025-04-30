@@ -165,7 +165,7 @@ export function createTabAwarePlatformContext(options = {}) {
           setSelectedModelId(null);
         }
       },
-      [tabId, interfaceType]
+      [tabId]
     );
 
     const _loadAndCheckPlatforms = useCallback(
@@ -308,7 +308,6 @@ export function createTabAwarePlatformContext(options = {}) {
       },
       [
         tabId,
-        interfaceType,
         globalStorageKey,
         loadModels,
         selectedPlatformId,
@@ -380,10 +379,8 @@ export function createTabAwarePlatformContext(options = {}) {
       [
         tabId,
         selectedPlatformId,
-        interfaceType,
         globalStorageKey,
         platforms,
-        onStatusUpdate,
         loadModels,
       ]
     );
@@ -428,7 +425,7 @@ export function createTabAwarePlatformContext(options = {}) {
           return false;
         }
       },
-      [tabId, interfaceType, selectedPlatformId, selectedModelId, models]
+      [tabId, selectedPlatformId, selectedModelId, models]
     );
 
     // Function to get API config for a specific platform

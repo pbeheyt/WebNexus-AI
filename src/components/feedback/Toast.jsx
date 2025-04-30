@@ -31,6 +31,7 @@ export function Toast({
     ? onClose
     : notificationContext?.clearNotification;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // For standalone usage, respond to the visible prop
     if (standalone) {
