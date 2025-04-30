@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
-
 import { useSidebarPlatform } from '../../contexts/platform';
-
 import { DropdownContext } from './Header';
 
 // SVG Icons
@@ -113,6 +111,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
           ref={dropdownRef}
           className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
           role='listbox' // ARIA role
           aria-labelledby={modelTriggerRef.current?.id || undefined} // Link to button if it has an ID
           tabIndex={0} // Make listbox focusable

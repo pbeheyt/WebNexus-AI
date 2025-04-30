@@ -127,7 +127,14 @@ export function UnifiedInput({
           <div
             ref={containerRef}
             onClick={handleContainerClick}
-            className='input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all'
+            role='button' // Added role
+            tabIndex={0} // Added tabIndex
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleContainerClick(e);
+              }
+            }} // Added onKeyDown
+            className='input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all cursor-text' // Added cursor-text for visual cue
           >
             {/* Flex container for layout */}
             <div className='flex w-full'>
@@ -149,7 +156,7 @@ export function UnifiedInput({
               {/* Send/Cancel Button */}
               <IconButton
                 icon={isStreamingActive ? XIcon : ArrowUpIcon}
-                iconClassName={`${sidebarIconSize} select-none`} // Apply select-none to icon
+                iconClassName={`${sidebarIconSize} select-none`}
                 className={`${sidebarButtonStyle} ${sidebarButtonSize} ${isCanceling ? 'opacity-70' : ''}`}
                 onClick={handleSubmit}
                 disabled={sidebarButtonDisabled}
@@ -159,7 +166,6 @@ export function UnifiedInput({
 
               {/* Prompt Selection Button */}
               <div className='relative'>
-                {/* Changed from div to button */}
                 <button
                   ref={promptButtonRef}
                   type='button'
@@ -169,7 +175,6 @@ export function UnifiedInput({
                   aria-label='Select prompt'
                   title='Select a custom prompt'
                 >
-                  {/* Adjust text size/weight as needed */}
                   <span className='font-semibold text-sm leading-none select-none'>
                     P
                   </span>
@@ -200,7 +205,14 @@ export function UnifiedInput({
           <div
             ref={containerRef}
             onClick={handleContainerClick}
-            className='input-container relative'
+            role='button' // Added role
+            tabIndex={0} // Added tabIndex
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleContainerClick(e);
+              }
+            }} // Added onKeyDown
+            className='input-container relative cursor-text' // Added cursor-text
           >
             {/* Flex container for layout */}
             <div className='flex w-full'>
@@ -222,7 +234,7 @@ export function UnifiedInput({
               {/* Send Button */}
               <IconButton
                 icon={ArrowUpIcon}
-                iconClassName={`${popupIconSize} select-none`} // Apply select-none to icon
+                iconClassName={`${popupIconSize} select-none`}
                 className={`${popupSendButtonStyle} ${popupButtonSize}`}
                 onClick={handleSubmit}
                 disabled={popupSendButtonDisabled}
@@ -232,7 +244,6 @@ export function UnifiedInput({
 
               {/* Prompt Selection Button */}
               <div className='relative'>
-                {/* Changed from div to button */}
                 <button
                   ref={promptButtonRef}
                   type='button'
