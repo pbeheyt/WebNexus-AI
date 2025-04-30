@@ -156,12 +156,12 @@ const PromptList = ({
                 </h3>
               </div>
               <small className='flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs select-none min-h-5'>
-                <div className='flex items-center select-none'>
-                  {item.contentTypeLabel}
+                <div className='inline-flex items-center gap-2 select-none'>
                   <ContentTypeIcon
                     contentType={item.contentType}
-                    className='ml-2 w-4 h-4 flex items-center justify-center select-none'
-                  />
+                    className='w-4 h-4 flex items-center justify-center select-none'
+                    />
+                  <span>{item.contentTypeLabel}</span>
                 </div>
                 {item.id === defaultPromptIds[item.contentType] && (
                   <span className='default-badge text-xs bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-full select-none'>

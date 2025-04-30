@@ -190,11 +190,11 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       {/* Content Type Display */}
       <div className='prompt-detail-meta mb-4 text-base text-theme-secondary select-none'>
         <div className='inline-flex items-center gap-2'>
-          <span>{prompt.contentTypeLabel}</span>
           <ContentTypeIcon
             contentType={prompt.contentType}
             className='w-4 h-4 flex items-center justify-center select-none'
-          />
+            />
+          <span>{prompt.contentTypeLabel}</span>
         </div>
       </div>
 
