@@ -1,3 +1,5 @@
+// src/sidebar/contexts/SidebarChatContext.jsx
+
 import React, {
   createContext,
   useContext,
@@ -146,7 +148,7 @@ export function SidebarChatProvider({ children }) {
 
     loadChatHistory();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabId]); // Model config dependency removed to avoid reload on model switch, stats recalc handles it
+  }, [tabId]);
 
   // Get visible messages (filtering out extracted content)
   const visibleMessages = useMemo(() => {
@@ -216,9 +218,6 @@ export function SidebarChatProvider({ children }) {
           finalContent += '\n\n_Stream cancelled by user._';
         }
 
-        // Find the message being updated to preserve its details
-        const originalMessage = messages.find(msg => msg.id === messageId);
-
         // Update message with final content (using the potentially modified finalContent)
         let updatedMessages = messages.map((msg) =>
           msg.id === messageId
@@ -226,8 +225,8 @@ export function SidebarChatProvider({ children }) {
                 ...msg,
                 content: finalContent,
                 isStreaming: false, // Explicitly mark as not streaming
-                model: model || selectedModel, // Use model from chunk or fallback
-                platformIconUrl: originalMessage?.platformIconUrl || selectedPlatform.iconUrl, // Preserve original icon
+                model: model || selectedModel,
+                platformIconUrl: msg.platformIconUrl,
                 outputTokens,
                 // If this is an error, change the role to system
                 role: isError ? MESSAGE_ROLES.SYSTEM : msg.role,
@@ -236,7 +235,7 @@ export function SidebarChatProvider({ children }) {
         );
 
         // If content not added yet, add extracted content message
-        if (!extractedContentAdded && !isError && !isCancelled) { // Only add if successful completion
+        if (!extractedContentAdded && !isError) {
           try {
             // Get formatted content from storage
             const result = await chrome.storage.local.get([
@@ -264,15 +263,11 @@ export function SidebarChatProvider({ children }) {
                   isExtractedContent: true,
                 };
 
-                // Find the index of the completed assistant message
-                const completedMsgIndex = updatedMessages.findIndex(msg => msg.id === messageId);
-                if (completedMsgIndex > 0) { // Ensure it's not the first message
-                    // Insert extracted content before the completed assistant message
-                    updatedMessages.splice(completedMsgIndex -1, 0, contentMessage);
-                    setExtractedContentAdded(true); // Mark as added
-                } else {
-                     logger.sidebar.warn("Could not find completed message index to insert extracted content.");
-                }
+                // Add extracted content at beginning
+                updatedMessages = [contentMessage, ...updatedMessages];
+
+                // Mark as added to prevent duplicate additions
+                setExtractedContentAdded(true);
               }
             }
           } catch (extractError) {
@@ -298,8 +293,6 @@ export function SidebarChatProvider({ children }) {
               initialOutputTokens: retrievedPreTruncationOutput,
             }
           );
-           // Recalculate stats after saving potentially modified history
-           await calculateStats(updatedMessages, modelConfigData);
         }
       } catch (error) {
         logger.sidebar.error('Error handling stream completion:', error);
@@ -339,7 +332,7 @@ export function SidebarChatProvider({ children }) {
             streamingMessageId,
             errorMessage,
             chunkData.model || null,
-            true // isError=true
+            true
           );
 
           setStreamingMessageId(null);
@@ -376,9 +369,9 @@ export function SidebarChatProvider({ children }) {
               streamingMessageId,
               finalContent,
               chunkData.model,
-              false, // isError=false
-              true // isCancelled=true
-            );
+              false,
+              true
+            ); // isError=false, isCancelled=true
           } else if (chunkData.error) {
             // Handle Error: Stream ended with an error (other than user cancellation)
             const errorMessage = chunkData.error;
@@ -387,13 +380,14 @@ export function SidebarChatProvider({ children }) {
               errorMessage
             );
             // Update the message with the error, mark as error, not cancelled
+            // Use buffered ref as fallback for error message context if needed, though error message itself is primary
             await handleStreamComplete(
               streamingMessageId,
               errorMessage,
               chunkData.model || null,
-              true, // isError=true
-              false // isCancelled=false
-            );
+              true,
+              false
+            ); // isError=true, isCancelled=false
           } else {
             // Handle Success: Stream completed normally
             const finalContent =
@@ -403,9 +397,9 @@ export function SidebarChatProvider({ children }) {
               streamingMessageId,
               finalContent,
               chunkData.model,
-              false, // isError=false
-              false // isCancelled=false
-            );
+              false,
+              false
+            ); // isError=false, isCancelled=false
           }
           // Reset state regardless of outcome (completion, cancellation, error)
           setStreamingMessageId(null);
@@ -434,20 +428,16 @@ export function SidebarChatProvider({ children }) {
         rafIdRef.current = null; // Also reset the ref here
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     streamingMessageId,
-    messages, // Include messages to access latest state in handleStreamComplete
+    messages,
+    visibleMessages,
     tabId,
     selectedModel,
-    selectedPlatform.iconUrl, // Include for fallback icon url
+    selectedPlatformId,
     modelConfigData,
     extractedContentAdded,
-    setMessages, // Include setters used indirectly
-    setStreamingMessageId,
-    setIsCanceling,
-    setExtractedContentAdded,
-    performStreamingStateUpdate, // Include the useCallback function
-    calculateStats, // Include for recalculation on completion
   ]);
 
   /**
@@ -515,8 +505,8 @@ export function SidebarChatProvider({ children }) {
     };
 
     // Update UI with user message and assistant placeholder
-    // Use functional update to ensure we have the latest messages state
-    setMessages(prevMessages => [...prevMessages, userMessage, assistantMessage]);
+    const updatedMessages = [...messages, userMessage, assistantMessage];
+    setMessages(updatedMessages);
     setInputValue('');
     setStreamingMessageId(assistantMessageId);
     batchedStreamingContentRef.current = ''; // Reset buffer
@@ -541,13 +531,12 @@ export function SidebarChatProvider({ children }) {
 
     try {
       // Format conversation history for the API - Filter out streaming messages and extracted content messages
-      // Use the state *before* adding the new user message and placeholder
-      const historyForApi = messages
+      const conversationHistory = messages
         .filter(
           (msg) =>
             (msg.role === MESSAGE_ROLES.USER ||
               msg.role === MESSAGE_ROLES.ASSISTANT) &&
-            !msg.isStreaming && !msg.isExtractedContent // Exclude extracted content from history sent to API
+            !msg.isStreaming
         )
         .map((msg) => ({
           role: msg.role,
@@ -560,10 +549,13 @@ export function SidebarChatProvider({ children }) {
         platformId: currentPlatformId, // Use the ID retrieved at the start
         modelId: currentModelId, // Use the ID retrieved at the start
         promptContent: text.trim(),
-        conversationHistory: historyForApi, // Use the filtered history
+        conversationHistory,
         streaming: true,
-        // Pass the toggle state directly, adjusted for page injectability
-        isContentExtractionEnabled: effectiveContentExtractionEnabled,
+        // Pass the toggle state directly
+        isContentExtractionEnabled: effectiveContentExtractionEnabled, // Use the calculated value based on page injectability
+        // Remove the old skipInitialExtraction line:
+        // skipInitialExtraction: isFirstMessage ? (!isContentExtractionEnabled || !isPageInjectable) : true, // <-- REMOVE THIS LINE
+        // Pass tabId and source explicitly if needed by the hook/API
         options: {
           tabId,
           source: INTERFACE_SOURCES.SIDEBAR,
@@ -590,33 +582,24 @@ export function SidebarChatProvider({ children }) {
           timestamp: new Date().toISOString(),
         };
 
-        // Update state: remove placeholder, add user msg + system msg
-        setMessages(prevMessages => {
-            // Filter out the placeholder assistant message
-            const messagesWithoutPlaceholder = prevMessages.filter(msg => msg.id !== assistantMessageId);
-            // Add the user message and the system message
-            return [...messagesWithoutPlaceholder, userMessage, systemMessage];
-        });
+        const finalMessages = messages // Use 'messages' which doesn't include the placeholder yet
+          .concat(userMessage, systemMessage); // Add user msg + system msg
+
+        setMessages(finalMessages); // Update UI immediately
 
         // Save this state (user message + system message) to history
         if (tabId) {
-          // Get the final message array from state after update
-          setMessages(currentFinalMessages => {
-              ChatHistoryService.saveHistory(
-                  tabId,
-                  currentFinalMessages,
-                  modelConfigData
-              );
-              // Recalculate stats based on this final state
-              calculateStats(currentFinalMessages, modelConfigData);
-              return currentFinalMessages; // Return state unchanged for this setter call
-          });
+          await ChatHistoryService.saveHistory(
+            tabId,
+            finalMessages,
+            modelConfigData
+          );
+          // No API call made, so no cost to update here, user msg tokens already tracked
         }
 
         // Reset streaming state as no stream was initiated
         setStreamingMessageId(null);
         resetContentProcessing(); // Reset the hook's processing state
-        rerunStatsRef.current = null; // Clear stats ref
 
         return; // Stop further processing for this message send
       }
@@ -635,43 +618,42 @@ export function SidebarChatProvider({ children }) {
         ? '[System: The connection was interrupted. Please try sending your message again.]'
         : `Error: ${error.message || 'Failed to process request'}`;
 
-
-      // Update UI: Replace the placeholder assistant message with a system error message
-      setMessages(prevMessages => prevMessages.map(msg =>
-            msg.id === assistantMessageId
-            ? {
-                ...msg, // Keep id, timestamp etc.
-                role: MESSAGE_ROLES.SYSTEM,
-                content: systemErrorMessageContent,
-                isStreaming: false,
-                outputTokens: 0, // No output tokens for error
-                model: null, // Clear model/platform on error
-                platformId: null,
-                platformIconUrl: null,
-              }
-            : msg
+      // Update streaming message to show error
+      const errorMessages = messages
+        .map(
+          (
+            msg // Use 'messages' which doesn't include the placeholder yet
+          ) =>
+            msg.id === userMessageId // Find the user message we just added
+              ? msg // Keep user message as is
+              : null // Placeholder for where the assistant message would have been
         )
-      );
+        .filter(Boolean); // Remove the null placeholder
 
+      // Add the system error message
+      const systemErrorMessage = {
+        id: assistantMessageId, // Reuse the ID intended for the assistant
+        role: MESSAGE_ROLES.SYSTEM,
+        content: systemErrorMessageContent, // Use determined content
+        timestamp: new Date().toISOString(),
+        isStreaming: false, // Turn off streaming state
+      };
+
+      const finalErrorMessages = [...errorMessages, systemErrorMessage];
+
+      setMessages(finalErrorMessages);
 
       // Save error state to history
       if (tabId) {
-           // Get the final message array from state after update
-           setMessages(currentFinalMessages => {
-               ChatHistoryService.saveHistory(
-                   tabId,
-                   currentFinalMessages,
-                   modelConfigData
-               );
-               // Recalculate stats based on this final state
-               calculateStats(currentFinalMessages, modelConfigData);
-               return currentFinalMessages; // Return state unchanged for this setter call
-           });
+        await ChatHistoryService.saveHistory(
+          tabId,
+          finalErrorMessages,
+          modelConfigData
+        );
       }
 
       setStreamingMessageId(null);
       resetContentProcessing(); // Ensure hook state is reset on error too
-      rerunStatsRef.current = null; // Clear stats ref
     }
   };
 
@@ -703,12 +685,12 @@ export function SidebarChatProvider({ children }) {
         truncatedMessages[truncatedMessages.length - 1];
       const promptContent = userMessageToRerun.content;
       const conversationHistory = truncatedMessages
-        .slice(0, -1) // Exclude the message being rerun
+        .slice(0, -1)
         .filter(
           (msg) =>
             (msg.role === MESSAGE_ROLES.USER ||
               msg.role === MESSAGE_ROLES.ASSISTANT) &&
-            !msg.isStreaming && !msg.isExtractedContent // Also filter extracted content
+            !msg.isStreaming
         )
         .map((msg) => ({
           role: msg.role,
@@ -727,8 +709,8 @@ export function SidebarChatProvider({ children }) {
         platformId: selectedPlatformId,
         timestamp: new Date().toISOString(),
         isStreaming: true,
-        inputTokens: 0,
-        outputTokens: 0,
+        inputTokens: 0, // No input tokens for assistant messages
+        outputTokens: 0, // Will be updated when streaming completes
       };
 
       // Add placeholder AFTER setting truncated messages
@@ -766,22 +748,16 @@ export function SidebarChatProvider({ children }) {
           ? '[System: The connection was interrupted during rerun. Please try again.]'
           : `Error: ${error.message || 'Failed to process rerun request'}`;
 
-        // Update UI: Replace the placeholder with a system error message
-        setMessages(prevMessages => prevMessages.map(msg =>
-            msg.id === assistantMessageId
-            ? {
-                ...msg, // Keep id, timestamp etc.
-                role: MESSAGE_ROLES.SYSTEM,
-                content: systemErrorMessageContent,
-                isStreaming: false,
-                outputTokens: 0,
-                model: null,
-                platformId: null,
-                platformIconUrl: null,
-              }
-            : msg
-          )
-        );
+        // Handle error similar to sendMessage error handling
+        const errorMessages = truncatedMessages; // Start with the truncated messages
+        const systemErrorMessage = {
+          id: assistantMessageId,
+          role: MESSAGE_ROLES.SYSTEM,
+          content: systemErrorMessageContent, // Use determined content
+          timestamp: new Date().toISOString(),
+          isStreaming: false,
+        };
+        setMessages([...errorMessages, systemErrorMessage]);
         setStreamingMessageId(null);
 
         // Save error state to history, passing the preserved stats
@@ -793,18 +769,12 @@ export function SidebarChatProvider({ children }) {
                 initialOutputTokens: savedStats.preTruncationOutput || 0,
               }
             : {};
-          // Use functional update to get the latest messages for saving
-          setMessages(currentFinalMessages => {
-              ChatHistoryService.saveHistory(
-                  tabId,
-                  currentFinalMessages,
-                  modelConfigData,
-                  historyOptions
-              );
-              // Recalculate stats based on this final state
-              calculateStats(currentFinalMessages, modelConfigData);
-              return currentFinalMessages; // Return state unchanged
-          });
+          await ChatHistoryService.saveHistory(
+            tabId,
+            [...errorMessages, systemErrorMessage],
+            modelConfigData,
+            historyOptions
+          );
         }
         rerunStatsRef.current = null; // Clear stats ref on error
         resetContentProcessing();
@@ -823,7 +793,6 @@ export function SidebarChatProvider({ children }) {
       selectedPlatform.iconUrl,
       resetContentProcessing,
       modelConfigData,
-      calculateStats, // Added dependency
     ]
   );
 
@@ -866,12 +835,12 @@ export function SidebarChatProvider({ children }) {
 
       const promptContent = updatedMessage.content;
       const conversationHistory = truncatedMessages
-        .slice(0, -1) // Exclude the edited message
+        .slice(0, -1)
         .filter(
           (msg) =>
             (msg.role === MESSAGE_ROLES.USER ||
               msg.role === MESSAGE_ROLES.ASSISTANT) &&
-            !msg.isStreaming && !msg.isExtractedContent // Also filter extracted content
+            !msg.isStreaming
         )
         .map((msg) => ({
           role: msg.role,
@@ -890,8 +859,8 @@ export function SidebarChatProvider({ children }) {
         platformId: selectedPlatformId,
         timestamp: new Date().toISOString(),
         isStreaming: true,
-        inputTokens: 0,
-        outputTokens: 0,
+        inputTokens: 0, // No input tokens for assistant messages
+        outputTokens: 0, // Will be updated when streaming completes
       };
 
       // Add placeholder AFTER setting truncated messages
@@ -929,22 +898,16 @@ export function SidebarChatProvider({ children }) {
           ? '[System: The connection was interrupted during edit/rerun. Please try again.]'
           : `Error: ${error.message || 'Failed to process edit/rerun request'}`;
 
-        // Update UI: Replace the placeholder with a system error message
-        setMessages(prevMessages => prevMessages.map(msg =>
-            msg.id === assistantMessageId
-            ? {
-                ...msg, // Keep id, timestamp etc.
-                role: MESSAGE_ROLES.SYSTEM,
-                content: systemErrorMessageContent,
-                isStreaming: false,
-                outputTokens: 0,
-                model: null,
-                platformId: null,
-                platformIconUrl: null,
-              }
-            : msg
-          )
-        );
+        // Handle error similar to sendMessage error handling
+        const errorMessages = truncatedMessages; // Start with the truncated messages
+        const systemErrorMessage = {
+          id: assistantMessageId,
+          role: MESSAGE_ROLES.SYSTEM,
+          content: systemErrorMessageContent, // Use determined content
+          timestamp: new Date().toISOString(),
+          isStreaming: false,
+        };
+        setMessages([...errorMessages, systemErrorMessage]);
         setStreamingMessageId(null);
 
         // Save error state to history, passing the preserved stats
@@ -956,18 +919,12 @@ export function SidebarChatProvider({ children }) {
                 initialOutputTokens: savedStats.preTruncationOutput || 0,
               }
             : {};
-          // Use functional update to get the latest messages for saving
-          setMessages(currentFinalMessages => {
-              ChatHistoryService.saveHistory(
-                  tabId,
-                  currentFinalMessages,
-                  modelConfigData,
-                  historyOptions
-              );
-              // Recalculate stats based on this final state
-               calculateStats(currentFinalMessages, modelConfigData);
-              return currentFinalMessages; // Return state unchanged
-          });
+          await ChatHistoryService.saveHistory(
+            tabId,
+            [...errorMessages, systemErrorMessage],
+            modelConfigData,
+            historyOptions
+          );
         }
         rerunStatsRef.current = null; // Clear stats ref on error
         resetContentProcessing();
@@ -986,7 +943,6 @@ export function SidebarChatProvider({ children }) {
       selectedPlatform.iconUrl,
       resetContentProcessing,
       modelConfigData,
-      calculateStats, // Added dependency
     ]
   );
 
@@ -1000,18 +956,12 @@ export function SidebarChatProvider({ children }) {
       const assistantIndex = messages.findIndex(
         (msg) => msg.id === assistantMessageId
       );
-      // Find the preceding USER message, skipping any potential SYSTEM or EXTRACTED messages
-      let userIndex = -1;
-      for (let i = assistantIndex - 1; i >= 0; i--) {
-          if (messages[i].role === MESSAGE_ROLES.USER && !messages[i].isExtractedContent) {
-              userIndex = i;
-              break;
-          }
-      }
+      const userIndex = assistantIndex - 1;
 
       if (
-        assistantIndex <= 0 || // Assistant message must exist and not be the first
-        userIndex < 0 // Preceding user message must be found
+        assistantIndex <= 0 ||
+        userIndex < 0 ||
+        messages[userIndex].role !== MESSAGE_ROLES.USER
       ) {
         logger.sidebar.error(
           'Cannot rerun assistant message: Invalid message structure or preceding user message not found.',
@@ -1025,7 +975,7 @@ export function SidebarChatProvider({ children }) {
       const preTruncationOutput = tokenStats.outputTokens || 0;
       rerunStatsRef.current = { preTruncationCost, preTruncationOutput };
 
-      // Truncate History (up to and including the preceding user message)
+      // Truncate History (up to the preceding user message)
       const truncatedMessages = messages.slice(0, userIndex + 1);
 
       // Update UI immediately
@@ -1036,12 +986,12 @@ export function SidebarChatProvider({ children }) {
 
       // Get History (before the user prompt)
       const conversationHistory = truncatedMessages
-        .slice(0, userIndex) // Exclude the user message itself
+        .slice(0, userIndex)
         .filter(
           (msg) =>
             (msg.role === MESSAGE_ROLES.USER ||
               msg.role === MESSAGE_ROLES.ASSISTANT) &&
-            !msg.isStreaming && !msg.isExtractedContent // Also filter extracted content
+            !msg.isStreaming
         )
         .map((msg) => ({
           role: msg.role,
@@ -1108,22 +1058,16 @@ export function SidebarChatProvider({ children }) {
           ? '[System: The connection was interrupted during assistant rerun. Please try again.]'
           : `Error: ${error.message || 'Failed to process assistant rerun request'}`;
 
-        // Update UI: Replace the placeholder with a system error message
-        setMessages(prevMessages => prevMessages.map(msg =>
-            msg.id === assistantPlaceholderId
-            ? {
-                ...msg, // Keep id, timestamp etc.
-                role: MESSAGE_ROLES.SYSTEM,
-                content: systemErrorMessageContent,
-                isStreaming: false,
-                outputTokens: 0,
-                model: null,
-                platformId: null,
-                platformIconUrl: null,
-              }
-            : msg
-          )
-        );
+        // Handle error: Restore truncated messages and add a system error message
+        const errorMessages = truncatedMessages; // Start with the state before adding the placeholder
+        const systemErrorMessage = {
+          id: assistantPlaceholderId, // Reuse the placeholder ID for the error message
+          role: MESSAGE_ROLES.SYSTEM,
+          content: systemErrorMessageContent, // Use determined content
+          timestamp: new Date().toISOString(),
+          isStreaming: false,
+        };
+        setMessages([...errorMessages, systemErrorMessage]);
         setStreamingMessageId(null);
 
         // Save error state to history, passing the preserved stats
@@ -1135,18 +1079,12 @@ export function SidebarChatProvider({ children }) {
                 initialOutputTokens: savedStats.preTruncationOutput || 0,
               }
             : {};
-           // Use functional update to get the latest messages for saving
-           setMessages(currentFinalMessages => {
-               ChatHistoryService.saveHistory(
-                   tabId,
-                   currentFinalMessages,
-                   modelConfigData,
-                   historyOptions
-               );
-               // Recalculate stats based on this final state
-               calculateStats(currentFinalMessages, modelConfigData);
-               return currentFinalMessages; // Return state unchanged
-           });
+          await ChatHistoryService.saveHistory(
+            tabId,
+            [...errorMessages, systemErrorMessage],
+            modelConfigData,
+            historyOptions
+          );
         }
         rerunStatsRef.current = null; // Clear stats ref on error
         resetContentProcessing();
@@ -1165,7 +1103,6 @@ export function SidebarChatProvider({ children }) {
       resetContentProcessing,
       selectedPlatform.iconUrl,
       modelConfigData,
-      calculateStats, // Added dependency
     ]
   );
 
@@ -1174,23 +1111,11 @@ export function SidebarChatProvider({ children }) {
   /**
    * Sends a cancellation request to the background script for the currently active stream,
    * updates the UI state to reflect cancellation, and saves the final state.
-   * Wrapped in useCallback to stabilize its reference.
    */
-  const cancelStream = useCallback(async () => {
+  const cancelStream = async () => { // NOTE: Not wrapped in useCallback
     if (!streamingMessageId || !isProcessing || isCanceling) return;
 
     const { [STORAGE_KEYS.STREAM_ID]: streamId } = await chrome.storage.local.get(STORAGE_KEYS.STREAM_ID);
-
-    // Check if a valid streamId was retrieved before proceeding
-    if (!streamId) {
-        logger.sidebar.warn("Attempted to cancel stream, but no active stream ID found in storage.");
-        // Optionally reset state here if it's definitively out of sync
-        // setIsCanceling(false);
-        // setStreamingMessageId(null);
-        return;
-    }
-
-
     setIsCanceling(true);
     // Cancel any pending animation frame immediately on cancellation request
     if (rafIdRef.current !== null) {
@@ -1202,74 +1127,114 @@ export function SidebarChatProvider({ children }) {
       // Send cancellation message to background script
       await robustSendMessage({
         action: 'cancelStream',
-        streamId: streamId, // Use the retrieved streamId
+        streamId: streamId,
       });
-      logger.sidebar.info(`Sent cancellation request for stream ID: ${streamId}`);
 
-      // The background script should now send a 'streamChunk' message with done=true and cancelled=true.
-      // The handleStreamChunk listener will handle the state update (setting content, isStreaming=false, saving history).
-      // We don't need to manually update the message content or save history here anymore,
-      // as the handleStreamComplete logic triggered by handleStreamChunk will manage it.
+      // Update the streaming message content to indicate cancellation
+      const cancelledContent =
+        batchedStreamingContentRef.current + '\n\n_Stream cancelled by user._';
 
-      // We might still want to clear the buffer immediately for responsiveness,
-      // though handleStreamComplete will also do this.
-      // batchedStreamingContentRef.current = '';
+      // Calculate output tokens for the cancelled content
+      const outputTokens =
+        TokenManagementService.estimateTokens(cancelledContent);
 
-      // Note: We intentionally DO NOT reset streamingMessageId or isCanceling here.
-      // The handleStreamChunk listener will do that when it receives the final 'cancelled' chunk.
-      // This prevents race conditions where we might reset state before the final chunk arrives.
+      let messagesAfterCancel = messages; // Start with current messages
 
-    } catch (error) {
-      logger.sidebar.error('Error sending cancelStream message:', error);
-      // If sending the message fails, we might be in an inconsistent state.
-      // Resetting state here could be a fallback.
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === streamingMessageId
-            ? {
-                ...msg,
-                content: msg.content + '\n\n_Error trying to cancel stream._',
-                isStreaming: false,
-              }
-            : msg
-        )
-      );
-       // Use functional update to get latest messages for saving
-       setMessages(currentFinalMessages => {
-            if (tabId) {
-                ChatHistoryService.saveHistory(
-                    tabId,
-                    currentFinalMessages,
-                    modelConfigData
+      if (!extractedContentAdded) {
+        try {
+          const result = await chrome.storage.local.get([
+            STORAGE_KEYS.TAB_FORMATTED_CONTENT,
+          ]);
+          const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
+
+          if (allTabContents) {
+            const tabIdKey = tabId.toString();
+            const extractedContent = allTabContents[tabIdKey];
+
+            if (
+              extractedContent &&
+              typeof extractedContent === 'string' &&
+              extractedContent.trim()
+            ) {
+              const contentMessage = {
+                id: `extracted_${Date.now()}`,
+                role: MESSAGE_ROLES.USER,
+                content: extractedContent,
+                timestamp: new Date().toISOString(),
+                inputTokens:
+                  TokenManagementService.estimateTokens(extractedContent),
+                outputTokens: 0,
+                isExtractedContent: true,
+              };
+
+              // Find index of the message being cancelled
+              const cancelledMsgIndex = messages.findIndex(
+                (msg) => msg.id === streamingMessageId
+              );
+
+              if (cancelledMsgIndex !== -1) {
+                // Insert content message before the cancelled message
+                const messagesWithContent = [
+                  ...messages.slice(0, cancelledMsgIndex),
+                  contentMessage,
+                  ...messages.slice(cancelledMsgIndex),
+                ];
+
+                // Update the local variable holding the messages
+                messagesAfterCancel = messagesWithContent;
+
+                // Update state immediately to reflect added content
+                setMessages(messagesAfterCancel);
+                setExtractedContentAdded(true);
+              } else {
+                logger.sidebar.warn(
+                  'Cancelled message not found, cannot insert extracted content correctly.'
                 );
-                // Recalculate stats
-                calculateStats(currentFinalMessages, modelConfigData);
+              }
             }
-            return currentFinalMessages; // Return state unchanged
-        });
+          }
+        } catch (extractError) {
+          logger.sidebar.error(
+            'Error adding extracted content during cancellation:',
+            extractError
+          );
+        }
+      }
 
+      // Update the cancelled message content within the potentially updated array
+      const finalMessages = messagesAfterCancel.map((msg) =>
+        msg.id === streamingMessageId
+          ? {
+              ...msg,
+              content: cancelledContent,
+              isStreaming: false,
+              outputTokens,
+            }
+          : msg
+      );
+
+      // Update state with the final message list
+      setMessages(finalMessages);
+
+      // Save the final state to history
+      if (tabId) {
+        await ChatHistoryService.saveHistory(
+          tabId,
+          finalMessages,
+          modelConfigData
+        );
+      }
+
+      // Reset streaming state
       setStreamingMessageId(null);
-      batchedStreamingContentRef.current = ''; // Clear buffer on error too
-      setIsCanceling(false); // Reset canceling state on error
+      batchedStreamingContentRef.current = ''; // Clear buffer on cancellation
+    } catch (error) {
+      logger.sidebar.error('Error cancelling stream:', error);
+      setStreamingMessageId(null);
+    } finally {
+      setIsCanceling(false);
     }
-    // No finally block needed to reset isCanceling, as it's reset by handleStreamChunk or the catch block
-  }, [
-      // Dependencies for cancelStream:
-      streamingMessageId,
-      isProcessing,
-      isCanceling,
-      tabId, // Needed for saving history in error case
-      modelConfigData, // Needed for saving history in error case
-      setIsCanceling, // State setters are stable but included for clarity
-      setStreamingMessageId,
-      setMessages,
-      calculateStats, // Added dependency
-      // robustSendMessage is stable (imported)
-      // logger is stable (imported)
-      // STORAGE_KEYS is stable (imported)
-      // refs (rafIdRef, batchedStreamingContentRef) don't need to be dependencies
-  ]);
-
+  };
 
   // Clear chat history and token metadata
   const clearChat = async () => {
@@ -1279,7 +1244,7 @@ export function SidebarChatProvider({ children }) {
     setExtractedContentAdded(false); // Reset the flag so content can be added again
     await ChatHistoryService.clearHistory(tabId);
 
-    // Clear token metadata (which also resets stats)
+    // Clear token metadata
     await clearTokenData();
   };
 
@@ -1301,33 +1266,28 @@ export function SidebarChatProvider({ children }) {
       )
     ) {
       try {
-        // Check if a stream is active and needs cancellation *before* clearing data
         if (streamingMessageId && isProcessing && !isCanceling) {
           logger.sidebar.info(
-            'Reset requested: Cancelling ongoing stream first...'
+            'Refresh requested: Cancelling ongoing stream first...'
           );
-          await cancelStream(); // Wait for cancellation attempt
-          logger.sidebar.info('Stream cancellation requested before reset.');
-          // Note: We proceed even if cancellation fails, as the goal is to clear data.
+          await cancelStream(); // Wait for cancellation to attempt completion
+          logger.sidebar.info('Stream cancellation attempted.');
         }
 
-        // Now send message to clear data in background
         const response = await robustSendMessage({
           action: 'clearTabData',
           tabId: tabId,
         });
 
         if (response && response.success) {
-          // Clear frontend state immediately after background confirmation
           setMessages([]);
           setInputValue('');
-          setStreamingMessageId(null); // Ensure streaming ID is cleared
+          setStreamingMessageId(null); // Ensure streaming ID is cleared if cancellation didn't reset it
           setExtractedContentAdded(false); // Allow extracted content to be added again
           setIsCanceling(false); // Ensure canceling state is reset
 
-          // Clear token data (which also recalculates stats to zero)
+          // Clear token data (which also recalculates stats)
           await clearTokenData();
-          logger.sidebar.info(`Successfully reset data for tab: ${tabId}`);
         } else {
           throw new Error(
             response?.error || 'Background script failed to clear data.'
@@ -1335,13 +1295,8 @@ export function SidebarChatProvider({ children }) {
         }
       } catch (error) {
         logger.sidebar.error('Failed to reset tab data:', error);
-        // Attempt to reset frontend state even on error for better UX
-        setMessages([]);
-        setInputValue('');
-        setStreamingMessageId(null);
-        setExtractedContentAdded(false);
+        // Ensure canceling state is reset even on error
         setIsCanceling(false);
-        await clearTokenData(); // Still try to clear token data
       }
     }
   }, [
@@ -1352,10 +1307,10 @@ export function SidebarChatProvider({ children }) {
     setStreamingMessageId,
     setExtractedContentAdded,
     setIsCanceling,
-    streamingMessageId, // Need to know if stream is active
-    isProcessing,       // Need to know if stream is active
-    isCanceling,        // Need to know if cancellation is already in progress
-    cancelStream,       // Need the cancel function
+    streamingMessageId,
+    isProcessing,
+    isCanceling,
+    cancelStream, // Dependency on cancelStream is acknowledged by suppression comment
   ]);
 
   /**
@@ -1420,9 +1375,7 @@ export function SidebarChatProvider({ children }) {
   // Add global keydown listener for Escape key cancellation
   useEffect(() => {
     const handleGlobalKeyDown = (event) => {
-      // Check if stream is active and not already canceling
-      if (event.key === 'Escape' && streamingMessageId && isProcessing && !isCanceling) {
-        logger.sidebar.debug("Escape key pressed, attempting to cancel stream.");
+      if (event.key === 'Escape' && isProcessing && !isCanceling) {
         cancelStream();
       }
     };
@@ -1432,14 +1385,13 @@ export function SidebarChatProvider({ children }) {
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
-    // Dependency array includes cancelStream (now memoized) and flags needed for the condition
-  }, [isProcessing, isCanceling, streamingMessageId, cancelStream]);
+  }, [isProcessing, isCanceling, cancelStream]); // Dependency on cancelStream is acknowledged by suppression comment
 
   return (
     <SidebarChatContext.Provider
       value={{
-        messages: visibleMessages, // Filtered messages for display
-        allMessages: messages, // All messages including extracted content
+        messages: visibleMessages,
+        allMessages: messages,
         inputValue,
         setInputValue,
         sendMessage,
