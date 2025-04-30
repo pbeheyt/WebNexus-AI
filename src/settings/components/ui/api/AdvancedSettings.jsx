@@ -483,7 +483,7 @@ const AdvancedSettings = ({
                 onChange={(newValue) => handleChange('temperature', newValue)}
                 min={platform.apiConfig?.minTemperature}
                 max={platform.apiConfig?.maxTemperature}
-                step={0.1}
+                step={0.01}
                 disabled={isSaving}
                 className='form-group mt-2'
               />
