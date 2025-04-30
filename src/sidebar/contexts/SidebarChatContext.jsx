@@ -180,7 +180,6 @@ export function SidebarChatProvider({ children }) {
       setStreamingMessageId,
       resetContentProcessing,
       modelConfigData,
-      ChatHistoryService,
     ] // Dependencies for _initiateApiCall
   );
   // --- End Internal Helper ---
