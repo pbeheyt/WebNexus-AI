@@ -10,7 +10,6 @@ class GrokPlatform extends BasePlatform {
   }
 
   isCurrentPlatform() {
-    // Keep this simple and reliable
     return window.location.hostname === 'grok.com';
   }
 

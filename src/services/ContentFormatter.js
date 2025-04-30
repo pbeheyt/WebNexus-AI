@@ -112,7 +112,6 @@ class ContentFormatter {
       data.comments.forEach((comment, index) => {
         formatted += `${index + 1}. Author: ${this._getData(comment.author, 'u/Anonymous')}\n`;
         formatted += `   Score: ${this._getData(comment.popularity, '0')} points\n`;
-        // Link removed as per previous request
         formatted += `   Comment: "${this._getData(comment.content, '')}"\n`;
       });
     } else {

@@ -186,13 +186,11 @@ class BasePlatform extends PlatformInterface {
 
           const prePrompt = result[STORAGE_KEYS.PRE_PROMPT];
           const formattedContentString =
-            result[STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION]; // Keep retrieval
+            result[STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION];
 
           if (!prePrompt) {
-            // Keep the check for prePrompt, as it's always required
             throw new Error('Missing prompt data in storage');
           }
-          // Removed the check: if (!formattedContentString) { ... }
 
           // Pass the potentially null formattedContentString
           const fullText = this.createStructuredPrompt(

@@ -315,7 +315,7 @@ import React, {
           rafIdHeightCalc.current = null;
         }
       };
-    }, [messages, precedingUserMessageHeight, textSize, requestHeightRecalculation]); // Added requestHeightRecalculation
+    }, [messages, precedingUserMessageHeight, textSize, requestHeightRecalculation]);
   
     // --- Manual Scroll To Bottom Function ---
     const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -468,7 +468,7 @@ import React, {
                         onMouseLeave={() => setHoveredElement(null)}
                         onFocus={() => setHoveredElement('freeTier')}
                         onBlur={() => setHoveredElement(null)}
-                        // REMOVED tabIndex='0'
+                         tabIndex='0'
                       >
                         <FreeTierIcon /> <span className='ml-1'>Free</span>
                         <Tooltip
@@ -489,7 +489,6 @@ import React, {
                               onMouseLeave={() => setHoveredElement(null)}
                               onFocus={() => setHoveredElement('inputPrice')}
                               onBlur={() => setHoveredElement(null)}
-                              // REMOVED tabIndex='0'
                             >
                               <InputTokenIcon />{' '}
                               <span className='ml-1'>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
@@ -513,7 +512,6 @@ import React, {
                               onMouseLeave={() => setHoveredElement(null)}
                               onFocus={() => setHoveredElement('outputPrice')}
                               onBlur={() => setHoveredElement(null)}
-                              // REMOVED tabIndex='0'
                             >
                               <OutputTokenIcon />{' '}
                               <span className='ml-1'>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
@@ -536,7 +534,6 @@ import React, {
                           onMouseLeave={() => setHoveredElement(null)}
                           onFocus={() => setHoveredElement('contextWindow')}
                           onBlur={() => setHoveredElement(null)}
-                          // REMOVED tabIndex='0'
                         >
                           <ContextWindowIcon />{' '}
                           <span className='ml-1'>
@@ -588,7 +585,6 @@ import React, {
                     onMouseLeave={() => setIsIncludeTooltipVisible(false)}
                     onFocus={() => setIsIncludeTooltipVisible(true)}
                     onBlur={() => setIsIncludeTooltipVisible(false)}
-                    // REMOVED tabIndex={0}
                     aria-describedby='include-context-tooltip-sidebar'
                   >
                     <ContentTypeIcon

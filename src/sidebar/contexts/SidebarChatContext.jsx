@@ -203,7 +203,7 @@ export function SidebarChatProvider({ children }) {
       const retrievedPreTruncationOutput = savedStats?.preTruncationOutput || 0;
 
       try {
-        // Calculate output tokens using the potentially modified finalContent - Removed await
+        // Calculate output tokens using the potentially modified finalContent
         const outputTokens =
           TokenManagementService.estimateTokens(finalContentInput);
         let finalContent = finalContentInput; // Use a mutable variable
@@ -399,7 +399,6 @@ export function SidebarChatProvider({ children }) {
           }
           // Reset state regardless of outcome (completion, cancellation, error)
           setStreamingMessageId(null);
-          // setStreamingContent(''); // Keep this commented or remove, buffer cleared elsewhere
           setIsCanceling(false); // Reset canceling state
         } else if (chunkContent) {
           // Process Intermediate Chunk: Append chunk to the ref buffer
@@ -1134,7 +1133,7 @@ export function SidebarChatProvider({ children }) {
       const cancelledContent =
         batchedStreamingContentRef.current + '\n\n_Stream cancelled by user._';
 
-      // Calculate output tokens for the cancelled content - Removed await
+      // Calculate output tokens for the cancelled content
       const outputTokens =
         TokenManagementService.estimateTokens(cancelledContent);
 

@@ -105,7 +105,6 @@ class GeminiPlatform extends BasePlatform {
         this.logger.warn(
           `[${this.platformId}] Submit button is initially disabled.`
         );
-        // Keep the enabling attempt logic here...
         if (buttonElement.hasAttribute('disabled')) {
           this.logger.info(
             `[${this.platformId}] Attempting to remove 'disabled' attribute.`

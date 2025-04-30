@@ -22,7 +22,7 @@ class DeepSeekPlatform extends BasePlatform {
    * @returns {HTMLElement|null} The editor element or null if not found
    */
   findEditorElement() {
-    // Keep existing selectors with fallbacks
+    // Selectors for DeepSeek's editor
     return (
       document.querySelector('#chat-input') ||
       document.querySelector('.c92459f0')

@@ -123,7 +123,7 @@ class TokenManagementService {
     // Use a standard for...of loop or Promise.all if parallelization is desired (not needed here)
     for (const [index, msg] of messages.entries()) {
       if (msg.role === 'user') {
-        // Removed await as estimateTokens is now sync
+        // Sync estimateTokens
         const msgInputTokens =
           msg.inputTokens || this.estimateTokens(msg.content);
 
@@ -168,7 +168,7 @@ class TokenManagementService {
     let outputTokensInLastApiCall = 0;
     if (lastAssistantMsgIndex !== -1) {
       const lastAssistantMsg = messages[lastAssistantMsgIndex];
-      // Removed await as estimateTokens is now sync
+      // Sync estimateTokens
       outputTokensInLastApiCall =
         lastAssistantMsg.outputTokens ||
         this.estimateTokens(lastAssistantMsg.content);
@@ -341,7 +341,7 @@ class TokenManagementService {
       logger.sidebar.warn(
         'TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.'
       );
-      return Math.ceil(text.length / 4); // Keep fallback or return 0
+      return Math.ceil(text.length / 4); // Fallback method: 1 token per 4 chars
     }
   }
 

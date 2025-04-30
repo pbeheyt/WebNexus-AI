@@ -85,7 +85,6 @@ class MistralPlatform extends BasePlatform {
       this.logger.info(
         `[${this.platformId}] Attempting to click submit button`
       );
-      // Remove disabled attribute if present
       if (
         buttonElement.disabled ||
         buttonElement.getAttribute('aria-disabled') === 'true'
@@ -93,7 +92,6 @@ class MistralPlatform extends BasePlatform {
         this.logger.warn(
           `[${this.platformId}] Submit button is initially disabled.`
         );
-        // Keep the enabling attempt logic here...
         this.logger.info(
           `[${this.platformId}] Attempting to remove 'disabled' attribute.`
         );

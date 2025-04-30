@@ -295,7 +295,7 @@ export const AssistantMessageBubble = memo(
             );
           },
         }),
-        [hasMathPlaceholders, mathMap, isStreaming] // Added isStreaming dependency for EnhancedCodeBlock
+        [hasMathPlaceholders, mathMap, isStreaming] // isStreaming dependency for EnhancedCodeBlock
       ); // Dependencies for markdownComponents memo
       // --- End Memoized Component Overrides ---
 

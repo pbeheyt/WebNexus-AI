@@ -136,10 +136,9 @@ export async function processContentViaApi(params) {
     modelId,
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null,
-    // streaming = false, // Note: streaming is forced to true later (Keep this comment or remove if desired)
+    // streaming = false, // Note: streaming is forced to true later
     conversationHistory = [],
-    isContentExtractionEnabled, // <-- ADD THIS
-    // Remove skipInitialExtraction parameter if present (It wasn't here, but ensuring it's not added)
+    isContentExtractionEnabled,
     preTruncationCost,
     preTruncationOutput,
   } = params;
@@ -177,7 +176,6 @@ export async function processContentViaApi(params) {
       await hasFormattedContentForTab(tabId);
     // Extraction depends on toggle state, content existence, and injectability.
     const canInject = isInjectablePage(url); // Check if page allows injection
-    // NEW:
     const shouldExtract =
       isContentExtractionEnabled && !initialFormattedContentExists && canInject;
 

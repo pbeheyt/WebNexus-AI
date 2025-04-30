@@ -19,8 +19,8 @@ export function Toggle({
 }) {
   return (
     <button
-      type='button' // Changed from div to button
-      className={`relative inline-block border-none bg-transparent p-0 ${className}`} // Added reset styles
+      type='button'
+      className={`relative inline-block border-none bg-transparent p-0 ${className}`}
       onClick={
         disabled
           ? undefined
@@ -29,7 +29,7 @@ export function Toggle({
             }
       }
       style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
-      disabled={disabled} // Add disabled prop to the button itself
+      disabled={disabled}
       {...props}
     >
       {/* Input remains visually hidden but semantically linked */}
