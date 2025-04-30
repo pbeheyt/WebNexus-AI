@@ -1,5 +1,6 @@
 // src/components/EnhancedCodeBlock.jsx
 import React, { useState, memo, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -114,5 +115,11 @@ const EnhancedCodeBlock = memo(
 );
 
 EnhancedCodeBlock.displayName = 'EnhancedCodeBlock';
+
+EnhancedCodeBlock.propTypes = {
+  className: PropTypes.string,
+  children: PropTypes.node,
+  isStreaming: PropTypes.bool,
+};
 
 export default EnhancedCodeBlock;

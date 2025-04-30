@@ -9,6 +9,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
+import PropTypes from 'prop-types';
 
 import { logger } from '../../shared/logger';
 import { useSidebarPlatform } from '../../contexts/platform';
@@ -23,6 +24,10 @@ import { isInjectablePage } from '../../shared/utils/content-utils';
 import { robustSendMessage } from '../../shared/utils/message-utils';
 
 const SidebarChatContext = createContext(null);
+
+SidebarChatProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export function SidebarChatProvider({ children }) {
   const {

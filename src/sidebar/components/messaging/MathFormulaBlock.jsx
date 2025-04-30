@@ -1,5 +1,6 @@
 // src/components/MathFormulaBlock.jsx
 import React, { memo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { InlineMath, BlockMath } from 'react-katex';
 
 import { logger } from '../../../shared/logger';
@@ -60,5 +61,10 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
 });
 
 MathFormulaBlock.displayName = 'MathFormulaBlock';
+
+MathFormulaBlock.propTypes = {
+  content: PropTypes.string.isRequired,
+  inline: PropTypes.bool,
+};
 
 export default MathFormulaBlock;

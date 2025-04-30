@@ -1,4 +1,5 @@
 import React, { memo, forwardRef } from 'react';
+import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -56,3 +57,13 @@ export const SystemMessageBubble = memo(
     }
   )
 );
+
+SystemMessageBubble.propTypes = {
+  id: PropTypes.string.isRequired,
+  content: PropTypes.string,
+  className: PropTypes.string,
+  style: PropTypes.object,
+  role: PropTypes.string, // Add role propType even if unused internally
+};
+
+SystemMessageBubble.displayName = 'SystemMessageBubble';

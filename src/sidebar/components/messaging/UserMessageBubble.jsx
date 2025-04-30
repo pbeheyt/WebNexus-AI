@@ -1,4 +1,5 @@
 import React, { useState, memo, forwardRef } from 'react';
+import PropTypes from 'prop-types';
 
 import {
   TextArea,
@@ -167,3 +168,13 @@ export const UserMessageBubble = memo(
     }
   )
 );
+
+UserMessageBubble.propTypes = {
+  id: PropTypes.string.isRequired,
+  content: PropTypes.string,
+  className: PropTypes.string,
+  style: PropTypes.object,
+  role: PropTypes.string, // Add role propType even if unused internally
+};
+
+UserMessageBubble.displayName = 'UserMessageBubble';

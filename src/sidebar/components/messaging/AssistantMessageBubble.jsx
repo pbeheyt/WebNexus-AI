@@ -1,4 +1,5 @@
 import React, { memo, forwardRef, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
@@ -189,19 +190,19 @@ export const AssistantMessageBubble = memo(
               </div>
             );
           },
-          pre: ({ node: _node, children, ...props }) => {
-            const codeChild = node?.children?.[0];
+          pre: ({ node, children, ...props }) => {
             const isFencedCodeBlock =
-              codeChild?.tagName === 'code' &&
-              codeChild?.properties?.className?.some((cls) =>
+              node?.children?.[0]?.type === 'element' &&
+              node?.children?.[0]?.tagName === 'code' &&
+              node?.children?.[0]?.properties?.className?.some((cls) =>
                 cls.startsWith('language-')
               );
 
             if (isFencedCodeBlock) {
-              const languageClass = codeChild.properties.className.find((cls) =>
+              const languageClass = node.children[0].properties.className.find((cls) =>
                 cls.startsWith('language-')
               );
-              const codeContent = codeChild.children?.[0]?.value || '';
+              const codeContent = node.children[0].children?.[0]?.value || '';
               return (
                 <EnhancedCodeBlock
                   className={languageClass}
@@ -398,3 +399,17 @@ export const AssistantMessageBubble = memo(
     }
   )
 );
+
+AssistantMessageBubble.propTypes = {
+  id: PropTypes.string.isRequired,
+  content: PropTypes.string,
+  isStreaming: PropTypes.bool,
+  model: PropTypes.string,
+  platformIconUrl: PropTypes.string,
+  platformId: PropTypes.string,
+  metadata: PropTypes.object,
+  className: PropTypes.string,
+  style: PropTypes.object,
+};
+
+AssistantMessageBubble.displayName = 'AssistantMessageBubble';

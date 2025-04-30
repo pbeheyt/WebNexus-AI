@@ -1,43 +1,49 @@
 // src/sidebar/components/messaging/MessageBubble.jsx
 import React, { memo, forwardRef } from 'react';
+import PropTypes from 'prop-types';
 
 import { logger } from '../../../shared/logger';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 
-// Import role-specific components
+// Import role-specific components (ensure these are correctly imported above)
 import { SystemMessageBubble } from './SystemMessageBubble';
 import { UserMessageBubble } from './UserMessageBubble';
 import { AssistantMessageBubble } from './AssistantMessageBubble';
 
-/**
- * Message bubble component wrapped with forwardRef
- * This component now acts as a delegator based on the message role.
- */
-export const MessageBubble = memo(
-  forwardRef(
-    (
-      {
-        role = 'assistant', // Default role kept for safety, though should always be provided
-        ...props // Collect all other props (id, content, isStreaming, model, etc.)
-      },
-      ref
-    ) => {
-      // Delegate rendering to the appropriate component based on the role
-      switch (role) {
-        case MESSAGE_ROLES.SYSTEM:
-          // Pass the ref and all props down
-          return <SystemMessageBubble ref={ref} role={role} {...props} />;
-        case MESSAGE_ROLES.USER:
-          // Pass the ref and all props down
-          return <UserMessageBubble ref={ref} role={role} {...props} />;
-        case MESSAGE_ROLES.ASSISTANT:
-          // Pass the ref and all props down
-          return <AssistantMessageBubble ref={ref} role={role} {...props} />;
-        default:
-          // Log an error for unknown roles, consistent with original request
-          logger.sidebar.error(`Unknown message role: ${role}`);
-          return null; // Return null for unknown roles
-      }
+// Define the core functional component using forwardRef
+const MessageBubbleComponent = forwardRef(
+  (
+    {
+      role = 'assistant', // Default role kept for safety
+      ...props // Collect all other props
+    },
+    ref
+  ) => {
+    // Delegate rendering based on role
+    switch (role) {
+      case MESSAGE_ROLES.SYSTEM:
+        return <SystemMessageBubble ref={ref} role={role} {...props} />;
+      case MESSAGE_ROLES.USER:
+        return <UserMessageBubble ref={ref} role={role} {...props} />;
+      case MESSAGE_ROLES.ASSISTANT:
+        return <AssistantMessageBubble ref={ref} role={role} {...props} />;
+      default:
+        logger.sidebar.error(`Unknown message role: ${role}`);
+        return null;
     }
-  )
-); // Close forwardRef
+  }
+);
+
+// Add propTypes to the core component
+MessageBubbleComponent.propTypes = {
+  role: PropTypes.oneOf(Object.values(MESSAGE_ROLES)).isRequired,
+  // Include any other props passed directly to MessageBubble if needed
+  id: PropTypes.string, // Example: Include props used before delegation
+  // Add other common props if necessary
+};
+
+// Add displayName
+MessageBubbleComponent.displayName = 'MessageBubble';
+
+// Export the memoized version
+export const MessageBubble = memo(MessageBubbleComponent);
