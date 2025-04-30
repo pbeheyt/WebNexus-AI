@@ -56,7 +56,7 @@ export function useTokenTracking(tabId) {
         const tabStats = allTokenStats[tabId];
         if (tabStats) {
           // Ensure all fields, including new ones, are updated
-          setTokenStats((prevStats) => ({
+          setTokenStats((_prevStats) => ({
             ...TokenManagementService._getEmptyStats(), // Start with default empty stats
             ...tabStats, // Overwrite with values from storage
             isCalculated: true, // Mark as calculated

@@ -375,8 +375,6 @@ export function SidebarChatProvider({ children }) {
             );
             // Update the message with the error, mark as error, not cancelled
             // Use buffered ref as fallback for error message context if needed, though error message itself is primary
-            const finalContentOnError =
-              chunkData.fullContent || batchedStreamingContentRef.current;
             await handleStreamComplete(
               streamingMessageId,
               errorMessage,
@@ -514,9 +512,7 @@ export function SidebarChatProvider({ children }) {
       preTruncationOutput: currentOutputTokens,
     };
 
-    // Determine if this is the first message (before adding the current user message)
-    const isFirstMessage = messages.length === 0;
-    // Determine if the current page is injectable
+      // Determine if the current page is injectable
     const isPageInjectable = currentTab?.url
       ? isInjectablePage(currentTab.url)
       : false;
@@ -1112,9 +1108,7 @@ export function SidebarChatProvider({ children }) {
   const cancelStream = async () => {
     if (!streamingMessageId || !isProcessing || isCanceling) return;
 
-    const result = await chrome.storage.local.get(STORAGE_KEYS.STREAM_ID);
-    // Extract the actual string ID from the object
-    const streamId = result[STORAGE_KEYS.STREAM_ID];
+    const { [STORAGE_KEYS.STREAM_ID]: streamId } = await chrome.storage.local.get(STORAGE_KEYS.STREAM_ID);
     setIsCanceling(true);
     // Cancel any pending animation frame immediately on cancellation request
     if (rafIdRef.current !== null) {
