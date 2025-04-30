@@ -215,7 +215,7 @@ class ClaudePlatform extends BasePlatform {
       // Split the text into lines and create paragraphs
       const lines = text.split('\n');
 
-      lines.forEach((line, index) => {
+      lines.forEach((line, _index) => {
         const p = document.createElement('p');
         // Use textContent to prevent potential XSS if text contained HTML
         p.textContent = line || '\u00A0'; // Use non-breaking space for empty lines to maintain structure

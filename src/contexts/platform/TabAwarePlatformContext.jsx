@@ -241,7 +241,7 @@ export function createTabAwarePlatformContext(options = {}) {
 
           // Determine the platform to use based strictly on preferences and credentials (for sidebar)
           let platformToUse = null;
-          let defaultModelId = null;
+      
           const credentialedPlatformIds = new Set(
             platformList.filter((p) => p.hasCredentials).map((p) => p.id)
           );

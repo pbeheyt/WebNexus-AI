@@ -245,7 +245,7 @@ class RedditExtractorStrategy extends BaseExtractor {
       }
 
       // Otherwise, watch for changes
-      const observer = new MutationObserver((mutations) => {
+      const observer = new MutationObserver((_mutations) => {
         for (const selector of selectors) {
           if (document.querySelectorAll(selector).length > 0) {
             observer.disconnect();

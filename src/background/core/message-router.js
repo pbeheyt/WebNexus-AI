@@ -70,20 +70,20 @@ export function setupMessageRouter() {
  */
 function registerCoreHandlers() {
   // Content type detection handler
-  messageHandlers.set('getContentType', (message, sender, sendResponse) => {
+  messageHandlers.set('getContentType', (message, _sender, _sendResponse) => {
     const contentType = determineContentType(message.url, message.hasSelection);
     sendResponse({ contentType });
     return false;
   });
 
   // Status check handler
-  messageHandlers.set('checkStatus', (message, sender, sendResponse) => {
+  messageHandlers.set('checkStatus', (message, _sender, _sendResponse) => {
     sendResponse({ status: 'ok' });
     return false;
   });
 
   // Error notification handler
-  messageHandlers.set('notifyError', (message, sender, sendResponse) => {
+  messageHandlers.set('notifyError', (message, _sender, _sendResponse) => {
     logger.background.error('Error from content script:', message.error);
     return false;
   });
@@ -119,7 +119,7 @@ function registerCoreHandlers() {
  */
 function registerApiHandlers() {
   // Get API models
-  messageHandlers.set('getApiModels', (message, sender, sendResponse) => {
+  messageHandlers.set('getApiModels', (message, _sender, sendResponse) => {
     handleApiModelRequest('getApiModels', message, sendResponse);
     return true; // Keep channel open for async response
   });
@@ -127,7 +127,7 @@ function registerApiHandlers() {
   // API credential operations
   messageHandlers.set(
     'credentialOperation',
-    (message, sender, sendResponse) => {
+    (message, _sender, sendResponse) => {
       handleCredentialOperation(message, sendResponse);
       return true; // Keep channel open for async response
     }
@@ -136,13 +136,13 @@ function registerApiHandlers() {
   // API content processing
   messageHandlers.set(
     'processContentViaApi',
-    (message, sender, sendResponse) => {
+    (message, _sender, sendResponse) => {
       handleProcessContentViaApiRequest(message, sendResponse);
       return true; // Keep channel open for async response
     }
   );
 
-  messageHandlers.set('cancelStream', (message, sender, sendResponse) => {
+  messageHandlers.set('cancelStream', (message, _sender, sendResponse) => {
     handleApiModelRequest('cancelStream', message, sendResponse);
     return true; // Keep channel open for async response
   });
@@ -153,19 +153,19 @@ function registerApiHandlers() {
  */
 function registerServiceHandlers() {
   // Process content
-  messageHandlers.set('processContent', (message, sender, sendResponse) => {
+  messageHandlers.set('processContent', (message, _sender, sendResponse) => {
     handleProcessContentRequest(message, sendResponse);
     return true; // Keep channel open for async response
   });
 
   // Get theme
-  messageHandlers.set('getTheme', (message, sender, sendResponse) => {
+  messageHandlers.set('getTheme', (message, _sender, sendResponse) => {
     handleThemeOperation(message, sendResponse);
     return true; // Keep channel open for async response
   });
 
   // Set theme
-  messageHandlers.set('setTheme', (message, sender, sendResponse) => {
+  messageHandlers.set('setTheme', (message, _sender, sendResponse) => {
     handleThemeOperation(message, sendResponse);
     return true; // Keep channel open for async response
   });

@@ -33,7 +33,7 @@ class PlatformInterface {
    * @param {string} text - The text to insert and submit
    * @returns {Promise<boolean>} Success status
    */
-  async insertAndSubmitText(text) {
+  async insertAndSubmitText(_text) {
     throw new Error('insertAndSubmitText must be implemented by subclasses');
   }
 

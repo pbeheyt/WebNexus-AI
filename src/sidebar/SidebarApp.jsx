@@ -82,7 +82,7 @@ export default function SidebarApp() {
       return;
     }
 
-    const messageListener = (message, sender, sendResponse) => {
+    const messageListener = (message, _sender, _sendResponse) => {
       if (message.action === 'pageNavigated' && message.tabId === tabId) {
         logger.sidebar.info(
           `Received pageNavigated event for current tab ${tabId}:`,

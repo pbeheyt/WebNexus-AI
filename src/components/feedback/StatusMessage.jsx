@@ -13,7 +13,7 @@ import React from 'react';
 export function StatusMessage({
   message,
   type = 'info',
-  context = 'default',
+  _context = 'default',
   className = '',
 }) {
   const typeClasses = {

@@ -158,7 +158,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       this.logger.info(`Extracting all visible YouTube comments...`);
 
       // Check if comment section exists
-      const commentSection = document.getElementById('comments');
+      document.getElementById('comments');
       const commentElements = document.querySelectorAll(
         'ytd-comment-thread-renderer'
       );

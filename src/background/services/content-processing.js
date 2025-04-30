@@ -106,7 +106,6 @@ export async function processWithDefaultPromptWebUI(tab) {
 export async function processContent(params) {
   const {
     tabId,
-    url,
     platformId = null,
     promptContent = null,
     useApi = false,
@@ -118,7 +117,7 @@ export async function processContent(params) {
   try {
     logger.background.info('Starting web UI content processing', {
       tabId,
-      url,
+      url: params.url,
       platformId,
       includeContext,
     });
@@ -134,9 +133,9 @@ export async function processContent(params) {
         'Include context requested, proceeding with extraction.'
       );
       // Check if page is injectable BEFORE attempting extraction
-      if (!isInjectablePage(url)) {
+      if (!isInjectablePage(params.url)) {
         logger.background.warn(
-          `processContent: Page is not injectable (${url}). Skipping extraction despite request.`
+          `processContent: Page is not injectable (${params.url}). Skipping extraction despite request.`
         );
         // Return specific error if context was requested but page isn't injectable
         return {
@@ -151,9 +150,9 @@ export async function processContent(params) {
       await resetExtractionState();
 
       // 2. Extract content (Only if extracting)
-      const contentType = determineContentType(url);
+      const contentType = determineContentType(params.url);
       logger.background.info(`Content type determined: ${contentType}`);
-      const extractionResult = await extractContent(tabId, url);
+      const extractionResult = await extractContent(tabId, params.url);
       if (!extractionResult) {
         logger.background.warn('Content extraction completed with issues');
       }
@@ -224,7 +223,7 @@ export async function processContent(params) {
     );
 
     // Determine contentType only if context was included, otherwise it's irrelevant
-    const finalContentType = includeContext ? determineContentType(url) : null;
+    const finalContentType = includeContext ? determineContentType(params.url) : null;
 
     return {
       success: true,
