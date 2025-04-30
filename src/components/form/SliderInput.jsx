@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 /**
  * A reusable component combining a range slider and a number input
- * with improved UX.
+ * with improved UX. The slider track dynamically fills with color
+ * based on the current value.
  */
 export function SliderInput({
   label,
@@ -15,6 +16,18 @@ export function SliderInput({
   className = '',
   disabled = false,
 }) {
+  const sliderRef = useRef(null);
+
+  useEffect(() => {
+    if (sliderRef.current) {
+      const range = max - min;
+      // Handle division by zero and ensure value is within bounds
+      const safeValue = Math.max(min, Math.min(value ?? min, max));
+      const percentage = range === 0 ? 0 : ((safeValue - min) / range) * 100;
+      // Set the CSS variable on the slider element
+      sliderRef.current.style.setProperty('--slider-fill-percentage', `${percentage}%`);
+    }
+  }, [value, min, max]);
   const handleInputChange = (event) => {
     const newValue = event.target.value;
     // Allow empty input temporarily, but pass 0 or min if empty/invalid
@@ -44,6 +57,7 @@ export function SliderInput({
       </label>
       <div className='flex items-center space-x-3 mt-1'>
         <input
+          ref={sliderRef}
           type='range'
           min={min}
           max={max}

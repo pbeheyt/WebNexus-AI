@@ -215,6 +215,21 @@
   }
 }
 
+/* Define slider color variables */
+:root {
+  --slider-track-bg: theme('colors.gray.300');
+  --slider-track-fill-color: theme('colors.primary.DEFAULT');
+  --slider-track-disabled-bg: theme('colors.gray.200');
+  --slider-track-disabled-fill-color: theme('colors.gray.400');
+}
+
+.dark {
+  --slider-track-bg: theme('colors.gray.700');
+  --slider-track-fill-color: theme('colors.primary.DEFAULT');
+  --slider-track-disabled-bg: theme('colors.gray.800');
+  --slider-track-disabled-fill-color: theme('colors.gray.500');
+}
+
 /* Custom Slider Styles */
 .custom-slider {
   -webkit-appearance: none;
@@ -230,11 +245,8 @@
   width: 100%;
   height: 8px;
   cursor: pointer;
-  background: theme('colors.gray.300');
+  background: linear-gradient(to right, var(--slider-track-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-bg) var(--slider-fill-percentage, 0%));
   border-radius: 9999px;
-}
-.dark .custom-slider::-webkit-slider-runnable-track {
-  background: theme('colors.gray.700');
 }
 
 /* Webkit Thumb */
@@ -256,7 +268,7 @@
    background: theme('colors.primary.hover');
 }
 
-/* Disabled State (Webkit Only) */
+/* Disabled State */
 .custom-slider:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -269,11 +281,48 @@
   background: theme('colors.gray.500');
 }
 .custom-slider:disabled::-webkit-slider-runnable-track {
-  background: theme('colors.gray.200');
+  background: linear-gradient(to right, var(--slider-track-disabled-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-disabled-bg) var(--slider-fill-percentage, 0%));
   cursor: not-allowed;
 }
-.dark .custom-slider:disabled::-webkit-slider-runnable-track {
-  background: theme('colors.gray.800');
+
+/* Mozilla Track */
+.custom-slider::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: linear-gradient(to right, var(--slider-track-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-bg) var(--slider-fill-percentage, 0%));
+  border-radius: 9999px;
+  border: none;
+}
+
+/* Disabled Mozilla Track */
+.custom-slider:disabled::-moz-range-track {
+  cursor: not-allowed;
+  background: linear-gradient(to right, var(--slider-track-disabled-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-disabled-bg) var(--slider-fill-percentage, 0%));
+}
+
+/* Mozilla Thumb */
+.custom-slider::-moz-range-thumb {
+  height: 24px;
+  width: 24px;
+  background: theme('colors.primary.DEFAULT');
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: background .2s ease-in-out;
+}
+.custom-slider:hover::-moz-range-thumb {
+   background: theme('colors.primary.hover');
+}
+.custom-slider:active::-moz-range-thumb {
+   background: theme('colors.primary.hover');
+}
+.custom-slider:disabled::-moz-range-thumb {
+  background: theme('colors.gray.400');
+  cursor: not-allowed;
+}
+.dark .custom-slider:disabled::-moz-range-thumb {
+  background: theme('colors.gray.500');
 }
 
 /* Hide spin buttons on ALL number inputs */
