@@ -1,5 +1,5 @@
 // src/components/feedback/Toast.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { XIcon } from '../icons/XIcon';
@@ -24,9 +24,11 @@ export function Toast({
   const notificationContext = useNotification();
 
   // If not in standalone mode, connect to the notification context
-  const notification = standalone
-    ? { message, type }
-    : notificationContext?.notification;
+  const notification = useMemo(() => {
+    return standalone
+      ? { message, type }
+      : notificationContext?.notification;
+  }, [standalone, message, type, notificationContext]);
   const closeHandler = standalone
     ? onClose
     : notificationContext?.clearNotification;

@@ -379,7 +379,6 @@ export function createTabAwarePlatformContext(options = {}) {
       [
         tabId,
         selectedPlatformId,
-        globalStorageKey,
         platforms,
         loadModels,
       ]
