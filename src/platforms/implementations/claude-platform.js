@@ -18,25 +18,6 @@ class ClaudePlatform extends BasePlatform {
   }
 
   /**
-   * Helper method to determine if an element is visible and interactive
-   * @param {HTMLElement} element - The element to check
-   * @returns {boolean} True if the element is visible and interactive
-   */
-  isVisibleElement(element) {
-    if (!element) return false;
-    const style = window.getComputedStyle(element);
-    const rect = element.getBoundingClientRect();
-    return (
-      style.display !== 'none' &&
-      style.visibility !== 'hidden' &&
-      style.opacity !== '0' &&
-      element.getAttribute('aria-hidden') !== 'true' &&
-      rect.width > 0 &&
-      rect.height > 0
-    ); // Check for actual dimensions
-  }
-
-  /**
    * Find Claude's editor element using more robust strategies.
    * @returns {HTMLElement|null} The editor element or null if not found
    */

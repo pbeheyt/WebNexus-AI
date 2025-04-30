@@ -221,19 +221,22 @@ const PromptForm = ({
         )}
       </div>
 
-      {/* Content Type Selection using CustomSelect */}
+      {/* Content Type Selection using CustomSelect (Wrapped in Label) */}
       <div className='form-group mb-6'>
         <label className='block mb-3 text-base font-medium text-theme-secondary select-none'>
           Content Type
+          {/* CustomSelect and its container div are now INSIDE the label */}
+          <div className='inline-block mt-1'>
+            {' '}
+            {/* Added mt-1 for spacing */}
+            <CustomSelect
+              options={contentTypeOptions}
+              selectedValue={formData.contentType}
+              onChange={handleContentTypeChange}
+              placeholder='Select Content Type'
+            />
+          </div>
         </label>
-        <div className='inline-block'>
-          <CustomSelect
-            options={contentTypeOptions}
-            selectedValue={formData.contentType}
-            onChange={handleContentTypeChange}
-            placeholder='Select Content Type'
-          />
-        </div>
       </div>
 
       {/* Prompt Name Input */}
