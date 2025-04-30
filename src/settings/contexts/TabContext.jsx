@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 // Tab IDs from the original constants.js
 const TABS = {
@@ -42,4 +43,8 @@ export const TabProvider = ({ children }) => {
       {children}
     </TabContext.Provider>
   );
+};
+
+TabProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };

@@ -6,8 +6,5 @@
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/settings/components/ui/api/AdvancedSettings.jsx
   168:6  warning  React Hook useEffect has missing dependencies: 'checkIfAtDefaults', 'getDefaultSettings', and 'getModelSettings'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
 
-/home/pbeheyt/Extensions/AI-Content-Assistant/src/settings/contexts/TabContext.jsx
-  13:31  warning  'children' is missing in props validation  react/prop-types
-
-✖ 2 problems (0 errors, 2 warnings)
+✖ 1 problem (0 errors, 1 warning)
 
