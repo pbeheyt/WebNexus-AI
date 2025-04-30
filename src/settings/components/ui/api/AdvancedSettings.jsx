@@ -165,6 +165,7 @@ const AdvancedSettings = ({
     setOriginalValues(newFormValues);
     setHasChanges(false);
     setIsAtDefaults(checkIfAtDefaults(newFormValues));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedModelId, advancedSettings]);
 
   // Check if current form values differ from original values

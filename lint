@@ -2,9 +2,3 @@
 > ai-content-assistant@1.0.0 lint:fix
 > eslint 'src/**/*.{js,jsx}' --fix
 
-
-/home/pbeheyt/Extensions/AI-Content-Assistant/src/settings/components/ui/api/AdvancedSettings.jsx
-  168:6  warning  React Hook useEffect has missing dependencies: 'checkIfAtDefaults', 'getDefaultSettings', and 'getModelSettings'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
-
-✖ 1 problem (0 errors, 1 warning)
-
