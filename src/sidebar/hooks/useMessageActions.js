@@ -1,8 +1,100 @@
 // src/sidebar/hooks/useMessageActions.js
+
 import { useCallback } from 'react';
 
 import { logger } from '../../shared/logger';
 import { MESSAGE_ROLES, INTERFACE_SOURCES } from '../../shared/constants';
+
+/**
+ * Internal helper function to initiate the API call sequence for reruns/edits.
+ * Encapsulates common logic like creating placeholders and calling the API initiator.
+ *
+ * @param {object} args - Arguments object.
+ * @param {string} args.promptContent - The content of the user prompt.
+ * @param {Array} args.conversationHistory - The history to send to the API.
+ * @param {Array} args.truncatedMessages - The messages array after truncation (and potential edit).
+ * @param {string} args.assistantPlaceholderId - The ID for the new assistant message.
+ * @param {function} args._initiateApiCall - The helper function from context to call the API.
+ * @param {function} args.setMessages - State setter for messages.
+ * @param {function} args.setStreamingMessageId - State setter for streaming ID.
+ * @param {React.MutableRefObject} args.batchedStreamingContentRef - Ref for stream buffer.
+ * @param {string} args.selectedModel - Current selected model ID.
+ * @param {object} args.selectedPlatform - Current selected platform details.
+ * @param {string} args.selectedPlatformId - Current selected platform ID.
+ * @param {number} args.tabId - Current tab ID.
+ * @param {object} args.rerunStatsRef - Ref containing pre-truncation stats.
+ * @param {function} args.processContentViaApi - API processing function.
+ * @param {function} args.resetContentProcessing - Function to reset API state.
+ * @param {object} args.modelConfigData - Current model configuration.
+ * @param {object} args.ChatHistoryService - Chat history service.
+ */
+const _initiateRerunSequence = async ({
+  promptContent,
+  conversationHistory,
+  truncatedMessages,
+  assistantPlaceholderId,
+  _initiateApiCall, // Receive the helper from context
+  setMessages,
+  setStreamingMessageId,
+  batchedStreamingContentRef,
+  selectedModel,
+  selectedPlatform,
+  selectedPlatformId,
+  tabId,
+  rerunStatsRef,
+  // Dependencies needed by _initiateApiCall (passed through)
+  processContentViaApi,
+  resetContentProcessing,
+  modelConfigData,
+  ChatHistoryService,
+}) => {
+  const assistantPlaceholder = {
+    id: assistantPlaceholderId,
+    role: MESSAGE_ROLES.ASSISTANT,
+    content: '',
+    model: selectedModel,
+    platformIconUrl: selectedPlatform.iconUrl,
+    platformId: selectedPlatformId,
+    timestamp: new Date().toISOString(),
+    isStreaming: true,
+    inputTokens: 0,
+    outputTokens: 0,
+  };
+
+  // Add placeholder *after* potential edit in editAndRerunMessage
+  setMessages([...truncatedMessages, assistantPlaceholder]);
+  setStreamingMessageId(assistantPlaceholderId);
+  batchedStreamingContentRef.current = '';
+
+  // Use the passed-in _initiateApiCall helper
+  await _initiateApiCall({
+    platformId: selectedPlatformId,
+    modelId: selectedModel,
+    promptContent,
+    conversationHistory,
+    streaming: true,
+    isContentExtractionEnabled: false, // Reruns/Edits don't re-extract content
+    options: {
+      tabId,
+      source: INTERFACE_SOURCES.SIDEBAR,
+      ...(rerunStatsRef.current && {
+        preTruncationCost: rerunStatsRef.current.preTruncationCost,
+        preTruncationOutput: rerunStatsRef.current.preTruncationOutput,
+      }),
+    },
+    // Pass dependencies needed by _initiateApiCall
+    processContentViaApi,
+    setMessages,
+    setStreamingMessageId,
+    resetContentProcessing,
+    ChatHistoryService,
+    modelConfigData,
+    tabId, // Pass tabId again as it's directly used in _initiateApiCall error handling
+    assistantMessageIdOnError: assistantPlaceholderId, // Pass the ID for error message assignment
+    messagesOnError: truncatedMessages, // Pass the state *before* placeholder for error handling
+    rerunStatsRef, // Pass ref for error handling cleanup
+  });
+};
 
 /**
  * Custom hook to manage message actions like rerun, edit & rerun.
@@ -24,6 +116,7 @@ import { MESSAGE_ROLES, INTERFACE_SOURCES } from '../../shared/constants';
  * @param {object} args.modelConfigData - Configuration for the selected model.
  * @param {object} args.ChatHistoryService - Service for chat history management.
  * @param {object} args.TokenManagementService - Service for token management.
+ * @param {function} args._initiateApiCall - Helper function from context to initiate API calls.
  * @returns {object} - Object containing action functions: { rerunMessage, editAndRerunMessage, rerunAssistantMessage }.
  */
 export function useMessageActions({
@@ -43,12 +136,13 @@ export function useMessageActions({
   modelConfigData,
   ChatHistoryService,
   TokenManagementService,
+  _initiateApiCall, // Receive the helper from context
 }) {
   const rerunMessage = useCallback(
     async (messageId) => {
+      // --- Guards ---
       if (!tabId || !selectedPlatformId || !selectedModel || isProcessing)
         return;
-
       const index = messages.findIndex((msg) => msg.id === messageId);
       if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
         logger.sidebar.error(
@@ -57,18 +151,15 @@ export function useMessageActions({
         return;
       }
 
-      const preTruncationCost = tokenStats.accumulatedCost || 0;
-      const preTruncationOutput = tokenStats.outputTokens || 0;
-      rerunStatsRef.current = { preTruncationCost, preTruncationOutput };
-
+      // --- Setup ---
+      rerunStatsRef.current = {
+        preTruncationCost: tokenStats.accumulatedCost || 0,
+        preTruncationOutput: tokenStats.outputTokens || 0,
+      };
       const truncatedMessages = messages.slice(0, index + 1);
-      setMessages(truncatedMessages);
-
-      const userMessageToRerun =
-        truncatedMessages[truncatedMessages.length - 1];
-      const promptContent = userMessageToRerun.content;
+      const promptContent = truncatedMessages[index].content;
       const conversationHistory = truncatedMessages
-        .slice(0, -1)
+        .slice(0, index)
         .filter(
           (msg) =>
             (msg.role === MESSAGE_ROLES.USER ||
@@ -80,105 +171,52 @@ export function useMessageActions({
           content: msg.content,
           timestamp: msg.timestamp,
         }));
+      const assistantPlaceholderId = `msg_${Date.now() + 1}`;
 
-      const assistantMessageId = `msg_${Date.now() + 1}`;
-      const assistantMessage = {
-        id: assistantMessageId,
-        role: MESSAGE_ROLES.ASSISTANT,
-        content: '',
-        model: selectedModel,
-        platformIconUrl: selectedPlatform.iconUrl,
-        platformId: selectedPlatformId,
-        timestamp: new Date().toISOString(),
-        isStreaming: true,
-        inputTokens: 0,
-        outputTokens: 0,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      setStreamingMessageId(assistantMessageId);
-      batchedStreamingContentRef.current = '';
-
-      try {
-        const result = await processContentViaApi({
-          platformId: selectedPlatformId,
-          modelId: selectedModel,
-          promptContent,
-          conversationHistory,
-          streaming: true,
-          isContentExtractionEnabled: false,
-          options: {
-            tabId,
-            source: INTERFACE_SOURCES.SIDEBAR,
-            preTruncationCost,
-            preTruncationOutput,
-          },
-        });
-
-        if (!result || !result.success) {
-          throw new Error(
-            result?.error || 'Failed to initialize streaming for rerun'
-          );
-        }
-      } catch (error) {
-        logger.sidebar.error('Error processing rerun message:', error);
-
-        const isPortClosedError = error.isPortClosed;
-        const systemErrorMessageContent = isPortClosedError
-          ? '[System: The connection was interrupted during rerun. Please try again.]'
-          : `Error: ${error.message || 'Failed to process rerun request'}`;
-
-        const errorMessages = truncatedMessages;
-        const systemErrorMessage = {
-          id: assistantMessageId,
-          role: MESSAGE_ROLES.SYSTEM,
-          content: systemErrorMessageContent,
-          timestamp: new Date().toISOString(),
-          isStreaming: false,
-        };
-        setMessages([...errorMessages, systemErrorMessage]);
-        setStreamingMessageId(null);
-
-        if (tabId) {
-          const savedStats = rerunStatsRef.current;
-          const historyOptions = savedStats
-            ? {
-                initialAccumulatedCost: savedStats.preTruncationCost || 0,
-                initialOutputTokens: savedStats.preTruncationOutput || 0,
-              }
-            : {};
-          await ChatHistoryService.saveHistory(
-            tabId,
-            [...errorMessages, systemErrorMessage],
-            modelConfigData,
-            historyOptions
-          );
-        }
-        rerunStatsRef.current = null;
-        resetContentProcessing();
-      }
+      // --- Delegate to Helper ---
+      await _initiateRerunSequence({
+        promptContent,
+        conversationHistory,
+        truncatedMessages,
+        assistantPlaceholderId,
+        _initiateApiCall,
+        setMessages,
+        setStreamingMessageId,
+        batchedStreamingContentRef,
+        selectedModel,
+        selectedPlatform,
+        selectedPlatformId,
+        tabId,
+        rerunStatsRef,
+        processContentViaApi,
+        resetContentProcessing,
+        modelConfigData,
+        ChatHistoryService,
+      });
     },
     [
       messages,
       tokenStats,
       setMessages,
-      processContentViaApi,
       selectedPlatformId,
       selectedModel,
       setStreamingMessageId,
       tabId,
       isProcessing,
-      selectedPlatform.iconUrl,
+      selectedPlatform, // Keep selectedPlatform as it's used in the helper
       resetContentProcessing,
       modelConfigData,
       rerunStatsRef,
       batchedStreamingContentRef,
       ChatHistoryService,
-    ] // Dependencies
+      _initiateApiCall, // Add helper dependency
+      processContentViaApi, // Pass dependency
+    ]
   );
 
   const editAndRerunMessage = useCallback(
     async (messageId, newContent) => {
+      // --- Guards ---
       if (
         !tabId ||
         !selectedPlatformId ||
@@ -187,7 +225,6 @@ export function useMessageActions({
         !newContent.trim()
       )
         return;
-
       const index = messages.findIndex((msg) => msg.id === messageId);
       if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
         logger.sidebar.error(
@@ -196,25 +233,27 @@ export function useMessageActions({
         return;
       }
 
-      const preTruncationCost = tokenStats.accumulatedCost || 0;
-      const preTruncationOutput = tokenStats.outputTokens || 0;
-      rerunStatsRef.current = { preTruncationCost, preTruncationOutput };
-
-      let truncatedMessages = messages.slice(0, index + 1);
+      // --- Setup ---
+      rerunStatsRef.current = {
+        preTruncationCost: tokenStats.accumulatedCost || 0,
+        preTruncationOutput: tokenStats.outputTokens || 0,
+      };
+      const truncatedMessages = messages.slice(0, index + 1);
       const editedMessageIndex = truncatedMessages.length - 1;
-      const originalMessage = truncatedMessages[editedMessageIndex];
       const updatedMessage = {
-        ...originalMessage,
+        ...truncatedMessages[editedMessageIndex],
         content: newContent.trim(),
         inputTokens: TokenManagementService.estimateTokens(newContent.trim()),
       };
       truncatedMessages[editedMessageIndex] = updatedMessage;
 
-      setMessages(truncatedMessages);
+      // --- Update State Immediately for Edit ---
+      setMessages(truncatedMessages); // Reflect edit before API call
 
+      // --- Prepare for Helper ---
       const promptContent = updatedMessage.content;
       const conversationHistory = truncatedMessages
-        .slice(0, -1)
+        .slice(0, editedMessageIndex) // Use index before edit
         .filter(
           (msg) =>
             (msg.role === MESSAGE_ROLES.USER ||
@@ -226,114 +265,59 @@ export function useMessageActions({
           content: msg.content,
           timestamp: msg.timestamp,
         }));
+      const assistantPlaceholderId = `msg_${Date.now() + 1}`;
 
-      const assistantMessageId = `msg_${Date.now() + 1}`;
-      const assistantMessage = {
-        id: assistantMessageId,
-        role: MESSAGE_ROLES.ASSISTANT,
-        content: '',
-        model: selectedModel,
-        platformIconUrl: selectedPlatform.iconUrl,
-        platformId: selectedPlatformId,
-        timestamp: new Date().toISOString(),
-        isStreaming: true,
-        inputTokens: 0,
-        outputTokens: 0,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      setStreamingMessageId(assistantMessageId);
-      batchedStreamingContentRef.current = '';
-
-      try {
-        const result = await processContentViaApi({
-          platformId: selectedPlatformId,
-          modelId: selectedModel,
-          promptContent,
-          conversationHistory,
-          streaming: true,
-          isContentExtractionEnabled: false,
-          options: {
-            tabId,
-            source: INTERFACE_SOURCES.SIDEBAR,
-            preTruncationCost,
-            preTruncationOutput,
-          },
-        });
-
-        if (!result || !result.success) {
-          throw new Error(
-            result?.error || 'Failed to initialize streaming for edit/rerun'
-          );
-        }
-      } catch (error) {
-        logger.sidebar.error('Error processing edit/rerun message:', error);
-
-        const isPortClosedError = error.isPortClosed;
-        const systemErrorMessageContent = isPortClosedError
-          ? '[System: The connection was interrupted during edit/rerun. Please try again.]'
-          : `Error: ${error.message || 'Failed to process edit/rerun request'}`;
-
-        const errorMessages = truncatedMessages;
-        const systemErrorMessage = {
-          id: assistantMessageId,
-          role: MESSAGE_ROLES.SYSTEM,
-          content: systemErrorMessageContent,
-          timestamp: new Date().toISOString(),
-          isStreaming: false,
-        };
-        setMessages([...errorMessages, systemErrorMessage]);
-        setStreamingMessageId(null);
-
-        if (tabId) {
-          const savedStats = rerunStatsRef.current;
-          const historyOptions = savedStats
-            ? {
-                initialAccumulatedCost: savedStats.preTruncationCost || 0,
-                initialOutputTokens: savedStats.preTruncationOutput || 0,
-              }
-            : {};
-          await ChatHistoryService.saveHistory(
-            tabId,
-            [...errorMessages, systemErrorMessage],
-            modelConfigData,
-            historyOptions
-          );
-        }
-        rerunStatsRef.current = null;
-        resetContentProcessing();
-      }
+      // --- Delegate to Helper ---
+      await _initiateRerunSequence({
+        promptContent,
+        conversationHistory,
+        truncatedMessages, // Pass the already updated messages
+        assistantPlaceholderId,
+        _initiateApiCall,
+        setMessages,
+        setStreamingMessageId,
+        batchedStreamingContentRef,
+        selectedModel,
+        selectedPlatform,
+        selectedPlatformId,
+        tabId,
+        rerunStatsRef,
+        processContentViaApi,
+        resetContentProcessing,
+        modelConfigData,
+        ChatHistoryService,
+      });
     },
     [
       messages,
       tokenStats,
       setMessages,
-      processContentViaApi,
       selectedPlatformId,
       selectedModel,
       setStreamingMessageId,
       tabId,
       isProcessing,
-      selectedPlatform.iconUrl,
+      selectedPlatform,
       resetContentProcessing,
       modelConfigData,
       rerunStatsRef,
       batchedStreamingContentRef,
       ChatHistoryService,
-      TokenManagementService,
-    ] // Dependencies
+      TokenManagementService, // Added dependency
+      _initiateApiCall, // Add helper dependency
+      processContentViaApi, // Pass dependency
+    ]
   );
 
   const rerunAssistantMessage = useCallback(
     async (assistantMessageId) => {
+      // --- Guards ---
       if (!tabId || !selectedPlatformId || !selectedModel || isProcessing)
         return;
-
       const assistantIndex = messages.findIndex(
         (msg) => msg.id === assistantMessageId
       );
       const userIndex = assistantIndex - 1;
-
       if (
         assistantIndex <= 0 ||
         userIndex < 0 ||
@@ -346,13 +330,12 @@ export function useMessageActions({
         return;
       }
 
-      const preTruncationCost = tokenStats.accumulatedCost || 0;
-      const preTruncationOutput = tokenStats.outputTokens || 0;
-      rerunStatsRef.current = { preTruncationCost, preTruncationOutput };
-
+      // --- Setup ---
+      rerunStatsRef.current = {
+        preTruncationCost: tokenStats.accumulatedCost || 0,
+        preTruncationOutput: tokenStats.outputTokens || 0,
+      };
       const truncatedMessages = messages.slice(0, userIndex + 1);
-      setMessages(truncatedMessages);
-
       const promptContent = truncatedMessages[userIndex].content;
       const conversationHistory = truncatedMessages
         .slice(0, userIndex)
@@ -367,87 +350,28 @@ export function useMessageActions({
           content: msg.content,
           timestamp: msg.timestamp,
         }));
-
       const assistantPlaceholderId = `msg_${Date.now() + 1}`;
-      const assistantPlaceholder = {
-        id: assistantPlaceholderId,
-        role: MESSAGE_ROLES.ASSISTANT,
-        content: '',
-        model: selectedModel,
-        platformIconUrl: selectedPlatform.iconUrl,
-        platformId: selectedPlatformId,
-        timestamp: new Date().toISOString(),
-        isStreaming: true,
-        inputTokens: 0,
-        outputTokens: 0,
-      };
 
-      setMessages((prev) => [...prev, assistantPlaceholder]);
-      setStreamingMessageId(assistantPlaceholderId);
-      batchedStreamingContentRef.current = '';
-
-      try {
-        const result = await processContentViaApi({
-          platformId: selectedPlatformId,
-          modelId: selectedModel,
-          promptContent,
-          conversationHistory,
-          streaming: true,
-          isContentExtractionEnabled: false,
-          options: {
-            tabId,
-            source: INTERFACE_SOURCES.SIDEBAR,
-            preTruncationCost,
-            preTruncationOutput,
-          },
-        });
-
-        if (!result || !result.success) {
-          throw new Error(
-            result?.error ||
-              'Failed to initialize streaming for assistant rerun'
-          );
-        }
-      } catch (error) {
-        logger.sidebar.error(
-          'Error processing assistant rerun message:',
-          error
-        );
-
-        const isPortClosedError = error.isPortClosed;
-        const systemErrorMessageContent = isPortClosedError
-          ? '[System: The connection was interrupted during assistant rerun. Please try again.]'
-          : `Error: ${error.message || 'Failed to process assistant rerun request'}`;
-
-        const errorMessages = truncatedMessages;
-        const systemErrorMessage = {
-          id: assistantPlaceholderId,
-          role: MESSAGE_ROLES.SYSTEM,
-          content: systemErrorMessageContent,
-          timestamp: new Date().toISOString(),
-          isStreaming: false,
-        };
-        setMessages([...errorMessages, systemErrorMessage]);
-        setStreamingMessageId(null);
-
-        if (tabId) {
-          const savedStats = rerunStatsRef.current;
-          const historyOptions = savedStats
-            ? {
-                initialAccumulatedCost: savedStats.preTruncationCost || 0,
-                initialOutputTokens: savedStats.preTruncationOutput || 0,
-              }
-            : {};
-          await ChatHistoryService.saveHistory(
-            tabId,
-            [...errorMessages, systemErrorMessage],
-            modelConfigData,
-            historyOptions
-          );
-        }
-        rerunStatsRef.current = null;
-        resetContentProcessing();
-      }
+      // --- Delegate to Helper ---
+      await _initiateRerunSequence({
+        promptContent,
+        conversationHistory,
+        truncatedMessages,
+        assistantPlaceholderId,
+        _initiateApiCall,
+        setMessages,
+        setStreamingMessageId,
+        batchedStreamingContentRef,
+        selectedModel,
+        selectedPlatform,
+        selectedPlatformId,
+        tabId,
+        rerunStatsRef,
+        processContentViaApi,
+        resetContentProcessing,
+        modelConfigData,
+        ChatHistoryService,
+      });
     },
     [
       tabId,
@@ -457,15 +381,16 @@ export function useMessageActions({
       messages,
       tokenStats,
       setMessages,
-      processContentViaApi,
       setStreamingMessageId,
       resetContentProcessing,
-      selectedPlatform.iconUrl,
+      selectedPlatform,
       modelConfigData,
       rerunStatsRef,
       batchedStreamingContentRef,
       ChatHistoryService,
-    ] // Dependencies
+      _initiateApiCall, // Add helper dependency
+      processContentViaApi, // Pass dependency
+    ]
   );
 
   return { rerunMessage, editAndRerunMessage, rerunAssistantMessage };

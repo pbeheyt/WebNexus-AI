@@ -2,3 +2,9 @@
 > ai-content-assistant@1.0.0 lint:fix
 > eslint 'src/**/*.{js,jsx}' --fix
 
+
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/sidebar/contexts/SidebarChatContext.jsx
+  177:5  warning  React Hook useCallback has an unnecessary dependency: 'ChatHistoryService'. Either exclude it or remove the dependency array. Outer scope values like 'ChatHistoryService' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+✖ 1 problem (0 errors, 1 warning)
+

@@ -15,8 +15,8 @@ import { logger } from '../../shared/logger';
 import { useSidebarPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';
-import { useChatStreaming } from '../hooks/useChatStreaming'; // Import new hook
-import { useMessageActions } from '../hooks/useMessageActions'; // Import new hook
+import { useChatStreaming } from '../hooks/useChatStreaming';
+import { useMessageActions } from '../hooks/useMessageActions';
 import ChatHistoryService from '../services/ChatHistoryService';
 import TokenManagementService from '../services/TokenManagementService';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
@@ -75,15 +75,125 @@ export function SidebarChatProvider({ children }) {
     [platforms, selectedPlatformId]
   );
 
-  // --- Instantiate New Hooks ---
+  // --- Internal Helper: Initiate API Call ---
+  // This function is defined here and passed down via context value
+  const _initiateApiCall = useCallback(
+    async ({
+      platformId,
+      modelId,
+      promptContent,
+      conversationHistory,
+      streaming,
+      isContentExtractionEnabled,
+      options,
+      // Dependencies needed for error handling and state updates
+      assistantMessageIdOnError,
+      messagesOnError, // State *before* placeholder was added
+      rerunStatsRef: localRerunStatsRef, // Use passed ref
+    }) => {
+      try {
+        const result = await processContentViaApi({
+          platformId,
+          modelId,
+          promptContent,
+          conversationHistory,
+          streaming,
+          isContentExtractionEnabled,
+          options,
+        });
+
+        if (result && result.skippedContext === true) {
+          logger.sidebar.info(
+            'Context extraction skipped by background:',
+            result.reason
+          );
+          const systemMessage = {
+            id: `sys_${Date.now()}`,
+            role: MESSAGE_ROLES.SYSTEM,
+            content: `Note: ${result.reason || 'Page content could not be included.'}`,
+            timestamp: new Date().toISOString(),
+          };
+          // Update messages: Use messagesOnError which is the state before the placeholder
+          const finalMessages = [...messagesOnError, systemMessage];
+          setMessages(finalMessages);
+          if (options.tabId) {
+            await ChatHistoryService.saveHistory(
+              options.tabId,
+              finalMessages,
+              modelConfigData
+            );
+          }
+          setStreamingMessageId(null); // No stream started
+          resetContentProcessing(); // Reset API state
+          return false; // Indicate stream did not start
+        }
+
+        if (!result || !result.success) {
+          const errorMsg = result?.error || 'Failed to initialize streaming';
+          throw new Error(errorMsg); // Throw to be caught by catch block
+        }
+
+        return true; // Indicate stream started successfully
+      } catch (error) {
+        logger.sidebar.error('Error initiating API call:', error);
+        const isPortClosedError = error.isPortClosed;
+        const systemErrorMessageContent = isPortClosedError
+          ? '[System: The connection was interrupted. Please try sending your message again.]'
+          : `Error: ${error.message || 'Failed to process request'}`;
+
+        // Use messagesOnError (state before placeholder) + new system error message
+        const systemErrorMessage = {
+          id: assistantMessageIdOnError, // Use the placeholder ID for the error message
+          role: MESSAGE_ROLES.SYSTEM,
+          content: systemErrorMessageContent,
+          timestamp: new Date().toISOString(),
+          isStreaming: false,
+        };
+        const finalErrorMessages = [...messagesOnError, systemErrorMessage];
+        setMessages(finalErrorMessages);
+
+        if (options.tabId) {
+          // Handle potential rerun stats cleanup on error
+          const savedStats = localRerunStatsRef?.current;
+          const historyOptions = savedStats
+            ? {
+                initialAccumulatedCost: savedStats.preTruncationCost || 0,
+                initialOutputTokens: savedStats.preTruncationOutput || 0,
+              }
+            : {};
+          await ChatHistoryService.saveHistory(
+            options.tabId,
+            finalErrorMessages,
+            modelConfigData,
+            historyOptions
+          );
+        }
+        if (localRerunStatsRef) localRerunStatsRef.current = null; // Clear ref on error
+        setStreamingMessageId(null);
+        resetContentProcessing();
+        return false; // Indicate stream did not start
+      }
+    },
+    [
+      processContentViaApi,
+      setMessages,
+      setStreamingMessageId,
+      resetContentProcessing,
+      modelConfigData,
+      ChatHistoryService,
+    ] // Dependencies for _initiateApiCall
+  );
+  // --- End Internal Helper ---
+
+  // --- Instantiate Hooks (Pass _initiateApiCall) ---
   const { cancelStream } = useChatStreaming({
     tabId,
     setMessages,
-    messages, // Pass messages state
+    messages,
     modelConfigData,
     selectedModel,
-    selectedPlatform, // Pass platform details
-    tokenStats, // Pass token stats
+    selectedPlatform,
+    tokenStats,
     rerunStatsRef,
     setExtractedContentAdded,
     isProcessing,
@@ -96,27 +206,28 @@ export function SidebarChatProvider({ children }) {
     ChatHistoryService,
     TokenManagementService,
     robustSendMessage,
-    extractedContentAdded, // Pass extracted content flag
+    extractedContentAdded,
   });
 
   const { rerunMessage, editAndRerunMessage, rerunAssistantMessage } =
     useMessageActions({
       tabId,
       setMessages,
-      messages, // Pass messages state
+      messages,
       selectedPlatformId,
       selectedModel,
-      selectedPlatform, // Pass platform details
+      selectedPlatform,
       isProcessing,
-      processContentViaApi,
-      tokenStats, // Pass token stats
+      processContentViaApi, // Pass down for _initiateApiCall
+      tokenStats,
       rerunStatsRef,
       setStreamingMessageId,
       batchedStreamingContentRef,
-      resetContentProcessing,
-      modelConfigData,
-      ChatHistoryService,
+      resetContentProcessing, // Pass down for _initiateApiCall
+      modelConfigData, // Pass down for _initiateApiCall
+      ChatHistoryService, // Pass down for _initiateApiCall
       TokenManagementService,
+      _initiateApiCall, // Pass the helper function
     });
   // --- End Hook Instantiation ---
 
@@ -179,7 +290,9 @@ export function SidebarChatProvider({ children }) {
         if (history.length > 0 && modelConfigData) {
           await calculateStats(history, modelConfigData);
         }
-        setExtractedContentAdded(history.length > 0);
+        // Check if extracted content message exists
+        const hasExtracted = history.some((msg) => msg.isExtractedContent);
+        setExtractedContentAdded(hasExtracted);
       } catch (error) {
         logger.sidebar.error('Error loading tab chat history:', error);
       }
@@ -200,12 +313,13 @@ export function SidebarChatProvider({ children }) {
     }
   }, [tabId, resetContentProcessing]);
 
-  // --- Send Message Logic (Remains in Context) ---
+  // --- Send Message Logic (Uses _initiateApiCall) ---
   const sendMessage = async (text = inputValue) => {
     const currentPlatformId = selectedPlatformId;
     const currentModelId = selectedModel;
     const currentHasCreds = hasAnyPlatformCredentials;
 
+    // --- Initial Validation ---
     if (!currentPlatformId || !currentModelId || !currentHasCreds) {
       let errorMessage = 'Error: ';
       if (!currentPlatformId) errorMessage += 'Please select a platform. ';
@@ -224,9 +338,9 @@ export function SidebarChatProvider({ children }) {
       ]);
       return;
     }
-
     if (!text.trim() || isProcessing || !tabId) return;
 
+    // --- Prepare Messages and State ---
     const inputTokens = TokenManagementService.estimateTokens(text.trim());
     const userMessageId = `msg_${Date.now()}`;
     const userMessage = {
@@ -237,7 +351,6 @@ export function SidebarChatProvider({ children }) {
       inputTokens,
       outputTokens: 0,
     };
-
     const assistantMessageId = `msg_${Date.now() + 1}`;
     const assistantMessage = {
       id: assistantMessageId,
@@ -252,17 +365,18 @@ export function SidebarChatProvider({ children }) {
       outputTokens: 0,
     };
 
-    const updatedMessages = [...messages, userMessage, assistantMessage];
-    setMessages(updatedMessages);
+    const messagesBeforeApiCall = [...messages, userMessage]; // State before placeholder
+    const messagesWithPlaceholder = [...messagesBeforeApiCall, assistantMessage];
+
+    setMessages(messagesWithPlaceholder); // Update UI with user message and placeholder
     setInputValue('');
     setStreamingMessageId(assistantMessageId); // Set streaming ID here
     batchedStreamingContentRef.current = '';
 
-    const currentAccumulatedCost = tokenStats.accumulatedCost || 0;
-    const currentOutputTokens = tokenStats.outputTokens || 0;
+    // Store pre-send stats (relevant if this becomes a rerun later)
     rerunStatsRef.current = {
-      preTruncationCost: currentAccumulatedCost,
-      preTruncationOutput: currentOutputTokens,
+      preTruncationCost: tokenStats.accumulatedCost || 0,
+      preTruncationOutput: tokenStats.outputTokens || 0,
     };
 
     const isPageInjectable = currentTab?.url
@@ -272,95 +386,41 @@ export function SidebarChatProvider({ children }) {
       ? isContentExtractionEnabled
       : false;
 
-    try {
-      const conversationHistory = messages
-        .filter(
-          (msg) =>
-            (msg.role === MESSAGE_ROLES.USER ||
-              msg.role === MESSAGE_ROLES.ASSISTANT) &&
-            !msg.isStreaming
-        )
-        .map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-          timestamp: msg.timestamp,
-        }));
+    const conversationHistory = messages // Use messages state *before* adding new user/assistant msg
+      .filter(
+        (msg) =>
+          (msg.role === MESSAGE_ROLES.USER ||
+            msg.role === MESSAGE_ROLES.ASSISTANT) &&
+          !msg.isStreaming
+      )
+      .map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+      }));
 
-      const result = await processContentViaApi({
-        platformId: currentPlatformId,
-        modelId: currentModelId,
-        promptContent: text.trim(),
-        conversationHistory,
-        streaming: true,
-        isContentExtractionEnabled: effectiveContentExtractionEnabled,
-        options: {
-          tabId,
-          source: INTERFACE_SOURCES.SIDEBAR,
-          ...(rerunStatsRef.current && {
-            preTruncationCost: rerunStatsRef.current.preTruncationCost,
-            preTruncationOutput: rerunStatsRef.current.preTruncationOutput,
-          }),
-        },
-      });
-
-      if (result && result.skippedContext === true) {
-        logger.sidebar.info(
-          'Context extraction skipped by background:',
-          result.reason
-        );
-        const systemMessage = {
-          id: `sys_${Date.now()}`,
-          role: MESSAGE_ROLES.SYSTEM,
-          content: `Note: ${result.reason || 'Page content could not be included.'}`,
-          timestamp: new Date().toISOString(),
-        };
-        const finalMessages = messages.concat(userMessage, systemMessage);
-        setMessages(finalMessages);
-        if (tabId) {
-          await ChatHistoryService.saveHistory(
-            tabId,
-            finalMessages,
-            modelConfigData
-          );
-        }
-        setStreamingMessageId(null);
-        resetContentProcessing();
-        return;
-      }
-
-      if (!result || !result.success) {
-        const errorMsg = result?.error || 'Failed to initialize streaming';
-        throw new Error(errorMsg);
-      }
-    } catch (error) {
-      logger.sidebar.error('Error processing streaming message:', error);
-      const isPortClosedError = error.isPortClosed;
-      const systemErrorMessageContent = isPortClosedError
-        ? '[System: The connection was interrupted. Please try sending your message again.]'
-        : `Error: ${error.message || 'Failed to process request'}`;
-
-      const errorMessages = messages
-        .map((msg) => (msg.id === userMessageId ? msg : null))
-        .filter(Boolean);
-      const systemErrorMessage = {
-        id: assistantMessageId,
-        role: MESSAGE_ROLES.SYSTEM,
-        content: systemErrorMessageContent,
-        timestamp: new Date().toISOString(),
-        isStreaming: false,
-      };
-      const finalErrorMessages = [...errorMessages, systemErrorMessage];
-      setMessages(finalErrorMessages);
-      if (tabId) {
-        await ChatHistoryService.saveHistory(
-          tabId,
-          finalErrorMessages,
-          modelConfigData
-        );
-      }
-      setStreamingMessageId(null);
-      resetContentProcessing();
-    }
+    // --- Delegate API Call Initiation ---
+    await _initiateApiCall({
+      platformId: currentPlatformId,
+      modelId: currentModelId,
+      promptContent: text.trim(),
+      conversationHistory,
+      streaming: true,
+      isContentExtractionEnabled: effectiveContentExtractionEnabled,
+      options: {
+        tabId,
+        source: INTERFACE_SOURCES.SIDEBAR,
+        ...(rerunStatsRef.current && {
+          preTruncationCost: rerunStatsRef.current.preTruncationCost,
+          preTruncationOutput: rerunStatsRef.current.preTruncationOutput,
+        }),
+      },
+      // Pass necessary info for error handling within _initiateApiCall
+      assistantMessageIdOnError: assistantMessageId,
+      messagesOnError: messagesBeforeApiCall, // Pass state before placeholder
+      rerunStatsRef: rerunStatsRef, // Pass the ref itself
+    });
+    // No further try/catch needed here, _initiateApiCall handles it
   };
   // --- End Send Message Logic ---
 
@@ -368,10 +428,54 @@ export function SidebarChatProvider({ children }) {
   const clearChat = async () => {
     if (!tabId) return;
     setMessages([]);
-    setExtractedContentAdded(false);
+    setExtractedContentAdded(false); // Reset flag
     await ChatHistoryService.clearHistory(tabId);
-    await clearTokenData();
+    await clearTokenData(); // Clear associated tokens
   };
+
+  const clearFormattedContentForTab = useCallback(async () => {
+    if (tabId === null || tabId === undefined) {
+      logger.sidebar.warn(
+        'clearFormattedContentForTab called without a valid tabId.'
+      );
+      return;
+    }
+    const tabIdKey = tabId.toString();
+    logger.sidebar.info(
+      `Attempting to clear formatted content for tab: ${tabIdKey}`
+    );
+    try {
+      const result = await chrome.storage.local.get(
+        STORAGE_KEYS.TAB_FORMATTED_CONTENT
+      );
+      const allFormattedContent =
+        result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
+      if (Object.hasOwn(allFormattedContent, tabIdKey)) {
+        const updatedFormattedContent = { ...allFormattedContent };
+        delete updatedFormattedContent[tabIdKey];
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: updatedFormattedContent,
+        });
+        logger.sidebar.info(
+          `Successfully cleared formatted content for tab: ${tabIdKey}`
+        );
+      } else {
+        logger.sidebar.info(
+          `No formatted content found in storage for tab: ${tabIdKey}. No action needed.`
+        );
+      }
+      // Only reset the flag, don't clear messages here
+      setExtractedContentAdded(false);
+      logger.sidebar.info(
+        `Reset extractedContentAdded flag for tab: ${tabIdKey}`
+      );
+    } catch (error) {
+      logger.sidebar.error(
+        `Error clearing formatted content for tab ${tabIdKey}:`,
+        error
+      );
+    }
+  }, [tabId, setExtractedContentAdded]);
 
   const resetCurrentTabData = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
@@ -391,25 +495,33 @@ export function SidebarChatProvider({ children }) {
           await cancelStream(); // Call cancelStream from the hook
           logger.sidebar.info('Stream cancellation attempted.');
         }
-        const response = await robustSendMessage({
-          action: 'clearTabData',
-          tabId: tabId,
-        });
-        if (response && response.success) {
-          setMessages([]);
-          setInputValue('');
-          setStreamingMessageId(null);
-          setExtractedContentAdded(false);
-          setIsCanceling(false);
-          await clearTokenData();
-        } else {
-          throw new Error(
-            response?.error || 'Background script failed to clear data.'
-          );
-        }
+        // Clear history and tokens via service first
+        await ChatHistoryService.clearHistory(tabId); // Clears tokens too
+        // Then clear any remaining formatted content specifically
+        await clearFormattedContentForTab();
+
+        // Reset local state
+        setMessages([]);
+        setInputValue('');
+        setStreamingMessageId(null);
+        setExtractedContentAdded(false);
+        setIsCanceling(false);
+        await clearTokenData(); // Ensure token state is reset too
+
+        // Optionally notify background if other state needs clearing there
+        // const response = await robustSendMessage({ action: 'clearTabData', tabId: tabId });
+        // Handle response if needed
+
+        logger.sidebar.info(`Successfully reset data for tab ${tabId}`);
       } catch (error) {
         logger.sidebar.error('Failed to reset tab data:', error);
-        setIsCanceling(false);
+        // Attempt to reset local state even on error
+        setMessages([]);
+        setInputValue('');
+        setStreamingMessageId(null);
+        setExtractedContentAdded(false);
+        setIsCanceling(false); // Ensure canceling state is reset
+        await clearTokenData();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -425,80 +537,40 @@ export function SidebarChatProvider({ children }) {
     isProcessing,
     isCanceling,
     cancelStream, // Add cancelStream from hook as dependency
+    clearFormattedContentForTab, // Add new dependency
   ]);
 
-  const clearFormattedContentForTab = useCallback(async () => {
-    if (tabId === null || tabId === undefined) {
-      logger.sidebar.warn(
-        'clearFormattedContentForTab called without a valid tabId.'
-      );
-      return;
-    }
-    const tabIdKey = tabId.toString();
-    logger.sidebar.info(
-      `Attempting to clear formatted content for tab: ${tabIdKey}`
-    );
-    try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.TAB_FORMATTED_CONTENT
-      );
-      const allFormattedContent =
-        result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
-        if (Object.hasOwn(allFormattedContent, tabIdKey)) {
-        const updatedFormattedContent = { ...allFormattedContent };
-        delete updatedFormattedContent[tabIdKey];
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: updatedFormattedContent,
-        });
-        logger.sidebar.info(
-          `Successfully cleared formatted content for tab: ${tabIdKey}`
-        );
-      } else {
-        logger.sidebar.info(
-          `No formatted content found in storage for tab: ${tabIdKey}. No action needed.`
-        );
-      }
-      setExtractedContentAdded(false);
-      logger.sidebar.info(
-        `Reset extractedContentAdded flag for tab: ${tabIdKey}`
-      );
-    } catch (error) {
-      logger.sidebar.error(
-        `Error clearing formatted content for tab ${tabIdKey}:`,
-        error
-      );
-    }
-  }, [tabId, setExtractedContentAdded]);
   // --- End Utility Functions ---
 
   return (
     <SidebarChatContext.Provider
       value={{
         // State
-        messages: visibleMessages, // Use alias for filtered messages
-        allMessages: messages, // Provide raw messages if needed elsewhere
+        messages: visibleMessages,
+        allMessages: messages,
         inputValue,
         contextStatus,
         extractedContentAdded,
         isContentExtractionEnabled,
         modelConfigData,
-        isProcessing, // From useContentProcessing
-        isCanceling, // Local state
-        apiError: processingError, // From useContentProcessing
-        contentType, // From useContent
-        tokenStats, // From useTokenTracking
+        isProcessing,
+        isCanceling,
+        apiError: processingError,
+        contentType,
+        tokenStats,
 
         // Setters / Actions
         setInputValue,
         setIsContentExtractionEnabled,
-        sendMessage, // Local function
-        cancelStream, // From useChatStreaming hook
-        clearChat, // Local function
-        resetCurrentTabData, // Local function
-        clearFormattedContentForTab, // Local function
-        rerunMessage, // From useMessageActions hook
-        editAndRerunMessage, // From useMessageActions hook
-        rerunAssistantMessage, // From useMessageActions hook
+        sendMessage,
+        cancelStream,
+        clearChat,
+        resetCurrentTabData,
+        clearFormattedContentForTab,
+        rerunMessage,
+        editAndRerunMessage,
+        rerunAssistantMessage,
+        // No need to expose _initiateApiCall directly to consumers
       }}
     >
       {children}
