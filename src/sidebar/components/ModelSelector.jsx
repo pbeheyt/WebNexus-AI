@@ -109,6 +109,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
 
       {/* Dropdown menu */}
       {isOpen && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Click handler is for stopping propagation, not user interaction
         <div
           ref={dropdownRef}
           className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'

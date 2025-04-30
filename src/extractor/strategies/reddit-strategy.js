@@ -215,7 +215,8 @@ class RedditExtractorStrategy extends BaseExtractor {
     }
 
     // Fallback - try to extract from URL
-    const urlMatch = window.location.pathname.match(/\/r\/([^\/]+)/);
+    // Updated regex to remove unnecessary escape: [^\/] changed to [^/]
+    const urlMatch = window.location.pathname.match(/r\/([^/]+)/);
     if (urlMatch && urlMatch[1]) {
       return `r/${urlMatch[1]}`;
     }

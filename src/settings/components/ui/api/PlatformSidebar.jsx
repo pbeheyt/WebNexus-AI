@@ -17,9 +17,11 @@ const PlatformSidebar = ({
 
       <ul className='platform-list space-y-2'>
         {platforms.map((platform) => (
-          <li
+          // Changed from li to button
+          <button
+            type='button'
             key={platform.id}
-            className={`platform-item flex items-center pl-3 pr-8 py-3 rounded-lg cursor-pointer select-none transition-colors relative border border-theme ${
+            className={`platform-item flex items-center pl-3 pr-8 py-3 rounded-lg cursor-pointer select-none transition-colors relative border border-theme w-full text-left ${
               platform.id === selectedPlatformId
                 ? ' bg-gray-100 dark:bg-gray-700 shadow-sm'
                 : ' bg-white dark:bg-theme-surface'
@@ -51,7 +53,7 @@ const PlatformSidebar = ({
             {credentials[platform.id] && (
               <CheckIcon className='absolute right-3 top-1/2 transform -translate-y-1/2 text-primary w-5 h-5 flex-shrink-0' />
             )}
-          </li>
+          </button>
         ))}
       </ul>
     </div>

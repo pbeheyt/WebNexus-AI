@@ -159,7 +159,7 @@ export function UnifiedInput({
 
               {/* Prompt Selection Button */}
               <div className='relative'>
-                {/* Using a standard button here as it has text content */}
+                {/* Changed from div to button */}
                 <button
                   ref={promptButtonRef}
                   type='button'
@@ -232,6 +232,7 @@ export function UnifiedInput({
 
               {/* Prompt Selection Button */}
               <div className='relative'>
+                {/* Changed from div to button */}
                 <button
                   ref={promptButtonRef}
                   type='button'
