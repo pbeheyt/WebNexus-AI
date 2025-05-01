@@ -42,21 +42,22 @@ Both API access (Side Panel) and Web UI interaction (Popup/Context Menu) are sup
     *   Does *not* require API keys for interaction (relies on website login).
     *   Attempts to auto-fill the platform's website input.
 *   **Prompt Management:** Create, save, edit, delete, and set default prompts for different content types via **Settings > Prompts**. Prompts are accessible in both Side Panel and Popup.
-*   **API Configuration (for Side Panel):**
-    *   **API Key Storage:** API keys are stored locally within the browser by the extension (via **Settings > API Settings**).
-    *   **Parameter Tuning:** Fine-tuning parameters (e.g., temperature, max tokens, system prompts) can be adjusted per model (**Settings > API Settings**) and are also stored locally.
+*   **API Configuration & Security (for Side Panel):**
+    *   **API Key Storage:** Your API keys are stored securely using the browser's local storage (`chrome.storage.local`) directly on your computer. **They are never transmitted to WebNexus AI's developers or any third-party servers.** Keys are only sent directly from your browser to the respective AI platform's official API endpoint when you use the Side Panel.
+    *   **Local Security:** While stored locally, please be aware that API keys could potentially be accessed if your computer itself is compromised by malware or unauthorized access.
+    *   **Parameter Tuning:** Fine-tuning parameters (e.g., temperature, max tokens, system prompts) can be adjusted per model (**Settings > API Settings**) and are also stored locally in your browser's sync storage (`chrome.storage.sync`) for convenience across your devices.
 *   **UI Customization:** Light/Dark themes and adjustable text sizes (Small, Base, Large) available in headers.
 *   **Keyboard Shortcuts:**
     *   `Alt+W` : Open WebNexus AI Popup.
     *   `Alt+Q` : Quick page content process with default prompt via Web UI (like Context Menu).
-    *   To customize these shortcuts, visit chrome://extensions/shortcuts in your Chrome browser or go to Chrome Settings → Extensions → Keyboard Shortcuts. Look for WebNexus AI in the list to modify its assigned keys.
+    *   To customize these shortcuts, visit `chrome://extensions/shortcuts` in your Chrome browser or go to Chrome Settings → Extensions → Keyboard Shortcuts. Look for WebNexus AI in the list to modify its assigned keys.
 
 ---
 
 ## Usage Overview
 
 1.  **Install** and pin the extension.
-2.  **(For Side Panel):** Open **Settings > API Settings**. Enter and save API keys for the platforms intended for Side Panel use.
+2.  **(For Side Panel):** Open **Settings > API Settings**. Enter and save API keys for the platforms intended for Side Panel use. Review the API key storage details above.
 3.  **Choose Interaction Method:**
     *   **Popup (Web UI):** Click extension icon, select platform, write/select prompt, toggle context, click send. Opens platform website.
     *   **Context Menu (Web UI):** Right-click page, select "Process in Web UI". Opens platform website with default prompt.
