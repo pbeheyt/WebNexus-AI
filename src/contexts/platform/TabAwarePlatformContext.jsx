@@ -71,7 +71,6 @@ export function createTabAwarePlatformContext(options = {}) {
       globalStorageKey,
       platformConfigs,
       credentialStatus,
-      interfaceType,
       onStatusUpdate // Pass the status update callback
     );
 
@@ -168,7 +167,6 @@ export function createTabAwarePlatformContext(options = {}) {
         isLoading,
         getPlatformApiConfig,
         tabId,
-        interfaceType,
         models,
         selectedModelId,
         selectModel,
