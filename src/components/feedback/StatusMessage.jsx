@@ -26,7 +26,7 @@ export function StatusMessage({
 
   return (
     <div
-      className={`text-xs px-3 rounded bg-opacity-5 min-h-[1rem] transition-all select-none ${typeClasses[type]} ${className}`}
+      className={`text-xs px-3 ${typeClasses[type]} ${className}`}
     >
       {message || '\u00A0'}{' '}
       {/* Use non-breaking space to maintain height when empty */}

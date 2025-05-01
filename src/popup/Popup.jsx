@@ -269,8 +269,7 @@ export function Popup() {
       const result = await processContent({
         platformId: selectedPlatformId,
         promptContent: promptContent,
-        includeContext: includeContext, // <-- Pass the state here
-        // useApi: false is handled by the hook itself
+        includeContext: includeContext,
       });
 
       // Check the result from the background script
@@ -337,7 +336,7 @@ export function Popup() {
       {/* Unified Input */}
       <div className='mt-3'>
         {/* Container for badge/info/toggle OR non-injectable message */}
-        <div className='flex justify-between items-center mb-2 px-3'>
+        <div className='flex justify-between items-center mb-3 px-3'>
           {!contentLoading &&
             (isInjectable ? (
               <>
@@ -388,7 +387,7 @@ export function Popup() {
                 </div>
               </>
             ) : (
-              // Message for Non-Injectable Pages (Toggle is not shown here)
+              // Empty div for Non-Injectable Pages (Toggle is not shown here)
               <div></div>
             ))}
           {contentLoading && (
