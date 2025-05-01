@@ -84,7 +84,6 @@ export function useChatStreaming({
       isError = false,
       isCancelled = false
     ) => {
-      logger.sidebar.debug('[TokenDebug] handleStreamComplete: Received args:', { messageId, finalContentInput, model, isError, isCancelled });
       // Retrieve rerun stats *before* saving history
       const savedStats = rerunStatsRef.current;
       const retrievedPreTruncationCost = savedStats?.preTruncationCost || 0;
@@ -97,19 +96,15 @@ export function useChatStreaming({
         if (isCancelled) {
             // Calculate tokens based on content *before* adding notice
             finalOutputTokensForMessage = TokenManagementService.estimateTokens(finalContentInput);
-            logger.sidebar.debug('[TokenDebug] handleStreamComplete (isCancelled): Tokens calculated before notice:', finalOutputTokensForMessage);
             // Append notice for display
             finalContent += '\n\n_Stream cancelled by user._';
-            logger.sidebar.debug('[TokenDebug] handleStreamComplete (isCancelled): finalContent after notice append:', finalContent);
         } else if (isError) {
             // Errors don't count towards output tokens
             finalOutputTokensForMessage = 0;
             // finalContent is already the error message passed in finalContentInput
-            logger.sidebar.debug('[TokenDebug] handleStreamComplete (isError): Setting output tokens to 0.');
         } else {
             // Normal completion: Calculate tokens from the final received content
             finalOutputTokensForMessage = TokenManagementService.estimateTokens(finalContentInput);
-            logger.sidebar.debug('[TokenDebug] handleStreamComplete (Normal): Calculated output tokens:', finalOutputTokensForMessage);
             // finalContent is already the complete content passed in finalContentInput
         }
 
@@ -173,13 +168,11 @@ export function useChatStreaming({
         }
 
         // Set messages with all updates at once
-        logger.sidebar.debug('[TokenDebug] handleStreamComplete: updatedMessages array before setMessages:', updatedMessages);
         setMessages(updatedMessages);
         batchedStreamingContentRef.current = ''; // Clear buffer on completion
 
         // Save history, passing the retrieved initial stats
         if (tabId) {
-          logger.sidebar.debug('[TokenDebug] handleStreamComplete: Calling ChatHistoryService.saveHistory with:', { tabId, updatedMessages, modelConfigData, options: { initialAccumulatedCost: retrievedPreTruncationCost, initialOutputTokens: retrievedPreTruncationOutput } });
           await ChatHistoryService.saveHistory(
             tabId,
             updatedMessages,
@@ -334,8 +327,6 @@ export function useChatStreaming({
 
     const { [STORAGE_KEYS.STREAM_ID]: streamId } =
       await chrome.storage.local.get(STORAGE_KEYS.STREAM_ID);
-    logger.sidebar.debug('[TokenDebug] cancelStream: Initial batched content before cancel append:', batchedStreamingContentRef.current);
-    logger.sidebar.debug('[TokenDebug] cancelStream: Messages state *before* cancel append:', messages);
     setIsCanceling(true);
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);

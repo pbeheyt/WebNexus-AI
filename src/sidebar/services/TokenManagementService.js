@@ -175,8 +175,6 @@ class TokenManagementService {
       } else {
         // Fallback to estimating only if the property doesn't exist or isn't a number
         outputTokensInLastApiCall = this.estimateTokens(lastAssistantMsg.content);
-         // Optionally add a warning if we fall back unexpectedly
-         logger.sidebar.warn(`[TokenDebug] Falling back to estimating output tokens for message ID ${lastAssistantMsg.id} as 'outputTokens' property was missing or not a number.`);
       }
     }
 
@@ -238,7 +236,6 @@ class TokenManagementService {
     modelConfig = null,
     options = {}
   ) {
-    logger.service.debug('[TokenDebug] TokenManagementService.calculateAndUpdateStatistics: Called with:', { tabId, messages_length: messages?.length, modelConfig, options });
     if (!tabId) return this._getEmptyStats();
 
     let initialAccumulatedCost;
@@ -259,7 +256,6 @@ class TokenManagementService {
       initialAccumulatedCost = currentStats.accumulatedCost || 0;
       initialOutputTokens = currentStats.outputTokens || 0;
     }
-    logger.service.debug('[TokenDebug] TokenManagementService.calculateAndUpdateStatistics: Initial stats:', { initialAccumulatedCost, initialOutputTokens });
 
     try {
       // 1. Get the actual system prompt string
@@ -270,7 +266,6 @@ class TokenManagementService {
         messages,
         systemPrompt
       );
-      logger.service.debug('[TokenDebug] TokenManagementService.calculateAndUpdateStatistics: baseStats from messages:', baseStats);
 
       // 4. Calculate Cost of the Last Call
       let currentCallCost = 0;
@@ -288,7 +283,6 @@ class TokenManagementService {
           modelConfig
         );
         currentCallCost = costInfo.totalCost || 0;
-        logger.service.debug('[TokenDebug] TokenManagementService.calculateAndUpdateStatistics: Calculated currentCallCost:', currentCallCost);
       }
       // If isLastError is true, currentCallCost remains 0 (its initial value)
 
@@ -313,11 +307,9 @@ class TokenManagementService {
         isCalculated: true,
       };
 
-      logger.service.debug('[TokenDebug] TokenManagementService.calculateAndUpdateStatistics: finalStatsObject before saving:', finalStatsObject);
       // 7. Save the complete, updated statistics
       await this.updateTokenStatistics(tabId, finalStatsObject);
 
-      logger.service.debug('[TokenDebug] TokenManagementService.calculateAndUpdateStatistics: Returning final stats:', finalStatsObject);
       // 8. Return the final statistics object
       return finalStatsObject;
     } catch (error) {
