@@ -2,9 +2,3 @@
 > ai-content-assistant@1.0.0 lint:fix
 > eslint 'src/**/*.{js,jsx}' --fix
 
-
-/home/pbeheyt/Extensions/AI-Content-Assistant/src/services/CredentialManager.js
-  101:46  error  Do not access Object.prototype method 'hasOwnProperty' from target object  no-prototype-builtins
-
-✖ 1 problem (1 error, 0 warnings)
-
