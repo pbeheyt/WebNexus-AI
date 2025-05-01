@@ -40,7 +40,7 @@ Both API access (Side Panel) and Web UI interaction (Popup/Context Menu) are sup
     *   **Popup:** Platform selection, prompt entry/selection, context inclusion toggle.
     *   **Context Menu:** Right-click page -> "Process in Web UI (Default Prompt)" sends content with the default prompt for that content type to the preferred platform.
     *   Does *not* require API keys for interaction (relies on website login).
-    *   Attempts to auto-fill the platform's website input.
+    *   Auto-fill the platform's website input.
 *   **Prompt Management:** Create, save, edit, delete, and set default prompts for different content types via **Settings > Prompts**. Prompts are accessible in both Side Panel and Popup.
 *   **API Configuration & Security (for Side Panel):**
     *   **API Key Storage:** Your API keys are stored securely using the browser's local storage (`chrome.storage.local`) directly on your computer. **They are never transmitted to WebNexus AI's developers or any third-party servers.** Keys are only sent directly from your browser to the respective AI platform's official API endpoint when you use the Side Panel.
