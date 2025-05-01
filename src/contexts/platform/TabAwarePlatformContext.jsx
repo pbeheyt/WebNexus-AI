@@ -23,7 +23,7 @@ import {
 
 /**
  * Creates a tab-aware platform context with shared functionality,
- * now refactored to use internal hooks for logic separation.
+ * now refactored to use internal hooks for logic separation and includes error handling.
  *
  * @param {Object} options - Configuration options
  * @param {string} options.interfaceType - Interface type (popup or sidebar)
@@ -50,7 +50,7 @@ export function createTabAwarePlatformContext(options = {}) {
     const {
       platformConfigs,
       isLoading: isLoadingConfigs,
-      // error: configError, // TODO: Handle or expose errors if needed
+      error: configError, // Capture config error
     } = usePlatformConfigurations();
 
     // 2. Fetch Credential Status (depends on configs)
@@ -58,7 +58,7 @@ export function createTabAwarePlatformContext(options = {}) {
       credentialStatus,
       hasAnyPlatformCredentials,
       isLoading: isLoadingCredentials,
-      // error: credentialError, // TODO: Handle or expose errors if needed
+      error: credentialError, // Capture credential error
     } = useCredentialStatus(platformConfigs, interfaceType);
 
     // 3. Manage Platform Selection (depends on tabId, configs, creds)
@@ -66,11 +66,13 @@ export function createTabAwarePlatformContext(options = {}) {
       selectedPlatformId,
       selectPlatform: selectPlatformInternal,
       isLoading: isLoadingSelection,
+      // Selection hook doesn't currently return error, assumes fallback or logs internally
     } = usePlatformSelection(
       tabId,
       globalStorageKey,
       platformConfigs,
       credentialStatus,
+      interfaceType,
       onStatusUpdate // Pass the status update callback
     );
 
@@ -80,7 +82,7 @@ export function createTabAwarePlatformContext(options = {}) {
       selectedModelId,
       selectModel,
       isLoading: isLoadingModels,
-      // error: modelError, // TODO: Handle or expose errors if needed
+      error: modelError, // Capture model error
     } = useModelManagement(selectedPlatformId, tabId, interfaceType);
 
     // --- End Hook Orchestration ---
@@ -90,8 +92,14 @@ export function createTabAwarePlatformContext(options = {}) {
         // Need tabId before anything else can load properly
         if (!tabId) return true;
         // Then wait for configs, selection logic, and potentially credentials/models
+        // Loading is finished once all dependent hooks are no longer loading
         return isLoadingConfigs || isLoadingSelection || isLoadingCredentials || isLoadingModels;
     }, [tabId, isLoadingConfigs, isLoadingSelection, isLoadingCredentials, isLoadingModels]);
+
+    // Determine overall error state (prioritize first error in sequence)
+    const error = useMemo(() => {
+        return configError || credentialError || modelError || null;
+    }, [configError, credentialError, modelError]);
 
 
     // Get current tab ID on mount
@@ -105,12 +113,13 @@ export function createTabAwarePlatformContext(options = {}) {
           if (tabs && tabs[0]) {
             setTabId(tabs[0].id);
           } else {
-             // No active tab found, loading will remain true until tabId is set
              console.warn('Could not get active tab ID.');
+             // If no tab ID, we might consider setting an error state here as well,
+             // but currently, isLoading will just remain true.
           }
-        } catch (error) {
-          console.error('Error getting current tab:', error);
-           // Handle error, maybe set an error state? Loading remains true.
+        } catch (err) {
+          console.error('Error getting current tab:', err);
+           // Consider setting an error state if tab ID fetch fails critically
         }
       };
       getCurrentTab();
@@ -124,6 +133,8 @@ export function createTabAwarePlatformContext(options = {}) {
 
     // Construct final platforms array with credential status
     const platforms = useMemo(() => {
+      // If configs failed to load, return empty array
+      if (configError) return [];
       return platformConfigs.map((config) => ({
         id: config.id,
         name: config.name,
@@ -134,7 +145,7 @@ export function createTabAwarePlatformContext(options = {}) {
             ? credentialStatus[config.id] || false
             : true, // Popups don't check/need creds here
       }));
-    }, [platformConfigs, credentialStatus, interfaceType]);
+    }, [platformConfigs, credentialStatus, configError]); // Added configError dependency
 
 
     // Build the context value
@@ -142,20 +153,21 @@ export function createTabAwarePlatformContext(options = {}) {
       const baseValue = {
         platforms,
         selectedPlatformId,
-        selectPlatform: selectPlatformInternal, // Use the function from the hook
+        selectPlatform: selectPlatformInternal,
         isLoading,
+        error, // Expose the combined error state
         getPlatformApiConfig,
         tabId,
-        setTabId, // Expose setTabId if needed externally (e.g., for testing or specific scenarios)
+        setTabId,
       };
 
       if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
         return {
           ...baseValue,
-          models,
-          selectedModel: selectedModelId, // Rename for consistency
+          models: modelError ? [] : models, // Return empty models if model loading failed
+          selectedModel: selectedModelId,
           selectModel,
-          hasAnyPlatformCredentials,
+          hasAnyPlatformCredentials: credentialError ? false : hasAnyPlatformCredentials, // Assume no creds if fetch failed
         };
       }
 
@@ -165,12 +177,15 @@ export function createTabAwarePlatformContext(options = {}) {
         selectedPlatformId,
         selectPlatformInternal,
         isLoading,
+        error, // Include error in dependency array
         getPlatformApiConfig,
         tabId,
-        models,
+        models, // Keep models/modelError related dependencies
         selectedModelId,
         selectModel,
-        hasAnyPlatformCredentials
+        hasAnyPlatformCredentials,
+        modelError, // Add modelError
+        credentialError // Add credentialError
     ]);
 
 

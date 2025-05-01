@@ -3,12 +3,8 @@
 > eslint 'src/**/*.{js,jsx}' --fix
 
 
-/home/pbeheyt/Extensions/AI-Content-Assistant/src/contexts/platform/TabAwarePlatformContext.jsx
-  138:8  warning  React Hook useMemo has an unnecessary dependency: 'interfaceType'. Either exclude it or remove the dependency array. Outer scope values like 'interfaceType' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
-  164:8  warning  React Hook useMemo has an unnecessary dependency: 'interfaceType'. Either exclude it or remove the dependency array. Outer scope values like 'interfaceType' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
-
 /home/pbeheyt/Extensions/AI-Content-Assistant/src/services/CredentialManager.js
   101:46  error  Do not access Object.prototype method 'hasOwnProperty' from target object  no-prototype-builtins
 
-✖ 3 problems (1 error, 2 warnings)
+✖ 1 problem (1 error, 0 warnings)
 
