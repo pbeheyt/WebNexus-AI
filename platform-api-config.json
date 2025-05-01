@@ -175,7 +175,8 @@
           "inputTokenPrice": 3.0,
           "outputTokenPrice": 15.0,
           "supportsTemperature": true,
-          "supportsTopP": true
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
         },
         {
           "id": "claude-3-5-haiku-latest",
@@ -186,7 +187,8 @@
           "inputTokenPrice": 0.8,
           "outputTokenPrice": 4.0,
           "supportsTemperature": true,
-          "supportsTopP": true
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
         },
         {
           "id": "claude-3-5-sonnet-latest",
@@ -197,7 +199,8 @@
           "inputTokenPrice": 3.0,
           "outputTokenPrice": 15.0,
           "supportsTemperature": true,
-          "supportsTopP": true
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
         },
         {
           "id": "claude-3-opus-latest",
@@ -208,7 +211,8 @@
           "inputTokenPrice": 15.0,
           "outputTokenPrice": 75.0,
           "supportsTemperature": true,
-          "supportsTopP": true
+          "supportsTopP": true,
+          "tokenParameter": "max_tokens"
         }
       ],
       "defaultModel": "claude-3-5-haiku-latest",
