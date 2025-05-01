@@ -416,4 +416,4 @@ PlatformDetails.propTypes = {
   credentialsKey: PropTypes.string.isRequired,
 };
 
-export default PlatformDetails;
+export default React.memo(PlatformDetails);

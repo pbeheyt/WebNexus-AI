@@ -590,4 +590,4 @@ AdvancedSettings.propTypes = {
   onResetToDefaults: PropTypes.func.isRequired,
 };
 
-export default AdvancedSettings;
+export default React.memo(AdvancedSettings);

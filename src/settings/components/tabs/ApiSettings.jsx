@@ -9,7 +9,6 @@ import ConfigService from '../../../services/ConfigService';
 
 const ApiSettings = () => {
   const { error } = useNotification();
-  const [isLoading, setIsLoading] = useState(true);
   const [platforms, setPlatforms] = useState([]);
   const [selectedPlatformId, setSelectedPlatformId] = useState(null);
   const [credentials, setCredentials] = useState({});
@@ -17,8 +16,6 @@ const ApiSettings = () => {
 
   useEffect(() => {
     const initialize = async () => {
-      if (!isLoading) return;
-
       try {
         // Get combined platform configs from ConfigService
         const platformList = await ConfigService.getAllPlatformConfigs();
@@ -46,13 +43,11 @@ const ApiSettings = () => {
       } catch (err) {
         logger.settings.error('Error loading API settings:', err);
         error('Failed to load API settings');
-      } finally {
-        setIsLoading(false);
       }
     };
 
     initialize();
-  }, [isLoading, error, selectedPlatformId]);
+  }, [error]);
 
   // Handler implementations remain largely unchanged
   const handleSelectPlatform = (platformId) => {
@@ -106,10 +101,6 @@ const ApiSettings = () => {
     });
   };
 
-  const refreshData = () => {
-    setIsLoading(true);
-  };
-
   const selectedPlatform = platforms.find((p) => p.id === selectedPlatformId);
 
   return (
@@ -140,7 +131,6 @@ const ApiSettings = () => {
             onCredentialsUpdated={handleCredentialsUpdated}
             onCredentialsRemoved={handleCredentialsRemoved}
             onAdvancedSettingsUpdated={handleAdvancedSettingsUpdated}
-            refreshData={refreshData}
             credentialsKey={STORAGE_KEYS.API_CREDENTIALS}
             advancedSettingsKey={STORAGE_KEYS.API_ADVANCED_SETTINGS}
           />

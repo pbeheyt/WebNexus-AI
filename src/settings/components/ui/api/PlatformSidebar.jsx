@@ -68,4 +68,4 @@ PlatformSidebar.propTypes = {
   onSelectPlatform: PropTypes.func.isRequired,
 };
 
-export default PlatformSidebar;
+export default React.memo(PlatformSidebar);
