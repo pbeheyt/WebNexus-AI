@@ -228,9 +228,8 @@ const PromptForm = ({
         <label className='block mb-3 text-base font-medium text-theme-secondary select-none'>
           Content Type
           {/* CustomSelect and its container div inside the label */}
-          <div className='inline-block mt-1'>
+          <div className='inline-block ml-3'>
             {' '}
-            {/* Added mt-1 for spacing */}
             <CustomSelect
               options={contentTypeOptions}
               selectedValue={formData.contentType}
