@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
@@ -41,7 +41,7 @@ const AdvancedSettings = ({
   const settings = getModelSettings();
 
   // Get default settings from model config
-  const getDefaultSettings = () => {
+  const getDefaultSettings = useCallback(() => {
     const currentModelConfig = models.find((m) => m.id === selectedModelId);
 
     const defaults = {
@@ -67,7 +67,7 @@ const AdvancedSettings = ({
     }
 
     return defaults;
-  };
+  }, [models, selectedModelId, platform.apiConfig]);
 
   const defaultSettings = getDefaultSettings();
 
@@ -86,7 +86,7 @@ const AdvancedSettings = ({
   const [originalValues, setOriginalValues] = useState({ ...formValues });
 
   // Check if current form values match default settings for the selected model
-  const checkIfAtDefaults = (formVals) => {
+  const checkIfAtDefaults = useCallback((formVals) => {
     const modelDefaults = getDefaultSettings(); // Get defaults for the current model
     const currentModelConfig = models.find((m) => m.id === selectedModelId); // Get config for checks
 
@@ -143,7 +143,7 @@ const AdvancedSettings = ({
 
     // If all relevant checks pass, values are at defaults
     return true;
-  };
+  }, [getDefaultSettings, models, selectedModelId, platform.apiConfig]);
 
   // Update form values when selected model or settings change
   useEffect(() => {
@@ -166,10 +166,10 @@ const AdvancedSettings = ({
     setHasChanges(false);
     setIsAtDefaults(checkIfAtDefaults(newFormValues));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedModelId]);
+  }, [selectedModelId, advancedSettings, getDefaultSettings, checkIfAtDefaults]);
 
   // Check if current form values differ from original values
-  const checkForChanges = (currentValues, originalVals) => {
+  const checkForChanges = useCallback((currentValues, originalVals) => {
     for (const key in currentValues) {
       if (currentValues[key] === undefined && originalVals[key] === undefined) {
         continue;
@@ -198,10 +198,10 @@ const AdvancedSettings = ({
       }
     }
     return false;
-  };
+  }, []);
 
   // Handle changes for all input types including toggles
-  const handleChange = (name, newValue) => {
+  const handleChange = useCallback((name, newValue) => {
     const updatedValues = { ...formValues };
 
     if (name === 'maxTokens') {
@@ -223,13 +223,13 @@ const AdvancedSettings = ({
     setFormValues(updatedValues);
     setHasChanges(checkForChanges(updatedValues, originalValues));
     setIsAtDefaults(checkIfAtDefaults(updatedValues));
-  };
+  }, [formValues, originalValues, checkForChanges, checkIfAtDefaults]);
 
-  const handleModelChange = (modelId) => {
+  const handleModelChange = useCallback((modelId) => {
     onModelSelect(modelId);
-  };
+  }, [onModelSelect]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setIsSaving(true);
 
@@ -300,9 +300,9 @@ const AdvancedSettings = ({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [formValues, models, selectedModelId, platform.id, platform.apiConfig, onSettingsUpdate, originalValues, checkIfAtDefaults, error]);
 
-  const handleResetClick = () => {
+  const handleResetClick = useCallback(() => {
     if (isAtDefaults) return; // Prevent action if disabled
 
     setIsAnimatingReset(true); // Start animation
@@ -342,7 +342,7 @@ const AdvancedSettings = ({
     setTimeout(() => {
       setIsAnimatingReset(false);
     }, 500); // Match duration in iconClassName
-  };
+  }, [isAtDefaults, getDefaultSettings, models, selectedModelId, platform.apiConfig, onResetToDefaults]);
 
   const formatPrice = (price) => {
     return typeof price === 'number' ? price.toFixed(2) : price;

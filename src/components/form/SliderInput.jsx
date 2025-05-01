@@ -94,4 +94,4 @@ SliderInput.propTypes = {
   disabled: PropTypes.bool,
 };
 
-export default SliderInput;
+export default React.memo(SliderInput);
