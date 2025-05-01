@@ -22,6 +22,7 @@ const AdvancedSettings = ({
 }) => {
   const { error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [isAtDefaults, setIsAtDefaults] = useState(true);
   const [isAnimatingReset, setIsAnimatingReset] = useState(false);
@@ -166,7 +167,7 @@ const AdvancedSettings = ({
     setHasChanges(false);
     setIsAtDefaults(checkIfAtDefaults(newFormValues));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedModelId, advancedSettings, getDefaultSettings, checkIfAtDefaults]);
+  }, [selectedModelId, getDefaultSettings, checkIfAtDefaults]);
 
   // Check if current form values differ from original values
   const checkForChanges = useCallback((currentValues, originalVals) => {
@@ -302,12 +303,14 @@ const AdvancedSettings = ({
     }
   }, [formValues, models, selectedModelId, platform.id, platform.apiConfig, onSettingsUpdate, originalValues, checkIfAtDefaults, error]);
 
-  const handleResetClick = useCallback(() => {
+  const handleResetClick = useCallback(async () => {
     if (isAtDefaults) return; // Prevent action if disabled
 
+    setIsResetting(true);
     setIsAnimatingReset(true); // Start animation
 
-    // Existing reset logic (copied from the old button's onClick)
+    try {
+      // Existing reset logic (copied from the old button's onClick)
     const defaults = getDefaultSettings();
     const currentModelConfig = models.find((m) => m.id === selectedModelId);
     const resetValues = {
@@ -338,10 +341,14 @@ const AdvancedSettings = ({
     setIsAtDefaults(true);
     onResetToDefaults(selectedModelId); // Call the prop function
 
-    // Stop animation after duration
-    setTimeout(() => {
-      setIsAnimatingReset(false);
-    }, 500); // Match duration in iconClassName
+      await onResetToDefaults(selectedModelId); // Call the prop function
+    } finally {
+      setIsResetting(false);
+      // Stop animation after duration
+      setTimeout(() => {
+        setIsAnimatingReset(false);
+      }, 500); // Match duration in iconClassName
+    }
   }, [isAtDefaults, getDefaultSettings, models, selectedModelId, platform.apiConfig, onResetToDefaults]);
 
   const formatPrice = (price) => {
@@ -379,7 +386,7 @@ const AdvancedSettings = ({
             selectedValue={selectedModelId}
             onChange={handleModelChange}
             placeholder='Select Model'
-            disabled={models.length === 0}
+            disabled={models.length === 0 || isSaving || isResetting}
           />
         </div>
       </div>
@@ -446,7 +453,7 @@ const AdvancedSettings = ({
             min={1}
             max={modelConfig?.maxTokens}
             step={1}
-            disabled={isSaving}
+            disabled={isSaving || isResetting}
             className='form-group'
           />
         </div>
@@ -464,7 +471,7 @@ const AdvancedSettings = ({
                 onChange={(newCheckedState) =>
                   handleChange('includeTemperature', newCheckedState)
                 }
-                disabled={isSaving}
+                disabled={isSaving || isResetting}
                 id={`${platform.id}-${selectedModelId}-include-temperature`}
               />
             </div>
@@ -484,7 +491,7 @@ const AdvancedSettings = ({
                 min={platform.apiConfig?.minTemperature}
                 max={platform.apiConfig?.maxTemperature}
                 step={0.01}
-                disabled={isSaving}
+                disabled={isSaving || isResetting}
                 className='form-group mt-2'
               />
             )}
@@ -504,7 +511,7 @@ const AdvancedSettings = ({
                 onChange={(newCheckedState) =>
                   handleChange('includeTopP', newCheckedState)
                 }
-                disabled={isSaving}
+                disabled={isSaving || isResetting}
                 id={`${platform.id}-${selectedModelId}-include-topp`}
               />
             </div>
@@ -524,7 +531,7 @@ const AdvancedSettings = ({
                 min={platform.apiConfig?.minTopP}
                 max={platform.apiConfig?.maxTopP}
                 step={0.01}
-                disabled={isSaving}
+                disabled={isSaving || isResetting}
                 className='form-group mt-2'
               />
             )}
@@ -562,6 +569,7 @@ const AdvancedSettings = ({
                 placeholder='Enter a system prompt for API requests'
                 value={formValues.systemPrompt}
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}
+                disabled={isSaving || isResetting}
               />
             </div>
           )}

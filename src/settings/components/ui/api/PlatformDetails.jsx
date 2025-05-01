@@ -359,12 +359,14 @@ const PlatformDetails = ({
               }
               value={apiKey}
               onChange={handleApiKeyChange}
+              disabled={isSaving}
             />
             <button
               type='button'
               className='show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded select-none'
               onClick={() => setShowApiKey(!showApiKey)}
               aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
+              disabled={isSaving}
             >
               {showApiKey ? 'Hide' : 'Show'}
             </button>
@@ -377,6 +379,7 @@ const PlatformDetails = ({
               variant='danger'
               onClick={handleRemoveCredentials}
               className='select-none'
+              disabled={isSaving}
             >
               Remove Key
             </Button>
