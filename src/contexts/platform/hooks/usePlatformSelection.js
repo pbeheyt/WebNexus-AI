@@ -154,7 +154,6 @@ export function usePlatformSelection(
         return true;
       } catch (error) {
         logger.context.error('Error setting platform preference:', error);
-        // Optionally revert state or show error
         return false;
       }
     },

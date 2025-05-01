@@ -167,7 +167,6 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
         return true;
       } catch (err) {
         logger.context.error('Error setting model preference:', err);
-        // Optionally revert state or show error
         return false;
       }
     },

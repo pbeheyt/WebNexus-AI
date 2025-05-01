@@ -11,6 +11,7 @@ import React, {
 import PropTypes from 'prop-types';
 
 import { INTERFACE_SOURCES } from '../../shared/constants';
+import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
 
 // Import the new hooks
@@ -66,14 +67,13 @@ export function createTabAwarePlatformContext(options = {}) {
       selectedPlatformId,
       selectPlatform: selectPlatformInternal,
       isLoading: isLoadingSelection,
-      // Selection hook doesn't currently return error, assumes fallback or logs internally
     } = usePlatformSelection(
       tabId,
       globalStorageKey,
       platformConfigs,
       credentialStatus,
       interfaceType,
-      onStatusUpdate // Pass the status update callback
+      onStatusUpdate
     );
 
     // 4. Manage Model Selection (depends on selectedPlatformId, tabId)
@@ -113,13 +113,10 @@ export function createTabAwarePlatformContext(options = {}) {
           if (tabs && tabs[0]) {
             setTabId(tabs[0].id);
           } else {
-             console.warn('Could not get active tab ID.');
-             // If no tab ID, we might consider setting an error state here as well,
-             // but currently, isLoading will just remain true.
+             logger.context.warn('Could not get active tab ID.');
           }
         } catch (err) {
-          console.error('Error getting current tab:', err);
-           // Consider setting an error state if tab ID fetch fails critically
+          logger.context.error('Error getting current tab:', err);
         }
       };
       getCurrentTab();
@@ -145,7 +142,7 @@ export function createTabAwarePlatformContext(options = {}) {
             ? credentialStatus[config.id] || false
             : true, // Popups don't check/need creds here
       }));
-    }, [platformConfigs, credentialStatus, configError]); // Added configError dependency
+    }, [platformConfigs, credentialStatus, configError]);
 
 
     // Build the context value
@@ -177,15 +174,15 @@ export function createTabAwarePlatformContext(options = {}) {
         selectedPlatformId,
         selectPlatformInternal,
         isLoading,
-        error, // Include error in dependency array
+        error,
         getPlatformApiConfig,
         tabId,
-        models, // Keep models/modelError related dependencies
+        models,
         selectedModelId,
         selectModel,
         hasAnyPlatformCredentials,
-        modelError, // Add modelError
-        credentialError // Add credentialError
+        modelError,
+        credentialError
     ]);
 
 
