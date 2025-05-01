@@ -136,7 +136,6 @@ export async function processContentViaApi(params) {
     modelId,
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null,
-    // streaming = false, // Note: streaming is forced to true later
     conversationHistory = [],
     isContentExtractionEnabled,
   } = params;
@@ -283,7 +282,6 @@ export async function processContentViaApi(params) {
     await initializeStreamResponse(streamId, platformId, resolvedParams.model); // Include model
 
     // 8. Determine the formatted content to include in the request based on the toggle state and content availability
-    // --- Start Replacement ---
     let formattedContentForRequest = null;
 
     if (!isContentExtractionEnabled) {
@@ -311,7 +309,6 @@ export async function processContentViaApi(params) {
         formattedContentForRequest = null;
       }
     }
-    // --- End Replacement ---
 
     if (tabId) {
       try {

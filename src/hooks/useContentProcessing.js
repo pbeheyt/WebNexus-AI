@@ -80,7 +80,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
           contentType,
           source,
           useApi: false,
-          includeContext: includeContext, // <-- Add this line
+          includeContext: includeContext,
         });
 
         // The background script now consistently returns { success: boolean, ... }
@@ -137,8 +137,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         streaming = false,
         onStreamChunk = null,
         conversationHistory = [],
-        isContentExtractionEnabled, // <-- Destructure here
-        // Remove skipInitialExtraction if it's destructured here
+        isContentExtractionEnabled,
       } = options;
 
       if (!currentTab?.id) {
@@ -169,12 +168,10 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
           contentType,
           source,
           streaming,
-          isContentExtractionEnabled, // <-- Ensure it's included here
-          // Ensure skipInitialExtraction is NOT included here
+          isContentExtractionEnabled,
         };
 
         // Add optional parameters if provided
-        // Ensure skipInitialExtraction logic is removed here
         if (modelId) request.modelId = modelId;
         if (promptContent) request.customPrompt = promptContent;
         if (conversationHistory?.length > 0)

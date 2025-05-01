@@ -303,9 +303,9 @@ export function useMessageActions({
       rerunStatsRef,
       batchedStreamingContentRef,
       ChatHistoryService,
-      TokenManagementService, // Added dependency
-      _initiateApiCall, // Add helper dependency
-      processContentViaApi, // Pass dependency
+      TokenManagementService,
+      _initiateApiCall,
+      processContentViaApi,
     ]
   );
 
