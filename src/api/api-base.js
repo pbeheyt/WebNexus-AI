@@ -388,10 +388,16 @@ class BaseApiService extends ApiInterface {
             `[${this.platformId}] Stream reader cancelled successfully for model ${model}.`
           );
         } catch (cancelError) {
-          this.logger.warn(
-            `[${this.platformId}] Error cancelling stream reader for model ${model} (potentially expected after abort):`,
-            cancelError
-          );
+          if (cancelError.name === 'AbortError') {
+            this.logger.info(
+              `[${this.platformId}] Stream reader cancellation failed as expected after abort for model ${model}: ${cancelError.message}`
+            );
+          } else {
+            this.logger.warn(
+              `[${this.platformId}] Unexpected error cancelling stream reader for model ${model}:`,
+              cancelError
+            );
+          }
         }
         // No need for releaseLock() as cancel() handles it.
       } else {
