@@ -41,7 +41,6 @@ export function createTabAwarePlatformContext(options = {}) {
     const [selectedPlatformId, setSelectedPlatformId] = useState(null);
     const [selectedModelId, setSelectedModelId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
     const [hasAnyPlatformCredentials, setHasAnyPlatformCredentials] =
       useState(false);
     const [tabId, setTabId] = useState(null);
@@ -335,18 +334,6 @@ export function createTabAwarePlatformContext(options = {}) {
       };
     }, [fetchCoreData, interfaceType]);
 
-    // Function to manually refresh platform data
-    const refreshPlatformData = useCallback(async () => {
-      setIsRefreshing(true);
-      try {
-        await fetchCoreData();
-      } catch (error) {
-        logger.sidebar.error('Error refreshing platform data:', error);
-      } finally {
-        setIsRefreshing(false);
-      }
-    }, [fetchCoreData]);
-
     // Select platform and save preference
     const selectPlatform = useCallback(
       async (platformId) => {
@@ -472,9 +459,7 @@ export function createTabAwarePlatformContext(options = {}) {
             models,
             selectedModel: selectedModelId, // Renamed for clarity
             selectModel,
-            hasAnyPlatformCredentials, // Overall credential status
-            isRefreshing, // Expose refresh loading state
-            refreshPlatformData, // Expose refresh function
+            hasAnyPlatformCredentials // Overall credential status
           }
         : {}),
     };

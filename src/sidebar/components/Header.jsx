@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, createContext } from 'react';
 
 import { useSidebarPlatform } from '../../contexts/platform';
-import { PlatformIcon, RefreshIcon, ChevronDownIcon } from '../../components';
+import { PlatformIcon, ChevronDownIcon } from '../../components';
 
 import ModelSelector from './ModelSelector';
 
@@ -19,15 +19,10 @@ function Header() {
     selectPlatform,
     hasAnyPlatformCredentials,
     isLoading,
-    isRefreshing,
-    refreshPlatformData,
   } = useSidebarPlatform();
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [showAnimation, setShowAnimation] = useState(false);
   const dropdownRef = useRef(null);
-  const refreshButtonRef = useRef(null);
   const triggerRef = useRef(null);
-  const prevIsRefreshingRef = useRef(isRefreshing);
 
   // Filter platforms based on credentials
   const availablePlatforms = platforms.filter((p) => p.hasCredentials);
@@ -82,24 +77,6 @@ function Header() {
     selectPlatform,
     availablePlatforms,
   ]);
-
-  // Effect to handle refresh animation
-  useEffect(() => {
-    if (isRefreshing) {
-      setShowAnimation(true);
-    }
-
-    if (prevIsRefreshingRef.current && !isRefreshing) {
-      const timer = setTimeout(() => {
-        setShowAnimation(false);
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-
-    // Update previous state reference
-    prevIsRefreshingRef.current = isRefreshing;
-  }, [isRefreshing]);
 
   const handleSelectPlatform = (platformId) => {
     selectPlatform(platformId);
@@ -199,21 +176,6 @@ function Header() {
             </div>
           )}
 
-          {/* 4. Refresh Button */}
-          <div className='flex-shrink-0 ml-2 h-9 flex items-center justify-center'>
-            <button
-              ref={refreshButtonRef}
-              onClick={refreshPlatformData}
-              disabled={isRefreshing || isLoading}
-              className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-              aria-label='Refresh platforms and credentials'
-              title='Refresh platforms and credentials'
-            >
-              <RefreshIcon
-                className={`w-4 h-4 select-none ${showAnimation ? 'animate-spin' : ''}`}
-              />
-            </button>
-          </div>
         </div>
       </div>
     </DropdownContext.Provider>
