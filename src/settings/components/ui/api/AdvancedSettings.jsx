@@ -310,7 +310,7 @@ const AdvancedSettings = ({
     setIsAnimatingReset(true); // Start animation
 
     try {
-      // Existing reset logic (copied from the old button's onClick)
+      // Existing reset logic
     const defaults = getDefaultSettings();
     const currentModelConfig = models.find((m) => m.id === selectedModelId);
     const resetValues = {
@@ -381,13 +381,14 @@ const AdvancedSettings = ({
           Model to Configure
         </label>
         <div className='inline-block'>
-          <CustomSelect
-            options={models.map((model) => ({ id: model.id, name: model.id }))}
-            selectedValue={selectedModelId}
-            onChange={handleModelChange}
-            placeholder='Select Model'
-            disabled={models.length === 0 || isSaving || isResetting}
-          />
+        <CustomSelect
+          id={`${platform.id}-settings-model-selector`}
+          options={models.map((model) => ({ id: model.id, name: model.id }))}
+          selectedValue={selectedModelId}
+          onChange={handleModelChange}
+          placeholder='Select Model'
+          disabled={models.length === 0 || isSaving || isResetting}
+        />
         </div>
       </div>
 
