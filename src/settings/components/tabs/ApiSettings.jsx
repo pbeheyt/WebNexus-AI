@@ -47,6 +47,7 @@ const ApiSettings = () => {
     };
 
     initialize();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error]);
 
   // Handler implementations remain largely unchanged
