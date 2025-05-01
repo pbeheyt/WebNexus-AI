@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
@@ -26,7 +26,7 @@ const AdvancedSettings = ({
   const [hasChanges, setHasChanges] = useState(false);
   const [isAtDefaults, setIsAtDefaults] = useState(true);
   const [isAnimatingReset, setIsAnimatingReset] = useState(false);
-  const models = platform.apiConfig?.models || [];
+        const models = useMemo(() => platform.apiConfig?.models || [], [platform.apiConfig?.models]);
 
   // Get model config for selected model
   const modelConfig = models.find((m) => m.id === selectedModelId);
@@ -301,7 +301,7 @@ const AdvancedSettings = ({
     } finally {
       setIsSaving(false);
     }
-  }, [formValues, models, selectedModelId, platform.id, platform.apiConfig, onSettingsUpdate, originalValues, checkIfAtDefaults, error]);
+  }, [formValues, selectedModelId, platform.apiConfig, onSettingsUpdate, checkIfAtDefaults, error, modelConfig]);
 
   const handleResetClick = useCallback(async () => {
     if (isAtDefaults) return; // Prevent action if disabled
