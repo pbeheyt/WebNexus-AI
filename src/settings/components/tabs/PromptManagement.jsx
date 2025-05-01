@@ -1,5 +1,5 @@
 // src/settings/components/tabs/PromptManagement.jsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 import PromptList from '../ui/prompts/PromptList';
 import PromptDetail from '../ui/prompts/PromptDetail';
@@ -15,7 +15,7 @@ const PromptManagement = () => {
     CONTENT_TYPES.GENERAL
   );
 
-  const handleNewPrompt = () => {
+  const handleNewPrompt = useCallback(() => {
     // Use the current filter value if it's a specific type, otherwise default to general
     const isValidContentType =
       Object.values(CONTENT_TYPES).includes(filterValue);
@@ -26,40 +26,41 @@ const PromptManagement = () => {
     setSelectedPrompt(null);
     setIsEditing(false);
     setIsCreating(true);
-  };
+  }, [filterValue, setInitialContentTypeForNew, setSelectedPrompt, setIsEditing, setIsCreating]);
 
-  const handleEditPrompt = (prompt) => {
+  const handleEditPrompt = useCallback((prompt) => {
     setSelectedPrompt(prompt);
     setIsCreating(false);
     setIsEditing(true);
-  };
+  }, [setSelectedPrompt, setIsCreating, setIsEditing]);
 
-  const handleViewPrompt = (prompt) => {
+  const handleViewPrompt = useCallback((prompt) => {
     setSelectedPrompt(prompt);
     setIsEditing(false);
     setIsCreating(false);
-  };
+  }, [setSelectedPrompt, setIsEditing, setIsCreating]);
 
-  const handleCancelForm = () => {
+  const handleCancelForm = useCallback(() => {
     setIsEditing(false);
     setIsCreating(false);
     setSelectedPrompt(null);
-  };
+  }, [setIsEditing, setIsCreating, setSelectedPrompt]);
 
-  const handlePromptSavedOrDeleted = () => {
+  const handlePromptSavedOrDeleted = useCallback(() => {
     setSelectedPrompt(null);
     setIsEditing(false);
     setIsCreating(false);
     // Keep the current filter value, don't reset it
-  };
+  }, [setSelectedPrompt, setIsEditing, setIsCreating]);
 
-  const handleFilterChange = (selectedId) => {
+  const handleFilterChange = useCallback((selectedId) => {
     setFilterValue(selectedId);
     // When filter changes, clear the detail view unless creating/editing
     if (!isCreating && !isEditing) {
       setSelectedPrompt(null);
     }
-  };
+  }, [setFilterValue, isCreating, isEditing, setSelectedPrompt]);
+
 
   // Determine what to show in the detail panel
   let detailContent;
@@ -81,6 +82,7 @@ const PromptManagement = () => {
       />
     );
   } else if (selectedPrompt) {
+    // Pass handleEditPrompt directly
     detailContent = (
       <PromptDetail
         prompt={selectedPrompt}

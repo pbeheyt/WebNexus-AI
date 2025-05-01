@@ -185,4 +185,4 @@ PromptList.propTypes = {
   onFilterChange: PropTypes.func.isRequired,
 };
 
-export default PromptList;
+export default React.memo(PromptList);

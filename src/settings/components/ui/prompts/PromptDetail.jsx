@@ -1,5 +1,5 @@
 // src/settings/components/ui/PromptDetail.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
@@ -12,7 +12,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();
   const [isDefaultForType, setIsDefaultForType] = useState(false);
 
-  const handleDelete = async () => {
+  // Memoize handleDelete
+  const handleDelete = useCallback(async () => {
     if (!prompt || !prompt.contentType || !prompt.id) {
       error('Cannot delete: Invalid prompt data.');
       return;
@@ -92,7 +93,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       // Display the specific error message from the check
       error(`Error deleting prompt: ${err.message}`, 10000);
     }
-  };
+  }, [prompt, error, success, onDelete]); // Add dependencies
 
   // Effect to check if the current prompt is the default for its type
   useEffect(() => {
@@ -138,8 +139,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     };
   }, [prompt]); // Rerun when the prompt prop changes
 
-  // Function to handle setting the prompt as default
-  const handleSetAsDefault = async () => {
+  // Memoize handleSetAsDefault
+  const handleSetAsDefault = useCallback(async () => {
     if (!prompt || !prompt.contentType || !prompt.id) {
       error('Cannot set default: Invalid prompt data.');
       return;
@@ -166,7 +167,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       logger.settings.error('Error setting default prompt:', err);
       error(`Failed to set default prompt: ${err.message}`);
     }
-  };
+  }, [prompt, error, success]);
 
   return (
     <div className='prompt-detail bg-theme-surface rounded-lg p-5 border border-theme'>
@@ -212,11 +213,19 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         >
           Set as Default
         </Button>
-        <Button variant='secondary' onClick={onEdit} className='select-none'>
+        <Button
+          variant='secondary'
+          onClick={onEdit}
+          className='select-none'
+        >
           Edit
         </Button>
 
-        <Button variant='danger' onClick={handleDelete} className='select-none'>
+        <Button
+          variant='danger'
+          onClick={handleDelete}
+          className='select-none'
+        >
           Delete
         </Button>
       </div>
@@ -230,4 +239,4 @@ PromptDetail.propTypes = {
   onDelete: PropTypes.func.isRequired,
 };
 
-export default PromptDetail;
+export default React.memo(PromptDetail);

@@ -1,5 +1,5 @@
 // src/settings/components/ui/prompts/PromptForm.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
@@ -61,24 +61,25 @@ const PromptForm = ({
     // Rerun when the original prompt object changes OR when the selected content type in the form changes
   }, [prompt, isEditing, formData.contentType]);
 
-  // Handler for standard input/textarea changes
-  const handleChange = (e) => {
+  // Memoize handleChange
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, [setFormData]); // Add dependency
 
-  // Handler specifically for CustomSelect changes
-  const handleContentTypeChange = (selectedContentType) => {
+  // Memoize handleContentTypeChange
+  const handleContentTypeChange = useCallback((selectedContentType) => {
     setFormData((prev) => ({
       ...prev,
       contentType: selectedContentType,
     }));
-  };
+  }, [setFormData]); // Add dependency
 
-  const handleSubmit = async (e) => {
+  // Memoize handleSubmit
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setIsSaving(true);
 
@@ -194,7 +195,7 @@ const PromptForm = ({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [formData, isEditing, prompt, success, error, onSuccess]);
 
   // Prepare options for CustomSelect
   const contentTypeOptions = Object.entries(CONTENT_TYPE_LABELS).map(
@@ -222,11 +223,11 @@ const PromptForm = ({
         )}
       </div>
 
-      {/* Content Type Selection using CustomSelect (Wrapped in Label) */}
+      {/* Content Type Selection using CustomSelect */}
       <div className='form-group mb-6'>
         <label className='block mb-3 text-base font-medium text-theme-secondary select-none'>
           Content Type
-          {/* CustomSelect and its container div are now INSIDE the label */}
+          {/* CustomSelect and its container div inside the label */}
           <div className='inline-block mt-1'>
             {' '}
             {/* Added mt-1 for spacing */}
@@ -314,4 +315,4 @@ PromptForm.propTypes = {
   initialContentType: PropTypes.string,
 };
 
-export default PromptForm;
+export default React.memo(PromptForm);
