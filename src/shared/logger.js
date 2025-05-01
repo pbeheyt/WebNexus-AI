@@ -72,6 +72,12 @@ export const logger = {
     warn: (message, data) => log('content', 'warn', message, data),
     error: (message, data) => log('content', 'error', message, data),
   },
+  context: {
+    debug: (message, data) => log('context', 'debug', message, data),
+    info: (message, data) => log('context', 'info', message, data),
+    warn: (message, data) => log('context', 'warn', message, data),
+    error: (message, data) => log('context', 'error', message, data),
+  },
   extractor: {
     debug: (message, data) => log('extractor', 'debug', message, data),
     info: (message, data) => log('extractor', 'info', message, data),
