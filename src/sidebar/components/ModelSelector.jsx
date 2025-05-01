@@ -22,9 +22,10 @@ const ChevronIcon = () => (
 );
 
 function ModelSelector({ className = '', selectedPlatformId = null }) {
-  const { models, selectedModel, selectModel } = useSidebarPlatform();
+  const { models, selectedModel, selectModel, isLoading } = useSidebarPlatform();
 
   const [formattedModels, setFormattedModels] = useState([]);
+  const [displayedModelName, setDisplayedModelName] = useState('Loading...');
   const { openDropdown, setOpenDropdown } = useContext(DropdownContext);
   const isOpen = openDropdown === 'model';
   const dropdownRef = useRef(null);
@@ -83,10 +84,18 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     }
   };
 
-  const selectedModelName =
-    formattedModels.find((m) => m.id === selectedModel)?.name ||
-    selectedModel ||
-    'Loading...';
+  // Update displayed model name when loading completes
+  useEffect(() => {
+    if (!isLoading) {
+      const currentModelName = 
+        formattedModels.find((m) => m.id === selectedModel)?.name ||
+        selectedModel ||
+        'Loading...';
+      if (currentModelName) {
+        setDisplayedModelName(currentModelName);
+      }
+    }
+  }, [selectedModel, formattedModels, isLoading]);
 
   const toggleDropdown = (e) => {
     e.stopPropagation();
@@ -98,11 +107,11 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       <button
         ref={modelTriggerRef}
         onClick={toggleDropdown}
-        className='flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full'
+        className='flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full min-w-[120px]'
         aria-haspopup='listbox'
         aria-expanded={isOpen}
       >
-        <span className='truncate mr-1 select-none'>{selectedModelName}</span>
+        <span className='truncate mr-1 select-none'>{displayedModelName}</span>
         <span className='text-theme-secondary flex-shrink-0 select-none'>
           <ChevronIcon />
         </span>
