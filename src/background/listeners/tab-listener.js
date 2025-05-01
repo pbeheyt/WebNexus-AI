@@ -36,6 +36,32 @@ export function setupTabListener() {
  * @param {Object} tab - Tab information
  */
 async function handleTabUpdate(tabId, changeInfo, tab) {
+  // --- Side Panel State Check on Completion ---
+  if (changeInfo.status === 'complete' && tab.url) {
+    try {
+      logger.background.info(`Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`);
+      const isAllowed = isSidePanelAllowedPage(tab.url);
+      const isVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
+
+      if (isAllowed) {
+        await chrome.sidePanel.setOptions({
+          tabId: tabId,
+          path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
+          enabled: isVisible, // Enable based on stored visibility
+        });
+        logger.background.info(`Side panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
+      } else {
+        await chrome.sidePanel.setOptions({
+          tabId: tabId,
+          enabled: false, // Force disable if not allowed
+        });
+        logger.background.info(`Side panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
+      }
+    } catch (error) {
+      logger.background.error(`Error setting side panel options during onUpdated for tab ${tabId}:`, error);
+    }
+  }
+
   // --- Platform Tab Injection Logic ---
   if (changeInfo.status === 'complete' && tab.url) {
     try {
@@ -146,7 +172,11 @@ async function handleTabActivation(activeInfo) {
   try {
     // Get the full tab object to check URL
     const activatedTab = await chrome.tabs.get(tabId);
-    if (!activatedTab || !activatedTab.url) {
+    if (!activatedTab.url && activatedTab.status === 'loading') {
+      logger.background.info(`Tab ${tabId} activated but still loading. Deferring side panel check to onUpdated.`);
+      return; // Exit early, onUpdated will handle it
+    }
+    if (!activatedTab || (!activatedTab.url && activatedTab.status !== 'loading')) {
       logger.background.warn(`Could not get URL for activated tab ${tabId}`);
       return;
     }
