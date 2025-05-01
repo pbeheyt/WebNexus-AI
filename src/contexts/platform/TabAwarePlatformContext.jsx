@@ -314,6 +314,27 @@ export function createTabAwarePlatformContext(options = {}) {
       loadModels(selectedPlatformId);
     }, [selectedPlatformId, tabId, interfaceType, loadModels]);
 
+    // Effect 4: Listen for credential changes in storage
+    useEffect(() => {
+      const handleStorageChange = async (changes, area) => {
+        if (area === 'local' && changes[STORAGE_KEYS.API_CREDENTIALS]) {
+          logger.sidebar.info('API credentials changed in storage, refreshing core data...');
+          try {
+            await fetchCoreData();
+          } catch (error) {
+            logger.sidebar.error('Error refreshing credentials:', error);
+          }
+        }
+      };
+
+      chrome.storage.onChanged.addListener(handleStorageChange);
+
+      return () => {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+        logger.sidebar.info('Removed storage change listener for credentials.');
+      };
+    }, [fetchCoreData, interfaceType]);
+
     // Function to manually refresh platform data
     const refreshPlatformData = useCallback(async () => {
       setIsRefreshing(true);
