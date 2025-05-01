@@ -45,6 +45,41 @@ export function createTabAwarePlatformContext(options = {}) {
     const [hasAnyPlatformCredentials, setHasAnyPlatformCredentials] =
       useState(false);
     const [tabId, setTabId] = useState(null);
+    const [platformConfigs, setPlatformConfigs] = useState([]);
+    const [credentialStatus, setCredentialStatus] = useState({});
+    const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+
+    // Fetch core platform data and credentials
+    const fetchCoreData = useCallback(async () => {
+      logger.sidebar.info('Starting core platform data fetch');
+      
+      try {
+        const configs = await ConfigService.getAllPlatformConfigs();
+        let credsStatus = {};
+
+        if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
+          const platformIds = configs.map(p => p.id);
+          const response = await robustSendMessage({
+            action: 'credentialOperation',
+            operation: 'checkMultiple',
+            platformIds,
+          });
+
+          if (response && response.success && response.results) {
+            credsStatus = response.results;
+          } else {
+            logger.sidebar.error('Failed to check credentials:', response?.error);
+          }
+        }
+
+        setPlatformConfigs(configs);
+        setCredentialStatus(credsStatus);
+        logger.sidebar.info('Completed core platform data fetch');
+      } catch (error) {
+        logger.sidebar.error('Error fetching core platform data:', error);
+        throw error;
+      }
+    }, [interfaceType]);
 
     // Get current tab ID on mount
     useEffect(() => {
@@ -165,161 +200,131 @@ export function createTabAwarePlatformContext(options = {}) {
           setSelectedModelId(null);
         }
       },
-      [tabId]
+      [tabId, interfaceType]
     );
 
-    const _loadAndCheckPlatforms = useCallback(
-      async (setLoadingState) => {
-        if (!tabId) {
-          logger.sidebar.warn('Attempted to load platforms without tabId.');
-          return;
-        }
-        setLoadingState(true);
+    // Effect 1: Initial Load & Core Data Fetch
+    useEffect(() => {
+      if (!tabId) return;
+
+      const fetchData = async () => {
+        setIsLoading(true);
         try {
-          let platformList = await ConfigService.getAllPlatformConfigs();
-
-          // Transform to expected format with hasCredentials flag
-          platformList = platformList.map((platform) => ({
-            id: platform.id,
-            name: platform.name,
-            url: platform.url || null,
-            iconUrl: platform.iconUrl,
-            hasCredentials: false, // Initialize with false
-          }));
-
-          let anyCredentialsFound = false;
-
-          // Check credentials for all platforms (only if sidebar)
-          if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
-            const allPlatformIds = platformList.map(p => p.id);
-            const response = await robustSendMessage({
-              action: 'credentialOperation',
-              operation: 'checkMultiple',
-              platformIds: allPlatformIds,
-            });
-
-            if (response && response.success && response.results) {
-              // Update platformList with credential status
-              platformList = platformList.map(platform => {
-                const hasCreds = !!response.results[platform.id];
-                if (hasCreds) {
-                  anyCredentialsFound = true;
-                }
-                return { ...platform, hasCredentials: hasCreds };
-              });
-            } else {
-              logger.sidebar.error('Failed to check credentials:', response?.error);
-              // Set all platforms to no credentials on failure
-              platformList = platformList.map(platform => ({
-                ...platform,
-                hasCredentials: false
-              }));
-            }
-
-            setHasAnyPlatformCredentials(anyCredentialsFound); // Set the overall flag
-          } else {
-            // For popup interfaces
-            setHasAnyPlatformCredentials(true);
-          }
-
-          // Get tab-specific platform preference
-          const tabPreferences = await chrome.storage.local.get(
-            STORAGE_KEYS.TAB_PLATFORM_PREFERENCES
-          );
-          const tabPlatformPrefs =
-            tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
-          const lastUsedTabPlatform = tabPlatformPrefs[tabId];
-
-          // Get global platform preference
-          const globalPreferences =
-            await chrome.storage.sync.get(globalStorageKey);
-          const globalPlatformPref = globalPreferences[globalStorageKey];
-
-          // Determine the platform to use based strictly on preferences and credentials (for sidebar)
-          let platformToUse = null;
-      
-          const credentialedPlatformIds = new Set(
-            platformList.filter((p) => p.hasCredentials).map((p) => p.id)
-          );
-
-          // Priority 1: Tab-specific preference
-          if (lastUsedTabPlatform) {
-            const isValidTabPref = platformList.some(
-              (p) => p.id === lastUsedTabPlatform
-            );
-            const hasCredsForTabPref =
-              interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
-              credentialedPlatformIds.has(lastUsedTabPlatform);
-            if (isValidTabPref && hasCredsForTabPref) {
-              platformToUse = lastUsedTabPlatform;
-            }
-          }
-
-          // Priority 2: Global preference (if tab pref didn't work out)
-          if (!platformToUse && globalPlatformPref) {
-            const isValidGlobalPref = platformList.some(
-              (p) => p.id === globalPlatformPref
-            );
-            const hasCredsForGlobalPref =
-              interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
-              credentialedPlatformIds.has(globalPlatformPref);
-            if (isValidGlobalPref && hasCredsForGlobalPref) {
-              platformToUse = globalPlatformPref;
-            }
-          }
-
-          // Set platforms (now with credential status)
-          setPlatforms(platformList);
-
-          // Update selected platform state based on the determined platformToUse
-          if (platformToUse && platformToUse !== selectedPlatformId) {
-            setSelectedPlatformId(platformToUse);
-            if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
-              await loadModels(platformToUse);
-            }
-          } else if (
-            platformToUse &&
-            interfaceType === INTERFACE_SOURCES.SIDEBAR &&
-            !models.length
-          ) {
-            // If platform didn't change but models are missing (e.g., initial load), load them
-            await loadModels(platformToUse);
-          } else if (!platformToUse) {
-            // Explicitly set to null if no valid platform was found
-            setSelectedPlatformId(null);
-            setModels([]);
-            setSelectedModelId(null);
-          }
+          await fetchCoreData();
+          setIsInitialLoadComplete(true);
         } catch (error) {
-          logger.sidebar.error('Error loading platforms:', error);
-          setPlatforms([]);
-          setHasAnyPlatformCredentials(false);
+          logger.sidebar.error('Error during initial load:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchData();
+    }, [tabId, fetchCoreData]);
+
+    // Effect 2: Platform Determination & State Construction
+    useEffect(() => {
+      if (!isInitialLoadComplete || !tabId) return;
+
+      const determinePlatforms = async () => {
+        // Construct finalPlatforms array with credential status
+        const finalPlatforms = platformConfigs.map(config => ({
+          id: config.id,
+          name: config.name,
+          url: config.url || null,
+          iconUrl: config.iconUrl,
+          hasCredentials: interfaceType !== INTERFACE_SOURCES.SIDEBAR 
+            ? true 
+            : credentialStatus[config.id] || false
+        }));
+
+        // Determine if any credentials were found
+        const anyCredentialsFound = interfaceType === INTERFACE_SOURCES.SIDEBAR
+          ? Object.values(credentialStatus).some(Boolean)
+          : true;
+
+        // Get preferences
+        const [tabPreferences, globalPreferences] = await Promise.all([
+          chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES),
+          chrome.storage.sync.get(globalStorageKey)
+        ]);
+
+        const tabPlatformPrefs = tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
+        const lastUsedTabPlatform = tabPlatformPrefs[tabId];
+        const globalPlatformPref = globalPreferences[globalStorageKey];
+
+        // Determine platform to use
+        let platformToUse = null;
+        const credentialedPlatformIds = new Set(
+          finalPlatforms.filter(p => p.hasCredentials).map(p => p.id)
+        );
+
+        // Priority 1: Tab-specific preference
+        if (lastUsedTabPlatform) {
+          const isValidTabPref = finalPlatforms.some(p => p.id === lastUsedTabPlatform);
+          const hasCredsForTabPref = interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
+            credentialedPlatformIds.has(lastUsedTabPlatform);
+          if (isValidTabPref && hasCredsForTabPref) {
+            platformToUse = lastUsedTabPlatform;
+          }
+        }
+
+        // Priority 2: Global preference
+        if (!platformToUse && globalPlatformPref) {
+          const isValidGlobalPref = finalPlatforms.some(p => p.id === globalPlatformPref);
+          const hasCredsForGlobalPref = interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
+            credentialedPlatformIds.has(globalPlatformPref);
+          if (isValidGlobalPref && hasCredsForGlobalPref) {
+            platformToUse = globalPlatformPref;
+          }
+        }
+
+        // Update state
+        setPlatforms(finalPlatforms);
+        setHasAnyPlatformCredentials(anyCredentialsFound);
+
+        if (platformToUse && platformToUse !== selectedPlatformId) {
+          setSelectedPlatformId(platformToUse);
+        } else if (!platformToUse) {
           setSelectedPlatformId(null);
           setModels([]);
           setSelectedModelId(null);
-        } finally {
-          setLoadingState(false);
         }
-      },
-      [
-        tabId,
-        loadModels,
-        selectedPlatformId,
-        models.length,
-      ]
-    );
+      };
 
-    // Initial load effect
+      determinePlatforms();
+    }, [
+      isInitialLoadComplete,
+      platformConfigs,
+      credentialStatus,
+      tabId,
+      globalStorageKey,
+      interfaceType,
+      selectedPlatformId
+    ]);
+
+    // Effect 3: Model Loading
     useEffect(() => {
-      if (tabId) {
-        _loadAndCheckPlatforms(setIsLoading);
-      }
-    }, [tabId, _loadAndCheckPlatforms]);
+      if (
+        interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
+        !tabId ||
+        !selectedPlatformId
+      ) return;
+
+      loadModels(selectedPlatformId);
+    }, [selectedPlatformId, tabId, interfaceType, loadModels]);
 
     // Function to manually refresh platform data
     const refreshPlatformData = useCallback(async () => {
-      await _loadAndCheckPlatforms(setIsRefreshing);
-    }, [_loadAndCheckPlatforms]);
+      setIsRefreshing(true);
+      try {
+        await fetchCoreData();
+      } catch (error) {
+        logger.sidebar.error('Error refreshing platform data:', error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    }, [fetchCoreData]);
 
     // Select platform and save preference
     const selectPlatform = useCallback(
@@ -375,6 +380,9 @@ export function createTabAwarePlatformContext(options = {}) {
         selectedPlatformId,
         platforms,
         loadModels,
+        interfaceType,
+        globalStorageKey,
+        onStatusUpdate
       ]
     );
 
