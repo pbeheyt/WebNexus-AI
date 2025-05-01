@@ -191,35 +191,30 @@ export function createTabAwarePlatformContext(options = {}) {
 
           // Check credentials for all platforms (only if sidebar)
           if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
-            const credentialChecks = platformList.map((platform) =>
-              robustSendMessage({
-                action: 'credentialOperation',
-                operation: 'get',
-                platformId: platform.id,
-              }).catch((err) => {
-                logger.sidebar.error(
-                  `Credential check failed for ${platform.id}:`,
-                  err
-                );
-                return { success: false }; // Treat errors as no credentials
-              })
-            );
-
-            const results = await Promise.allSettled(credentialChecks);
-
-            // Update platformList with credential status
-            platformList = platformList.map((platform, index) => {
-              const result = results[index];
-              const hasCreds =
-                result.status === 'fulfilled' &&
-                result.value &&
-                result.value.success &&
-                result.value.credentials;
-              if (hasCreds) {
-                anyCredentialsFound = true; // Update overall flag if any platform has credentials
-              }
-              return { ...platform, hasCredentials: hasCreds };
+            const allPlatformIds = platformList.map(p => p.id);
+            const response = await robustSendMessage({
+              action: 'credentialOperation',
+              operation: 'checkMultiple',
+              platformIds: allPlatformIds,
             });
+
+            if (response && response.success && response.results) {
+              // Update platformList with credential status
+              platformList = platformList.map(platform => {
+                const hasCreds = !!response.results[platform.id];
+                if (hasCreds) {
+                  anyCredentialsFound = true;
+                }
+                return { ...platform, hasCredentials: hasCreds };
+              });
+            } else {
+              logger.sidebar.error('Failed to check credentials:', response?.error);
+              // Set all platforms to no credentials on failure
+              platformList = platformList.map(platform => ({
+                ...platform,
+                hasCredentials: false
+              }));
+            }
 
             setHasAnyPlatformCredentials(anyCredentialsFound); // Set the overall flag
           } else {

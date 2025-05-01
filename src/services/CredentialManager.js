@@ -86,6 +86,29 @@ class CredentialManager {
   }
 
   /**
+   * Check if credentials exist for multiple platforms in a single batch operation
+   * @param {string[]} platformIds - Array of platform identifiers
+   * @returns {Promise<Object>} Object with platform IDs as keys and boolean existence flags as values
+   */
+  async checkCredentialsExist(platformIds) {
+    try {
+      this.logger.info(`Checking credential existence for ${platformIds.length} platforms`);
+      const result = await chrome.storage.local.get(this.STORAGE_KEY);
+      const allCredentials = result[this.STORAGE_KEY] || {};
+      const results = {};
+
+      platformIds.forEach(platformId => {
+        results[platformId] = allCredentials.hasOwnProperty(platformId);
+      });
+
+      return results;
+    } catch (error) {
+      this.logger.error('Error checking credential existence:', error);
+      return {};
+    }
+  }
+
+  /**
    * Validate credentials for a platform by making a test API call
    * @param {string} platformId - Platform identifier
    * @param {Object} credentials - Credentials to validate

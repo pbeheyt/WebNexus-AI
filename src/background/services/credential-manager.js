@@ -52,6 +52,18 @@ export async function handleCredentialOperation(message, sendResponse) {
         });
         break;
       }
+      case 'checkMultiple': {
+        const { platformIds } = message;
+        if (!Array.isArray(platformIds)) {
+          throw new Error('platformIds must be an array');
+        }
+        const results = await CredentialManagerService.checkCredentialsExist(platformIds);
+        sendResponse({
+          success: true,
+          results,
+        });
+        break;
+      }
       default:
         throw new Error(`Unknown credential operation: ${operation}`);
     }
