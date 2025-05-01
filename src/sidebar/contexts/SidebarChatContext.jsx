@@ -227,6 +227,7 @@ export function SidebarChatProvider({ children }) {
       ChatHistoryService, // Pass down for _initiateApiCall
       TokenManagementService,
       _initiateApiCall, // Pass the helper function
+      isContentExtractionEnabled, // Pass the content extraction toggle state
     });
   // --- End Hook Instantiation ---
 

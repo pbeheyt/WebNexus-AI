@@ -42,6 +42,7 @@ const _initiateRerunSequence = async ({
   selectedPlatformId,
   tabId,
   rerunStatsRef,
+  isContentExtractionEnabled,
   // Dependencies needed by _initiateApiCall (passed through)
   processContentViaApi,
   resetContentProcessing,
@@ -73,7 +74,7 @@ const _initiateRerunSequence = async ({
     promptContent,
     conversationHistory,
     streaming: true,
-    isContentExtractionEnabled: false, // Reruns/Edits don't re-extract content
+    isContentExtractionEnabled: isContentExtractionEnabled,
     options: {
       tabId,
       source: INTERFACE_SOURCES.SIDEBAR,
@@ -137,6 +138,7 @@ export function useMessageActions({
   ChatHistoryService,
   TokenManagementService,
   _initiateApiCall, // Receive the helper from context
+  isContentExtractionEnabled,
 }) {
   const rerunMessage = useCallback(
     async (messageId) => {
@@ -188,6 +190,7 @@ export function useMessageActions({
         selectedPlatformId,
         tabId,
         rerunStatsRef,
+        isContentExtractionEnabled,
         processContentViaApi,
         resetContentProcessing,
         modelConfigData,
@@ -282,6 +285,7 @@ export function useMessageActions({
         selectedPlatformId,
         tabId,
         rerunStatsRef,
+        isContentExtractionEnabled,
         processContentViaApi,
         resetContentProcessing,
         modelConfigData,
@@ -367,6 +371,7 @@ export function useMessageActions({
         selectedPlatformId,
         tabId,
         rerunStatsRef,
+        isContentExtractionEnabled,
         processContentViaApi,
         resetContentProcessing,
         modelConfigData,
