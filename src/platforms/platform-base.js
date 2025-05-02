@@ -377,6 +377,11 @@ class BasePlatform extends PlatformInterface {
           }
 
           // 6. Verify Submission Attempt (always runs after click attempt)
+          // Add a delay to allow the platform UI to potentially update after click
+          const verificationDelay = 500; // ms delay (adjust if needed)
+          this.logger.info(`[${this.platformId}] Waiting ${verificationDelay}ms before verification...`);
+          await this._wait(verificationDelay);
+
           const verificationSuccess = await this._verifySubmissionAttempted();
 
           if (verificationSuccess) {
