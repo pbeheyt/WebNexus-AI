@@ -8,7 +8,7 @@ class PlatformInterface {
      * @abstract
      * @protected
      */
-    async _clickSubmitButton(buttonElement) {
+    async _clickSubmitButton(_buttonElement) {
       throw new Error('_clickSubmitButton must be implemented by subclasses');
     }
 

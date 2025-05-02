@@ -138,42 +138,124 @@ class BasePlatform extends PlatformInterface {
    * @protected
    */
   /**
-   * Default implementation for clicking the submit button.
-   * Attempts the click directly. Errors during the click are caught.
-   * Subclasses should override this if the platform requires a non-standard click simulation.
-   * @param {HTMLElement} buttonElement - The submit button element.
-   * @returns {Promise<boolean>} - True if click was dispatched without error, false otherwise.
+   * Simulates a realistic click sequence (mousedown -> mouseup -> click)
+   * @param {HTMLElement} buttonElement - The button element to click
+   * @returns {Promise<boolean>} True if events dispatched successfully, false otherwise
    * @protected
    */
-  async _clickSubmitButton(buttonElement) {
+  async _simulateRealClick(buttonElement) {
     try {
-      this.logger.info(
-        `[${this.platformId}] Attempting to dispatch click event to submit button`
+      this.logger.info(`[${this.platformId}] Attempting to click submit button with event sequence`);
+      
+      // Dispatch mousedown with button pressed
+      buttonElement.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          buttons: 1
+        })
       );
-      // Dispatch click event directly
-      buttonElement.click();
-      this.logger.info(
-        `[${this.platformId}] Successfully dispatched click event.`
+      
+      // Dispatch mouseup with button released
+      buttonElement.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          buttons: 0
+        })
       );
-      return true; // Indicate click dispatch attempt was successful
+      
+      // Dispatch final click event
+      buttonElement.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        })
+      );
+      
+      this.logger.info(`[${this.platformId}] Successfully dispatched click events.`);
+      return true;
     } catch (error) {
-      this.logger.error(
-        `[${this.platformId}] Failed to click submit button:`,
-        error
-      );
+      this.logger.error(`[${this.platformId}] Failed to dispatch click events:`, error);
       return false;
     }
   }
 
   /**
-   * Default verification logic. Assumes success if not overridden.
-   * Subclasses should provide specific checks.
-   * @returns {Promise<boolean>} Always returns true in the base implementation.
+   * Default implementation for clicking the submit button.
+   * Uses simulated click sequence by default.
+   * Subclasses should override this if the platform requires different behavior.
+   * @param {HTMLElement} buttonElement - The submit button element.
+   * @returns {Promise<boolean>} - True if click was dispatched without error, false otherwise.
+   * @protected
+   */
+  async _clickSubmitButton(buttonElement) {
+    return this._simulateRealClick(buttonElement);
+  }
+
+  /**
+   * Checks if the platform-specific editor element is considered empty.
+   * @param {HTMLElement} editorElement - The editor element to check.
+   * @returns {boolean} True if the editor is empty, false otherwise.
+   * @protected
+   * @abstract
+   */
+  _isEditorEmpty(_editorElement) {
+    throw new Error('_isEditorEmpty must be implemented by subclasses');
+  }
+
+  /**
+   * Verifies if submission was attempted by checking submit button state and editor emptiness.
+   * @returns {Promise<boolean>} True if verification passes (button disabled or editor empty), false otherwise.
    * @protected
    */
   async _verifySubmissionAttempted() {
-    this.logger.info(`[${this.platformId}] Using default _verifySubmissionAttempted (always returns true).`);
-    return true;
+    this.logger.info(`[${this.platformId}] Starting submission verification`);
+    
+    // Check submit button state
+    const submitButton = this.findSubmitButton();
+    let isButtonDisabled = false;
+    if (submitButton) {
+      isButtonDisabled = submitButton.disabled;
+      this.logger.info(
+        `[${this.platformId}] Submit button found, disabled state: ${isButtonDisabled}`
+      );
+    } else {
+      this.logger.warn(
+        `[${this.platformId}] Could not find submit button for verification`
+      );
+    }
+
+    // Check editor emptiness
+    const editorElement = this.findEditorElement();
+    let isEditorEmpty = false;
+    if (editorElement) {
+      try {
+        isEditorEmpty = this._isEditorEmpty(editorElement);
+        this.logger.info(
+          `[${this.platformId}] Verification: Editor empty check returned: ${isEditorEmpty}`
+        );
+      } catch (error) {
+        this.logger.error(
+          `[${this.platformId}] Error checking editor emptiness:`,
+          error
+        );
+      }
+    } else {
+      this.logger.warn(
+        `[${this.platformId}] Could not find editor element for verification`
+      );
+    }
+
+    const verificationSuccess = isButtonDisabled || isEditorEmpty;
+    this.logger.info(
+      `[${this.platformId}] Verification ${verificationSuccess ? 'PASSED' : 'FAILED'} ` +
+      `(button disabled: ${isButtonDisabled}, editor empty: ${isEditorEmpty})`
+    );
+    return verificationSuccess;
   }
 
   /**

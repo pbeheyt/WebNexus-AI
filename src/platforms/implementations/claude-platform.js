@@ -258,37 +258,13 @@ class ClaudePlatform extends BasePlatform {
   }
 
   /**
-   * Override: Click Claude's submit button using a more robust event sequence.
-   * @param {HTMLElement} buttonElement - The submit button element.
-   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * Checks if the Claude editor element is empty.
+   * @param {HTMLElement} editorElement - The editor element to check.
+   * @returns {boolean} True if the editor is empty, false otherwise.
    * @protected
    */
-  async _clickSubmitButton(buttonElement) {
-    try {
-      this.logger.info(
-        `[${this.platformId}] Attempting to click submit button with event sequence`
-      );
-      // Dispatch multiple events to simulate a real click
-      ['mousedown', 'mouseup', 'click'].forEach((eventType) => {
-        const event = new MouseEvent(eventType, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          buttons: eventType === 'mousedown' ? 1 : 0
-        });
-        buttonElement.dispatchEvent(event);
-      });
-      this.logger.info(
-        `[${this.platformId}] Successfully dispatched click events.`
-      );
-      return true; // Indicate dispatch attempt finished without error
-    } catch (error) {
-      this.logger.error(
-        `[${this.platformId}] Failed to dispatch click events:`,
-        error
-      );
-      return false; // Indicate the dispatch attempt itself threw an error
-    }
+  _isEditorEmpty(editorElement) {
+    return (editorElement.textContent || editorElement.innerText || '').trim() === '';
   }
 
   /**

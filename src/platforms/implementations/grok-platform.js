@@ -343,6 +343,16 @@ class GrokPlatform extends BasePlatform {
   }
 
   /**
+   * Checks if the Grok editor element is empty.
+   * @param {HTMLElement} editorElement - The editor element to check.
+   * @returns {boolean} True if the editor is empty, false otherwise.
+   * @protected
+   */
+  _isEditorEmpty(editorElement) {
+    return (editorElement.value || '').trim() === '';
+  }
+
+  /**
    * Verify submission by checking if the submit button is disabled or the editor is cleared.
    * @returns {Promise<boolean>} True if verification passes, false otherwise.
    * @protected

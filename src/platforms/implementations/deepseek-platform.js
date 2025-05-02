@@ -83,28 +83,13 @@ class DeepSeekPlatform extends BasePlatform {
   }
 
   /**
-   * Override: Click DeepSeek's submit button, attempting to enable if necessary.
-   * @param {HTMLElement} buttonElement - The submit button element.
-   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * Checks if the DeepSeek editor element is empty.
+   * @param {HTMLElement} editorElement - The editor element to check.
+   * @returns {boolean} True if the editor is empty, false otherwise.
    * @protected
    */
-  async _clickSubmitButton(buttonElement) {
-    try {
-      this.logger.info(
-        `[${this.platformId}] Attempting to dispatch click event to submit button (DeepSeek override).`
-      );
-      buttonElement.click(); // Direct click attempt
-      this.logger.info(
-        `[${this.platformId}] Successfully dispatched click event (DeepSeek override).`
-      );
-      return true; // Indicate the attempt was made without throwing
-    } catch (error) {
-      this.logger.error(
-        `[${this.platformId}] Failed to dispatch click event (DeepSeek override):`,
-        error
-      );
-      return false; // Indicate the click attempt itself threw an error
-    }
+  _isEditorEmpty(editorElement) {
+    return (editorElement.value || '').trim() === '';
   }
 
   /**
