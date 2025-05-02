@@ -89,6 +89,7 @@ import React, {
       setInitialScrollCompletedForResponse,
     ] = useState(true);
     const rafIdHeightCalc = useRef(null);
+    const showButtonTimerRef = useRef(null);
   
     // --- Add Ref ---
     const includeToggleRef = useRef(null); // Add Ref
@@ -178,9 +179,24 @@ import React, {
       (!lastMsg.content || lastMsg.content.trim() === '');
       
       const shouldShow = !isNearBottom && !forceHideButton;
-      setShowScrollDownButton((prev) =>
-        prev !== shouldShow ? shouldShow : prev
-    );
+      if (shouldShow) {
+        // Only schedule show if it's not already showing and no timer is pending
+        if (!showScrollDownButton && !showButtonTimerRef.current) {
+           showButtonTimerRef.current = setTimeout(() => {
+             setShowScrollDownButton(true);
+             showButtonTimerRef.current = null; // Clear ref after execution
+           }, 500); // 500ms delay before showing
+        }
+      } else {
+        // If it should be hidden, clear any pending show timer and hide immediately
+        if (showButtonTimerRef.current) {
+          clearTimeout(showButtonTimerRef.current);
+          showButtonTimerRef.current = null;
+        }
+        if (showScrollDownButton) {
+           setShowScrollDownButton(false);
+        }
+      }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [messages, showScrollDownButton, SCROLL_THRESHOLD, textSize]);
   
@@ -338,6 +354,16 @@ import React, {
       [checkScrollPosition]
     );
   
+    // Effect for cleaning up the show button timer on unmount
+    useEffect(() => {
+      // Return a cleanup function
+      return () => {
+        if (showButtonTimerRef.current) {
+          clearTimeout(showButtonTimerRef.current);
+        }
+      };
+    }, []); // Empty dependency array ensures this runs only on unmount
+
     // --- Effect for Manual Scroll Listener ---
     useEffect(() => {
       const scrollContainer = scrollContainerRef.current;
