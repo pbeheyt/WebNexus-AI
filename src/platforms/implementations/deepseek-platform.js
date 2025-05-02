@@ -153,6 +153,65 @@ class DeepSeekPlatform extends BasePlatform {
       return false;
     }
   }
+
+  /**
+   * Verify submission by checking if the submit button is disabled or the editor is cleared.
+   * @returns {Promise<boolean>} True if verification passes, false otherwise.
+   * @protected
+   * @override
+   */
+  async _verifySubmissionAttempted() {
+    this.logger.info(`[${this.platformId}] Starting post-click verification...`);
+    let isButtonDisabled = false;
+    let isEditorEmpty = false;
+
+    // Check 1: Submit Button Disabled
+    try {
+      const submitButton = this.findSubmitButton(); // Re-find the button
+      if (submitButton && (submitButton.disabled || submitButton.getAttribute('aria-disabled') === 'true')) {
+        isButtonDisabled = true;
+        this.logger.info(`[${this.platformId}] Verification: Submit button is disabled.`);
+      } else if (submitButton) {
+        this.logger.info(`[${this.platformId}] Verification: Submit button is enabled.`);
+      } else {
+        this.logger.warn(`[${this.platformId}] Verification: Could not re-find submit button.`);
+        // Consider this potentially okay if the button disappears on submit
+      }
+    } catch (error) {
+       this.logger.error(`[${this.platformId}] Verification: Error checking submit button state:`, error);
+    }
+
+    // Check 2: Editor Cleared/Reset (Platform-Specific Nuances Might Apply)
+    try {
+      const editorElement = this.findEditorElement(); // Re-find the editor
+      if (editorElement) {
+        // DeepSeek uses a textarea
+        const editorValue = editorElement.value;
+        if (editorValue === null || editorValue.trim() === '') {
+           isEditorEmpty = true;
+           this.logger.info(`[${this.platformId}] Verification: Editor appears empty.`);
+        } else {
+           this.logger.info(`[${this.platformId}] Verification: Editor is not empty. Content: "${editorValue.substring(0, 50)}..."`);
+        }
+      } else {
+         this.logger.warn(`[${this.platformId}] Verification: Could not re-find editor element.`);
+         // This might be okay if the editor is replaced after submission
+      }
+    } catch (error) {
+       this.logger.error(`[${this.platformId}] Verification: Error checking editor state:`, error);
+    }
+
+    // Determine overall success
+    const verificationSuccess = isButtonDisabled || isEditorEmpty;
+
+    if (verificationSuccess) {
+      this.logger.info(`[${this.platformId}] Post-click verification PASSED.`);
+    } else {
+      this.logger.warn(`[${this.platformId}] Post-click verification FAILED (Button enabled AND Editor not empty).`);
+    }
+
+    return verificationSuccess;
+  }
 }
 
 export default DeepSeekPlatform;

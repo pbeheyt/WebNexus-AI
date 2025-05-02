@@ -4,13 +4,24 @@
  * Interface defining the contract that all AI platform implementations must follow
  */
 class PlatformInterface {
-  /**
-   * Check if the current page is the target platform
-   * @returns {boolean} True if current page is the target platform
-   */
-  isCurrentPlatform() {
-    throw new Error('isCurrentPlatform must be implemented by subclasses');
-  }
+    /**
+     * @abstract
+     * @protected
+     */
+    async _clickSubmitButton(buttonElement) {
+      throw new Error('_clickSubmitButton must be implemented by subclasses');
+    }
+
+    /**
+     * Verify if the submission seems to have been accepted by the platform UI.
+     * This is called after attempting a click on the submit button.
+     * Checks for UI changes like the button becoming disabled or the input clearing.
+     * @returns {Promise<boolean>} True if verification passes, false otherwise.
+     * @protected Should be implemented by subclasses.
+     */
+    async _verifySubmissionAttempted() {
+        throw new Error('_verifySubmissionAttempted must be implemented by subclasses');
+    }
 
   /**
    * Find the editor element for text input

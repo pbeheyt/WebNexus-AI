@@ -2,3 +2,9 @@
 > ai-content-assistant@1.0.0 lint:fix
 > eslint 'src/**/*.{js,jsx}' --fix
 
+
+/home/pbeheyt/Extensions/AI-Content-Assistant/src/platforms/platform-interface.js
+  11:30  warning  'buttonElement' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
+

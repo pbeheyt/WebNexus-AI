@@ -168,6 +168,17 @@ class BasePlatform extends PlatformInterface {
   }
 
   /**
+   * Default verification logic. Assumes success if not overridden.
+   * Subclasses should provide specific checks.
+   * @returns {Promise<boolean>} Always returns true in the base implementation.
+   * @protected
+   */
+  async _verifySubmissionAttempted() {
+    this.logger.info(`[${this.platformId}] Using default _verifySubmissionAttempted (always returns true).`);
+    return true;
+  }
+
+  /**
    * Template Method: Process content from storage, find elements, insert, and submit.
    */
   async processContent() {
@@ -283,30 +294,67 @@ class BasePlatform extends PlatformInterface {
           );
 
           // 5. Click Submit Button
-          const clickSuccess = await this._clickSubmitButton(submitButton);
-          if (!clickSuccess) {
-            this.logger.error(
-              `[${this.platformId}] Failed to click submit button using _clickSubmitButton.`
-            );
-            throw new Error(
-              `Failed to click the submit button on ${this.platformId}.`
-            );
+          let clickAttempted = false;
+          try {
+            const clickSuccess = await this._clickSubmitButton(submitButton);
+            if (clickSuccess) {
+              clickAttempted = true; // Mark that the click function reported success
+              this.logger.info(`[${this.platformId}] Submit button click reported success.`);
+            } else {
+              // _clickSubmitButton explicitly returned false (e.g., button was disabled *during* the click attempt)
+              this.logger.error(`[${this.platformId}] _clickSubmitButton returned false.`);
+              throw new Error(`Failed to click the submit button on ${this.platformId} (click function returned false).`);
+            }
+          } catch (clickError) {
+            // Handle errors thrown directly by _clickSubmitButton
+            this.logger.error(`[${this.platformId}] Error occurred during _clickSubmitButton:`, clickError);
+            throw new Error(`Failed to click the submit button on ${this.platformId}: ${clickError.message}`);
           }
-          this.logger.info(
-            `[${this.platformId}] Submit button click step completed.`
-          );
-          // --- End Template Method Steps ---
 
-          this.logger.info(
-            `[${this.platformId}] Content successfully processed and submitted`
-          );
-          // Clear the data after successful processing
-          chrome.storage.local.remove([
-            STORAGE_KEYS.EXTRACTED_CONTENT,
-            STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
-            STORAGE_KEYS.PRE_PROMPT,
-            STORAGE_KEYS.CONTENT_READY,
-          ]);
+          // 6. Verify Submission Attempt (only if click function succeeded)
+          if (clickAttempted) {
+            this.logger.info(`[${this.platformId}] Waiting briefly before verification...`);
+            await this._wait(500); // Short delay for UI to potentially update
+
+            const verificationSuccess = await this._verifySubmissionAttempted();
+
+            if (verificationSuccess) {
+              this.logger.info(`[${this.platformId}] Post-click verification successful.`);
+              // --- Submission Likely Succeeded ---
+              this.logger.info(
+                `[${this.platformId}] Content successfully processed and submitted (pending verification)`
+              );
+              // Clear the data after successful processing and verification
+              chrome.storage.local.remove([
+                STORAGE_KEYS.EXTRACTED_CONTENT,
+                STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
+                STORAGE_KEYS.PRE_PROMPT,
+                STORAGE_KEYS.CONTENT_READY,
+              ]);
+              // --- End Success Logic ---
+            } else {
+              // --- Verification Failed ---
+              this.logger.warn(`[${this.platformId}] Post-click verification failed. The interaction may not have been fully processed by the platform.`);
+              // Notify the user about the verification failure, but don't throw a hard error here
+              // as the click *was* attempted. The user might see the result anyway.
+              robustSendMessage({
+                action: 'notifyError',
+                error: `Verification failed after interacting with ${this.platformId}. Please check the platform tab manually.`,
+              }).catch((err) =>
+                this.logger.error('Failed to send verification failure notification:', err)
+              );
+              // Still attempt to clear storage as the process is 'done' from the extension's perspective
+              chrome.storage.local.remove([
+                STORAGE_KEYS.EXTRACTED_CONTENT,
+                STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
+                STORAGE_KEYS.PRE_PROMPT,
+                STORAGE_KEYS.CONTENT_READY,
+              ]);
+              // --- End Verification Failed Logic ---
+            }
+          }
+          // Note: If clickAttempted is false, an error was already thrown before verification.
+          // --- End Template Method Steps ---
         } catch (error) {
           this.logger.error(
             `[${this.platformId}] Error during processContent execution:`,
