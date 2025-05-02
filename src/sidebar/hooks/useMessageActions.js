@@ -33,7 +33,7 @@ const _initiateRerunSequence = async ({
   conversationHistory,
   truncatedMessages,
   assistantPlaceholderId,
-  _initiateApiCall, // Receive the helper from context
+  _initiateApiCall,
   setMessages,
   setStreamingMessageId,
   batchedStreamingContentRef,
@@ -43,7 +43,6 @@ const _initiateRerunSequence = async ({
   tabId,
   rerunStatsRef,
   isContentExtractionEnabled,
-  // Dependencies needed by _initiateApiCall (passed through)
   processContentViaApi,
   resetContentProcessing,
   modelConfigData,
@@ -60,6 +59,8 @@ const _initiateRerunSequence = async ({
     isStreaming: true,
     inputTokens: 0,
     outputTokens: 0,
+    requestModelId: selectedModel,
+    requestModelConfigSnapshot: modelConfigData,
   };
 
   // Add placeholder *after* potential edit in editAndRerunMessage
@@ -90,10 +91,10 @@ const _initiateRerunSequence = async ({
     resetContentProcessing,
     ChatHistoryService,
     modelConfigData,
-    tabId, // Pass tabId again as it's directly used in _initiateApiCall error handling
-    assistantMessageIdOnError: assistantPlaceholderId, // Pass the ID for error message assignment
-    messagesOnError: truncatedMessages, // Pass the state *before* placeholder for error handling
-    rerunStatsRef, // Pass ref for error handling cleanup
+    tabId,
+    assistantMessageIdOnError: assistantPlaceholderId,
+    messagesOnError: truncatedMessages,
+    rerunStatsRef,
   });
 };
 
@@ -137,7 +138,7 @@ export function useMessageActions({
   modelConfigData,
   ChatHistoryService,
   TokenManagementService,
-  _initiateApiCall, // Receive the helper from context
+  _initiateApiCall,
   isContentExtractionEnabled,
 }) {
   const rerunMessage = useCallback(
@@ -206,14 +207,14 @@ export function useMessageActions({
       setStreamingMessageId,
       tabId,
       isProcessing,
-      selectedPlatform, // Keep selectedPlatform as it's used in the helper
+      selectedPlatform,
       resetContentProcessing,
       modelConfigData,
       rerunStatsRef,
       batchedStreamingContentRef,
       ChatHistoryService,
-      _initiateApiCall, // Add helper dependency
-      processContentViaApi, // Pass dependency
+      _initiateApiCall,
+      processContentViaApi,
       isContentExtractionEnabled,
     ]
   );
@@ -395,8 +396,8 @@ export function useMessageActions({
       rerunStatsRef,
       batchedStreamingContentRef,
       ChatHistoryService,
-      _initiateApiCall, // Add helper dependency
-      processContentViaApi, // Pass dependency
+      _initiateApiCall,
+      processContentViaApi,
       isContentExtractionEnabled,
     ]
   );

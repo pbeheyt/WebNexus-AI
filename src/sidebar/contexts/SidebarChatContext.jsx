@@ -217,17 +217,17 @@ export function SidebarChatProvider({ children }) {
       selectedModel,
       selectedPlatform,
       isProcessing,
-      processContentViaApi, // Pass down for _initiateApiCall
+      processContentViaApi,
       tokenStats,
       rerunStatsRef,
       setStreamingMessageId,
       batchedStreamingContentRef,
-      resetContentProcessing, // Pass down for _initiateApiCall
-      modelConfigData, // Pass down for _initiateApiCall
-      ChatHistoryService, // Pass down for _initiateApiCall
+      resetContentProcessing,
+      modelConfigData,
+      ChatHistoryService,
       TokenManagementService,
-      _initiateApiCall, // Pass the helper function
-      isContentExtractionEnabled, // Pass the content extraction toggle state
+      _initiateApiCall,
+      isContentExtractionEnabled,
     });
   // --- End Hook Instantiation ---
 
@@ -313,7 +313,7 @@ export function SidebarChatProvider({ children }) {
     }
   }, [tabId, resetContentProcessing]);
 
-  // --- Send Message Logic (Uses _initiateApiCall) ---
+  // --- Send Message Logic ---
   const sendMessage = async (text = inputValue) => {
     const currentPlatformId = selectedPlatformId;
     const currentModelId = selectedModel;
@@ -363,6 +363,8 @@ export function SidebarChatProvider({ children }) {
       isStreaming: true,
       inputTokens: 0,
       outputTokens: 0,
+      requestModelId: selectedModel,
+      requestModelConfigSnapshot: modelConfigData,
     };
 
     const messagesBeforeApiCall = [...messages, userMessage]; // State before placeholder
@@ -415,10 +417,9 @@ export function SidebarChatProvider({ children }) {
           preTruncationOutput: rerunStatsRef.current.preTruncationOutput,
         }),
       },
-      // Pass necessary info for error handling within _initiateApiCall
       assistantMessageIdOnError: assistantMessageId,
-      messagesOnError: messagesBeforeApiCall, // Pass state before placeholder
-      rerunStatsRef: rerunStatsRef, // Pass the ref itself
+      messagesOnError: messagesBeforeApiCall,
+      rerunStatsRef: rerunStatsRef,
     });
     // No further try/catch needed here, _initiateApiCall handles it
   };
@@ -567,7 +568,6 @@ export function SidebarChatProvider({ children }) {
         rerunMessage,
         editAndRerunMessage,
         rerunAssistantMessage,
-        // No need to expose _initiateApiCall directly to consumers
       }}
     >
       {children}

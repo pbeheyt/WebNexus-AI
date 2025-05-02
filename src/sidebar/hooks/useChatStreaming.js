@@ -34,11 +34,9 @@ import { MESSAGE_ROLES, STORAGE_KEYS } from '../../shared/constants';
 export function useChatStreaming({
   tabId,
   setMessages,
-  messages, // Receive messages state
+  messages,
   modelConfigData,
   selectedModel,
-  // selectedPlatform, // Not directly used in moved logic, but handleStreamComplete uses platformIconUrl from message
-  // tokenStats, // Not directly used in moved logic, but handleStreamComplete calls services that might use it implicitly
   rerunStatsRef,
   setExtractedContentAdded,
   isProcessing,
@@ -51,7 +49,7 @@ export function useChatStreaming({
   ChatHistoryService,
   TokenManagementService,
   robustSendMessage,
-  extractedContentAdded, // Receive extractedContentAdded state
+  extractedContentAdded,
 }) {
   // --- State Update Logic (using requestAnimationFrame) ---
   const performStreamingStateUpdate = useCallback(() => {
@@ -109,19 +107,20 @@ export function useChatStreaming({
         }
 
         // Update message with final content (using the potentially modified finalContent)
-        let updatedMessages = messages.map((msg) =>
-          msg.id === messageId
-            ? {
-                ...msg,
-                content: finalContent, // Use the potentially modified content (with notice or error)
-                isStreaming: false,
-                model: model || selectedModel,
-                platformIconUrl: msg.platformIconUrl,
-                outputTokens: finalOutputTokensForMessage, // Use the correctly calculated token count
-                role: isError ? MESSAGE_ROLES.SYSTEM : msg.role, // Keep error role handling
-              }
-            : msg
-        );
+        let updatedMessages = messages.map((msg) => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              content: finalContent, // Use the potentially modified content (with notice or error)
+              isStreaming: false,
+              model: model || selectedModel,
+              platformIconUrl: msg.platformIconUrl,
+              outputTokens: finalOutputTokensForMessage, // Use the correctly calculated token count
+              role: isError ? MESSAGE_ROLES.SYSTEM : msg.role, // Keep error role handling
+            };
+          }
+          return msg;
+        });
 
         // If content not added yet, add extracted content message
         if (!extractedContentAdded && !isError) {
@@ -173,10 +172,12 @@ export function useChatStreaming({
 
         // Save history, passing the retrieved initial stats
         if (tabId) {
+          const messageBeingUpdated = updatedMessages.find(msg => msg.id === messageId);
+          const correctModelConfigForHistory = messageBeingUpdated?.requestModelConfigSnapshot || modelConfigData;
           await ChatHistoryService.saveHistory(
             tabId,
             updatedMessages,
-            modelConfigData,
+            correctModelConfigForHistory,
             {
               initialAccumulatedCost: retrievedPreTruncationCost,
               initialOutputTokens: retrievedPreTruncationOutput,
