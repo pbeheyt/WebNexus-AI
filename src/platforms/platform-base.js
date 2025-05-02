@@ -137,27 +137,25 @@ class BasePlatform extends PlatformInterface {
    * @returns {Promise<boolean>} - True if successful, false otherwise.
    * @protected
    */
+  /**
+   * Default implementation for clicking the submit button.
+   * Attempts the click directly. Errors during the click are caught.
+   * Subclasses should override this if the platform requires a non-standard click simulation.
+   * @param {HTMLElement} buttonElement - The submit button element.
+   * @returns {Promise<boolean>} - True if click was dispatched without error, false otherwise.
+   * @protected
+   */
   async _clickSubmitButton(buttonElement) {
     try {
       this.logger.info(
-        `[${this.platformId}] Attempting to click submit button`
+        `[${this.platformId}] Attempting to dispatch click event to submit button`
       );
-      if (
-        buttonElement.disabled ||
-        buttonElement.getAttribute('aria-disabled') === 'true'
-      ) {
-        this.logger.warn(
-          `[${this.platformId}] Submit button is disabled, cannot click.`
-        );
-        return false; // Indicate failure
-      }
-
-      // Dispatch click event
+      // Dispatch click event directly
       buttonElement.click();
       this.logger.info(
-        `[${this.platformId}] Successfully clicked submit button.`
+        `[${this.platformId}] Successfully dispatched click event.`
       );
-      return true;
+      return true; // Indicate click dispatch attempt was successful
     } catch (error) {
       this.logger.error(
         `[${this.platformId}] Failed to click submit button:`,
@@ -254,23 +252,12 @@ class BasePlatform extends PlatformInterface {
 
           for (let attempt = 1; attempt <= maxButtonRetries; attempt++) {
             submitButton = this.findSubmitButton();
-            if (submitButton) {
-              // Check if button is actually enabled now before breaking
-              if (
-                !submitButton.disabled &&
-                submitButton.getAttribute('aria-disabled') !== 'true'
-              ) {
-                this.logger.info(
-                  `[${this.platformId}] Found enabled submit button on attempt ${attempt}.`
-                );
-                break; // Exit loop only if found AND enabled
-              } else {
-                this.logger.warn(
-                  `[${this.platformId}] Found submit button on attempt ${attempt}, but it's disabled. Continuing retries...`
-                );
-                submitButton = null; // Reset submitButton so loop continues
-              }
-            }
+          if (submitButton) {
+            this.logger.info(
+              `[${this.platformId}] Found submit button on attempt ${attempt}.`
+            );
+            break; // Exit loop as soon as any submit button is found
+          }
             // If button not found OR found but disabled, wait before next attempt
             if (attempt < maxButtonRetries) {
               this.logger.info(
@@ -280,15 +267,18 @@ class BasePlatform extends PlatformInterface {
             }
           }
 
-          // Check if button was found and ready after retries
+          // Check if a button element was found after retries
           if (!submitButton) {
             this.logger.error(
-              `[${this.platformId}] Submit button not found or not enabled after ${maxButtonRetries} attempts.`
+              `[${this.platformId}] Submit button element not found after ${maxButtonRetries} attempts.`
             );
             throw new Error(
-              `Could not find an enabled submit button on ${this.platformId} after multiple attempts.`
+              `Could not find the submit button element on ${this.platformId} after multiple attempts.`
             );
           }
+          this.logger.info(
+            `[${this.platformId}] Found submit button element. Proceeding to click attempt.`
+          );
           this.logger.info(
             `[${this.platformId}] Submit button finding step completed successfully.`
           );
@@ -335,8 +325,7 @@ class BasePlatform extends PlatformInterface {
             } else {
               // --- Verification Failed ---
               this.logger.warn(`[${this.platformId}] Post-click verification failed. The interaction may not have been fully processed by the platform.`);
-              // Notify the user about the verification failure, but don't throw a hard error here
-              // as the click *was* attempted. The user might see the result anyway.
+              // Notify the user about the verification failure
               robustSendMessage({
                 action: 'notifyError',
                 error: `Verification failed after interacting with ${this.platformId}. Please check the platform tab manually.`,
@@ -350,6 +339,8 @@ class BasePlatform extends PlatformInterface {
                 STORAGE_KEYS.PRE_PROMPT,
                 STORAGE_KEYS.CONTENT_READY,
               ]);
+              // Throw an error to indicate the overall process failed due to verification
+              throw new Error(`Post-click verification failed for ${this.platformId}. Interaction may not have succeeded.`);
               // --- End Verification Failed Logic ---
             }
           }
