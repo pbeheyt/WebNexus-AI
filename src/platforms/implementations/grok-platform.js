@@ -197,24 +197,6 @@ class GrokPlatform extends BasePlatform {
       );
     }
 
-    // --- Strategy 4: Fallback using aria-label ---
-    try {
-      const ariaLabelSelector =
-        'textarea[aria-label*="Ask Grok"], textarea[aria-label*="Demander"]'; // Match English/French
-      const editor = document.querySelector(ariaLabelSelector);
-      if (editor && this.isVisibleElement(editor)) {
-        this.logger.info(
-          `[${this.platformId}] Found editor using Strategy 4 (Aria Label)`
-        );
-        return editor;
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 4 editor search:`,
-        e
-      );
-    }
-
     this.logger.error(
       `[${this.platformId}] Editor element not found using any strategy.`
     );
