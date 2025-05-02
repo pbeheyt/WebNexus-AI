@@ -21,15 +21,23 @@ function Header() {
     isLoading,
   } = useSidebarPlatform();
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [displayPlatformId, setDisplayPlatformId] = useState(selectedPlatformId);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
+
+  // Update display platform ID only when loading is finished
+  useEffect(() => {
+    if (!isLoading) {
+      setDisplayPlatformId(selectedPlatformId);
+    }
+  }, [selectedPlatformId, isLoading]);
 
   // Filter platforms based on credentials
   const availablePlatforms = platforms.filter((p) => p.hasCredentials);
 
-  // Find selected platform details
-  const selectedPlatformDetails = platforms.find(
-    (p) => p.id === selectedPlatformId
+  // Find display platform details
+  const displayPlatformDetails = platforms.find(
+    (p) => p.id === displayPlatformId
   );
 
   const isPlatformDropdownOpen = openDropdown === 'platform';
@@ -83,7 +91,7 @@ function Header() {
     setOpenDropdown(null);
   };
 
-  const selectedPlatformForDisplay = selectedPlatformDetails;
+  const selectedPlatformForDisplay = displayPlatformDetails;
 
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>

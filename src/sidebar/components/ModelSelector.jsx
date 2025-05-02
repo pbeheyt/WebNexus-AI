@@ -25,6 +25,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
   const { models, selectedModel, selectModel, isLoading } = useSidebarPlatform();
 
   const [formattedModels, setFormattedModels] = useState([]);
+  const [displayModelId, setDisplayModelId] = useState(selectedModel);
   const [displayedModelName, setDisplayedModelName] = useState('Loading...');
   const { openDropdown, setOpenDropdown } = useContext(DropdownContext);
   const isOpen = openDropdown === 'model';
@@ -84,9 +85,11 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     }
   };
 
-  // Update displayed model name when loading completes
+  // Update displayed model data when loading completes
   useEffect(() => {
     if (!isLoading) {
+      setDisplayModelId(selectedModel);
+      
       const currentModelName = 
         formattedModels.find((m) => m.id === selectedModel)?.name ||
         selectedModel ||
@@ -137,9 +140,9 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
               <button
                 key={model.id}
                 role='option' // ARIA role for item
-                aria-selected={selectedModel === model.id}
+                aria-selected={displayModelId === model.id}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap select-none ${
-                  selectedModel === model.id ? 'font-medium bg-theme-hover' : ''
+                  displayModelId === model.id ? 'font-medium bg-theme-hover' : ''
                 }`}
                 onClick={() => handleModelChange(model.id)}
               >

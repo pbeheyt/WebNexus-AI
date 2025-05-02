@@ -14,7 +14,7 @@ import React, {
   import { useSidebarPlatform } from '../../contexts/platform';
   import { useUI } from '../../contexts/UIContext';
   import { Toggle } from '../../components/core/Toggle';
-  import { Tooltip } from '../../components'; // Import Tooltip
+  import { Tooltip } from '../../components';
   import { PlatformIcon } from '../../components/layout/PlatformIcon';
   import { useContent } from '../../contexts/ContentContext';
   import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
@@ -73,10 +73,11 @@ import React, {
       selectedPlatformId,
       selectedModel,
       hasAnyPlatformCredentials,
+      isLoading,
     } = useSidebarPlatform();
   
     // --- State ---
-    const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false); // Add State
+    const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false);
     const [showScrollDownButton, setShowScrollDownButton] = useState(false);
     const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
     const [displayModelConfig, setDisplayModelConfig] = useState(null);
@@ -90,26 +91,26 @@ import React, {
     ] = useState(true);
     const rafIdHeightCalc = useRef(null);
     const showButtonTimerRef = useRef(null);
-  
-    // --- Add Ref ---
-    const includeToggleRef = useRef(null); // Add Ref
-  
+
+    const includeToggleRef = useRef(null);
     // --- Effect for Platform/Model Display ---
     useEffect(() => {
-      const targetPlatform = platforms.find((p) => p.id === selectedPlatformId);
-      const isPlatformReady = !!targetPlatform;
-      const isModelConfigReadyForSelection =
-        modelConfigData && selectedModel && modelConfigData.id === selectedModel;
-  
-      if (isPlatformReady && isModelConfigReadyForSelection) {
-        setDisplayPlatformConfig({
-          id: targetPlatform.id,
-          name: targetPlatform.name,
-          iconUrl: targetPlatform.iconUrl,
-        });
-        setDisplayModelConfig(modelConfigData);
-        if (!hasCompletedInitialLoad) {
-          setHasCompletedInitialLoad(true);
+      if (!isLoading) {
+        const targetPlatform = platforms.find((p) => p.id === selectedPlatformId);
+        const isPlatformReady = !!targetPlatform;
+        const isModelConfigReadyForSelection =
+          modelConfigData && selectedModel && modelConfigData.id === selectedModel;
+    
+        if (isPlatformReady && isModelConfigReadyForSelection) {
+          setDisplayPlatformConfig({
+            id: targetPlatform.id,
+            name: targetPlatform.name,
+            iconUrl: targetPlatform.iconUrl,
+          });
+          setDisplayModelConfig(modelConfigData);
+          if (!hasCompletedInitialLoad) {
+            setHasCompletedInitialLoad(true);
+          }
         }
       }
     }, [
@@ -119,6 +120,7 @@ import React, {
       selectedModel,
       hasCompletedInitialLoad,
       hasAnyPlatformCredentials,
+      isLoading,
     ]);
   
     // --- Get Content Type Name ---

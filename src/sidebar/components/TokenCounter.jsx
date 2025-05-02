@@ -1,10 +1,21 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
+import { useSidebarPlatform } from '../../contexts/platform';
 import { Tooltip } from '../../components/layout/Tooltip';
 import { InputTokenIcon, OutputTokenIcon, ChevronUpIcon } from '../../components';
 
 function TokenCounter({ tokenStats, contextStatus, className = '' }) {
+  const { isLoading } = useSidebarPlatform();
+  const [displayTokenStats, setDisplayTokenStats] = useState(tokenStats);
+  const [displayContextStatus, setDisplayContextStatus] = useState(contextStatus);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setDisplayTokenStats(tokenStats);
+      setDisplayContextStatus(contextStatus);
+    }
+  }, [tokenStats, contextStatus, isLoading]);
   const {
     outputTokens = 0,
     accumulatedCost = 0,
@@ -13,7 +24,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
     lastApiCallCost = 0,
     promptTokensInLastApiCall = 0,
     systemTokensInLastApiCall = 0,
-  } = tokenStats || {};
+  } = displayTokenStats || {};
 
   // Toggle for expanded details view
   const [showDetails, setShowDetails] = useState(false);
@@ -55,7 +66,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   const formattedCost = formatCost(accumulatedCost);
 
   // Ensure we have context status data with safe defaults
-  const contextData = contextStatus || {
+  const contextData = displayContextStatus || {
     warningLevel: 'none',
     percentage: 0,
     tokensRemaining: 0,
