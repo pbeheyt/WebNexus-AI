@@ -91,66 +91,19 @@ class DeepSeekPlatform extends BasePlatform {
   async _clickSubmitButton(buttonElement) {
     try {
       this.logger.info(
-        `[${this.platformId}] Attempting to click submit button for Deepseek.`
+        `[${this.platformId}] Attempting to dispatch click event to submit button (DeepSeek override).`
       );
-
-      let currentButton = buttonElement; // Use a local variable
-
-      // Check if button is initially disabled
-      if (currentButton.getAttribute('aria-disabled') === 'true') {
-        this.logger.warn(
-          `[${this.platformId}] Submit button is initially disabled. Attempting to trigger editor input event...`
-        );
-
-        // Find the editor again to dispatch the event
-        const editorElement = this.findEditorElement();
-        if (editorElement) {
-          const inputEvent = new Event('input', { bubbles: true });
-          editorElement.dispatchEvent(inputEvent);
-          await this._wait(300); // Wait a bit for potential UI update
-
-          // Re-find the button after triggering event
-          currentButton = this.findSubmitButton(); // Re-fetch the button state
-
-          if (!currentButton) {
-            this.logger.error(
-              `[${this.platformId}] Failed to re-find submit button after triggering input event.`
-            );
-            return false;
-          }
-
-          if (currentButton.getAttribute('aria-disabled') === 'true') {
-            this.logger.error(
-              `[${this.platformId}] Submit button remained disabled after triggering input event.`
-            );
-            return false; // Failed to enable
-          }
-          this.logger.info(
-            `[${this.platformId}] Submit button appears enabled after triggering input event.`
-          );
-        } else {
-          this.logger.error(
-            `[${this.platformId}] Could not find editor element to trigger enabling event.`
-          );
-          return false; // Cannot attempt enabling
-        }
-      }
-
-      // Proceed to click the (potentially updated) button
+      buttonElement.click(); // Direct click attempt
       this.logger.info(
-        `[${this.platformId}] Dispatching click event to submit button.`
+        `[${this.platformId}] Successfully dispatched click event (DeepSeek override).`
       );
-      currentButton.click(); // Use the potentially re-found button
-      this.logger.info(
-        `[${this.platformId}] Successfully dispatched click event.`
-      );
-      return true;
+      return true; // Indicate the attempt was made without throwing
     } catch (error) {
       this.logger.error(
-        `[${this.platformId}] Failed to click submit button:`,
+        `[${this.platformId}] Failed to dispatch click event (DeepSeek override):`,
         error
       );
-      return false;
+      return false; // Indicate the click attempt itself threw an error
     }
   }
 

@@ -141,39 +141,28 @@ class ChatGptPlatform extends BasePlatform {
   async _clickSubmitButton(buttonElement) {
     try {
       this.logger.info(
-        `[${this.platformId}] Attempting to click submit button for ChatGPT with event sequence`
+        `[${this.platformId}] Attempting to click submit button with event sequence`
       );
-      if (
-        buttonElement.disabled ||
-        buttonElement.getAttribute('aria-disabled') === 'true'
-      ) {
-        this.logger.warn(
-          `[${this.platformId}] Submit button is disabled right before click attempt.`
-        );
-        return false;
-      }
-      this.logger.info(
-        `[${this.platformId}] Dispatching click events sequence.`
-      );
+      // Dispatch multiple events to simulate a real click
       ['mousedown', 'mouseup', 'click'].forEach((eventType) => {
         const event = new MouseEvent(eventType, {
-          view: window,
           bubbles: true,
           cancelable: true,
-          buttons: eventType === 'mousedown' ? 1 : 0,
+          view: window,
+          buttons: eventType === 'mousedown' ? 1 : 0
         });
         buttonElement.dispatchEvent(event);
       });
       this.logger.info(
         `[${this.platformId}] Successfully dispatched click events.`
       );
-      return true;
+      return true; // Indicate dispatch attempt finished without error
     } catch (error) {
       this.logger.error(
-        `[${this.platformId}] Failed to click submit button:`,
+        `[${this.platformId}] Failed to dispatch click events:`,
         error
       );
-      return false;
+      return false; // Indicate the dispatch attempt itself threw an error
     }
   }
 
