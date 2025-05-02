@@ -495,24 +495,22 @@ export function SidebarChatProvider({ children }) {
           await cancelStream(); // Call cancelStream from the hook
           logger.sidebar.info('Stream cancellation attempted.');
         }
-        // Clear history and tokens via service first
-        await ChatHistoryService.clearHistory(tabId); // Clears tokens too
-        // Then clear any remaining formatted content specifically
-        await clearFormattedContentForTab();
-
-        // Reset local state
+        // Reset local state first
         setMessages([]);
         setInputValue('');
         setStreamingMessageId(null);
         setExtractedContentAdded(false);
         setIsCanceling(false);
-        await clearTokenData(); // Ensure token state is reset too
+        await clearTokenData(); // Clear local token state
 
-        // Optionally notify background if other state needs clearing there
-        // const response = await robustSendMessage({ action: 'clearTabData', tabId: tabId });
-        // Handle response if needed
-
-        logger.sidebar.info(`Successfully reset data for tab ${tabId}`);
+        // Notify background to clear all its relevant tab data
+        logger.sidebar.info(`Requesting background to clear data for tab ${tabId}`);
+        const clearResponse = await robustSendMessage({ action: 'clearTabData', tabId: tabId });
+        if (!clearResponse || !clearResponse.success) {
+            logger.sidebar.error('Background failed to confirm tab data clear:', clearResponse?.error);
+        } else {
+            logger.sidebar.info(`Background confirmed clearing data for tab ${tabId}`);
+        }
       } catch (error) {
         logger.sidebar.error('Failed to reset tab data:', error);
         // Attempt to reset local state even on error
@@ -536,8 +534,7 @@ export function SidebarChatProvider({ children }) {
     streamingMessageId,
     isProcessing,
     isCanceling,
-    cancelStream, // Add cancelStream from hook as dependency
-    clearFormattedContentForTab, // Add new dependency
+    cancelStream,
   ]);
 
   // --- End Utility Functions ---
