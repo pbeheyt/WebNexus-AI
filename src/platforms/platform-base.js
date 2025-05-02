@@ -509,13 +509,7 @@ class BasePlatform extends PlatformInterface {
           } else {
             // --- Verification Failed ---
             this.logger.warn(`[${this.platformId}] Post-click verification failed. The interaction may not have been fully processed by the platform.`);
-            // Notify the user about the verification failure
-            robustSendMessage({
-              action: 'notifyError',
-              error: `Verification failed after interacting with ${this.platformId}. Please check the platform tab manually.`,
-            }).catch((err) =>
-              this.logger.error('Failed to send verification failure notification:', err)
-            );
+
             // Still attempt to clear storage as the process is 'done' from the extension's perspective
             chrome.storage.local.remove([
               STORAGE_KEYS.EXTRACTED_CONTENT,
@@ -533,12 +527,7 @@ class BasePlatform extends PlatformInterface {
             `[${this.platformId}] Error during processContent execution:`,
             error
           );
-          robustSendMessage({
-            action: 'notifyError',
-            error: `Error interacting with ${this.platformId}: ${error.message}`,
-          }).catch((err) =>
-            this.logger.error('Failed to send notifyError message:', err)
-          );
+
           chrome.storage.local.remove([
             STORAGE_KEYS.EXTRACTED_CONTENT,
             STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
