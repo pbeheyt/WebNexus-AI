@@ -128,13 +128,9 @@ export function UnifiedInput({
           <div
             ref={containerRef}
             onClick={handleContainerClick}
-            role='button'
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleContainerClick(e);
-              }
-            }}
+            onKeyDown={handleContainerClick}
+            role="presentation"
+            tabIndex={-1}
             className='input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all cursor-text'
           >
             {/* Flex container for layout */}
@@ -206,13 +202,9 @@ export function UnifiedInput({
           <div
             ref={containerRef}
             onClick={handleContainerClick}
-            role='button'
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleContainerClick(e);
-              }
-            }}
+            onKeyDown={handleContainerClick}
+            role="presentation"
+            tabIndex={-1}
             className='input-container relative cursor-text'
           >
             {/* Flex container for layout */}
