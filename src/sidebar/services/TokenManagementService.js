@@ -292,8 +292,9 @@ class TokenManagementService {
       // 6. Prepare Final Stats Object to Save (Explicitly matching _getEmptyStats structure)
       const finalStatsObject = {
         // Cumulative stats (use initial output tokens + tokens from this specific call)
-        outputTokens:
-          initialOutputTokens + (baseStats.outputTokensInLastApiCall || 0),
+        outputTokens: isLastError
+          ? initialOutputTokens // On error, cumulative output doesn't increase
+          : initialOutputTokens + (baseStats.outputTokensInLastApiCall || 0), // On success, add last assistant output
         accumulatedCost: newAccumulatedCost,
 
         // Last API call stats (from base calculation - these reflect ONLY the last call)
