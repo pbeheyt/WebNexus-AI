@@ -66,14 +66,15 @@ export function usePlatformSelection(
 
         let platformToUse = null;
 
-        // Priority 1: Tab-specific preference (if valid and available)
+        // Priority 1: Tab-specific preference (ONLY IF SIDEBAR)
         if (
+          interfaceType === INTERFACE_SOURCES.SIDEBAR &&
           lastUsedTabPlatform &&
           platformConfigs.some((p) => p.id === lastUsedTabPlatform) && // Check if it's a known platform
           availablePlatformIds.has(lastUsedTabPlatform)                 // Check if available based on creds
         ) {
           platformToUse = lastUsedTabPlatform;
-          logger.context.debug(`Using tab preference: ${platformToUse}`);
+          logger.context.debug(`Using tab preference (Sidebar): ${platformToUse}`);
         }
 
         // Priority 2: Global preference (if valid and available)
@@ -84,7 +85,7 @@ export function usePlatformSelection(
           availablePlatformIds.has(globalPlatformPref)                // Check if available based on creds
         ) {
           platformToUse = globalPlatformPref;
-          logger.context.debug(`Using global preference: ${platformToUse}`);
+          logger.context.debug(`Using global preference (${interfaceType}): ${platformToUse}`);
         }
 
         // Priority 3: First available platform (if any)
@@ -132,16 +133,19 @@ export function usePlatformSelection(
       try {
         setSelectedPlatformId(platformId); // Update state immediately
 
-        // Update tab-specific preference
-        const tabPreferences = await chrome.storage.local.get(
-          STORAGE_KEYS.TAB_PLATFORM_PREFERENCES
-        );
-        const tabPlatformPrefs =
-          tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
-        tabPlatformPrefs[tabId] = platformId;
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]: tabPlatformPrefs,
-        });
+        // Update tab-specific preference ONLY IF SIDEBAR
+        if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
+          const tabPreferences = await chrome.storage.local.get(
+            STORAGE_KEYS.TAB_PLATFORM_PREFERENCES
+          );
+          const tabPlatformPrefs =
+            tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
+          tabPlatformPrefs[tabId] = platformId;
+          await chrome.storage.local.set({
+            [STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]: tabPlatformPrefs,
+          });
+          logger.context.debug(`Saved tab preference (Sidebar): Tab ${tabId} -> ${platformId}`);
+        }
 
         // Update global preference for new tabs
         await chrome.storage.sync.set({ [globalStorageKey]: platformId });
@@ -163,6 +167,7 @@ export function usePlatformSelection(
       platformConfigs,
       globalStorageKey,
       onPlatformSelected,
+      interfaceType
     ]
   );
 
