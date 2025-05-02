@@ -242,13 +242,6 @@ class BasePlatform extends PlatformInterface {
               resolve(true); // Success condition met
               return;
             }
-          } else {
-            // If editor disappears, consider it a potential (though less certain) success signal in some cases,
-            // but for now, we treat it as "not verifiable" which leads to failure.
-            // Alternatively, could resolve(true) here if desired.
-            this.logger.warn(
-              `[${this.platformId}] Verification polling: Could not re-find editor element.`
-            );
           }
         } catch (error) {
           this.logger.error(
@@ -441,7 +434,7 @@ class BasePlatform extends PlatformInterface {
           );
 
           // 3. Wait
-          await this._wait(800); // Allow time for UI updates or checks
+          await this._wait(500); // Allow time for UI updates or checks
           this.logger.info(`[${this.platformId}] Wait step completed.`);
 
           // 4. Find Submit Button (with retries)
@@ -450,7 +443,7 @@ class BasePlatform extends PlatformInterface {
           );
           let submitButton = null;
           const maxButtonRetries = 3;
-          const buttonRetryDelay = 600; // ms
+          const buttonRetryDelay = 500; // ms
 
           for (let attempt = 1; attempt <= maxButtonRetries; attempt++) {
             submitButton = this.findSubmitButton();
