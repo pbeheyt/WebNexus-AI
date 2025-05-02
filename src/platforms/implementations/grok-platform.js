@@ -284,40 +284,6 @@ class GrokPlatform extends BasePlatform {
       );
     }
 
-    // --- Strategy 3: Aria Label (Fallback) ---
-    try {
-      const ariaSelectors = [
-        'button[type="submit"][aria-label*="Submit"]', // English
-        'button[type="submit"][aria-label*="Soumettre"]', // French
-        // Add other languages if necessary
-      ];
-      for (const selector of ariaSelectors) {
-        const button = document.querySelector(selector);
-        // Check visibility *and* ensure it's not disabled
-        if (
-          button &&
-          this.isVisibleElement(button) &&
-          !button.disabled &&
-          button.getAttribute('aria-disabled') !== 'true'
-        ) {
-          this.logger.info(
-            `[${this.platformId}] Found submit button using Strategy 3 (Aria Label: ${selector})`
-          );
-          return button;
-        } else if (button) {
-          this.logger.warn(
-            `[${this.platformId}] Strategy 3: Found button via aria-label (${selector}), but it's hidden or disabled.`,
-            button
-          );
-        }
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 3 submit button search:`,
-        e
-      );
-    }
-
     this.logger.error(
       `[${this.platformId}] Submit button not found using any strategy.`
     );
