@@ -81,20 +81,41 @@ export function useTokenTracking(tabId) {
    */
   const calculateContextStatus = useCallback(
     async (modelConfig) => {
-      if (!tabId || !modelConfig) {
+      if (!tabId || !modelConfig || !modelConfig.contextWindow) {
         return {
           warningLevel: 'none',
           percentage: 0,
           tokensRemaining: 0,
           exceeds: false,
+          totalTokens: 0
         };
       }
 
-      // Use direct service call with current token stats
-      return TokenManagementService.calculateContextStatus(
-        tokenStats,
-        modelConfig
-      );
+      try {
+        // Use direct service call with current token stats
+        const status = await TokenManagementService.calculateContextStatus(
+          tokenStats,
+          modelConfig
+        );
+        
+        // Ensure we always return a valid status object
+        return status || {
+          warningLevel: 'none',
+          percentage: 0,
+          tokensRemaining: 0,
+          exceeds: false,
+          totalTokens: 0
+        };
+      } catch (error) {
+        logger.sidebar.error('Error calculating context status:', error);
+        return {
+          warningLevel: 'none',
+          percentage: 0,
+          tokensRemaining: 0,
+          exceeds: false,
+          totalTokens: 0
+        };
+      }
     },
     [tabId, tokenStats]
   );

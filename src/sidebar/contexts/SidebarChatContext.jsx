@@ -271,18 +271,21 @@ export function SidebarChatProvider({ children }) {
   useEffect(() => {
     const updateContextStatus = async () => {
       if (!tabId || !modelConfigData) {
+        // Don't update stableContextStatus - keep previous valid state
         setContextStatus({ warningLevel: 'none' });
-        setStableContextStatus({ warningLevel: 'none' });
         return;
       }
       try {
         const status = await calculateContextStatus(modelConfigData);
+        // Only update stable status if we got a valid status object
+        if (status && typeof status === 'object') {
+          setStableContextStatus(status);
+        }
         setContextStatus(status);
-        setStableContextStatus(status);
       } catch (error) {
         logger.sidebar.error('Error calculating context status:', error);
         setContextStatus({ warningLevel: 'none' });
-        setStableContextStatus({ warningLevel: 'none' });
+        // Don't update stableContextStatus on error - keep previous valid state
       }
     };
     updateContextStatus();
