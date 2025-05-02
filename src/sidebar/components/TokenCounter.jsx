@@ -12,10 +12,24 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
 
   useEffect(() => {
     if (!isLoading) {
+      // Update token stats directly when the prop changes
       setDisplayTokenStats(tokenStats);
-      setDisplayContextStatus(contextStatus);
+
+      // Conditionally update context status based on display values
+      const newPercentageStr = contextStatus?.percentage?.toFixed(1);
+      const currentPercentageStr = displayContextStatus?.percentage?.toFixed(1);
+      const newWarningLevel = contextStatus?.warningLevel;
+      const currentWarningLevel = displayContextStatus?.warningLevel;
+
+      if (
+        newPercentageStr !== currentPercentageStr ||
+        newWarningLevel !== currentWarningLevel
+      ) {
+        setDisplayContextStatus(contextStatus);
+      }
     }
-  }, [tokenStats, contextStatus, isLoading]);
+    // Keep the original dependencies
+  }, [tokenStats, contextStatus, isLoading, displayContextStatus]);
   const {
     outputTokens = 0,
     accumulatedCost = 0,
