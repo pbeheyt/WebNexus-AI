@@ -10,30 +10,36 @@ class MistralPlatform extends BasePlatform {
   }
 
   findEditorElement() {
-    const editor =
-      document.querySelector(
-        'textarea[name="message.text"][placeholder*="Demander au Chat"]'
-      ) || // French placeholder
-      document.querySelector(
-        'textarea[name="message.text"][placeholder*="Ask the Chat"]'
-      ) || // English placeholder
-      document.querySelector('textarea.border-default.ring-offset-background'); // Fallback
+    const primarySelector = 'textarea[name="message.text"]';
+    const fallbackSelector = 'textarea.border-default.ring-offset-background';
+    let editor = document.querySelector(primarySelector);
+
+    if (!editor) {
+      this.logger.debug(`[${this.platformId}] Editor not found with primary selector '${primarySelector}', trying fallback '${fallbackSelector}'`);
+      editor = document.querySelector(fallbackSelector);
+    }
+
     if (!editor) {
       this.logger.error(
-        `[${this.platformId}] Editor element not found using selectors.`
+        `[${this.platformId}] Editor element not found using selectors '${primarySelector}' or '${fallbackSelector}'.`
       );
     }
     return editor;
   }
 
   findSubmitButton() {
-    // More specific selector including aria-label and class structure
-    const button = document.querySelector(
-      'button[aria-label*="Send question"][class*="bg-inverted"]'
-    ); // Match partial class
+    const primarySelector = 'button[type="submit"]:has(svg)';
+    const fallbackSelector = 'button[type="submit"][class*="bg-inverted"]';
+    let button = document.querySelector(primarySelector);
+
+     if (!button) {
+      this.logger.debug(`[${this.platformId}] Submit button not found with primary selector '${primarySelector}', trying fallback '${fallbackSelector}'`);
+      button = document.querySelector(fallbackSelector);
+    }
+
     if (!button) {
       this.logger.error(
-        `[${this.platformId}] Submit button not found using selector.`
+        `[${this.platformId}] Submit button not found using selectors '${primarySelector}' or '${fallbackSelector}'.`
       );
     }
     return button;
