@@ -214,42 +214,65 @@ class BasePlatform extends PlatformInterface {
    * @protected
    */
   /**
-   * Verifies if submission was likely attempted by checking UI cues after clicking the submit button.
-   * Checks if the submit button became disabled OR if the editor element became empty.
-   * @returns {Promise<boolean>} True if verification passes (button disabled or editor empty), false otherwise.
+   * Verifies if submission was likely successful by polling to check if the editor element became empty
+   * after clicking the submit button.
+   * @returns {Promise<boolean>} True if verification passes (editor becomes empty within timeout), false otherwise.
    * @protected
    */
   async _verifySubmissionAttempted() {
-    this.logger.info(`[${this.platformId}] Starting post-click verification...`);
-    let isEditorEmpty = false;
+    const pollInterval = 200; // Check every 200ms
+    const maxWaitTime = 5000; // Max wait 5 seconds
+    const startTime = Date.now();
 
-    // Check : Editor Cleared/Reset
-    try {
-      const editorElement = this.findEditorElement(); // Re-find the editor
-      if (editorElement) {
-        isEditorEmpty = this._isEditorEmpty(editorElement);
-        if (isEditorEmpty) {
-          this.logger.info(`[${this.platformId}] Verification: Editor appears empty.`);
-        } else {
-          this.logger.info(`[${this.platformId}] Verification: Editor is not empty.`);
+    this.logger.info(
+      `[${this.platformId}] Starting post-click verification polling (Interval: ${pollInterval}ms, Timeout: ${maxWaitTime}ms)...`
+    );
+
+    return new Promise((resolve) => {
+      const checkEditor = async () => {
+        let isEditorEmpty = false;
+        try {
+          const editorElement = this.findEditorElement();
+          if (editorElement) {
+            isEditorEmpty = this._isEditorEmpty(editorElement);
+            if (isEditorEmpty) {
+              this.logger.info(
+                `[${this.platformId}] Verification polling PASSED: Editor is empty.`
+              );
+              resolve(true); // Success condition met
+              return;
+            }
+          } else {
+            // If editor disappears, consider it a potential (though less certain) success signal in some cases,
+            // but for now, we treat it as "not verifiable" which leads to failure.
+            // Alternatively, could resolve(true) here if desired.
+            this.logger.warn(
+              `[${this.platformId}] Verification polling: Could not re-find editor element.`
+            );
+          }
+        } catch (error) {
+          this.logger.error(
+            `[${this.platformId}] Verification polling: Error checking editor state:`,
+            error
+          );
+          // Continue polling unless timed out
         }
-      } else {
-        this.logger.warn(`[${this.platformId}] Verification: Could not re-find editor element.`);
-      }
-    } catch (error) {
-      this.logger.error(`[${this.platformId}] Verification: Error checking editor state:`, error);
-    }
 
-    // Determine success
-    const verificationSuccess = isEditorEmpty;
+        // Check if timeout exceeded
+        if (Date.now() - startTime > maxWaitTime) {
+          this.logger.warn(
+            `[${this.platformId}] Verification polling FAILED: Timeout (${maxWaitTime}ms) reached and editor is still not empty.`
+          );
+          resolve(false); // Timeout reached
+        } else {
+          // Schedule next check
+          setTimeout(checkEditor, pollInterval);
+        }
+      };
 
-    if (verificationSuccess) {
-      this.logger.info(`[${this.platformId}] Post-click verification PASSED.`);
-    } else {
-      this.logger.warn(`[${this.platformId}] Post-click verification FAILED (Editor not empty).`);
-    }
-
-    return verificationSuccess;
+      // Start the first check
+      checkEditor();
+    });
   }
 
   /**
@@ -474,11 +497,6 @@ class BasePlatform extends PlatformInterface {
           }
 
           // 6. Verify Submission Attempt (always runs after click attempt)
-          // Add a delay to allow the platform UI to potentially update after click
-          const verificationDelay = 500; // ms delay (adjust if needed)
-          this.logger.info(`[${this.platformId}] Waiting ${verificationDelay}ms before verification...`);
-          await this._wait(verificationDelay);
-
           const verificationSuccess = await this._verifySubmissionAttempted();
 
           if (verificationSuccess) {
