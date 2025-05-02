@@ -112,9 +112,6 @@ class ChatHistoryService {
         options
       );
 
-      // Add this line just before returning true
-      const statsResult = await TokenManagementService.getTokenStatistics(tabId); // Re-fetch the latest stats
-
       return true;
     } catch (error) {
       logger.sidebar.error('TabChatHistory: Error saving chat history:', error);

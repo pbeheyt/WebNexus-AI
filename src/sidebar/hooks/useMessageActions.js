@@ -214,6 +214,7 @@ export function useMessageActions({
       ChatHistoryService,
       _initiateApiCall, // Add helper dependency
       processContentViaApi, // Pass dependency
+      isContentExtractionEnabled,
     ]
   );
 
@@ -310,6 +311,7 @@ export function useMessageActions({
       TokenManagementService,
       _initiateApiCall,
       processContentViaApi,
+      isContentExtractionEnabled,
     ]
   );
 
@@ -395,6 +397,7 @@ export function useMessageActions({
       ChatHistoryService,
       _initiateApiCall, // Add helper dependency
       processContentViaApi, // Pass dependency
+      isContentExtractionEnabled,
     ]
   );
 
