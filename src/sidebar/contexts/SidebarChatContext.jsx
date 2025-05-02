@@ -45,12 +45,15 @@ export function SidebarChatProvider({ children }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState(null);
-  const [contextStatus, setContextStatus] = useState({ warningLevel: 'none' });
+  const [, setContextStatus] = useState({ warningLevel: 'none' }); // Internal state only (unused)
+  const [stableContextStatus, setStableContextStatus] = useState({ warningLevel: 'none' });
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isContentExtractionEnabled, setIsContentExtractionEnabled] =
     useState(true);
   const [modelConfigData, setModelConfigData] = useState(null);
+  const [stableModelConfigData, setStableModelConfigData] = useState(null);
+  const [stableTokenStats, setStableTokenStats] = useState(TokenManagementService._getEmptyStats());
 
   // Refs remain in the context as they are shared between hooks/context logic
   const batchedStreamingContentRef = useRef('');
@@ -251,12 +254,14 @@ export function SidebarChatProvider({ children }) {
         }
         const modelData = config.models.find((m) => m.id === selectedModel);
         setModelConfigData(modelData);
+        setStableModelConfigData(modelData);
       } catch (error) {
         logger.sidebar.error(
           'Failed to load or process platform API configuration:',
           error
         );
         setModelConfigData(null);
+        setStableModelConfigData(null);
       }
     };
     loadFullConfig();
@@ -267,18 +272,30 @@ export function SidebarChatProvider({ children }) {
     const updateContextStatus = async () => {
       if (!tabId || !modelConfigData) {
         setContextStatus({ warningLevel: 'none' });
+        setStableContextStatus({ warningLevel: 'none' });
         return;
       }
       try {
         const status = await calculateContextStatus(modelConfigData);
         setContextStatus(status);
+        setStableContextStatus(status);
       } catch (error) {
         logger.sidebar.error('Error calculating context status:', error);
         setContextStatus({ warningLevel: 'none' });
+        setStableContextStatus({ warningLevel: 'none' });
       }
     };
     updateContextStatus();
   }, [tabId, modelConfigData, tokenStats, calculateContextStatus]);
+
+  // Stabilize tokenStats for UI consumers
+  const { isLoading: isPlatformLoading } = useSidebarPlatform(); // Get loading state outside effect
+
+  useEffect(() => {
+    if (!isPlatformLoading) {
+      setStableTokenStats(tokenStats); // Update stable stats when loading is done
+    }
+  }, [tokenStats, isPlatformLoading]); // Depend on internal tokenStats and isPlatformLoading
 
   // Load chat history for current tab
   useEffect(() => {
@@ -547,15 +564,15 @@ export function SidebarChatProvider({ children }) {
         messages: visibleMessages,
         allMessages: messages,
         inputValue,
-        contextStatus,
+        contextStatus: stableContextStatus,
         extractedContentAdded,
         isContentExtractionEnabled,
-        modelConfigData,
+        modelConfigData: stableModelConfigData,
         isProcessing,
         isCanceling,
         apiError: processingError,
         contentType,
-        tokenStats,
+        tokenStats: stableTokenStats,
 
         // Setters / Actions
         setInputValue,

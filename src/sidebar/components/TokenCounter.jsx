@@ -1,35 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 
-import { useSidebarPlatform } from '../../contexts/platform';
 import { Tooltip } from '../../components/layout/Tooltip';
 import { InputTokenIcon, OutputTokenIcon, ChevronUpIcon } from '../../components';
 
 function TokenCounter({ tokenStats, contextStatus, className = '' }) {
-  const { isLoading } = useSidebarPlatform();
-  const [displayTokenStats, setDisplayTokenStats] = useState(tokenStats);
-  const [displayContextStatus, setDisplayContextStatus] = useState(contextStatus);
-
-  useEffect(() => {
-    if (!isLoading) {
-      // Update token stats directly when the prop changes
-      setDisplayTokenStats(tokenStats);
-
-      // Conditionally update context status based on display values
-      const newPercentageStr = contextStatus?.percentage?.toFixed(1);
-      const currentPercentageStr = displayContextStatus?.percentage?.toFixed(1);
-      const newWarningLevel = contextStatus?.warningLevel;
-      const currentWarningLevel = displayContextStatus?.warningLevel;
-
-      if (
-        newPercentageStr !== currentPercentageStr ||
-        newWarningLevel !== currentWarningLevel
-      ) {
-        setDisplayContextStatus(contextStatus);
-      }
-    }
-    // Keep the original dependencies
-  }, [tokenStats, contextStatus, isLoading, displayContextStatus]);
   const {
     outputTokens = 0,
     accumulatedCost = 0,
@@ -38,7 +13,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
     lastApiCallCost = 0,
     promptTokensInLastApiCall = 0,
     systemTokensInLastApiCall = 0,
-  } = displayTokenStats || {};
+  } = tokenStats || {};
 
   // Toggle for expanded details view
   const [showDetails, setShowDetails] = useState(false);
@@ -80,7 +55,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   const formattedCost = formatCost(accumulatedCost);
 
   // Ensure we have context status data with safe defaults
-  const contextData = displayContextStatus || {
+  const contextData = contextStatus || {
     warningLevel: 'none',
     percentage: 0,
     tokensRemaining: 0,

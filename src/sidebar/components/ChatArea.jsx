@@ -73,7 +73,6 @@ import React, {
       selectedPlatformId,
       selectedModel,
       hasAnyPlatformCredentials,
-      isLoading,
     } = useSidebarPlatform();
   
     // --- State ---
@@ -95,22 +94,20 @@ import React, {
     const includeToggleRef = useRef(null);
     // --- Effect for Platform/Model Display ---
     useEffect(() => {
-      if (!isLoading) {
-        const targetPlatform = platforms.find((p) => p.id === selectedPlatformId);
-        const isPlatformReady = !!targetPlatform;
-        const isModelConfigReadyForSelection =
-          modelConfigData && selectedModel && modelConfigData.id === selectedModel;
+      const targetPlatform = platforms.find((p) => p.id === selectedPlatformId);
+      const isPlatformReady = !!targetPlatform;
+      const isModelConfigReadyForSelection =
+        modelConfigData && selectedModel && modelConfigData.id === selectedModel;
     
-        if (isPlatformReady && isModelConfigReadyForSelection) {
-          setDisplayPlatformConfig({
-            id: targetPlatform.id,
-            name: targetPlatform.name,
-            iconUrl: targetPlatform.iconUrl,
-          });
-          setDisplayModelConfig(modelConfigData);
-          if (!hasCompletedInitialLoad) {
-            setHasCompletedInitialLoad(true);
-          }
+      if (isPlatformReady && isModelConfigReadyForSelection) {
+        setDisplayPlatformConfig({
+          id: targetPlatform.id,
+          name: targetPlatform.name,
+          iconUrl: targetPlatform.iconUrl,
+        });
+        setDisplayModelConfig(modelConfigData);
+        if (!hasCompletedInitialLoad) {
+          setHasCompletedInitialLoad(true);
         }
       }
     }, [
@@ -120,7 +117,6 @@ import React, {
       selectedModel,
       hasCompletedInitialLoad,
       hasAnyPlatformCredentials,
-      isLoading,
     ]);
   
   
