@@ -131,13 +131,6 @@ class BasePlatform extends PlatformInterface {
   }
 
   /**
-   * Default implementation for clicking the submit button.
-   * Subclasses should override this if the platform requires a non-standard click simulation.
-   * @param {HTMLElement} buttonElement - The submit button element.
-   * @returns {Promise<boolean>} - True if successful, false otherwise.
-   * @protected
-   */
-  /**
    * Simulates a realistic click sequence (mousedown -> mouseup -> click)
    * @param {HTMLElement} buttonElement - The button element to click
    * @returns {Promise<boolean>} True if events dispatched successfully, false otherwise
@@ -145,41 +138,48 @@ class BasePlatform extends PlatformInterface {
    */
   async _simulateRealClick(buttonElement) {
     try {
-      this.logger.info(`[${this.platformId}] Attempting to click submit button with event sequence`);
-      
+      this.logger.info(
+        `[${this.platformId}] Attempting to click submit button with event sequence`
+      );
+
       // Dispatch mousedown with button pressed
       buttonElement.dispatchEvent(
         new MouseEvent('mousedown', {
           bubbles: true,
           cancelable: true,
           view: window,
-          buttons: 1
+          buttons: 1,
         })
       );
-      
+
       // Dispatch mouseup with button released
       buttonElement.dispatchEvent(
         new MouseEvent('mouseup', {
           bubbles: true,
           cancelable: true,
           view: window,
-          buttons: 0
+          buttons: 0,
         })
       );
-      
+
       // Dispatch final click event
       buttonElement.dispatchEvent(
         new MouseEvent('click', {
           bubbles: true,
           cancelable: true,
-          view: window
+          view: window,
         })
       );
-      
-      this.logger.info(`[${this.platformId}] Successfully dispatched click events.`);
+
+      this.logger.info(
+        `[${this.platformId}] Successfully dispatched click events.`
+      );
       return true;
     } catch (error) {
-      this.logger.error(`[${this.platformId}] Failed to dispatch click events:`, error);
+      this.logger.error(
+        `[${this.platformId}] Failed to dispatch click events:`,
+        error
+      );
       return false;
     }
   }
@@ -208,61 +208,45 @@ class BasePlatform extends PlatformInterface {
   }
 
   /**
-   * Verifies if submission was likely attempted by checking UI cues after clicking the submit button.
-   * Checks if the submit button became disabled OR if the editor element became empty.
-   * @returns {Promise<boolean>} True if verification passes (button disabled or editor empty), false otherwise.
-   * @protected
-   */
-  /**
-   * Verifies if submission was likely attempted by checking UI cues after clicking the submit button.
-   * Checks if the submit button became disabled OR if the editor element became empty.
-   * @returns {Promise<boolean>} True if verification passes (button disabled or editor empty), false otherwise.
+   * Verifies if submission was likely successful by checking if the editor element became empty after clicking the submit button.
+   * @returns {Promise<boolean>} True if verification passes (editor is empty), false otherwise.
    * @protected
    */
   async _verifySubmissionAttempted() {
-    this.logger.info(`[${this.platformId}] Starting post-click verification...`);
-    let isButtonDisabled = false;
-    let isEditorEmpty = false;
+    this.logger.info(
+      `[${this.platformId}] Starting post-click verification (Editor Empty Check Only)...`
+    );
+    let verificationSuccess = false; // Default to false
 
-    // Check 1: Submit Button Disabled
-    try {
-      const submitButton = this.findSubmitButton(); // Re-find the button
-      if (submitButton && (submitButton.disabled || submitButton.getAttribute('aria-disabled') === 'true')) {
-        isButtonDisabled = true;
-        this.logger.info(`[${this.platformId}] Verification: Submit button is disabled.`);
-      } else if (submitButton) {
-        this.logger.info(`[${this.platformId}] Verification: Submit button is enabled.`);
-      } else {
-        this.logger.warn(`[${this.platformId}] Verification: Could not re-find submit button.`);
-      }
-    } catch (error) {
-      this.logger.error(`[${this.platformId}] Verification: Error checking submit button state:`, error);
-    }
-
-    // Check 2: Editor Cleared/Reset
+    // Check Editor Cleared/Reset
     try {
       const editorElement = this.findEditorElement(); // Re-find the editor
       if (editorElement) {
-        isEditorEmpty = this._isEditorEmpty(editorElement);
-        if (isEditorEmpty) {
-          this.logger.info(`[${this.platformId}] Verification: Editor appears empty.`);
-        } else {
-          this.logger.info(`[${this.platformId}] Verification: Editor is not empty.`);
-        }
+        verificationSuccess = this._isEditorEmpty(editorElement); // Check emptiness
+        this.logger.info(
+          `[${this.platformId}] Verification: Editor empty check returned: ${verificationSuccess}`
+        );
       } else {
-        this.logger.warn(`[${this.platformId}] Verification: Could not re-find editor element.`);
+        this.logger.warn(
+          `[${this.platformId}] Verification: Could not re-find editor element.`
+        );
+        // verificationSuccess remains false
       }
     } catch (error) {
-      this.logger.error(`[${this.platformId}] Verification: Error checking editor state:`, error);
+      this.logger.error(
+        `[${this.platformId}] Verification: Error checking editor state:`,
+        error
+      );
+      // verificationSuccess remains false
     }
 
-    // Determine overall success
-    const verificationSuccess = isButtonDisabled || isEditorEmpty;
-
+    // Determine overall success (now based only on editor state)
     if (verificationSuccess) {
       this.logger.info(`[${this.platformId}] Post-click verification PASSED.`);
     } else {
-      this.logger.warn(`[${this.platformId}] Post-click verification FAILED (Button enabled AND Editor not empty).`);
+      this.logger.warn(
+        `[${this.platformId}] Post-click verification FAILED (Editor not empty or not found).`
+      );
     }
 
     return verificationSuccess;
@@ -276,6 +260,7 @@ class BasePlatform extends PlatformInterface {
    * @protected
    */
   _isVisibleElement(element) {
+    // This method remains unchanged from the previous version
     if (!element) return false;
 
     // Check for explicit hidden attributes or styles
@@ -433,9 +418,9 @@ class BasePlatform extends PlatformInterface {
             `[${this.platformId}] Text insertion step completed.`
           );
 
-          // 3. Wait
-          await this._wait(800); // Allow time for UI updates or checks
-          this.logger.info(`[${this.platformId}] Wait step completed.`);
+          // 3. Wait (Optional, can be adjusted or removed if UI updates quickly)
+          // await this._wait(800);
+          // this.logger.info(`[${this.platformId}] Initial wait step completed.`);
 
           // 4. Find Submit Button (with retries)
           this.logger.info(
@@ -447,16 +432,16 @@ class BasePlatform extends PlatformInterface {
 
           for (let attempt = 1; attempt <= maxButtonRetries; attempt++) {
             submitButton = this.findSubmitButton();
-          if (submitButton) {
-            this.logger.info(
-              `[${this.platformId}] Found submit button on attempt ${attempt}.`
-            );
-            break; // Exit loop as soon as any submit button is found
-          }
-            // If button not found OR found but disabled, wait before next attempt
+            if (submitButton) {
+              this.logger.info(
+                `[${this.platformId}] Found submit button on attempt ${attempt}.`
+              );
+              break; // Exit loop as soon as any submit button is found
+            }
+            // If button not found, wait before next attempt
             if (attempt < maxButtonRetries) {
               this.logger.info(
-                `[${this.platformId}] Submit button not ready/found on attempt ${attempt}. Retrying in ${buttonRetryDelay}ms...`
+                `[${this.platformId}] Submit button not found on attempt ${attempt}. Retrying in ${buttonRetryDelay}ms...`
               );
               await this._wait(buttonRetryDelay);
             }
@@ -480,28 +465,39 @@ class BasePlatform extends PlatformInterface {
 
           // 5. Click Submit Button Attempt
           try {
-            this.logger.info(`[${this.platformId}] Attempting submit button click...`);
+            this.logger.info(
+              `[${this.platformId}] Attempting submit button click...`
+            );
             await this._clickSubmitButton(submitButton);
             // Log success of the *attempt*, but don't rely on its return value here
-            this.logger.info(`[${this.platformId}] Submit button click attempt finished.`);
+            this.logger.info(
+              `[${this.platformId}] Submit button click attempt finished.`
+            );
           } catch (clickError) {
             // Log errors during the click attempt, but continue to verification
-            this.logger.error(`[${this.platformId}] Error occurred during _clickSubmitButton attempt (will proceed to verification):`, clickError);
+            this.logger.error(
+              `[${this.platformId}] Error occurred during _clickSubmitButton attempt (will proceed to verification):`,
+              clickError
+            );
           }
 
-          // 6. Verify Submission Attempt (always runs after click attempt)
           // Add a delay to allow the platform UI to potentially update after click
           const verificationDelay = 500; // ms delay (adjust if needed)
-          this.logger.info(`[${this.platformId}] Waiting ${verificationDelay}ms before verification...`);
+          this.logger.info(
+            `[${this.platformId}] Waiting ${verificationDelay}ms before verification...`
+          );
           await this._wait(verificationDelay);
 
+          // 6. Verify Submission Attempt (now only checks editor emptiness)
           const verificationSuccess = await this._verifySubmissionAttempted();
 
           if (verificationSuccess) {
-            this.logger.info(`[${this.platformId}] Post-click verification successful.`);
+            this.logger.info(
+              `[${this.platformId}] Post-click verification successful.`
+            );
             // --- Submission Likely Succeeded ---
             this.logger.info(
-              `[${this.platformId}] Content successfully processed and submitted (pending verification)`
+              `[${this.platformId}] Content successfully processed and submitted.`
             );
             // Clear the data after successful processing and verification
             chrome.storage.local.remove([
@@ -513,13 +509,18 @@ class BasePlatform extends PlatformInterface {
             // --- End Success Logic ---
           } else {
             // --- Verification Failed ---
-            this.logger.warn(`[${this.platformId}] Post-click verification failed. The interaction may not have been fully processed by the platform.`);
+            this.logger.warn(
+              `[${this.platformId}] Post-click verification failed. The interaction may not have been fully processed by the platform.`
+            );
             // Notify the user about the verification failure
             robustSendMessage({
               action: 'notifyError',
               error: `Verification failed after interacting with ${this.platformId}. Please check the platform tab manually.`,
             }).catch((err) =>
-              this.logger.error('Failed to send verification failure notification:', err)
+              this.logger.error(
+                'Failed to send verification failure notification:',
+                err
+              )
             );
             // Still attempt to clear storage as the process is 'done' from the extension's perspective
             chrome.storage.local.remove([
@@ -529,7 +530,9 @@ class BasePlatform extends PlatformInterface {
               STORAGE_KEYS.CONTENT_READY,
             ]);
             // Throw an error to indicate the overall process failed due to verification
-            throw new Error(`Post-click verification failed for ${this.platformId}. Interaction may not have succeeded.`);
+            throw new Error(
+              `Post-click verification failed for ${this.platformId}. Interaction may not have succeeded.`
+            );
             // --- End Verification Failed Logic ---
           }
           // --- End Template Method Steps ---
