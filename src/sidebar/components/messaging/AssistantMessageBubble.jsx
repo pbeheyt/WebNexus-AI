@@ -337,7 +337,7 @@ export const AssistantMessageBubble = memo(
                   {model}
                 </span>
               )}
-              <div className={`flex gap-1 items-center transition-opacity duration-150 ${isStreaming ? 'opacity-100' : 'opacity-0'}`}>
+              <div className={`flex gap-1 items-center transition-opacity duration-150 h-4 ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <div className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'></div>
                 <div
                   className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
