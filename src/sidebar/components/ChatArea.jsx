@@ -17,7 +17,7 @@ import React, {
   import { Tooltip } from '../../components';
   import { PlatformIcon } from '../../components/layout/PlatformIcon';
   import { useContent } from '../../contexts/ContentContext';
-  import { CONTENT_TYPES, MESSAGE_ROLES } from '../../shared/constants';
+  import { CONTENT_TYPES, CONTENT_TYPE_LABELS, MESSAGE_ROLES } from '../../shared/constants';
   import { ContentTypeIcon } from '../../components/layout/ContentTypeIcon';
   import { isInjectablePage } from '../../shared/utils/content-utils';
   import { logger } from '../../shared/logger';
@@ -123,21 +123,6 @@ import React, {
       isLoading,
     ]);
   
-    // --- Get Content Type Name ---
-    const getContentTypeName = (type) => {
-      switch (type) {
-        case CONTENT_TYPES.YOUTUBE:
-          return 'YouTube Video';
-        case CONTENT_TYPES.REDDIT:
-          return 'Reddit Post';
-        case CONTENT_TYPES.PDF:
-          return 'PDF Document';
-        case CONTENT_TYPES.GENERAL:
-          return 'Web Page';
-        default:
-          return 'Content';
-      }
-    };
   
     // --- getWelcomeMessage ---
     function getWelcomeMessage(contentType, isPageInjectable) {
@@ -623,7 +608,7 @@ import React, {
                       className='w-6 h-6 text-current'
                     />
                     <span className='text-base font-medium ml-2 select-none'>
-                      {getContentTypeName(contentType)}
+                      {CONTENT_TYPE_LABELS[contentType] || 'Content'}
                     </span>
                     <Toggle
                       id='content-extract-toggle'
