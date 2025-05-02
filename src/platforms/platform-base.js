@@ -226,15 +226,24 @@ class BasePlatform extends PlatformInterface {
         let isEditorEmpty = false;
         try {
           const editorElement = this.findEditorElement();
-          if (editorElement) {
-            isEditorEmpty = this._isEditorEmpty(editorElement);
-            if (isEditorEmpty) {
-              this.logger.info(
-                `[${this.platformId}] Verification polling PASSED: Editor is empty.`
-              );
-              resolve(true); // Success condition met
-              return;
-            }
+          
+          // Check if editor element was not found (disappeared after submit)
+          if (editorElement === null) {
+            this.logger.info(
+              `[${this.platformId}] Verification polling PASSED: Editor element no longer found (assumed submitted).`
+            );
+            resolve(true);
+            return;
+          }
+
+          // If editor exists, check if it's empty
+          isEditorEmpty = this._isEditorEmpty(editorElement);
+          if (isEditorEmpty) {
+            this.logger.info(
+              `[${this.platformId}] Verification polling PASSED: Editor is empty.`
+            );
+            resolve(true); // Success condition met
+            return;
           }
         } catch (error) {
           this.logger.error(
@@ -247,7 +256,7 @@ class BasePlatform extends PlatformInterface {
         // Check if timeout exceeded
         if (Date.now() - startTime > maxWaitTime) {
           this.logger.warn(
-            `[${this.platformId}] Verification polling FAILED: Timeout (${maxWaitTime}ms) reached and editor is still not empty.`
+            `[${this.platformId}] Verification polling FAILED: Timeout (${maxWaitTime}ms) reached and editor is still present and not empty.`
           );
           resolve(false); // Timeout reached
         } else {

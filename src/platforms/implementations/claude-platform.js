@@ -92,9 +92,6 @@ class ClaudePlatform extends BasePlatform {
       );
     }
 
-    this.logger.error(
-      `[${this.platformId}] Editor element not found using any strategy.`
-    );
     return null;
   }
 
