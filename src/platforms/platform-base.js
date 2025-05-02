@@ -208,54 +208,167 @@ class BasePlatform extends PlatformInterface {
   }
 
   /**
-   * Verifies if submission was attempted by checking submit button state and editor emptiness.
+   * Verifies if submission was likely attempted by checking UI cues after clicking the submit button.
+   * Checks if the submit button became disabled OR if the editor element became empty.
+   * @returns {Promise<boolean>} True if verification passes (button disabled or editor empty), false otherwise.
+   * @protected
+   */
+  /**
+   * Verifies if submission was likely attempted by checking UI cues after clicking the submit button.
+   * Checks if the submit button became disabled OR if the editor element became empty.
    * @returns {Promise<boolean>} True if verification passes (button disabled or editor empty), false otherwise.
    * @protected
    */
   async _verifySubmissionAttempted() {
-    this.logger.info(`[${this.platformId}] Starting submission verification`);
-    
-    // Check submit button state
-    const submitButton = this.findSubmitButton();
+    this.logger.info(`[${this.platformId}] Starting post-click verification...`);
     let isButtonDisabled = false;
-    if (submitButton) {
-      isButtonDisabled = submitButton.disabled;
-      this.logger.info(
-        `[${this.platformId}] Submit button found, disabled state: ${isButtonDisabled}`
-      );
-    } else {
-      this.logger.warn(
-        `[${this.platformId}] Could not find submit button for verification`
-      );
+    let isEditorEmpty = false;
+
+    // Check 1: Submit Button Disabled
+    try {
+      const submitButton = this.findSubmitButton(); // Re-find the button
+      if (submitButton && (submitButton.disabled || submitButton.getAttribute('aria-disabled') === 'true')) {
+        isButtonDisabled = true;
+        this.logger.info(`[${this.platformId}] Verification: Submit button is disabled.`);
+      } else if (submitButton) {
+        this.logger.info(`[${this.platformId}] Verification: Submit button is enabled.`);
+      } else {
+        this.logger.warn(`[${this.platformId}] Verification: Could not re-find submit button.`);
+      }
+    } catch (error) {
+      this.logger.error(`[${this.platformId}] Verification: Error checking submit button state:`, error);
     }
 
-    // Check editor emptiness
-    const editorElement = this.findEditorElement();
-    let isEditorEmpty = false;
-    if (editorElement) {
-      try {
+    // Check 2: Editor Cleared/Reset
+    try {
+      const editorElement = this.findEditorElement(); // Re-find the editor
+      if (editorElement) {
         isEditorEmpty = this._isEditorEmpty(editorElement);
-        this.logger.info(
-          `[${this.platformId}] Verification: Editor empty check returned: ${isEditorEmpty}`
+        if (isEditorEmpty) {
+          this.logger.info(`[${this.platformId}] Verification: Editor appears empty.`);
+        } else {
+          this.logger.info(`[${this.platformId}] Verification: Editor is not empty.`);
+        }
+      } else {
+        this.logger.warn(`[${this.platformId}] Verification: Could not re-find editor element.`);
+      }
+    } catch (error) {
+      this.logger.error(`[${this.platformId}] Verification: Error checking editor state:`, error);
+    }
+
+    // Determine overall success
+    const verificationSuccess = isButtonDisabled || isEditorEmpty;
+
+    if (verificationSuccess) {
+      this.logger.info(`[${this.platformId}] Post-click verification PASSED.`);
+    } else {
+      this.logger.warn(`[${this.platformId}] Post-click verification FAILED (Button enabled AND Editor not empty).`);
+    }
+
+    return verificationSuccess;
+  }
+
+  /**
+   * Helper method to determine if an element is considered visible and potentially interactive.
+   * Checks display, visibility, opacity, dimensions, position, and parent overflow.
+   * @param {HTMLElement} element - The element to check.
+   * @returns {boolean} True if the element seems visible, false otherwise.
+   * @protected
+   */
+  _isVisibleElement(element) {
+    if (!element) return false;
+
+    // Check for explicit hidden attributes or styles
+    if (
+      element.getAttribute('aria-hidden') === 'true' ||
+      element.style.visibility === 'hidden' ||
+      element.style.display === 'none'
+    ) {
+      this.logger.warn(
+        `[${this.platformId}] Element hidden by attribute/style:`,
+        element
+      );
+      return false;
+    }
+
+    // Check computed styles
+    const style = window.getComputedStyle(element);
+    if (
+      style.display === 'none' ||
+      style.visibility === 'hidden' ||
+      style.opacity === '0' ||
+      style.pointerEvents === 'none'
+    ) {
+      this.logger.warn(
+        `[${this.platformId}] Element hidden by computed style: display=${style.display}, visibility=${style.visibility}, opacity=${style.opacity}, pointerEvents=${style.pointerEvents}`,
+        element
+      );
+      return false;
+    }
+
+    // Check if element has zero dimensions
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      // Allow zero height for textareas which might start small
+      if (element.tagName !== 'TEXTAREA') {
+        this.logger.warn(
+          `[${this.platformId}] Element has zero dimensions: width=${rect.width}, height=${rect.height}`,
+          element
         );
-      } catch (error) {
-        this.logger.error(
-          `[${this.platformId}] Error checking editor emptiness:`,
-          error
+        return false;
+      } else {
+        this.logger.info(
+          `[${this.platformId}] Textarea has zero height, allowing as potentially visible.`
         );
       }
-    } else {
-      this.logger.warn(
-        `[${this.platformId}] Could not find editor element for verification`
-      );
     }
 
-    const verificationSuccess = isButtonDisabled || isEditorEmpty;
-    this.logger.info(
-      `[${this.platformId}] Verification ${verificationSuccess ? 'PASSED' : 'FAILED'} ` +
-      `(button disabled: ${isButtonDisabled}, editor empty: ${isEditorEmpty})`
-    );
-    return verificationSuccess;
+    // Check if element is practically off-screen (adjust threshold as needed)
+    const threshold = 5; // Small pixel threshold
+    if (
+      rect.right < threshold ||
+      rect.bottom < threshold ||
+      rect.left > window.innerWidth - threshold ||
+      rect.top > window.innerHeight - threshold
+    ) {
+      this.logger.warn(
+        `[${this.platformId}] Element is positioned off-screen:`,
+        rect,
+        element
+      );
+      return false;
+    }
+
+    // Check if the element or its parent is hidden via overflow
+    let parent = element.parentElement;
+    while (parent) {
+      const parentStyle = window.getComputedStyle(parent);
+      if (
+        parentStyle.overflow === 'hidden' ||
+        parentStyle.overflowX === 'hidden' ||
+        parentStyle.overflowY === 'hidden'
+      ) {
+        const parentRect = parent.getBoundingClientRect();
+        // Check if the element is outside the parent's visible bounds
+        if (
+          rect.top < parentRect.top ||
+          rect.bottom > parentRect.bottom ||
+          rect.left < parentRect.left ||
+          rect.right > parentRect.right
+        ) {
+          this.logger.warn(
+            `[${this.platformId}] Element hidden by parent overflow:`,
+            element,
+            parent
+          );
+          // return false; // Be cautious with this check, might be too strict
+        }
+      }
+      if (parent === document.body) break;
+      parent = parent.parentElement;
+    }
+
+    return true;
   }
 
   /**

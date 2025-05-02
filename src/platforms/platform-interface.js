@@ -13,11 +13,10 @@ class PlatformInterface {
     }
 
     /**
-     * Verify if the submission seems to have been accepted by the platform UI.
-     * This is called after attempting a click on the submit button.
-     * Checks for UI changes like the button becoming disabled or the input clearing.
-     * @returns {Promise<boolean>} True if verification passes, false otherwise.
-     * @protected Should be implemented by subclasses.
+     * Verifies if submission was likely attempted by checking UI cues after clicking the submit button.
+     * Checks if the submit button became disabled OR if the editor element became empty.
+     * @returns {Promise<boolean>} True if verification passes (button disabled or editor empty), false otherwise.
+     * @protected
      */
     async _verifySubmissionAttempted() {
         throw new Error('_verifySubmissionAttempted must be implemented by subclasses');

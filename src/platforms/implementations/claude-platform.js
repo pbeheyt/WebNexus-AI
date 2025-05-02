@@ -33,7 +33,7 @@ class ClaudePlatform extends BasePlatform {
         const editor = wrapper.querySelector(
           'div[contenteditable="true"].ProseMirror'
         );
-        if (editor && this.isVisibleElement(editor)) {
+        if (editor && this._isVisibleElement(editor)) {
           this.logger.info(
             `[${this.platformId}] Found editor using Strategy 1 (Wrapper + Contenteditable)`
           );
@@ -57,7 +57,7 @@ class ClaudePlatform extends BasePlatform {
         const editor = placeholderParagraph.closest(
           'div[contenteditable="true"].ProseMirror'
         );
-        if (editor && this.isVisibleElement(editor)) {
+        if (editor && this._isVisibleElement(editor)) {
           this.logger.info(
             `[${this.platformId}] Found editor using Strategy 2 (Placeholder Parent)`
           );
@@ -78,7 +78,7 @@ class ClaudePlatform extends BasePlatform {
       );
       // Find the first one that's visible (usually the main input)
       for (const editor of editors) {
-        if (this.isVisibleElement(editor)) {
+        if (this._isVisibleElement(editor)) {
           this.logger.info(
             `[${this.platformId}] Found editor using Strategy 3 (Visible Contenteditable)`
           );
@@ -98,31 +98,6 @@ class ClaudePlatform extends BasePlatform {
     return null;
   }
 
-  /**
-   * Helper method to determine if an element is visible and interactive
-   * @param {HTMLElement} element - The element to check
-   * @returns {boolean} True if the element is visible and interactive
-   */
-  isVisibleElement(element) {
-    if (!element) return false;
-    const style = window.getComputedStyle(element);
-    const rect = element.getBoundingClientRect();
-    const isVisible =
-      style.display !== 'none' &&
-      style.visibility !== 'hidden' &&
-      style.opacity !== '0' &&
-      element.getAttribute('aria-hidden') !== 'true' &&
-      rect.width > 0 &&
-      rect.height > 0;
-
-    if (!isVisible) {
-      this.logger.debug(
-        `[${this.platformId}] Element failed visibility check:`,
-        { element, style, rect }
-      );
-    }
-    return isVisible;
-  }
 
   /**
    * Check if a button element is currently enabled and ready for interaction.
@@ -180,7 +155,7 @@ class ClaudePlatform extends BasePlatform {
       `[${this.platformId}] Found button element via selector. Performing visibility and enabled checks...`
     );
     const isEnabled = this._isButtonEnabled(buttonElement);
-    const isVisible = this.isVisibleElement(buttonElement);
+    const isVisible = this._isVisibleElement(buttonElement);
 
     if (isEnabled && isVisible) {
       this.logger.info(
@@ -267,64 +242,6 @@ class ClaudePlatform extends BasePlatform {
     return (editorElement.textContent || editorElement.innerText || '').trim() === '';
   }
 
-  /**
-   * Verify submission by checking if the submit button is disabled or the editor is cleared.
-   * @returns {Promise<boolean>} True if verification passes, false otherwise.
-   * @protected
-   * @override
-   */
-  async _verifySubmissionAttempted() {
-    this.logger.info(`[${this.platformId}] Starting post-click verification...`);
-    let isButtonDisabled = false;
-    let isEditorEmpty = false;
-
-    // Check 1: Submit Button Disabled
-    try {
-      const submitButton = this.findSubmitButton(); // Re-find the button
-      if (submitButton && (submitButton.disabled || submitButton.getAttribute('aria-disabled') === 'true')) {
-        isButtonDisabled = true;
-        this.logger.info(`[${this.platformId}] Verification: Submit button is disabled.`);
-      } else if (submitButton) {
-        this.logger.info(`[${this.platformId}] Verification: Submit button is enabled.`);
-      } else {
-        this.logger.warn(`[${this.platformId}] Verification: Could not re-find submit button.`);
-        // Consider this potentially okay if the button disappears on submit
-      }
-    } catch (error) {
-       this.logger.error(`[${this.platformId}] Verification: Error checking submit button state:`, error);
-    }
-
-    // Check 2: Editor Cleared/Reset (Platform-Specific Nuances Might Apply)
-    try {
-      const editorElement = this.findEditorElement(); // Re-find the editor
-      if (editorElement) {
-        // Claude uses contenteditable div
-        const editorContent = editorElement.textContent || editorElement.innerText;
-        if (editorContent === null || editorContent.trim() === '') {
-           isEditorEmpty = true;
-           this.logger.info(`[${this.platformId}] Verification: Editor appears empty.`);
-        } else {
-           this.logger.info(`[${this.platformId}] Verification: Editor is not empty. Content: "${editorContent.substring(0, 50)}..."`);
-        }
-      } else {
-         this.logger.warn(`[${this.platformId}] Verification: Could not re-find editor element.`);
-         // This might be okay if the editor is replaced after submission
-      }
-    } catch (error) {
-       this.logger.error(`[${this.platformId}] Verification: Error checking editor state:`, error);
-    }
-
-    // Determine overall success
-    const verificationSuccess = isButtonDisabled || isEditorEmpty;
-
-    if (verificationSuccess) {
-      this.logger.info(`[${this.platformId}] Post-click verification PASSED.`);
-    } else {
-      this.logger.warn(`[${this.platformId}] Post-click verification FAILED (Button enabled AND Editor not empty).`);
-    }
-
-    return verificationSuccess;
-  }
 }
 
 export default ClaudePlatform;
