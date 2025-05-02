@@ -431,6 +431,72 @@ export async function storeFormattedContentForTab(tabId, formattedContent) {
  * @param {number} tabId - The ID of the tab to retrieve content for.
  * @returns {Promise<string|null>} The formatted content string, or null if not found or on error.
  */
+/**
+ * Set the context sent flag for a specific tab
+ * @param {number} tabId - The tab ID to set the flag for
+ * @param {boolean} sent - Whether context has been sent
+ * @returns {Promise<void>}
+ */
+export async function setTabContextSentFlag(tabId, sent) {
+  if (typeof tabId !== 'number') {
+    logger.background.warn(
+      'setTabContextSentFlag called with invalid tabId:',
+      tabId
+    );
+    return;
+  }
+
+  const tabIdStr = String(tabId);
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG);
+    const flags = result[STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG] || {};
+    
+    flags[tabIdStr] = sent;
+    
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG]: flags
+    });
+    logger.background.info(`Set context sent flag for tab ${tabId} to ${sent}`);
+  } catch (error) {
+    logger.background.error(
+      `Error setting context sent flag for tab ${tabId}:`,
+      error
+    );
+  }
+}
+
+/**
+ * Get the context sent flag for a specific tab
+ * @param {number} tabId - The tab ID to check
+ * @returns {Promise<boolean>} Whether context has been sent for this tab
+ */
+export async function getTabContextSentFlag(tabId) {
+  if (typeof tabId !== 'number') {
+    logger.background.warn(
+      'getTabContextSentFlag called with invalid tabId:',
+      tabId
+    );
+    return false;
+  }
+
+  const tabIdStr = String(tabId);
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG);
+    const flags = result[STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG];
+    
+    if (flags && typeof flags === 'object') {
+      return Boolean(flags[tabIdStr]);
+    }
+    return false;
+  } catch (error) {
+    logger.background.error(
+      `Error getting context sent flag for tab ${tabId}:`,
+      error
+    );
+    return false;
+  }
+}
+
 export async function getFormattedContentForTab(tabId) {
   if (typeof tabId !== 'number') {
     logger.background.warn(

@@ -19,6 +19,8 @@ import {
   storeFormattedContentForTab,
   getFormattedContentForTab,
   storeSystemPromptForTab,
+  getTabContextSentFlag,
+  setTabContextSentFlag,
 } from '../core/state-manager.js';
 import { logger } from '../../shared/logger.js';
 
@@ -281,28 +283,31 @@ export async function processContentViaApi(params) {
     // 7. Initialize streaming response (using platformId from params)
     await initializeStreamResponse(streamId, platformId, resolvedParams.model); // Include model
 
-    // 8. Determine the formatted content to include in the request based on the toggle state and content availability
+    // 8. Determine the formatted content to include in the request
     let formattedContentForRequest = null;
+    const contextAlreadySent = await getTabContextSentFlag(tabId);
 
     if (!isContentExtractionEnabled) {
       logger.background.info(`Content inclusion skipped: Toggle is OFF.`);
       formattedContentForRequest = null;
+    } else if (contextAlreadySent) {
+      logger.background.info(
+        `Content inclusion skipped: Context already sent for tab ${tabId}.`
+      );
+      formattedContentForRequest = null;
     } else {
-      // Toggle is ON, check if content is available
+      // Toggle is ON and context not sent yet
       if (shouldExtract && newlyFormattedContent) {
-        // Extraction happened now and succeeded
         formattedContentForRequest = newlyFormattedContent;
         logger.background.info(
           `Including newly extracted/formatted content for tab ${tabId}.`
         );
       } else if (initialFormattedContentExists) {
-        // Content existed before this run
         formattedContentForRequest = await getFormattedContentForTab(tabId);
         logger.background.info(
           `Including pre-existing formatted content for tab ${tabId}.`
         );
       } else {
-        // Toggle ON, but no content available (extraction didn't run, failed, or page not injectable)
         logger.background.info(
           `Content inclusion skipped: Toggle is ON, but no content available for tab ${tabId}.`
         );
@@ -323,6 +328,12 @@ export async function processContentViaApi(params) {
           storeError
         );
       }
+    }
+
+    // Set the flag *before* the API call if context is being included in this request
+    if (formattedContentForRequest !== null) {
+        await setTabContextSentFlag(tabId, true);
+        logger.background.info(`Context included in this request. Set context sent flag for tab ${tabId}.`);
     }
 
     // 10. Create unified request configuration
@@ -357,6 +368,7 @@ export async function processContentViaApi(params) {
       );
 
       // If we get here without an error, streaming completed successfully
+
       return {
         success: true,
         streamId,
