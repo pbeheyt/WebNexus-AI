@@ -6,6 +6,7 @@ import {
   isSidePanelAllowedPage,
 } from '../../shared/utils/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
+import { fetchPdfAsBase64 } from '../services/file-access-service.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
 import {
   handleProcessContentRequest,
@@ -178,4 +179,21 @@ function registerServiceHandlers() {
     'toggleNativeSidePanelAction',
     handleToggleNativeSidePanelAction
   );
+
+  // Handle PDF fetch requests for file:// URLs
+  messageHandlers.set('fetchPdfAsBase64', (message, _sender, sendResponse) => {
+    if (!message.url) {
+      sendResponse({ success: false, error: 'Missing URL in fetchPdfAsBase64 request' });
+      return false; // Synchronous response for this error
+    }
+    fetchPdfAsBase64(message.url)
+      .then(response => {
+        sendResponse(response);
+      })
+      .catch(error => {
+        logger.background.error('Unexpected error in fetchPdfAsBase64 handler:', error);
+        sendResponse({ success: false, error: error.message || 'Internal background error fetching PDF' });
+      });
+    return true; // Indicate async response
+  });
 }
