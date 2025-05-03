@@ -17,7 +17,7 @@ module.exports = {
     sidebar: './src/sidebar/index.jsx',
     'content-script': './src/content/index.js',
     'platform-content': './src/content/platform-content.js',
-    'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
+    'pdf.worker': 'pdfjs-dist/build/pdf.worker.mjs',
   },
   output: {
     filename: '[name].bundle.js',

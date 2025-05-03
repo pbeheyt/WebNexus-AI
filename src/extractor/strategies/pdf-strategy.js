@@ -1,5 +1,5 @@
 // src/extractor/strategies/pdf-strategy.js
-import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+import * as pdfjsLib from 'pdfjs-dist';
 
 import BaseExtractor from '../base-extractor.js';
 
