@@ -67,7 +67,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
 
   // Tooltip content definitions (Incorporating the base disclaimer)
   const tooltipContent = {
-    inputTokens: `Est. total input tokens (system + history + prompt) sent in the last API request.`,
+    inputTokens: `Est. total input tokens ( prompt + history + system) sent in the last API request.`,
     outputTokens: `Est. total output tokens generated in this chat session.`,
     cost: `Est. total accumulated cost for this chat session.`,
     lastCost: `Est. cost of the last API call.`,
