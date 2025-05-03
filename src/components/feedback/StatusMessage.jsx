@@ -8,13 +8,11 @@ import PropTypes from 'prop-types';
  * @param {Object} props - Component props
  * @param {string} props.message - The message to display
  * @param {string} [props.type='info'] - Message type (info, success, warning, error)
- * @param {string} [props.context='default'] - Rendering context ('popup', 'sidebar', 'default')
  * @param {string} [props.className=''] - Additional CSS classes
  */
 export function StatusMessage({
   message,
   type = 'info',
-  _context = 'default',
   className = '',
 }) {
   const typeClasses = {
@@ -37,7 +35,6 @@ export function StatusMessage({
 StatusMessage.propTypes = {
   message: PropTypes.string,
   type: PropTypes.oneOf(['info', 'success', 'warning', 'error']),
-  _context: PropTypes.string,
   className: PropTypes.string,
 };
 
