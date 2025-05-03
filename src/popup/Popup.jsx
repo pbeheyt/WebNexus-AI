@@ -51,6 +51,17 @@ export function Popup() {
   const infoButtonRef = useRef(null);
   const includeContextRef = useRef(null); // This ref will now point to the div containing label and toggle
 
+  // Fade in effect for popup
+  useEffect(() => {
+    // Use setTimeout to ensure the transition applies after the initial render
+    setTimeout(() => {
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.style.opacity = '1';
+      }
+    }, 0); // 0ms delay allows the browser to paint the initial state first
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   // Automatically disable includeContext for non-injectable pages
   useEffect(() => {
     if (!isInjectable) {
@@ -321,107 +332,106 @@ export function Popup() {
         </button>
       </AppHeader>
 
-      {/* Platform Selector */}
-      <div className='mt-4'>
-        <PlatformSelector
-          disabled={
-            !isSupported ||
-            contentLoading ||
-            isProcessingContent ||
-            isProcessing
-          }
-        />
-      </div>
+      {/* Main Content - Conditionally Rendered */}
+      {!contentLoading && (
+        <>
+          {/* Platform Selector */}
+          <div className='mt-4'>
+            <PlatformSelector
+              disabled={
+                !isSupported ||
+                contentLoading ||
+                isProcessingContent ||
+                isProcessing
+              }
+            />
+          </div>
 
-      {/* Unified Input */}
-      <div className='mt-3'>
-        {/* Container for badge/info/toggle OR non-injectable message */}
-        <div className='flex justify-between items-center mb-3 px-3'>
-          {!contentLoading &&
-            (isInjectable ? (
-              <>
-                {/* Container for Content Type, Toggle, and Tooltip Trigger */}
-                <div
-                  className={`flex items-center gap-1 w-full mt-3 cursor-default`}
-                  ref={includeContextRef} // Ref for tooltip target
-                  onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
-                  onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
-                  onFocus={() => setIsIncludeContextTooltipVisible(true)}
-                  onBlur={() => setIsIncludeContextTooltipVisible(false)}
-                  aria-describedby='include-context-tooltip'
-                >
-                  {contentTypeLabel ? (
-                    <>
-                      {/* Icon */}
-                      <ContentTypeIcon
-                        contentType={contentType}
-                        className='w-5 h-5 text-current'
-                      />
+          {/* Unified Input */}
+          <div className='mt-3'>
+            {/* Container for badge/info/toggle OR non-injectable message */}
+            <div className='flex justify-between items-center mb-3 px-3'>
+              {isInjectable ? (
+                <>
+                  {/* Container for Content Type, Toggle, and Tooltip Trigger */}
+                  <div
+                    className={`flex items-center gap-1 w-full mt-3 cursor-default`}
+                    ref={includeContextRef} // Ref for tooltip target
+                    onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
+                    onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
+                    onFocus={() => setIsIncludeContextTooltipVisible(true)}
+                    onBlur={() => setIsIncludeContextTooltipVisible(false)}
+                    aria-describedby='include-context-tooltip'
+                  >
+                    {contentTypeLabel ? (
+                      <>
+                        {/* Icon */}
+                        <ContentTypeIcon
+                          contentType={contentType}
+                          className='w-5 h-5 text-current'
+                        />
 
-                      {/* Label */}
-                      <span className='text-sm font-medium truncate ml-1 select-none cursor-default'>
-                        {contentTypeLabel}
+                        {/* Label */}
+                        <span className='text-sm font-medium truncate ml-1 select-none cursor-default'>
+                          {contentTypeLabel}
+                        </span>
+
+                        {/* Toggle */}
+                        <Toggle
+                          id='include-context-toggle'
+                          checked={includeContext}
+                          onChange={(newCheckedState) => {
+                            if (!isToggleDisabled) {
+                              setIncludeContext(newCheckedState);
+                              updateStatus(
+                                `Content inclusion ${newCheckedState ? 'enabled' : 'disabled'}`
+                              );
+                            }
+                          }}
+                          disabled={isToggleDisabled}
+                          className='w-8 h-4 ml-3'
+                        />
+                      </>
+                    ) : (
+                      <span className='text-sm text-theme-secondary select-none cursor-default'>
+                        Detecting type...
                       </span>
-
-                      {/* Toggle */}
-                      <Toggle
-                        id='include-context-toggle'
-                        checked={includeContext}
-                        onChange={(newCheckedState) => {
-                          if (!isToggleDisabled) {
-                            setIncludeContext(newCheckedState);
-                            updateStatus(
-                              `Content inclusion ${newCheckedState ? 'enabled' : 'disabled'}`
-                            );
-                          }
-                        }}
-                        disabled={isToggleDisabled}
-                        className='w-8 h-4 ml-3'
-                      />
-                    </>
-                  ) : (
-                    <span className='text-sm text-theme-secondary select-none cursor-default'>
-                      Detecting type...
-                    </span>
-                  )}
-                </div>
-              </>
-            ) : (
-              // Empty div for Non-Injectable Pages (Toggle is not shown here)
-              <div></div>
-            ))}
-          {contentLoading && (
-            <div className='text-sm text-theme-secondary w-full text-left select-none cursor-default'>
-              Loading...
+                    )}
+                  </div>
+                </>
+              ) : (
+                // Empty div for Non-Injectable Pages (Toggle is not shown here)
+                <div></div>
+              )}
             </div>
-          )}
-        </div>
 
-        <UnifiedInput
-          value={inputText}
-          onChange={setInputText}
-          onSubmit={handleProcessWithText}
-          disabled={
-            !isSupported ||
-            contentLoading ||
-            isProcessingContent ||
-            isProcessing ||
-            (includeContext && !isInjectable)
-          }
-          isProcessing={isProcessingContent || isProcessing}
-          contentType={contentType}
-          showTokenInfo={false}
-          layoutVariant='popup'
-          onCancel={null} // No cancel in popup
-        />
-      </div>
+            <UnifiedInput
+              value={inputText}
+              onChange={setInputText}
+              onSubmit={handleProcessWithText}
+              disabled={
+                !isSupported ||
+                contentLoading ||
+                isProcessingContent ||
+                isProcessing ||
+                (includeContext && !isInjectable)
+              }
+              isProcessing={isProcessingContent || isProcessing}
+              contentType={contentType}
+              showTokenInfo={false}
+              layoutVariant='popup'
+              onCancel={null} // No cancel in popup
+            />
+          </div>
 
-      {/* Status Message */}
-      <StatusMessage
-        message={statusMessage}
-        context='popup'
-        className='py-3 select-none'
-      />
+          {/* Status Message */}
+          <StatusMessage
+            message={statusMessage}
+            context='popup'
+            className='py-3 select-none'
+          />
+        </>
+      )}
 
       {/* Tooltip for Info Button */}
       <Tooltip
