@@ -14,107 +14,6 @@ class GrokPlatform extends BasePlatform {
   }
 
   /**
-   * Helper method to determine if an element is visible and interactive
-   * @param {HTMLElement} element - The element to check
-   * @returns {boolean} True if the element is visible and interactive
-   */
-  isVisibleElement(element) {
-    if (!element) return false;
-
-    // Check for explicit hidden attributes or styles
-    if (
-      element.getAttribute('aria-hidden') === 'true' ||
-      element.style.visibility === 'hidden' ||
-      element.style.display === 'none'
-    ) {
-      this.logger.warn(
-        `[${this.platformId}] Element hidden by attribute/style:`,
-        element
-      );
-      return false;
-    }
-
-    // Check computed styles
-    const style = window.getComputedStyle(element);
-    if (
-      style.display === 'none' ||
-      style.visibility === 'hidden' ||
-      style.opacity === '0' ||
-      style.pointerEvents === 'none'
-    ) {
-      this.logger.warn(
-        `[${this.platformId}] Element hidden by computed style: display=${style.display}, visibility=${style.visibility}, opacity=${style.opacity}, pointerEvents=${style.pointerEvents}`,
-        element
-      );
-      return false;
-    }
-
-    // Check if element has zero dimensions
-    const rect = element.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) {
-      // Allow zero height for textareas which might start small
-      if (element.tagName !== 'TEXTAREA') {
-        this.logger.warn(
-          `[${this.platformId}] Element has zero dimensions: width=${rect.width}, height=${rect.height}`,
-          element
-        );
-        return false;
-      } else {
-        this.logger.info(
-          `[${this.platformId}] Textarea has zero height, allowing as potentially visible.`
-        );
-      }
-    }
-
-    // Check if element is practically off-screen (adjust threshold as needed)
-    const threshold = 5; // Small pixel threshold
-    if (
-      rect.right < threshold ||
-      rect.bottom < threshold ||
-      rect.left > window.innerWidth - threshold ||
-      rect.top > window.innerHeight - threshold
-    ) {
-      this.logger.warn(
-        `[${this.platformId}] Element is positioned off-screen:`,
-        rect,
-        element
-      );
-      return false;
-    }
-
-    // Check if the element or its parent is hidden via overflow
-    let parent = element.parentElement;
-    while (parent) {
-      const parentStyle = window.getComputedStyle(parent);
-      if (
-        parentStyle.overflow === 'hidden' ||
-        parentStyle.overflowX === 'hidden' ||
-        parentStyle.overflowY === 'hidden'
-      ) {
-        const parentRect = parent.getBoundingClientRect();
-        // Check if the element is outside the parent's visible bounds
-        if (
-          rect.top < parentRect.top ||
-          rect.bottom > parentRect.bottom ||
-          rect.left < parentRect.left ||
-          rect.right > parentRect.right
-        ) {
-          this.logger.warn(
-            `[${this.platformId}] Element hidden by parent overflow:`,
-            element,
-            parent
-          );
-          // return false; // Be cautious with this check, might be too strict
-        }
-      }
-      if (parent === document.body) break;
-      parent = parent.parentElement;
-    }
-
-    return true;
-  }
-
-  /**
    * Find the active Grok editor element using more robust strategies.
    * @returns {HTMLElement|null} The editor element or null if not found
    */
@@ -131,7 +30,7 @@ class GrokPlatform extends BasePlatform {
         const editor = queryBar.querySelector(
           'textarea[dir="auto"][style*="resize: none"]'
         );
-        if (editor && this.isVisibleElement(editor)) {
+        if (editor && this._isVisibleElement(editor)) {
           this.logger.info(
             `[${this.platformId}] Found editor using Strategy 1a (Query Bar + Attributes)`
           );
@@ -139,7 +38,7 @@ class GrokPlatform extends BasePlatform {
         }
         // Simpler version within query bar if the style one fails
         const simplerEditor = queryBar.querySelector('textarea[dir="auto"]');
-        if (simplerEditor && this.isVisibleElement(simplerEditor)) {
+        if (simplerEditor && this._isVisibleElement(simplerEditor)) {
           this.logger.info(
             `[${this.platformId}] Found editor using Strategy 1b (Query Bar + dir=auto)`
           );
@@ -163,7 +62,7 @@ class GrokPlatform extends BasePlatform {
         'textarea[dir="auto"][style*="resize: none"]'
       );
       for (const editor of textareas) {
-        if (this.isVisibleElement(editor)) {
+        if (this._isVisibleElement(editor)) {
           this.logger.info(
             `[${this.platformId}] Found editor using Strategy 2 (Attributes Only)`
           );
@@ -183,7 +82,7 @@ class GrokPlatform extends BasePlatform {
         'textarea[dir="auto"]'
       );
       for (const editor of textareasDirAuto) {
-        if (this.isVisibleElement(editor)) {
+        if (this._isVisibleElement(editor)) {
           this.logger.info(
             `[${this.platformId}] Found editor using Strategy 3 (Broader dir=auto)`
           );
@@ -222,7 +121,7 @@ class GrokPlatform extends BasePlatform {
         // Check visibility *and* ensure it's not disabled
         if (
           button &&
-          this.isVisibleElement(button) &&
+          this._isVisibleElement(button) &&
           !button.disabled &&
           button.getAttribute('aria-disabled') !== 'true'
         ) {
@@ -258,7 +157,7 @@ class GrokPlatform extends BasePlatform {
         // Check visibility *and* ensure it's not disabled
         if (
           submitButton &&
-          this.isVisibleElement(submitButton) &&
+          this._isVisibleElement(submitButton) &&
           !submitButton.disabled &&
           submitButton.getAttribute('aria-disabled') !== 'true'
         ) {

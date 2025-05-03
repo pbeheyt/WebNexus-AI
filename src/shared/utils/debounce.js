@@ -13,7 +13,7 @@ export function debounce(func, wait) {
     timeout = setTimeout(later, wait); // Set a new timeout
   };
 
-  // Add a cancel method
+  // Cancel method
   debouncedFunction.cancel = () => {
     clearTimeout(timeout);
     timeout = null; // Ensure timeout ID is cleared

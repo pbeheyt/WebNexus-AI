@@ -31,7 +31,6 @@ export const AssistantMessageBubble = memo(
         model = null,
         platformIconUrl = null,
         platformId = null,
-        metadata = {},
         className = '',
         style = {},
       },
@@ -381,17 +380,6 @@ export const AssistantMessageBubble = memo(
             </div>
           </div>
 
-          {/* Metadata (Optional) */}
-          {Object.keys(metadata).length > 0 && (
-            <div className='text-xs mt-3 opacity-70 overflow-hidden text-ellipsis space-x-3'>
-              {Object.entries(metadata).map(([key, value]) => (
-                <span key={key} className='inline-block break-words'>
-                  <span className='font-medium'>{key}:</span>{' '}
-                  {typeof value === 'object' ? JSON.stringify(value) : value}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       );
     }
@@ -405,7 +393,6 @@ AssistantMessageBubble.propTypes = {
   model: PropTypes.string,
   platformIconUrl: PropTypes.string,
   platformId: PropTypes.string,
-  metadata: PropTypes.object,
   className: PropTypes.string,
   style: PropTypes.object,
 };

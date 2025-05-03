@@ -187,6 +187,13 @@ import React, {
     const lastMessage = messages[messages.length - 1];
     const secondLastMessage =
       messages.length > 1 ? messages[messages.length - 2] : null;
+
+    // --- Scrolling Effect ---
+    // This effect handles scrolling behavior within the chat area.
+    // It ensures that when a new assistant message starts streaming, the view
+    // scrolls smoothly to show the preceding user message. It also manages
+    // the visibility of the "Scroll Down" button based on the user's scroll position.
+    // It resets the initial scroll flag when an assistant finishes or a new user message appears.
   
     // --- Scrolling Effect ---
     useLayoutEffect(() => {
@@ -275,15 +282,20 @@ import React, {
       lastMessage?.isStreaming,
       secondLastMessage?.id,
       secondLastMessage?.role,
-      textSize, // Include textSize
-      checkScrollPosition, // Include checkScrollPosition
-      initialScrollCompletedForResponse, // Include this state
-      showScrollDownButton, // Include this state
-      lastMessage, // Add missing dependency
-      secondLastMessage, // Add missing dependency
+      textSize,
+      checkScrollPosition,
+      initialScrollCompletedForResponse,
+      showScrollDownButton,
+      lastMessage,
+      secondLastMessage,
     ]); // Ensure all relevant dependencies are listed
   
     // --- Layout Effect for Preceding User Message Height ---
+    // Calculates the height of the user message bubble that immediately precedes
+    // a streaming assistant message. This height is used to calculate the
+    // minimum height for the streaming assistant bubble, ensuring it fills
+    // the remaining space appropriately during streaming. Uses requestAnimationFrame
+    // for accurate height calculation after potential layout shifts.
     useLayoutEffect(() => {
       const isTargetScenario =
         messages.length >= 2 &&
@@ -321,6 +333,7 @@ import React, {
     }, [messages, precedingUserMessageHeight, textSize, requestHeightRecalculation]);
   
     // --- Manual Scroll To Bottom Function ---
+    // Utility function to programmatically scroll the chat container to the bottom.
     const scrollToBottom = useCallback((behavior = 'smooth') => {
       const scrollContainer = scrollContainerRef.current;
       if (scrollContainer) {
