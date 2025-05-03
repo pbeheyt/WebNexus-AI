@@ -32,7 +32,7 @@ WebNexus AI connects you to Gemini, ChatGPT, Claude, DeepSeek, Grok, and Mistral
 
 *   **Website Content Extraction:** Extracts the main text content from web pages. Works best on standard article/blog layouts. Complex or highly dynamic sites might result in incomplete extraction. **Tip:** For comments (YouTube, Reddit), scroll to load all desired content *before* processing the content.
 *   **Web UI Automation:** Relies on current AI website structures. Significant site changes (infrequent) might temporarily affect auto-filling; functionality is maintained via updates.
-*   **Token Estimation (Side Panel):** The token count shown is an **estimate for guidance purposes only**, calculated using OpenAI's TikToken for consistency. Actual token counts billed by platforms like Claude, Gemini, Mistral etc., may differ (often 10-30% higher) due to their unique tokenizers. Please refer to the official platform dashboard for accurate billing information
+*   **Token Estimation (Side Panel):** The token count shown is an **estimate for guidance purposes only**, calculated using OpenAI's TikToken for consistency. Actual token counts billed by platforms like Claude, Gemini, Mistral etc., may differ (often 10-30% higher) due to their unique tokenizers. Please refer to the official platform dashboard for accurate billing information.
 
 ## Getting Started
 
