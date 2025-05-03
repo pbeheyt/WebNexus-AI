@@ -166,10 +166,16 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
       </div>
 
       {/* --- Expanded Details Section --- */}
-      {showDetails && (
-        <>
-          {/* Grid for detailed token breakdown */}
-          <div className='mt-2 py-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-2'>
+      <div
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          showDetails
+            ? 'max-h-40 opacity-100 mt-2 pt-3 pb-1 border-t border-gray-200 dark:border-gray-700'
+            : 'max-h-0 opacity-0'
+        }`}
+        aria-hidden={!showDetails}
+      >
+        {/* Grid for detailed token breakdown */}
+        <div className='grid grid-cols-3 gap-2'>
             {/* Prompt tokens */}
             <div
               ref={promptRef}
@@ -231,45 +237,44 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             </div>
           </div>
 
-          {/* Context window progress bar */}
-          <div>
-            <div
-              ref={contextWindowRef}
-              className='flex items-center relative cursor-help'
-              onMouseEnter={() => setHoveredElement('contextWindow')}
-              onMouseLeave={() => setHoveredElement(null)}
-              onFocus={() => setHoveredElement('contextWindow')}
-              onBlur={() => setHoveredElement(null)}
-            >
-              <div className='h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full mr-2 select-none'>
-                <div
-                  className={`h-1.5 rounded-full ${
-                    contextData.warningLevel === 'critical'
-                      ? 'bg-red-500'
-                      : contextData.warningLevel === 'warning'
-                        ? 'bg-yellow-500'
-                        : contextData.warningLevel === 'notice'
-                          ? 'bg-blue-500'
-                          : 'bg-gray-500'
-                  }`}
-                  style={{
-                    width: `${Math.min(100, contextData.percentage || 0)}%`,
-                  }}
-                ></div>
-              </div>
-              <span className='text-xs whitespace-nowrap select-none'>
-                {Math.min(100, contextData.percentage || 0).toFixed(1)}%
-              </span>
-              <Tooltip
-                show={hoveredElement === 'contextWindow'}
-                message={tooltipContent.contextWindow}
-                position='bottom'
-                targetRef={contextWindowRef}
-              />
+        {/* Context window progress bar */}
+        <div className='mt-2'>
+          <div
+            ref={contextWindowRef}
+            className='flex items-center relative cursor-help'
+            onMouseEnter={() => setHoveredElement('contextWindow')}
+            onMouseLeave={() => setHoveredElement(null)}
+            onFocus={() => setHoveredElement('contextWindow')}
+            onBlur={() => setHoveredElement(null)}
+          >
+            <div className='h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full mr-2 select-none'>
+              <div
+                className={`h-1.5 rounded-full ${
+                  contextData.warningLevel === 'critical'
+                    ? 'bg-red-500'
+                    : contextData.warningLevel === 'warning'
+                      ? 'bg-yellow-500'
+                      : contextData.warningLevel === 'notice'
+                        ? 'bg-blue-500'
+                        : 'bg-gray-500'
+                }`}
+                style={{
+                  width: `${Math.min(100, contextData.percentage || 0)}%`,
+                }}
+              ></div>
             </div>
+            <span className='text-xs whitespace-nowrap select-none'>
+              {Math.min(100, contextData.percentage || 0).toFixed(1)}%
+            </span>
+            <Tooltip
+              show={hoveredElement === 'contextWindow'}
+              message={tooltipContent.contextWindow}
+              position='bottom'
+              targetRef={contextWindowRef}
+            />
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
