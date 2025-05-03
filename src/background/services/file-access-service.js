@@ -16,7 +16,7 @@ import { logger } from '../../shared/logger.js';
  * @param {string} url - The file:// URL of the PDF.
  * @returns {Promise<{success: boolean, base64Data?: string, error?: string}>}
  */
-export async function fetchPdfAsBase64(url) {
+async function fetchPdfAsBase64(url) {
   logger.background.info(`Attempting to fetch PDF from file URL: ${url}`);
   if (!url || !url.startsWith('file://')) {
     return { success: false, error: 'Invalid or non-file URL provided.' };
@@ -34,4 +34,29 @@ export async function fetchPdfAsBase64(url) {
     logger.background.error(`Error fetching file URL ${url}:`, error);
     return { success: false, error: error.message || 'Unknown fetch error' };
   }
+}
+
+/**
+ * Handles the request to fetch a PDF from a file URL via message passing.
+ * @param {object} message - The message object containing the URL.
+ * @param {function} sendResponse - The function to send the response.
+ */
+export async function handleFetchPdfRequest(message, sendResponse) {
+  if (!message.url) {
+    logger.background.error('handleFetchPdfRequest: Missing URL in message.');
+    // Ensure synchronous response for this specific error
+    sendResponse({ success: false, error: 'Missing URL in fetchPdfAsBase64 request' });
+    return; // Exit early
+  }
+
+  try {
+    // Call the internal (non-exported) fetch function
+    const response = await fetchPdfAsBase64(message.url);
+    sendResponse(response);
+  } catch (error) {
+    // Catch potential errors within fetchPdfAsBase64 itself if it rejects unexpectedly
+    logger.background.error('Unexpected error during fetchPdfAsBase64 execution:', error);
+    sendResponse({ success: false, error: error.message || 'Internal background error fetching PDF' });
+  }
+  // No return true here, the listener handles that
 }
