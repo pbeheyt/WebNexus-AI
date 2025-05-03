@@ -16,6 +16,7 @@
     "@babel/core": "^7.26.9",
     "@babel/preset-env": "^7.26.9",
     "@babel/preset-react": "^7.26.3",
+    "@tailwindcss/container-queries": "^0.1.0",
     "@tailwindcss/typography": "^0.5.16",
     "autoprefixer": "^10.4.16",
     "babel-loader": "^10.0.0",

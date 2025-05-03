@@ -39,7 +39,7 @@ export const SystemMessageBubble = memo(
           ref={ref}
           id={id}
           style={style}
-          className={`px-5 py-4 w-full ${className}`}
+          className={`px-5 @md:px-6 @lg:px-7 @xl:px-8 py-4 w-full ${className}`}
         >
           <div // Intermediate container: Provides the red background around the text ONLY
             className='bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-md p-3'

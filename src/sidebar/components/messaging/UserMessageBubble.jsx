@@ -70,7 +70,7 @@ export const UserMessageBubble = memo(
           ref={ref}
           id={id}
           style={style}
-          className={`group px-5 pt-4 w-full flex flex-col items-end message-group user-message relative ${className}`}
+          className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full flex flex-col items-end message-group user-message relative ${className}`}
         >
           {/* Bubble container with conditional width */}
           <div

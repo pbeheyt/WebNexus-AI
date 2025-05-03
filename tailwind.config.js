@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+const containerQueries = require('@tailwindcss/container-queries');
 module.exports = {
   content: [
     './src/**/*.{js,jsx,ts,tsx}',
@@ -63,6 +64,7 @@ module.exports = {
     },
   },
   plugins: [
+    containerQueries,
     require('@tailwindcss/typography'),
     // Original theme-aware utility classes
     function ({ addUtilities }) {

@@ -305,7 +305,7 @@ export const AssistantMessageBubble = memo(
           ref={ref}
           id={id}
           style={style}
-          className={`group px-5 pt-4 w-full message-group assistant-message relative ${className}`}
+          className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full message-group assistant-message relative ${className}`}
         >
           {/* Prose container for Markdown styling */}
           <div

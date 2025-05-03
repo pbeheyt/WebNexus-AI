@@ -646,7 +646,7 @@ import React, {
         {/* Scrollable container */}
         <div
           ref={scrollContainerRef}
-          className='flex-1 overflow-y-auto flex flex-col'
+          className='flex-1 overflow-y-auto flex flex-col @container'
           style={{ scrollbarGutter: 'stable' }}
         >
           {/* Conditional Content Inside Scrollable Container */}
