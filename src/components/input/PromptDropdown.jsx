@@ -17,43 +17,41 @@ export function PromptDropdown({
   className = '',
 }) {
   const [prompts, setPrompts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const dropdownRef = useRef(null);
 
   // Handle visibility transition
   useEffect(() => {
+    let timer;
     if (isOpen) {
-      setIsVisible(true);
+      // Use a small delay to ensure initial styles are applied before transition
+      timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 10); // 10ms delay
     } else {
-      const timer = setTimeout(() => setIsVisible(false), 300);
-      return () => clearTimeout(timer);
+      // Set visibility to false immediately on close
+      setIsVisible(false);
     }
+    // Cleanup the timer if the component unmounts or isOpen changes
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   // Fetch relevant prompts when the dropdown opens
   useEffect(() => {
     if (isOpen && contentType) {
-      setIsLoading(true);
       setError(null);
       loadRelevantPrompts(contentType)
         .then((loadedPrompts) => {
           setPrompts(loadedPrompts);
-          setIsLoading(false);
-          setIsInitialLoad(false);
         })
         .catch((err) => {
           logger.popup.error('Error loading prompts in dropdown:', err);
           setError('Failed to load prompts.');
-          setIsLoading(false);
-          setIsInitialLoad(false);
         });
     } else {
       // Reset state when closed
       setPrompts([]);
-      setIsLoading(false);
       setError(null);
     }
   }, [isOpen, contentType]);
@@ -83,11 +81,6 @@ export function PromptDropdown({
     return null;
   }
 
-  // Don't render anything during initial load to prevent flash
-  if (isLoading && isInitialLoad) {
-    return null;
-  }
-
   return (
     <div
       ref={dropdownRef}
@@ -96,25 +89,22 @@ export function PromptDropdown({
       aria-label='Select a prompt'
     >
       {error && <div className='px-3 py-1.5 text-sm text-red-500'>{error}</div>}
-      {!isLoading && !error && prompts.length === 0 && (
+      {!error && prompts.length === 0 && (
         <div className={`px-3 py-1.5 ${className} text-theme-muted`}>
           No prompts available.
         </div>
       )}
-      {!isLoading &&
-        !error &&
-        prompts.length > 0 &&
-        prompts.map((prompt) => (
-          <button
-            key={prompt.id}
-            onClick={() => onSelectPrompt(prompt)}
-            className={`block w-full text-left px-3 py-1.5 ${className} text-theme-base hover:bg-theme-hover rounded cursor-pointer whitespace-nowrap select-none`}
-            role='option'
-            aria-selected='false'
-          >
-            {prompt.name}
-          </button>
-        ))}
+      {!error && prompts.length > 0 && prompts.map((prompt) => (
+        <button
+          key={prompt.id}
+          onClick={() => onSelectPrompt(prompt)}
+          className={`block w-full text-left px-3 py-1.5 ${className} text-theme-base hover:bg-theme-hover rounded cursor-pointer whitespace-nowrap select-none overflow-hidden text-ellipsis`}
+          role='option'
+          aria-selected='false'
+        >
+          {prompt.name}
+        </button>
+      ))}
     </div>
   );
 }
