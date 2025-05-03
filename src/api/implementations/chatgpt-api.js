@@ -40,17 +40,16 @@ class ChatGptApiService extends BaseApiService {
     requestPayload.messages = messages;
 
     // Apply model parameters
-    if (params.parameterStyle === 'reasoning') {
-      requestPayload[params.tokenParameter || 'max_completion_tokens'] =
-        params.maxTokens;
-    } else {
-      requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
-      if ('temperature' in params) {
-        requestPayload.temperature = params.temperature;
-      }
-      if ('topP' in params) {
-        requestPayload.top_p = params.topP;
-      }
+    requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
+    
+    // Apply temperature if the model supports it and the value exists
+    if (params.supportsTemperature !== false && 'temperature' in params) {
+      requestPayload.temperature = params.temperature;
+    }
+
+    // Apply top_p if the model supports it and the value exists
+    if (params.supportsTopP === true && 'topP' in params) {
+      requestPayload.top_p = params.topP;
     }
 
     return {

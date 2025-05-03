@@ -164,6 +164,8 @@ class ContentFormatter {
     );
 
     // Attempt to clean JSON artifacts if necessary (keep existing logic)
+    // Safeguard against potential JSON-like string artifacts sometimes returned
+    // by the PDF extraction process. If detected, try to parse and extract the 'content' field.
     if (
       typeof contentText === 'string' &&
       contentText.startsWith('{"content":"')
