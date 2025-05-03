@@ -20,7 +20,18 @@ export function PromptDropdown({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Handle visibility transition
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+    } else {
+      const timer = setTimeout(() => setIsVisible(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   // Fetch relevant prompts when the dropdown opens
   useEffect(() => {
@@ -80,10 +91,9 @@ export function PromptDropdown({
   return (
     <div
       ref={dropdownRef}
-      className={`absolute bottom-full mb-2 right-0 z-50 overflow-y-auto bg-theme-surface border border-theme rounded-md shadow-lg p-1 min-w-48 ${className}`}
+      className={`absolute bottom-full mb-2 right-0 z-50 bg-theme-surface border border-theme rounded-md shadow-lg p-1 w-fit min-w-0 max-w-48 ${className} transition-all duration-300 ease-in-out ${isVisible ? 'opacity-100 max-h-[150px] overflow-y-auto' : 'opacity-0 max-h-0 overflow-hidden'}`}
       role='listbox'
       aria-label='Select a prompt'
-      style={{ maxHeight: '150px' }}
     >
       {error && <div className='px-3 py-1.5 text-sm text-red-500'>{error}</div>}
       {!isLoading && !error && prompts.length === 0 && (
