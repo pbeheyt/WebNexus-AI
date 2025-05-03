@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const isProduction = process.env.NODE_ENV === 'production';
 const TerserPlugin = require('terser-webpack-plugin');
 
@@ -8,6 +9,18 @@ module.exports = {
     new webpack.DefinePlugin({
       // Ensure process.env.NODE_ENV is available, default to 'development' if not set
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'node_modules/pdfjs-dist/build/pdf.worker.mjs',
+          to: 'pdf.worker.mjs'
+        },
+        {
+          from: 'node_modules/pdfjs-dist/cmaps/',
+          to: 'cmaps/'
+        }
+      ]
     })
   ],
   entry: {
@@ -17,7 +30,6 @@ module.exports = {
     sidebar: './src/sidebar/index.jsx',
     'content-script': './src/content/index.js',
     'platform-content': './src/content/platform-content.js',
-    'pdf.worker': 'pdfjs-dist/build/pdf.worker.mjs',
   },
   output: {
     filename: '[name].bundle.js',

@@ -12,7 +12,7 @@
     "sidePanel"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self'; script-src-elem 'self'"
   },
   "host_permissions": [
   "https://*.youtube.com/",
@@ -55,7 +55,9 @@
         "platform-api-config.json",
         "prompt-config.json",
         "dist/*.bundle.js",
-        "images/*.png"
+        "images/*.png",
+        "dist/pdf.worker.mjs",
+        "dist/cmaps/*"
       ],
       "matches": [
         "<all_urls>"

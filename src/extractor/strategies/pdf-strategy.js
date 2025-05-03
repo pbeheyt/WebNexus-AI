@@ -1,5 +1,5 @@
 // src/extractor/strategies/pdf-strategy.js
-import * as pdfjsLib from 'pdfjs-dist';
+import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 
 import BaseExtractor from '../base-extractor.js';
 
@@ -14,10 +14,14 @@ function _base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-// Set worker source path - make sure webpack is configured to handle this
-pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(
-  'dist/pdf.worker.bundle.js'
-);
+// Set worker source path
+GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('dist/pdf.worker.mjs');
+
+// PDF.js initialization config
+const options = {
+  cMapUrl: chrome.runtime.getURL('dist/cmaps/'),
+  cMapPacked: true,
+};
 
 class PdfExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -82,7 +86,11 @@ class PdfExtractorStrategy extends BaseExtractor {
 
       // === Common PDF Parsing Logic ===
       this.logger.info('Loading PDF document with pdfjsLib...');
-      const loadingTask = pdfjsLib.getDocument({ data: pdfDataArrayBuffer }); // Use the obtained ArrayBuffer
+      const loadingTask = getDocument({
+        data: pdfDataArrayBuffer,
+        cMapUrl: options.cMapUrl,
+        cMapPacked: options.cMapPacked
+      });
 
       const pdf = await loadingTask.promise;
       const pageCount = pdf.numPages;
