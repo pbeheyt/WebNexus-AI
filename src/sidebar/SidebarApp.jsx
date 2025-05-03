@@ -275,8 +275,8 @@ export default function SidebarApp() {
               }`}
               aria-hidden={!headerExpanded}
             >
-              {/* Render Header content only when expanded */}
-              {headerExpanded && <Header />}
+              {/* Render Header content (always mounted, hidden by parent CSS) */}
+              <Header />
             </div>
           </div>
 
