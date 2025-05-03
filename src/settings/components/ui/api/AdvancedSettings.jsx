@@ -235,6 +235,24 @@ const AdvancedSettings = ({
     setIsSaving(true);
 
     try {
+      // Required field checks
+      if (formValues.maxTokens === null || formValues.maxTokens === undefined || isNaN(formValues.maxTokens)) {
+        throw new Error('Max Tokens is required.');
+      }
+      if (formValues.includeTemperature && (formValues.temperature === null || formValues.temperature === undefined || isNaN(formValues.temperature))) {
+        throw new Error('Temperature is required when enabled.');
+      }
+      // Check Top P requirement only if supported and enabled
+      if (formValues.includeTopP && modelConfig?.supportsTopP === true && (formValues.topP === null || formValues.topP === undefined || isNaN(formValues.topP))) {
+        throw new Error('Top P is required when enabled.');
+      }
+
+      // Max length check for System Prompt (only if supported)
+      if (platform.apiConfig?.hasSystemPrompt !== false && modelConfig?.supportsSystemPrompt !== false && formValues.systemPrompt.length > 30000) {
+        throw new Error('System Prompt cannot exceed 30000 characters.');
+      }
+
+      // Range validation checks
       const maxTokensMax = modelConfig.maxTokens;
       if (formValues.maxTokens < 1 || formValues.maxTokens > maxTokensMax) {
         throw new Error(`Max tokens must be between 1 and ${maxTokensMax}`);
@@ -392,7 +410,7 @@ const AdvancedSettings = ({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className='model-advanced-settings'>
+      <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
         {/* Model specifications */}
         <div className='model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
@@ -567,6 +585,7 @@ const AdvancedSettings = ({
                 id={`${platform.id}-${selectedModelId}-system-prompt`}
                 name='systemPrompt'
                 className='system-prompt-input w-full min-h-[120px] p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md'
+                maxLength="30000"
                 placeholder='Enter a system prompt for API requests'
                 value={formValues.systemPrompt}
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}

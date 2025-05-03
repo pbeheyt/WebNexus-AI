@@ -87,11 +87,30 @@ const PromptForm = ({
       const { name, content, contentType } = formData;
 
       // Validate inputs
-      if (!name.trim() || !content.trim()) {
-        throw new Error('Name and content are required');
+      if (!name.trim()) {
+        error('Prompt Name is required.');
+        setIsSaving(false);
+        return;
+      }
+      if (name.length > 100) {
+        error('Prompt Name cannot exceed 100 characters.');
+        setIsSaving(false);
+        return;
+      }
+      if (!content.trim()) {
+        error('Prompt Content is required.');
+        setIsSaving(false);
+        return;
+      }
+      if (content.length > 30000) {
+        error('Prompt Content cannot exceed 30000 characters.');
+        setIsSaving(false);
+        return;
       }
       if (!contentType) {
-        throw new Error('Content type is required');
+        error('Content Type is required.');
+        setIsSaving(false);
+        return;
       }
 
       // Get current prompts
@@ -209,6 +228,7 @@ const PromptForm = ({
     <form
       onSubmit={handleSubmit}
       className='add-prompt-form bg-theme-surface rounded-lg p-6 border border-theme'
+      noValidate
     >
       {/* Title Section with Conditional Badge */}
       <div className='flex items-center mb-5 pb-3 border-b border-theme'>
@@ -255,7 +275,7 @@ const PromptForm = ({
           placeholder='Give your prompt a descriptive name'
           value={formData.name}
           onChange={handleChange}
-          required
+          maxLength="100"
         />
       </div>
 
@@ -270,11 +290,11 @@ const PromptForm = ({
         <textarea
           id='content'
           name='content'
-          className='w-full p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md min-h-[220px] focus-primary'
+          className='w-full p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md min-h-[220px] focus-primary break-words'
           placeholder='Enter your prompt content here...'
           value={formData.content}
           onChange={handleChange}
-          required
+          maxLength="30000"
         />
       </div>
 

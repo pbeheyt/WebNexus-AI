@@ -58,7 +58,7 @@ const PlatformDetails = ({
 
   const handleSaveCredentials = async () => {
     if (!apiKey.trim()) {
-      error('API key cannot be empty');
+      error('API Key is required.');
       return;
     }
 
