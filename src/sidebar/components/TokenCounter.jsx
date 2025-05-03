@@ -241,7 +241,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onFocus={() => setHoveredElement('contextWindow')}
               onBlur={() => setHoveredElement(null)}
             >
-              <div className='h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full mr-2'>
+              <div className='h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full mr-2 select-none'>
                 <div
                   className={`h-1.5 rounded-full ${
                     contextData.warningLevel === 'critical'
