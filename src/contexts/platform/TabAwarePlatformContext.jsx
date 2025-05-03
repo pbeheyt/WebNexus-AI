@@ -46,6 +46,12 @@ export function createTabAwarePlatformContext(options = {}) {
     const [tabId, setTabId] = useState(null);
 
     // --- Hook Orchestration ---
+    // The following hooks manage the platform and model state.
+    // They are called in a specific order due to dependencies:
+    // 1. usePlatformConfigurations: Fetches static config for all platforms.
+    // 2. useCredentialStatus: Checks which platforms have credentials (depends on configs).
+    // 3. usePlatformSelection: Determines the initially selected platform based on preferences and credential status.
+    // 4. useModelManagement: Fetches models for the selected platform and determines the active model.
 
     // 1. Fetch Platform Configurations
     const {
@@ -123,7 +129,7 @@ export function createTabAwarePlatformContext(options = {}) {
     }, []);
 
 
-    // Function to get API config (remains simple)
+    // Function to get API config
     const getPlatformApiConfig = useCallback((platformId) => {
       return ConfigService.getPlatformApiConfig(platformId);
     }, []);
