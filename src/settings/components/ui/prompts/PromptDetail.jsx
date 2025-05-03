@@ -173,10 +173,10 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     <div className='prompt-detail bg-theme-surface rounded-lg p-5 border border-theme'>
       {/* Header with Conditional Badge */}
       <div className='prompt-detail-header flex items-center justify-between mb-4 pb-3 border-b border-theme'>
-        <div className='flex items-center'>
+        <div className='flex items-center min-w-0'>
           {' '}
           {/* Wrapper for title and badge */}
-          <h3 className='prompt-detail-title text-lg font-medium text-theme-primary select-none'>
+          <h3 className='prompt-detail-title text-lg font-medium text-theme-primary select-none truncate'>
             {prompt.prompt.name}
           </h3>
           {/* Conditionally render the Default badge */}

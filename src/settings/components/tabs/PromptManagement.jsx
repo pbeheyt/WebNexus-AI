@@ -129,7 +129,7 @@ const PromptManagement = () => {
       </div>
 
       {/* Detail Panel */}
-      <div className='detail-panel flex-grow'>{detailContent}</div>
+      <div className='detail-panel flex-grow min-w-0'>{detailContent}</div>
     </div>
   );
 };
