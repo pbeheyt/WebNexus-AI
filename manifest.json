@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WebNexus AI",
-  "description": "Summarize & Interact with Web Content, PDFs & YouTube Videos using AI (ChatGPT, Gemini+) | Side Panel or Web UI",
+  "description": "Summarize & Interact with Web Content, PDFs & YouTube Videos using AI (ChatGPT, Gemini+) | Web UI or Side Panel",
   "version": "1.0.0",
   "permissions": [
     "activeTab",
