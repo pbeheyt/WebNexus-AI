@@ -282,12 +282,12 @@ import React, {
       lastMessage?.isStreaming,
       secondLastMessage?.id,
       secondLastMessage?.role,
-      textSize, // Include textSize
-      checkScrollPosition, // Include checkScrollPosition
-      initialScrollCompletedForResponse, // Include this state
-      showScrollDownButton, // Include this state
-      lastMessage, // Add missing dependency
-      secondLastMessage, // Add missing dependency
+      textSize,
+      checkScrollPosition,
+      initialScrollCompletedForResponse,
+      showScrollDownButton,
+      lastMessage,
+      secondLastMessage,
     ]); // Ensure all relevant dependencies are listed
   
     // --- Layout Effect for Preceding User Message Height ---

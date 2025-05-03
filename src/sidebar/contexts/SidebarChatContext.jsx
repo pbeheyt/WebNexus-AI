@@ -576,7 +576,7 @@ export function SidebarChatProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tabId,
-    isRefreshing, // Add isRefreshing
+    isRefreshing,
     clearTokenData,
     setMessages,
     setInputValue,
@@ -587,7 +587,7 @@ export function SidebarChatProvider({ children }) {
     isProcessing,
     isCanceling,
     cancelStream,
-    robustSendMessage, // Add robustSendMessage
+    robustSendMessage,
   ]);
 
   // --- End Utility Functions ---
