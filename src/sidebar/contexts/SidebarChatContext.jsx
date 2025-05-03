@@ -522,7 +522,6 @@ export function SidebarChatProvider({ children }) {
         setStreamingMessageId(null);
         setExtractedContentAdded(false);
         setIsCanceling(false);
-        await clearTokenData(); // Clear local token state
 
         // Notify background to clear all its relevant tab data
         logger.sidebar.info(`Requesting background to clear data for tab ${tabId}`);
@@ -540,7 +539,6 @@ export function SidebarChatProvider({ children }) {
         setStreamingMessageId(null);
         setExtractedContentAdded(false);
         setIsCanceling(false); // Ensure canceling state is reset
-        await clearTokenData();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
