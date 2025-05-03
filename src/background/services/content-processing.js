@@ -36,7 +36,7 @@ export async function processWithDefaultPromptWebUI(tab) {
     );
 
     // 1. Get the default prompt ID for this content type
-    const defaultsResult = await chrome.storage.sync.get(
+    const defaultsResult = await chrome.storage.local.get(
       STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE
     );
     const defaultPrompts =
@@ -52,7 +52,7 @@ export async function processWithDefaultPromptWebUI(tab) {
     logger.background.info(`Found default prompt ID: ${defaultPromptId}`);
 
     // 2. Get the actual prompt content
-    const promptsResult = await chrome.storage.sync.get(
+    const promptsResult = await chrome.storage.local.get(
       STORAGE_KEYS.CUSTOM_PROMPTS
     );
     const promptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
@@ -70,7 +70,7 @@ export async function processWithDefaultPromptWebUI(tab) {
     );
 
     // 3. Get the last used popup platform
-    const platformResult = await chrome.storage.sync.get(
+    const platformResult = await chrome.storage.local.get(
       STORAGE_KEYS.POPUP_PLATFORM
     );
     const platformId = platformResult[STORAGE_KEYS.POPUP_PLATFORM] || 'chatgpt';

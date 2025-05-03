@@ -14,7 +14,6 @@ import { INTERFACE_SOURCES } from '../../shared/constants';
 import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
 
-// Import the new hooks
 import {
   usePlatformConfigurations,
   useCredentialStatus,

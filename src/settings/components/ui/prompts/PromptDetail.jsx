@@ -1,5 +1,5 @@
 // src/settings/components/ui/PromptDetail.jsx
-import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
@@ -30,8 +30,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     try {
       // Get current prompts and defaults
       const [promptsResult, defaultsResult] = await Promise.all([
-        chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS),
-        chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE),
+        chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS),
+        chrome.storage.local.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE),
       ]);
       const customPromptsByType =
         promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
@@ -79,7 +79,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       }
 
       // Save updated prompts
-      await chrome.storage.sync.set({
+      await chrome.storage.local.set({
         [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType,
       });
 
@@ -103,7 +103,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         return;
       }
       try {
-        const result = await chrome.storage.sync.get(
+        const result = await chrome.storage.local.get(
           STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE
         );
         const defaults = result[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
@@ -115,7 +115,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     };
     // Listener for storage changes to update the badge dynamically
     const handleStorageChange = (changes, area) => {
-      if (area === 'sync' && changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]) {
+      if (area === 'local' && changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]) {
         const newDefaults =
           changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE].newValue || {};
         if (prompt && prompt.contentType && prompt.id) {
@@ -146,7 +146,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       return;
     }
     try {
-      const result = await chrome.storage.sync.get(
+      const result = await chrome.storage.local.get(
         STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE
       );
       const currentDefaults =
@@ -156,7 +156,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         [prompt.contentType]: prompt.id, // Set this prompt as default for its type
       };
 
-      await chrome.storage.sync.set({
+      await chrome.storage.local.set({
         [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults,
       });
       // No need to call setIsDefaultForType(true) here, the storage listener will handle it

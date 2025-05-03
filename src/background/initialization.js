@@ -25,7 +25,7 @@ async function initializeDefaultPrompts() {
     const defaultPromptsConfig = await response.json();
 
     // Fetch existing custom prompts from sync storage
-    const syncResult = await chrome.storage.sync.get(
+    const syncResult = await chrome.storage.local.get(
       STORAGE_KEYS.CUSTOM_PROMPTS
     );
     const promptsByType =
@@ -97,7 +97,7 @@ async function initializeDefaultPrompts() {
 
     // Save the potentially updated custom prompts
     if (promptsAdded) {
-      await chrome.storage.sync.set({
+      await chrome.storage.local.set({
         [STORAGE_KEYS.CUSTOM_PROMPTS]: promptsByType,
       });
       logger.background.info(
@@ -212,7 +212,7 @@ export async function handleInstallation(details) {
 
       if (platformList && platformList.length > 0) {
         const defaultPlatformId = platformList[0].id; // Use the ID of the first platform
-        await chrome.storage.sync.set({
+        await chrome.storage.local.set({
           [STORAGE_KEYS.POPUP_PLATFORM]: defaultPlatformId,
         });
         logger.background.info(

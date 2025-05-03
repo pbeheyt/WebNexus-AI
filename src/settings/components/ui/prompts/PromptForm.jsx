@@ -1,5 +1,5 @@
 // src/settings/components/ui/prompts/PromptForm.jsx
-import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
@@ -42,7 +42,7 @@ const PromptForm = ({
         return;
       }
       try {
-        const result = await chrome.storage.sync.get(
+        const result = await chrome.storage.local.get(
           STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE
         );
         const defaults = result[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
@@ -114,7 +114,7 @@ const PromptForm = ({
       }
 
       // Get current prompts
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+      const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
       const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
 
       // Initialize content type if needed
@@ -148,7 +148,7 @@ const PromptForm = ({
           // Content type has changed, check if it's allowed
 
           // Fetch the current default prompts map
-          const defaultsResult = await chrome.storage.sync.get(
+          const defaultsResult = await chrome.storage.local.get(
             STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE
           );
           const currentDefaults =
@@ -199,7 +199,7 @@ const PromptForm = ({
       }
 
       // Save to storage
-      await chrome.storage.sync.set({
+      await chrome.storage.local.set({
         [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType,
       });
 

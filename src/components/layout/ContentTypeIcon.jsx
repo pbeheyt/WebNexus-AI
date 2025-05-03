@@ -2,9 +2,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { CONTENT_TYPES } from '../../shared/constants'; // Import constants
+import { CONTENT_TYPES } from '../../shared/constants';
 
-// --- SVG Generation Logic (Moved from utils) ---
+// --- SVG Generation Logic ---
 function getContentTypeIconSvgInternal(contentType) {
   let iconSvg = '';
   // Define colors used within SVGs

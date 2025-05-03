@@ -26,8 +26,8 @@ const PromptList = ({
       try {
         // Fetch both custom prompts and default settings
         const [promptsResult, defaultsResult] = await Promise.all([
-          chrome.storage.sync.get(STORAGE_KEYS.CUSTOM_PROMPTS),
-          chrome.storage.sync.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE),
+          chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS),
+          chrome.storage.local.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE),
         ]);
 
         // Process custom prompts
@@ -81,7 +81,7 @@ const PromptList = ({
   // Effect to listen for changes in default prompts storage
   useEffect(() => {
     const handleStorageChange = (changes, area) => {
-      if (area === 'sync' && changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]) {
+      if (area === 'local' && changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]) {
         logger.settings.info('Default prompts changed, reloading defaults...');
         const newDefaults =
           changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE].newValue || {};
