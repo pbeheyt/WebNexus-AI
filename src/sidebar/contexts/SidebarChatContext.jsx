@@ -45,7 +45,6 @@ export function SidebarChatProvider({ children }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState(null);
-  const [, setContextStatus] = useState({ warningLevel: 'none' }); // Internal state only (unused)
   const [stableContextStatus, setStableContextStatus] = useState({ warningLevel: 'none' });
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
@@ -273,7 +272,6 @@ export function SidebarChatProvider({ children }) {
     const updateContextStatus = async () => {
       if (!tabId || !modelConfigData) {
         // Don't update stableContextStatus - keep previous valid state
-        setContextStatus({ warningLevel: 'none' });
         return;
       }
       try {
@@ -282,10 +280,8 @@ export function SidebarChatProvider({ children }) {
         if (status && typeof status === 'object') {
           setStableContextStatus(status);
         }
-        setContextStatus(status);
       } catch (error) {
         logger.sidebar.error('Error calculating context status:', error);
-        setContextStatus({ warningLevel: 'none' });
         // Don't update stableContextStatus on error - keep previous valid state
       }
     };
