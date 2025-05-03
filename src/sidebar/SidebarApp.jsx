@@ -21,7 +21,7 @@ import { useSidebarChat } from './contexts/SidebarChatContext';
 
 export default function SidebarApp() {
   const { tabId, setTabId } = useSidebarPlatform();
-  const { resetCurrentTabData } = useSidebarChat();
+  const { resetCurrentTabData, isRefreshing } = useSidebarChat();
   const { updateContentContext } = useContent();
   const { textSize } = useUI();
   const [isReady, setIsReady] = useState(false);
@@ -253,6 +253,7 @@ export default function SidebarApp() {
             <AppHeader
               showRefreshButton={true}
               onRefreshClick={resetCurrentTabData}
+              isRefreshing={isRefreshing}
               isExpanded={headerExpanded}
               onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
               showExpandToggle={true}
@@ -278,6 +279,15 @@ export default function SidebarApp() {
               {headerExpanded && <Header />}
             </div>
           </div>
+
+          {/* Refresh overlay */}
+          {isReady && tabId && isRefreshing && (
+            <div className="absolute inset-0 bg-theme-primary/75 dark:bg-theme-primary/75 z-20 flex items-center justify-center pointer-events-auto">
+              <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status">
+                <span className="sr-only">Refreshing...</span>
+              </div>
+            </div>
+          )}
 
           {/* Ensure ChatArea takes remaining space */}
           <ChatArea

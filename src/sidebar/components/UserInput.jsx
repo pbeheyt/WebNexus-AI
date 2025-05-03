@@ -21,6 +21,7 @@ export function UserInput({ className = '' }) {
     cancelStream,
     isProcessing,
     isCanceling,
+    isRefreshing,
     tokenStats,
     contextStatus,
   } = useSidebarChat();
@@ -43,7 +44,7 @@ export function UserInput({ className = '' }) {
       onChange={handleInputChange}
       onSubmit={handleSend}
       onCancel={handleCancel}
-      disabled={!hasAnyPlatformCredentials || (isProcessing && isCanceling)}
+      disabled={!hasAnyPlatformCredentials || (isProcessing && isCanceling) || isRefreshing}
       isProcessing={isProcessing}
       isCanceling={isCanceling}
       placeholder='Type a message or select a prompt...'

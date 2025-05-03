@@ -54,6 +54,7 @@ export function SidebarChatProvider({ children }) {
   const [modelConfigData, setModelConfigData] = useState(null);
   const [stableModelConfigData, setStableModelConfigData] = useState(null);
   const [stableTokenStats, setStableTokenStats] = useState(TokenManagementService._getEmptyStats());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Refs remain in the context as they are shared between hooks/context logic
   const batchedStreamingContentRef = useRef('');
@@ -503,48 +504,79 @@ export function SidebarChatProvider({ children }) {
       logger.sidebar.warn('resetCurrentTabData called without a valid tabId.');
       return;
     }
+    // Prevent concurrent refreshes
+    if (isRefreshing) {
+        logger.sidebar.warn('Refresh already in progress. Ignoring request.');
+        return;
+    }
+
     if (
       window.confirm(
         'Are you sure you want to clear all chat history and data for this tab? This action cannot be undone.'
       )
     ) {
+      // Set refreshing state immediately
+      setIsRefreshing(true);
+
       try {
+        // 1. Cancel any ongoing stream
         if (streamingMessageId && isProcessing && !isCanceling) {
           logger.sidebar.info(
             'Refresh requested: Cancelling ongoing stream first...'
           );
-          await cancelStream(); // Call cancelStream from the hook
+          await cancelStream(); // Wait for cancellation attempt
           logger.sidebar.info('Stream cancellation attempted.');
         }
-        // Reset local state first
-        setMessages([]);
-        setInputValue('');
-        setStreamingMessageId(null);
-        setExtractedContentAdded(false);
-        setIsCanceling(false);
-        await clearTokenData(); // Clear associated tokens and reset local state
 
-        // Notify background to clear all its relevant tab data
+        // 2. Notify background to clear its data (attempt and log, but don't block local reset on failure)
         logger.sidebar.info(`Requesting background to clear data for tab ${tabId}`);
-        const clearResponse = await robustSendMessage({ action: 'clearTabData', tabId: tabId });
-        if (!clearResponse || !clearResponse.success) {
-            logger.sidebar.error('Background failed to confirm tab data clear:', clearResponse?.error);
-        } else {
-            logger.sidebar.info(`Background confirmed clearing data for tab ${tabId}`);
+        try {
+            const clearResponse = await robustSendMessage({ action: 'clearTabData', tabId: tabId });
+            if (clearResponse && clearResponse.success) {
+                logger.sidebar.info(`Background confirmed clearing data for tab ${tabId}`);
+            } else {
+                logger.sidebar.error('Background failed to confirm tab data clear:', clearResponse?.error);
+                // Proceed with local reset even if background fails
+            }
+        } catch (sendError) {
+             logger.sidebar.error('Error sending clearTabData message to background:', sendError);
+             // Proceed with local reset despite background communication failure
         }
-      } catch (error) {
-        logger.sidebar.error('Failed to reset tab data:', error);
-        // Attempt to reset local state even on error
+
+        // 3. Reset local state *after* attempting background clear
+        logger.sidebar.info('Resetting local sidebar state...');
         setMessages([]);
         setInputValue('');
         setStreamingMessageId(null);
         setExtractedContentAdded(false);
-        setIsCanceling(false); // Ensure canceling state is reset
+        setIsCanceling(false); // Ensure canceling state is reset if cancellation happened
+        await clearTokenData(); // Clear associated tokens and reset local token state
+        logger.sidebar.info('Local sidebar state reset complete.');
+
+      } catch (error) {
+        // Catch errors primarily from stream cancellation or clearTokenData
+        logger.sidebar.error('Error during the refresh process (excluding background communication):', error);
+        // Attempt to reset local state even on these errors
+        try {
+            setMessages([]);
+            setInputValue('');
+            setStreamingMessageId(null);
+            setExtractedContentAdded(false);
+            setIsCanceling(false);
+            await clearTokenData();
+        } catch (resetError) {
+            logger.sidebar.error('Error during fallback state reset:', resetError);
+        }
+      } finally {
+        // 4. ALWAYS turn off refreshing state
+        logger.sidebar.info('Setting isRefreshing to false in finally block.');
+        setIsRefreshing(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tabId,
+    isRefreshing, // Add isRefreshing
     clearTokenData,
     setMessages,
     setInputValue,
@@ -555,6 +587,7 @@ export function SidebarChatProvider({ children }) {
     isProcessing,
     isCanceling,
     cancelStream,
+    robustSendMessage, // Add robustSendMessage
   ]);
 
   // --- End Utility Functions ---
@@ -572,6 +605,7 @@ export function SidebarChatProvider({ children }) {
         modelConfigData: stableModelConfigData,
         isProcessing,
         isCanceling,
+        isRefreshing,
         apiError: processingError,
         contentType,
         tokenStats: stableTokenStats,

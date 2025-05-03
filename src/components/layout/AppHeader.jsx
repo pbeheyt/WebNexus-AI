@@ -22,6 +22,7 @@ export function AppHeader({
   onClose,
   onRefreshClick,
   isExpanded = false,
+  isRefreshing = false,
   onToggleExpand = () => {},
   showExpandToggle = false,
   className = '',
@@ -134,12 +135,19 @@ export function AppHeader({
         {showRefreshButton && (
           <button
             onClick={
-              typeof onRefreshClick === 'function' ? onRefreshClick : undefined
+              typeof onRefreshClick === 'function' && !isRefreshing ? onRefreshClick : undefined
             }
-            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-            title='Clear chat'
+            className={`p-1 rounded transition-colors ${
+              isRefreshing
+                ? 'text-theme-disabled cursor-not-allowed'
+                : 'text-theme-secondary hover:text-primary hover:bg-theme-active'
+            }`}
+            title={isRefreshing ? 'Refreshing...' : 'Clear chat'}
+            disabled={isRefreshing}
           >
-            <RefreshIcon className='w-4 h-4 select-none' />
+            <RefreshIcon className={`w-4 h-4 select-none ${
+              isRefreshing ? 'animate-spin' : ''
+            }`} />
           </button>
         )}
 
@@ -179,6 +187,7 @@ AppHeader.propTypes = {
   onClose: PropTypes.func,
   onRefreshClick: PropTypes.func,
   isExpanded: PropTypes.bool,
+  isRefreshing: PropTypes.bool,
   onToggleExpand: PropTypes.func,
   showExpandToggle: PropTypes.bool,
   className: PropTypes.string,
