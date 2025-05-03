@@ -522,6 +522,7 @@ export function SidebarChatProvider({ children }) {
         setStreamingMessageId(null);
         setExtractedContentAdded(false);
         setIsCanceling(false);
+        await clearTokenData(); // Clear associated tokens and reset local state
 
         // Notify background to clear all its relevant tab data
         logger.sidebar.info(`Requesting background to clear data for tab ${tabId}`);
