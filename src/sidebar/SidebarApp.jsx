@@ -299,7 +299,7 @@ export default function SidebarApp() {
           {/* User input at the bottom - Wrap to attach ref */}
           <div
             ref={userInputRef}
-            className='flex-shrink-0 relative z-10 border-t border-theme'
+            className='flex-shrink-0 relative z-10 border-t border-theme select-none'
           >
             <UserInput className='' />
           </div>
