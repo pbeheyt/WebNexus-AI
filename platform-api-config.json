@@ -2,444 +2,703 @@
   "aiPlatforms": {
     "gemini": {
       "endpoint": "https://generativelanguage.googleapis.com/v1/models/{model}:generateContent",
-      "minTemperature": 0.0,
-      "maxTemperature": 2.0,
-      "temperature": 0.7,
-      "topP": 0.9,
-      "minTopP": 0.0,
-      "maxTopP": 1.0,
+      "temperature": {
+        "min": 0.0,
+        "max": 2.0,
+        "default": 0.7
+      },
+      "topP": {
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.9
+      },
+      "auth": {
+        "type": "query",
+        "paramName": "key"
+      },
+      "apiStructure": {
+        "supportsSystemPrompt": true
+      },
+      "defaultModel": "gemini-2.0-flash",
+      "requiresModel": true,
       "models": [
         {
           "id": "gemini-2.5-pro-exp-03-25",
           "description": "Most powerful reasoning model (Experimental).",
-          "maxTokens": 65536,
-          "parameterStyle": "standard",
-          "contextWindow": 1048576,
-          "inputTokenPrice": 0.0,
-          "outputTokenPrice": 0.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "maxOutputTokens",
-          "supportsSystemPrompt": true,
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 65536,
+            "parameterName": "maxOutputTokens",
+            "contextWindow": 1048576
+          },
+          "pricing": {
+            "inputTokenPrice": 0.0,
+            "outputTokenPrice": 0.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "gemini-2.5-pro-preview-03-25",
           "description": "Most powerful reasoning model (Preview).",
-          "maxTokens": 65536,
-          "parameterStyle": "standard",
-          "contextWindow": 1048576,
-          "inputTokenPrice": 1.25,
-          "outputTokenPrice": 10.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "maxOutputTokens",
-          "supportsSystemPrompt": true,
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 65536,
+            "parameterName": "maxOutputTokens",
+            "contextWindow": 1048576
+          },
+          "pricing": {
+            "inputTokenPrice": 1.25,
+            "outputTokenPrice": 10.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "gemini-2.5-flash-preview-04-17",
           "description": "Best price-performance model, well-rounded capabilities.",
-          "maxTokens": 65536,
-          "parameterStyle": "standard",
-          "contextWindow": 1048576,
-          "inputTokenPrice": 0.15,
-          "outputTokenPrice": 0.6,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "maxOutputTokens",
-          "supportsSystemPrompt": true,
-          "hasThinking": true,
-          "thinkingIsToggleable": true,
-          "thinkingPricing": {
+          "tokens": {
+            "maxOutput": 65536,
+            "parameterName": "maxOutputTokens",
+            "contextWindow": 1048576
+          },
+          "pricing": {
             "inputTokenPrice": 0.15,
-            "outputTokenPrice": 3.50
+            "outputTokenPrice": 0.6
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": true,
+            "pricing": {
+              "inputTokenPrice": 0.15,
+              "outputTokenPrice": 3.50
+            }
           }
         },
         {
           "id": "gemini-2.0-flash",
           "description": "Balanced multimodal model delivering excellent performance across all tasks.",
-          "maxTokens": 8192,
-          "parameterStyle": "standard",
-          "contextWindow": 1048576,
-          "inputTokenPrice": 0.1,
-          "outputTokenPrice": 0.7,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "supportsSystemPrompt": false,
-          "tokenParameter": "maxOutputTokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 8192,
+            "parameterName": "maxOutputTokens",
+            "contextWindow": 1048576
+          },
+          "pricing": {
+            "inputTokenPrice": 0.1,
+            "outputTokenPrice": 0.7
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": false,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "gemini-2.0-flash-lite",
           "description": "Cost-effective and low-latency model.",
-          "maxTokens": 8192,
-          "parameterStyle": "standard",
-          "contextWindow": 1048576,
-          "inputTokenPrice": 0.075,
-          "outputTokenPrice": 0.3,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "supportsSystemPrompt": false,
-          "tokenParameter": "maxOutputTokens",
-          "hasThinking": false,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 8192,
+            "parameterName": "maxOutputTokens",
+            "contextWindow": 1048576
+          },
+          "pricing": {
+            "inputTokenPrice": 0.075,
+            "outputTokenPrice": 0.3
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": false,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": false,
+            "toggleable": false
+          }
         }
-      ],
-      "defaultModel": "gemini-2.0-flash",
-      "requiresModel": true,
-      "authType": "query",
-      "authParamName": "key",
-      "hasSystemPrompt": true
+      ]
     },
     "chatgpt": {
       "endpoint": "https://api.openai.com/v1/chat/completions",
-      "minTemperature": 0.0,
-      "maxTemperature": 2.0,
-      "temperature": 0.5,
-      "topP": 0.9,
-      "minTopP": 0.0,
-      "maxTopP": 1.0,
+      "temperature": {
+        "min": 0.0,
+        "max": 2.0,
+        "default": 0.5
+      },
+      "topP": {
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.9
+      },
+      "auth": {
+        "type": "bearer",
+        "headerName": "Authorization"
+      },
+      "apiStructure": {
+        "supportsSystemPrompt": true
+      },
+      "defaultModel": "gpt-4.1-mini",
+      "requiresModel": true,
       "models": [
         {
           "id": "gpt-4.1",
           "description": "Flagship model for complex tasks.",
-          "maxTokens": 32768,
-          "parameterStyle": "standard",
-          "contextWindow": 1047576,
-          "inputTokenPrice": 2.0,
-          "outputTokenPrice": 8.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 32768,
+            "parameterName": "max_tokens",
+            "contextWindow": 1047576
+          },
+          "pricing": {
+            "inputTokenPrice": 2.0,
+            "outputTokenPrice": 8.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "gpt-4.1-mini",
           "description": "Balanced for intelligence, speed, and cost.",
-          "maxTokens": 32768,
-          "parameterStyle": "standard",
-          "contextWindow": 1047576,
-          "inputTokenPrice": 0.4,
-          "outputTokenPrice": 1.6,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 32768,
+            "parameterName": "max_tokens",
+            "contextWindow": 1047576
+          },
+          "pricing": {
+            "inputTokenPrice": 0.4,
+            "outputTokenPrice": 1.6
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "gpt-4.1-nano",
           "description": "Fastest, most cost-effective model.",
-          "maxTokens": 32768,
-          "parameterStyle": "standard",
-          "contextWindow": 1047576,
-          "inputTokenPrice": 0.1,
-          "outputTokenPrice": 0.4,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": false,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 32768,
+            "parameterName": "max_tokens",
+            "contextWindow": 1047576
+          },
+          "pricing": {
+            "inputTokenPrice": 0.1,
+            "outputTokenPrice": 0.4
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": false,
+            "toggleable": false
+          }
         },
         {
           "id": "o3",
           "description": "Most powerful reasoning model.",
-          "maxTokens": 100000,
-          "parameterStyle": "reasoning",
-          "tokenParameter": "max_completion_tokens",
-          "contextWindow": 200000,
-          "inputTokenPrice": 10.0,
-          "outputTokenPrice": 40.0,
-          "supportsTemperature": false,
-          "supportsTopP": false,
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 100000,
+            "parameterName": "max_completion_tokens",
+            "contextWindow": 200000
+          },
+          "pricing": {
+            "inputTokenPrice": 10.0,
+            "outputTokenPrice": 40.0
+          },
+          "capabilities": {
+            "supportsTemperature": false,
+            "supportsTopP": false,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "reasoning"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "o4-mini",
           "description": "Fast, flexible, and intelligent reasoning model.",
-          "maxTokens": 100000,
-          "parameterStyle": "reasoning",
-          "tokenParameter": "max_completion_tokens",
-          "contextWindow": 200000,
-          "inputTokenPrice": 1.1,
-          "outputTokenPrice": 4.4,
-          "supportsTemperature": false,
-          "supportsTopP": false,
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 100000,
+            "parameterName": "max_completion_tokens",
+            "contextWindow": 200000
+          },
+          "pricing": {
+            "inputTokenPrice": 1.1,
+            "outputTokenPrice": 4.4
+          },
+          "capabilities": {
+            "supportsTemperature": false,
+            "supportsTopP": false,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "reasoning"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         }
-      ],
-      "defaultModel": "gpt-4.1-mini",
-      "requiresModel": true,
-      "authType": "bearer",
-      "authHeaderName": "Authorization",
-      "hasSystemPrompt": true
+      ]
     },
     "claude": {
       "endpoint": "https://api.anthropic.com/v1/messages",
-      "minTemperature": -1.0,
-      "maxTemperature": 1.0,
-      "temperature": 0.5,
-      "topP": 0.7,
-      "minTopP": 0.0,
-      "maxTopP": 1.0,
+      "temperature": {
+        "min": -1.0,
+        "max": 1.0,
+        "default": 0.5
+      },
+      "topP": {
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.7
+      },
+      "auth": {
+        "type": "header",
+        "headerName": "x-api-key"
+      },
+      "apiStructure": {
+        "supportsSystemPrompt": true
+      },
+      "defaultModel": "claude-3-5-haiku-latest",
+      "requiresModel": true,
       "models": [
         {
           "id": "claude-3-7-sonnet-latest",
           "description": "Most intelligent model, first hybrid reasoning model.",
-          "maxTokens": 8192,
-          "parameterStyle": "standard",
-          "contextWindow": 200000,
-          "inputTokenPrice": 3.0,
-          "outputTokenPrice": 15.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 8192,
+            "parameterName": "max_tokens",
+            "contextWindow": 200000
+          },
+          "pricing": {
+            "inputTokenPrice": 3.0,
+            "outputTokenPrice": 15.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "claude-3-5-haiku-latest",
           "description": "Fastest model, balancing speed and intelligence.",
-          "maxTokens": 8192,
-          "parameterStyle": "standard",
-          "contextWindow": 200000,
-          "inputTokenPrice": 0.8,
-          "outputTokenPrice": 4.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 8192,
+            "parameterName": "max_tokens",
+            "contextWindow": 200000
+          },
+          "pricing": {
+            "inputTokenPrice": 0.8,
+            "outputTokenPrice": 4.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "claude-3-5-sonnet-latest",
           "description": "High-intelligence model balancing capability and speed.",
-          "maxTokens": 8192,
-          "parameterStyle": "standard",
-          "contextWindow": 200000,
-          "inputTokenPrice": 3.0,
-          "outputTokenPrice": 15.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 8192,
+            "parameterName": "max_tokens",
+            "contextWindow": 200000
+          },
+          "pricing": {
+            "inputTokenPrice": 3.0,
+            "outputTokenPrice": 15.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "claude-3-opus-latest",
           "description": "Powerful model for complex tasks. Top-level intelligence and understanding.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 200000,
-          "inputTokenPrice": 15.0,
-          "outputTokenPrice": 75.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 200000
+          },
+          "pricing": {
+            "inputTokenPrice": 15.0,
+            "outputTokenPrice": 75.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         }
-      ],
-      "defaultModel": "claude-3-5-haiku-latest",
-      "requiresModel": true,
-      "authType": "header",
-      "authHeaderName": "x-api-key",
-      "hasSystemPrompt": true
+      ]
     },
     "deepseek": {
       "endpoint": "https://api.deepseek.com/v1/chat/completions",
-      "minTemperature": 0.0,
-      "maxTemperature": 2.0,
-      "minTopP": 0.1,
-      "maxTopP": 1.0,
-      "temperature": 1.0,
-      "topP": 0.9,
+      "temperature": {
+        "min": 0.0,
+        "max": 2.0,
+        "default": 1.0
+      },
+      "topP": {
+        "min": 0.1,
+        "max": 1.0,
+        "default": 0.9
+      },
+      "auth": {
+        "type": "bearer",
+        "headerName": "Authorization"
+      },
+      "apiStructure": {
+        "supportsSystemPrompt": true
+      },
+      "defaultModel": "deepseek-chat",
+      "requiresModel": true,
       "models": [
         {
           "id": "deepseek-chat",
           "description": "General chat model.",
-          "maxTokens": 8000,
-          "parameterStyle": "standard",
-          "contextWindow": 64000,
-          "inputTokenPrice": 0.07,
-          "outputTokenPrice": 1.1,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": false,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 8000,
+            "parameterName": "max_tokens",
+            "contextWindow": 64000
+          },
+          "pricing": {
+            "inputTokenPrice": 0.07,
+            "outputTokenPrice": 1.1
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": false,
+            "toggleable": false
+          }
         },
         {
           "id": "deepseek-reasoner",
           "description": "Reasoning model featuring Chain of Thought capabilities.",
-          "maxTokens": 8000,
-          "parameterStyle": "standard",
-          "contextWindow": 64000,
-          "inputTokenPrice": 0.14,
-          "outputTokenPrice": 2.19,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 8000,
+            "parameterName": "max_tokens",
+            "contextWindow": 64000
+          },
+          "pricing": {
+            "inputTokenPrice": 0.14,
+            "outputTokenPrice": 2.19
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         }
-      ],
-      "defaultModel": "deepseek-chat",
-      "requiresModel": true,
-      "authType": "bearer",
-      "authHeaderName": "Authorization",
-      "hasSystemPrompt": true
+      ]
     },
     "grok": {
       "endpoint": "https://api.x.ai/v1/chat/completions",
-      "minTemperature": 0.0,
-      "maxTemperature": 2.0,
-      "minTopP": 0.01,
-      "maxTopP": 1.0,
-      "temperature": 0.7,
-      "topP": 0.9,
+      "temperature": {
+        "min": 0.0,
+        "max": 2.0,
+        "default": 0.7
+      },
+      "topP": {
+        "min": 0.01,
+        "max": 1.0,
+        "default": 0.9
+      },
+      "auth": {
+        "type": "bearer",
+        "headerName": "Authorization"
+      },
+      "apiStructure": {
+        "supportsSystemPrompt": true
+      },
+      "defaultModel": "grok-3-mini-latest",
+      "requiresModel": true,
       "models": [
         {
           "id": "grok-3-latest",
           "description": "Flagship model excelling at enterprise tasks with deep domain knowledge.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 131072,
-          "inputTokenPrice": 3.0,
-          "outputTokenPrice": 15.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 131072
+          },
+          "pricing": {
+            "inputTokenPrice": 3.0,
+            "outputTokenPrice": 15.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "grok-3-fast-latest",
           "description": "Faster version of Grok 3, lower latency at a higher cost.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 131072,
-          "inputTokenPrice": 5.0,
-          "outputTokenPrice": 25.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 131072
+          },
+          "pricing": {
+            "inputTokenPrice": 5.0,
+            "outputTokenPrice": 25.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "grok-3-mini-latest",
           "description": "Fast, smart, good for logic tasks without deep domain needs.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 131072,
-          "inputTokenPrice": 0.3,
-          "outputTokenPrice": 0.5,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 131072
+          },
+          "pricing": {
+            "inputTokenPrice": 0.3,
+            "outputTokenPrice": 0.5
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "grok-3-mini-fast-latest",
           "description": "Faster version of Grok 3 Mini, lower latency at a higher cost.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 131072,
-          "inputTokenPrice": 0.6,
-          "outputTokenPrice": 4.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 131072
+          },
+          "pricing": {
+            "inputTokenPrice": 0.6,
+            "outputTokenPrice": 4.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         }
-      ],
-      "defaultModel": "grok-3-mini-latest",
-      "requiresModel": true,
-      "authType": "bearer",
-      "authHeaderName": "Authorization",
-      "hasSystemPrompt": true
+      ]
     },
     "mistral": {
       "endpoint": "https://api.mistral.ai/v1/chat/completions",
-      "minTemperature": 0.0,
-      "maxTemperature": 1.5,
-      "temperature": 0.3,
-      "topP": 0.7,
-      "minTopP": 0.0,
-      "maxTopP": 1.0,
+      "temperature": {
+        "min": 0.0,
+        "max": 1.5,
+        "default": 0.3
+      },
+      "topP": {
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.7
+      },
+      "auth": {
+        "type": "bearer",
+        "headerName": "Authorization"
+      },
+      "apiStructure": {
+        "supportsSystemPrompt": true
+      },
+      "defaultModel": "mistral-small-latest",
+      "requiresModel": true,
       "models": [
         {
           "id": "mistral-large-latest",
           "description": "Top-tier reasoning model for complex tasks.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 131000,
-          "inputTokenPrice": 2.0,
-          "outputTokenPrice": 6.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 131000
+          },
+          "pricing": {
+            "inputTokenPrice": 2.0,
+            "outputTokenPrice": 6.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "mistral-small-latest",
           "description": "Leading small model.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 131000,
-          "inputTokenPrice": 0.0,
-          "outputTokenPrice": 0.0,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": false,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 131000
+          },
+          "pricing": {
+            "inputTokenPrice": 0.0,
+            "outputTokenPrice": 0.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": false,
+            "toggleable": false
+          }
         },
         {
           "id": "codestral-latest",
           "description": "Cutting-edge model specialized for coding tasks.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 256000,
-          "inputTokenPrice": 0.3,
-          "outputTokenPrice": 0.9,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": true,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 256000
+          },
+          "pricing": {
+            "inputTokenPrice": 0.3,
+            "outputTokenPrice": 0.9
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
         },
         {
           "id": "mistral-saba-latest",
           "description": "Efficient model focused on Middle East & South Asia languages.",
-          "maxTokens": 4096,
-          "parameterStyle": "standard",
-          "contextWindow": 32000,
-          "inputTokenPrice": 0.2,
-          "outputTokenPrice": 0.6,
-          "supportsTemperature": true,
-          "supportsTopP": true,
-          "tokenParameter": "max_tokens",
-          "hasThinking": false,
-          "thinkingIsToggleable": false
+          "tokens": {
+            "maxOutput": 4096,
+            "parameterName": "max_tokens",
+            "contextWindow": 32000
+          },
+          "pricing": {
+            "inputTokenPrice": 0.2,
+            "outputTokenPrice": 0.6
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true,
+            "parameterStyle": "standard"
+          },
+          "thinking": {
+            "available": false,
+            "toggleable": false
+          }
         }
-      ],
-      "defaultModel": "mistral-small-latest",
-      "requiresModel": true,
-      "authType": "bearer",
-      "authHeaderName": "Authorization",
-      "hasSystemPrompt": true
+      ]
     }
   }
 }
