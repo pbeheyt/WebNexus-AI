@@ -81,6 +81,12 @@ class GeminiApiService extends BaseApiService {
       formattedRequest.generationConfig.topP = params.topP;
     }
 
+    // Enable Thinking Mode if requested and available for this model
+    if (params.isThinkingEnabledForRequest) {
+      formattedRequest.tool_config = { function_calling_config: { mode: 'ANY' } };
+      this.logger.info(`[${this.platformId}] Enabling Thinking Mode (tool_config: ANY) for model: ${params.model}`);
+    }
+
     return {
       url: url.toString(),
       method: 'POST',

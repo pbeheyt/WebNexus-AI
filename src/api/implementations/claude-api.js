@@ -42,6 +42,12 @@ class ClaudeApiService extends BaseApiService {
       requestPayload.system = params.systemPrompt;
     }
 
+    // Enable Thinking Mode if requested and available for this model
+    if (params.isThinkingEnabledForRequest) {
+      requestPayload.tool_choice = { type: 'any' };
+      this.logger.info(`[${this.platformId}] Enabling Thinking Mode (tool_choice: any) for model: ${params.model}`);
+    }
+
     // Prepend conversation history if available
     if (params.conversationHistory && params.conversationHistory.length > 0) {
       // Use the helper to format history and add the current prompt correctly

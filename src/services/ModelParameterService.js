@@ -350,6 +350,9 @@ class ModelParameterService {
         params.tabId = tabId;
       }
 
+      // Set thinking mode flag if enabled and available for this model
+      params.isThinkingEnabledForRequest = useThinkingMode && modelConfig?.thinking?.available === true;
+
       logger.service.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, {
         ...params,
       });
