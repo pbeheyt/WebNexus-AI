@@ -54,6 +54,7 @@ export function SidebarChatProvider({ children }) {
   const [stableModelConfigData, setStableModelConfigData] = useState(null);
   const [stableTokenStats, setStableTokenStats] = useState(TokenManagementService._getEmptyStats());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isThinkingModeEnabled, setIsThinkingModeEnabled] = useState(false);
 
   // Refs remain in the context as they are shared between hooks/context logic
   const batchedStreamingContentRef = useRef('');
@@ -330,6 +331,36 @@ export function SidebarChatProvider({ children }) {
     }
   }, [tabId, resetContentProcessing]);
 
+  // Load Thinking Mode preference when dependencies change
+  useEffect(() => {
+    const loadPreference = async () => {
+      // Only proceed if platform/model/tab are selected and config data is loaded
+      if (!selectedPlatformId || !selectedModel || !tabId || !modelConfigData) {
+        setIsThinkingModeEnabled(false); // Default to false if dependencies aren't ready
+        return;
+      }
+
+      // Check if the loaded model config allows toggling
+      if (modelConfigData?.thinking?.toggleable === true) {
+        try {
+          const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE);
+          const prefs = result[STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE] || {};
+          const modePref = prefs[selectedPlatformId]?.[selectedModel];
+          // Set state based on preference, default to false if undefined
+          setIsThinkingModeEnabled(modePref === undefined ? false : modePref);
+        } catch (err) {
+          logger.sidebar.error("Error loading thinking mode preference:", err);
+          setIsThinkingModeEnabled(false); // Default to false on error
+        }
+      } else {
+        // If not toggleable, ensure state is false
+        setIsThinkingModeEnabled(false);
+      }
+    };
+
+    loadPreference();
+  }, [selectedPlatformId, selectedModel, tabId, modelConfigData]);
+
   // --- Send Message Logic ---
   const sendMessage = async (text = inputValue) => {
     const currentPlatformId = selectedPlatformId;
@@ -586,6 +617,34 @@ export function SidebarChatProvider({ children }) {
     robustSendMessage,
   ]);
 
+  // Toggle Thinking Mode handler
+  const toggleThinkingMode = useCallback(async (newState) => {
+    // Only proceed if platform/model are selected
+    if (!selectedPlatformId || !selectedModel) return;
+
+    setIsThinkingModeEnabled(newState);
+
+    try {
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE);
+      const prefs = result[STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE] || {};
+
+      // Ensure platform object exists
+      if (!prefs[selectedPlatformId]) {
+        prefs[selectedPlatformId] = {};
+      }
+
+      // Update the specific model preference
+      prefs[selectedPlatformId][selectedModel] = newState;
+
+      // Save back to storage
+      await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE]: prefs });
+      logger.sidebar.info(`Thinking mode preference saved for ${selectedPlatformId}/${selectedModel}: ${newState}`);
+    } catch (err) {
+      logger.sidebar.error("Error saving thinking mode preference:", err);
+      // Optionally revert state or show error to user
+    }
+  }, [selectedPlatformId, selectedModel]); // Dependencies for the handler
+
   // --- End Utility Functions ---
 
   return (
@@ -605,8 +664,10 @@ export function SidebarChatProvider({ children }) {
         apiError: processingError,
         contentType,
         tokenStats: stableTokenStats,
+        isThinkingModeEnabled,
 
         // Setters / Actions
+        toggleThinkingMode,
         setInputValue,
         setIsContentExtractionEnabled,
         sendMessage,

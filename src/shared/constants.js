@@ -77,6 +77,7 @@ export const STORAGE_KEYS = {
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
   TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
+  SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
 };
 
 // Prompt limits

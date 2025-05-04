@@ -213,14 +213,14 @@ class ModelParameterService {
    * @returns {Promise<Object>} Resolved parameters object for API calls
    */
   async resolveParameters(platformId, modelId, options = {}) {
+    const { tabId, source, conversationHistory, useThinkingMode } = options; // Add useThinkingMode
     // Add immediate check for modelId
     if (!modelId) {
       throw new Error('Model ID must be provided to resolveParameters');
     }
 
     try {
-      const { tabId, source, conversationHistory } = options;
-      logger.service.info(
+        logger.service.info(
         `Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`
       );
 
@@ -241,8 +241,22 @@ class ModelParameterService {
         throw new Error(`Model configuration not found for ${modelId}`);
       }
 
+      // Determine mode key based on Thinking Mode toggle
+      const modeKey = useThinkingMode && modelConfig?.thinking?.toggleable ? 'thinking' : 'base';
+      logger.service.info(`Resolving parameters using mode: ${modeKey}`);
+
       // Get user settings for this model using the provided modelId
-      const userSettings = await this.getUserModelSettings(platformId, modelId);
+      const advancedSettingsResult = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const allAdvancedSettings = advancedSettingsResult[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
+      const platformSettings = allAdvancedSettings[platformId] || {}; // Get settings for the specific platform
+
+      // Get the mode-specific settings and the platform defaults
+      const modelModeSettings = platformSettings.models?.[modelId]?.[modeKey] || {};
+      const platformDefaultSettings = platformSettings.default || {};
+
+      // Merge them correctly, giving mode-specific settings precedence
+      const userSettings = { ...platformDefaultSettings, ...modelModeSettings };
+      logger.service.info(`User settings retrieved for ${platformId}/${modelId} (mode: ${modeKey}):`, userSettings);
 
       // Determine effective toggle values, defaulting to true if not set
       const effectiveIncludeTemperature =
@@ -257,10 +271,20 @@ class ModelParameterService {
         maxTokens:
           userSettings.maxTokens !== undefined
             ? userSettings.maxTokens
-            : modelConfig.tokens.maxOutput,
+            : (modeKey === 'thinking' && modelConfig.thinking?.maxOutput !== undefined)
+              ? modelConfig.thinking.maxOutput
+              : modelConfig.tokens.maxOutput,
         contextWindow: modelConfig.tokens.contextWindow,
         modelSupportsSystemPrompt: modelConfig?.capabilities?.supportsSystemPrompt ?? false,
       };
+
+      // Apply Thinking Mode overrides if applicable
+      if (modeKey === 'thinking' && modelConfig.thinking) {
+        logger.service.info(`Applying Thinking Mode overrides for ${platformId}/${modelId}`);
+        if (modelConfig.thinking.maxOutput !== undefined) {
+          logger.service.info(`Overriding maxTokens with Thinking Mode value: ${modelConfig.thinking.maxOutput}`);
+        }
+      }
 
       // Add temperature ONLY if model supports it AND user included it
       const modelSupportsTemperature =

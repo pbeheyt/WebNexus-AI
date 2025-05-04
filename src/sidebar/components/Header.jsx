@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef, createContext } from 'react';
 
 import { useSidebarPlatform } from '../../contexts/platform';
-import { PlatformIcon, ChevronDownIcon } from '../../components';
+import { useSidebarChat } from '../contexts/SidebarChatContext';
+import { PlatformIcon, ChevronDownIcon, Toggle, InfoIcon, Tooltip } from '../../components';
 
 import ModelSelector from './ModelSelector';
 
@@ -20,6 +21,9 @@ function Header() {
     hasAnyPlatformCredentials,
     isLoading,
   } = useSidebarPlatform();
+  const { modelConfigData, isThinkingModeEnabled, toggleThinkingMode } = useSidebarChat();
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const infoIconRef = useRef(null);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [displayPlatformId, setDisplayPlatformId] = useState(selectedPlatformId);
   const dropdownRef = useRef(null);
@@ -169,6 +173,41 @@ function Header() {
               <div className='min-w-0'>
                 <ModelSelector selectedPlatformId={selectedPlatformId} />
               </div>
+              
+              {/* Thinking Mode Toggle */}
+              {modelConfigData?.thinking?.toggleable === true && (
+                <div className="flex items-center ml-2 flex-shrink-0">
+                  <Toggle
+                    checked={isThinkingModeEnabled}
+                    onChange={toggleThinkingMode}
+                    aria-label="Toggle Thinking Mode"
+                    id="thinking-mode-toggle-sidebar"
+                    disabled={!hasAnyPlatformCredentials || isLoading}
+                  />
+                  {/* Info Icon and Tooltip */}
+                  <div
+                    ref={infoIconRef}
+                    className="ml-1.5 cursor-help"
+                    onMouseEnter={() => setTooltipVisible(true)}
+                    onMouseLeave={() => setTooltipVisible(false)}
+                    onFocus={() => setTooltipVisible(true)}
+                    onBlur={() => setTooltipVisible(false)}
+                    tabIndex={0}
+                    role="button"
+                    aria-describedby="thinking-mode-tooltip"
+                  >
+                    <InfoIcon className="w-3.5 h-3.5 text-theme-secondary" />
+                  </div>
+                  <Tooltip
+                    show={tooltipVisible}
+                    targetRef={infoIconRef}
+                    message="Enable enhanced reasoning. May affect speed/cost."
+                    position="bottom"
+                    id="thinking-mode-tooltip"
+                  />
+                </div>
+              )}
+              
               {/* 3. Spacer Element */}
               <div
                 className='flex-grow'

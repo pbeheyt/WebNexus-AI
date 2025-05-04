@@ -139,7 +139,8 @@ export async function processContentViaApi(params) {
     source = INTERFACE_SOURCES.POPUP,
     customPrompt = null,
     conversationHistory = [],
-    isContentExtractionEnabled,
+          isContentExtractionEnabled,
+          isThinkingModeEnabled,
   } = params;
 
   if (!platformId || !modelId) {
@@ -272,7 +273,7 @@ export async function processContentViaApi(params) {
     let resolvedParams = await ModelParameterService.resolveParameters(
       platformId,
       modelId,
-      { tabId, source, conversationHistory }
+      { tabId, source, conversationHistory, useThinkingMode: isThinkingModeEnabled }
     );
     resolvedParams.conversationHistory = conversationHistory;
     logger.background.info(`Resolved parameters:`, resolvedParams);
