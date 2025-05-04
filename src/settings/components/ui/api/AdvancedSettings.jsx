@@ -586,7 +586,6 @@ const AdvancedSettings = ({
                 id={`${platform.id}-${selectedModelId}-system-prompt`}
                 name='systemPrompt'
                 className='system-prompt-input w-full min-h-[120px] p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md'
-                maxLength={MAX_SYSTEM_PROMPT_LENGTH}
                 placeholder='Enter a system prompt for API requests'
                 value={formValues.systemPrompt}
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}

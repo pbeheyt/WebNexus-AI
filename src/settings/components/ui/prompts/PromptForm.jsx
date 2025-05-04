@@ -213,15 +213,26 @@ const PromptForm = ({
       }
 
       // Save to storage
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType,
-      });
+      try {
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType,
+        });
 
-      // Ensure default prompts are set correctly
-      await ensureDefaultPrompts();
+        // Ensure default prompts are set correctly
+        await ensureDefaultPrompts();
 
-      // Notify parent
-      onSuccess();
+        // Notify parent
+        onSuccess();
+      } catch (err) {
+        logger.settings.error('Error saving prompt:', err);
+        // Check for quota error
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES')) {
+          error('Local storage limit reached. Please remove some prompts.', 10000);
+        } else {
+          error(`Error saving prompt: ${err.message}`, 10000);
+        }
+      }
     } catch (err) {
       logger.settings.error('Error saving prompt:', err);
       error(`Error saving prompt: ${err.message}`, 10000);

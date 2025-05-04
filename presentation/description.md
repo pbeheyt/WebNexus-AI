@@ -24,7 +24,7 @@ WebNexus AI connects you to Gemini, ChatGPT, Claude, DeepSeek, Grok, and Mistral
 
 *   **Content Analysis:** Extracts information from web pages (main article/text content), YouTube transcripts, Reddit posts/comments, and PDFs.
 *   **Supported Platforms:** Works with Gemini, ChatGPT, Claude, DeepSeek, Grok, and Mistral via both API (Side Panel) and Web UI modes.
-*   **Prompt Management:** Create, save, edit, and set default prompts (used by Quick Actions) in `Settings > Prompts`.
+*   **Prompt Management:** Create, save, edit, and set default prompts (used by Quick Actions) in `Settings > Prompts`. **Note:** To accommodate potentially numerous and lengthy prompts within browser storage limits, custom prompts are saved locally (`chrome.storage.local`) and **will not** automatically sync across different devices.
 *   **Secure API Key Handling (Side Panel):** Keys stored locally (`chrome.storage.local`) on your computer, never sent to WebNexus AI developers. Sent directly to the AI platform's API endpoint only. *Note: Local storage is vulnerable if your computer is compromised.*
 *   **Configuration:** Adjust API parameters (e.g., temperature, max tokens, system prompts) per model, UI themes (Light/Dark), text size, and keyboard shortcuts (`chrome://extensions/shortcuts`).
 

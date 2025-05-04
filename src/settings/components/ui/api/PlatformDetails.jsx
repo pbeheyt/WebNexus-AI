@@ -94,16 +94,33 @@ const PlatformDetails = ({
       allCredentials[platform.id] = newCredentials;
 
       // Save all credentials under a single key
-      await chrome.storage.local.set({
-        [credentialsKey]: allCredentials,
-      });
+      try {
+        await chrome.storage.local.set({
+          [credentialsKey]: allCredentials,
+        });
 
-      onCredentialsUpdated(platform.id, newCredentials);
-      success(`API key saved for ${platform.name}`);
+        onCredentialsUpdated(platform.id, newCredentials);
+        success(`API key saved for ${platform.name}`);
 
-      // Update original key reference after successful save
-      setOriginalApiKey(apiKey);
-      setHasApiKeyChanges(false);
+        // Update original key reference after successful save
+        setOriginalApiKey(apiKey);
+        setHasApiKeyChanges(false);
+      } catch (err) {
+        logger.settings.error('Error saving API key:', err);
+        // Check for quota error
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES')) {
+          error('Local storage limit reached for API keys.', 10000);
+        } else if (err.isPortClosed) {
+          // Handle specific port closed error during validation/saving
+          logger.settings.warn(
+            'handleSaveCredentials: Port closed during credential validation/saving.'
+          );
+          error('Validation timed out or connection lost. Please try again.');
+        } else {
+          error(`Failed to save API key: ${err.message}`);
+        }
+      }
     } catch (err) {
       if (err.isPortClosed) {
         // Handle specific port closed error during validation/saving
@@ -111,7 +128,6 @@ const PlatformDetails = ({
           'handleSaveCredentials: Port closed during credential validation/saving.'
         );
         error('Validation timed out or connection lost. Please try again.');
-        // No specific validation state to set here, just notify and stop saving
       } else {
         // Handle other errors during validation or saving
         logger.settings.error('Error saving API key:', err);
@@ -263,12 +279,24 @@ const PlatformDetails = ({
         };
       }
 
-      await chrome.storage.sync.set({
-        [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings,
-      });
-      onAdvancedSettingsUpdated(platform.id, modelId, settings);
-      success('Advanced settings saved');
-      return true;
+      try {
+        await chrome.storage.sync.set({
+          [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings,
+        });
+        onAdvancedSettingsUpdated(platform.id, modelId, settings);
+        success('Advanced settings saved');
+        return true;
+      } catch (err) {
+        logger.settings.error('Error saving advanced settings:', err);
+        // Check for sync quota errors
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES_PER_ITEM') || lastError?.message?.includes('QUOTA_BYTES')) {
+          error('Sync storage limit reached. Reduce size/number of advanced settings or system prompts.', 10000);
+        } else {
+          error(`Failed to save advanced settings: ${err.message}`);
+        }
+        return false;
+      }
     } catch (err) {
       logger.settings.error('Error saving advanced settings:', err);
       error(`Failed to save advanced settings: ${err.message}`);
