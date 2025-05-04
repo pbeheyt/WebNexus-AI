@@ -316,7 +316,10 @@
           "thinking": {
             "available": true,
             "toggleable": true,
-            "maxOutput": 64000
+            "maxOutput": 64000,
+            "supportsTemperature": false,
+            "supportsTopP": false,
+            "defaultBudget": 16000
           }
         },
         {

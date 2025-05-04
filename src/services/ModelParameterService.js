@@ -243,7 +243,8 @@ class ModelParameterService {
 
       // Determine mode key based on Thinking Mode toggle
       const modeKey = useThinkingMode && modelConfig?.thinking?.toggleable ? 'thinking' : 'base';
-      logger.service.info(`Resolving parameters using mode: ${modeKey}`);
+        logger.service.info(`Resolving parameters using mode: ${modeKey}`);
+
 
       // Get user settings for this model using the provided modelId
       const advancedSettingsResult = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
@@ -278,31 +279,48 @@ class ModelParameterService {
         modelSupportsSystemPrompt: modelConfig?.capabilities?.supportsSystemPrompt ?? false,
       };
 
-      // Apply Thinking Mode overrides if applicable
-      if (modeKey === 'thinking' && modelConfig.thinking) {
-        logger.service.info(`Applying Thinking Mode overrides for ${platformId}/${modelId}`);
-        if (modelConfig.thinking.maxOutput !== undefined) {
-          logger.service.info(`Overriding maxTokens with Thinking Mode value: ${modelConfig.thinking.maxOutput}`);
-        }
+      // Determine if thinking mode overrides parameter support
+      let thinkingOverridesTemperature = false;
+      let thinkingOverridesTopP = false;
+      let thinkingBudget = null;
+
+      if (modeKey === 'thinking' && modelConfig?.thinking) {
+          logger.service.info(`Checking Thinking Mode parameter overrides for ${platformId}/${modelId}`);
+          if (modelConfig.thinking.supportsTemperature === false) {
+              thinkingOverridesTemperature = true;
+              logger.service.info(`Thinking mode explicitly disables Temperature for ${modelId}.`);
+          }
+          if (modelConfig.thinking.supportsTopP === false) {
+              thinkingOverridesTopP = true;
+              logger.service.info(`Thinking mode explicitly disables TopP for ${modelId}.`);
+          }
+          // Get thinking budget from config, fallback to a default if not specified
+          thinkingBudget = modelConfig.thinking.defaultBudget ?? 16000; // Use 16000 as fallback
+          params.thinkingBudget = thinkingBudget; // Add budget to params
+          logger.service.info(`Setting thinking budget: ${thinkingBudget}`);
       }
 
-      // Add temperature ONLY if model supports it AND user included it
+      // Add temperature ONLY if model supports it AND user included it AND thinking mode doesn't override it
       const modelSupportsTemperature =
         modelConfig?.capabilities?.supportsTemperature !== false;
-      if (modelSupportsTemperature && effectiveIncludeTemperature) {
+      if (modelSupportsTemperature && effectiveIncludeTemperature && !thinkingOverridesTemperature) {
         params.temperature =
           userSettings.temperature !== undefined
             ? userSettings.temperature
             : platformApiConfig.temperature.default;
+      } else if (thinkingOverridesTemperature && effectiveIncludeTemperature) {
+        logger.service.warn(`Temperature included by user but overridden by thinking mode for ${modelId}.`);
       }
 
-      // Add topP ONLY if model supports it AND user included it
+      // Add topP ONLY if model supports it AND user included it AND thinking mode doesn't override it
       const modelSupportsTopP = modelConfig?.capabilities?.supportsTopP === true;
-      if (modelSupportsTopP && effectiveIncludeTopP) {
+      if (modelSupportsTopP && effectiveIncludeTopP && !thinkingOverridesTopP) {
         params.topP =
           userSettings.topP !== undefined
             ? userSettings.topP
             : platformApiConfig.topP.default;
+      } else if (thinkingOverridesTopP && effectiveIncludeTopP) {
+        logger.service.warn(`TopP included by user but overridden by thinking mode for ${modelId}.`);
       }
 
       // Calculate effective system prompt support
