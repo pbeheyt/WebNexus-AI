@@ -166,32 +166,49 @@ const AdvancedSettings = ({
 
   // Update form values when selected model or settings change
   useEffect(() => {
-    const currentSettings = getModelSettings();
-    let modelDefaults = getDefaultSettings();
-    
-    if (currentEditingMode === 'thinking' && modelConfig?.thinking) {
-      modelDefaults = {
-        ...modelDefaults,
-        maxTokens: modelConfig.thinking.maxOutput ?? modelDefaults.maxTokens,
-        contextWindow: modelConfig.thinking.contextWindow ?? modelDefaults.contextWindow
-      };
-    }
+    // 1. Get settings and defaults for the NEW mode/model
+    const currentSettings = getModelSettings(); // Settings specific to the new mode/model
+    const newDefaults = getDefaultSettings(); // Defaults specific to the new mode/model
 
-    const newFormValues = {
-      maxTokens: currentSettings.maxTokens ?? modelDefaults.maxTokens,
-      temperature: currentSettings.temperature ?? modelDefaults.temperature,
-      topP: currentSettings.topP ?? modelDefaults.topP,
-      contextWindow: currentSettings.contextWindow ?? modelDefaults.contextWindow,
+    // 2. Calculate the target form values, preferring saved settings over new defaults
+    const targetFormValues = {
+      maxTokens: currentSettings.maxTokens ?? newDefaults.maxTokens,
+      temperature: currentSettings.temperature ?? newDefaults.temperature,
+      topP: currentSettings.topP ?? newDefaults.topP,
+      contextWindow: currentSettings.contextWindow ?? newDefaults.contextWindow, // Keep contextWindow update
       systemPrompt: currentSettings.systemPrompt ?? '',
-      includeTemperature: currentSettings.includeTemperature ?? true,
-      includeTopP: currentSettings.includeTopP ?? false,
-      thinkingBudget: currentSettings.thinkingBudget ?? modelDefaults.thinkingBudget ?? null,
+      includeTemperature: currentSettings.includeTemperature ?? (newDefaults.includeTemperature ?? true), // Default includeTemp to true if not specified
+      includeTopP: currentSettings.includeTopP ?? (newDefaults.includeTopP ?? false), // Default includeTopP to false if not specified
+      thinkingBudget: currentSettings.thinkingBudget ?? newDefaults.thinkingBudget ?? null,
     };
 
-    setFormValues(newFormValues);
-    setOriginalValues(newFormValues);
-    setHasChanges(false);
-    setIsAtDefaults(checkIfAtDefaults(newFormValues));
+    // 3. Compare with current state ONLY if necessary
+    // Check if the calculated target values are different from the current formValues state
+    let needsUpdate = false;
+    for (const key in targetFormValues) {
+      // Use Object.is for accurate comparison, especially for NaN or +/-0 if they could occur
+      if (!Object.is(targetFormValues[key], formValues[key])) {
+        needsUpdate = true;
+        break; // Found a difference, no need to check further
+      }
+    }
+    // Also check if keys were removed (e.g., thinkingBudget)
+     for (const key in formValues) {
+       if (!(key in targetFormValues) && formValues[key] !== null && formValues[key] !== undefined) {
+         needsUpdate = true;
+         break;
+       }
+     }
+
+    // 4. Update state only if there's a difference
+    if (needsUpdate) {
+      setFormValues(targetFormValues);
+    }
+
+    // 5. Always update originalValues and flags based on the target state
+    setOriginalValues(targetFormValues); // Reflects the state *after* the potential update
+    setHasChanges(false); // Reset changes after mode/model switch
+    setIsAtDefaults(checkIfAtDefaults(targetFormValues)); // Check defaults based on the target state
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedModelId, currentEditingMode, getDefaultSettings, checkIfAtDefaults]);
 
@@ -282,7 +299,7 @@ const AdvancedSettings = ({
       }
 
       // Range validation checks
-      const maxTokensMax = modelConfig.tokens.maxOutput;
+      const maxTokensMax = displaySpecs.maxOutputTokens;
       if (formValues.maxTokens < 1 || formValues.maxTokens > maxTokensMax) {
         throw new Error(`Max tokens must be between 1 and ${maxTokensMax}`);
       }
