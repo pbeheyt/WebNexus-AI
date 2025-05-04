@@ -252,7 +252,7 @@ class ModelParameterService {
       // Start with base parameters
       const params = {
         model: modelId,
-        parameterStyle: modelConfig.parameterStyle,
+        modelType: modelConfig.modelType,
         tokenParameter: modelConfig.tokens.parameterName,
         maxTokens:
           userSettings.maxTokens !== undefined
