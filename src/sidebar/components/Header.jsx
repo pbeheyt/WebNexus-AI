@@ -201,7 +201,7 @@ function Header() {
                   <Tooltip
                     show={tooltipVisible}
                     targetRef={infoIconRef}
-                    message="Enable enhanced reasoning. May affect speed/cost."
+                    message="Enable Thinking."
                     position="bottom"
                     id="thinking-mode-tooltip"
                   />

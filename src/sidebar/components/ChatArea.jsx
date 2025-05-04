@@ -58,6 +58,7 @@ import React, {
       isContentExtractionEnabled,
       setIsContentExtractionEnabled,
       modelConfigData,
+      isThinkingModeEnabled,
     } = useSidebarChat();
     const { contentType, currentTab } = useContent();
     const { textSize } = useUI();
@@ -81,6 +82,41 @@ import React, {
     const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
     const [displayModelConfig, setDisplayModelConfig] = useState(null);
     const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
+
+    // Calculate dynamic specs based on current mode
+    const dynamicSpecs = useMemo(() => {
+      // Use displayModelConfig which is derived from modelConfigData
+      if (!displayModelConfig) {
+        return {
+          contextWindow: null,
+          inputPrice: undefined,
+          outputPrice: undefined,
+        };
+      }
+
+      // Get base values
+      const baseContextWindow = displayModelConfig.tokens?.contextWindow;
+      const baseInputPrice = displayModelConfig.pricing?.inputTokenPrice;
+      const baseOutputPrice = displayModelConfig.pricing?.outputTokenPrice;
+
+      // Initialize with base values
+      let contextWindow = baseContextWindow;
+      let inputPrice = baseInputPrice;
+      let outputPrice = baseOutputPrice;
+
+      // Check for thinking mode overrides ONLY if enabled AND toggleable
+      if (isThinkingModeEnabled && displayModelConfig.thinking?.toggleable) {
+        contextWindow = displayModelConfig.thinking.contextWindow ?? contextWindow;
+        inputPrice = displayModelConfig.thinking.pricing?.inputTokenPrice ?? inputPrice;
+        outputPrice = displayModelConfig.thinking.pricing?.outputTokenPrice ?? outputPrice;
+      }
+
+      return {
+        contextWindow,
+        inputPrice,
+        outputPrice,
+      };
+    }, [displayModelConfig, isThinkingModeEnabled]);
     const [precedingUserMessageHeight, setPrecedingUserMessageHeight] =
       useState(0);
     const precedingUserMessageRef = useRef(null);
@@ -485,8 +521,8 @@ import React, {
                     </p>
                   )}
                   <div className='flex flex-row flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-theme-secondary mt-1 select-none'>
-                    {displayModelConfig.pricing?.inputTokenPrice === 0 &&
-                    displayModelConfig.pricing?.outputTokenPrice === 0 ? (
+                    {dynamicSpecs.inputPrice === 0 &&
+                    dynamicSpecs.outputPrice === 0 ? (
                       <div
                         ref={freeTierRef}
                         className='flex items-center relative cursor-help'
@@ -505,8 +541,8 @@ import React, {
                       </div>
                     ) : (
                       <>
-                        {typeof displayModelConfig.pricing?.inputTokenPrice === 'number' &&
-                          displayModelConfig.pricing?.inputTokenPrice >= 0 && (
+                        {typeof dynamicSpecs.inputPrice === 'number' &&
+                          dynamicSpecs.inputPrice >= 0 && (
                             <div
                               ref={inputPriceRef}
                               className='flex items-center relative cursor-help'
@@ -516,18 +552,18 @@ import React, {
                               onBlur={() => setHoveredElement(null)}
                             >
                               <InputTokenIcon />{' '}
-                              <span className='ml-1'>{`$${displayModelConfig.pricing?.inputTokenPrice.toFixed(2)}`}</span>
+                              <span className='ml-1'>{`$${dynamicSpecs.inputPrice.toFixed(2)}`}</span>
                               <Tooltip
                                 show={hoveredElement === 'inputPrice'}
-                                message={`$${displayModelConfig.pricing?.inputTokenPrice.toFixed(2)} / 1M input tokens.`}
+                                message={`$${dynamicSpecs.inputPrice.toFixed(2)} / 1M input tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                                 targetRef={inputPriceRef}
                                 position='bottom'
                               />
                             </div>
                           )}
-                        {typeof displayModelConfig.pricing?.outputTokenPrice ===
+                        {typeof dynamicSpecs.outputPrice ===
                           'number' &&
-                          displayModelConfig.pricing?.outputTokenPrice > 0 && (
+                          dynamicSpecs.outputPrice > 0 && (
                             <div
                               ref={outputPriceRef}
                               className='flex items-center relative cursor-help'
@@ -539,10 +575,10 @@ import React, {
                               onBlur={() => setHoveredElement(null)}
                             >
                               <OutputTokenIcon />{' '}
-                              <span className='ml-1'>{`$${displayModelConfig.pricing?.outputTokenPrice.toFixed(2)}`}</span>
+                              <span className='ml-1'>{`$${dynamicSpecs.outputPrice.toFixed(2)}`}</span>
                               <Tooltip
                                 show={hoveredElement === 'outputPrice'}
-                                message={`$${displayModelConfig.pricing?.outputTokenPrice.toFixed(2)} / 1M output tokens.`}
+                                message={`$${dynamicSpecs.outputPrice.toFixed(2)} / 1M output tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                                 targetRef={outputPriceRef}
                                 position='bottom'
                               />
@@ -550,8 +586,8 @@ import React, {
                           )}
                       </>
                     )}
-                    {typeof displayModelConfig.tokens?.contextWindow === 'number' &&
-                      displayModelConfig.tokens?.contextWindow > 0 && (
+                    {typeof dynamicSpecs.contextWindow === 'number' &&
+                      dynamicSpecs.contextWindow > 0 && (
                         <div
                           ref={contextWindowRef}
                           className='flex items-center relative cursor-help'
@@ -563,12 +599,12 @@ import React, {
                           <ContextWindowIcon />{' '}
                           <span className='ml-1'>
                             {formatContextWindow(
-                              displayModelConfig.tokens?.contextWindow
+                              dynamicSpecs.contextWindow
                             )}
                           </span>
                           <Tooltip
                             show={hoveredElement === 'contextWindow'}
-                            message={`Max context window: ${displayModelConfig.tokens?.contextWindow.toLocaleString()} tokens.`}
+                            message={`Max context window: ${dynamicSpecs.contextWindow?.toLocaleString()} tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                             targetRef={contextWindowRef}
                             position='bottom'
                           />
