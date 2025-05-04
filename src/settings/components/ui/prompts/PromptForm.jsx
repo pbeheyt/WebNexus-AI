@@ -23,18 +23,67 @@ const PromptForm = ({
   const { success, error } = useNotification();
   const [isSaving, setIsSaving] = useState(false);
   const [isDefaultForType, setIsDefaultForType] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Determine if editing before setting initial state
   const isEditing = !!prompt;
 
   // Use initialContentType prop when creating a new prompt
-  const [formData, setFormData] = useState({
-    name: prompt?.prompt?.name || '',
-    content: prompt?.prompt?.content || '',
-    contentType: isEditing
-      ? prompt?.contentType || CONTENT_TYPES.GENERAL
-      : initialContentType,
+  const [formData, setFormData] = useState(() => {
+    // Initial state based on whether we are editing or creating
+    if (prompt) { // isEditing is true
+      return {
+        name: prompt.prompt.name || '',
+        content: prompt.prompt.content || '',
+        contentType: prompt.contentType || CONTENT_TYPES.GENERAL,
+      };
+    } else { // isCreating is true
+      return {
+        name: '',
+        content: '',
+        contentType: initialContentType,
+      };
+    }
   });
+
+  useEffect(() => {
+    if (isEditing && prompt) {
+      const initialData = {
+        name: prompt.prompt.name || '',
+        content: prompt.prompt.content || '',
+        contentType: prompt.contentType || CONTENT_TYPES.GENERAL,
+      };
+      // Set formData based on prop for edit mode (may be redundant with useState initializer but safe)
+      setFormData(initialData);
+      // Store the original data separately
+      setOriginalFormData(initialData);
+      setHasChanges(false); // Reset changes flag on load/prompt change
+    } else if (!isEditing) {
+      // Reset form for creating new prompt if initialContentType changes
+       setFormData({
+          name: '',
+          content: '',
+          contentType: initialContentType,
+      });
+      setOriginalFormData(null); // No original data when creating
+      setHasChanges(false); // Reset changes flag
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prompt, isEditing, initialContentType]); // Keep dependencies as specified
+
+  useEffect(() => {
+    if (isEditing && originalFormData) {
+      // Trim strings for accurate comparison
+      const nameChanged = formData.name.trim() !== originalFormData.name.trim();
+      const contentChanged = formData.content.trim() !== originalFormData.content.trim();
+      const typeChanged = formData.contentType !== originalFormData.contentType;
+      setHasChanges(nameChanged || contentChanged || typeChanged);
+    } else {
+       // In create mode, hasChanges is not used to disable the button, so keep it false.
+       setHasChanges(false);
+    }
+  }, [formData, originalFormData, isEditing]);
 
   // Effect to check default status when in edit mode or when content type changes
   useEffect(() => {
@@ -337,8 +386,8 @@ const PromptForm = ({
         <Button
           type='submit'
           className='px-5 py-2 select-none'
-          disabled={isSaving}
-          variant={isSaving ? 'inactive' : 'primary'}
+          disabled={isSaving || (isEditing && !hasChanges)}
+          variant={isSaving || (isEditing && !hasChanges) ? 'inactive' : 'primary'}
         >
           {isSaving
             ? 'Saving...'
