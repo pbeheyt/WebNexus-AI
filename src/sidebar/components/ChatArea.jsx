@@ -485,8 +485,8 @@ import React, {
                     </p>
                   )}
                   <div className='flex flex-row flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-theme-secondary mt-1 select-none'>
-                    {displayModelConfig.inputTokenPrice === 0 &&
-                    displayModelConfig.outputTokenPrice === 0 ? (
+                    {displayModelConfig.pricing?.inputTokenPrice === 0 &&
+                    displayModelConfig.pricing?.outputTokenPrice === 0 ? (
                       <div
                         ref={freeTierRef}
                         className='flex items-center relative cursor-help'
@@ -505,8 +505,8 @@ import React, {
                       </div>
                     ) : (
                       <>
-                        {typeof displayModelConfig.inputTokenPrice === 'number' &&
-                          displayModelConfig.inputTokenPrice >= 0 && (
+                        {typeof displayModelConfig.pricing?.inputTokenPrice === 'number' &&
+                          displayModelConfig.pricing?.inputTokenPrice >= 0 && (
                             <div
                               ref={inputPriceRef}
                               className='flex items-center relative cursor-help'
@@ -516,18 +516,18 @@ import React, {
                               onBlur={() => setHoveredElement(null)}
                             >
                               <InputTokenIcon />{' '}
-                              <span className='ml-1'>{`$${displayModelConfig.inputTokenPrice.toFixed(2)}`}</span>
+                              <span className='ml-1'>{`$${displayModelConfig.pricing?.inputTokenPrice.toFixed(2)}`}</span>
                               <Tooltip
                                 show={hoveredElement === 'inputPrice'}
-                                message={`$${displayModelConfig.inputTokenPrice.toFixed(2)} / 1M input tokens.`}
+                                message={`$${displayModelConfig.pricing?.inputTokenPrice.toFixed(2)} / 1M input tokens.`}
                                 targetRef={inputPriceRef}
                                 position='bottom'
                               />
                             </div>
                           )}
-                        {typeof displayModelConfig.outputTokenPrice ===
+                        {typeof displayModelConfig.pricing?.outputTokenPrice ===
                           'number' &&
-                          displayModelConfig.outputTokenPrice > 0 && (
+                          displayModelConfig.pricing?.outputTokenPrice > 0 && (
                             <div
                               ref={outputPriceRef}
                               className='flex items-center relative cursor-help'
@@ -539,10 +539,10 @@ import React, {
                               onBlur={() => setHoveredElement(null)}
                             >
                               <OutputTokenIcon />{' '}
-                              <span className='ml-1'>{`$${displayModelConfig.outputTokenPrice.toFixed(2)}`}</span>
+                              <span className='ml-1'>{`$${displayModelConfig.pricing?.outputTokenPrice.toFixed(2)}`}</span>
                               <Tooltip
                                 show={hoveredElement === 'outputPrice'}
-                                message={`$${displayModelConfig.outputTokenPrice.toFixed(2)} / 1M output tokens.`}
+                                message={`$${displayModelConfig.pricing?.outputTokenPrice.toFixed(2)} / 1M output tokens.`}
                                 targetRef={outputPriceRef}
                                 position='bottom'
                               />
@@ -550,8 +550,8 @@ import React, {
                           )}
                       </>
                     )}
-                    {typeof displayModelConfig.contextWindow === 'number' &&
-                      displayModelConfig.contextWindow > 0 && (
+                    {typeof displayModelConfig.tokens?.contextWindow === 'number' &&
+                      displayModelConfig.tokens?.contextWindow > 0 && (
                         <div
                           ref={contextWindowRef}
                           className='flex items-center relative cursor-help'
@@ -563,12 +563,12 @@ import React, {
                           <ContextWindowIcon />{' '}
                           <span className='ml-1'>
                             {formatContextWindow(
-                              displayModelConfig.contextWindow
+                              displayModelConfig.tokens?.contextWindow
                             )}
                           </span>
                           <Tooltip
                             show={hoveredElement === 'contextWindow'}
-                            message={`Max context window: ${displayModelConfig.contextWindow.toLocaleString()} tokens.`}
+                            message={`Max context window: ${displayModelConfig.tokens?.contextWindow.toLocaleString()} tokens.`}
                             targetRef={contextWindowRef}
                             position='bottom'
                           />
