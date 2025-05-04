@@ -8,6 +8,9 @@ import {
   STORAGE_KEYS,
   CONTENT_TYPES,
   CONTENT_TYPE_LABELS,
+  MAX_PROMPTS_PER_TYPE,
+  MAX_PROMPT_NAME_LENGTH,
+  MAX_PROMPT_CONTENT_LENGTH,
 } from '../../../../shared/constants';
 import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
 
@@ -92,8 +95,8 @@ const PromptForm = ({
         setIsSaving(false);
         return;
       }
-      if (name.length > 100) {
-        error('Prompt Name cannot exceed 100 characters.');
+      if (name.length > MAX_PROMPT_NAME_LENGTH) {
+        error(`Prompt Name cannot exceed ${MAX_PROMPT_NAME_LENGTH} characters.`);
         setIsSaving(false);
         return;
       }
@@ -102,8 +105,8 @@ const PromptForm = ({
         setIsSaving(false);
         return;
       }
-      if (content.length > 30000) {
-        error('Prompt Content cannot exceed 30000 characters.');
+      if (content.length > MAX_PROMPT_CONTENT_LENGTH) {
+        error(`Prompt Content cannot exceed ${MAX_PROMPT_CONTENT_LENGTH} characters.`);
         setIsSaving(false);
         return;
       }
@@ -116,6 +119,17 @@ const PromptForm = ({
       // Get current prompts
       const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
       const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+
+      // Check prompt count limit for new prompts
+      if (!isEditing) {
+        const existingPromptsForType = customPromptsByType[contentType]?.prompts || {};
+        const currentPromptCount = Object.keys(existingPromptsForType).length;
+        if (currentPromptCount >= MAX_PROMPTS_PER_TYPE) {
+          error(`Cannot add more than ${MAX_PROMPTS_PER_TYPE} prompts for ${CONTENT_TYPE_LABELS[contentType] || contentType}.`);
+          setIsSaving(false);
+          return;
+        }
+      }
 
       // Initialize content type if needed
       if (!customPromptsByType[contentType]) {
@@ -275,7 +289,7 @@ const PromptForm = ({
           placeholder='Give your prompt a descriptive name'
           value={formData.name}
           onChange={handleChange}
-          maxLength="100"
+          maxLength={MAX_PROMPT_NAME_LENGTH}
         />
       </div>
 
@@ -294,7 +308,7 @@ const PromptForm = ({
           placeholder='Enter your prompt content here...'
           value={formData.content}
           onChange={handleChange}
-          maxLength="30000"
+          maxLength={MAX_PROMPT_CONTENT_LENGTH}
         />
       </div>
 

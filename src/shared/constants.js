@@ -79,6 +79,12 @@ export const STORAGE_KEYS = {
   TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
 };
 
+// Prompt limits
+export const MAX_PROMPTS_PER_TYPE = 10;
+export const MAX_PROMPT_NAME_LENGTH = 100;
+export const MAX_PROMPT_CONTENT_LENGTH = 30000;
+export const MAX_SYSTEM_PROMPT_LENGTH = 5000;
+
 /**
  * Interface sources for API requests
  */

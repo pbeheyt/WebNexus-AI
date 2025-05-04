@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
+import { MAX_SYSTEM_PROMPT_LENGTH } from '../../../../shared/constants';
 import {
   Button,
   useNotification,
@@ -248,8 +249,8 @@ const AdvancedSettings = ({
       }
 
       // Max length check for System Prompt (only if supported)
-      if (platform.apiConfig?.hasSystemPrompt !== false && modelConfig?.supportsSystemPrompt !== false && formValues.systemPrompt.length > 30000) {
-        throw new Error('System Prompt cannot exceed 30000 characters.');
+      if (platform.apiConfig?.hasSystemPrompt !== false && modelConfig?.supportsSystemPrompt !== false && formValues.systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
+        throw new Error(`System Prompt cannot exceed ${MAX_SYSTEM_PROMPT_LENGTH} characters.`);
       }
 
       // Range validation checks
@@ -585,7 +586,7 @@ const AdvancedSettings = ({
                 id={`${platform.id}-${selectedModelId}-system-prompt`}
                 name='systemPrompt'
                 className='system-prompt-input w-full min-h-[120px] p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md'
-                maxLength="30000"
+                maxLength={MAX_SYSTEM_PROMPT_LENGTH}
                 placeholder='Enter a system prompt for API requests'
                 value={formValues.systemPrompt}
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}
