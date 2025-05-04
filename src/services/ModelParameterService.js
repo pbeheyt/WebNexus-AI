@@ -253,39 +253,39 @@ class ModelParameterService {
       const params = {
         model: modelId,
         parameterStyle: modelConfig.parameterStyle,
-        tokenParameter: modelConfig.tokenParameter,
+        tokenParameter: modelConfig.tokens.parameterName,
         maxTokens:
           userSettings.maxTokens !== undefined
             ? userSettings.maxTokens
-            : modelConfig.maxTokens,
-        contextWindow: modelConfig.contextWindow,
-        modelSupportsSystemPrompt: modelConfig?.supportsSystemPrompt ?? false,
+            : modelConfig.tokens.maxOutput,
+        contextWindow: modelConfig.tokens.contextWindow,
+        modelSupportsSystemPrompt: modelConfig?.capabilities?.supportsSystemPrompt ?? false,
       };
 
       // Add temperature ONLY if model supports it AND user included it
       const modelSupportsTemperature =
-        modelConfig?.supportsTemperature !== false;
+        modelConfig?.capabilities?.supportsTemperature !== false;
       if (modelSupportsTemperature && effectiveIncludeTemperature) {
         params.temperature =
           userSettings.temperature !== undefined
             ? userSettings.temperature
-            : platformApiConfig.temperature;
+            : platformApiConfig.temperature.default;
       }
 
       // Add topP ONLY if model supports it AND user included it
-      const modelSupportsTopP = modelConfig?.supportsTopP === true;
+      const modelSupportsTopP = modelConfig?.capabilities?.supportsTopP === true;
       if (modelSupportsTopP && effectiveIncludeTopP) {
         params.topP =
           userSettings.topP !== undefined
             ? userSettings.topP
-            : platformApiConfig.topP;
+            : platformApiConfig.topP.default;
       }
 
       // Calculate effective system prompt support
       const platformSupportsSystemPrompt =
-        platformApiConfig?.hasSystemPrompt !== false;
+        platformApiConfig?.apiStructure?.supportsSystemPrompt !== false;
       const modelExplicitlyForbidsSystemPrompt =
-        modelConfig?.supportsSystemPrompt === false;
+        modelConfig?.capabilities?.supportsSystemPrompt === false;
       const effectiveModelSupportsSystemPrompt =
         platformSupportsSystemPrompt && !modelExplicitlyForbidsSystemPrompt;
 

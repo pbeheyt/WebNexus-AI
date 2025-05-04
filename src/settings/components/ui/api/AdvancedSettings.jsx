@@ -47,24 +47,24 @@ const AdvancedSettings = ({
     const currentModelConfig = models.find((m) => m.id === selectedModelId);
 
     const defaults = {
-      maxTokens: currentModelConfig.maxTokens,
-      contextWindow: currentModelConfig.contextWindow,
+      maxTokens: currentModelConfig.tokens.maxOutput,
+      contextWindow: currentModelConfig.tokens.contextWindow,
     };
 
     // Add temperature and its toggle default only if supported
-    if (currentModelConfig?.supportsTemperature !== false) {
-      (defaults.temperature = platform.apiConfig.temperature),
+    if (currentModelConfig?.capabilities?.supportsTemperature !== false) {
+      (defaults.temperature = platform.apiConfig.temperature.default),
         (defaults.includeTemperature = true);
     }
 
     // Add topP and its toggle default only if supported
-    if (currentModelConfig?.supportsTopP === true) {
-      defaults.topP = platform.apiConfig.topP;
+    if (currentModelConfig?.capabilities?.supportsTopP === true) {
+      defaults.topP = platform.apiConfig.topP.default;
       defaults.includeTopP = false; // Default include to false if supported
     }
 
     // Add systemPrompt only if the platform supports it
-    if (platform.apiConfig?.hasSystemPrompt !== false) {
+    if (platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false) {
       defaults.systemPrompt = ''; // Default is always empty string
     }
 
@@ -101,7 +101,7 @@ const AdvancedSettings = ({
     }
 
     // Compare temperature only if supported
-    if (currentModelConfig?.supportsTemperature !== false) {
+    if (currentModelConfig?.capabilities?.supportsTemperature !== false) {
       if (
         !('temperature' in formVals) ||
         !('temperature' in modelDefaults) ||
@@ -119,7 +119,7 @@ const AdvancedSettings = ({
     }
 
     // Compare topP only if supported
-    if (currentModelConfig?.supportsTopP === true) {
+    if (currentModelConfig?.capabilities?.supportsTopP === true) {
       if (
         !('topP' in formVals) ||
         !('topP' in modelDefaults) ||
@@ -134,7 +134,7 @@ const AdvancedSettings = ({
     }
 
     // Compare systemPrompt only if supported
-    if (platform.apiConfig?.hasSystemPrompt !== false) {
+    if (platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false) {
       if (
         !('systemPrompt' in formVals) ||
         formVals.systemPrompt.trim() !== ''
@@ -254,13 +254,13 @@ const AdvancedSettings = ({
       }
 
       // Range validation checks
-      const maxTokensMax = modelConfig.maxTokens;
+      const maxTokensMax = modelConfig.tokens.maxOutput;
       if (formValues.maxTokens < 1 || formValues.maxTokens > maxTokensMax) {
         throw new Error(`Max tokens must be between 1 and ${maxTokensMax}`);
       }
       if (formValues.temperature !== undefined) {
-        const minTemp = platform.apiConfig.minTemperatur;
-        const maxTemp = platform.apiConfig.maxTemperature;
+        const minTemp = platform.apiConfig.temperature.min;
+        const maxTemp = platform.apiConfig.temperature.max;
         if (
           formValues.temperature < minTemp ||
           formValues.temperature > maxTemp
@@ -271,8 +271,8 @@ const AdvancedSettings = ({
         }
       }
       if (formValues.topP !== undefined) {
-        const minTopP = platform.apiConfig.minTopP;
-        const maxTopP = platform.apiConfig.maxTopP;
+        const minTopP = platform.apiConfig.topP.min;
+        const maxTopP = platform.apiConfig.topP.max;
         if (formValues.topP < minTopP || formValues.topP > maxTopP) {
           throw new Error(`Top P must be between ${minTopP} and ${maxTopP}`);
         }
@@ -337,18 +337,18 @@ const AdvancedSettings = ({
       contextWindow: defaults.contextWindow,
     };
     if (
-      currentModelConfig?.supportsTemperature !== false &&
+      currentModelConfig?.capabilities?.supportsTemperature !== false &&
       'temperature' in defaults
     ) {
       resetValues.temperature = defaults.temperature;
       resetValues.includeTemperature = defaults.includeTemperature ?? true;
     }
-    if (currentModelConfig?.supportsTopP === true && 'topP' in defaults) {
+    if (currentModelConfig?.capabilities?.supportsTopP === true && 'topP' in defaults) {
       resetValues.topP = defaults.topP;
       resetValues.includeTopP = defaults.includeTopP ?? false;
     }
     if (
-      platform.apiConfig?.hasSystemPrompt !== false &&
+      platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false &&
       'systemPrompt' in defaults
     ) {
       resetValues.systemPrompt = defaults.systemPrompt;
@@ -423,33 +423,33 @@ const AdvancedSettings = ({
                 Context window
               </span>
               <span className='spec-value font-mono select-none'>
-                {formValues.contextWindow?.toLocaleString() ||
-                  modelConfig?.contextWindow?.toLocaleString() ||
-                  '16,000'}{' '}
+        {formValues.contextWindow?.toLocaleString() ||
+          modelConfig?.tokens?.contextWindow?.toLocaleString() ||
+          '16,000'}{' '}
                 tokens
               </span>
             </div>
-            {modelConfig && modelConfig.inputTokenPrice !== undefined && (
+            {modelConfig?.pricing?.inputTokenPrice !== undefined && (
               <div className='spec-item flex justify-between text-sm'>
                 <span className='spec-label font-medium text-theme-secondary select-none'>
                   Input tokens
                 </span>
                 <span className='spec-value font-mono select-none'>
-                  {Math.abs(modelConfig.inputTokenPrice) < 0.0001
+                  {Math.abs(modelConfig.pricing.inputTokenPrice) < 0.0001
                     ? 'Free'
-                    : `$${formatPrice(modelConfig.inputTokenPrice)} per 1M tokens`}
+                    : `$${formatPrice(modelConfig.pricing.inputTokenPrice)} per 1M tokens`}
                 </span>
               </div>
             )}
-            {modelConfig && modelConfig.outputTokenPrice !== undefined && (
+            {modelConfig?.pricing?.outputTokenPrice !== undefined && (
               <div className='spec-item flex justify-between text-sm'>
                 <span className='spec-label font-medium text-theme-secondary select-none'>
                   Output tokens
                 </span>
                 <span className='spec-value font-mono select-none'>
-                  {Math.abs(modelConfig.outputTokenPrice) < 0.0001
+                  {Math.abs(modelConfig.pricing.outputTokenPrice) < 0.0001
                     ? 'Free'
-                    : `$${formatPrice(modelConfig.outputTokenPrice)} per 1M tokens`}
+                    : `$${formatPrice(modelConfig.pricing.outputTokenPrice)} per 1M tokens`}
                 </span>
               </div>
             )}
@@ -471,7 +471,7 @@ const AdvancedSettings = ({
             value={formValues?.maxTokens}
             onChange={(newValue) => handleChange('maxTokens', newValue)}
             min={1}
-            max={modelConfig?.maxTokens}
+            max={modelConfig?.tokens?.maxOutput}
             step={1}
             disabled={isSaving || isResetting}
             className='form-group'
@@ -479,7 +479,7 @@ const AdvancedSettings = ({
         </div>
 
         {/* Temperature setting (if supported) */}
-        {modelConfig?.supportsTemperature !== false && (
+        {modelConfig?.capabilities?.supportsTemperature !== false && (
           <div className='form-group mb-7'>
             {/* Temperature Toggle - Always visible */}
             <div className='mb-3 flex items-center'>
@@ -508,8 +508,8 @@ const AdvancedSettings = ({
                 label=''
                 value={formValues.temperature}
                 onChange={(newValue) => handleChange('temperature', newValue)}
-                min={platform.apiConfig?.minTemperature}
-                max={platform.apiConfig?.maxTemperature}
+            min={platform.apiConfig?.temperature?.min}
+            max={platform.apiConfig?.temperature?.max}
                 step={0.01}
                 disabled={isSaving || isResetting}
                 className='form-group mt-2'
@@ -519,7 +519,7 @@ const AdvancedSettings = ({
         )}
 
         {/* Top P setting (if supported) */}
-        {modelConfig?.supportsTopP === true && (
+        {modelConfig?.capabilities?.supportsTopP === true && (
           <div className='form-group mb-7'>
             {/* Top P Toggle - Always visible */}
             <div className='mb-3 flex items-center'>
@@ -548,8 +548,8 @@ const AdvancedSettings = ({
                 label=''
                 value={formValues.topP}
                 onChange={(newValue) => handleChange('topP', newValue)}
-                min={platform.apiConfig?.minTopP}
-                max={platform.apiConfig?.maxTopP}
+            min={platform.apiConfig?.topP?.min}
+            max={platform.apiConfig?.topP?.max}
                 step={0.01}
                 disabled={isSaving || isResetting}
                 className='form-group mt-2'
@@ -559,8 +559,8 @@ const AdvancedSettings = ({
         )}
 
         {/* Warning for using both Temp and TopP */}
-        {modelConfig?.supportsTemperature !== false &&
-          modelConfig?.supportsTopP === true &&
+        {modelConfig?.capabilities?.supportsTemperature !== false &&
+          modelConfig?.capabilities?.supportsTopP === true &&
           formValues.includeTemperature &&
           formValues.includeTopP && (
             <p className='text-amber-600 text-sm -mt-4 mb-10 select-none'>
@@ -570,8 +570,8 @@ const AdvancedSettings = ({
           )}
 
         {/* System prompt (if supported) */}
-        {platform.apiConfig?.hasSystemPrompt !== false &&
-          modelConfig?.supportsSystemPrompt !== false && (
+        {platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false &&
+          modelConfig?.capabilities?.supportsSystemPrompt !== false && (
             <div className='form-group mb-4'>
               <label
                 htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
