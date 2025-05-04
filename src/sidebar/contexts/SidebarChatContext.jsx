@@ -212,6 +212,7 @@ export function SidebarChatProvider({ children }) {
     TokenManagementService,
     robustSendMessage,
     extractedContentAdded,
+    isThinkingModeEnabled,
   });
 
   const { rerunMessage, editAndRerunMessage, rerunAssistantMessage } =

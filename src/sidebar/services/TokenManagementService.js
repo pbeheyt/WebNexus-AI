@@ -234,7 +234,8 @@ class TokenManagementService {
     tabId,
     messages,
     modelConfig = null,
-    options = {}
+    options = {},
+    isThinkingModeEnabled = false
   ) {
     if (!tabId) return this._getEmptyStats();
 
@@ -280,7 +281,8 @@ class TokenManagementService {
         const costInfo = this.calculateCost(
           baseStats.inputTokensInLastApiCall,
           baseStats.outputTokensInLastApiCall,
-          modelConfig
+          modelConfig,
+          isThinkingModeEnabled
         );
         currentCallCost = costInfo.totalCost || 0;
       }
@@ -355,25 +357,42 @@ class TokenManagementService {
    * @param {number} inputTokens - Number of input tokens
    * @param {number} outputTokens - Number of output tokens
    * @param {Object} modelConfig - Model configuration with pricing
+   * @param {boolean} [isThinkingModeEnabled=false] - Whether thinking mode is active
    * @returns {Object} - Pricing information
    */
-  static calculateCost(inputTokens, outputTokens, modelConfig) {
+  static calculateCost(inputTokens, outputTokens, modelConfig, isThinkingModeEnabled = false) {
     if (!modelConfig) return { totalCost: 0 };
 
-    const inputPrice = modelConfig.inputTokenPrice || 0;
-    const outputPrice = modelConfig.outputTokenPrice || 0;
+    // Initialize with base prices
+    let effectiveInputPrice = modelConfig?.pricing?.inputTokenPrice ?? 0;
+    let effectiveOutputPrice = modelConfig?.pricing?.outputTokenPrice ?? 0;
+
+    // Check for thinking mode overrides if applicable
+    if (modelConfig?.thinking?.toggleable === true && isThinkingModeEnabled === true) {
+      // Apply input price override if valid
+      const overrideInputPrice = modelConfig.thinking.pricing?.inputTokenPrice;
+      if (typeof overrideInputPrice === 'number' && overrideInputPrice >= 0) {
+        effectiveInputPrice = overrideInputPrice;
+      }
+
+      // Apply output price override if valid
+      const overrideOutputPrice = modelConfig.thinking.pricing?.outputTokenPrice;
+      if (typeof overrideOutputPrice === 'number' && overrideOutputPrice >= 0) {
+        effectiveOutputPrice = overrideOutputPrice;
+      }
+    }
 
     // Convert from price per million tokens
-    const inputCost = (inputTokens / 1000000) * inputPrice;
-    const outputCost = (outputTokens / 1000000) * outputPrice;
+    const inputCost = (inputTokens / 1000000) * effectiveInputPrice;
+    const outputCost = (outputTokens / 1000000) * effectiveOutputPrice;
     const totalCost = inputCost + outputCost;
 
     return {
       inputCost,
       outputCost,
       totalCost,
-      inputTokenPrice: inputPrice,
-      outputTokenPrice: outputPrice,
+      inputTokenPrice: effectiveInputPrice,
+      outputTokenPrice: effectiveOutputPrice,
     };
   }
 

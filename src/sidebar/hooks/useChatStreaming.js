@@ -50,6 +50,7 @@ export function useChatStreaming({
   TokenManagementService,
   robustSendMessage,
   extractedContentAdded,
+  isThinkingModeEnabled = false,
 }) {
   // --- State Update Logic (using requestAnimationFrame) ---
   const performStreamingStateUpdate = useCallback(() => {
@@ -181,7 +182,8 @@ export function useChatStreaming({
             {
               initialAccumulatedCost: retrievedPreTruncationCost,
               initialOutputTokens: retrievedPreTruncationOutput,
-            }
+            },
+            isThinkingModeEnabled
           );
         }
       } catch (error) {

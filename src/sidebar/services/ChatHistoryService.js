@@ -80,9 +80,10 @@ class ChatHistoryService {
    * @param {Object} [options={}] - Optional parameters like initial stats for reruns.
    * @param {number} [options.initialAccumulatedCost] - Starting cost for calculation (used in reruns).
    * @param {number} [options.initialOutputTokens] - Starting output tokens for calculation (used in reruns).
+   * @param {boolean} [isThinkingModeEnabled=false] - Whether thinking mode is active
    * @returns {Promise<boolean>} Success status
    */
-  static async saveHistory(tabId, messages, modelConfig = null, options = {}) {
+  static async saveHistory(tabId, messages, modelConfig = null, options = {}, isThinkingModeEnabled = false) {
     try {
       if (!tabId) {
         logger.sidebar.error(
@@ -109,7 +110,8 @@ class ChatHistoryService {
         tabId,
         limitedMessages,
         modelConfig,
-        options
+        options,
+        isThinkingModeEnabled
       );
 
       return true;
