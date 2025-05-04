@@ -43,6 +43,7 @@ const _initiateRerunSequence = async ({
   tabId,
   rerunStatsRef,
   isContentExtractionEnabled,
+  isThinkingModeEnabled,
   processContentViaApi,
   resetContentProcessing,
   modelConfigData,
@@ -76,6 +77,7 @@ const _initiateRerunSequence = async ({
     conversationHistory,
     streaming: true,
     isContentExtractionEnabled: isContentExtractionEnabled,
+    isThinkingModeEnabled: isThinkingModeEnabled,
     options: {
       tabId,
       source: INTERFACE_SOURCES.SIDEBAR,
@@ -140,6 +142,7 @@ export function useMessageActions({
   TokenManagementService,
   _initiateApiCall,
   isContentExtractionEnabled,
+  isThinkingModeEnabled,
 }) {
   const rerunMessage = useCallback(
     async (messageId) => {
@@ -192,6 +195,7 @@ export function useMessageActions({
         tabId,
         rerunStatsRef,
         isContentExtractionEnabled,
+        isThinkingModeEnabled,
         processContentViaApi,
         resetContentProcessing,
         modelConfigData,
@@ -216,6 +220,7 @@ export function useMessageActions({
       _initiateApiCall,
       processContentViaApi,
       isContentExtractionEnabled,
+      isThinkingModeEnabled,
     ]
   );
 
@@ -288,6 +293,7 @@ export function useMessageActions({
         tabId,
         rerunStatsRef,
         isContentExtractionEnabled,
+        isThinkingModeEnabled,
         processContentViaApi,
         resetContentProcessing,
         modelConfigData,
@@ -313,6 +319,7 @@ export function useMessageActions({
       _initiateApiCall,
       processContentViaApi,
       isContentExtractionEnabled,
+      isThinkingModeEnabled,
     ]
   );
 
@@ -375,6 +382,7 @@ export function useMessageActions({
         tabId,
         rerunStatsRef,
         isContentExtractionEnabled,
+        isThinkingModeEnabled,
         processContentViaApi,
         resetContentProcessing,
         modelConfigData,
@@ -399,6 +407,7 @@ export function useMessageActions({
       _initiateApiCall,
       processContentViaApi,
       isContentExtractionEnabled,
+      isThinkingModeEnabled,
     ]
   );
 

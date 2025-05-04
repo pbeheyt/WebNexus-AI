@@ -89,6 +89,7 @@ export function SidebarChatProvider({ children }) {
       conversationHistory,
       streaming,
       isContentExtractionEnabled,
+      isThinkingModeEnabled,
       options,
       // Dependencies needed for error handling and state updates
       assistantMessageIdOnError,
@@ -103,6 +104,7 @@ export function SidebarChatProvider({ children }) {
           conversationHistory,
           streaming,
           isContentExtractionEnabled,
+          isThinkingModeEnabled: isThinkingModeEnabled,
           options,
         });
 
@@ -232,6 +234,7 @@ export function SidebarChatProvider({ children }) {
       TokenManagementService,
       _initiateApiCall,
       isContentExtractionEnabled,
+      isThinkingModeEnabled,
     });
   // --- End Hook Instantiation ---
 
@@ -457,6 +460,7 @@ export function SidebarChatProvider({ children }) {
       conversationHistory,
       streaming: true,
       isContentExtractionEnabled: effectiveContentExtractionEnabled,
+      isThinkingModeEnabled: isThinkingModeEnabled,
       options: {
         tabId,
         source: INTERFACE_SOURCES.SIDEBAR,
