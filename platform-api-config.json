@@ -20,7 +20,9 @@
           "supportsTemperature": true,
           "supportsTopP": true,
           "tokenParameter": "maxOutputTokens",
-          "supportsSystemPrompt": true
+          "supportsSystemPrompt": true,
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "gemini-2.5-pro-preview-03-25",
@@ -33,7 +35,9 @@
           "supportsTemperature": true,
           "supportsTopP": true,
           "tokenParameter": "maxOutputTokens",
-          "supportsSystemPrompt": true
+          "supportsSystemPrompt": true,
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "gemini-2.5-flash-preview-04-17",
@@ -46,7 +50,13 @@
           "supportsTemperature": true,
           "supportsTopP": true,
           "tokenParameter": "maxOutputTokens",
-          "supportsSystemPrompt": true
+          "supportsSystemPrompt": true,
+          "hasThinking": true,
+          "thinkingIsToggleable": true,
+          "thinkingPricing": {
+            "inputTokenPrice": 0.15,
+            "outputTokenPrice": 3.50
+          }
         },
         {
           "id": "gemini-2.0-flash",
@@ -59,7 +69,9 @@
           "supportsTemperature": true,
           "supportsTopP": true,
           "supportsSystemPrompt": false,
-          "tokenParameter": "maxOutputTokens"
+          "tokenParameter": "maxOutputTokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "gemini-2.0-flash-lite",
@@ -72,7 +84,9 @@
           "supportsTemperature": true,
           "supportsTopP": true,
           "supportsSystemPrompt": false,
-          "tokenParameter": "maxOutputTokens"
+          "tokenParameter": "maxOutputTokens",
+          "hasThinking": false,
+          "thinkingIsToggleable": false
         }
       ],
       "defaultModel": "gemini-2.0-flash",
@@ -100,7 +114,9 @@
           "outputTokenPrice": 8.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "gpt-4.1-mini",
@@ -112,7 +128,9 @@
           "outputTokenPrice": 1.6,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "gpt-4.1-nano",
@@ -124,7 +142,9 @@
           "outputTokenPrice": 0.4,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": false,
+          "thinkingIsToggleable": false
         },
         {
           "id": "o3",
@@ -136,7 +156,9 @@
           "inputTokenPrice": 10.0,
           "outputTokenPrice": 40.0,
           "supportsTemperature": false,
-          "supportsTopP": false
+          "supportsTopP": false,
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "o4-mini",
@@ -148,7 +170,9 @@
           "inputTokenPrice": 1.1,
           "outputTokenPrice": 4.4,
           "supportsTemperature": false,
-          "supportsTopP": false
+          "supportsTopP": false,
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         }
       ],
       "defaultModel": "gpt-4.1-mini",
@@ -176,7 +200,9 @@
           "outputTokenPrice": 15.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "claude-3-5-haiku-latest",
@@ -188,7 +214,9 @@
           "outputTokenPrice": 4.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "claude-3-5-sonnet-latest",
@@ -200,7 +228,9 @@
           "outputTokenPrice": 15.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "claude-3-opus-latest",
@@ -212,7 +242,9 @@
           "outputTokenPrice": 75.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         }
       ],
       "defaultModel": "claude-3-5-haiku-latest",
@@ -240,7 +272,9 @@
           "outputTokenPrice": 1.1,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": false,
+          "thinkingIsToggleable": false
         },
         {
           "id": "deepseek-reasoner",
@@ -252,7 +286,9 @@
           "outputTokenPrice": 2.19,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         }
       ],
       "defaultModel": "deepseek-chat",
@@ -280,7 +316,9 @@
           "outputTokenPrice": 15.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "grok-3-fast-latest",
@@ -292,7 +330,9 @@
           "outputTokenPrice": 25.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "grok-3-mini-latest",
@@ -304,7 +344,9 @@
           "outputTokenPrice": 0.5,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "grok-3-mini-fast-latest",
@@ -316,7 +358,9 @@
           "outputTokenPrice": 4.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         }
       ],
       "defaultModel": "grok-3-mini-latest",
@@ -344,7 +388,9 @@
           "outputTokenPrice": 6.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "mistral-small-latest",
@@ -356,7 +402,9 @@
           "outputTokenPrice": 0.0,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": false,
+          "thinkingIsToggleable": false
         },
         {
           "id": "codestral-latest",
@@ -368,7 +416,9 @@
           "outputTokenPrice": 0.9,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": true,
+          "thinkingIsToggleable": false
         },
         {
           "id": "mistral-saba-latest",
@@ -380,7 +430,9 @@
           "outputTokenPrice": 0.6,
           "supportsTemperature": true,
           "supportsTopP": true,
-          "tokenParameter": "max_tokens"
+          "tokenParameter": "max_tokens",
+          "hasThinking": false,
+          "thinkingIsToggleable": false
         }
       ],
       "defaultModel": "mistral-small-latest",
