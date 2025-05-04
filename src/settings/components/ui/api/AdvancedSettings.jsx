@@ -471,23 +471,20 @@ const AdvancedSettings = ({
 
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
         {modelConfig?.thinking?.toggleable && (
-          <div className='mode-toggle-container flex gap-2 mb-6'>
-            <button
-              type='button'
-              className={`px-4 py-2 rounded-md ${currentEditingMode === 'base' ? 'bg-primary text-white' : 'bg-theme-hover text-theme-secondary'}`}
-              onClick={() => setCurrentEditingMode('base')}
-              aria-pressed={currentEditingMode === 'base'}
-            >
-              Base Settings
-            </button>
-            <button
-              type='button'
-              className={`px-4 py-2 rounded-md ${currentEditingMode === 'thinking' ? 'bg-primary text-white' : 'bg-theme-hover text-theme-secondary'}`}
-              onClick={() => setCurrentEditingMode('thinking')}
-              aria-pressed={currentEditingMode === 'thinking'}
-            >
-              Thinking Settings
-            </button>
+          <div className='mb-6'>
+            <div className='flex items-center gap-3'>
+              <span className='text-base font-semibold text-theme-secondary select-none'>
+                Thinking Mode
+              </span>
+              <Toggle
+                id='thinking-mode-toggle'
+                checked={currentEditingMode === 'thinking'}
+                onChange={(newCheckedState) => 
+                  setCurrentEditingMode(newCheckedState ? 'thinking' : 'base')
+                }
+                disabled={isSaving || isResetting}
+              />
+            </div>
           </div>
         )}
         {/* Model specifications */}
