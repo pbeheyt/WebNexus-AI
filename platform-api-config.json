@@ -319,7 +319,11 @@
             "maxOutput": 64000,
             "supportsTemperature": false,
             "supportsTopP": false,
-            "defaultBudget": 16000
+              "budget": {
+              "min": 1024,
+              "max": 64000,
+              "default": 16000
+            }
           }
         },
         {

@@ -69,8 +69,13 @@ const AdvancedSettings = ({
       defaults.systemPrompt = ''; // Default is always empty string
     }
 
+    // Add thinking budget default if in thinking mode and model supports it
+    if (currentEditingMode === 'thinking' && currentModelConfig?.thinking?.budget) {
+      defaults.thinkingBudget = currentModelConfig.thinking.budget.default;
+    }
+
     return defaults;
-  }, [models, selectedModelId, platform.apiConfig]);
+  }, [models, selectedModelId, platform.apiConfig, currentEditingMode]);
 
   const defaultSettings = getDefaultSettings();
 
@@ -83,6 +88,7 @@ const AdvancedSettings = ({
     systemPrompt: settings.systemPrompt ?? '',
     includeTemperature: settings.includeTemperature ?? true,
     includeTopP: settings.includeTopP ?? false, // Default to false
+    thinkingBudget: settings.thinkingBudget ?? null,
   });
 
   // Original values reference for comparison
@@ -144,9 +150,19 @@ const AdvancedSettings = ({
       }
     }
 
+    // Check thinkingBudget only if in thinking mode and model supports it
+    if (currentEditingMode === 'thinking' && currentModelConfig?.thinking?.budget) {
+      if (
+        !('thinkingBudget' in formVals) ||
+        formVals.thinkingBudget !== modelDefaults.thinkingBudget
+      ) {
+        return false;
+      }
+    }
+
     // If all relevant checks pass, values are at defaults
     return true;
-  }, [getDefaultSettings, models, selectedModelId, platform.apiConfig]);
+  }, [getDefaultSettings, models, selectedModelId, platform.apiConfig, currentEditingMode]);
 
   // Update form values when selected model or settings change
   useEffect(() => {
@@ -165,11 +181,11 @@ const AdvancedSettings = ({
       maxTokens: currentSettings.maxTokens ?? modelDefaults.maxTokens,
       temperature: currentSettings.temperature ?? modelDefaults.temperature,
       topP: currentSettings.topP ?? modelDefaults.topP,
-      contextWindow:
-        currentSettings.contextWindow ?? modelDefaults.contextWindow,
+      contextWindow: currentSettings.contextWindow ?? modelDefaults.contextWindow,
       systemPrompt: currentSettings.systemPrompt ?? '',
       includeTemperature: currentSettings.includeTemperature ?? true,
       includeTopP: currentSettings.includeTopP ?? false,
+      thinkingBudget: currentSettings.thinkingBudget ?? modelDefaults.thinkingBudget ?? null,
     };
 
     setFormValues(newFormValues);
@@ -227,6 +243,9 @@ const AdvancedSettings = ({
       updatedValues[name] = newValue;
     } else if (name === 'includeTemperature' || name === 'includeTopP') {
       updatedValues[name] = newValue;
+    } else if (name === 'thinkingBudget') {
+      const parsedValue = parseInt(newValue, 10);
+      updatedValues[name] = isNaN(parsedValue) ? formValues.thinkingBudget : parsedValue;
     } else {
       updatedValues[name] = newValue;
     }
@@ -287,22 +306,34 @@ const AdvancedSettings = ({
         }
       }
 
+      // Validate thinkingBudget if shown
+      const showBudgetSlider = currentEditingMode === 'thinking' && modelConfig?.thinking?.budget;
+      if (showBudgetSlider) {
+        if (formValues.thinkingBudget === null || formValues.thinkingBudget === undefined || isNaN(formValues.thinkingBudget)) {
+          throw new Error('Thinking Budget is required.');
+        }
+        const { min, max } = modelConfig.thinking.budget;
+        if (formValues.thinkingBudget < min || formValues.thinkingBudget > max) {
+          throw new Error(`Thinking Budget must be between ${min} and ${max}.`);
+        }
+      }
+
       // Create settings object including new toggles
       const updateSettings = {};
       if ('maxTokens' in formValues)
         updateSettings.maxTokens = formValues.maxTokens;
       if (
         'temperature' in formValues &&
-        modelConfig?.supportsTemperature !== false
+        modelConfig?.capabilities?.supportsTemperature !== false
       ) {
         updateSettings.temperature = formValues.temperature;
       }
-      if ('topP' in formValues && modelConfig?.supportsTopP === true) {
+      if ('topP' in formValues && modelConfig?.capabilities?.supportsTopP === true) {
         updateSettings.topP = formValues.topP;
       }
       if (
         'systemPrompt' in formValues &&
-        platform.apiConfig?.hasSystemPrompt !== false
+        platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false
       ) {
         updateSettings.systemPrompt = formValues.systemPrompt;
       }
@@ -312,6 +343,10 @@ const AdvancedSettings = ({
       }
       if ('includeTopP' in formValues) {
         updateSettings.includeTopP = formValues.includeTopP;
+      }
+      // Add thinkingBudget if in thinking mode and it exists in formValues
+      if (currentEditingMode === 'thinking' && 'thinkingBudget' in formValues) {
+        updateSettings.thinkingBudget = formValues.thinkingBudget;
       }
 
       // Save settings
@@ -432,6 +467,16 @@ const AdvancedSettings = ({
     };
   }, [modelConfig, currentEditingMode]);
 
+  // Define boolean constants for conditional rendering
+  const isThinkingModeActive = currentEditingMode === 'thinking';
+  const thinkingOverridesTemp = isThinkingModeActive && modelConfig?.thinking?.supportsTemperature === false;
+  const thinkingOverridesTopP = isThinkingModeActive && modelConfig?.thinking?.supportsTopP === false;
+  const modelSupportsTemp = modelConfig?.capabilities?.supportsTemperature !== false;
+  const modelSupportsTopP = modelConfig?.capabilities?.supportsTopP === true;
+  const showTempSection = modelSupportsTemp && !thinkingOverridesTemp;
+  const showTopPSection = modelSupportsTopP && !thinkingOverridesTopP;
+  const showBudgetSlider = isThinkingModeActive && modelConfig?.thinking?.budget;
+
   return (
     <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
       <div className='flex justify-between items-center mb-6'>
@@ -550,8 +595,8 @@ const AdvancedSettings = ({
           />
         </div>
 
-        {/* Temperature setting (if supported) */}
-        {modelConfig?.capabilities?.supportsTemperature !== false && (
+        {/* Temperature setting (if supported and not overridden by thinking mode) */}
+        {showTempSection && (
           <div className='form-group mb-7'>
             {/* Temperature Toggle - Always visible */}
             <div className='mb-3 flex items-center'>
@@ -590,8 +635,8 @@ const AdvancedSettings = ({
           </div>
         )}
 
-        {/* Top P setting (if supported) */}
-        {modelConfig?.capabilities?.supportsTopP === true && (
+        {/* Top P setting (if supported and not overridden by thinking mode) */}
+        {showTopPSection && (
           <div className='form-group mb-7'>
             {/* Top P Toggle - Always visible */}
             <div className='mb-3 flex items-center'>
@@ -640,6 +685,28 @@ const AdvancedSettings = ({
               both.
             </p>
           )}
+       
+        {/* Thinking Budget slider (if in thinking mode and model supports it) */}
+        {showBudgetSlider && (
+          <div className='form-group mb-7'>
+            <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
+              Thinking Budget
+            </span>
+            <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
+              Maximum tokens the model can use for internal thinking steps.
+            </p>
+            <SliderInput
+              label=''
+              value={formValues.thinkingBudget}
+              onChange={(newValue) => handleChange('thinkingBudget', newValue)}
+              min={modelConfig.thinking.budget.min}
+              max={modelConfig.thinking.budget.max}
+              step={1000}
+              disabled={isSaving || isResetting}
+              className='form-group mt-2'
+            />
+          </div>
+        )}
 
         {/* System prompt (if supported) */}
         {platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false &&

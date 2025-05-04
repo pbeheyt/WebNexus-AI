@@ -186,7 +186,7 @@ const PlatformDetails = ({
 
       if (!currentSettings[platform.id]) {
         // Nothing to remove, already at defaults
-        onAdvancedSettingsUpdated(platform.id, modelId, {}); // Notify with empty settings
+        onAdvancedSettingsUpdated(platform.id, modelId, {}, mode); // Notify with empty settings
         success('Settings already at defaults');
         return true;
       }
@@ -204,13 +204,15 @@ const PlatformDetails = ({
         }
       } else {
         if (currentSettings[platform.id].models?.[modelId]) {
-          if (mode === 'base') {
+          if (mode === 'thinking') {
+            // For thinking mode, just delete the thinking settings
+            if (currentSettings[platform.id].models[modelId].thinking) {
+              delete currentSettings[platform.id].models[modelId].thinking;
+              settingsChanged = true;
+            }
+          } else {
             // For base mode, delete the entire model entry
             delete currentSettings[platform.id].models[modelId];
-            settingsChanged = true;
-          } else if (currentSettings[platform.id].models[modelId][mode]) {
-            // For thinking mode, just delete the thinking settings
-            delete currentSettings[platform.id].models[modelId][mode];
             settingsChanged = true;
           }
 
@@ -249,7 +251,7 @@ const PlatformDetails = ({
       }
 
       // Always notify and show success message
-        onAdvancedSettingsUpdated(platform.id, modelId, {}, mode);
+      onAdvancedSettingsUpdated(platform.id, modelId, {}, mode);
       success('Advanced settings reset to defaults');
 
       return true;
@@ -288,8 +290,15 @@ const PlatformDetails = ({
         if (!currentSettings[platform.id].models[modelId]) {
           currentSettings[platform.id].models[modelId] = {};
         }
+        
+        // Ensure the mode object exists
+        if (!currentSettings[platform.id].models[modelId][mode]) {
+          currentSettings[platform.id].models[modelId][mode] = {};
+        }
+        
+        // Merge settings into the correct mode key
         currentSettings[platform.id].models[modelId][mode] = {
-          ...(currentSettings[platform.id].models?.[modelId]?.[mode] || {}),
+          ...currentSettings[platform.id].models[modelId][mode],
           ...settings,
         };
       }
@@ -298,7 +307,7 @@ const PlatformDetails = ({
         await chrome.storage.sync.set({
           [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings,
         });
-        onAdvancedSettingsUpdated(platform.id, modelId, settings);
+        onAdvancedSettingsUpdated(platform.id, modelId, settings, mode);
         success('Advanced settings saved');
         return true;
       } catch (err) {
