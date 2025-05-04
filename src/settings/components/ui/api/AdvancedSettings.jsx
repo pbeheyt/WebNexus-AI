@@ -22,6 +22,7 @@ const AdvancedSettings = ({
   onResetToDefaults,
 }) => {
   const { error } = useNotification();
+  const [currentEditingMode, setCurrentEditingMode] = useState('base');
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -37,7 +38,7 @@ const AdvancedSettings = ({
     if (!selectedModelId || selectedModelId === 'default') {
       return advancedSettings.default || {};
     }
-    return advancedSettings.models?.[selectedModelId] || {};
+    return advancedSettings.models?.[selectedModelId]?.[currentEditingMode] || {};
   };
 
   const settings = getModelSettings();
@@ -150,7 +151,14 @@ const AdvancedSettings = ({
   // Update form values when selected model or settings change
   useEffect(() => {
     const currentSettings = getModelSettings();
-    const modelDefaults = getDefaultSettings();
+    let modelDefaults = getDefaultSettings();
+    
+    if (currentEditingMode === 'thinking' && modelConfig?.thinking) {
+      modelDefaults = {
+        ...modelDefaults,
+        maxTokens: modelConfig.thinking.maxOutput ?? modelDefaults.maxTokens
+      };
+    }
 
     const newFormValues = {
       maxTokens: currentSettings.maxTokens ?? modelDefaults.maxTokens,
@@ -168,7 +176,7 @@ const AdvancedSettings = ({
     setHasChanges(false);
     setIsAtDefaults(checkIfAtDefaults(newFormValues));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedModelId, getDefaultSettings, checkIfAtDefaults]);
+  }, [selectedModelId, currentEditingMode, getDefaultSettings, checkIfAtDefaults]);
 
   // Check if current form values differ from original values
   const checkForChanges = useCallback((currentValues, originalVals) => {
@@ -306,7 +314,7 @@ const AdvancedSettings = ({
       }
 
       // Save settings
-      const success = await onSettingsUpdate(selectedModelId, updateSettings);
+      const success = await onSettingsUpdate(selectedModelId, updateSettings, currentEditingMode);
       if (!success) {
         throw new Error('Failed to save settings');
       }
@@ -320,6 +328,7 @@ const AdvancedSettings = ({
     } finally {
       setIsSaving(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formValues, selectedModelId, platform.apiConfig, onSettingsUpdate, checkIfAtDefaults, error, modelConfig]);
 
   const handleResetClick = useCallback(async () => {
@@ -330,8 +339,16 @@ const AdvancedSettings = ({
 
     try {
       // Existing reset logic
-    const defaults = getDefaultSettings();
+    let defaults = getDefaultSettings();
     const currentModelConfig = models.find((m) => m.id === selectedModelId);
+    
+    if (currentEditingMode === 'thinking' && modelConfig?.thinking) {
+      defaults = {
+        ...defaults,
+        maxTokens: modelConfig.thinking.maxOutput ?? defaults.maxTokens
+      };
+    }
+    
     const resetValues = {
       maxTokens: defaults.maxTokens,
       contextWindow: defaults.contextWindow,
@@ -358,7 +375,7 @@ const AdvancedSettings = ({
     setOriginalValues(resetValues); // Ensure original values are also reset
     setHasChanges(false);
     setIsAtDefaults(true);
-    onResetToDefaults(selectedModelId); // Call the prop function
+    await onResetToDefaults(selectedModelId, currentEditingMode); // Call the prop function
 
       await onResetToDefaults(selectedModelId); // Call the prop function
     } finally {
@@ -368,6 +385,7 @@ const AdvancedSettings = ({
         setIsAnimatingReset(false);
       }, 500); // Match duration in iconClassName
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAtDefaults, getDefaultSettings, models, selectedModelId, platform.apiConfig, onResetToDefaults]);
 
   const formatPrice = (price) => {
@@ -412,6 +430,26 @@ const AdvancedSettings = ({
       </div>
 
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
+        {modelConfig?.thinking?.toggleable && (
+          <div className='mode-toggle-container flex gap-2 mb-6'>
+            <button
+              type='button'
+              className={`px-4 py-2 rounded-md ${currentEditingMode === 'base' ? 'bg-primary text-white' : 'bg-theme-hover text-theme-secondary'}`}
+              onClick={() => setCurrentEditingMode('base')}
+              aria-pressed={currentEditingMode === 'base'}
+            >
+              Base Settings
+            </button>
+            <button
+              type='button'
+              className={`px-4 py-2 rounded-md ${currentEditingMode === 'thinking' ? 'bg-primary text-white' : 'bg-theme-hover text-theme-secondary'}`}
+              onClick={() => setCurrentEditingMode('thinking')}
+              aria-pressed={currentEditingMode === 'thinking'}
+            >
+              Thinking Settings
+            </button>
+          </div>
+        )}
         {/* Model specifications */}
         <div className='model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>

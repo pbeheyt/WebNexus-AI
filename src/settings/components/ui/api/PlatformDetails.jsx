@@ -176,7 +176,7 @@ const PlatformDetails = ({
   };
 
   // New function to handle resetting advanced settings to defaults
-  const handleResetAdvancedSettings = async (modelId) => {
+  const handleResetAdvancedSettings = async (modelId, mode = 'base') => {
     try {
       // Load current settings from storage
       const result = await chrome.storage.sync.get(
@@ -203,12 +203,24 @@ const PlatformDetails = ({
           settingsChanged = true;
         }
       } else {
-        if (
-          currentSettings[platform.id].models &&
-          currentSettings[platform.id].models[modelId]
-        ) {
-          delete currentSettings[platform.id].models[modelId];
-          settingsChanged = true;
+        if (currentSettings[platform.id].models?.[modelId]) {
+          if (mode === 'base') {
+            // For base mode, delete the entire model entry
+            delete currentSettings[platform.id].models[modelId];
+            settingsChanged = true;
+          } else if (currentSettings[platform.id].models[modelId][mode]) {
+            // For thinking mode, just delete the thinking settings
+            delete currentSettings[platform.id].models[modelId][mode];
+            settingsChanged = true;
+          }
+
+          // Clean up empty model entry if needed
+          if (
+            currentSettings[platform.id].models[modelId] &&
+            Object.keys(currentSettings[platform.id].models[modelId]).length === 0
+          ) {
+            delete currentSettings[platform.id].models[modelId];
+          }
         }
 
         // Clean up empty models object if needed
@@ -237,7 +249,7 @@ const PlatformDetails = ({
       }
 
       // Always notify and show success message
-      onAdvancedSettingsUpdated(platform.id, modelId, {});
+        onAdvancedSettingsUpdated(platform.id, modelId, {}, mode);
       success('Advanced settings reset to defaults');
 
       return true;
@@ -248,7 +260,7 @@ const PlatformDetails = ({
     }
   };
 
-  const handleAdvancedSettingsUpdate = async (modelId, settings) => {
+  const handleAdvancedSettingsUpdate = async (modelId, settings, mode = 'base') => {
     try {
       // Load current settings
       const result = await chrome.storage.sync.get(
@@ -273,8 +285,11 @@ const PlatformDetails = ({
           ...settings,
         };
       } else {
-        currentSettings[platform.id].models[modelId] = {
-          ...(currentSettings[platform.id].models?.[modelId] || {}),
+        if (!currentSettings[platform.id].models[modelId]) {
+          currentSettings[platform.id].models[modelId] = {};
+        }
+        currentSettings[platform.id].models[modelId][mode] = {
+          ...(currentSettings[platform.id].models?.[modelId]?.[mode] || {}),
           ...settings,
         };
       }
