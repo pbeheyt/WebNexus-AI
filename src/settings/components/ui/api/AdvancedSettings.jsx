@@ -156,7 +156,8 @@ const AdvancedSettings = ({
     if (currentEditingMode === 'thinking' && modelConfig?.thinking) {
       modelDefaults = {
         ...modelDefaults,
-        maxTokens: modelConfig.thinking.maxOutput ?? modelDefaults.maxTokens
+        maxTokens: modelConfig.thinking.maxOutput ?? modelDefaults.maxTokens,
+        contextWindow: modelConfig.thinking.contextWindow ?? modelDefaults.contextWindow
       };
     }
 
@@ -392,6 +393,45 @@ const AdvancedSettings = ({
     return typeof price === 'number' ? price.toFixed(2) : price;
   };
 
+  // Calculate dynamic specs based on current editing mode
+  const displaySpecs = useMemo(() => {
+    if (!modelConfig) {
+      return {
+        contextWindow: 'N/A',
+        inputPrice: 0,
+        outputPrice: 0,
+        maxOutputTokens: 1
+      };
+    }
+
+    // Get base values
+    const baseContextWindow = modelConfig.tokens?.contextWindow;
+    const baseInputPrice = modelConfig.pricing?.inputTokenPrice;
+    const baseOutputPrice = modelConfig.pricing?.outputTokenPrice;
+    const baseMaxOutputTokens = modelConfig.tokens?.maxOutput;
+
+    // Initialize with base values
+    let contextWindow = baseContextWindow;
+    let inputPrice = baseInputPrice;
+    let outputPrice = baseOutputPrice;
+    let maxOutputTokens = baseMaxOutputTokens;
+
+    // Override with thinking mode values if applicable
+    if (currentEditingMode === 'thinking' && modelConfig.thinking) {
+      contextWindow = modelConfig.thinking.contextWindow ?? contextWindow;
+      inputPrice = modelConfig.thinking.pricing?.inputTokenPrice ?? inputPrice;
+      outputPrice = modelConfig.thinking.pricing?.outputTokenPrice ?? outputPrice;
+      maxOutputTokens = modelConfig.thinking.maxOutput ?? maxOutputTokens;
+    }
+
+    return {
+      contextWindow,
+      inputPrice,
+      outputPrice,
+      maxOutputTokens
+    };
+  }, [modelConfig, currentEditingMode]);
+
   return (
     <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
       <div className='flex justify-between items-center mb-6'>
@@ -461,33 +501,30 @@ const AdvancedSettings = ({
                 Context window
               </span>
               <span className='spec-value font-mono select-none'>
-        {formValues.contextWindow?.toLocaleString() ||
-          modelConfig?.tokens?.contextWindow?.toLocaleString() ||
-          '16,000'}{' '}
-                tokens
+                {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
               </span>
             </div>
-            {modelConfig?.pricing?.inputTokenPrice !== undefined && (
+            {displaySpecs.inputPrice !== undefined && (
               <div className='spec-item flex justify-between text-sm'>
                 <span className='spec-label font-medium text-theme-secondary select-none'>
                   Input tokens
                 </span>
                 <span className='spec-value font-mono select-none'>
-                  {Math.abs(modelConfig.pricing.inputTokenPrice) < 0.0001
+                  {Math.abs(displaySpecs.inputPrice) < 0.0001
                     ? 'Free'
-                    : `$${formatPrice(modelConfig.pricing.inputTokenPrice)} per 1M tokens`}
+                    : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
                 </span>
               </div>
             )}
-            {modelConfig?.pricing?.outputTokenPrice !== undefined && (
+            {displaySpecs.outputPrice !== undefined && (
               <div className='spec-item flex justify-between text-sm'>
                 <span className='spec-label font-medium text-theme-secondary select-none'>
                   Output tokens
                 </span>
                 <span className='spec-value font-mono select-none'>
-                  {Math.abs(modelConfig.pricing.outputTokenPrice) < 0.0001
+                  {Math.abs(displaySpecs.outputPrice) < 0.0001
                     ? 'Free'
-                    : `$${formatPrice(modelConfig.pricing.outputTokenPrice)} per 1M tokens`}
+                    : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
                 </span>
               </div>
             )}
@@ -509,7 +546,7 @@ const AdvancedSettings = ({
             value={formValues?.maxTokens}
             onChange={(newValue) => handleChange('maxTokens', newValue)}
             min={1}
-            max={modelConfig?.tokens?.maxOutput}
+            max={displaySpecs.maxOutputTokens ?? 1}
             step={1}
             disabled={isSaving || isResetting}
             className='form-group'
