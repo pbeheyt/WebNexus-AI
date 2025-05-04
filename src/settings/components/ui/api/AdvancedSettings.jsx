@@ -424,6 +424,11 @@ const AdvancedSettings = ({
       resetValues.systemPrompt = defaults.systemPrompt;
     }
 
+    // Add thinkingBudget if it exists in defaults (meaning we are in thinking mode and it's supported)
+    if ('thinkingBudget' in defaults) {
+      resetValues.thinkingBudget = defaults.thinkingBudget;
+    }
+
     setFormValues(resetValues);
     setOriginalValues(resetValues); // Ensure original values are also reset
     setHasChanges(false);
