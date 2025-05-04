@@ -1,5 +1,5 @@
 // src/platforms/implementations/deepseek-platform.js
-const BasePlatform = require('../platform-base');
+import BasePlatform from '../platform-base.js';
 
 /**
  * DeepSeek AI platform implementation
@@ -22,9 +22,11 @@ class DeepSeekPlatform extends BasePlatform {
    * @returns {HTMLElement|null} The editor element or null if not found
    */
   findEditorElement() {
-    // Keep existing selectors with fallbacks
-    return document.querySelector('#chat-input') ||
-           document.querySelector('.c92459f0');
+    // Selectors for DeepSeek's editor
+    return (
+      document.querySelector('#chat-input') ||
+      document.querySelector('.c92459f0')
+    );
   }
 
   /**
@@ -34,104 +36,62 @@ class DeepSeekPlatform extends BasePlatform {
   findSubmitButton() {
     // Primary selectors - target specific UI patterns unique to the send button
     const sendButton =
-
       // Target by class combinations (current approach with additions)
       document.querySelector('div[role="button"]._7436101.bcc55ca1') ||
       document.querySelector('div[role="button"]._7436101') ||
-      document.querySelector('div[role="button"] ._6f28693')?.closest('div[role="button"]') ||
-
+      document
+        .querySelector('div[role="button"] ._6f28693')
+        ?.closest('div[role="button"]') ||
       // Position-based fallbacks (rightmost button in the input container)
       document.querySelector('.ec4f5d61 > div[role="button"]:last-child') ||
-      document.querySelector('.bf38813a > div:last-child > div[role="button"]') ||
-
+      document.querySelector(
+        '.bf38813a > div:last-child > div[role="button"]'
+      ) ||
       // Attribute-based fallbacks
       document.querySelector('div[role="button"][aria-disabled]') ||
-
       // Icon-based detection
-      document.querySelector('div[role="button"] .ds-icon svg[width="14"][height="16"]')?.closest('div[role="button"]') ||
-
+      document
+        .querySelector(
+          'div[role="button"] .ds-icon svg[width="14"][height="16"]'
+        )
+        ?.closest('div[role="button"]') ||
       // Original fallbacks
       document.querySelector('div[role="button"].f6d670.bcc55ca1') ||
       document.querySelector('div[role="button"].f6d670');
 
+    if (!sendButton) {
+      this.logger.error(
+        `[${this.platformId}] Submit button not found using any strategy.`
+      );
+    }
     return sendButton;
   }
 
   /**
-   * Insert text into DeepSeek's editor and submit
-   * @param {string} text - The text to insert
-   * @returns {Promise<boolean>} Success status
+   * Override: Insert text into DeepSeek's editor.
+   * Uses the base implementation as it targets a standard textarea.
+   * @param {HTMLElement} editorElement - The editor element (textarea).
+   * @param {string} text - The text to insert.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
    */
-  async insertAndSubmitText(text) {
-    const editorElement = this.findEditorElement();
-
-    if (!editorElement) {
-      this.logger.error(`[${this.platformId}] Textarea element not found`);
-      return false;
-    }
-
-    try {
-      // Focus on the textarea
-      editorElement.focus();
-
-      // Set the value directly
-      editorElement.value = text;
-
-      // Trigger input event to activate the UI
-      const inputEvent = new Event('input', { bubbles: true });
-      editorElement.dispatchEvent(inputEvent);
-
-      // Wait a short moment for the UI to update
-      return new Promise(resolve => {
-        setTimeout(() => {
-          // Look for the send button
-          const sendButton = this.findSubmitButton();
-
-          if (!sendButton) {
-            // Enhanced logging to help troubleshoot button selector issues
-            this.logger.error(`[${this.platformId}] Send button not found. DOM structure may have changed.`);
-            this.logger.info(`[${this.platformId}] Available button elements:`,
-              document.querySelectorAll('div[role="button"]').length);
-            resolve(false);
-            return;
-          }
-
-          // Check if button is disabled
-          const isDisabled = sendButton.getAttribute('aria-disabled') === 'true';
-
-          if (isDisabled) {
-            this.logger.warn(`[${this.platformId}] Send button is currently disabled`);
-            // Try enabling the button by triggering another input event
-            editorElement.dispatchEvent(inputEvent);
-
-            // Wait a bit more and try again
-            setTimeout(() => {
-              const updatedButton = this.findSubmitButton();
-
-              if (updatedButton && updatedButton.getAttribute('aria-disabled') !== 'true') {
-                updatedButton.click();
-                this.logger.info(`[${this.platformId}] Text submitted successfully after enabling button`);
-                resolve(true);
-              } else {
-                this.logger.error(`[${this.platformId}] Send button remained disabled after retry`);
-                resolve(false);
-              }
-            }, 300);
-          } else {
-            // Click the send button if it's not disabled
-            sendButton.click();
-            this.logger.info(`[${this.platformId}] Text submitted successfully`);
-            resolve(true);
-          }
-        }, 500);
-      });
-    } catch (error) {
-      this.logger.error(`[${this.platformId}] Error inserting text:`, error);
-      return false;
-    }
+  async _insertTextIntoEditor(editorElement, text) {
+    this.logger.info(
+      `[${this.platformId}] Using base _insertTextIntoEditor for Deepseek.`
+    );
+    return super._insertTextIntoEditor(editorElement, text); // Call base class method
   }
-  // No override needed for _insertTextIntoEditor - default implementation works
-  // No override needed for _clickSubmitButton - default implementation works
+
+  /**
+   * Checks if the DeepSeek editor element is empty.
+   * @param {HTMLElement} editorElement - The editor element to check.
+   * @returns {boolean} True if the editor is empty, false otherwise.
+   * @protected
+   */
+  _isEditorEmpty(editorElement) {
+    return (editorElement.value || '').trim() === '';
+  }
+
 }
 
-module.exports = DeepSeekPlatform;
+export default DeepSeekPlatform;

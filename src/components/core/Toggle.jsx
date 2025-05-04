@@ -1,13 +1,15 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
- * Toggle switch component with properly scaled circle that adapts to Tailwind classes.
+ * Toggle switch component with a properly positioned circle.
+ * Now uses a semantic button element for the clickable wrapper.
  *
  * @param {Object} props - Component props
  * @param {boolean} [props.checked=false] - Whether toggle is checked
  * @param {Function} props.onChange - Change handler
  * @param {boolean} [props.disabled=false] - Whether toggle is disabled
- * @param {string} [props.className=''] - Additional CSS classes
+ * @param {string} [props.className=''] - Additional CSS classes for the button wrapper
  */
 export function Toggle({
   checked = false,
@@ -17,39 +19,59 @@ export function Toggle({
   ...props
 }) {
   return (
-    <div
-      className={`relative inline-block ${className}`}
-      onClick={disabled ? undefined : () => {
-        onChange(!checked);
-      }}
+    <button
+      type='button'
+      className={`relative inline-block border-none bg-transparent p-0 ${className}`}
+      onClick={
+        disabled
+          ? undefined
+          : () => {
+              onChange(!checked);
+            }
+      }
       style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+      disabled={disabled}
+      {...props}
     >
+      {/* Input remains visually hidden but semantically linked */}
       <input
-        type="checkbox"
-        className="sr-only"
+        type='checkbox'
+        className='sr-only'
         checked={checked}
-        onChange={() => {}}
+        onChange={() => {}} // onChange on input is redundant now due to button click
         disabled={disabled}
-        {...props}
+        tabIndex={-1} // Prevent redundant focus on the hidden input
+        aria-hidden='true' // Hide from accessibility tree as button handles interaction
       />
+      {/* Visual slider background */}
       <span
         className={`absolute inset-0 rounded-full transition-all select-none ${
           checked ? 'bg-primary' : 'bg-theme-hover'
         } ${disabled ? 'opacity-50' : ''}`}
+        aria-hidden='true' // Decorative
       />
+      {/* Visual slider knob */}
       <span
-        className="absolute bg-white rounded-full transition-transform duration-200 ease-in-out"
+        className='absolute bg-white rounded-full transition-transform duration-200 ease-in-out'
         style={{
-          top: '10%',
-          left: '4%',
-          width: '42%',
-          height: '80%',
-          aspectRatio: '1',
-          transform: checked ? 'translateX(120%)' : 'translateX(0)'
+          height: '70%',
+          aspectRatio: '1/1',
+          width: 'auto',
+          top: '15%',
+          left: '10%',
+          transform: checked ? 'translateX(130%)' : 'translateX(0)',
         }}
+        aria-hidden='true' // Decorative
       />
-    </div>
+    </button>
   );
 }
+
+Toggle.propTypes = {
+  checked: PropTypes.bool,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  className: PropTypes.string,
+};
 
 export default Toggle;

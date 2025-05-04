@@ -1,4 +1,4 @@
-const BasePlatform = require('../platform-base');
+import BasePlatform from '../platform-base.js';
 
 class MistralPlatform extends BasePlatform {
   constructor() {
@@ -10,15 +10,39 @@ class MistralPlatform extends BasePlatform {
   }
 
   findEditorElement() {
-    // Updated selector based on actual textarea attributes
-    return document.querySelector('textarea[name="message.text"][placeholder*="Demander au Chat"]') || // French placeholder
-           document.querySelector('textarea[name="message.text"][placeholder*="Ask the Chat"]') || // English placeholder
-           document.querySelector('textarea.border-default.ring-offset-background'); // Fallback
+    const primarySelector = 'textarea[name="message.text"]';
+    const fallbackSelector = 'textarea.border-default.ring-offset-background';
+    let editor = document.querySelector(primarySelector);
+
+    if (!editor) {
+      this.logger.debug(`[${this.platformId}] Editor not found with primary selector '${primarySelector}', trying fallback '${fallbackSelector}'`);
+      editor = document.querySelector(fallbackSelector);
+    }
+
+    if (!editor) {
+      this.logger.error(
+        `[${this.platformId}] Editor element not found using selectors '${primarySelector}' or '${fallbackSelector}'.`
+      );
+    }
+    return editor;
   }
 
   findSubmitButton() {
-    // More specific selector including aria-label and class structure
-    return document.querySelector('button[aria-label*="Send question"][class*="bg-inverted"]'); // Match partial class
+    const primarySelector = 'button[type="submit"]:has(svg)';
+    const fallbackSelector = 'button[type="submit"][class*="bg-inverted"]';
+    let button = document.querySelector(primarySelector);
+
+     if (!button) {
+      this.logger.debug(`[${this.platformId}] Submit button not found with primary selector '${primarySelector}', trying fallback '${fallbackSelector}'`);
+      button = document.querySelector(fallbackSelector);
+    }
+
+    if (!button) {
+      this.logger.error(
+        `[${this.platformId}] Submit button not found using selectors '${primarySelector}' or '${fallbackSelector}'.`
+      );
+    }
+    return button;
   }
 
   /**
@@ -30,7 +54,9 @@ class MistralPlatform extends BasePlatform {
    */
   async _insertTextIntoEditor(editorElement, text) {
     try {
-      this.logger.info(`[${this.platformId}] Inserting text into Mistral editor with specific events`);
+      this.logger.info(
+        `[${this.platformId}] Inserting text into Mistral editor with specific events`
+      );
       // Focus first to ensure proper state
       editorElement.focus();
 
@@ -41,57 +67,29 @@ class MistralPlatform extends BasePlatform {
       // Use base helper for standard events
       this._dispatchEvents(editorElement, ['input', 'change']);
 
-      this.logger.info(`[${this.platformId}] Successfully inserted text into Mistral editor.`);
+      this.logger.info(
+        `[${this.platformId}] Successfully inserted text into Mistral editor.`
+      );
       return true;
     } catch (error) {
-      this.logger.error(`[${this.platformId}] Error inserting text into Mistral editor:`, error);
+      this.logger.error(
+        `[${this.platformId}] Error inserting text into Mistral editor:`,
+        error
+      );
       return false;
     }
   }
 
   /**
-   * Override: Click Mistral's submit button, ensuring it's enabled and using event sequence.
-   * @param {HTMLElement} buttonElement - The submit button element.
-   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * Checks if the Mistral editor element is empty.
+   * @param {HTMLElement} editorElement - The editor element to check.
+   * @returns {boolean} True if the editor is empty, false otherwise.
    * @protected
    */
-  async _clickSubmitButton(buttonElement) {
-    try {
-      this.logger.info(`[${this.platformId}] Attempting to click submit button`);
-      // Remove disabled attribute if present
-      if (buttonElement.disabled) {
-        this.logger.warn(`[${this.platformId}] Submit button is disabled, attempting to enable.`);
-        buttonElement.removeAttribute('disabled');
-        // Re-check after attempting to enable
-        if (buttonElement.disabled) {
-            this.logger.error(`[${this.platformId}] Submit button remained disabled.`);
-            return false;
-        }
-      }
-       // Also check aria-disabled just in case
-      if (buttonElement.getAttribute('aria-disabled') === 'true') {
-         this.logger.warn(`[${this.platformId}] Submit button is aria-disabled.`);
-      }
-
-
-      // Create full click simulation
-      ['mousedown', 'mouseup', 'click'].forEach(eventType => {
-        const event = new MouseEvent(eventType, {
-          view: window,
-          bubbles: true,
-          cancelable: true,
-          buttons: eventType === 'mousedown' ? 1 : 0 // Set buttons only for mousedown
-        });
-        buttonElement.dispatchEvent(event);
-      });
-
-      this.logger.info(`[${this.platformId}] Successfully clicked submit button.`);
-      return true;
-    } catch (error) {
-      this.logger.error(`[${this.platformId}] Failed to click submit button:`, error);
-      return false;
-    }
+  _isEditorEmpty(editorElement) {
+    return (editorElement.value || '').trim() === '';
   }
+
 }
 
-module.exports = MistralPlatform;
+export default MistralPlatform;

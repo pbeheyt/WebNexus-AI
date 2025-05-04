@@ -1,5 +1,7 @@
 import React from 'react';
-import { useUI } from '../../contexts/UIContext';
+import PropTypes from 'prop-types';
+
+
 import PlatformIcon from './PlatformIcon';
 
 /**
@@ -36,9 +38,9 @@ export function PlatformLogoItem({
 
   return (
     <button
-      type="button"
+      type='button'
       onClick={handleClick}
-      className="platform-logo-btn-fixed group relative transition-all duration-300 ease-in-out rounded-md border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed user-select-none cursor-pointer"
+      className='platform-logo-btn-fixed group relative transition-all duration-300 ease-in-out rounded-md border-2 border-transparent disabled:opacity-50 disabled:cursor-not-allowed user-select-none cursor-pointer'
       aria-label={`Select ${name}`}
       aria-pressed={isSelected}
       disabled={disabled}
@@ -53,5 +55,14 @@ export function PlatformLogoItem({
     </button>
   );
 }
+
+PlatformLogoItem.propTypes = {
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  iconUrl: PropTypes.string.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+};
 
 export default PlatformLogoItem;

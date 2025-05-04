@@ -1,20 +1,16 @@
 import React, { useEffect, useState, useRef, createContext } from 'react';
+
 import { useSidebarPlatform } from '../../contexts/platform';
+import { PlatformIcon, ChevronDownIcon } from '../../components';
+
 import ModelSelector from './ModelSelector';
-import { PlatformIcon, RefreshIcon } from '../../components';
 
 // Create a context for dropdown state coordination
 export const DropdownContext = createContext({
   openDropdown: null,
-  setOpenDropdown: () => {}
+  setOpenDropdown: () => {},
 });
 
-// SVG Icons
-const ChevronIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-  </svg>
-);
 
 function Header() {
   const {
@@ -23,21 +19,26 @@ function Header() {
     selectPlatform,
     hasAnyPlatformCredentials,
     isLoading,
-    isRefreshing,
-    refreshPlatformData
   } = useSidebarPlatform();
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [showAnimation, setShowAnimation] = useState(false);
+  const [displayPlatformId, setDisplayPlatformId] = useState(selectedPlatformId);
   const dropdownRef = useRef(null);
-  const refreshButtonRef = useRef(null);
   const triggerRef = useRef(null);
-  const prevIsRefreshingRef = useRef(isRefreshing);
+
+  // Update display platform ID only when loading is finished
+  useEffect(() => {
+    if (!isLoading) {
+      setDisplayPlatformId(selectedPlatformId);
+    }
+  }, [selectedPlatformId, isLoading]);
 
   // Filter platforms based on credentials
-  const availablePlatforms = platforms.filter(p => p.hasCredentials);
+  const availablePlatforms = platforms.filter((p) => p.hasCredentials);
 
-  // Find selected platform details
-  const selectedPlatformDetails = platforms.find(p => p.id === selectedPlatformId);
+  // Find display platform details
+  const displayPlatformDetails = platforms.find(
+    (p) => p.id === displayPlatformId
+  );
 
   const isPlatformDropdownOpen = openDropdown === 'platform';
 
@@ -45,8 +46,10 @@ function Header() {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        (dropdownRef.current && !dropdownRef.current.contains(event.target)) &&
-        (triggerRef.current && !triggerRef.current.contains(event.target))
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target)
       ) {
         setOpenDropdown(null);
       }
@@ -65,99 +68,94 @@ function Header() {
 
   // Effect to handle selection change if current platform loses credentials
   useEffect(() => {
-    if (isLoading || !hasAnyPlatformCredentials) return; 
+    if (isLoading || !hasAnyPlatformCredentials) return;
 
-    const isSelectedPlatformAvailable = availablePlatforms.some(p => p.id === selectedPlatformId);
+    const isSelectedPlatformAvailable = availablePlatforms.some(
+      (p) => p.id === selectedPlatformId
+    );
 
     if (!isSelectedPlatformAvailable && availablePlatforms.length > 0) {
       selectPlatform(availablePlatforms[0].id);
     }
-  }, [platforms, selectedPlatformId, hasAnyPlatformCredentials, isLoading, selectPlatform, availablePlatforms]);
-
-  // Effect to handle refresh animation
-  useEffect(() => {
-    if (isRefreshing) {
-      setShowAnimation(true);
-    }
-    
-    if (prevIsRefreshingRef.current && !isRefreshing) {
-      const timer = setTimeout(() => {
-        setShowAnimation(false);
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-    
-    // Update previous state reference
-    prevIsRefreshingRef.current = isRefreshing;
-  }, [isRefreshing]);
+  }, [
+    platforms,
+    selectedPlatformId,
+    hasAnyPlatformCredentials,
+    isLoading,
+    selectPlatform,
+    availablePlatforms,
+  ]);
 
   const handleSelectPlatform = (platformId) => {
     selectPlatform(platformId);
     setOpenDropdown(null);
   };
 
-  const selectedPlatformForDisplay = selectedPlatformDetails; 
+  const selectedPlatformForDisplay = displayPlatformDetails;
 
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
-      <div className="flex items-center px-5">
-        <div className="flex items-center w-full min-w-0">
+      <div className='flex items-center px-5'>
+        <div className='flex items-center w-full min-w-0'>
           {hasAnyPlatformCredentials ? (
             <>
               {/* 1. Platform Selector */}
-              <div className="relative flex items-center h-9 flex-shrink-0 mr-2">
+              <div className='relative flex items-center h-9 flex-shrink-0 mr-2'>
                 {selectedPlatformForDisplay && (
                   <div ref={triggerRef}>
                     <button
-                      onClick={() => setOpenDropdown(openDropdown === 'platform' ? null : 'platform')}
-                      className="flex items-center h-9 px-2 py-2 rounded focus:outline-none transition-colors select-none"
-                      aria-label="Change Platform"
-                      aria-haspopup="true"
+                      onClick={() =>
+                        setOpenDropdown(
+                          openDropdown === 'platform' ? null : 'platform'
+                        )
+                      }
+                      className='flex items-center h-9 px-2 py-2 rounded focus:outline-none transition-colors select-none'
+                      aria-label='Change Platform'
+                      aria-haspopup='true'
                       aria-expanded={isPlatformDropdownOpen}
                     >
-            <PlatformIcon 
-              platformId={selectedPlatformForDisplay?.id} 
-              iconUrl={selectedPlatformForDisplay?.iconUrl} 
-              altText={selectedPlatformForDisplay?.name || ''} 
-              className="w-5 h-5 mr-1" 
-            />
-                      <span className="text-theme-secondary select-none">
-                        <ChevronIcon />
-                      </span>
+                      <PlatformIcon
+                        platformId={selectedPlatformForDisplay?.id}
+                        iconUrl={selectedPlatformForDisplay?.iconUrl}
+                        altText={selectedPlatformForDisplay?.name || ''}
+                        className='w-5 h-5 mr-1'
+                      />
+                      <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
                     </button>
                   </div>
                 )}
-  
+
                 {/* Platform Dropdown */}
                 {isPlatformDropdownOpen && (
                   <div
                     ref={dropdownRef}
-                    className="absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 py-1 w-max max-w-sm"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="platform-menu-button"
+                    className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 py-1 w-max max-w-sm'
+                    role='menu'
+                    aria-orientation='vertical'
+                    aria-labelledby='platform-menu-button'
                   >
                     {availablePlatforms.map((platform) => {
                       const isSelected = platform.id === selectedPlatformId;
                       return (
                         <button
                           key={platform.id}
-                          role="menuitem"
+                          role='menuitem'
                           className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-theme-hover ${
                             isSelected ? 'font-medium' : ''
                           }`}
                           onClick={() => handleSelectPlatform(platform.id)}
                         >
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-2">
-                              <PlatformIcon 
-                                platformId={platform.id} 
-                                iconUrl={platform.iconUrl} 
-                                altText="" 
-                                className="w-4 h-4" 
+                          <div className='flex items-center justify-between w-full'>
+                            <div className='flex items-center gap-2'>
+                              <PlatformIcon
+                                platformId={platform.id}
+                                iconUrl={platform.iconUrl}
+                                altText=''
+                                className='w-4 h-4'
                               />
-                              <span className="text-sm select-none">{platform.name}</span>
+                              <span className='text-sm select-none'>
+                                {platform.name}
+                              </span>
                             </div>
                           </div>
                         </button>
@@ -166,36 +164,26 @@ function Header() {
                   </div>
                 )}
               </div>
-  
+
               {/* 2. Model Selector */}
-              <div className="min-w-0">
-                <ModelSelector
-                  selectedPlatformId={selectedPlatformId}
-                />
+              <div className='min-w-0'>
+                <ModelSelector selectedPlatformId={selectedPlatformId} />
               </div>
               {/* 3. Spacer Element */}
-              <div className="flex-grow" style={{ pointerEvents: 'none' }}></div>
+              <div
+                className='flex-grow'
+                style={{ pointerEvents: 'none' }}
+              ></div>
             </>
           ) : (
             // When no credentials, show message
-            <div className="flex-grow py-1.5 h-9"> 
-              <span className="text-theme-secondary text-sm">No API credentials configured.</span>
+            <div className='flex-grow py-1.5 h-9 flex items-center'>
+              <span className='text-theme-secondary text-sm select-none'>
+                No API credentials configured.
+              </span>
             </div>
           )}
-          
-          {/* 4. Refresh Button */}
-          <div className="flex-shrink-0 ml-2 h-9 flex items-center justify-center">
-            <button
-              ref={refreshButtonRef}
-              onClick={refreshPlatformData}
-              disabled={isRefreshing || isLoading}
-              className="p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Refresh platforms and credentials"
-              title="Refresh platforms and credentials"
-            >
-              <RefreshIcon className={`w-4 h-4 select-none ${showAnimation ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
+
         </div>
       </div>
     </DropdownContext.Provider>

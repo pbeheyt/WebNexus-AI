@@ -1,4 +1,4 @@
-import logger from '../../shared/logger.js';
+import { logger } from '../../shared/logger.js';
 import { processWithDefaultPromptWebUI } from '../services/content-processing.js';
 
 /**
@@ -6,7 +6,11 @@ import { processWithDefaultPromptWebUI } from '../services/content-processing.js
  */
 async function handleContextMenuClick(info, tab) {
   if (info.menuItemId === 'menu-quick-process') {
-    logger.background.info('Context menu clicked:', { menuItemId: info.menuItemId, tabId: tab?.id, url: tab?.url });
+    logger.background.info('Context menu clicked:', {
+      menuItemId: info.menuItemId,
+      tabId: tab?.id,
+      url: tab?.url,
+    });
     if (!tab || !tab.id || !tab.url) {
       logger.background.error('Context menu click missing tab information.');
       return;
@@ -30,6 +34,8 @@ export function setupContextMenuListener() {
     chrome.contextMenus.onClicked.addListener(handleContextMenuClick);
     logger.background.info('Context menu click listener registered.');
   } else {
-    logger.background.error('Context Menus API not available, cannot register click listener.');
+    logger.background.error(
+      'Context Menus API not available, cannot register click listener.'
+    );
   }
 }

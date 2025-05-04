@@ -118,6 +118,16 @@
 
 /* Utility classes */
 @layer utilities {
+  /* Define the CSS variable for the general icon fill color */
+  :root {
+    --icon-general-fill-color: #6B7280; /* Default gray for light mode */
+  }
+
+  /* Override the variable for dark mode */
+  .dark {
+    --icon-general-fill-color: #FFFFFF; /* White for dark mode */
+  }
+
   .focus-primary {
     @apply focus:ring-2 focus:ring-primary focus:ring-opacity-50 focus:border-primary focus:outline-none;
   }
@@ -179,8 +189,8 @@
     padding-right: 3px;
   }
   .platform-logo-btn-fixed[aria-pressed="true"] {
-    padding-left: 25px;
-    padding-right: 25px;
+    padding-left: 20px;
+    padding-right: 20px;
     background-color: var(--theme-active);
   }
   .platform-logo-btn-fixed:disabled {
@@ -205,6 +215,21 @@
   }
 }
 
+/* Define slider color variables */
+:root {
+  --slider-track-bg: theme('colors.gray.300');
+  --slider-track-fill-color: theme('colors.primary.DEFAULT');
+  --slider-track-disabled-bg: theme('colors.gray.200');
+  --slider-track-disabled-fill-color: theme('colors.gray.400');
+}
+
+.dark {
+  --slider-track-bg: theme('colors.gray.700');
+  --slider-track-fill-color: theme('colors.primary.DEFAULT');
+  --slider-track-disabled-bg: theme('colors.gray.800');
+  --slider-track-disabled-fill-color: theme('colors.gray.500');
+}
+
 /* Custom Slider Styles */
 .custom-slider {
   -webkit-appearance: none;
@@ -218,22 +243,19 @@
 /* Webkit Track */
 .custom-slider::-webkit-slider-runnable-track {
   width: 100%;
-  height: 8px;
+  height: 6px;
   cursor: pointer;
-  background: theme('colors.gray.300');
+  background: linear-gradient(to right, var(--slider-track-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-bg) var(--slider-fill-percentage, 0%));
   border-radius: 9999px;
-}
-.dark .custom-slider::-webkit-slider-runnable-track {
-  background: theme('colors.gray.700');
 }
 
 /* Webkit Thumb */
 .custom-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  margin-top: -8px;
-  height: 24px;
-  width: 24px;
+  margin-top: -7px;
+  height: 20px;
+  width: 20px;
   background: theme('colors.primary.DEFAULT');
   border-radius: 50%;
   cursor: pointer;
@@ -246,7 +268,7 @@
    background: theme('colors.primary.hover');
 }
 
-/* Disabled State (Webkit Only) */
+/* Disabled State */
 .custom-slider:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -259,11 +281,55 @@
   background: theme('colors.gray.500');
 }
 .custom-slider:disabled::-webkit-slider-runnable-track {
-  background: theme('colors.gray.200');
+  background: linear-gradient(to right, var(--slider-track-disabled-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-disabled-bg) var(--slider-fill-percentage, 0%));
   cursor: not-allowed;
 }
-.dark .custom-slider:disabled::-webkit-slider-runnable-track {
-  background: theme('colors.gray.800');
+
+/* Mozilla Track */
+.custom-slider::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: linear-gradient(to right, var(--slider-track-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-bg) var(--slider-fill-percentage, 0%));
+  border-radius: 9999px;
+  border: none;
+}
+
+/* Disabled Mozilla Track */
+.custom-slider:disabled::-moz-range-track {
+  cursor: not-allowed;
+  background: linear-gradient(to right, var(--slider-track-disabled-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-disabled-bg) var(--slider-fill-percentage, 0%));
+}
+
+/* Mozilla Thumb */
+.custom-slider::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  background: theme('colors.primary.DEFAULT');
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: background .2s ease-in-out;
+}
+.custom-slider:hover::-moz-range-thumb {
+   background: theme('colors.primary.hover');
+}
+.custom-slider:active::-moz-range-thumb {
+   background: theme('colors.primary.hover');
+}
+.custom-slider:disabled::-moz-range-thumb {
+  background: theme('colors.gray.400');
+  cursor: not-allowed;
+}
+.dark .custom-slider:disabled::-moz-range-thumb {
+  background: theme('colors.gray.500');
+}
+
+/* Force removal of focus indicators specifically from the range input */
+.custom-slider:focus {
+  outline: none !important; /* Remove outline */
+  box-shadow: none !important; /* Remove ring/shadow */
+  border-color: transparent !important; /* Prevent border color change */
 }
 
 /* Hide spin buttons on ALL number inputs */

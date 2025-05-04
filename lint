@@ -1,0 +1,4 @@
+
+> ai-content-assistant@1.0.0 lint:fix
+> eslint 'src/**/*.{js,jsx}' --fix
+

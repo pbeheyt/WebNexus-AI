@@ -1,4 +1,4 @@
-const BaseApiService = require('../api-base');
+import BaseApiService from '../api-base.js';
 
 /**
  * ChatGPT API implementation
@@ -18,12 +18,15 @@ class ChatGptApiService extends BaseApiService {
    * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
   async _buildApiRequest(prompt, params, apiKey) {
-    const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
-    this.logger.info(`[${this.platformId}] Building API request for model: ${params.model}`);
+    const endpoint =
+      this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
+    this.logger.info(
+      `[${this.platformId}] Building API request for model: ${params.model}`
+    );
 
     const requestPayload = {
       model: params.model,
-      stream: true
+      stream: true,
     };
 
     const messages = [];
@@ -37,16 +40,16 @@ class ChatGptApiService extends BaseApiService {
     requestPayload.messages = messages;
 
     // Apply model parameters
-    if (params.parameterStyle === 'reasoning') {
-      requestPayload[params.tokenParameter || 'max_completion_tokens'] = params.maxTokens;
-    } else {
-      requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
-      if ('temperature' in params) {
-        requestPayload.temperature = params.temperature;
-      }
-      if ('topP' in params) {
-        requestPayload.top_p = params.topP;
-      }
+    requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
+    
+    // Apply temperature if the model supports it and the value exists
+    if (params.supportsTemperature !== false && 'temperature' in params) {
+      requestPayload.temperature = params.temperature;
+    }
+
+    // Apply top_p if the model supports it and the value exists
+    if (params.supportsTopP === true && 'topP' in params) {
+      requestPayload.top_p = params.topP;
     }
 
     return {
@@ -54,9 +57,9 @@ class ChatGptApiService extends BaseApiService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(requestPayload)
+      body: JSON.stringify(requestPayload),
     };
   }
 
@@ -89,9 +92,17 @@ class ChatGptApiService extends BaseApiService {
           return { type: 'ignore' };
         }
       } catch (e) {
-        this.logger.error(`[${this.platformId}] Error parsing stream chunk:`, e, 'Line:', line);
+        this.logger.error(
+          `[${this.platformId}] Error parsing stream chunk:`,
+          e,
+          'Line:',
+          line
+        );
         // Treat parsing errors as stream errors - return error type
-        return { type: 'error', error: `Error parsing stream data: ${e.message}` };
+        return {
+          type: 'error',
+          error: `Error parsing stream data: ${e.message}`,
+        };
       }
     }
 
@@ -105,7 +116,7 @@ class ChatGptApiService extends BaseApiService {
    * @returns {Array} Formatted messages for OpenAI API
    */
   _formatOpenAIMessages(history) {
-    return history.map(msg => {
+    return history.map((msg) => {
       // Map internal role names to OpenAI roles
       let role = 'user';
       if (msg.role === 'assistant') role = 'assistant';
@@ -113,7 +124,7 @@ class ChatGptApiService extends BaseApiService {
 
       return {
         role,
-        content: msg.content
+        content: msg.content,
       };
     });
   }
@@ -127,13 +138,12 @@ class ChatGptApiService extends BaseApiService {
    * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
   async _buildValidationRequest(apiKey, model) {
-    const endpoint = this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
+    const endpoint =
+      this.config?.endpoint || 'https://api.openai.com/v1/chat/completions';
     const validationPayload = {
       model: model,
-      messages: [
-        { role: 'user', content: 'API validation check' }
-      ],
-      max_tokens: 1 // Minimum tokens
+      messages: [{ role: 'user', content: 'API validation check' }],
+      max_tokens: 1, // Minimum tokens
     };
 
     return {
@@ -141,11 +151,11 @@ class ChatGptApiService extends BaseApiService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(validationPayload)
+      body: JSON.stringify(validationPayload),
     };
   }
 }
 
-module.exports = ChatGptApiService;
+export default ChatGptApiService;

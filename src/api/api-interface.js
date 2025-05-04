@@ -7,10 +7,10 @@ class ApiInterface {
    * @param {Object} credentials - API credentials
    * @returns {Promise<void>}
    */
-  async initialize(credentials) {
+  async initialize(_credentials) {
     throw new Error('initialize must be implemented by subclasses');
   }
-  
+
   /**
    * Process unified API request with complete configuration
    * @param {Object} requestConfig - Unified request configuration
@@ -23,10 +23,10 @@ class ApiInterface {
    * @param {number} [requestConfig.tabId] - Tab ID for token accounting
    * @returns {Promise<Object>} Standardized response object
    */
-  async processRequest(requestConfig) {
+  async processRequest(_requestConfig) {
     throw new Error('processRequest must be implemented by subclasses');
   }
-  
+
   /**
    * Lightweight method to verify API credentials
    * @returns {Promise<boolean>} Validation result
@@ -36,4 +36,4 @@ class ApiInterface {
   }
 }
 
-module.exports = ApiInterface;
+export default ApiInterface;

@@ -1,16 +1,24 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export const EditIcon = ({ className = 'w-4 h-4', ...props }) => (
-    <svg 
-        className={`${className} stroke-[2] size-4`}
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
-    >
-        <path d="M18.25 5.75C16.8693 4.36929 14.6307 4.36929 13.25 5.75L10.125 8.875L5.52404 13.476C4.86236 14.1376 4.45361 15.0104 4.36889 15.9423L4 20.0001L8.0578 19.6311C8.98967 19.5464 9.86234 19.1377 10.524 18.476L18.25 10.75C19.6307 9.36929 19.6307 7.13071 18.25 5.75V5.75Z" stroke="currentColor"></path>
-        <path d="M12.5 7.5L16.5 11.5" stroke="currentColor"></path>
-    </svg>
+  <svg
+    className={`${className} stroke-[2] size-4`}
+    width='16'
+    height='16'
+    viewBox='0 0 24 24'
+    fill='none'
+    xmlns='http://www.w3.org/2000/svg'
+    {...props}
+  >
+    <path
+      d='M18.25 5.75C16.8693 4.36929 14.6307 4.36929 13.25 5.75L10.125 8.875L5.52404 13.476C4.86236 14.1376 4.45361 15.0104 4.36889 15.9423L4 20.0001L8.0578 19.6311C8.98967 19.5464 9.86234 19.1377 10.524 18.476L18.25 10.75C19.6307 9.36929 19.6307 7.13071 18.25 5.75V5.75Z'
+      stroke='currentColor'
+    ></path>
+    <path d='M12.5 7.5L16.5 11.5' stroke='currentColor'></path>
+  </svg>
 );
+
+EditIcon.propTypes = {
+  className: PropTypes.string,
+};

@@ -1,4 +1,4 @@
-const BaseApiService = require('../api-base');
+import BaseApiService from '../api-base.js';
 
 /**
  * Claude API implementation
@@ -18,8 +18,11 @@ class ClaudeApiService extends BaseApiService {
    * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
   async _buildApiRequest(prompt, params, apiKey) {
-    const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
-    this.logger.info(`[${this.platformId}] Building API request for model: ${params.model}`);
+    const endpoint =
+      this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
+    this.logger.info(
+      `[${this.platformId}] Building API request for model: ${params.model}`
+    );
 
     let requestPayload = {
       model: params.model,
@@ -47,6 +50,7 @@ class ClaudeApiService extends BaseApiService {
 
     // Set messages
     if (params.conversationHistory && params.conversationHistory.length > 0) {
+<<<<<<< HEAD
       requestPayload.messages = this._formatClaudeMessages(params.conversationHistory, prompt);
     } else {
       requestPayload.messages = [{ role: 'user', content: [{ type: "text", text: prompt }] }];
@@ -55,6 +59,13 @@ class ClaudeApiService extends BaseApiService {
     // Add system prompt if supported
     if (params.systemPrompt) {
       requestPayload.system = params.systemPrompt;
+=======
+      // Use the helper to format history and add the current prompt correctly
+      requestPayload.messages = this._formatClaudeMessages(
+        params.conversationHistory,
+        prompt
+      );
+>>>>>>> main
     }
 
     return {
@@ -64,9 +75,9 @@ class ClaudeApiService extends BaseApiService {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true' // Required for direct browser calls
+        'anthropic-dangerous-direct-browser-access': 'true', // Required for direct browser calls
       },
-      body: JSON.stringify(requestPayload)
+      body: JSON.stringify(requestPayload),
     };
   }
 
@@ -101,25 +112,39 @@ class ClaudeApiService extends BaseApiService {
         const data = JSON.parse(line.substring(6));
 
         // Check for content delta
-        if (data.type === 'content_block_delta' && data.delta?.type === 'text_delta') {
+        if (
+          data.type === 'content_block_delta' &&
+          data.delta?.type === 'text_delta'
+        ) {
           const content = data.delta.text;
-          return content ? { type: 'content', chunk: content } : { type: 'ignore' };
+          return content
+            ? { type: 'content', chunk: content }
+            : { type: 'ignore' };
         }
 
         // Check for errors reported within the stream
         if (data.type === 'error') {
           const streamErrorMessage = `Stream error: ${data.error?.type} - ${data.error?.message || 'Unknown stream error'}`;
-          this.logger.error(`[${this.platformId}] ${streamErrorMessage}`, data.error);
+          this.logger.error(
+            `[${this.platformId}] ${streamErrorMessage}`,
+            data.error
+          );
           return { type: 'error', error: streamErrorMessage };
         }
 
         // Ignore other data types like 'message_delta' (stop_reason is handled by 'message_stop' event or reader end)
         return { type: 'ignore' };
-
       } catch (e) {
-        // Update log call
-        this.logger.error(`[${this.platformId}] Error parsing stream chunk:`, e, 'Line:', line);
-        return { type: 'error', error: `Error parsing stream data: ${e.message}` };
+        this.logger.error(
+          `[${this.platformId}] Error parsing stream chunk:`,
+          e,
+          'Line:',
+          line
+        );
+        return {
+          type: 'error',
+          error: `Error parsing stream data: ${e.message}`,
+        };
       }
     }
 
@@ -145,10 +170,10 @@ class ClaudeApiService extends BaseApiService {
         role: role,
         content: [
           {
-            type: "text",
-            text: message.content
-          }
-        ]
+            type: 'text',
+            text: message.content,
+          },
+        ],
       });
     }
 
@@ -157,10 +182,10 @@ class ClaudeApiService extends BaseApiService {
       role: 'user',
       content: [
         {
-          type: "text",
-          text: currentPrompt
-        }
-      ]
+          type: 'text',
+          text: currentPrompt,
+        },
+      ],
     });
 
     return formattedMessages;
@@ -175,7 +200,8 @@ class ClaudeApiService extends BaseApiService {
    * @returns {Promise<Object>} Fetch options { url, method, headers, body }.
    */
   async _buildValidationRequest(apiKey, model) {
-    const endpoint = this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
+    const endpoint =
+      this.config?.endpoint || 'https://api.anthropic.com/v1/messages';
     const validationPayload = {
       model: model,
       max_tokens: 1, // Minimum tokens needed
@@ -184,12 +210,12 @@ class ClaudeApiService extends BaseApiService {
           role: 'user',
           content: [
             {
-              type: "text",
-              text: "API validation check"
-            }
-          ]
-        }
-      ]
+              type: 'text',
+              text: 'API validation check',
+            },
+          ],
+        },
+      ],
     };
 
     return {
@@ -199,11 +225,11 @@ class ClaudeApiService extends BaseApiService {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true' // Required for direct browser calls
+        'anthropic-dangerous-direct-browser-access': 'true', // Required for direct browser calls
       },
-      body: JSON.stringify(validationPayload)
+      body: JSON.stringify(validationPayload),
     };
   }
 }
 
-module.exports = ClaudeApiService;
+export default ClaudeApiService;

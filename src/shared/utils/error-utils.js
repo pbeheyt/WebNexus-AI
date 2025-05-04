@@ -1,3 +1,5 @@
+import { logger } from '../logger';
+
 /**
  * Extracts a user-friendly error message from an API response object.
  * Attempts to parse the JSON body and find specific error details.
@@ -17,14 +19,20 @@ export async function extractApiErrorMessage(response) {
     errorData = await clonedResponse.json();
   } catch (jsonError) {
     // Ignore JSON parsing errors, we'll use the default message
-    console.warn('Failed to parse API error response as JSON:', jsonError);
+    logger.service.warn(
+      'Failed to parse API error response as JSON:',
+      jsonError
+    );
     return defaultMessage;
   }
 
   // Check for array structure first (e.g., some Gemini errors)
   if (Array.isArray(errorData) && errorData.length > 0) {
     const firstError = errorData[0];
-    if (firstError?.error?.message && typeof firstError.error.message === 'string') {
+    if (
+      firstError?.error?.message &&
+      typeof firstError.error.message === 'string'
+    ) {
       detailString = firstError.error.message;
     }
   }
@@ -34,7 +42,10 @@ export async function extractApiErrorMessage(response) {
     // 1. Check errorData.message
     if (typeof errorData.message === 'string') {
       detailString = errorData.message;
-    } else if (typeof errorData.message === 'object' && errorData.message !== null) {
+    } else if (
+      typeof errorData.message === 'object' &&
+      errorData.message !== null
+    ) {
       // Handle nested message objects (e.g., Mistral's { message: { detail: '...' } })
       if (typeof errorData.message.detail === 'string') {
         detailString = errorData.message.detail;
@@ -47,11 +58,20 @@ export async function extractApiErrorMessage(response) {
     }
 
     // 2. Check errorData.error.message (if message wasn't useful)
-    if (!detailString && errorData.error && typeof errorData.error === 'object' && typeof errorData.error.message === 'string') {
+    if (
+      !detailString &&
+      errorData.error &&
+      typeof errorData.error === 'object' &&
+      typeof errorData.error.message === 'string'
+    ) {
       detailString = errorData.error.message;
     }
     // Check if errorData.error is the string itself
-    else if (!detailString && errorData.error && typeof errorData.error === 'string') {
+    else if (
+      !detailString &&
+      errorData.error &&
+      typeof errorData.error === 'string'
+    ) {
       detailString = errorData.error;
     }
 
@@ -64,13 +84,18 @@ export async function extractApiErrorMessage(response) {
   // If we found a specific detail, clean it and format the message
   if (detailString) {
     // Clean up common prefixes like '* '
-    if (detailString) { detailString = detailString.replace(/^\*\s*/, ''); }
+    if (detailString) {
+      detailString = detailString.replace(/^\*\s*/, '');
+    }
     return `API error (${response.status}): ${detailString}`;
   } else {
     // If we couldn't extract a specific string, log for debugging
     // but return the default message to avoid large objects in UI.
-    const dataType = Array.isArray(errorData) ? 'array' : (typeof errorData);
-    console.warn(`API error data received (type: ${dataType}), but no specific message field found:`, errorData);
+    const dataType = Array.isArray(errorData) ? 'array' : typeof errorData;
+    logger.service.warn(
+      `API error data received (type: ${dataType}), but no specific message field found:`,
+      errorData
+    );
     return defaultMessage;
   }
 }

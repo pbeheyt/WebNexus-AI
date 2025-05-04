@@ -1,11 +1,11 @@
 // src/extractor/base-extractor.js
-const logger = require('../shared/logger').extractor;
+import { logger } from '../shared/logger.js';
 
 class BaseExtractor {
   constructor(contentType) {
     this.contentType = contentType;
     this.contentScriptReady = false;
-    this.logger = logger;
+    this.logger = logger.extractor;
     this.messageListener = null;
   }
 
@@ -19,7 +19,10 @@ class BaseExtractor {
       this.contentScriptReady = true;
       this.logger.info(`${this.contentType} extractor ready`);
     } catch (error) {
-      this.logger.error(`Error initializing ${this.contentType} extractor:`, error);
+      this.logger.error(
+        `Error initializing ${this.contentType} extractor:`,
+        error
+      );
     }
   }
 
@@ -34,7 +37,10 @@ class BaseExtractor {
       }
       this.logger.info(`${this.contentType} extractor cleaned up`);
     } catch (error) {
-      this.logger.error(`Error cleaning up ${this.contentType} extractor:`, error);
+      this.logger.error(
+        `Error cleaning up ${this.contentType} extractor:`,
+        error
+      );
     }
   }
 
@@ -45,9 +51,12 @@ class BaseExtractor {
     this.messageListener = (message, sender, sendResponse) => {
       // Only log if the action is not 'streamChunk'
       if (message.action !== 'streamChunk') {
-        this.logger.info(`Message received in ${this.contentType} extractor:`, message);
+        this.logger.info(
+          `Message received in ${this.contentType} extractor:`,
+          message
+        );
       }
-      
+
       if (message.action === 'extractContent') {
         this.logger.info('Extract content request received');
         this.extractAndSaveContent();
@@ -55,7 +64,7 @@ class BaseExtractor {
         return true;
       }
     };
-    
+
     chrome.runtime.onMessage.addListener(this.messageListener);
   }
 
@@ -81,33 +90,36 @@ class BaseExtractor {
    */
   async saveToStorage(data) {
     try {
-      await chrome.storage.local.set({ 
+      await chrome.storage.local.set({
         extractedContent: {
           ...data,
-          contentType: this.contentType
+          contentType: this.contentType,
         },
-        contentReady: true
+        contentReady: true,
       });
-      
+
       this.logger.info(`${this.contentType} data saved to storage`);
       return true;
     } catch (error) {
-      this.logger.error(`Error saving ${this.contentType} data to storage:`, error);
-      
+      this.logger.error(
+        `Error saving ${this.contentType} data to storage:`,
+        error
+      );
+
       // Save error message to storage
-      await chrome.storage.local.set({ 
+      await chrome.storage.local.set({
         extractedContent: {
           error: true,
           message: error.message || 'Unknown error occurred',
           extractedAt: new Date().toISOString(),
-          contentType: this.contentType
+          contentType: this.contentType,
         },
-        contentReady: true
+        contentReady: true,
       });
-      
+
       return false;
     }
   }
 }
 
-module.exports = BaseExtractor;
+export default BaseExtractor;

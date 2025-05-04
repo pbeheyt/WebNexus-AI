@@ -1,10 +1,12 @@
 // src/platforms/platform-factory.js
-const ClaudePlatform = require('./implementations/claude-platform');
-const ChatGptPlatform = require('./implementations/chatgpt-platform');
-const DeepSeekPlatform = require('./implementations/deepseek-platform');
-const MistralPlatform = require('./implementations/mistral-platform');
-const GeminiPlatform = require('./implementations/gemini-platform');
-const GrokPlatform = require('./implementations/grok-platform');
+import { logger } from '../shared/logger.js';
+
+import ChatGptPlatform from './implementations/chatgpt-platform.js';
+import ClaudePlatform from './implementations/claude-platform.js';
+import DeepSeekPlatform from './implementations/deepseek-platform.js';
+import MistralPlatform from './implementations/mistral-platform.js';
+import GeminiPlatform from './implementations/gemini-platform.js';
+import GrokPlatform from './implementations/grok-platform.js';
 
 /**
  * Factory to create the appropriate platform implementation
@@ -21,13 +23,13 @@ class PlatformFactory {
       new DeepSeekPlatform(),
       new MistralPlatform(),
       new GeminiPlatform(),
-      new GrokPlatform()
+      new GrokPlatform(),
     ];
-    
+
     // Find the first platform that matches the current URL
-    return platforms.find(platform => platform.isCurrentPlatform()) || null;
+    return platforms.find((platform) => platform.isCurrentPlatform()) || null;
   }
-  
+
   /**
    * Create a platform by ID regardless of current URL
    * @param {string} platformId - The platform ID to create
@@ -48,10 +50,10 @@ class PlatformFactory {
       case 'grok':
         return new GrokPlatform();
       default:
-        console.error(`Unknown platform ID: ${platformId}`);
+        logger.platform.error(`Unknown platform ID: ${platformId}`);
         return null;
     }
   }
 }
 
-module.exports = PlatformFactory;
+export default PlatformFactory;

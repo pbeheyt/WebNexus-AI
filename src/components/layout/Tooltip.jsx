@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Tooltip component for displaying messages with configurable delay.
@@ -10,14 +11,14 @@ import React, { useEffect, useState, useRef } from 'react';
  * @param {number} [delay=500] - Delay in ms before showing tooltip (default: 500ms).
  * @param {object} targetRef - Reference to the target element.
  */
-export function Tooltip({ 
-  show, 
-  message, 
-  position = 'top', 
-  offset = 8, 
-  width = 'auto', 
+export function Tooltip({
+  show,
+  message,
+  position = 'top',
+  offset = 8,
+  width = 'auto',
   delay = 500, // Default delay of 500ms
-  targetRef 
+  targetRef,
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef(null);
@@ -55,9 +56,9 @@ export function Tooltip({
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
       const tooltipWidth = tooltipRect.width;
       const tooltipHeight = tooltipRect.height;
-      
+
       let top, left;
-      
+
       switch (position) {
         case 'top':
           top = rect.top - offset - tooltipHeight;
@@ -105,14 +106,14 @@ export function Tooltip({
 
   // Handle width styling
   const widthClass = width === 'auto' ? '' : `w-${width}`;
-  
+
   return (
     <div
       ref={tooltipRef}
       style={{
         ...tooltipStyle,
         position: 'fixed',
-        visibility: Object.keys(tooltipStyle).length ? 'visible' : 'hidden'
+        visibility: Object.keys(tooltipStyle).length ? 'visible' : 'hidden',
       }}
       className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 opacity-100 select-none`}
     >
@@ -120,3 +121,13 @@ export function Tooltip({
     </div>
   );
 }
+
+Tooltip.propTypes = {
+  show: PropTypes.bool.isRequired,
+  message: PropTypes.node.isRequired,
+  position: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
+  offset: PropTypes.number,
+  width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  delay: PropTypes.number,
+  targetRef: PropTypes.object,
+};

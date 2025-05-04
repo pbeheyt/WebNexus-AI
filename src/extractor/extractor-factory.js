@@ -1,11 +1,11 @@
 // src/extractor/extractor-factory.js
-const { CONTENT_TYPES } = require('../shared/constants');
-const { determineContentType } = require('../shared/utils/content-utils.js');
+import { CONTENT_TYPES } from '../shared/constants.js';
+import { determineContentType } from '../shared/utils/content-utils.js';
 
-const GeneralExtractorStrategy = require('./strategies/general-strategy');
-const RedditExtractorStrategy = require('./strategies/reddit-strategy');
-const YoutubeExtractorStrategy = require('./strategies/youtube-strategy');
-const PdfExtractorStrategy = require('./strategies/pdf-strategy');
+import GeneralExtractorStrategy from './strategies/general-strategy.js';
+import RedditExtractorStrategy from './strategies/reddit-strategy.js';
+import YoutubeExtractorStrategy from './strategies/youtube-strategy.js';
+import PdfExtractorStrategy from './strategies/pdf-strategy.js';
 
 /**
  * Factory to create the appropriate content extractor
@@ -24,7 +24,7 @@ class ExtractorFactory {
     [CONTENT_TYPES.GENERAL]: GeneralExtractorStrategy,
     [CONTENT_TYPES.REDDIT]: RedditExtractorStrategy,
     [CONTENT_TYPES.YOUTUBE]: YoutubeExtractorStrategy,
-    [CONTENT_TYPES.PDF]: PdfExtractorStrategy
+    [CONTENT_TYPES.PDF]: PdfExtractorStrategy,
   };
 
   /**
@@ -32,10 +32,11 @@ class ExtractorFactory {
    */
   static createExtractor(url) {
     const contentType = determineContentType(url);
-    const StrategyClass = this.STRATEGY_MAP[contentType] || GeneralExtractorStrategy;
+    const StrategyClass =
+      this.STRATEGY_MAP[contentType] || GeneralExtractorStrategy;
     return new StrategyClass();
   }
-  
+
   /**
    * Initialize the appropriate extractor based on the current page
    */
@@ -44,14 +45,14 @@ class ExtractorFactory {
     if (this.activeExtractor) {
       this.activeExtractor.cleanup();
     }
-    
+
     const url = window.location.href;
     this.activeExtractor = ExtractorFactory.createExtractor(url);
     this.activeExtractor.initialize();
     return this.activeExtractor;
   }
 
-    /**
+  /**
    * Reinitialize extractor based on selection state change
    * @returns {BaseExtractor} The reinitialized extractor
    */
@@ -61,17 +62,17 @@ class ExtractorFactory {
       this.activeExtractor.cleanup();
       this.activeExtractor = null;
     }
-    
+
     // Create new extractor with current URL
     const url = window.location.href;
     const contentType = determineContentType(url);
-    
+
     this.logger.info(`Creating new extractor for content type: ${contentType}`);
-    
+
     // Create and initialize the new extractor
     this.activeExtractor = this.createExtractor(url);
     this.activeExtractor.initialize();
-    
+
     return this.activeExtractor;
   }
 
@@ -83,4 +84,4 @@ class ExtractorFactory {
   }
 }
 
-module.exports = ExtractorFactory;
+export default ExtractorFactory;

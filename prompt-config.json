@@ -1,18 +1,18 @@
 {
   "general": {
     "Short Summary": "Summarize the primary content provided, ignoring headers, footers, navigation, ads, and similar boilerplate. Identify the content type (e.g., news, blog, product page) and create a concise 3-sentence summary highlighting the main topic and key points.",
-    "Detailed Summary": "Summarize the primary content provided, ignoring headers, footers, navigation, ads, and similar boilerplate. Identify the content type (e.g., news, blog, product page) and provide a comprehensive summary including: the main topic or purpose, key sections or arguments, important facts or features, and the central message or conclusion."
+    "Detailed Summary": "Summarize the primary content provided, ignoring headers, footers, navigation, ads, and similar boilerplate. Identify the content type (e.g., news, blog, product page) and provide a comprehensive summary including: the main topic or purpose, key sections or information presented, important facts or features, and the overall takeaway or primary objective."
   },
   "youtube": {
     "Short Summary": "Summarize this YouTube video in 3-5 sentences covering the main topic and key points discussed or shown.",
-    "Detailed Summary": "Create a detailed summary of this YouTube video including: introduction (topic/presenter), timeline of main points with timestamps, key insights or demonstrations, and important quotes or conclusions presented."
+    "Detailed Summary": "Create a detailed summary of this YouTube video including: introduction (topic/presenter), timeline of main points with approximate timestamps, key insights or demonstrations, and important quotes or conclusions presented."
   },
   "reddit": {
     "Short Summary": "Provide a brief 3-sentence summary of this Reddit post including the main question/topic and the key community responses or perspectives shared.",
-    "Detailed Summary": "Create a comprehensive summary of this Reddit post including: the original post's question/topic, main arguments in top comments, differing perspectives shared, notable expertise or information provided, and any useful resources or links mentioned."
+    "Detailed Summary": "Create a comprehensive summary of this Reddit post including: the original post's question/topic, main arguments in top comments, differing perspectives shared, comments offering notable information or expertise, and any useful resources or links mentioned (if any)."
   },
   "pdf": {
     "Short Summary": "Summarize this PDF in 5 sentences or less, covering the document type, main topic, and key findings or conclusions.",
-    "Detailed Summary": "Create a detailed summary of this PDF including: document type, author/organization (if available), executive summary/abstract, methodology (if applicable), key points from each main section, important data/statistics, and the main conclusions or recommendations."
+    "Detailed Summary": "Create a detailed summary of this PDF including: document type, author/organization (if available), executive summary/abstract (if present), methodology (if applicable), key points from each main section, important data/statistics, and the main conclusions or recommendations."
   }
 }

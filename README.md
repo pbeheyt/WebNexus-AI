@@ -1,83 +1,68 @@
-# AI Content Assistant
+# WebNexus AI: Interact on Web, PDFs, YouTube w/ ChatGPT, Gemini+ | SidePanel or Web UI
 
-AI Content Assistant enhances your browsing by integrating powerful AI capabilities directly into Chrome. Choose how you interact: use the **Sidebar** for direct API-driven chat about page content, or use the **Popup** to quickly send content to an AI platform's standard web interface.
+WebNexus AI acts as a central hub utilizing diverse AI models directly on encountered web content. It supports interaction methods for both in-depth analysis via direct API chat in the Side Panel, and quick actions sending content to AI websites through the Popup/Context Menu (Web UI Mode). You can interact with web pages, PDFs, YouTube videos, and Reddit Posts, using the selected AI tools.
 
-## Key Features
+---
 
-*   **Two Ways to Interact:**
-    *   **Sidebar (Direct API Chat):** Open a persistent sidebar on any tab. Chat directly with AI models (like ChatGPT, Claude, Gemini, etc.) about the page's content. Responses are generated via the AI's official API and displayed *within the sidebar*. **Requires configuring API keys in Settings.**
-    *   **Popup (Web Interface Interaction):** Use the quick-action popup to select an AI platform. The extension extracts page content, opens the chosen platform's **website** in a new tab, and attempts to paste the content and your prompt into *that website's* chat interface. **Does not use API keys for the interaction itself.**
-*   **Multi-Platform Support:**
-    *   **Sidebar (API):** Integrates with APIs from Claude, ChatGPT, DeepSeek, Mistral, Gemini, and Grok.
-    *   **Popup (Web UI):** Supports sending content to the web interfaces of the same platforms.
-*   **Versatile Content Extraction:** Automatically extracts key information for AI processing from:
-    *   General Web Pages (main text, metadata)
-    *   YouTube Videos (transcripts, comments, metadata)
-    *   Reddit Posts (post content, comments, metadata)
-    *   PDF Documents (text content, metadata)
-*   **Interactive Sidebar Features (API Mode):**
-    *   Select specific AI platforms and models for API interactions.
-    *   Maintains separate conversation histories for each browser tab.
-    *   Provides estimated token usage and accumulated API cost tracking per tab.
-    *   Supports system prompts for advanced API control.
-*   **Custom Prompt Management:** Create, edit, and manage custom prompts for different content types or shared use across both Popup and Sidebar modes via the Settings page.
-*   **API Configuration (for Sidebar Mode):**
-    *   Manage API keys obtained from AI providers, stored in the browser's local storage. Includes validation checks.
-    *   Fine-tune API request parameters (temperature, max tokens, etc.) for sidebar interactions.
-*   **Theme Support:** Adapts to your system's Light or Dark mode.
-*   **Quick Access:** Use keyboard shortcuts or the right-click context menu to activate the popup or toggle the sidebar.
+This extension uses various AI models to analyze and interact with online content. It offers two distinct methods:
+
+1.  **Side Panel (API Mode):** A persistent panel alongside web content for direct chat conversations using the selected platform's official API. Requires API key configuration in Settings.
+2.  **Popup/Context Menu (Web UI Mode):** Quick actions to send extracted content and prompts to the AI platform's website in a new tab. Does _not_ use API keys for the interaction itself but requires you to be logged into the respective platform's website.
 
 ## Supported Platforms
 
-*   **Sidebar (via API):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
-    *   *Requires API key configuration in Settings for functionality.*
-*   **Popup (via Web Interface):** ChatGPT, Claude, DeepSeek, Gemini, Grok, Mistral.
-    *   *Opens the platform's website. API keys are not used for this interaction.*
+WebNexus AI supports interaction with the following AI platforms:
 
-## How to Use
+- Gemini (Google)
+- ChatGPT (OpenAI)
+- Claude (Anthropic)
+- DeepSeek
+- Grok (xAI)
+- Mistral
 
-1.  **Installation:** Load the extension into Chrome (see Installation section below).
-2.  **Configure API Keys (Strongly Recommended for Sidebar):**
-    *   To use the **Sidebar chat feature**, you **must** configure API keys. Open the extension's **Settings** page (Right-click extension icon > Options, or via Popup).
-    *   Go to the **API Settings** tab. Select each AI platform you want to use *in the sidebar* and enter its API key. Save and validate the key (✓ indicates success).
-    *   You can skip this step if you only plan to use the Popup mode.
-3.  **Using the Sidebar (Direct API Chat):**
-    *   Toggle the sidebar using `Ctrl+Shift+Q` (or your shortcut) or the right-click context menu.
-    *   Select an AI Platform and Model from the dropdowns. **Only platforms with configured API keys will work here.**
-    *   Type your prompt about the current page content. The AI response appears directly **within the sidebar**, using the configured API key.
-    *   Token usage and cost estimates are tracked for these API calls.
-4.  **Using the Popup (Web Interface Interaction):**
-    *   Click the extension icon in your browser toolbar.
-    *   Select an AI platform.
-    *   Enter your prompt.
-    *   Click the send button.
-    *   The extension opens the chosen AI platform's **website** in a new tab and attempts to paste the page content and your prompt into **that website's input field.** No API keys are used for this process.
-5.  **Managing Prompts:** Configure custom prompts in **Settings > Prompts** for use in either the Sidebar or Popup.
+Both API access (Side Panel) and Web UI interaction (Popup/Context Menu) are supported for these platforms.
 
-## Installation
+---
 
-1.  Clone or download this repository.
-2.  Open Chrome and go to `chrome://extensions/`.
-3.  Enable "Developer mode" (top-right).
-4.  Click "Load unpacked".
-5.  Select the directory containing `manifest.json`.
+## Core Functionality
 
-## Development
+- **Analyze Diverse Content:** Extracts key information from standard web pages, YouTube video transcripts, Reddit posts & comments, and PDF documents.
+- **Side Panel (API Mode):**
+  - Direct chat with AI models via API.
+  - Requires API key configuration in **Settings > API Settings**.
+  - Selection of specific AI platforms and models.
+  - Maintains separate conversation history per browser tab.
+  - Provides estimated token usage and API cost tracking (based on OpenAI tokenizer, may differ from official billing).
+  - Supports system prompts (where applicable by the model).
+  - Toggle to include/exclude page content on the first message.
+- **Popup & Context Menu (Web UI Mode):**
+  - Send content and prompts to the AI platform's _website_.
+  - **Popup:** Platform selection, prompt entry/selection, context inclusion toggle.
+  - **Context Menu:** Right-click page -> "Process in Web UI (Default Prompt)" sends content with the default prompt for that content type to the preferred platform.
+  - Does _not_ require API keys for interaction (relies on website login).
+  - Attempts to auto-fill the platform's website input.
+- **Prompt Management:** Create, save, edit, delete, and set default prompts for different content types via **Settings > Prompts**. Prompts are accessible in both Side Panel and Popup.
+- **API Configuration (for Side Panel):**
+  - **API Key Storage:** API keys are stored locally within the browser by the extension (via **Settings > API Settings**).
+  - **Parameter Tuning:** Fine-tuning parameters (e.g., temperature, max tokens, system prompts) can be adjusted per model (**Settings > API Settings**) and are also stored locally.
+- **UI Customization:** Light/Dark themes and adjustable text sizes (Small, Base, Large) available in headers.
+- **Keyboard Shortcuts:**
+  - `Alt+I` (or configured key): Open Popup.
+  - `Alt+U` (or configured key): Process page with default prompt via Web UI (like Context Menu).
 
-1.  Requires Node.js and npm.
-2.  Install dependencies: `npm install`
-3.  Build: `npm run build`
-4.  Watch for changes: `npm run watch`
-5.  Load/reload the extension in Chrome as described above.
+---
 
-## Permissions Required
+## Usage Overview
 
-*   **`activeTab` & `scripting`:** To read and interact with the current tab's content.
-*   **`storage`:** To save settings, API keys (in local storage), prompts, chat history, etc.
-*   **`tabs`:** To get tab info (URLs), create tabs (for Popup mode), and manage the sidebar.
-*   **`webRequest`:** (Verify specific usage in `manifest.json`).
-*   **`contextMenus`:** To add the "Open Sidebar" right-click option.
-*   **`host_permissions`:** Needed for:
-    *   Popup Mode: Interacting with AI platform websites (e.g., `chatgpt.com`).
-    *   Sidebar Mode: Calling AI platform API endpoints (e.g., `api.openai.com`).
-    *   Both Modes: Extracting content from various websites (`<all_urls>`).
+1.  **Install** and pin the extension.
+2.  **(For Side Panel):** Open **Settings > API Settings**. Enter and save API keys for the platforms intended for Side Panel use.
+3.  **Choose Interaction Method:**
+    - **Popup (Web UI):** Click extension icon, select platform, write/select prompt, toggle context, click send. Opens platform website.
+    - **Context Menu (Web UI):** Right-click page, select "Process in Web UI". Opens platform website with default prompt.
+    - **Side Panel (API):** Toggle via Popup icon or context menu. Select platform/model (API key required), chat directly.
+
+## Usage Notes
+
+- **Content Extraction Notes:** Extraction performs well on standard website layouts. However, on highly complex or non-standard sites, some page context might not be fully captured. **Pro Tip for Dynamic Content:** To ensure comprehensive extraction of comment sections (e.g., YouTube, Reddit), scroll down the page to fully load all desired comments _before_ activating WebNexus AI on the content.
+- **Web UI Automation (Popup/Context Menu):** Auto-filling functionality depends on the AI platform's website structure and may require updates if the site changes. Extension updates will aim to address this.
+- **Token Estimation (Side Panel):** Estimates are based on OpenAI tokenizer and may differ from official provider billing. Use provider dashboards for accurate cost/usage.

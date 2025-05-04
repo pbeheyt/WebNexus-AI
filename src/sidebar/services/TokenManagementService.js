@@ -1,15 +1,17 @@
 // src/sidebar/services/TokenManagementService.js
 
 import { encode } from 'gpt-tokenizer';
-import { STORAGE_KEYS, MESSAGE_ROLES } from "../../shared/constants";
-import ChatHistoryService from "./ChatHistoryService";
+
+import { logger } from '../../shared/logger';
+import { STORAGE_KEYS, MESSAGE_ROLES } from '../../shared/constants';
+
+import ChatHistoryService from './ChatHistoryService';
 
 /**
  * Service for token estimation, cost calculation, storage, and context window monitoring
  * Central authority for all token-related operations
  */
 class TokenManagementService {
-
   /**
    * Get token statistics for a specific tab
    * @param {number} tabId - Tab identifier
@@ -22,14 +24,19 @@ class TokenManagementService {
 
     try {
       // Get all tab token statistics
-      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
+      const result = await chrome.storage.local.get([
+        STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+      ]);
       const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
       const tabStats = allTokenStats[tabId] || {};
 
       // Return merged stats, ensuring all default fields are present
       return { ...this._getEmptyStats(), ...tabStats };
     } catch (error) {
-      console.error('TokenManagementService: Error getting token statistics:', error);
+      logger.sidebar.error(
+        'TokenManagementService: Error getting token statistics:',
+        error
+      );
       return this._getEmptyStats();
     }
   }
@@ -45,20 +52,27 @@ class TokenManagementService {
 
     try {
       // Get all tab token statistics
-      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
+      const result = await chrome.storage.local.get([
+        STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+      ]);
       const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
 
       // Update stats for this tab
       allTokenStats[tabId] = {
         ...stats,
-        lastUpdated: Date.now()
+        lastUpdated: Date.now(),
       };
 
       // Save all token statistics
-      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats });
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats,
+      });
       return true;
     } catch (error) {
-      console.error('TokenManagementService: Error updating token statistics:', error);
+      logger.sidebar.error(
+        'TokenManagementService: Error updating token statistics:',
+        error
+      );
       return false;
     }
   }
@@ -70,7 +84,6 @@ class TokenManagementService {
    * @returns {Object} - Token statistics focused on the last API call. (Made synchronous again)
    */
   static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') {
-
     let outputTokens = 0;
     let promptTokensInLastApiCall = 0;
 
@@ -94,7 +107,11 @@ class TokenManagementService {
     }
 
     // Process system prompt if present
-    if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim().length > 0) {
+    if (
+      systemPrompt &&
+      typeof systemPrompt === 'string' &&
+      systemPrompt.trim().length > 0
+    ) {
       const systemPromptTokensCount = this.estimateTokens(systemPrompt);
 
       // Assign tokens *only* from the initial system prompt provided.
@@ -106,8 +123,9 @@ class TokenManagementService {
     // Use a standard for...of loop or Promise.all if parallelization is desired (not needed here)
     for (const [index, msg] of messages.entries()) {
       if (msg.role === 'user') {
-        // Removed await as estimateTokens is now sync
-        const msgInputTokens = msg.inputTokens || this.estimateTokens(msg.content);
+        // Sync estimateTokens
+        const msgInputTokens =
+          msg.inputTokens || this.estimateTokens(msg.content);
 
         // Determine if this is the most recent user prompt
         const isLastUserPrompt = index === lastUserMsgIndex;
@@ -115,9 +133,7 @@ class TokenManagementService {
         if (isLastUserPrompt) {
           // Assign tokens only for the message identified as the last user prompt.
           promptTokensInLastApiCall = msgInputTokens;
-
         } else {
-
           // Also add to history sent in last call if it's a USER message and not excluded
           if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
             // Add tokens from past user messages to history sent in the last call.
@@ -125,7 +141,8 @@ class TokenManagementService {
           }
         }
       } else if (msg.role === 'assistant') {
-        const msgOutputTokens = typeof msg.outputTokens === 'number'
+        const msgOutputTokens =
+          typeof msg.outputTokens === 'number'
             ? msg.outputTokens
             : this.estimateTokens(msg.content);
         // Calculate cumulative output tokens by summing output from all assistant messages.
@@ -142,14 +159,23 @@ class TokenManagementService {
     } // End of for loop replacing forEach
 
     // Calculate total input tokens for the last API call by summing system, history sent, and last prompt tokens.
-    const inputTokensInLastApiCall = (systemTokensInLastApiCall || 0) + (historyTokensSentInLastApiCall || 0) + (promptTokensInLastApiCall || 0);
+    const inputTokensInLastApiCall =
+      (systemTokensInLastApiCall || 0) +
+      (historyTokensSentInLastApiCall || 0) +
+      (promptTokensInLastApiCall || 0);
 
     // Calculate output tokens for the last assistant message
     let outputTokensInLastApiCall = 0;
     if (lastAssistantMsgIndex !== -1) {
       const lastAssistantMsg = messages[lastAssistantMsgIndex];
-      // Removed await as estimateTokens is now sync
-      outputTokensInLastApiCall = lastAssistantMsg.outputTokens || this.estimateTokens(lastAssistantMsg.content);
+      // Sync estimateTokens
+      // Explicitly check if outputTokens is a number (even if 0)
+      if (typeof lastAssistantMsg.outputTokens === 'number') {
+        outputTokensInLastApiCall = lastAssistantMsg.outputTokens;
+      } else {
+        // Fallback to estimating only if the property doesn't exist or isn't a number
+        outputTokensInLastApiCall = this.estimateTokens(lastAssistantMsg.content);
+      }
     }
 
     return {
@@ -172,17 +198,24 @@ class TokenManagementService {
 
     try {
       // Get all tab token statistics
-      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_TOKEN_STATISTICS]);
+      const result = await chrome.storage.local.get([
+        STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+      ]);
       const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
 
       // Remove stats for this tab
       delete allTokenStats[tabId];
 
       // Save updated stats
-      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats });
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats,
+      });
       return true;
     } catch (error) {
-      console.error('TokenManagementService: Error clearing token statistics:', error);
+      logger.sidebar.error(
+        'TokenManagementService: Error clearing token statistics:',
+        error
+      );
       return false;
     }
   }
@@ -197,27 +230,52 @@ class TokenManagementService {
    * @param {number} [options.initialOutputTokens=0] - Starting output tokens for calculation (used in reruns).
    * @returns {Promise<Object>} - Token statistics
    */
-  static async calculateAndUpdateStatistics(tabId, messages, modelConfig = null, options = {}) {
+  static async calculateAndUpdateStatistics(
+    tabId,
+    messages,
+    modelConfig = null,
+    options = {}
+  ) {
     if (!tabId) return this._getEmptyStats();
 
-    const { initialAccumulatedCost = 0, initialOutputTokens = 0 } = options;
+    let initialAccumulatedCost;
+    let initialOutputTokens;
+
+    // Determine initial values: use options if valid, otherwise fetch current stats
+    if (
+      typeof options.initialAccumulatedCost === 'number' &&
+      options.initialAccumulatedCost >= 0 &&
+      typeof options.initialOutputTokens === 'number' &&
+      options.initialOutputTokens >= 0
+    ) {
+      initialAccumulatedCost = options.initialAccumulatedCost;
+      initialOutputTokens = options.initialOutputTokens;
+    } else {
+      // Fetch currently stored statistics if options are not valid
+      const currentStats = await this.getTokenStatistics(tabId);
+      initialAccumulatedCost = currentStats.accumulatedCost || 0;
+      initialOutputTokens = currentStats.outputTokens || 0;
+    }
 
     try {
-      // 1. Get existing accumulated cost is NOT needed here anymore, use initialAccumulatedCost from options
-
-      // 2. Get the actual system prompt string
+      // 1. Get the actual system prompt string
       const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId);
 
       // 3. Calculate base token statistics from messages (includes input/output tokens for last call)
-      const baseStats = this.calculateTokenStatisticsFromMessages(messages, systemPrompt);
+      const baseStats = this.calculateTokenStatisticsFromMessages(
+        messages,
+        systemPrompt
+      );
 
       // 4. Calculate Cost of the Last Call
       let currentCallCost = 0;
       // Check if the last message indicates an error
       const lastMessage = messages[messages.length - 1];
-      const isLastError = lastMessage && lastMessage.role === MESSAGE_ROLES.SYSTEM;
+      const isLastError =
+        lastMessage && lastMessage.role === MESSAGE_ROLES.SYSTEM;
 
-      if (modelConfig && !isLastError) { // Only calculate cost if modelConfig exists AND the last message wasn't an error
+      if (modelConfig && !isLastError) {
+        // Only calculate cost if modelConfig exists AND the last message wasn't an error
         // Use the specific input/output tokens for the *last call*
         const costInfo = this.calculateCost(
           baseStats.inputTokensInLastApiCall,
@@ -234,17 +292,20 @@ class TokenManagementService {
       // 6. Prepare Final Stats Object to Save (Explicitly matching _getEmptyStats structure)
       const finalStatsObject = {
         // Cumulative stats (use initial output tokens + tokens from this specific call)
-        outputTokens: initialOutputTokens + (baseStats.outputTokensInLastApiCall || 0),
+        outputTokens: isLastError
+          ? initialOutputTokens // On error, cumulative output doesn't increase
+          : initialOutputTokens + (baseStats.outputTokensInLastApiCall || 0), // On success, add last assistant output
         accumulatedCost: newAccumulatedCost,
 
         // Last API call stats (from base calculation - these reflect ONLY the last call)
         promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
-        historyTokensSentInLastApiCall: baseStats.historyTokensSentInLastApiCall || 0,
+        historyTokensSentInLastApiCall:
+          baseStats.historyTokensSentInLastApiCall || 0,
         systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,
         inputTokensInLastApiCall: baseStats.inputTokensInLastApiCall || 0,
         outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0,
         lastApiCallCost: currentCallCost,
-        isCalculated: true
+        isCalculated: true,
       };
 
       // 7. Save the complete, updated statistics
@@ -253,7 +314,10 @@ class TokenManagementService {
       // 8. Return the final statistics object
       return finalStatsObject;
     } catch (error) {
-      console.error('TokenManagementService: Error calculating token statistics:', error);
+      logger.sidebar.error(
+        'TokenManagementService: Error calculating token statistics:',
+        error
+      );
       return this._getEmptyStats();
     }
   }
@@ -263,7 +327,8 @@ class TokenManagementService {
    * @param {string} text - Input text
    * @returns {number} - Estimated token count (synchronous)
    */
-  static estimateTokens(text) { // Made synchronous again
+  static estimateTokens(text) {
+    // Made synchronous again
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return 0;
     }
@@ -273,10 +338,15 @@ class TokenManagementService {
       const tokens = encode(text);
       return tokens.length;
     } catch (error) {
-      console.error("TokenManagementService: Error encoding text with gpt-tokenizer:", error);
+      logger.sidebar.error(
+        'TokenManagementService: Error encoding text with gpt-tokenizer:',
+        error
+      );
       // Fallback on encoding error
-      console.warn("TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.");
-      return Math.ceil(text.length / 4); // Keep fallback or return 0
+      logger.sidebar.warn(
+        'TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.'
+      );
+      return Math.ceil(text.length / 4); // Fallback method: 1 token per 4 chars
     }
   }
 
@@ -303,7 +373,7 @@ class TokenManagementService {
       outputCost,
       totalCost,
       inputTokenPrice: inputPrice,
-      outputTokenPrice: outputPrice
+      outputTokenPrice: outputPrice,
     };
   }
 
@@ -317,7 +387,7 @@ class TokenManagementService {
 
     return {
       inputTokenPrice: modelConfig.inputTokenPrice,
-      outputTokenPrice: modelConfig.outputTokenPrice
+      outputTokenPrice: modelConfig.outputTokenPrice,
     };
   }
 
@@ -333,7 +403,7 @@ class TokenManagementService {
         warningLevel: 'none',
         percentage: 0,
         tokensRemaining: 0,
-        exceeds: false
+        exceeds: false,
       };
     }
 
@@ -343,7 +413,8 @@ class TokenManagementService {
     const totalTokensInContext = tokenStats.inputTokensInLastApiCall || 0;
     const contextWindow = modelConfig.contextWindow;
     const tokensRemaining = Math.max(0, contextWindow - totalTokensInContext);
-    const percentage = contextWindow > 0 ? (totalTokensInContext / contextWindow) * 100 : 0;
+    const percentage =
+      contextWindow > 0 ? (totalTokensInContext / contextWindow) * 100 : 0;
     const exceeds = totalTokensInContext > contextWindow;
 
     // Determine warning level
@@ -361,7 +432,7 @@ class TokenManagementService {
       percentage,
       tokensRemaining,
       exceeds,
-      totalTokens: totalTokensInContext // Return the context usage total
+      totalTokens: totalTokensInContext, // Return the context usage total
     };
   }
 
@@ -383,7 +454,7 @@ class TokenManagementService {
       inputTokensInLastApiCall: 0,
       outputTokensInLastApiCall: 0,
       lastApiCallCost: 0,
-      isCalculated: false
+      isCalculated: false,
     };
   }
 }

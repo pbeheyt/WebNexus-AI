@@ -1,4 +1,6 @@
 // src/popup/components/PlatformSelector.jsx
+import PropTypes from 'prop-types';
+
 import { usePopupPlatform } from '../../contexts/platform';
 import { useStatus } from '../contexts/StatusContext';
 import { PlatformLogoItem } from '../../components/layout/PlatformLogoItem';
@@ -6,19 +8,22 @@ import { PlatformLogoItem } from '../../components/layout/PlatformLogoItem';
 export function PlatformSelector({ disabled }) {
   const { platforms, selectedPlatformId, selectPlatform } = usePopupPlatform();
   const { notifyPlatformChanged } = useStatus();
-  
+
   const handlePlatformSelect = async (platformId) => {
     if (!disabled && platformId !== selectedPlatformId) {
       const success = await selectPlatform(platformId);
       if (success) {
-        const platformName = platforms.find(p => p.id === platformId)?.name || platformId;
+        const platformName =
+          platforms.find((p) => p.id === platformId)?.name || platformId;
         notifyPlatformChanged(platformName);
       }
     }
   };
-  
+
   return (
-    <div className={`platform-selector-container transition-opacity duration-200 ${disabled ? 'opacity-50' : ''}`}>
+    <div
+      className={`platform-selector-container transition-opacity duration-200 ${disabled ? 'opacity-50' : ''}`}
+    >
       {platforms.map((platform) => (
         <PlatformLogoItem
           key={platform.id}
@@ -33,3 +38,7 @@ export function PlatformSelector({ disabled }) {
     </div>
   );
 }
+
+PlatformSelector.propTypes = {
+  disabled: PropTypes.bool,
+};

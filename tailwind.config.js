@@ -1,20 +1,22 @@
 /** @type {import('tailwindcss').Config} */
+const containerQueries = require('@tailwindcss/container-queries');
 module.exports = {
   content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
-    "./popup.html",
-    "./settings.html",
-    "./sidepanel.html",
-    "./*.html"
+    './src/**/*.{js,jsx,ts,tsx}',
+    './popup.html',
+    './settings.html',
+    './sidepanel.html',
+    './*.html',
   ],
   darkMode: 'class', // Enable class-based dark mode
   theme: {
     extend: {
       typography: (theme) => ({
-        DEFAULT: { // Applies to the base 'prose' class
+        DEFAULT: {
+          // Applies to the base 'prose' class
           css: {
             // Target inline code elements specifically
-            'code': {
+            code: {
               // Reset potential default styles if needed, though usually handled by prose
             },
             // Explicitly remove content from pseudo-elements for inline code
@@ -43,10 +45,10 @@ module.exports = {
         warning: '#FFC107',
       },
       scale: {
-        '200': '2',
+        200: '2',
       },
       animation: {
-        'bounce': 'bounce 1s infinite',
+        bounce: 'bounce 1s infinite',
         'rotate-180-once': 'rotate-180-once 0.5s ease-in-out',
       },
       keyframes: {
@@ -57,14 +59,15 @@ module.exports = {
         'rotate-180-once': {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(180deg)' },
-        }
-      }
+        },
+      },
     },
   },
   plugins: [
+    containerQueries,
     require('@tailwindcss/typography'),
     // Original theme-aware utility classes
-    function({ addUtilities }) {
+    function ({ addUtilities }) {
       // Define theme-aware utility classes
       const themeUtilities = {
         // Light theme (default)
@@ -93,27 +96,31 @@ module.exports = {
         '.dark .border-theme': { borderColor: '#3D3D3D' },
         '.dark .divide-theme': { divideColor: '#3D3D3D' },
 
-        '.dark .shadow-theme-light': { boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' },
-        '.dark .shadow-theme-medium': { boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)' },
+        '.dark .shadow-theme-light': {
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+        },
+        '.dark .shadow-theme-medium': {
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+        },
       };
 
       addUtilities(themeUtilities);
     },
 
     // New custom group variants for code block hover states
-    function({ addVariant, e }) {
+    function ({ addVariant, e }) {
       // Add custom group variants for code blocks and message containers
       addVariant('code-block-group-hover', ({ modifySelectors, separator }) => {
         modifySelectors(({ className }) => {
-          return `.code-block-group:hover .${e(`code-block-group-hover${separator}${className}`)}`
-        })
+          return `.code-block-group:hover .${e(`code-block-group-hover${separator}${className}`)}`;
+        });
       });
 
       addVariant('message-group-hover', ({ modifySelectors, separator }) => {
         modifySelectors(({ className }) => {
-          return `.message-group:hover .${e(`message-group-hover${separator}${className}`)}`
-        })
+          return `.message-group:hover .${e(`message-group-hover${separator}${className}`)}`;
+        });
       });
-    }
+    },
   ],
-}
+};

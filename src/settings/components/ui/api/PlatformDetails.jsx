@@ -1,8 +1,12 @@
 // src/settings/components/ui/platforms/PlatformDetails.jsx
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
+import { logger } from '../../../../shared/logger';
 import { Button, useNotification, PlatformIcon } from '../../../../components';
-import AdvancedSettings from './AdvancedSettings';
 import { STORAGE_KEYS } from '../../../../shared/constants';
+
+import AdvancedSettings from './AdvancedSettings';
 
 const PlatformDetails = ({
   platform,
@@ -11,7 +15,7 @@ const PlatformDetails = ({
   onCredentialsUpdated,
   onCredentialsRemoved,
   onAdvancedSettingsUpdated,
-  credentialsKey
+  credentialsKey,
 }) => {
   const { success, error } = useNotification();
   const [apiKey, setApiKey] = useState('');
@@ -20,7 +24,9 @@ const PlatformDetails = ({
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState(
-    platform.apiConfig?.models?.length > 0 ? platform.apiConfig.models[0].id : 'default'
+    platform.apiConfig?.models?.length > 0
+      ? platform.apiConfig.models[0].id
+      : 'default'
   );
 
   // Synchronize API key state with platform credentials when platform changes
@@ -52,7 +58,7 @@ const PlatformDetails = ({
 
   const handleSaveCredentials = async () => {
     if (!apiKey.trim()) {
-      error('API key cannot be empty');
+      error('API Key is required.');
       return;
     }
 
@@ -61,12 +67,13 @@ const PlatformDetails = ({
     try {
       // Create credentials object
       const newCredentials = {
-        apiKey
+        apiKey,
       };
 
       // Validate the API key before saving
-      const credentialManager = await import('../../../../services/CredentialManager')
-        .then(module => module.default || module);
+      const credentialManager = await import(
+        '../../../../services/CredentialManager'
+      ).then((module) => module.default || module);
 
       const validationResult = await credentialManager.validateCredentials(
         platform.id,
@@ -87,26 +94,56 @@ const PlatformDetails = ({
       allCredentials[platform.id] = newCredentials;
 
       // Save all credentials under a single key
-      await chrome.storage.local.set({
-        [credentialsKey]: allCredentials
-      });
+      try {
+        await chrome.storage.local.set({
+          [credentialsKey]: allCredentials,
+        });
 
-      onCredentialsUpdated(platform.id, newCredentials);
-      success(`API key saved for ${platform.name}`);
+        onCredentialsUpdated(platform.id, newCredentials);
+        success(`API key saved for ${platform.name}`);
 
-      // Update original key reference after successful save
-      setOriginalApiKey(apiKey);
-      setHasApiKeyChanges(false);
+        // Update original key reference after successful save
+        setOriginalApiKey(apiKey);
+        setHasApiKeyChanges(false);
+      } catch (err) {
+        logger.settings.error('Error saving API key:', err);
+        // Check for quota error
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES')) {
+          error('Local storage limit reached for API keys.', 10000);
+        } else if (err.isPortClosed) {
+          // Handle specific port closed error during validation/saving
+          logger.settings.warn(
+            'handleSaveCredentials: Port closed during credential validation/saving.'
+          );
+          error('Validation timed out or connection lost. Please try again.');
+        } else {
+          error(`Failed to save API key: ${err.message}`);
+        }
+      }
     } catch (err) {
-      console.error('Error saving API key:', err);
-      error(`Failed to save API key: ${err.message}`);
+      if (err.isPortClosed) {
+        // Handle specific port closed error during validation/saving
+        logger.settings.warn(
+          'handleSaveCredentials: Port closed during credential validation/saving.'
+        );
+        error('Validation timed out or connection lost. Please try again.');
+      } else {
+        // Handle other errors during validation or saving
+        logger.settings.error('Error saving API key:', err);
+        error(`Failed to save API key: ${err.message}`);
+      }
     } finally {
-      setIsSaving(false);
+      setIsSaving(false); // Ensure saving state is always reset
     }
   };
 
   const handleRemoveCredentials = async () => {
-    if (!window.confirm(`Are you sure you want to remove the API key for ${platform.name}?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to remove the API key for ${platform.name}?`
+      )
+    ) {
       return;
     }
 
@@ -120,7 +157,7 @@ const PlatformDetails = ({
 
       // Save updated credentials
       await chrome.storage.local.set({
-        [credentialsKey]: allCredentials
+        [credentialsKey]: allCredentials,
       });
 
       onCredentialsRemoved(platform.id);
@@ -129,7 +166,7 @@ const PlatformDetails = ({
       setOriginalApiKey('');
       setHasApiKeyChanges(false);
     } catch (err) {
-      console.error('Error removing API key:', err);
+      logger.settings.error('Error removing API key:', err);
       error(`Failed to remove API key: ${err.message}`);
     }
   };
@@ -142,7 +179,9 @@ const PlatformDetails = ({
   const handleResetAdvancedSettings = async (modelId) => {
     try {
       // Load current settings from storage
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const result = await chrome.storage.sync.get(
+        STORAGE_KEYS.API_ADVANCED_SETTINGS
+      );
       const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
 
       if (!currentSettings[platform.id]) {
@@ -156,26 +195,36 @@ const PlatformDetails = ({
 
       // Handle model-specific or default settings removal
       if (!modelId || modelId === 'default') {
-        if (currentSettings[platform.id].default && Object.keys(currentSettings[platform.id].default).length > 0) {
+        if (
+          currentSettings[platform.id].default &&
+          Object.keys(currentSettings[platform.id].default).length > 0
+        ) {
           delete currentSettings[platform.id].default;
           settingsChanged = true;
         }
       } else {
-        if (currentSettings[platform.id].models &&
-            currentSettings[platform.id].models[modelId]) {
+        if (
+          currentSettings[platform.id].models &&
+          currentSettings[platform.id].models[modelId]
+        ) {
           delete currentSettings[platform.id].models[modelId];
           settingsChanged = true;
         }
 
         // Clean up empty models object if needed
-        if (currentSettings[platform.id].models &&
-            Object.keys(currentSettings[platform.id].models).length === 0) {
+        if (
+          currentSettings[platform.id].models &&
+          Object.keys(currentSettings[platform.id].models).length === 0
+        ) {
           delete currentSettings[platform.id].models;
         }
       }
 
       // Remove entire platform entry if it's now empty
-      if (currentSettings[platform.id] && Object.keys(currentSettings[platform.id]).length === 0) {
+      if (
+        currentSettings[platform.id] &&
+        Object.keys(currentSettings[platform.id]).length === 0
+      ) {
         delete currentSettings[platform.id];
         settingsChanged = true;
       }
@@ -183,17 +232,17 @@ const PlatformDetails = ({
       // Only save if changes were made
       if (settingsChanged) {
         await chrome.storage.sync.set({
-          [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings
+          [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings,
         });
       }
-      
+
       // Always notify and show success message
       onAdvancedSettingsUpdated(platform.id, modelId, {});
       success('Advanced settings reset to defaults');
 
       return true;
     } catch (err) {
-      console.error('Error resetting advanced settings:', err);
+      logger.settings.error('Error resetting advanced settings:', err);
       error(`Failed to reset advanced settings: ${err.message}`);
       return false;
     }
@@ -202,7 +251,9 @@ const PlatformDetails = ({
   const handleAdvancedSettingsUpdate = async (modelId, settings) => {
     try {
       // Load current settings
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const result = await chrome.storage.sync.get(
+        STORAGE_KEYS.API_ADVANCED_SETTINGS
+      );
       const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
 
       if (!currentSettings[platform.id]) {
@@ -211,85 +262,99 @@ const PlatformDetails = ({
       if (!currentSettings[platform.id].default) {
         currentSettings[platform.id].default = {};
       }
-       if (!currentSettings[platform.id].models) {
-          currentSettings[platform.id].models = {};
+      if (!currentSettings[platform.id].models) {
+        currentSettings[platform.id].models = {};
       }
 
       // Update appropriate settings
       if (!modelId || modelId === 'default') {
         currentSettings[platform.id].default = {
           ...currentSettings[platform.id].default,
-          ...settings
+          ...settings,
         };
       } else {
         currentSettings[platform.id].models[modelId] = {
           ...(currentSettings[platform.id].models?.[modelId] || {}),
-          ...settings
+          ...settings,
         };
       }
 
-      await chrome.storage.sync.set({
-        [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings
-      });
-      onAdvancedSettingsUpdated(platform.id, modelId, settings);
-      success('Advanced settings saved');
-      return true;
+      try {
+        await chrome.storage.sync.set({
+          [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings,
+        });
+        onAdvancedSettingsUpdated(platform.id, modelId, settings);
+        success('Advanced settings saved');
+        return true;
+      } catch (err) {
+        logger.settings.error('Error saving advanced settings:', err);
+        // Check for sync quota errors
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES_PER_ITEM') || lastError?.message?.includes('QUOTA_BYTES')) {
+          error('Sync storage limit reached. Reduce size/number of advanced settings or system prompts.', 10000);
+        } else {
+          error(`Failed to save advanced settings: ${err.message}`);
+        }
+        return false;
+      }
     } catch (err) {
-      console.error('Error saving advanced settings:', err);
+      logger.settings.error('Error saving advanced settings:', err);
       error(`Failed to save advanced settings: ${err.message}`);
       return false;
     }
   };
 
   return (
-    <div className="platform-details-panel flex-1">
+    <div className='platform-details-panel flex-1'>
       {/* Platform header */}
-      <div className="platform-header flex items-center mb-6">
+      <div className='platform-header flex items-center mb-6'>
         {platform.iconUrl ? (
           <PlatformIcon
             platformId={platform.id}
             iconUrl={platform.iconUrl}
             altText={platform.name}
-            className="platform-icon-large w-12 h-12 mr-6 flex-shrink-0"
+            className='platform-icon-large w-12 h-12 mr-6 flex-shrink-0'
           />
         ) : (
-          <div className="platform-icon-placeholder-large w-12 h-12 mr-6 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
+          <div className='platform-icon-placeholder-large w-12 h-12 mr-6 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold flex-shrink-0'>
             {platform.name.charAt(0)}
           </div>
         )}
 
-        <div className="platform-header-info min-w-0">
-          <h3 className="platform-title text-xl font-medium mb-2 text-theme-primary truncate select-none">{platform.name}</h3> 
-          <div className="platform-actions flex flex-wrap gap-x-3 gap-y-1">
+        <div className='platform-header-info min-w-0'>
+          <h3 className='platform-title text-xl font-medium mb-2 text-theme-primary truncate select-none'>
+            {platform.name}
+          </h3>
+          <div className='platform-actions flex flex-wrap gap-x-3 gap-y-1'>
             <a
               href={platform.consoleApiLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="platform-link text-primary hover:underline text-sm cursor-pointer select-none"
+              target='_blank'
+              rel='noopener noreferrer'
+              className='platform-link text-primary hover:underline text-sm cursor-pointer select-none'
             >
               API Console
             </a>
             <a
               href={platform.docApiLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="platform-link text-primary hover:underline text-sm cursor-pointer select-none"
+              target='_blank'
+              rel='noopener noreferrer'
+              className='platform-link text-primary hover:underline text-sm cursor-pointer select-none'
             >
               API Documentation
             </a>
             <a
               href={platform.modelApiLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="platform-link text-primary hover:underline text-sm cursor-pointer select-none"
+              target='_blank'
+              rel='noopener noreferrer'
+              className='platform-link text-primary hover:underline text-sm cursor-pointer select-none'
             >
               Model Documentation
             </a>
             <a
               href={platform.keyApiLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="platform-link text-primary hover:underline text-sm cursor-pointer select-none"
+              target='_blank'
+              rel='noopener noreferrer'
+              className='platform-link text-primary hover:underline text-sm cursor-pointer select-none'
             >
               API Keys
             </a>
@@ -298,42 +363,51 @@ const PlatformDetails = ({
       </div>
 
       {/* API credentials section */}
-      <div className="settings-section bg-theme-surface p-5 rounded-lg border border-theme mb-6">
-        <h4 className="section-subtitle text-lg font-medium mb-4 text-theme-primary select-none">API Credentials</h4>
+      <div className='settings-section bg-theme-surface p-5 rounded-lg border border-theme mb-6'>
+        <h4 className='section-subtitle text-lg font-medium mb-4 text-theme-primary select-none'>
+          API Credentials
+        </h4>
 
-        <div className="form-group mb-4">
+        <div className='form-group mb-4'>
           <label
             htmlFor={`${platform.id}-api-key`}
-            className="block mb-2 text-sm font-medium text-theme-secondary select-none"
+            className='block mb-2 text-sm font-medium text-theme-secondary select-none'
           >
             API Key:
           </label>
-          <div className="relative flex items-center">
+          <div className='relative flex items-center'>
             <input
               type={showApiKey ? 'text' : 'password'}
               id={`${platform.id}-api-key`}
-              className="api-key-input w-full p-2 pr-16 bg-gray-50 dark:bg-gray-700 text-theme-primary border border-theme rounded-md font-mono focus:ring-primary focus:border-primary"
-              placeholder={credentials?.apiKey ? "••••••••••••••••••••••••••" : "Enter your API key"}
+              className='api-key-input w-full p-2 pr-16 bg-gray-50 dark:bg-gray-700 text-theme-primary border border-theme rounded-md font-mono focus:ring-primary focus:border-primary'
+              placeholder={
+                credentials?.apiKey
+                  ? '••••••••••••••••••••••••••'
+                  : 'Enter your API key'
+              }
               value={apiKey}
               onChange={handleApiKeyChange}
+              disabled={isSaving}
             />
             <button
-              type="button"
-              className="show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded select-none"
+              type='button'
+              className='show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded select-none'
               onClick={() => setShowApiKey(!showApiKey)}
               aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
+              disabled={isSaving}
             >
               {showApiKey ? 'Hide' : 'Show'}
             </button>
           </div>
         </div>
 
-        <div className="form-actions flex justify-end gap-3">
+        <div className='form-actions flex justify-end gap-3'>
           {credentials && (
             <Button
-              variant="danger"
+              variant='danger'
               onClick={handleRemoveCredentials}
-              className="select-none"
+              className='select-none'
+              disabled={isSaving}
             >
               Remove Key
             </Button>
@@ -343,9 +417,9 @@ const PlatformDetails = ({
             onClick={handleSaveCredentials}
             disabled={isSaving || !hasApiKeyChanges}
             variant={!hasApiKeyChanges ? 'inactive' : 'primary'}
-            className="select-none"
+            className='select-none'
           >
-            {isSaving ? 'Saving...' : (credentials ? 'Update Key' : 'Save Key')}
+            {isSaving ? 'Saving...' : credentials ? 'Update Key' : 'Save Key'}
           </Button>
         </div>
       </div>
@@ -363,4 +437,14 @@ const PlatformDetails = ({
   );
 };
 
-export default PlatformDetails;
+PlatformDetails.propTypes = {
+  platform: PropTypes.object.isRequired,
+  credentials: PropTypes.object,
+  advancedSettings: PropTypes.object,
+  onCredentialsUpdated: PropTypes.func.isRequired,
+  onCredentialsRemoved: PropTypes.func.isRequired,
+  onAdvancedSettingsUpdated: PropTypes.func.isRequired,
+  credentialsKey: PropTypes.string.isRequired,
+};
+
+export default React.memo(PlatformDetails);

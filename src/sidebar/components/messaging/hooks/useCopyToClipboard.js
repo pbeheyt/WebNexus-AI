@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+
+import { logger } from '../../../../shared/logger';
 import { copyToClipboard } from '../utils/clipboard.js';
-import { CopyIcon, CheckIcon, XMarkIcon } from '../../../../components/index.js';
+import { CopyIcon, CheckIcon, XIcon } from '../../../../components/index.js';
 
 export const useCopyToClipboard = (textToCopy) => {
   const [copyState, setCopyState] = useState('idle');
@@ -18,7 +20,7 @@ export const useCopyToClipboard = (textToCopy) => {
       setCopyState('copied');
       setDisplayIconState('copied');
     } catch (error) {
-      console.error('Failed to copy text:', error);
+      logger.sidebar.error('Failed to copy text:', error);
       setCopyState('error');
       setDisplayIconState('error');
     }
@@ -63,7 +65,7 @@ export const useCopyToClipboard = (textToCopy) => {
     IconComponent = CheckIcon;
     iconClassName = 'text-green-600 dark:text-green-400';
   } else if (displayIconState === 'error') {
-    IconComponent = XMarkIcon;
+    IconComponent = XIcon;
     iconClassName = 'text-red-500 dark:text-red-400';
   }
 
@@ -72,6 +74,6 @@ export const useCopyToClipboard = (textToCopy) => {
     handleCopy,
     IconComponent,
     iconClassName,
-    disabled: copyState !== 'idle'
+    disabled: copyState !== 'idle',
   };
 };

@@ -1,29 +1,28 @@
 {
   "manifest_version": 3,
-  "name": "AI Insightr: Web Content Assistant",
-  "description": "Interact with, analyze, and summarize web pages, YouTube videos, PDFs, and Reddit posts using ChatGPT, Claude, Gemini and other AI platforms. Choose between direct API integration via side panel or seamless transfer to web UIs without copying and pasting",
+  "name": "WebNexus AI",
+  "description": "Summarize & Interact with Web Content, PDFs & YouTube Videos using AI (ChatGPT, Gemini+) | Web UI or Side Panel",
   "version": "1.0.0",
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
     "tabs",
-    "webRequest",
     "contextMenus",
     "sidePanel"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self'; script-src-elem 'self'"
   },
   "host_permissions": [
-  "https://.youtube.com/",
-  "https://.reddit.com/",
+  "https://*.youtube.com/",
+  "https://*.reddit.com/",
   "https://claude.ai/",
   "https://chatgpt.com/",
   "https://chat.deepseek.com/",
   "https://chat.mistral.ai/",
   "https://gemini.google.com/",
-  "file://.pdf",
+  "file://*.pdf",
   "<all_urls>",
   "https://api.anthropic.com/",
   "https://api.openai.com/",
@@ -38,16 +37,16 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "images/icon16.png",
-      "48": "images/icon48.png",
-      "128": "images/icon128.png"
+      "16": "images/logo.png",
+      "48": "images/logo.png",
+      "128": "images/logo.png"
     }
   },
   "options_page": "settings.html",
   "icons": {
-    "16": "images/icon16.png",
-    "48": "images/icon48.png",
-    "128": "images/icon128.png"
+    "16": "images/logo.png",
+    "48": "images/logo.png",
+    "128": "images/logo.png"
   },
   "web_accessible_resources": [
     {
@@ -56,7 +55,9 @@
         "platform-api-config.json",
         "prompt-config.json",
         "dist/*.bundle.js",
-        "images/*.png"
+        "images/*.png",
+        "dist/pdf.worker.mjs",
+        "dist/cmaps/*"
       ],
       "matches": [
         "<all_urls>"
@@ -66,17 +67,17 @@
   "commands": {
     "_execute_action": {
       "suggested_key": {
-        "default": "Alt+I",
-        "mac": "Alt+I"
+        "default": "Alt+W",
+        "mac": "Alt+W"
       },
-      "description": "Open the AI Insightr popup"
+      "description": "Open the WebNexus AI popup"
     },
     "process-default-prompt": {
       "suggested_key": {
-        "default": "Alt+U",
-        "mac": "Alt+U"
+        "default": "Alt+Q",
+        "mac": "Alt+Q"
       },
-      "description": "Process page content with default prompt in Web UI"
+      "description": "Quick page content process with default prompt via Web UI"
     }
   }
 }

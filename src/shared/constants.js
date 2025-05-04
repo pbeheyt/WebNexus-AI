@@ -7,7 +7,7 @@ export const CONTENT_TYPES = {
   GENERAL: 'general',
   REDDIT: 'reddit',
   YOUTUBE: 'youtube',
-  PDF: 'pdf'
+  PDF: 'pdf',
 };
 
 /**
@@ -17,7 +17,7 @@ export const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.GENERAL]: 'Web Content',
   [CONTENT_TYPES.REDDIT]: 'Reddit Post',
   [CONTENT_TYPES.YOUTUBE]: 'YouTube Video',
-  [CONTENT_TYPES.PDF]: 'PDF Document'
+  [CONTENT_TYPES.PDF]: 'PDF Document',
 };
 
 /**
@@ -42,7 +42,7 @@ export const STORAGE_KEYS = {
   POPUP_PLATFORM: 'popup_platform_preference',
   SIDEBAR_PLATFORM: 'sidebar_platform_preference',
   SIDEBAR_MODEL: 'sidebar_model_preference',
-  
+
   // Settings
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
   API_CREDENTIALS: 'api_credentials',
@@ -60,14 +60,14 @@ export const STORAGE_KEYS = {
   FORMATTED_CONTENT_FOR_INJECTION: 'formatted_content_for_injection',
   INJECTION_PLATFORM: 'injectionPlatform',
   INJECTION_PLATFORM_TAB_ID: 'injectionPlatformTabId',
-  
+
   // API
   API_PROCESSING_STATUS: 'apiProcessingStatus',
   API_RESPONSE: 'apiResponse',
   API_PROCESSING_ERROR: 'apiProcessingError',
   API_RESPONSE_TIMESTAMP: 'apiResponseTimestamp',
   STREAM_ID: 'streamId',
-  
+
   // Sidebar
   TAB_FORMATTED_CONTENT: 'tab_formatted_content',
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
@@ -76,14 +76,21 @@ export const STORAGE_KEYS = {
   TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
+  TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
 };
+
+// Prompt limits
+export const MAX_PROMPTS_PER_TYPE = 10;
+export const MAX_PROMPT_NAME_LENGTH = 100;
+export const MAX_PROMPT_CONTENT_LENGTH = 30000;
+export const MAX_SYSTEM_PROMPT_LENGTH = 5000;
 
 /**
  * Interface sources for API requests
  */
 export const INTERFACE_SOURCES = {
   POPUP: 'popup',
-  SIDEBAR: 'sidebar'
+  SIDEBAR: 'sidebar',
 };
 
 /**
@@ -92,5 +99,5 @@ export const INTERFACE_SOURCES = {
 export const MESSAGE_ROLES = {
   USER: 'user',
   ASSISTANT: 'assistant',
-  SYSTEM: 'system'
-}
+  SYSTEM: 'system',
+};

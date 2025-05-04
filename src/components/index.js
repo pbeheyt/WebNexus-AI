@@ -8,7 +8,10 @@ export { IconButton } from './core/IconButton';
 // Feedback components
 export { StatusMessage } from './feedback/StatusMessage';
 export { Toast } from './feedback/Toast';
-export { useNotification, NotificationProvider } from './feedback/NotificationContext';
+export {
+  useNotification,
+  NotificationProvider,
+} from './feedback/NotificationContext';
 
 // Form components
 export { TextArea } from './form/TextArea';
@@ -19,6 +22,7 @@ export { SliderInput } from './form/SliderInput';
 export { PlatformLogoItem } from './layout/PlatformLogoItem';
 export { AppHeader } from './layout/AppHeader';
 export { Tooltip } from './layout/Tooltip';
+export { ContentTypeIcon } from './layout/ContentTypeIcon';
 export { PlatformIcon } from './layout/PlatformIcon';
 
 // Icon components
@@ -29,13 +33,13 @@ export { RerunIcon } from './icons/RerunIcon';
 export { ArrowUpIcon } from './icons/ArrowUpIcon';
 export { XIcon } from './icons/XIcon';
 export { CheckIcon } from './icons/CheckIcon';
-export { XMarkIcon } from './icons/XMarkIcon';
 export { TextSizeIcon } from './icons/TextSizeIcon';
 export { SunIcon } from './icons/SunIcon';
 export { MoonIcon } from './icons/MoonIcon';
 export { SettingsIcon } from './icons/SettingsIcon';
 export { RefreshIcon } from './icons/RefreshIcon';
 export { ChevronDownIcon } from './icons/ChevronDownIcon';
+export { ChevronUpIcon } from './icons/ChevronUpIcon';
 export { SidebarIcon } from './icons/SidebarIcon';
 export { InputTokenIcon } from './icons/InputTokenIcon';
 export { OutputTokenIcon } from './icons/OutputTokenIcon';
