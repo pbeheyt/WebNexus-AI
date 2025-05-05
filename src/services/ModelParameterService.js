@@ -267,7 +267,6 @@ class ModelParameterService {
       // Start with base parameters
       const params = {
         model: modelId,
-        modelType: modelConfig.modelType,
         tokenParameter: modelConfig.tokens.parameterName,
         maxTokens:
           userSettings.maxTokens !== undefined
@@ -278,6 +277,11 @@ class ModelParameterService {
         contextWindow: modelConfig.tokens.contextWindow,
         modelSupportsSystemPrompt: modelConfig?.capabilities?.supportsSystemPrompt ?? false,
       };
+
+      // Conditionally add modelType if it exists in the config
+      if (modelConfig?.modelType) {
+        params.modelType = modelConfig.modelType;
+      }
 
       // Determine if thinking mode overrides parameter support
       let thinkingOverridesTemperature = false;
