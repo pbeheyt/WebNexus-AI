@@ -266,9 +266,6 @@ export async function processContentViaApi(params) {
     }
 
     // 5. Parameter Resolution (Centralized) - Use platformId and modelId from params
-    logger.background.info(
-      `Resolving parameters for platform: ${platformId}, model: ${modelId}`
-    );
     let resolvedParams = await ModelParameterService.resolveParameters(
       platformId,
       modelId,

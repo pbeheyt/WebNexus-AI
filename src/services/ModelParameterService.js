@@ -432,9 +432,6 @@ class ModelParameterService {
 
     params.isThinkingEnabledForRequest = useThinkingMode && modelConfig?.thinking?.available === true;
 
-      logger.service.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, {
-        ...params,
-      });
       return params;
     } catch (error) {
       logger.service.error(
