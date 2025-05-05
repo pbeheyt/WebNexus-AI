@@ -212,16 +212,21 @@ const PlatformDetails = ({
             }
           } else {
             // For base mode, delete the entire model entry
-            delete currentSettings[platform.id].models[modelId];
-            settingsChanged = true;
+          if (currentSettings[platform.id].models[modelId]?.[mode]) {
+              delete currentSettings[platform.id].models[modelId][mode];
+              settingsChanged = true;
+              logger.settings.info(`Deleted settings for mode '${mode}' within model ${modelId}`);
+          }
           }
 
           // Clean up empty model entry if needed
-          if (
-            currentSettings[platform.id].models[modelId] &&
-            Object.keys(currentSettings[platform.id].models[modelId]).length === 0
-          ) {
+          if (currentSettings[platform.id].models[modelId] &&
+              !currentSettings[platform.id].models[modelId].base &&
+              !currentSettings[platform.id].models[modelId].thinking) {
+            logger.settings.info(`Model entry ${modelId} is empty after mode reset, removing model entry.`);
             delete currentSettings[platform.id].models[modelId];
+            // Ensure settingsChanged is true if we deleted the model entry
+            settingsChanged = true;
           }
         }
 

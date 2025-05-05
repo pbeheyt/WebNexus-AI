@@ -52,6 +52,12 @@ const AdvancedSettings = ({
       contextWindow: currentModelConfig.tokens.contextWindow,
     };
 
+    // Override maxTokens default if in thinking mode and a specific value exists
+    if (currentEditingMode === 'thinking' && currentModelConfig?.thinking?.maxOutput !== undefined) {
+        defaults.maxTokens = currentModelConfig.thinking.maxOutput;
+        logger.settings.info(`Overriding maxTokens default for thinking mode to: ${defaults.maxTokens}`);
+    }
+
     // Add temperature and its toggle default only if supported
     if (currentModelConfig?.capabilities?.supportsTemperature !== false) {
       (defaults.temperature = platform.apiConfig.temperature.default),
@@ -435,7 +441,7 @@ const AdvancedSettings = ({
     setIsAtDefaults(true);
     await onResetToDefaults(selectedModelId, currentEditingMode); // Call the prop function
 
-      await onResetToDefaults(selectedModelId); // Call the prop function
+      await onResetToDefaults(selectedModelId, currentEditingMode); // Call the prop function with mode
     } finally {
       setIsResetting(false);
       // Stop animation after duration
