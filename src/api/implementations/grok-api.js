@@ -29,6 +29,20 @@ class GrokApiService extends BaseApiService {
       stream: true,
     };
 
+    // Add reasoning_effort if provided in params (for supported Grok models)
+    if (params.reasoningEffort && typeof params.reasoningEffort === 'string') {
+      // Ensure the value is one of the allowed ones, though ModelParameterService should handle this.
+      const allowedEfforts = ['low', 'high'];
+      if (allowedEfforts.includes(params.reasoningEffort)) {
+          requestPayload.reasoning_effort = params.reasoningEffort;
+          this.logger.info(
+            `[${this.platformId}] Adding reasoning_effort: ${params.reasoningEffort} for model: ${params.model}`
+          );
+      } else {
+           this.logger.warn(`[${this.platformId}] Invalid reasoning_effort value '${params.reasoningEffort}' provided for model ${params.model}. Allowed: ${allowedEfforts.join(', ')}. Parameter will not be sent.`);
+      }
+    }
+
     const messages = [];
     if (params.systemPrompt) {
       messages.push({ role: 'system', content: params.systemPrompt });
