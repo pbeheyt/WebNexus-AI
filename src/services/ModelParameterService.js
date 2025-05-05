@@ -328,6 +328,15 @@ class ModelParameterService {
         logger.service.info(`Resolved thinking budget: ${budgetValue}`);
       }
 
+      // Add reasoning effort if in thinking mode and model supports it
+      if (modeKey === 'thinking' && modelConfig?.thinking?.reasoningEffort) {
+        const userEffort = userSettings.reasoningEffort;
+        if (userEffort !== undefined && userEffort !== null) {
+          params.reasoningEffort = userEffort;
+          logger.service.info(`Resolved reasoning effort: ${userEffort}`);
+        }
+      }
+
       // Calculate effective system prompt support
       const platformSupportsSystemPrompt =
         platformApiConfig?.apiStructure?.supportsSystemPrompt !== false;

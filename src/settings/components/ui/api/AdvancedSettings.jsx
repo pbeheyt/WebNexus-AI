@@ -75,9 +75,18 @@ const AdvancedSettings = ({
       defaults.systemPrompt = ''; // Default is always empty string
     }
 
-    // Add thinking budget default if in thinking mode and model supports it
-    if (currentEditingMode === 'thinking' && currentModelConfig?.thinking?.budget) {
+    // Add thinking budget default if model supports it (regardless of mode, UI controls visibility)
+    if (currentModelConfig?.thinking?.budget) {
       defaults.thinkingBudget = currentModelConfig.thinking.budget.default;
+    } else {
+      defaults.thinkingBudget = null;
+    }
+
+    // Add reasoning effort default if model supports it (regardless of mode, UI controls visibility)
+    if (currentModelConfig?.thinking?.reasoningEffort) {
+      defaults.reasoningEffort = currentModelConfig.thinking.reasoningEffort.default;
+    } else {
+      defaults.reasoningEffort = null;
     }
 
     return defaults;
@@ -95,6 +104,7 @@ const AdvancedSettings = ({
     includeTemperature: settings.includeTemperature ?? true,
     includeTopP: settings.includeTopP ?? false, // Default to false
     thinkingBudget: settings.thinkingBudget ?? null,
+    reasoningEffort: settings.reasoningEffort ?? null,
   });
 
   // Original values reference for comparison
@@ -156,18 +166,29 @@ const AdvancedSettings = ({
       }
     }
 
-    // Check thinkingBudget only if in thinking mode and model supports it
-    if (currentEditingMode === 'thinking' && currentModelConfig?.thinking?.budget) {
-      if (
-        !('thinkingBudget' in formVals) ||
-        formVals.thinkingBudget !== modelDefaults.thinkingBudget
-      ) {
-        return false;
-      }
+  // Check thinkingBudget only if model supports it
+  if (currentModelConfig?.thinking?.budget) {
+    if (
+      !('thinkingBudget' in formVals) ||
+      formVals.thinkingBudget !== modelDefaults.thinkingBudget
+    ) {
+      return false;
     }
+  }
 
-    // If all relevant checks pass, values are at defaults
-    return true;
+  // Check reasoningEffort only if model supports it
+  if (currentModelConfig?.thinking?.reasoningEffort) {
+    if (
+      !('reasoningEffort' in formVals) ||
+      formVals.reasoningEffort !== modelDefaults.reasoningEffort
+    ) {
+       return false;
+    }
+  }
+
+  // If all relevant checks pass, values are at defaults
+  return true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getDefaultSettings, models, selectedModelId, platform.apiConfig, currentEditingMode]);
 
   // Update form values when selected model or settings change
@@ -186,6 +207,7 @@ const AdvancedSettings = ({
       includeTemperature: currentSettings.includeTemperature ?? (newDefaults.includeTemperature ?? true), // Default includeTemp to true if not specified
       includeTopP: currentSettings.includeTopP ?? (newDefaults.includeTopP ?? false), // Default includeTopP to false if not specified
       thinkingBudget: currentSettings.thinkingBudget ?? newDefaults.thinkingBudget ?? null,
+      reasoningEffort: currentSettings.reasoningEffort ?? newDefaults.reasoningEffort ?? null,
     };
 
     // 3. Compare with current state ONLY if necessary
@@ -252,31 +274,34 @@ const AdvancedSettings = ({
 
   // Handle changes for all input types including toggles
   const handleChange = useCallback((name, newValue) => {
-    const updatedValues = { ...formValues };
+    setFormValues(prevValues => {
+      const updatedValues = { ...prevValues };
 
-    if (name === 'maxTokens') {
-      const parsedValue = parseInt(newValue, 10);
-      updatedValues[name] = isNaN(parsedValue)
-        ? formValues.maxTokens
-        : parsedValue;
-    } else if (name === 'temperature' || name === 'topP') {
-      const parsedValue = parseFloat(newValue);
-      updatedValues[name] = isNaN(parsedValue) ? formValues[name] : parsedValue;
-    } else if (name === 'systemPrompt') {
-      updatedValues[name] = newValue;
-    } else if (name === 'includeTemperature' || name === 'includeTopP') {
-      updatedValues[name] = newValue;
-    } else if (name === 'thinkingBudget') {
-      const parsedValue = parseInt(newValue, 10);
-      updatedValues[name] = isNaN(parsedValue) ? formValues.thinkingBudget : parsedValue;
-    } else {
-      updatedValues[name] = newValue;
-    }
+      if (name === 'maxTokens' || name === 'thinkingBudget') {
+        const parsedValue = parseInt(newValue, 10);
+        // Use fallback to previous value if parsing fails, except for null/empty input
+        updatedValues[name] = (newValue === '' || newValue === null) ? null : (isNaN(parsedValue) ? prevValues[name] : parsedValue);
+      } else if (name === 'temperature' || name === 'topP') {
+        const parsedValue = parseFloat(newValue);
+        updatedValues[name] = isNaN(parsedValue) ? prevValues[name] : parsedValue;
+      } else if (name === 'reasoningEffort') {
+        // Ensure it's one of the allowed values or null/empty if clearing
+        const allowed = modelConfig?.thinking?.reasoningEffort?.allowedValues ?? [];
+        updatedValues[name] = (newValue === '' || newValue === null || !allowed.includes(newValue)) ? null : newValue;
+      } else if (name === 'includeTemperature' || name === 'includeTopP') {
+        updatedValues[name] = newValue; // Boolean toggle
+      } else {
+        // Handles systemPrompt and any other string inputs
+        updatedValues[name] = newValue;
+      }
 
-    setFormValues(updatedValues);
-    setHasChanges(checkForChanges(updatedValues, originalValues));
-    setIsAtDefaults(checkIfAtDefaults(updatedValues));
-  }, [formValues, originalValues, checkForChanges, checkIfAtDefaults]);
+      // Check for changes *after* updating the state value
+      setHasChanges(checkForChanges(updatedValues, originalValues));
+      setIsAtDefaults(checkIfAtDefaults(updatedValues));
+
+      return updatedValues; // Return the new state
+    });
+  }, [originalValues, checkForChanges, checkIfAtDefaults, modelConfig]); // Added modelConfig dependency
 
   const handleModelChange = useCallback((modelId) => {
     onModelSelect(modelId);
@@ -329,8 +354,8 @@ const AdvancedSettings = ({
         }
       }
 
-      // Validate thinkingBudget if shown
-      const showBudgetSlider = currentEditingMode === 'thinking' && modelConfig?.thinking?.budget;
+      // Validate thinkingBudget if shown and supported
+      const showBudgetSlider = modelConfig?.thinking?.budget;
       if (showBudgetSlider) {
         if (formValues.thinkingBudget === null || formValues.thinkingBudget === undefined || isNaN(formValues.thinkingBudget)) {
           throw new Error('Thinking Budget is required.');
@@ -341,7 +366,19 @@ const AdvancedSettings = ({
         }
       }
 
-      // Create settings object including new toggles
+      // Validate reasoningEffort if shown and supported
+      const showReasoningEffort = modelConfig?.thinking?.reasoningEffort;
+      if (showReasoningEffort) {
+         if (formValues.reasoningEffort === null || formValues.reasoningEffort === undefined) {
+            throw new Error('Reasoning Effort is required.');
+         }
+         const allowed = modelConfig.thinking.reasoningEffort.allowedValues;
+         if (!allowed.includes(formValues.reasoningEffort)) {
+            throw new Error(`Reasoning Effort must be one of: ${allowed.join(', ')}.`);
+         }
+      }
+
+      // Create settings object including new toggles and fields
       const updateSettings = {};
       if ('maxTokens' in formValues)
         updateSettings.maxTokens = formValues.maxTokens;
@@ -367,9 +404,13 @@ const AdvancedSettings = ({
       if ('includeTopP' in formValues) {
         updateSettings.includeTopP = formValues.includeTopP;
       }
-      // Add thinkingBudget if in thinking mode and it exists in formValues
-      if (currentEditingMode === 'thinking' && 'thinkingBudget' in formValues) {
+      // Add thinkingBudget if supported by model config
+      if (modelConfig?.thinking?.budget && 'thinkingBudget' in formValues) {
         updateSettings.thinkingBudget = formValues.thinkingBudget;
+      }
+      // Add reasoningEffort if supported by model config
+      if (modelConfig?.thinking?.reasoningEffort && 'reasoningEffort' in formValues) {
+          updateSettings.reasoningEffort = formValues.reasoningEffort;
       }
 
       // Save settings
@@ -430,18 +471,25 @@ const AdvancedSettings = ({
       resetValues.systemPrompt = defaults.systemPrompt;
     }
 
-    // Add thinkingBudget if it exists in defaults (meaning we are in thinking mode and it's supported)
+    // Add thinkingBudget if it exists in defaults (meaning model supports it)
     if ('thinkingBudget' in defaults) {
       resetValues.thinkingBudget = defaults.thinkingBudget;
+    } else {
+        resetValues.thinkingBudget = null; // Or undefined, ensure consistency
+    }
+
+    // Add reasoningEffort if it exists in defaults (meaning model supports it)
+    if ('reasoningEffort' in defaults) {
+        resetValues.reasoningEffort = defaults.reasoningEffort;
+    } else {
+        resetValues.reasoningEffort = null; // Or undefined
     }
 
     setFormValues(resetValues);
     setOriginalValues(resetValues); // Ensure original values are also reset
     setHasChanges(false);
     setIsAtDefaults(true);
-    await onResetToDefaults(selectedModelId, currentEditingMode); // Call the prop function
-
-      await onResetToDefaults(selectedModelId, currentEditingMode); // Call the prop function with mode
+    await onResetToDefaults(selectedModelId, currentEditingMode); // Call the prop function with mode
     } finally {
       setIsResetting(false);
       // Stop animation after duration
@@ -733,6 +781,28 @@ const AdvancedSettings = ({
               disabled={isSaving || isResetting}
               className='form-group mt-2'
             />
+          </div>
+        )}
+
+        {/* Reasoning Effort setting (if supported by model config) */}
+        {modelConfig?.thinking?.reasoningEffort && (
+          <div className='form-group mb-7'>
+            <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
+              Reasoning Effort
+            </span>
+            <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
+              Controls the amount of internal reasoning the model performs.
+            </p>
+            <div className='inline-block'>
+              <CustomSelect
+                id={`${platform.id}-${selectedModelId}-reasoning-effort`}
+                options={modelConfig.thinking.reasoningEffort.allowedValues.map(value => ({ id: value, name: value }))}
+                selectedValue={formValues.reasoningEffort}
+                onChange={(selectedValue) => handleChange('reasoningEffort', selectedValue)}
+                placeholder='Select Effort Level'
+                disabled={isSaving || isResetting}
+              />
+            </div>
           </div>
         )}
 

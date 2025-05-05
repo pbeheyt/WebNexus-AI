@@ -193,7 +193,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         },
@@ -215,7 +215,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         },
@@ -367,7 +367,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         },
@@ -389,7 +389,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         },
@@ -411,7 +411,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         }
@@ -479,7 +479,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         }
@@ -525,7 +525,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         },
@@ -547,7 +547,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         },
@@ -572,7 +572,7 @@
             "available": true,
             "toggleable": false,
             "reasoningEffort": {
-              "allowedValues": ["low", "medium", "high"],
+              "allowedValues": ["low", "high"],
               "default": "low"
             }
           }
@@ -596,7 +596,11 @@
           },
           "thinking": {
             "available": true,
-            "toggleable": false
+            "toggleable": false,
+            "reasoningEffort": {
+              "allowedValues": ["low", "high"],
+              "default": "low"
+            }
           }
         }
       ]
@@ -641,7 +645,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         },
@@ -685,7 +689,7 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": true,
+            "available": false,
             "toggleable": false
           }
         },
