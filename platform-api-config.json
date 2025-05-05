@@ -41,7 +41,12 @@
           },
           "thinking": {
             "available": true,
-            "toggleable": false
+            "toggleable": false,
+            "budget": {
+              "min": 0,
+              "max": 24576,
+              "default": 8192
+            }
           }
         },
         {
@@ -63,7 +68,12 @@
           },
           "thinking": {
             "available": true,
-            "toggleable": false
+            "toggleable": false,
+             "budget": {
+              "min": 0,
+              "max": 24576,
+              "default": 8192
+            }
           }
         },
         {
@@ -89,6 +99,11 @@
             "pricing": {
               "inputTokenPrice": 0.15,
               "outputTokenPrice": 3.50
+            },
+            "budget": {
+              "min": 0,
+              "max": 24576,
+              "default": 8192
             }
           }
         },
@@ -246,7 +261,11 @@
           },
           "thinking": {
             "available": true,
-            "toggleable": false
+            "toggleable": false,
+            "reasoningEffort": {
+              "allowedValues": ["low", "medium", "high"],
+              "default": "medium"
+            }
           }
         },
         {
@@ -269,7 +288,11 @@
           },
           "thinking": {
             "available": true,
-            "toggleable": false
+            "toggleable": false,
+            "reasoningEffort": {
+              "allowedValues": ["low", "medium", "high"],
+              "default": "medium"
+            }
           }
         }
       ]
@@ -547,7 +570,11 @@
           },
           "thinking": {
             "available": true,
-            "toggleable": false
+            "toggleable": false,
+            "reasoningEffort": {
+              "allowedValues": ["low", "medium", "high"],
+              "default": "low"
+            }
           }
         },
         {
