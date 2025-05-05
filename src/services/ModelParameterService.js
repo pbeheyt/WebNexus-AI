@@ -383,7 +383,50 @@ class ModelParameterService {
       }
 
       // Set thinking mode flag if enabled and available for this model
-      params.isThinkingEnabledForRequest = useThinkingMode && modelConfig?.thinking?.available === true;
+      // Add thinking budget if in thinking mode and model supports it
+    if (modeKey === 'thinking' && modelConfig?.thinking?.budget) {
+      const userBudget = userSettings.thinkingBudget;
+      // Use user setting if defined, otherwise use default from config, ensure it's not undefined/null before assigning
+      const budgetValue = userBudget !== undefined && userBudget !== null
+        ? userBudget
+        : modelConfig.thinking.budget.default;
+
+      // Add to params only if budgetValue is a valid number (including 0)
+      if (typeof budgetValue === 'number') {
+          params.thinkingBudget = budgetValue;
+          logger.service.info(`Resolved thinking budget: ${budgetValue}`);
+      } else {
+           logger.service.warn(`Could not resolve a valid thinking budget for ${platformId}/${modelId}. UserSetting: ${userBudget}, Default: ${modelConfig.thinking.budget.default}`);
+           // Optionally set to null or don't add the key if resolution fails
+           // params.thinkingBudget = null;
+      }
+    } else if (modeKey === 'thinking') {
+        logger.service.info(`Thinking mode active for ${platformId}/${modelId}, but model config does not specify a budget.`);
+    }
+
+    // Add reasoning effort if model supports it
+    if (modelConfig?.thinking?.reasoningEffort) {
+      const userEffort = userSettings.reasoningEffort;
+      // Use user setting if defined and valid, otherwise use default from config
+      const allowedValues = modelConfig.thinking.reasoningEffort.allowedValues || [];
+      const defaultValue = modelConfig.thinking.reasoningEffort.default;
+
+      if (userEffort !== undefined && userEffort !== null && allowedValues.includes(userEffort)) {
+          params.reasoningEffort = userEffort;
+          logger.service.info(`Resolved reasoning effort from user settings: ${userEffort}`);
+      } else if (defaultValue !== undefined && defaultValue !== null && allowedValues.includes(defaultValue)) {
+          params.reasoningEffort = defaultValue;
+          logger.service.info(`Resolved reasoning effort from model default: ${defaultValue}`);
+          if (userEffort !== undefined && userEffort !== null) {
+              logger.service.warn(`User reasoning effort '${userEffort}' is invalid, falling back to default '${defaultValue}'. Allowed: ${allowedValues.join(', ')}`);
+          }
+      } else {
+          logger.service.warn(`Could not resolve a valid reasoning effort for ${platformId}/${modelId}. UserSetting: ${userEffort}, Default: ${defaultValue}, Allowed: ${allowedValues.join(', ')}`);
+          // Do not add the key if resolution fails
+      }
+    }
+
+    params.isThinkingEnabledForRequest = useThinkingMode && modelConfig?.thinking?.available === true;
 
       logger.service.info(`FINAL Resolved parameters for ${platformId}/${modelId}:`, {
         ...params,

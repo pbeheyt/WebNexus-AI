@@ -29,6 +29,14 @@ class ChatGptApiService extends BaseApiService {
       stream: true,
     };
 
+    // Add reasoning_effort if provided in params (for specific models like o3, o4-mini)
+    if (params.reasoningEffort && typeof params.reasoningEffort === 'string') {
+      requestPayload.reasoning_effort = params.reasoningEffort;
+      this.logger.info(
+        `[${this.platformId}] Adding reasoning_effort: ${params.reasoningEffort} for model: ${params.model}`
+      );
+    }
+
     const messages = [];
     if (params.systemPrompt) {
       messages.push({ role: 'system', content: params.systemPrompt });

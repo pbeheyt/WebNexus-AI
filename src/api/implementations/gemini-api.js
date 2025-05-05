@@ -81,6 +81,18 @@ class GeminiApiService extends BaseApiService {
       formattedRequest.generationConfig.topP = params.topP;
     }
 
+    // Add thinkingConfig if thinking is enabled and a budget is resolved
+    if (params.isThinkingEnabledForRequest && typeof params.thinkingBudget === 'number') {
+      formattedRequest.generationConfig.thinkingConfig = {
+        thinkingBudget: params.thinkingBudget,
+      };
+      this.logger.info(
+        `[${this.platformId}] Enabling Thinking Mode with budget: ${params.thinkingBudget} for model: ${params.model}`
+      );
+    } else if (params.isThinkingEnabledForRequest) {
+        this.logger.warn(`[${this.platformId}] Thinking mode requested but no valid budget resolved. Thinking config will not be added.`);
+    }
+
     // Enable Thinking Mode if requested and available for this model
     if (params.isThinkingEnabledForRequest) {
       formattedRequest.tool_config = { function_calling_config: { mode: 'ANY' } };
