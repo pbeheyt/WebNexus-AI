@@ -176,7 +176,7 @@ function Header() {
               
               {/* Thinking Mode Toggle */}
               {modelConfigData?.thinking?.toggleable === true && (
-                <div className="flex items-center ml-2 flex-shrink-0">
+                <div className="flex items-center ml-2 flex-shrink-0 select-none">
                   <Toggle
                     checked={isThinkingModeEnabled}
                     onChange={toggleThinkingMode}

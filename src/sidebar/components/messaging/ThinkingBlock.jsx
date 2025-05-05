@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 
 import { ChevronUpIcon } from '../../../components/icons/ChevronUpIcon'; // Adjust path if needed
 
-const ThinkingBlock = ({ thinkingContent, isStreaming }) => {
+const ThinkingBlock = ({ thinkingContent }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const contentRef = useRef(null);
   const [contentMaxHeight, setContentMaxHeight] = useState('0px');
@@ -36,7 +36,6 @@ const ThinkingBlock = ({ thinkingContent, isStreaming }) => {
         // Basic block code rendering (no syntax highlighting needed here)
         return <pre className='bg-gray-200 dark:bg-gray-700 p-2 rounded text-xs my-2 overflow-x-auto'><code {...props}>{children}</code></pre>;
     },
-    // Add other basic elements if needed (strong, em, etc.)
   };
 
 
@@ -49,22 +48,9 @@ const ThinkingBlock = ({ thinkingContent, isStreaming }) => {
         aria-controls={`thinking-content-${React.useId()}`} // Generate unique ID
       >
         <div className='flex items-center'>
-          <span className='text-xs italic text-gray-600 dark:text-gray-400 select-none'>
-            Thinking Process...
-          </span>
-          {isStreaming && thinkingContent && thinkingContent.trim() && (
-             <div className={`flex gap-1 items-center ml-2 transition-opacity duration-150 h-3`}>
-                <div className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'></div>
-                <div
-                  className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
-                  style={{ animationDelay: '0.2s' }}
-                ></div>
-                <div
-                  className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
-                  style={{ animationDelay: '0.4s' }}
-                ></div>
-              </div>
-          )}
+        <span className='text-xs italic text-gray-600 dark:text-gray-400 select-none'>
+          Thinking Process
+        </span>
         </div>
         <ChevronUpIcon
           className={`w-4 h-4 text-gray-500 dark:text-gray-400 transform transition-transform duration-200 ${
@@ -78,7 +64,7 @@ const ThinkingBlock = ({ thinkingContent, isStreaming }) => {
         className='overflow-hidden transition-all duration-300 ease-in-out'
         style={{ maxHeight: contentMaxHeight }}
       >
-        <div className='px-3 pb-3 pt-1 text-xs text-gray-700 dark:text-gray-300 prose prose-xs dark:prose-invert max-w-none'>
+        <div className='px-3 py-2 text-xs text-gray-700 dark:text-gray-300 prose prose-xs dark:prose-invert max-w-none'>
            <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={thinkingMarkdownComponents} // Use simplified components
