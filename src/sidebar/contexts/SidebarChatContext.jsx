@@ -408,6 +408,7 @@ export function SidebarChatProvider({ children }) {
       id: assistantMessageId,
       role: MESSAGE_ROLES.ASSISTANT,
       content: '',
+      thinkingContent: '', // <-- Add this line
       model: selectedModel,
       platformIconUrl: selectedPlatform.iconUrl,
       platformId: selectedPlatformId,

@@ -4,10 +4,12 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
+
 import { logger } from '../../../shared/logger';
 import { IconButton, RerunIcon, PlatformIcon } from '../../../components';
 import { useSidebarChat } from '../../contexts/SidebarChatContext';
 
+import ThinkingBlock from './ThinkingBlock';
 import EnhancedCodeBlock from './EnhancedCodeBlock';
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
@@ -27,6 +29,7 @@ export const AssistantMessageBubble = memo(
       {
         id,
         content,
+        thinkingContent = null,
         isStreaming = false,
         model = null,
         platformIconUrl = null,
@@ -306,6 +309,14 @@ export const AssistantMessageBubble = memo(
           style={style}
           className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full message-group assistant-message relative ${className}`}
         >
+          {/* Render Thinking Block if content exists */}
+          {thinkingContent && thinkingContent.trim() && (
+            <ThinkingBlock
+              thinkingContent={thinkingContent}
+              isStreaming={isStreaming}
+            />
+          )}
+          
           {/* Prose container for Markdown styling */}
           <div
             className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}
@@ -389,6 +400,7 @@ export const AssistantMessageBubble = memo(
 AssistantMessageBubble.propTypes = {
   id: PropTypes.string.isRequired,
   content: PropTypes.string,
+  thinkingContent: PropTypes.string,
   isStreaming: PropTypes.bool,
   model: PropTypes.string,
   platformIconUrl: PropTypes.string,

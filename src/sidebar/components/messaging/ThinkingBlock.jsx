@@ -1,0 +1,99 @@
+// src/sidebar/components/messaging/ThinkingBlock.jsx
+import React, { useState, useRef, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+import { ChevronUpIcon } from '../../../components/icons/ChevronUpIcon'; // Adjust path if needed
+
+const ThinkingBlock = ({ thinkingContent, isStreaming }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const contentRef = useRef(null);
+  const [contentMaxHeight, setContentMaxHeight] = useState('0px');
+
+  useEffect(() => {
+    if (isExpanded && contentRef.current) {
+      setContentMaxHeight(`${contentRef.current.scrollHeight}px`);
+    } else {
+      setContentMaxHeight('0px');
+    }
+  }, [isExpanded, thinkingContent]); // Recalculate on expand/collapse and content change
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  // Simplified Markdown components for thinking block
+  const thinkingMarkdownComponents = {
+    p: ({ node: _node, children }) => <p className='mb-2'>{children}</p>,
+    ul: ({ node: _node, ordered: _ordered, ...props }) => <ul className='list-disc pl-4 mb-2' {...props} />,
+    ol: ({ node: _node, ordered: _ordered, ...props }) => <ol className='list-decimal pl-4 mb-2' {...props} />,
+    li: ({ node: _node, children, ordered: _ordered, ...props }) => <li className='mb-1' {...props}>{children}</li>,
+    code: ({ node: _node, inline, children, ...props }) => {
+        if (inline) {
+            return <code className='bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs' {...props}>{children}</code>;
+        }
+        // Basic block code rendering (no syntax highlighting needed here)
+        return <pre className='bg-gray-200 dark:bg-gray-700 p-2 rounded text-xs my-2 overflow-x-auto'><code {...props}>{children}</code></pre>;
+    },
+    // Add other basic elements if needed (strong, em, etc.)
+  };
+
+
+  return (
+    <div className='my-3 border border-dashed border-gray-400 dark:border-gray-600 rounded-md bg-gray-100/50 dark:bg-gray-800/50'>
+      <button
+        onClick={toggleExpand}
+        className='flex items-center justify-between w-full px-3 py-2 text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded-t-md hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
+        aria-expanded={isExpanded}
+        aria-controls={`thinking-content-${React.useId()}`} // Generate unique ID
+      >
+        <div className='flex items-center'>
+          <span className='text-xs italic text-gray-600 dark:text-gray-400 select-none'>
+            Thinking Process...
+          </span>
+          {isStreaming && thinkingContent && thinkingContent.trim() && (
+             <div className={`flex gap-1 items-center ml-2 transition-opacity duration-150 h-3`}>
+                <div className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'></div>
+                <div
+                  className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
+                  style={{ animationDelay: '0.2s' }}
+                ></div>
+                <div
+                  className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
+                  style={{ animationDelay: '0.4s' }}
+                ></div>
+              </div>
+          )}
+        </div>
+        <ChevronUpIcon
+          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transform transition-transform duration-200 ${
+            isExpanded ? 'rotate-0' : 'rotate-180'
+          }`}
+        />
+      </button>
+      <div
+        ref={contentRef}
+        id={`thinking-content-${React.useId()}`} // Match aria-controls
+        className='overflow-hidden transition-all duration-300 ease-in-out'
+        style={{ maxHeight: contentMaxHeight }}
+      >
+        <div className='px-3 pb-3 pt-1 text-xs text-gray-700 dark:text-gray-300 prose prose-xs dark:prose-invert max-w-none'>
+           <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={thinkingMarkdownComponents} // Use simplified components
+            >
+              {thinkingContent}
+            </ReactMarkdown>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+ThinkingBlock.propTypes = {
+  thinkingContent: PropTypes.string,
+  isStreaming: PropTypes.bool,
+};
+
+export default ThinkingBlock;

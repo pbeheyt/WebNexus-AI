@@ -209,17 +209,23 @@ class BaseApiService extends ApiInterface {
    * @private
    */
   _handleParsedChunk(parsedResult, onChunk, model, accumulatedContent) {
-    if (parsedResult.type === 'content') {
+    if (parsedResult.type === 'thinking') {
+      // Handle thinking chunks separately
+      if (parsedResult.chunk && parsedResult.chunk.length > 0) {
+        onChunk({ thinkingChunk: parsedResult.chunk, done: false, model });
+      }
+      // Do NOT modify accumulatedContent for thinking chunks
+    } else if (parsedResult.type === 'content') {
+      // Handle regular content chunks (existing logic)
       if (Array.isArray(parsedResult.chunks)) {
         for (const subChunk of parsedResult.chunks) {
           if (subChunk && subChunk.length > 0) {
-            accumulatedContent += subChunk;
+            accumulatedContent += subChunk; // Only update for content
             onChunk({ chunk: subChunk, done: false, model });
           }
         }
       } else if (parsedResult.chunk) {
-        // Handle single chunk (standard case for other APIs)
-        accumulatedContent += parsedResult.chunk;
+        accumulatedContent += parsedResult.chunk; // Only update for content
         onChunk({ chunk: parsedResult.chunk, done: false, model });
       }
     }

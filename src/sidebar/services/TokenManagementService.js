@@ -141,17 +141,24 @@ class TokenManagementService {
           }
         }
       } else if (msg.role === 'assistant') {
-        const msgOutputTokens =
-          typeof msg.outputTokens === 'number'
-            ? msg.outputTokens
-            : this.estimateTokens(msg.content);
+        let msgTotalOutputTokens = 0;
+        // Check if pre-calculated tokens exist and are valid
+        if (typeof msg.outputTokens === 'number' && msg.outputTokens >= 0) {
+            msgTotalOutputTokens = msg.outputTokens;
+        } else {
+            // Estimate if pre-calculated tokens are missing or invalid
+            const contentTokens = this.estimateTokens(msg.content || '');
+            const thinkingTokens = this.estimateTokens(msg.thinkingContent || ''); // Estimate thinking tokens
+            msgTotalOutputTokens = contentTokens + thinkingTokens; // Sum both
+        }
+
         // Calculate cumulative output tokens by summing output from all assistant messages.
-        outputTokens += msgOutputTokens;
+        outputTokens += msgTotalOutputTokens;
 
         // Add to history sent in last call if it's an ASSISTANT message and not excluded
         if (index !== lastUserMsgIndex && index !== lastAssistantMsgIndex) {
           // Add tokens from past assistant messages to history sent in the last call.
-          historyTokensSentInLastApiCall += msgOutputTokens;
+          historyTokensSentInLastApiCall += msgTotalOutputTokens;
         }
         // System messages (like errors) are not counted towards API call tokens.
         // Note: The initial system prompt is handled separately above.
@@ -168,13 +175,14 @@ class TokenManagementService {
     let outputTokensInLastApiCall = 0;
     if (lastAssistantMsgIndex !== -1) {
       const lastAssistantMsg = messages[lastAssistantMsgIndex];
-      // Sync estimateTokens
       // Explicitly check if outputTokens is a number (even if 0)
       if (typeof lastAssistantMsg.outputTokens === 'number') {
         outputTokensInLastApiCall = lastAssistantMsg.outputTokens;
       } else {
-        // Fallback to estimating only if the property doesn't exist or isn't a number
-        outputTokensInLastApiCall = this.estimateTokens(lastAssistantMsg.content);
+        // Fallback to estimating both content and thinking content
+        const contentTokens = this.estimateTokens(lastAssistantMsg.content || '');
+        const thinkingTokens = this.estimateTokens(lastAssistantMsg.thinkingContent || '');
+        outputTokensInLastApiCall = contentTokens + thinkingTokens;
       }
     }
 

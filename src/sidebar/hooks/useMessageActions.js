@@ -49,20 +49,21 @@ const _initiateRerunSequence = async ({
   modelConfigData,
   ChatHistoryService,
 }) => {
-  const assistantPlaceholder = {
-    id: assistantPlaceholderId,
-    role: MESSAGE_ROLES.ASSISTANT,
-    content: '',
-    model: selectedModel,
-    platformIconUrl: selectedPlatform.iconUrl,
-    platformId: selectedPlatformId,
-    timestamp: new Date().toISOString(),
-    isStreaming: true,
-    inputTokens: 0,
-    outputTokens: 0,
-    requestModelId: selectedModel,
-    requestModelConfigSnapshot: modelConfigData,
-  };
+      const assistantPlaceholder = {
+        id: assistantPlaceholderId,
+        role: MESSAGE_ROLES.ASSISTANT,
+        content: '',
+        thinkingContent: '', // <-- Add this line
+        model: selectedModel,
+        platformIconUrl: selectedPlatform.iconUrl,
+        platformId: selectedPlatformId,
+        timestamp: new Date().toISOString(),
+        isStreaming: true,
+        inputTokens: 0,
+        outputTokens: 0,
+        requestModelId: selectedModel,
+        requestModelConfigSnapshot: modelConfigData,
+      };
 
   // Add placeholder *after* potential edit in editAndRerunMessage
   setMessages([...truncatedMessages, assistantPlaceholder]);

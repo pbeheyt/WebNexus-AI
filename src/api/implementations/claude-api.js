@@ -126,8 +126,8 @@ class ClaudeApiService extends BaseApiService {
             }
             // Case 2: Thinking content delta
             else if (data.delta.type === 'thinking_delta' && data.delta.thinking) {
-                // Treat thinking content chunks the same as text chunks for UI streaming
-                return { type: 'content', chunk: data.delta.thinking };
+                // Return a distinct type for thinking content
+                return { type: 'thinking', chunk: data.delta.thinking };
             }
             // Case 3: Signature delta (appears at the end of a thinking block)
             else if (data.delta.type === 'signature_delta') {
