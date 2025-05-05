@@ -94,19 +94,25 @@ class GrokApiService extends BaseApiService {
     if (line.startsWith('data: ')) {
       try {
         const data = JSON.parse(line.substring(6));
-        const content = data.choices?.[0]?.delta?.content;
+        // Check for reasoning content first
+        const reasoningContent = data.choices?.[0]?.delta?.reasoning_content;
+        if (reasoningContent) {
+          return { type: 'thinking', chunk: reasoningContent };
+        }
 
+        // Check for regular content if reasoning content wasn't found
+        const content = data.choices?.[0]?.delta?.content;
         if (content) {
           return { type: 'content', chunk: content };
-        } else {
-          // Ignore chunks without content (like finish_reason markers)
-          if (data.choices?.[0]?.finish_reason) {
-            this.logger.info(
-              `[${this.platformId}] Stream finished with reason: ${data.choices[0].finish_reason}`
-            );
-          }
-          return { type: 'ignore' };
         }
+
+        // Ignore chunks without relevant content (like finish_reason markers)
+        if (data.choices?.[0]?.finish_reason) {
+          this.logger.info(
+            `[${this.platformId}] Stream finished with reason: ${data.choices[0].finish_reason}`
+          );
+        }
+        return { type: 'ignore' };
       } catch (e) {
         this.logger.error(
           `[${this.platformId}] Error parsing stream chunk:`,
