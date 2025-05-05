@@ -318,8 +318,8 @@ class ModelParameterService {
         logger.service.warn(`TopP included by user but overridden by thinking mode for ${modelId}.`);
       }
 
-      // Add thinking budget if in thinking mode and model supports it
-      if (modeKey === 'thinking' && modelConfig?.thinking?.budget) {
+      // Add thinking budget if model supports it AND thinking is available (regardless of toggleable state)
+      if (modelConfig?.thinking?.budget && modelConfig?.thinking?.available === true) {
         const userBudget = userSettings.thinkingBudget;
         const budgetValue = userBudget !== undefined 
           ? userBudget 
@@ -328,8 +328,8 @@ class ModelParameterService {
         logger.service.info(`Resolved thinking budget: ${budgetValue}`);
       }
 
-      // Add reasoning effort if in thinking mode and model supports it
-      if (modeKey === 'thinking' && modelConfig?.thinking?.reasoningEffort) {
+      // Add reasoning effort if model supports it AND thinking is available (regardless of toggleable state)
+      if (modelConfig?.thinking?.reasoningEffort && modelConfig?.thinking?.available === true) {
         const userEffort = userSettings.reasoningEffort;
         if (userEffort !== undefined && userEffort !== null) {
           params.reasoningEffort = userEffort;
