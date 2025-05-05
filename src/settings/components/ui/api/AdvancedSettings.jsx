@@ -367,7 +367,8 @@ const AdvancedSettings = ({
       }
 
       // Validate reasoningEffort if shown and supported
-      const showReasoningEffort = modelConfig?.thinking?.reasoningEffort;
+      // Determine visibility: show only if model supports effort, thinking is available, AND (editing 'thinking' OR thinking isn't toggleable)
+  const showReasoningEffort = modelConfig?.thinking?.reasoningEffort && modelConfig?.thinking?.available === true && (currentEditingMode === 'thinking' || !modelConfig?.thinking?.toggleable);
       if (showReasoningEffort) {
          if (formValues.reasoningEffort === null || formValues.reasoningEffort === undefined) {
             throw new Error('Reasoning Effort is required.');
@@ -551,7 +552,8 @@ const AdvancedSettings = ({
   const modelSupportsTopP = modelConfig?.capabilities?.supportsTopP === true;
   const showTempSection = modelSupportsTemp && !thinkingOverridesTemp;
   const showTopPSection = modelSupportsTopP && !thinkingOverridesTopP;
-  const showBudgetSlider = isThinkingModeActive && modelConfig?.thinking?.budget;
+  // Determine visibility: show only if model supports budget, thinking is available, AND (editing 'thinking' OR thinking isn't toggleable)
+  const showBudgetSlider = modelConfig?.thinking?.budget && modelConfig?.thinking?.available === true && (currentEditingMode === 'thinking' || !modelConfig?.thinking?.toggleable);
 
   return (
     <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
@@ -777,7 +779,7 @@ const AdvancedSettings = ({
               onChange={(newValue) => handleChange('thinkingBudget', newValue)}
               min={modelConfig.thinking.budget.min}
               max={modelConfig.thinking.budget.max}
-              step={1000}
+              step={1}
               disabled={isSaving || isResetting}
               className='form-group mt-2'
             />
