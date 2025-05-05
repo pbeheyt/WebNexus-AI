@@ -1,5 +1,4 @@
-// src/background/api/api-coordinator.js - API model request handling
-
+// src/background/api/api-coordinator.js ---
 import ApiServiceManager from '../../services/ApiServiceManager.js';
 import ModelParameterService from '../../services/ModelParameterService.js';
 import ContentFormatter from '../../services/ContentFormatter.js';
@@ -418,7 +417,9 @@ function createStreamHandler(
   return async function handleChunk(chunkData) {
     if (!chunkData) return;
 
+    // Extract potential chunks
     const chunk = typeof chunkData.chunk === 'string' ? chunkData.chunk : '';
+    const thinkingChunk = typeof chunkData.thinkingChunk === 'string' ? chunkData.thinkingChunk : ''; // Get thinking chunk
     const done = !!chunkData.done;
 
     // Model should be consistent, but log if chunkData provides a different one
@@ -428,22 +429,34 @@ function createStreamHandler(
       );
     }
 
-    if (chunk) {
-      fullContent += chunk;
+    // Process intermediate chunks (regular or thinking)
+    if (!done && (chunk || thinkingChunk)) { // Send if not done and either chunk exists
+      fullContent += chunk; // Only accumulate regular content
 
-      // Send to content script for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
-          // Use runtime API for sidebar communication
-          chrome.runtime.sendMessage({
-            action: 'streamChunk',
-            streamId,
-            chunkData: {
-              chunk,
+          // **Explicitly construct the inner chunkData object**
+          const chunkDataPayload = {
               done: false,
               model: modelToUse,
-            },
-          });
+          };
+          if (chunk) {
+              chunkDataPayload.chunk = chunk;
+          }
+          if (thinkingChunk) {
+              chunkDataPayload.thinkingChunk = thinkingChunk;
+          }
+
+          // Prepare the full message payload for the sidebar
+          const messagePayload = {
+            action: 'streamChunk',
+            streamId,
+            chunkData: chunkDataPayload, // Use the explicitly constructed object
+          };
+
+          // Send the payload
+          chrome.runtime.sendMessage(messagePayload);
+
         } catch (err) {
           logger.background.warn('Error sending stream chunk:', err);
         }
@@ -453,10 +466,11 @@ function createStreamHandler(
     // Handle stream completion or error
     if (done) {
       const finalChunkData = {
-        chunk: '',
+        chunk: '', // Final message doesn't need the 'chunk' prop itself
         done: true,
         model: modelToUse,
         fullContent: chunkData.fullContent || fullContent,
+        thinkingChunk: null, // Explicitly nullify thinkingChunk in final message
       };
 
       // Check for user cancellation first
@@ -474,7 +488,7 @@ function createStreamHandler(
         // Do NOT add finalChunkData.error
       } else if (chunkData.error) {
         // Handle other errors
-        // chunkData.error should now be the pre-formatted string from extractApiErrorMessage
+        // chunkData.error should now be the pre-formatted string from extractApiErrorMessage or similar
         const errorMessage = chunkData.error;
         logger.background.error(`Stream ended with error: ${errorMessage}`);
         await setApiProcessingError(errorMessage);
@@ -496,12 +510,13 @@ function createStreamHandler(
       // Ensure the final message (success, error, or cancelled) is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
         try {
-          // Use runtime API for sidebar communication
-          chrome.runtime.sendMessage({
+          const finalMessagePayload = {
             action: 'streamChunk',
             streamId,
-            chunkData: finalChunkData,
-          });
+            chunkData: finalChunkData, // Send the final chunk data object
+          };
+          // Use runtime API for sidebar communication
+          chrome.runtime.sendMessage(finalMessagePayload);
         } catch (err) {
           logger.background.warn(
             'Error sending stream completion/error message:',

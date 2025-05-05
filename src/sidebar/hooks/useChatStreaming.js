@@ -1,4 +1,4 @@
-// src/sidebar/hooks/useChatStreaming.js
+// src/sidebar/hooks/useChatStreaming.js ---
 import { useEffect, useCallback, useRef } from 'react';
 
 import { logger } from '../../shared/logger';
@@ -266,8 +266,9 @@ export function useChatStreaming({
           await handleStreamComplete(
             streamingMessageId,
             errorMessage,
+            '', // No thinking content on error
             chunkData.model || null,
-            true
+            true // isError
           );
           setStreamingMessageId(null);
           setIsCanceling(false);
@@ -275,18 +276,15 @@ export function useChatStreaming({
         }
 
         if (chunkData.done) {
-          if (rafIdRef.current !== null) {
-            cancelAnimationFrame(rafIdRef.current);
-            rafIdRef.current = null;
-          }
-
+          // --- Stream Done Handling ---
           if (rafIdRef.current !== null) {
             cancelAnimationFrame(rafIdRef.current);
             rafIdRef.current = null;
           }
 
           let finalContent = chunkData.fullContent || batchedStreamingContentRef.current;
-          let finalThinkingContent = batchedThinkingContentRef.current; // Capture thinking content before clearing
+          // Ensure we capture the final thinking content from the buffer before clearing
+          let finalThinkingContent = batchedThinkingContentRef.current;
 
           if (chunkData.cancelled === true) {
             logger.sidebar.info(
@@ -374,7 +372,7 @@ export function useChatStreaming({
     batchedStreamingContentRef,
     rafIdRef,
     performStreamingStateUpdate,
-    performThinkingStreamingStateUpdate,
+    performThinkingStreamingStateUpdate, // Added dependency
   ]); // Dependencies for the listener effect
 
   // --- Stream Cancellation Logic ---
