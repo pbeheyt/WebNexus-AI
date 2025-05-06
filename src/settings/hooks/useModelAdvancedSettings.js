@@ -45,14 +45,12 @@ export function useModelAdvancedSettings({
     modelsFromPlatform,
   ]);
 
-  // Initialize and update formValues, originalValues, and flags
+  // Initialize and update formValues and originalValues
   useEffect(() => {
     if (!derivedSettings) {
       // Handle case where modelId might be invalid or config not found
       setFormValues({});
       setOriginalValues({});
-      setHasChanges(false);
-      setIsAtDefaults(true);
       return;
     }
 
@@ -86,19 +84,19 @@ export function useModelAdvancedSettings({
       }
     });
 
-
-    setFormValues(initialFormValues);
-    setOriginalValues({ ...initialFormValues }); // Important to clone
-    setHasChanges(false);
-    setIsAtDefaults(
-      checkAreFormValuesAtDefaults(
-        initialFormValues,
-        modelDefaults,
-        derivedSettings.capabilities,
-        platform.apiConfig
-      )
-    );
-  }, [derivedSettings, advancedSettingsFromStorage, selectedModelId, currentEditingMode, platform.apiConfig]);
+    // Conditional initialization logic
+    if (checkForFormChanges(formValues, originalValues)) {
+      // Form is dirty, preserve user's current input in formValues.
+      // Only update originalValues to reflect the new baseline from storage/defaults.
+      setOriginalValues({ ...initialFormValues }); // Update baseline
+      // formValues remains untouched. hasChanges and isAtDefaults will be updated by a separate effect.
+    } else {
+      // Form is clean, proceed with full re-initialization of formValues and originalValues.
+      setFormValues(initialFormValues);
+      setOriginalValues({ ...initialFormValues });
+      // hasChanges and isAtDefaults will be updated by a separate effect.
+    }
+  }, [derivedSettings, advancedSettingsFromStorage, selectedModelId, currentEditingMode, platform.apiConfig, formValues, originalValues]);
 
   const handleChange = useCallback(
     (name, newValue) => {
@@ -212,6 +210,29 @@ export function useModelAdvancedSettings({
       setIsSaving(false);
     }
   }, [formValues, selectedModelId, currentEditingMode, onSettingsUpdateProp, derivedSettings, platform.apiConfig, showNotificationError]);
+
+  // Effect to update hasChanges and isAtDefaults whenever formValues or originalValues change
+  useEffect(() => {
+    if (!derivedSettings) {
+      // If derivedSettings are not yet available, default to clean/at-defaults state
+      setHasChanges(false);
+      setIsAtDefaults(true);
+      return;
+    }
+
+    const { defaultSettings: modelDefaults, capabilities } = derivedSettings;
+
+    const currentHasChanges = checkForFormChanges(formValues, originalValues);
+    const currentIsAtDefaults = checkAreFormValuesAtDefaults(
+      formValues,
+      modelDefaults,
+      capabilities,
+      platform.apiConfig
+    );
+
+    setHasChanges(currentHasChanges);
+    setIsAtDefaults(currentIsAtDefaults);
+  }, [formValues, originalValues, derivedSettings, platform.apiConfig]);
 
   const handleResetClick = useCallback(async () => {
     if (isAtDefaults || !derivedSettings) return;
