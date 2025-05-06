@@ -20,7 +20,7 @@ export const IconButton = forwardRef(
       <button
         ref={ref}
         type='button'
-        className={`flex items-center justify-center cursor-pointer border-none outline-none transition-colors duration-150 ${className} ${disabled ? 'opacity-70 cursor-not-allowed' : ''}`}
+        className={`flex items-center justify-center cursor-pointer border-none outline-none transition-colors duration-150 ${className}`}
         onClick={onClick}
         disabled={disabled}
         aria-label={ariaLabel}
