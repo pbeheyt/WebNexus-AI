@@ -96,7 +96,8 @@ export function useModelAdvancedSettings({
       setOriginalValues({ ...initialFormValues });
       // hasChanges and isAtDefaults will be updated by a separate effect.
     }
-  }, [derivedSettings, advancedSettingsFromStorage, selectedModelId, currentEditingMode, platform.apiConfig, formValues, originalValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [derivedSettings, advancedSettingsFromStorage, selectedModelId, currentEditingMode, platform.apiConfig]);
 
   const handleChange = useCallback(
     (name, newValue) => {

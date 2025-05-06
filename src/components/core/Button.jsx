@@ -22,9 +22,9 @@ export function Button({
   onClick = () => {},
   ...props
 }) {
-  // Base classes
-  const baseClasses =
-    'inline-flex items-center justify-center rounded-lg font-medium transition-colors';
+    // Base classes
+    const baseClasses =
+      'inline-flex items-center justify-center rounded-lg font-medium transition-colors transition-opacity duration-200';
 
   // Size classes
   const sizeClasses = {
