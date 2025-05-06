@@ -4,6 +4,8 @@ import { useCallback } from 'react';
 
 import { logger } from '../../shared/logger';
 import { MESSAGE_ROLES, INTERFACE_SOURCES } from '../../shared/constants';
+import { useContent } from '../../contexts/ContentContext';
+import { isInjectablePage } from '../../shared/utils/content-utils';
 
 /**
  * Internal helper function to initiate the API call sequence for reruns/edits.
@@ -41,6 +43,7 @@ const _initiateRerunSequence = async ({
   selectedPlatform,
   selectedPlatformId,
   tabId,
+  currentTab,
   rerunStatsRef,
   isContentExtractionEnabled,
   isThinkingModeEnabled,
@@ -70,6 +73,14 @@ const _initiateRerunSequence = async ({
   setStreamingMessageId(assistantPlaceholderId);
   batchedStreamingContentRef.current = '';
 
+  // --- Determine effective content extraction state ---
+  const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
+  // 'isContentExtractionEnabled' below refers to the parameter passed to _initiateRerunSequence (the toggle state)
+  const effectiveContentExtractionEnabled = isPageInjectable ? isContentExtractionEnabled : false;
+  logger.sidebar.info(
+    `[_initiateRerunSequence] Page injectable: ${isPageInjectable}, Toggle state: ${isContentExtractionEnabled}, Effective: ${effectiveContentExtractionEnabled}`
+  );
+
   // Use the passed-in _initiateApiCall helper
   await _initiateApiCall({
     platformId: selectedPlatformId,
@@ -77,7 +88,7 @@ const _initiateRerunSequence = async ({
     promptContent,
     conversationHistory,
     streaming: true,
-    isContentExtractionEnabled: isContentExtractionEnabled,
+    isContentExtractionEnabled: effectiveContentExtractionEnabled,
     isThinkingModeEnabled: isThinkingModeEnabled,
     options: {
       tabId,
@@ -145,6 +156,7 @@ export function useMessageActions({
   isContentExtractionEnabled,
   isThinkingModeEnabled,
 }) {
+  const { currentTab } = useContent();
   const rerunMessage = useCallback(
     async (messageId) => {
       // --- Guards ---
@@ -194,6 +206,7 @@ export function useMessageActions({
         selectedPlatform,
         selectedPlatformId,
         tabId,
+        currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
         isThinkingModeEnabled,
@@ -222,6 +235,7 @@ export function useMessageActions({
       processContentViaApi,
       isContentExtractionEnabled,
       isThinkingModeEnabled,
+      currentTab,
     ]
   );
 
@@ -292,6 +306,7 @@ export function useMessageActions({
         selectedPlatform,
         selectedPlatformId,
         tabId,
+        currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
         isThinkingModeEnabled,
@@ -321,6 +336,7 @@ export function useMessageActions({
       processContentViaApi,
       isContentExtractionEnabled,
       isThinkingModeEnabled,
+      currentTab,
     ]
   );
 
