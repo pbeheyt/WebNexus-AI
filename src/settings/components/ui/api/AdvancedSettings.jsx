@@ -11,7 +11,7 @@ import {
   RefreshIcon,
   CustomSelect,
 } from '../../../../components';
-import { useModelAdvancedSettings } from '../../../hooks/useModelAdvancedSettings'; // New Hook
+import { useModelAdvancedSettings } from '../../../hooks/useModelAdvancedSettings';
 
 const AdvancedSettings = ({
   platform,
@@ -21,7 +21,7 @@ const AdvancedSettings = ({
   onSettingsUpdate, // Prop from PlatformDetails (handleAdvancedSettingsUpdate)
   onResetToDefaults, // Prop from PlatformDetails (handleResetAdvancedSettings)
 }) => {
-  const { error: showNotificationError } = useNotification(); // Renamed for clarity
+  const { error: showNotificationError } = useNotification();
 
   const {
     formValues,
@@ -140,7 +140,7 @@ const AdvancedSettings = ({
 
         <div className='model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
-            Model Specifications {currentEditingMode === 'thinking' ? '(Thinking Mode)' : '(Base Mode)'}
+            Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
           </h4>
           <div className='specs-info space-y-2.5'>
             <div className='spec-item flex justify-between text-sm'>
