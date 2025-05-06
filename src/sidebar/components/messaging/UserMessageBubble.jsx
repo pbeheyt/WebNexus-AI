@@ -93,7 +93,7 @@ export const UserMessageBubble = memo(
 
             {/* Editing Mode */}
             {isEditing && (
-              <div className='flex flex-col w-full space-y-3'>
+              <div className='flex flex-col w-full space-y-3 select-none'>
                 <TextArea
                   value={editedContent}
                   onChange={(e) => setEditedContent(e.target.value)}
@@ -108,7 +108,7 @@ export const UserMessageBubble = memo(
                     variant='secondary'
                     size='sm'
                     onClick={handleCancelEdit}
-                    className='px-4'
+                    className='px-4 select-none'
                   >
                     Cancel
                   </Button>
@@ -117,7 +117,7 @@ export const UserMessageBubble = memo(
                     size='sm'
                     onClick={handleSaveAndRerun}
                     disabled={!editedContent.trim()}
-                    className='px-4'
+                    className='px-4 select-none'
                   >
                     Save & Rerun
                   </Button>
