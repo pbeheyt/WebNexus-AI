@@ -20,11 +20,6 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         });
       }
 
-      // Give a moment for YouTube's dynamic content to load
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      this.logger.info('Starting YouTube video data extraction...');
-
       // Extract all video data
       const videoData = await this.extractData();
 
