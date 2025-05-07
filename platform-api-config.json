@@ -147,7 +147,7 @@
             "supportsSystemPrompt": false
           },
           "thinking": {
-            "available": false,
+            "available": true,
             "toggleable": false
           }
         }
