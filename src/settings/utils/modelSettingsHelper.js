@@ -31,178 +31,181 @@ export function getDerivedModelSettings({
 
   if (!baseModelConfig) {
     logger.settings.warn(
-      `getDerivedModelSettings: No base configuration found for modelId: ${modelId}`
+      `getDerivedModelSettings: No base configuration found for modelId: ${modelId} on platform ${platformApiConfig?.id || 'Unknown'}`
     );
     return null;
   }
 
-  let resolvedModelConfig = { ...baseModelConfig };
-  let currentPricing = { ...baseModelConfig.pricing };
-  let currentTokens = { ...baseModelConfig.tokens };
-  let currentCapabilities = { ...baseModelConfig.capabilities };
-  let currentThinkingConfig = baseModelConfig.thinking
-    ? { ...baseModelConfig.thinking }
-    : null;
+  let resolvedModelConfig = { ...baseModelConfig }; // Start with a shallow copy
+  // Deep copy nested objects that will be modified
+  resolvedModelConfig.pricing = { ...(baseModelConfig.pricing || {}) };
+  resolvedModelConfig.tokens = { ...(baseModelConfig.tokens || {}) };
+  resolvedModelConfig.capabilities = { ...(baseModelConfig.capabilities || {}) };
+  resolvedModelConfig.thinking = baseModelConfig.thinking ? { ...baseModelConfig.thinking } : null;
+
 
   // Apply thinking mode overrides if applicable
-  if (editingMode === 'thinking' && currentThinkingConfig?.available) {
-    currentPricing = {
-      ...currentPricing,
-      ...(currentThinkingConfig.pricing || {}),
+  if (editingMode === 'thinking' && resolvedModelConfig.thinking?.available) {
+    const thinkingConfig = resolvedModelConfig.thinking;
+
+    resolvedModelConfig.pricing = {
+      ...resolvedModelConfig.pricing,
+      ...(thinkingConfig.pricing || {}),
     };
-    currentTokens = {
-      ...currentTokens,
-      maxOutput:
-        currentThinkingConfig.maxOutput !== undefined
-          ? currentThinkingConfig.maxOutput
-          : currentTokens.maxOutput,
-      contextWindow:
-        currentThinkingConfig.contextWindow !== undefined
-          ? currentThinkingConfig.contextWindow
-          : currentTokens.contextWindow,
-    };
-    currentCapabilities = {
-      ...currentCapabilities,
-      supportsTemperature:
-        currentThinkingConfig.supportsTemperature !== undefined
-          ? currentThinkingConfig.supportsTemperature
-          : currentCapabilities.supportsTemperature,
-      supportsTopP:
-        currentThinkingConfig.supportsTopP !== undefined
-          ? currentThinkingConfig.supportsTopP
-          : currentCapabilities.supportsTopP,
-      // System prompt support is usually not overridden by thinking mode, but can be if needed
-      supportsSystemPrompt:
-        currentThinkingConfig.supportsSystemPrompt !== undefined
-          ? currentThinkingConfig.supportsSystemPrompt
-          : currentCapabilities.supportsSystemPrompt,
-    };
-    // Update resolvedModelConfig with these thinking-mode specific values
-    resolvedModelConfig.pricing = currentPricing;
-    resolvedModelConfig.tokens = currentTokens;
-    resolvedModelConfig.capabilities = currentCapabilities;
-    // Ensure the 'thinking' part of resolvedModelConfig reflects the active thinking config
-    resolvedModelConfig.thinking = currentThinkingConfig;
-  } else if (editingMode === 'base') {
-    // Ensure resolvedModelConfig uses base thinking details if not in 'thinking' mode
-    // or if thinking is not available/toggleable for this model.
-    // This is important if the model *has* a thinking block but it's not currently active.
-    resolvedModelConfig.thinking = baseModelConfig.thinking;
+    resolvedModelConfig.tokens.maxOutput =
+        thinkingConfig.maxOutput !== undefined
+          ? thinkingConfig.maxOutput
+          : resolvedModelConfig.tokens.maxOutput;
+    // contextWindow is typically not overridden by thinking mode, but can be if needed:
+    // resolvedModelConfig.tokens.contextWindow = thinkingConfig.contextWindow ?? resolvedModelConfig.tokens.contextWindow;
+
+    resolvedModelConfig.capabilities.supportsTemperature =
+        thinkingConfig.supportsTemperature !== undefined
+          ? thinkingConfig.supportsTemperature
+          : resolvedModelConfig.capabilities.supportsTemperature;
+    resolvedModelConfig.capabilities.supportsTopP =
+        thinkingConfig.supportsTopP !== undefined
+          ? thinkingConfig.supportsTopP
+          : resolvedModelConfig.capabilities.supportsTopP;
+    resolvedModelConfig.capabilities.supportsSystemPrompt =
+        thinkingConfig.supportsSystemPrompt !== undefined
+          ? thinkingConfig.supportsSystemPrompt
+          : resolvedModelConfig.capabilities.supportsSystemPrompt;
   }
+  // currentTokens, currentPricing, currentCapabilities are now effectively resolvedModelConfig.tokens etc.
 
 
-  // --- Calculate Default Settings ---
+  // --- Calculate Default Settings (based on resolvedModelConfig) ---
   const defaultSettings = {
-    maxTokens: currentTokens.maxOutput,
-    contextWindow: currentTokens.contextWindow, // This is informational, not directly a form field
-    systemPrompt: '', // Always default to empty
-    includeTemperature: true, // Default to true if temperature is supported
-    includeTopP: false, // Default to false if topP is supported
-    thinkingBudget: currentThinkingConfig?.budget?.default ?? null,
-    reasoningEffort: currentThinkingConfig?.reasoningEffort?.default ?? null,
+    maxTokens: resolvedModelConfig.tokens.maxOutput,
+    contextWindow: resolvedModelConfig.tokens.contextWindow, // Informational
+    systemPrompt: '', // Always default to empty for user input
+    includeTemperature: true, // Default to true if temperature is supported by model & platform
+    includeTopP: false, // Default to false
+    thinkingBudget: resolvedModelConfig.thinking?.budget?.default ?? null,
+    reasoningEffort: resolvedModelConfig.thinking?.reasoningEffort?.default ?? null,
   };
 
-  if (currentCapabilities.supportsTemperature !== false) {
+  if (resolvedModelConfig.capabilities.supportsTemperature !== false && platformApiConfig.temperature) {
     defaultSettings.temperature = platformApiConfig.temperature.default;
   } else {
-    // If not supported, ensure includeTemperature is false and temp is not set
     defaultSettings.includeTemperature = false;
-    delete defaultSettings.temperature;
+    // delete defaultSettings.temperature; // No need to delete, just won't be used if includeTemperature is false
   }
 
-  if (currentCapabilities.supportsTopP === true) {
+  if (resolvedModelConfig.capabilities.supportsTopP === true && platformApiConfig.topP) {
     defaultSettings.topP = platformApiConfig.topP.default;
   } else {
-    // If not supported, ensure includeTopP is false and topP is not set
     defaultSettings.includeTopP = false;
-    delete defaultSettings.topP;
+    // delete defaultSettings.topP;
   }
+
 
   // --- Derive Display Specs ---
   const displaySpecs = {
-    contextWindow: currentTokens.contextWindow,
-    inputPrice: currentPricing.inputTokenPrice,
-    outputPrice: currentPricing.outputTokenPrice,
-    maxOutputTokens: currentTokens.maxOutput,
+    contextWindow: resolvedModelConfig.tokens.contextWindow,
+    inputPrice: resolvedModelConfig.pricing.inputTokenPrice,
+    outputPrice: resolvedModelConfig.pricing.outputTokenPrice,
+    maxOutputTokens: resolvedModelConfig.tokens.maxOutput,
   };
 
   // --- Derive Parameter Specs (for sliders, inputs) ---
   const parameterSpecs = {
     maxTokens: {
-      min: 1,
-      max: currentTokens.maxOutput,
+      min: 1, // Or a more sensible minimum like 16, or from config if available
+      max: resolvedModelConfig.tokens.maxOutput,
       step: 1,
-      parameterName: currentTokens.parameterName,
+      parameterName: resolvedModelConfig.tokens.parameterName,
     },
-    temperature: currentCapabilities.supportsTemperature !== false ? {
+    temperature: (resolvedModelConfig.capabilities.supportsTemperature !== false && platformApiConfig.temperature) ? {
       min: platformApiConfig.temperature.min,
       max: platformApiConfig.temperature.max,
-      step: 0.01,
+      step: 0.01, // Or from config if available
     } : null,
-    topP: currentCapabilities.supportsTopP === true ? {
+    topP: (resolvedModelConfig.capabilities.supportsTopP === true && platformApiConfig.topP) ? {
       min: platformApiConfig.topP.min,
       max: platformApiConfig.topP.max,
-      step: 0.01,
+      step: 0.01, // Or from config if available
     } : null,
-    systemPrompt: platformApiConfig.apiStructure?.supportsSystemPrompt !== false && currentCapabilities.supportsSystemPrompt !== false ? {
+    systemPrompt: (platformApiConfig.apiStructure?.supportsSystemPrompt !== false && resolvedModelConfig.capabilities.supportsSystemPrompt !== false) ? {
       maxLength: MAX_SYSTEM_PROMPT_LENGTH,
     } : null,
-    thinkingBudget: currentThinkingConfig?.budget ? {
-      min: currentThinkingConfig.budget.min,
-      max: currentThinkingConfig.budget.max,
-      default: currentThinkingConfig.budget.default,
-      step: 1, // Assuming integer steps for budget
+    thinkingBudget: resolvedModelConfig.thinking?.budget ? {
+      min: resolvedModelConfig.thinking.budget.min,
+      max: resolvedModelConfig.thinking.budget.max,
+      default: resolvedModelConfig.thinking.budget.default,
+      step: resolvedModelConfig.thinking.budget.step || 1,
     } : null,
-    reasoningEffort: currentThinkingConfig?.reasoningEffort ? {
-        allowedValues: currentThinkingConfig.reasoningEffort.allowedValues,
-        default: currentThinkingConfig.reasoningEffort.default,
+    reasoningEffort: resolvedModelConfig.thinking?.reasoningEffort ? {
+        allowedValues: resolvedModelConfig.thinking.reasoningEffort.allowedValues,
+        default: resolvedModelConfig.thinking.reasoningEffort.default,
     } : null,
   };
 
   return {
     resolvedModelConfig, // The model config after applying mode-specific overrides
-    defaultSettings,     // Default values for form fields
+    defaultSettings,     // Default values for form fields (config-derived, not user-saved)
     displaySpecs,        // Specs for UI display (pricing, context window)
     parameterSpecs,      // Constraints for form inputs (min/max/step)
-    capabilities: currentCapabilities, // Effective capabilities for the current model/mode
+    capabilities: resolvedModelConfig.capabilities, // Effective capabilities for the current model/mode
   };
 }
 
 /**
  * Checks if the current form values are at the default settings for the model and mode.
  * @param {object} formValues - The current form values.
- * @param {object} defaultSettings - The default settings derived by getDerivedModelSettings.
+ * @param {object} configDefaults - The default settings derived purely from config by getDerivedModelSettings.
  * @param {object} capabilities - The capabilities derived by getDerivedModelSettings.
- * @param {object} platformApiConfig - The platform's API configuration.
- * @returns {boolean} True if form values match defaults, false otherwise.
+ * @param {object} platformApiConfig - The platform's API configuration (for platform-level defaults if needed).
+ * @returns {boolean} True if form values match config-derived defaults, false otherwise.
  */
-export function checkAreFormValuesAtDefaults(formValues, defaultSettings, capabilities, platformApiConfig) {
-  if (!formValues || !defaultSettings || !capabilities || !platformApiConfig) return true;
+export function checkAreFormValuesAtDefaults(formValues, configDefaults, capabilities, platformApiConfig) {
+  if (!formValues || !configDefaults || !capabilities || !platformApiConfig) return true; // Or false, depending on desired strictness
 
-  if (formValues.maxTokens !== defaultSettings.maxTokens) return false;
+  // Check maxTokens
+  if (formValues.maxTokens !== configDefaults.maxTokens) return false;
 
+  // Check temperature settings
   if (capabilities.supportsTemperature !== false) {
-    if (formValues.temperature !== defaultSettings.temperature) return false;
-    if (formValues.includeTemperature !== (defaultSettings.includeTemperature ?? true)) return false;
+    if (formValues.temperature !== configDefaults.temperature) return false;
+    if (formValues.includeTemperature !== (configDefaults.includeTemperature ?? true)) return false;
+  } else {
+    // If temp not supported, includeTemperature should ideally be false in formValues if at defaults
+    if (formValues.includeTemperature !== false) return false;
   }
 
+  // Check topP settings
   if (capabilities.supportsTopP === true) {
-    if (formValues.topP !== defaultSettings.topP) return false;
-    if (formValues.includeTopP !== (defaultSettings.includeTopP ?? false)) return false;
+    if (formValues.topP !== configDefaults.topP) return false;
+    if (formValues.includeTopP !== (configDefaults.includeTopP ?? false)) return false;
+  } else {
+     // If topP not supported, includeTopP should ideally be false
+    if (formValues.includeTopP !== false) return false;
   }
 
+  // Check systemPrompt
   if (platformApiConfig.apiStructure?.supportsSystemPrompt !== false && capabilities.supportsSystemPrompt !== false) {
-    if ((formValues.systemPrompt || '').trim() !== (defaultSettings.systemPrompt || '').trim()) return false;
+    if ((formValues.systemPrompt || '').trim() !== (configDefaults.systemPrompt || '').trim()) return false;
+  } else {
+    // If system prompt not supported, it should be empty if at defaults
+    if ((formValues.systemPrompt || '').trim() !== '') return false;
   }
   
-  // Check thinkingBudget only if it's part of defaultSettings (meaning model supports it)
-  if (defaultSettings.thinkingBudget !== null && defaultSettings.thinkingBudget !== undefined) {
-    if (formValues.thinkingBudget !== defaultSettings.thinkingBudget) return false;
+  // Check thinkingBudget
+  if (configDefaults.thinkingBudget !== null && configDefaults.thinkingBudget !== undefined) { // Check if model supports it via configDefaults
+    if (formValues.thinkingBudget !== configDefaults.thinkingBudget) return false;
+  } else {
+    // If not supported by model (i.e., configDefaults.thinkingBudget is null/undefined),
+    // formValue should also be null/undefined or match if it was explicitly set to a non-default null.
+    if (formValues.thinkingBudget !== null && formValues.thinkingBudget !== undefined) return false;
   }
 
-  // Check reasoningEffort only if it's part of defaultSettings
-  if (defaultSettings.reasoningEffort !== null && defaultSettings.reasoningEffort !== undefined) {
-     if (formValues.reasoningEffort !== defaultSettings.reasoningEffort) return false;
+
+  // Check reasoningEffort
+  if (configDefaults.reasoningEffort !== null && configDefaults.reasoningEffort !== undefined) {
+     if (formValues.reasoningEffort !== configDefaults.reasoningEffort) return false;
+  } else {
+    if (formValues.reasoningEffort !== null && formValues.reasoningEffort !== undefined) return false;
   }
 
   return true;
@@ -210,29 +213,46 @@ export function checkAreFormValuesAtDefaults(formValues, defaultSettings, capabi
 
 /**
  * Checks if there are any meaningful changes between current and original form values.
+ * Original values are typically what was last saved or initially loaded (config defaults + user overrides).
  * @param {object} currentValues - The current form values.
- * @param {object} originalValues - The original form values.
+ * @param {object} originalValues - The original form values to compare against.
  * @returns {boolean} True if there are changes, false otherwise.
  */
 export function checkForFormChanges(currentValues, originalValues) {
-  if (!currentValues || !originalValues) return false;
+  if (!currentValues || !originalValues) return false; // Or true if one is null and other is not
 
-  for (const key in currentValues) {
-    if (key === 'contextWindow') continue; // contextWindow is informational
+  const keys = new Set([...Object.keys(currentValues), ...Object.keys(originalValues)]);
+
+  for (const key of keys) {
+    if (key === 'contextWindow') continue; // contextWindow is informational, not a user setting
 
     const currentValue = currentValues[key];
     const originalValue = originalValues[key];
 
+    // Handle cases where a key might exist in one but not the other,
+    // especially for booleans (includeTemperature/TopP) which might default if not present.
+    // A robust check considers effective values. For simplicity here, direct comparison.
+    // For booleans, treat undefined/null as potentially different from explicit true/false.
+    if (typeof currentValue === 'boolean' || typeof originalValue === 'boolean') {
+        if (currentValue !== originalValue) return true;
+        continue;
+    }
+    
     if (currentValue === undefined && originalValue === undefined) continue;
     if (currentValue === null && originalValue === null) continue;
+    // If one is null/undefined and other is not (and not boolean already handled)
+    if ((currentValue == null && originalValue != null) || (currentValue != null && originalValue == null)) return true;
+
 
     if (typeof currentValue === 'string') {
       if (currentValue.trim() !== (originalValue || '').trim()) return true;
     } else if (typeof currentValue === 'number') {
+      // Use Object.is for precise comparison, handles NaN correctly (though unlikely here)
+      // Also handles 0 vs -0 if that were a concern.
+      // For simple numeric fields, direct inequality is fine.
       if (!Object.is(currentValue, originalValue)) return true;
-    } else if (typeof currentValue === 'boolean') {
-      if (currentValue !== originalValue) return true;
-    } else if (currentValue !== originalValue) { // Fallback for other types, though less common
+    } else if (currentValue !== originalValue) { 
+      // Fallback for other types or if one is defined and the other isn't (after null/undefined checks)
       return true;
     }
   }

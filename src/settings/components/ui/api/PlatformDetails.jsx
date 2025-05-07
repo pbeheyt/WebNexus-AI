@@ -2,34 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
-import { logger } from '../../../../shared/logger';
 import { Button, useNotification, PlatformIcon } from '../../../../components';
-import { STORAGE_KEYS } from '../../../../shared/constants';
+// STORAGE_KEYS might not be needed directly if all storage interactions are through context actions.
+// import { STORAGE_KEYS } from '../../../../shared/constants';
 
 import AdvancedSettings from './AdvancedSettings';
 
 const PlatformDetails = ({
-  platform,
-  credentials,
-  advancedSettings,
-  onCredentialsUpdated,
-  onCredentialsRemoved,
-  onAdvancedSettingsUpdated,
-  credentialsKey,
+  platform, // This is selectedPlatformConfig from context
+  credentials, // This is credentialsForSelectedPlatform from context
+  advancedSettingsForPlatform, // This is advancedSettingsForSelectedPlatform from context
+  saveApiKeyAction,
+  removeApiKeyAction,
+  saveAdvancedModelSettingsAction,
+  resetAdvancedModelSettingsToDefaultsAction,
+  // credentialsStorageKey, // No longer directly used for saving/removing here
 }) => {
-  const { success, error } = useNotification();
+  const { error } = useNotification();
   const [apiKey, setApiKey] = useState('');
   const [originalApiKey, setOriginalApiKey] = useState('');
   const [hasApiKeyChanges, setHasApiKeyChanges] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingApiKey, setIsSavingApiKey] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState(
     platform.apiConfig?.models?.length > 0
       ? platform.apiConfig.models[0].id
-      : 'default'
+      : 'default' // Should ideally not be 'default' if models exist
   );
 
-  // Synchronize API key state with platform credentials when platform changes
+  // Synchronize API key state with platform credentials when platform or credentials change
   useEffect(() => {
     if (credentials?.apiKey) {
       setApiKey(credentials.apiKey);
@@ -38,22 +39,21 @@ const PlatformDetails = ({
       setApiKey('');
       setOriginalApiKey('');
     }
-    setHasApiKeyChanges(false);
-  }, [platform.id, credentials]);
+    setHasApiKeyChanges(false); // Reset on platform/credential change
+    // Reset selected model to the first available for the new platform
+    if (platform.apiConfig?.models?.length > 0) {
+      setSelectedModelId(platform.apiConfig.models[0].id);
+    } else {
+        // Handle case where a platform might have no configurable models (though unlikely for API settings)
+        setSelectedModelId('default'); // Or null, depending on how AdvancedSettings handles it
+    }
+  }, [platform.id, credentials, platform.apiConfig?.models]);
 
-  // Check for API key changes
+
   const handleApiKeyChange = (e) => {
     const newApiKey = e.target.value;
     setApiKey(newApiKey);
-
-    // Check if the API key has changed from its original value
-    if (credentials) {
-      // For existing credentials, compare with original
-      setHasApiKeyChanges(newApiKey !== originalApiKey);
-    } else {
-      // For new credentials, any non-empty value is a change
-      setHasApiKeyChanges(newApiKey.trim() !== '');
-    }
+    setHasApiKeyChanges(newApiKey !== originalApiKey);
   };
 
   const handleSaveCredentials = async () => {
@@ -61,81 +61,13 @@ const PlatformDetails = ({
       error('API Key is required.');
       return;
     }
-
-    setIsSaving(true);
-
-    try {
-      // Create credentials object
-      const newCredentials = {
-        apiKey,
-      };
-
-      // Validate the API key before saving
-      const credentialManager = await import(
-        '../../../../services/CredentialManager'
-      ).then((module) => module.default || module);
-
-      const validationResult = await credentialManager.validateCredentials(
-        platform.id,
-        newCredentials
-      );
-
-      if (!validationResult.isValid) {
-        error(`Invalid API key: ${validationResult.message}`);
-        setIsSaving(false);
-        return;
-      }
-
-      // Get current credentials from storage
-      const result = await chrome.storage.local.get(credentialsKey);
-      const allCredentials = result[credentialsKey] || {};
-
-      // Update credentials for this platform
-      allCredentials[platform.id] = newCredentials;
-
-      // Save all credentials under a single key
-      try {
-        await chrome.storage.local.set({
-          [credentialsKey]: allCredentials,
-        });
-
-        onCredentialsUpdated(platform.id, newCredentials);
-        success(`API key saved for ${platform.name}`);
-
-        // Update original key reference after successful save
-        setOriginalApiKey(apiKey);
-        setHasApiKeyChanges(false);
-      } catch (err) {
-        logger.settings.error('Error saving API key:', err);
-        // Check for quota error
-        const lastError = chrome.runtime.lastError;
-        if (lastError?.message?.includes('QUOTA_BYTES')) {
-          error('Local storage limit reached for API keys.', 10000);
-        } else if (err.isPortClosed) {
-          // Handle specific port closed error during validation/saving
-          logger.settings.warn(
-            'handleSaveCredentials: Port closed during credential validation/saving.'
-          );
-          error('Validation timed out or connection lost. Please try again.');
-        } else {
-          error(`Failed to save API key: ${err.message}`);
-        }
-      }
-    } catch (err) {
-      if (err.isPortClosed) {
-        // Handle specific port closed error during validation/saving
-        logger.settings.warn(
-          'handleSaveCredentials: Port closed during credential validation/saving.'
-        );
-        error('Validation timed out or connection lost. Please try again.');
-      } else {
-        // Handle other errors during validation or saving
-        logger.settings.error('Error saving API key:', err);
-        error(`Failed to save API key: ${err.message}`);
-      }
-    } finally {
-      setIsSaving(false); // Ensure saving state is always reset
+    setIsSavingApiKey(true);
+    const success = await saveApiKeyAction(platform.id, apiKey);
+    if (success) {
+      setOriginalApiKey(apiKey);
+      setHasApiKeyChanges(false);
     }
+    setIsSavingApiKey(false);
   };
 
   const handleRemoveCredentials = async () => {
@@ -146,28 +78,11 @@ const PlatformDetails = ({
     ) {
       return;
     }
-
-    try {
-      // Get current credentials from storage
-      const result = await chrome.storage.local.get(credentialsKey);
-      const allCredentials = result[credentialsKey] || {};
-
-      // Remove credentials for this platform
-      delete allCredentials[platform.id];
-
-      // Save updated credentials
-      await chrome.storage.local.set({
-        [credentialsKey]: allCredentials,
-      });
-
-      onCredentialsRemoved(platform.id);
-      success(`API key removed for ${platform.name}`);
+    const success = await removeApiKeyAction(platform.id);
+    if (success) {
       setApiKey('');
       setOriginalApiKey('');
       setHasApiKeyChanges(false);
-    } catch (err) {
-      logger.settings.error('Error removing API key:', err);
-      error(`Failed to remove API key: ${err.message}`);
     }
   };
 
@@ -175,163 +90,9 @@ const PlatformDetails = ({
     setSelectedModelId(modelId);
   };
 
-  // New function to handle resetting advanced settings to defaults
-  const handleResetAdvancedSettings = async (modelId, mode = 'base') => {
-    try {
-      // Load current settings from storage
-      const result = await chrome.storage.sync.get(
-        STORAGE_KEYS.API_ADVANCED_SETTINGS
-      );
-      const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
-
-      if (!currentSettings[platform.id]) {
-        // Nothing to remove, already at defaults
-        onAdvancedSettingsUpdated(platform.id, modelId, {}, mode); // Notify with empty settings
-        success('Settings already at defaults');
-        return true;
-      }
-
-      let settingsChanged = false; // Track if anything was actually deleted
-
-      // Handle model-specific or default settings removal
-      if (!modelId || modelId === 'default') {
-        if (
-          currentSettings[platform.id].default &&
-          Object.keys(currentSettings[platform.id].default).length > 0
-        ) {
-          delete currentSettings[platform.id].default;
-          settingsChanged = true;
-        }
-      } else {
-        if (currentSettings[platform.id].models?.[modelId]) {
-          if (mode === 'thinking') {
-            // For thinking mode, just delete the thinking settings
-            if (currentSettings[platform.id].models[modelId].thinking) {
-              delete currentSettings[platform.id].models[modelId].thinking;
-              settingsChanged = true;
-            }
-          } else {
-            // For base mode, delete the entire model entry
-          if (currentSettings[platform.id].models[modelId]?.[mode]) {
-              delete currentSettings[platform.id].models[modelId][mode];
-              settingsChanged = true;
-              logger.settings.info(`Deleted settings for mode '${mode}' within model ${modelId}`);
-          }
-          }
-
-          // Clean up empty model entry if needed
-          if (currentSettings[platform.id].models[modelId] &&
-              !currentSettings[platform.id].models[modelId].base &&
-              !currentSettings[platform.id].models[modelId].thinking) {
-            logger.settings.info(`Model entry ${modelId} is empty after mode reset, removing model entry.`);
-            delete currentSettings[platform.id].models[modelId];
-            // Ensure settingsChanged is true if we deleted the model entry
-            settingsChanged = true;
-          }
-        }
-
-        // Clean up empty models object if needed
-        if (
-          currentSettings[platform.id].models &&
-          Object.keys(currentSettings[platform.id].models).length === 0
-        ) {
-          delete currentSettings[platform.id].models;
-        }
-      }
-
-      // Remove entire platform entry if it's now empty
-      if (
-        currentSettings[platform.id] &&
-        Object.keys(currentSettings[platform.id]).length === 0
-      ) {
-        delete currentSettings[platform.id];
-        settingsChanged = true;
-      }
-
-      // Only save if changes were made
-      if (settingsChanged) {
-        await chrome.storage.sync.set({
-          [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings,
-        });
-      }
-
-      // Always notify and show success message
-      onAdvancedSettingsUpdated(platform.id, modelId, {}, mode);
-      success('Advanced settings reset to defaults');
-
-      return true;
-    } catch (err) {
-      logger.settings.error('Error resetting advanced settings:', err);
-      error(`Failed to reset advanced settings: ${err.message}`);
-      return false;
-    }
-  };
-
-  const handleAdvancedSettingsUpdate = async (modelId, settings, mode = 'base') => {
-    try {
-      // Load current settings
-      const result = await chrome.storage.sync.get(
-        STORAGE_KEYS.API_ADVANCED_SETTINGS
-      );
-      const currentSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
-
-      if (!currentSettings[platform.id]) {
-        currentSettings[platform.id] = {};
-      }
-      if (!currentSettings[platform.id].default) {
-        currentSettings[platform.id].default = {};
-      }
-      if (!currentSettings[platform.id].models) {
-        currentSettings[platform.id].models = {};
-      }
-
-      // Update appropriate settings
-      if (!modelId || modelId === 'default') {
-        currentSettings[platform.id].default = {
-          ...currentSettings[platform.id].default,
-          ...settings,
-        };
-      } else {
-        if (!currentSettings[platform.id].models[modelId]) {
-          currentSettings[platform.id].models[modelId] = {};
-        }
-        
-        // Ensure the mode object exists
-        if (!currentSettings[platform.id].models[modelId][mode]) {
-          currentSettings[platform.id].models[modelId][mode] = {};
-        }
-        
-        // Merge settings into the correct mode key
-        currentSettings[platform.id].models[modelId][mode] = {
-          ...currentSettings[platform.id].models[modelId][mode],
-          ...settings,
-        };
-      }
-
-      try {
-        await chrome.storage.sync.set({
-          [STORAGE_KEYS.API_ADVANCED_SETTINGS]: currentSettings,
-        });
-        onAdvancedSettingsUpdated(platform.id, modelId, settings, mode);
-        success('Advanced settings saved');
-        return true;
-      } catch (err) {
-        logger.settings.error('Error saving advanced settings:', err);
-        // Check for sync quota errors
-        const lastError = chrome.runtime.lastError;
-        if (lastError?.message?.includes('QUOTA_BYTES_PER_ITEM') || lastError?.message?.includes('QUOTA_BYTES')) {
-          error('Sync storage limit reached. Reduce size/number of advanced settings or system prompts.', 10000);
-        } else {
-          error(`Failed to save advanced settings: ${err.message}`);
-        }
-        return false;
-      }
-    } catch (err) {
-      logger.settings.error('Error saving advanced settings:', err);
-      error(`Failed to save advanced settings: ${err.message}`);
-      return false;
-    }
-  };
+  // The props for onSettingsUpdate and onResetToDefaults for AdvancedSettings
+  // will now be the context actions, already bound to the platform.id by ApiSettings.jsx
+  // (or rather, they receive platform.id as an argument).
 
   return (
     <div className='platform-details-panel flex-1'>
@@ -416,14 +177,14 @@ const PlatformDetails = ({
               }
               value={apiKey}
               onChange={handleApiKeyChange}
-              disabled={isSaving}
+              disabled={isSavingApiKey}
             />
             <button
               type='button'
               className='show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded select-none'
               onClick={() => setShowApiKey(!showApiKey)}
               aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
-              disabled={isSaving}
+              disabled={isSavingApiKey}
             >
               {showApiKey ? 'Hide' : 'Show'}
             </button>
@@ -436,7 +197,7 @@ const PlatformDetails = ({
               variant='danger'
               onClick={handleRemoveCredentials}
               className='select-none'
-              disabled={isSaving}
+              disabled={isSavingApiKey}
             >
               Remove Key
             </Button>
@@ -444,23 +205,28 @@ const PlatformDetails = ({
 
           <Button
             onClick={handleSaveCredentials}
-            disabled={isSaving || !hasApiKeyChanges}
+            disabled={isSavingApiKey || !hasApiKeyChanges}
             variant={!hasApiKeyChanges ? 'inactive' : 'primary'}
             className='select-none'
           >
-            {isSaving ? 'Saving...' : credentials ? 'Update Key' : 'Save Key'}
+            {isSavingApiKey
+              ? 'Saving...'
+              : credentials
+                ? 'Update Key'
+                : 'Save Key'}
           </Button>
         </div>
       </div>
 
       {/* Advanced settings section */}
       <AdvancedSettings
-        platform={platform}
+        platform={platform} // This is selectedPlatformConfig
         selectedModelId={selectedModelId}
-        advancedSettings={advancedSettings}
+        advancedSettingsForPlatform={advancedSettingsForPlatform} // Pass the platform-specific slice
         onModelSelect={handleModelSelect}
-        onSettingsUpdate={handleAdvancedSettingsUpdate}
-        onResetToDefaults={handleResetAdvancedSettings}
+        // Pass the context actions, they already know the platformId or will receive it
+        onSave={saveAdvancedModelSettingsAction}
+        onReset={resetAdvancedModelSettingsToDefaultsAction}
       />
     </div>
   );
@@ -468,12 +234,13 @@ const PlatformDetails = ({
 
 PlatformDetails.propTypes = {
   platform: PropTypes.object.isRequired,
-  credentials: PropTypes.object,
-  advancedSettings: PropTypes.object,
-  onCredentialsUpdated: PropTypes.func.isRequired,
-  onCredentialsRemoved: PropTypes.func.isRequired,
-  onAdvancedSettingsUpdated: PropTypes.func.isRequired,
-  credentialsKey: PropTypes.string.isRequired,
+  credentials: PropTypes.object, // Can be null if not set
+  advancedSettingsForPlatform: PropTypes.object, // Can be empty {} if not set
+  saveApiKeyAction: PropTypes.func.isRequired,
+  removeApiKeyAction: PropTypes.func.isRequired,
+  saveAdvancedModelSettingsAction: PropTypes.func.isRequired,
+  resetAdvancedModelSettingsToDefaultsAction: PropTypes.func.isRequired,
+  // credentialsStorageKey: PropTypes.string.isRequired, // Potentially redundant
 };
 
 export default React.memo(PlatformDetails);

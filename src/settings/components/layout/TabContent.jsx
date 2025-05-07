@@ -3,6 +3,7 @@ import React from 'react';
 import { useTabs } from '../../contexts/TabContext';
 import PromptManagement from '../tabs/PromptManagement';
 import ApiSettings from '../tabs/ApiSettings';
+import { ApiSettingsProvider } from '../../contexts/ApiSettingsContext';
 
 const TabContent = () => {
   const { TABS, activeTab } = useTabs();
@@ -13,7 +14,9 @@ const TabContent = () => {
         className={`relative min-h-[400px] ${activeTab !== TABS.API_SETTINGS ? 'hidden' : ''}`}
         id={TABS.API_SETTINGS}
       >
-        <ApiSettings />
+        <ApiSettingsProvider>
+          <ApiSettings />
+        </ApiSettingsProvider>
       </div>
 
       <div
