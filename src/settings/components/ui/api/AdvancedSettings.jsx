@@ -38,6 +38,7 @@ const AdvancedSettings = ({
     hasChanges,
     isAtDefaults,
     modelsFromPlatform,
+    isFormReady,
     // UI rendering flags from the hook
     showThinkingModeToggle,
     // isThinkingModeActive, // currentEditingMode === 'thinking' can be used
@@ -70,7 +71,7 @@ const AdvancedSettings = ({
   // Show loading if derivedSettings are not yet available from the hook.
   // This would typically only happen if getDerivedModelSettings in the hook
   // returns null (e.g., for an invalid modelId or platform config issue).
-  if (!derivedSettings) {
+  if (!derivedSettings || !isFormReady) {
     return (
       <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
         <p className='text-theme-secondary'>Loading model settings...</p>

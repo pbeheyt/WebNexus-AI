@@ -28,6 +28,7 @@ export function useModelAdvancedSettings({
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isAnimatingReset, setIsAnimatingReset] = useState(false);
+  const [isFormReady, setIsFormReady] = useState(false);
 
   const modelsFromPlatform = useMemo(
     () => platform.apiConfig?.models || [],
@@ -70,10 +71,12 @@ export function useModelAdvancedSettings({
 
   // Initialize and update formValues and originalValues
   useEffect(() => {
+    setIsFormReady(false); // Reset readiness on dependency change
     if (!derivedSettings || !selectedModelId) {
       setFormValues({});
       setOriginalValues({});
       logger.settings.info('useModelAdvancedSettings: derivedSettings or selectedModelId is null, resetting formValues.');
+      setIsFormReady(true); // Set ready even if resetting, to allow UI to clear
       return;
     }
 
@@ -117,6 +120,7 @@ export function useModelAdvancedSettings({
 
     setFormValues(initialFormValues);
     setOriginalValues({ ...initialFormValues }); // Base comparison against this merged state
+    setIsFormReady(true); // Mark form as ready after values are set
     // hasChanges and isAtDefaults will be updated by a separate effect below
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [derivedSettings, advancedSettingsForPlatform, selectedModelId, currentEditingMode, platform.apiConfig]);
@@ -316,5 +320,6 @@ export function useModelAdvancedSettings({
     showReasoningEffort,
     modelSupportsSystemPrompt,
     modelsFromPlatform,
+    isFormReady,
   };
 }
