@@ -54,7 +54,7 @@ const PromptForm = ({
         content: prompt.prompt.content || '',
         contentType: prompt.contentType || CONTENT_TYPES.GENERAL,
       };
-      // Set formData based on prop for edit mode (may be redundant with useState initializer but safe)
+      // Set formData based on prop for edit mode
       setFormData(initialData);
       // Store the original data separately
       setOriginalFormData(initialData);
@@ -70,7 +70,7 @@ const PromptForm = ({
       setHasChanges(false); // Reset changes flag
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prompt, isEditing, initialContentType]); // Keep dependencies as specified
+  }, [prompt, isEditing, initialContentType]);
 
   useEffect(() => {
     if (isEditing && originalFormData) {
@@ -120,7 +120,7 @@ const PromptForm = ({
       ...prev,
       [name]: value,
     }));
-  }, [setFormData]); // Add dependency
+  }, [setFormData]);
 
   // Memoize handleContentTypeChange
   const handleContentTypeChange = useCallback((selectedContentType) => {
@@ -128,7 +128,7 @@ const PromptForm = ({
       ...prev,
       contentType: selectedContentType,
     }));
-  }, [setFormData]); // Add dependency
+  }, [setFormData]);
 
   // Memoize handleSubmit
   const handleSubmit = useCallback(async (e) => {

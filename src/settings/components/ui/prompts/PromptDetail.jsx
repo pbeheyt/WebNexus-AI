@@ -96,7 +96,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       // Display the specific error message from the check
       error(`Error deleting prompt: ${err.message}`, 10000);
     }
-  }, [prompt, error, success, onDelete]); // Add dependencies
+  }, [prompt, error, success, onDelete]);
 
   // Effect to check if the current prompt is the default for its type
   useEffect(() => {
