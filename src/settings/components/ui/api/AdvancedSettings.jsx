@@ -23,11 +23,10 @@ const AdvancedSettings = ({
 }) => {
   const { error: showNotificationError } = useNotification();
 
-  // Get all values, including derivedSettings, directly from the hook
   const {
     formValues,
     currentEditingMode,
-    derivedSettings, // Use this directly!
+    derivedSettings,
     handleChange,
     handleSubmit,
     handleResetClick,
@@ -39,7 +38,6 @@ const AdvancedSettings = ({
     isAtDefaults,
     modelsFromPlatform,
     isFormReady,
-    // UI rendering flags from the hook
     showThinkingModeToggle,
     // isThinkingModeActive, // currentEditingMode === 'thinking' can be used
     showTempSection,
@@ -67,7 +65,6 @@ const AdvancedSettings = ({
     return typeof price === 'number' ? price.toFixed(2) : price;
   };
 
-  // Simplified Loading Condition:
   // Show loading if derivedSettings are not yet available from the hook.
   // This would typically only happen if getDerivedModelSettings in the hook
   // returns null (e.g., for an invalid modelId or platform config issue).
@@ -120,7 +117,7 @@ const AdvancedSettings = ({
               id: model.id,
               name: model.id,
             }))}
-            selectedValue={selectedModelId} // IMPORTANT: This MUST remain selectedModelId from props
+            selectedValue={selectedModelId}
             onChange={handleModelChange}
             placeholder='Select Model'
             disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}

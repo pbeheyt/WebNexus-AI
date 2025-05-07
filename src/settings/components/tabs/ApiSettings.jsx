@@ -2,8 +2,8 @@ import React from 'react';
 
 import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
-import { useApiSettings } from '../../contexts/ApiSettingsContext'; // Import the new hook
-import { STORAGE_KEYS } from '../../../shared/constants'; // Keep for PlatformDetails prop
+import { useApiSettings } from '../../contexts/ApiSettingsContext';
+import { STORAGE_KEYS } from '../../../shared/constants';
 
 const ApiSettings = () => {
   const {
@@ -11,15 +11,15 @@ const ApiSettings = () => {
     allCredentials,
     selectedPlatformId,
     isLoading,
-    error: contextError, // Renamed to avoid conflict if we had local error state
+    error: contextError,
     selectedPlatformConfig,
     credentialsForSelectedPlatform,
     advancedSettingsForSelectedPlatform,
     selectPlatform,
-    saveApiKey, // Action from context
-    removeApiKey, // Action from context
-    saveAdvancedModelSettings, // Action from context
-    resetAdvancedModelSettingsToDefaults, // Action from context
+    saveApiKey,
+    removeApiKey,
+    saveAdvancedModelSettings,
+    resetAdvancedModelSettingsToDefaults,
   } = useApiSettings();
 
   if (isLoading) {
@@ -51,17 +51,17 @@ const ApiSettings = () => {
 
       <div className='api-settings-layout flex gap-6'>
         <PlatformSidebar
-          platforms={platformConfigs} // From context
-          selectedPlatformId={selectedPlatformId} // From context
-          credentials={allCredentials} // From context (for checkmarks)
-          onSelectPlatform={selectPlatform} // From context
+          platforms={platformConfigs}
+          selectedPlatformId={selectedPlatformId}
+          credentials={allCredentials}
+          onSelectPlatform={selectPlatform}
         />
 
         {selectedPlatformConfig ? (
           <PlatformDetails
-            platform={selectedPlatformConfig} // From context
-            credentials={credentialsForSelectedPlatform} // From context
-            advancedSettingsForPlatform={advancedSettingsForSelectedPlatform} // From context
+            platform={selectedPlatformConfig}
+            credentials={credentialsForSelectedPlatform}
+            advancedSettingsForPlatform={advancedSettingsForSelectedPlatform}
             // Pass action handlers from context
             saveApiKeyAction={saveApiKey}
             removeApiKeyAction={removeApiKey}

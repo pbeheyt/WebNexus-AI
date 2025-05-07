@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
 import { logger } from '../../shared/logger';
 import { STORAGE_KEYS } from '../../shared/constants';
 import ConfigService from '../../services/ConfigService';
-import CredentialManager from '../../services/CredentialManager'; // Assuming default export
+import CredentialManager from '../../services/CredentialManager';
 import { useNotification } from '../../components/feedback/NotificationContext';
 
 const ApiSettingsContext = createContext(null);
@@ -67,8 +67,7 @@ export const ApiSettingsProvider = ({ children }) => {
     };
 
     loadInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // showErroNotification removed as it causes infinite loops if not stable
+  }, []);
 
   // Derived State
   const selectedPlatformConfig = useMemo(() => {
