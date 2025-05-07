@@ -1,5 +1,5 @@
 // src/settings/components/ui/api/AdvancedSettings.jsx
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import {
@@ -22,13 +22,12 @@ const AdvancedSettings = ({
   onResetToDefaults, // Prop from PlatformDetails (handleResetAdvancedSettings)
 }) => {
   const { error: showNotificationError } = useNotification();
-  const [displayableDerivedSettings, setDisplayableDerivedSettings] = useState(null);
-  const [displayableSelectedModelId, setDisplayableSelectedModelId] = useState(null);
 
+  // Get all values, including derivedSettings, directly from the hook
   const {
     formValues,
     currentEditingMode,
-    derivedSettings, // This comes from the hook
+    derivedSettings, // Use this directly!
     handleChange,
     handleSubmit,
     handleResetClick,
@@ -38,35 +37,23 @@ const AdvancedSettings = ({
     isAnimatingReset,
     hasChanges,
     isAtDefaults,
+    modelsFromPlatform,
+    // UI rendering flags from the hook
     showThinkingModeToggle,
-    // isThinkingModeActive, // Not directly used, currentEditingMode is used
+    // isThinkingModeActive, // currentEditingMode === 'thinking' can be used
     showTempSection,
     showTopPSection,
     showBudgetSlider,
     showReasoningEffort,
     modelSupportsSystemPrompt,
-    modelsFromPlatform,
   } = useModelAdvancedSettings({
     platform,
-    selectedModelId, // Pass the prop selectedModelId to the hook
+    selectedModelId,
     advancedSettingsFromStorage: advancedSettings,
     onSettingsUpdateProp: onSettingsUpdate,
     onResetToDefaultsProp: onResetToDefaults,
     showNotificationError,
   });
-
-  useEffect(() => {
-    // Update displayable settings ONLY when derivedSettings from the hook are stable
-    // AND match the current prop selectedModelId.
-    if (derivedSettings && selectedModelId && derivedSettings.resolvedModelConfig?.id === selectedModelId) {
-      setDisplayableDerivedSettings(derivedSettings);
-      setDisplayableSelectedModelId(selectedModelId);
-    }
-    // If derivedSettings are not yet ready for the current selectedModelId,
-    // displayableDerivedSettings will retain its previous value, or remain null if initial.
-    // The loading condition below will handle showing "Loading..." if necessary.
-  }, [derivedSettings, selectedModelId]);
-
 
   const handleModelChange = useCallback(
     (modelId) => {
@@ -79,9 +66,11 @@ const AdvancedSettings = ({
     return typeof price === 'number' ? price.toFixed(2) : price;
   };
 
-  if (!displayableDerivedSettings || (selectedModelId && displayableSelectedModelId !== selectedModelId)) {
-    // Show loading if displayable settings are not yet available OR
-    // if the selectedModelId prop has changed and displayable settings haven't caught up.
+  // Simplified Loading Condition:
+  // Show loading if derivedSettings are not yet available from the hook.
+  // This would typically only happen if getDerivedModelSettings in the hook
+  // returns null (e.g., for an invalid modelId or platform config issue).
+  if (!derivedSettings) {
     return (
       <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
         <p className='text-theme-secondary'>Loading model settings...</p>
@@ -89,14 +78,14 @@ const AdvancedSettings = ({
     );
   }
 
-  // Destructure from displayableDerivedSettings for rendering
+  // Destructure from the `derivedSettings` obtained directly from the hook
   const {
     displaySpecs,
     parameterSpecs,
-    // capabilities, // Not directly used here, flags from hook are preferred
-    // defaultSettings, // Not directly used here
-    // resolvedModelConfig // Not directly used here, flags from hook are preferred
-  } = displayableDerivedSettings;
+    // capabilities, // Specific capability flags are destructured from the hook directly
+    // defaultSettings, // Used internally by the hook or for comparison
+    // resolvedModelConfig // Used internally by the hook
+  } = derivedSettings;
 
 
   return (
@@ -109,8 +98,8 @@ const AdvancedSettings = ({
           icon={RefreshIcon}
           iconClassName={`w-6 h-6 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''}`}
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-          onClick={handleResetClick} // Uses hook's handleResetClick
-          disabled={isAtDefaults || isResetting} // Uses hook's isAtDefaults, isResetting
+          onClick={handleResetClick}
+          disabled={isAtDefaults || isResetting}
           ariaLabel='Reset settings to configuration defaults'
           title='Reset settings to configuration defaults'
         />
@@ -126,30 +115,30 @@ const AdvancedSettings = ({
         <div className='inline-block'>
           <CustomSelect
             id={`${platform.id}-settings-model-selector`}
-            options={modelsFromPlatform.map((model) => ({ // Uses hook's modelsFromPlatform
+            options={modelsFromPlatform.map((model) => ({
               id: model.id,
               name: model.id,
             }))}
             selectedValue={selectedModelId} // IMPORTANT: This MUST remain selectedModelId from props
-            onChange={handleModelChange} // Uses local handleModelChange
+            onChange={handleModelChange}
             placeholder='Select Model'
-            disabled={modelsFromPlatform.length === 0 || isSaving || isResetting} // Uses hook's modelsFromPlatform, isSaving, isResetting
+            disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
           />
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate> {/* Uses hook's handleSubmit */}
-        {showThinkingModeToggle && ( // Uses hook's showThinkingModeToggle
+      <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
+        {showThinkingModeToggle && (
           <div className='mb-6'>
             <div className='flex items-center gap-3'>
               <span className='text-base font-semibold text-theme-secondary select-none'>
                 Thinking Mode
               </span>
               <Toggle
-                id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`} // Uses selectedModelId from props
-                checked={currentEditingMode === 'thinking'} // Uses hook's currentEditingMode
-                onChange={toggleEditingMode} // Uses hook's toggleEditingMode
-                disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
+                id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
+                checked={currentEditingMode === 'thinking'}
+                onChange={toggleEditingMode}
+                disabled={isSaving || isResetting}
               />
             </div>
           </div>
@@ -157,7 +146,7 @@ const AdvancedSettings = ({
 
         <div className='model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
-            Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''} {/* Uses hook's currentEditingMode */}
+            Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
           </h4>
           <div className='specs-info space-y-2.5'>
             <div className='spec-item flex justify-between text-sm'>
@@ -165,10 +154,10 @@ const AdvancedSettings = ({
                 Context window
               </span>
               <span className='spec-value font-mono select-none'>
-                {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens {/* Uses displaySpecs from displayableDerivedSettings */}
+                {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
               </span>
             </div>
-            {displaySpecs.inputPrice !== undefined && ( // Uses displaySpecs
+            {displaySpecs.inputPrice !== undefined && (
               <div className='spec-item flex justify-between text-sm'>
                 <span className='spec-label font-medium text-theme-secondary select-none'>
                   Input tokens
@@ -176,11 +165,11 @@ const AdvancedSettings = ({
                 <span className='spec-value font-mono select-none'>
                   {Math.abs(displaySpecs.inputPrice) < 0.0001
                     ? 'Free'
-                    : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`} {/* Uses local formatPrice, displaySpecs */}
+                    : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
                 </span>
               </div>
             )}
-            {displaySpecs.outputPrice !== undefined && ( // Uses displaySpecs
+            {displaySpecs.outputPrice !== undefined && (
               <div className='spec-item flex justify-between text-sm'>
                 <span className='spec-label font-medium text-theme-secondary select-none'>
                   Output tokens
@@ -188,14 +177,14 @@ const AdvancedSettings = ({
                 <span className='spec-value font-mono select-none'>
                   {Math.abs(displaySpecs.outputPrice) < 0.0001
                     ? 'Free'
-                    : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`} {/* Uses local formatPrice, displaySpecs */}
+                    : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
                 </span>
               </div>
             )}
           </div>
         </div>
 
-        {parameterSpecs.maxTokens && ( // Uses parameterSpecs from displayableDerivedSettings
+        {parameterSpecs.maxTokens && (
           <div className='mb-7'>
             <div className='mb-2'>
               <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
@@ -207,92 +196,92 @@ const AdvancedSettings = ({
             </p>
             <SliderInput
               label=''
-              value={formValues?.maxTokens ?? parameterSpecs.maxTokens.min} // Uses hook's formValues, parameterSpecs
-              onChange={(newValue) => handleChange('maxTokens', newValue)} // Uses hook's handleChange
-              min={parameterSpecs.maxTokens.min} // Uses parameterSpecs
-              max={parameterSpecs.maxTokens.max} // Uses parameterSpecs
-              step={parameterSpecs.maxTokens.step} // Uses parameterSpecs
-              disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
+              value={formValues?.maxTokens ?? parameterSpecs.maxTokens.min}
+              onChange={(newValue) => handleChange('maxTokens', newValue)}
+              min={parameterSpecs.maxTokens.min}
+              max={parameterSpecs.maxTokens.max}
+              step={parameterSpecs.maxTokens.step}
+              disabled={isSaving || isResetting}
               className='form-group'
             />
           </div>
         )}
 
-        {showTempSection && parameterSpecs.temperature && ( // Uses hook's showTempSection, parameterSpecs
+        {showTempSection && parameterSpecs.temperature && (
           <div className='form-group mb-7'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-secondary mr-3 select-none'>
                 Temperature
               </span>
               <Toggle
-                checked={formValues.includeTemperature ?? true} // Uses hook's formValues
+                checked={formValues.includeTemperature ?? true}
                 onChange={(newCheckedState) =>
-                  handleChange('includeTemperature', newCheckedState) // Uses hook's handleChange
+                  handleChange('includeTemperature', newCheckedState)
                 }
-                disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
-                id={`${platform.id}-${selectedModelId}-include-temperature`} // Uses selectedModelId from props
+                disabled={isSaving || isResetting}
+                id={`${platform.id}-${selectedModelId}-include-temperature`}
               />
             </div>
             <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
               Controls randomness: lower values are more deterministic, higher
               values more creative.
             </p>
-            {formValues.includeTemperature && ( // Uses hook's formValues
+            {formValues.includeTemperature && (
               <SliderInput
                 label=''
-                value={formValues.temperature ?? parameterSpecs.temperature.min} // Uses hook's formValues, parameterSpecs
-                onChange={(newValue) => handleChange('temperature', newValue)} // Uses hook's handleChange
-                min={parameterSpecs.temperature.min} // Uses parameterSpecs
-                max={parameterSpecs.temperature.max} // Uses parameterSpecs
-                step={parameterSpecs.temperature.step} // Uses parameterSpecs
-                disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
+                value={formValues.temperature ?? parameterSpecs.temperature.min}
+                onChange={(newValue) => handleChange('temperature', newValue)}
+                min={parameterSpecs.temperature.min}
+                max={parameterSpecs.temperature.max}
+                step={parameterSpecs.temperature.step}
+                disabled={isSaving || isResetting}
                 className='form-group mt-2'
               />
             )}
           </div>
         )}
 
-        {showTopPSection && parameterSpecs.topP && ( // Uses hook's showTopPSection, parameterSpecs
+        {showTopPSection && parameterSpecs.topP && (
           <div className='form-group mb-7'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-secondary mr-3 select-none'>
                 Top P
               </span>
               <Toggle
-                checked={formValues.includeTopP ?? false} // Uses hook's formValues
+                checked={formValues.includeTopP ?? false}
                 onChange={(newCheckedState) =>
-                  handleChange('includeTopP', newCheckedState) // Uses hook's handleChange
+                  handleChange('includeTopP', newCheckedState)
                 }
-                disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
-                id={`${platform.id}-${selectedModelId}-include-topp`} // Uses selectedModelId from props
+                disabled={isSaving || isResetting}
+                id={`${platform.id}-${selectedModelId}-include-topp`}
               />
             </div>
             <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
               Alternative to temperature, controls diversity via nucleus
               sampling.
             </p>
-            {formValues.includeTopP && ( // Uses hook's formValues
+            {formValues.includeTopP && (
               <SliderInput
                 label=''
-                value={formValues.topP ?? parameterSpecs.topP.min} // Uses hook's formValues, parameterSpecs
-                onChange={(newValue) => handleChange('topP', newValue)} // Uses hook's handleChange
-                min={parameterSpecs.topP.min} // Uses parameterSpecs
-                max={parameterSpecs.topP.max} // Uses parameterSpecs
-                step={parameterSpecs.topP.step} // Uses parameterSpecs
-                disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
+                value={formValues.topP ?? parameterSpecs.topP.min}
+                onChange={(newValue) => handleChange('topP', newValue)}
+                min={parameterSpecs.topP.min}
+                max={parameterSpecs.topP.max}
+                step={parameterSpecs.topP.step}
+                disabled={isSaving || isResetting}
                 className='form-group mt-2'
               />
             )}
           </div>
         )}
         
-        {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && ( // Uses hook flags and formValues
+        {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
             <p className='text-amber-600 text-sm -mt-4 mb-10 select-none'>
               It is generally recommended to alter Temperature or Top P, but not both.
             </p>
         )}
 
-        {showBudgetSlider && parameterSpecs.thinkingBudget && ( // Uses hook's showBudgetSlider, parameterSpecs
+        {showBudgetSlider && parameterSpecs.thinkingBudget && (
           <div className='form-group mb-7'>
             <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
               Thinking Budget
@@ -302,18 +291,18 @@ const AdvancedSettings = ({
             </p>
             <SliderInput
               label=''
-              value={formValues.thinkingBudget ?? parameterSpecs.thinkingBudget.default} // Uses hook's formValues, parameterSpecs
-              onChange={(newValue) => handleChange('thinkingBudget', newValue)} // Uses hook's handleChange
-              min={parameterSpecs.thinkingBudget.min} // Uses parameterSpecs
-              max={parameterSpecs.thinkingBudget.max} // Uses parameterSpecs
-              step={parameterSpecs.thinkingBudget.step} // Uses parameterSpecs
-              disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
+              value={formValues.thinkingBudget ?? parameterSpecs.thinkingBudget.default}
+              onChange={(newValue) => handleChange('thinkingBudget', newValue)}
+              min={parameterSpecs.thinkingBudget.min}
+              max={parameterSpecs.thinkingBudget.max}
+              step={parameterSpecs.thinkingBudget.step}
+              disabled={isSaving || isResetting}
               className='form-group mt-2'
             />
           </div>
         )}
 
-        {showReasoningEffort && parameterSpecs.reasoningEffort && ( // Uses hook's showReasoningEffort, parameterSpecs
+        {showReasoningEffort && parameterSpecs.reasoningEffort && (
           <div className='form-group mb-7'>
             <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
               Reasoning Effort
@@ -323,21 +312,21 @@ const AdvancedSettings = ({
             </p>
             <div className='inline-block'>
               <CustomSelect
-                id={`${platform.id}-${selectedModelId}-reasoning-effort`} // Uses selectedModelId from props
-                options={parameterSpecs.reasoningEffort.allowedValues.map(value => ({ id: value, name: value }))} // Uses parameterSpecs
-                selectedValue={formValues.reasoningEffort ?? parameterSpecs.reasoningEffort.default} // Uses hook's formValues, parameterSpecs
-                onChange={(selectedValue) => handleChange('reasoningEffort', selectedValue)} // Uses hook's handleChange
+                id={`${platform.id}-${selectedModelId}-reasoning-effort`}
+                options={parameterSpecs.reasoningEffort.allowedValues.map(value => ({ id: value, name: value }))}
+                selectedValue={formValues.reasoningEffort ?? parameterSpecs.reasoningEffort.default}
+                onChange={(selectedValue) => handleChange('reasoningEffort', selectedValue)}
                 placeholder='Select Effort Level'
-                disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
+                disabled={isSaving || isResetting}
               />
             </div>
           </div>
         )}
 
-        {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && ( // Uses hook's modelSupportsSystemPrompt, parameterSpecs
+        {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && (
           <div className='form-group mb-4'>
             <label
-              htmlFor={`${platform.id}-${selectedModelId}-system-prompt`} // Uses selectedModelId from props
+              htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
               className='block mb-3 text-base font-semibold text-theme-secondary select-none'
             >
               System Prompt
@@ -346,14 +335,14 @@ const AdvancedSettings = ({
               Optional system prompt to provide context for API requests.
             </p>
             <textarea
-              id={`${platform.id}-${selectedModelId}-system-prompt`} // Uses selectedModelId from props
+              id={`${platform.id}-${selectedModelId}-system-prompt`}
               name='systemPrompt'
               className='system-prompt-input w-full min-h-[120px] p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md'
               placeholder='Enter a system prompt for API requests'
-              value={formValues.systemPrompt ?? ''} // Uses hook's formValues
-              onChange={(e) => handleChange('systemPrompt', e.target.value)} // Uses hook's handleChange
-              maxLength={parameterSpecs.systemPrompt.maxLength} // Uses parameterSpecs
-              disabled={isSaving || isResetting} // Uses hook's isSaving, isResetting
+              value={formValues.systemPrompt ?? ''}
+              onChange={(e) => handleChange('systemPrompt', e.target.value)}
+              maxLength={parameterSpecs.systemPrompt.maxLength}
+              disabled={isSaving || isResetting}
             />
           </div>
         )}
@@ -361,11 +350,11 @@ const AdvancedSettings = ({
         <div className='form-actions flex justify-end'>
           <Button
             type='submit'
-            disabled={isSaving || !hasChanges || isResetting} // Uses hook's isSaving, hasChanges, isResetting
-            variant={!hasChanges || isResetting ? 'inactive' : 'primary'} // Uses hook's hasChanges, isResetting
+            disabled={isSaving || !hasChanges || isResetting}
+            variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
             className='px-5 py-2 select-none'
           >
-            {isSaving ? 'Saving...' : 'Save Settings'} {/* Uses hook's isSaving */}
+            {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
       </form>
