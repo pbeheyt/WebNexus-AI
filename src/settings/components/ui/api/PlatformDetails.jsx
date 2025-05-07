@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { Button, useNotification, PlatformIcon } from '../../../../components';
+import { logger } from '../../../../shared/logger'; // Added logger import
 // STORAGE_KEYS might not be needed directly if all storage interactions are through context actions.
 // import { STORAGE_KEYS } from '../../../../shared/constants';
 
@@ -30,7 +31,7 @@ const PlatformDetails = ({
       : 'default' // Should ideally not be 'default' if models exist
   );
 
-  // Synchronize API key state with platform credentials when platform or credentials change
+  // Synchronize API key state and selectedModelId when platform or its related props change
   useEffect(() => {
     if (credentials?.apiKey) {
       setApiKey(credentials.apiKey);
@@ -40,14 +41,21 @@ const PlatformDetails = ({
       setOriginalApiKey('');
     }
     setHasApiKeyChanges(false); // Reset on platform/credential change
+
     // Reset selected model to the first available for the new platform
-    if (platform.apiConfig?.models?.length > 0) {
-      setSelectedModelId(platform.apiConfig.models[0].id);
+    // This is crucial because the component no longer remounts on platform change.
+    const firstModelId = platform.apiConfig?.models?.[0]?.id;
+    if (firstModelId) {
+      setSelectedModelId(firstModelId);
     } else {
-        // Handle case where a platform might have no configurable models (though unlikely for API settings)
-        setSelectedModelId('default'); // Or null, depending on how AdvancedSettings handles it
+      // Fallback if no models are defined for the platform or if models array is empty.
+      // 'default' might not be ideal if AdvancedSettings expects a valid model ID.
+      // Consider setting to null or an empty string if AdvancedSettings can handle it,
+      // or ensure platforms always have at least one model if they are configurable.
+      setSelectedModelId(platform.apiConfig?.defaultModel || 'default');
+      logger.settings.warn(`PlatformDetails: Platform ${platform.id} has no models or defaultModel defined in apiConfig. Falling back selectedModelId.`);
     }
-  }, [platform.id, credentials, platform.apiConfig?.models]);
+  }, [platform.id, platform.apiConfig, credentials]); // Ensure platform.apiConfig is a dependency
 
 
   const handleApiKeyChange = (e) => {

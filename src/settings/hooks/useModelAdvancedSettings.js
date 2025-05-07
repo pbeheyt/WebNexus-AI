@@ -30,6 +30,11 @@ export function useModelAdvancedSettings({
   const [isAnimatingReset, setIsAnimatingReset] = useState(false);
   const [isFormReady, setIsFormReady] = useState(false);
 
+  // Reset editing mode when the selected model changes
+  useEffect(() => {
+    setCurrentEditingMode('base');
+  }, [selectedModelId]);
+
   const modelsFromPlatform = useMemo(
     () => platform.apiConfig?.models || [],
     [platform.apiConfig?.models]
@@ -123,7 +128,7 @@ export function useModelAdvancedSettings({
     setIsFormReady(true); // Mark form as ready after values are set
     // hasChanges and isAtDefaults will be updated by a separate effect below
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [derivedSettings, advancedSettingsForPlatform, selectedModelId, currentEditingMode, platform.apiConfig]);
+  }, [selectedModelId, currentEditingMode, platform.apiConfig, advancedSettingsForPlatform, derivedSettings]);
 
 
   // Effect to update hasChanges and isAtDefaults whenever formValues, originalValues, or derivedSettings change

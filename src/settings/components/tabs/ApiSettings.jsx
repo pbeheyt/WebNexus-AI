@@ -59,7 +59,6 @@ const ApiSettings = () => {
 
         {selectedPlatformConfig ? (
           <PlatformDetails
-            key={selectedPlatformConfig.id} // Use selectedPlatformConfig.id for key
             platform={selectedPlatformConfig} // From context
             credentials={credentialsForSelectedPlatform} // From context
             advancedSettingsForPlatform={advancedSettingsForSelectedPlatform} // From context
