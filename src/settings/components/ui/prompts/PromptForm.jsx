@@ -311,7 +311,7 @@ const PromptForm = ({
         </h3>
         {/* Conditionally render the Default badge only in edit mode */}
         {isEditing && isDefaultForType && (
-          <span className='default-badge ml-3 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-0.5 rounded-full font-medium select-none'>
+          <span className='default-badge ml-3 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full font-medium select-none'>
             Default
           </span>
         )}
