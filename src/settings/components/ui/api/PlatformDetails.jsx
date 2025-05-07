@@ -219,15 +219,15 @@ const PlatformDetails = ({
       </div>
 
       {/* Advanced settings section */}
-      <AdvancedSettings
-        platform={platform} // This is selectedPlatformConfig
-        selectedModelId={selectedModelId}
-        advancedSettingsForPlatform={advancedSettingsForPlatform} // Pass the platform-specific slice
-        onModelSelect={handleModelSelect}
-        // Pass the context actions, they already know the platformId or will receive it
-        onSave={saveAdvancedModelSettingsAction}
-        onReset={resetAdvancedModelSettingsToDefaultsAction}
-      />
+<AdvancedSettings
+  platform={platform} // This is selectedPlatformConfig
+  selectedModelId={selectedModelId}
+  advancedSettingsForPlatform={advancedSettingsForPlatform} // Pass the platform-specific slice
+  onModelSelect={handleModelSelect}
+  // Pass the context actions, they already know the platformId or will receive it
+  onSettingsUpdate={saveAdvancedModelSettingsAction}
+  onResetToDefaults={resetAdvancedModelSettingsToDefaultsAction}
+/>
     </div>
   );
 };

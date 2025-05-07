@@ -50,8 +50,8 @@ const AdvancedSettings = ({
     platform,
     selectedModelId,
     advancedSettingsFromStorage: advancedSettings,
-    onSettingsUpdateProp: onSettingsUpdate,
-    onResetToDefaultsProp: onResetToDefaults,
+    onSave: onSettingsUpdate,
+    onReset: onResetToDefaults,
     showNotificationError,
   });
 
