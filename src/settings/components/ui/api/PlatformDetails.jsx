@@ -3,21 +3,18 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { Button, useNotification, PlatformIcon } from '../../../../components';
-import { logger } from '../../../../shared/logger'; // Added logger import
-// STORAGE_KEYS might not be needed directly if all storage interactions are through context actions.
-// import { STORAGE_KEYS } from '../../../../shared/constants';
+import { logger } from '../../../../shared/logger';
 
 import AdvancedSettings from './AdvancedSettings';
 
 const PlatformDetails = ({
-  platform, // This is selectedPlatformConfig from context
-  credentials, // This is credentialsForSelectedPlatform from context
-  advancedSettingsForPlatform, // This is advancedSettingsForSelectedPlatform from context
+  platform,
+  credentials,
+  advancedSettingsForPlatform,
   saveApiKeyAction,
   removeApiKeyAction,
   saveAdvancedModelSettingsAction,
   resetAdvancedModelSettingsToDefaultsAction,
-  // credentialsStorageKey, // No longer directly used for saving/removing here
 }) => {
   const { error } = useNotification();
   const [apiKey, setApiKey] = useState('');
@@ -43,19 +40,15 @@ const PlatformDetails = ({
     setHasApiKeyChanges(false); // Reset on platform/credential change
 
     // Reset selected model to the first available for the new platform
-    // This is crucial because the component no longer remounts on platform change.
     const firstModelId = platform.apiConfig?.models?.[0]?.id;
     if (firstModelId) {
       setSelectedModelId(firstModelId);
     } else {
       // Fallback if no models are defined for the platform or if models array is empty.
-      // 'default' might not be ideal if AdvancedSettings expects a valid model ID.
-      // Consider setting to null or an empty string if AdvancedSettings can handle it,
-      // or ensure platforms always have at least one model if they are configurable.
       setSelectedModelId(platform.apiConfig?.defaultModel || 'default');
       logger.settings.warn(`PlatformDetails: Platform ${platform.id} has no models or defaultModel defined in apiConfig. Falling back selectedModelId.`);
     }
-  }, [platform.id, platform.apiConfig, credentials]); // Ensure platform.apiConfig is a dependency
+  }, [platform.id, platform.apiConfig, credentials]);
 
 
   const handleApiKeyChange = (e) => {
@@ -97,10 +90,6 @@ const PlatformDetails = ({
   const handleModelSelect = (modelId) => {
     setSelectedModelId(modelId);
   };
-
-  // The props for onSettingsUpdate and onResetToDefaults for AdvancedSettings
-  // will now be the context actions, already bound to the platform.id by ApiSettings.jsx
-  // (or rather, they receive platform.id as an argument).
 
   return (
     <div className='platform-details-panel flex-1'>
@@ -228,11 +217,10 @@ const PlatformDetails = ({
 
       {/* Advanced settings section */}
 <AdvancedSettings
-  platform={platform} // This is selectedPlatformConfig
+  platform={platform}
   selectedModelId={selectedModelId}
-  advancedSettingsForPlatform={advancedSettingsForPlatform} // Pass the platform-specific slice
+  advancedSettingsForPlatform={advancedSettingsForPlatform}
   onModelSelect={handleModelSelect}
-  // Pass the context actions, they already know the platformId or will receive it
   onSettingsUpdate={saveAdvancedModelSettingsAction}
   onResetToDefaults={resetAdvancedModelSettingsToDefaultsAction}
 />
@@ -248,7 +236,6 @@ PlatformDetails.propTypes = {
   removeApiKeyAction: PropTypes.func.isRequired,
   saveAdvancedModelSettingsAction: PropTypes.func.isRequired,
   resetAdvancedModelSettingsToDefaultsAction: PropTypes.func.isRequired,
-  // credentialsStorageKey: PropTypes.string.isRequired, // Potentially redundant
 };
 
 export default React.memo(PlatformDetails);

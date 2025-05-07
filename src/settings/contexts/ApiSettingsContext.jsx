@@ -67,6 +67,7 @@ export const ApiSettingsProvider = ({ children }) => {
     };
 
     loadInitialData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Derived State
