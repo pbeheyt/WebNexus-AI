@@ -247,6 +247,7 @@
   cursor: pointer;
   background: linear-gradient(to right, var(--slider-track-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-bg) var(--slider-fill-percentage, 0%));
   border-radius: 9999px;
+  transition: background 0.15s ease-out;
 }
 
 /* Webkit Thumb */
@@ -293,6 +294,7 @@
   background: linear-gradient(to right, var(--slider-track-fill-color) var(--slider-fill-percentage, 0%), var(--slider-track-bg) var(--slider-fill-percentage, 0%));
   border-radius: 9999px;
   border: none;
+  transition: background 0.15s ease-out;
 }
 
 /* Disabled Mozilla Track */
