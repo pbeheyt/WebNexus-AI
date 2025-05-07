@@ -12,16 +12,17 @@ import {
   CustomSelect,
 } from '../../../../components';
 import { useModelAdvancedSettings } from '../../../hooks/useModelAdvancedSettings';
+// import { logger } from '../../../../shared/logger'; // Logger can be removed if not used
 
 const AdvancedSettings = ({
   platform,
-  selectedModelId, // This is the actual model ID string from PlatformDetails
-  advancedSettings, // This is advancedSettings[platform.id] from PlatformDetails
-  onModelSelect, // Prop from PlatformDetails to update its selectedModelId state
-  onSettingsUpdate, // Prop from PlatformDetails (handleAdvancedSettingsUpdate)
-  onResetToDefaults, // Prop from PlatformDetails (handleResetAdvancedSettings)
+  selectedModelId, 
+  advancedSettings, 
+  onModelSelect, 
+  onSettingsUpdate, 
+  onResetToDefaults, 
 }) => {
-  const { error: showNotificationError } = useNotification();
+  const { error: showNotificationErrorHook } = useNotification();
 
   const {
     formValues,
@@ -39,7 +40,6 @@ const AdvancedSettings = ({
     modelsFromPlatform,
     isFormReady,
     showThinkingModeToggle,
-    // isThinkingModeActive, // currentEditingMode === 'thinking' can be used
     showTempSection,
     showTopPSection,
     showBudgetSlider,
@@ -48,15 +48,15 @@ const AdvancedSettings = ({
   } = useModelAdvancedSettings({
     platform,
     selectedModelId,
-    advancedSettingsFromStorage: advancedSettings,
+    advancedSettingsForPlatform: advancedSettings,
     onSave: onSettingsUpdate,
     onReset: onResetToDefaults,
-    showNotificationError,
+    showNotificationError: showNotificationErrorHook,
   });
 
   const handleModelChange = useCallback(
     (modelId) => {
-      onModelSelect(modelId); // Call prop from PlatformDetails
+      onModelSelect(modelId);
     },
     [onModelSelect]
   );
@@ -65,9 +65,6 @@ const AdvancedSettings = ({
     return typeof price === 'number' ? price.toFixed(2) : price;
   };
 
-  // Show loading if derivedSettings are not yet available from the hook.
-  // This would typically only happen if getDerivedModelSettings in the hook
-  // returns null (e.g., for an invalid modelId or platform config issue).
   if (!derivedSettings || !isFormReady) {
     return (
       <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
@@ -76,13 +73,9 @@ const AdvancedSettings = ({
     );
   }
 
-  // Destructure from the `derivedSettings` obtained directly from the hook
   const {
     displaySpecs,
     parameterSpecs,
-    // capabilities, // Specific capability flags are destructured from the hook directly
-    // defaultSettings, // Used internally by the hook or for comparison
-    // resolvedModelConfig // Used internally by the hook
   } = derivedSettings;
 
 
@@ -363,7 +356,7 @@ const AdvancedSettings = ({
 AdvancedSettings.propTypes = {
   platform: PropTypes.object.isRequired,
   selectedModelId: PropTypes.string,
-  advancedSettings: PropTypes.object, // This is advancedSettings[platform.id]
+  advancedSettings: PropTypes.object, 
   onModelSelect: PropTypes.func.isRequired,
   onSettingsUpdate: PropTypes.func.isRequired,
   onResetToDefaults: PropTypes.func.isRequired,

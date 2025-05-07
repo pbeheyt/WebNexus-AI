@@ -39,14 +39,13 @@ const PlatformDetails = ({
     }
     setHasApiKeyChanges(false); // Reset on platform/credential change
 
-    // Reset selected model to the first available for the new platform
     const firstModelId = platform.apiConfig?.models?.[0]?.id;
     if (firstModelId) {
       setSelectedModelId(firstModelId);
     } else {
-      // Fallback if no models are defined for the platform or if models array is empty.
-      setSelectedModelId(platform.apiConfig?.defaultModel || 'default');
-      logger.settings.warn(`PlatformDetails: Platform ${platform.id} has no models or defaultModel defined in apiConfig. Falling back selectedModelId.`);
+      const fallbackModelId = platform.apiConfig?.defaultModel || 'default';
+      logger.settings.warn(`PlatformDetails: Platform ${platform.id} has no models or defaultModel defined in apiConfig. Falling back selectedModelId to: ${fallbackModelId}`);
+      setSelectedModelId(fallbackModelId);
     }
   }, [platform.id, platform.apiConfig, credentials]);
 
@@ -219,7 +218,7 @@ const PlatformDetails = ({
 <AdvancedSettings
   platform={platform}
   selectedModelId={selectedModelId}
-  advancedSettingsForPlatform={advancedSettingsForPlatform}
+  advancedSettings={advancedSettingsForPlatform} 
   onModelSelect={handleModelSelect}
   onSettingsUpdate={saveAdvancedModelSettingsAction}
   onResetToDefaults={resetAdvancedModelSettingsToDefaultsAction}

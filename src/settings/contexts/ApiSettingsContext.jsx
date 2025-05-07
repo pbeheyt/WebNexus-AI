@@ -68,21 +68,27 @@ export const ApiSettingsProvider = ({ children }) => {
 
     loadInitialData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // showErrorNotification is stable
 
   // Derived State
   const selectedPlatformConfig = useMemo(() => {
-    if (!selectedPlatformId || platformConfigs.length === 0) return null;
+    if (!selectedPlatformId || platformConfigs.length === 0) {
+      return null;
+    }
     return platformConfigs.find((p) => p.id === selectedPlatformId) || null;
   }, [selectedPlatformId, platformConfigs]);
 
   const credentialsForSelectedPlatform = useMemo(() => {
-    if (!selectedPlatformId) return null;
+    if (!selectedPlatformId) {
+      return null;
+    }
     return allCredentials[selectedPlatformId] || null;
   }, [selectedPlatformId, allCredentials]);
 
   const advancedSettingsForSelectedPlatform = useMemo(() => {
-    if (!selectedPlatformId) return {}; // Return empty object if no platform selected
+    if (!selectedPlatformId) {
+      return {}; // Return empty object if no platform selected
+    }
     return allAdvancedSettings[selectedPlatformId] || {};
   }, [selectedPlatformId, allAdvancedSettings]);
 
@@ -111,7 +117,7 @@ export const ApiSettingsProvider = ({ children }) => {
         await chrome.storage.local.set({
           [STORAGE_KEYS.API_CREDENTIALS]: updatedCredentials,
         });
-        setAllCredentials(updatedCredentials);
+        setAllCredentials(() => updatedCredentials);
         showSuccessNotification('API key saved successfully.');
         return true;
       } catch (err) {
@@ -131,7 +137,7 @@ export const ApiSettingsProvider = ({ children }) => {
         await chrome.storage.local.set({
           [STORAGE_KEYS.API_CREDENTIALS]: updatedCredentials,
         });
-        setAllCredentials(updatedCredentials);
+        setAllCredentials(() => updatedCredentials);
         showSuccessNotification('API key removed successfully.');
         return true;
       } catch (err) {
@@ -167,7 +173,7 @@ export const ApiSettingsProvider = ({ children }) => {
         await chrome.storage.sync.set({
           [STORAGE_KEYS.API_ADVANCED_SETTINGS]: updatedAllAdvancedSettings,
         });
-        setAllAdvancedSettings(updatedAllAdvancedSettings);
+        setAllAdvancedSettings(() => updatedAllAdvancedSettings);
         showSuccessNotification('Advanced settings saved.');
         return true;
       } catch (err) {
@@ -202,7 +208,7 @@ export const ApiSettingsProvider = ({ children }) => {
                     delete updatedAllAdvancedSettings[platformId].models[modelId];
                 }
                 // Clean up 'models' object if it becomes empty
-                if (Object.keys(updatedAllAdvancedSettings[platformId].models).length === 0) {
+                if (Object.keys(updatedAllAdvancedSettings[platformId].models || {}).length === 0) {
                     delete updatedAllAdvancedSettings[platformId].models;
                 }
                 // Clean up platform entry if it becomes entirely empty (no default, no models)
@@ -216,7 +222,7 @@ export const ApiSettingsProvider = ({ children }) => {
                 await chrome.storage.sync.set({
                     [STORAGE_KEYS.API_ADVANCED_SETTINGS]: updatedAllAdvancedSettings,
                 });
-                setAllAdvancedSettings(updatedAllAdvancedSettings);
+                setAllAdvancedSettings(() => updatedAllAdvancedSettings);
             }
             showSuccessNotification('Advanced settings reset to defaults.');
             return true;
