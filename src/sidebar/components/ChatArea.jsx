@@ -795,19 +795,23 @@ const checkScrollPosition = useCallback(() => {
       <button
         onClick={() => scrollToBottom('smooth')}
         className={`
-                    absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10
-                    p-1.5 rounded-full shadow-md
-                    bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700
-                    text-theme-primary dark:text-theme-primary-dark
-                    transition-opacity duration-300 ease-in-out
-                    ${showScrollDownButton ? 'opacity-100' : 'opacity-0 pointer-events-none'}
-                `}
+          absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10
+          p-2 rounded-full
+          text-theme-primary dark:text-theme-primary-dark 
+          transition-opacity duration-300 ease-in-out
+          ${showScrollDownButton
+            ? 'opacity-100 bg-gray-200/50 hover:bg-gray-300/50 dark:bg-gray-900/50 dark:hover:bg-gray-800/50'
+            : 'opacity-0 pointer-events-none'
+          }
+      `}
         aria-label='Scroll to bottom'
         title='Scroll to bottom'
         aria-hidden={!showScrollDownButton}
         tabIndex={showScrollDownButton ? 0 : -1}
       >
-        <ScrollDownIcon />
+        <ScrollDownIcon
+          className='w-6 h-6 select-none'
+        />
       </button>
     </div>
   );
