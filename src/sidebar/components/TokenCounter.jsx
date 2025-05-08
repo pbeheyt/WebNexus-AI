@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 
-import { logger } from '../../shared/logger';
 import { Tooltip } from '../../components/layout/Tooltip';
 import { InputTokenIcon, OutputTokenIcon, ChevronUpIcon } from '../../components';
 
