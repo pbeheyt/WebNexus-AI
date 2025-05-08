@@ -81,23 +81,33 @@ class GeminiApiService extends BaseApiService {
       formattedRequest.generationConfig.topP = params.topP;
     }
 
-    // Add thinkingConfig if thinking is enabled and a budget is resolved
+    // Add thinkingConfig if thinking is enabled and a valid thinkingBudget is provided.
+    // If thinkingBudget is 0, thinking is explicitly disabled.
+    // If thinkingBudget > 0, thinking is enabled with the specified budget.
+    // If isThinkingEnabledForRequest is true but thinkingBudget is not a number, thinkingConfig is not added,
+    // and the model will use its default behavior (Thinking ON).
+    // If isThinkingEnabledForRequest is false, thinkingConfig is not added, and the model defaults to Thinking ON.
     if (params.isThinkingEnabledForRequest && typeof params.thinkingBudget === 'number') {
       formattedRequest.generationConfig.thinkingConfig = {
         thinkingBudget: params.thinkingBudget,
       };
-      this.logger.info(
-        `[${this.platformId}] Enabling Thinking Mode with budget: ${params.thinkingBudget} for model: ${params.model}`
-      );
-    } else if (params.isThinkingEnabledForRequest) {
-        this.logger.warn(`[${this.platformId}] Thinking mode requested but no valid budget resolved. Thinking config will not be added.`);
+      if (params.thinkingBudget === 0) {
+        this.logger.info(
+          `[${this.platformId}] Explicitly disabling Thinking Mode (thinkingBudget: 0) for model: ${params.model}`
+        );
+      } else {
+        this.logger.info(
+          `[${this.platformId}] Enabling Thinking Mode with budget: ${params.thinkingBudget} for model: ${params.model}`
+        );
+      }
+    } else if (params.isThinkingEnabledForRequest) { // isThinkingEnabledForRequest is true, but thinkingBudget is not a number
+        this.logger.warn(
+          `[${this.platformId}] Thinking mode was requested (isThinkingEnabledForRequest: true), but params.thinkingBudget was not a valid number (value: ${params.thinkingBudget}). ` +
+          `'thinkingConfig' will not be added to the request. The model will use its default behavior (Thinking ON).`
+        );
     }
-
-    // Enable Thinking Mode if requested and available for this model
-    if (params.isThinkingEnabledForRequest) {
-      formattedRequest.tool_config = { function_calling_config: { mode: 'ANY' } };
-      this.logger.info(`[${this.platformId}] Enabling Thinking Mode (tool_config: ANY) for model: ${params.model}`);
-    }
+    // If params.isThinkingEnabledForRequest is false, no thinkingConfig is added, and the model uses its default (Thinking ON).
+    // No explicit logging for this default case to avoid verbosity.
 
     return {
       url: url.toString(),
