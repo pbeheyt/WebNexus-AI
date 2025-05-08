@@ -372,7 +372,7 @@ export function useChatStreaming({
     batchedStreamingContentRef,
     rafIdRef,
     performStreamingStateUpdate,
-    performThinkingStreamingStateUpdate, // Added dependency
+    performThinkingStreamingStateUpdate,
   ]); // Dependencies for the listener effect
 
   // --- Stream Cancellation Logic ---

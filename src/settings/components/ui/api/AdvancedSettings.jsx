@@ -12,7 +12,6 @@ import {
   CustomSelect,
 } from '../../../../components';
 import { useModelAdvancedSettings } from '../../../hooks/useModelAdvancedSettings';
-// import { logger } from '../../../../shared/logger'; // Logger can be removed if not used
 
 const AdvancedSettings = ({
   platform,
