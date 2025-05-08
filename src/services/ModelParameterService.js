@@ -99,7 +99,7 @@ class ModelParameterService {
    */
   async getUserModelSettings(platformId, modelId) {
     try {
-      const result = await chrome.storage.sync.get(
+      const result = await chrome.storage.local.get(
         STORAGE_KEYS.API_ADVANCED_SETTINGS
       );
       const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
@@ -213,8 +213,7 @@ class ModelParameterService {
    * @returns {Promise<Object>} Resolved parameters object for API calls
    */
   async resolveParameters(platformId, modelId, options = {}) {
-    const { tabId, source, conversationHistory, useThinkingMode } = options; // Add useThinkingMode
-    // Add immediate check for modelId
+    const { tabId, source, conversationHistory, useThinkingMode } = options;
     if (!modelId) {
       throw new Error('Model ID must be provided to resolveParameters');
     }
@@ -247,7 +246,7 @@ class ModelParameterService {
 
 
       // Get user settings for this model using the provided modelId
-      const advancedSettingsResult = await chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
+      const advancedSettingsResult = await chrome.storage.local.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
       const allAdvancedSettings = advancedSettingsResult[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
       const platformSettings = allAdvancedSettings[platformId] || {}; // Get settings for the specific platform
 

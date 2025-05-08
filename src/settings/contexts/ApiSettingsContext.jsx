@@ -43,7 +43,7 @@ export const ApiSettingsProvider = ({ children }) => {
         ] = await Promise.all([
           ConfigService.getAllPlatformConfigs(),
           chrome.storage.local.get(STORAGE_KEYS.API_CREDENTIALS),
-          chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS),
+          chrome.storage.local.get(STORAGE_KEYS.API_ADVANCED_SETTINGS),
         ]);
 
         setPlatformConfigs(loadedPlatformConfigs || []);
@@ -170,7 +170,7 @@ export const ApiSettingsProvider = ({ children }) => {
             ...settings,
         };
 
-        await chrome.storage.sync.set({
+        await chrome.storage.local.set({
           [STORAGE_KEYS.API_ADVANCED_SETTINGS]: updatedAllAdvancedSettings,
         });
         setAllAdvancedSettings(() => updatedAllAdvancedSettings);
@@ -219,7 +219,7 @@ export const ApiSettingsProvider = ({ children }) => {
 
 
             if (settingsChanged) {
-                await chrome.storage.sync.set({
+                await chrome.storage.local.set({
                     [STORAGE_KEYS.API_ADVANCED_SETTINGS]: updatedAllAdvancedSettings,
                 });
                 setAllAdvancedSettings(() => updatedAllAdvancedSettings);
