@@ -795,12 +795,12 @@ const checkScrollPosition = useCallback(() => {
       <button
         onClick={() => scrollToBottom('smooth')}
         className={`
-          absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10
-          p-2 rounded-full
+          absolute bottom-1 left-1/2 transform -translate-x-1/2 z-10
+          p-1.5 rounded-full
           text-theme-primary dark:text-theme-primary-dark 
           transition-opacity duration-300 ease-in-out
           ${showScrollDownButton
-            ? 'opacity-100 bg-gray-200/50 hover:bg-gray-300/50 dark:bg-gray-900/50 dark:hover:bg-gray-800/50'
+            ? 'opacity-100 bg-theme-primary/50 hover:bg-gray-300/50 dark:theme-primary/50 dark:hover:bg-gray-700/50'
             : 'opacity-0 pointer-events-none'
           }
       `}

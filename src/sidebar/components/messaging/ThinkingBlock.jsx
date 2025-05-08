@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { ChevronUpIcon } from '../../../components/icons/ChevronUpIcon'; // Adjust path if needed
+import { ChevronUpIcon } from '../../../components/icons/ChevronUpIcon';
 
 const ThinkingBlock = ({ thinkingContent }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -40,10 +40,10 @@ const ThinkingBlock = ({ thinkingContent }) => {
 
 
   return (
-    <div className='my-3 border border-dashed border-gray-400 dark:border-gray-600 rounded-md bg-gray-100/50 dark:bg-gray-800/50'>
+    <div className='mb-4 border border-dashed border-gray-400 dark:border-gray-600 rounded-md bg-gray-100/50 dark:bg-gray-800/50'>
       <button
         onClick={toggleExpand}
-        className='flex items-center justify-between w-full px-3 py-2 text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded-t-md hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
+        className='flex items-center justify-between w-full px-3 py-2 text-left rounded-t-md hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
         aria-expanded={isExpanded}
         aria-controls={`thinking-content-${React.useId()}`} // Generate unique ID
       >
@@ -64,10 +64,10 @@ const ThinkingBlock = ({ thinkingContent }) => {
         className='overflow-hidden transition-all duration-300 ease-in-out'
         style={{ maxHeight: contentMaxHeight }}
       >
-        <div className='px-3 py-2 text-xs text-gray-700 dark:text-gray-300 prose prose-xs dark:prose-invert max-w-none'>
+        <div className='p-3 text-xs text-gray-700 dark:text-gray-300 prose prose-xs dark:prose-invert max-w-none'>
            <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              components={thinkingMarkdownComponents} // Use simplified components
+              components={thinkingMarkdownComponents}
             >
               {thinkingContent}
             </ReactMarkdown>
