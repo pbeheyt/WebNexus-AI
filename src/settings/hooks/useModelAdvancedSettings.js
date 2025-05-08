@@ -85,11 +85,10 @@ export function useModelAdvancedSettings({
     const { defaultSettings: configDefaults } = derivedSettings;
 
     let userStoredSettingsForModelMode = {};
-    if (advancedSettingsForPlatform && advancedSettingsForPlatform.models && advancedSettingsForPlatform.models[selectedModelId]) {
-      userStoredSettingsForModelMode = advancedSettingsForPlatform.models[selectedModelId][currentEditingMode] || {};
-    } else if (advancedSettingsForPlatform && selectedModelId === 'default') { // Fallback for 'default' if used
-        userStoredSettingsForModelMode = advancedSettingsForPlatform.default || {};
+    if (advancedSettingsForPlatform?.models?.[selectedModelId]?.[currentEditingMode]) {
+      userStoredSettingsForModelMode = advancedSettingsForPlatform.models[selectedModelId][currentEditingMode];
     }
+    // No more fallback to platform.default from storage here
 
 
     const initialFormValues = {

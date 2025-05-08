@@ -192,44 +192,35 @@ const PromptForm = ({
         customPromptsByType[contentType].prompts = {};
       }
 
-      // Prepare prompt data
-      const promptData = {
+      // Prepare prompt object to save (without contentType field)
+      const promptObjectToSave = {
         name: name.trim(),
         content: content.trim(),
-        contentType: contentType,
         updatedAt: new Date().toISOString(),
       };
 
+      let currentPromptId;
+
       if (isEditing) {
-        promptData.id = prompt.id;
-        // Ensure createdAt is preserved if it exists
-        promptData.createdAt = prompt.prompt.createdAt || promptData.updatedAt;
+        currentPromptId = prompt.id; // The ID (key) of the prompt being edited
+        promptObjectToSave.createdAt = prompt.prompt.createdAt || promptObjectToSave.updatedAt; // Preserve original createdAt
 
-        // Check if the content type has changed during the edit
+        // Handle content type change if needed
         if (prompt.contentType !== formData.contentType) {
-          // --- BEGIN VALIDATION FOR CONTENT TYPE CHANGE ON LAST DEFAULT ---
-          // Content type has changed, check if it's allowed
-
-          // Fetch the current default prompts map
+          // Validate content type change
           const defaultsResult = await chrome.storage.local.get(
             STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE
           );
           const currentDefaults =
             defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
-
-          // Check if the prompt being edited IS the default for its ORIGINAL content type
           const isCurrentDefaultForOriginalType =
             currentDefaults[prompt.contentType] === prompt.id;
-
-          // Check if the prompt being edited IS the ONLY prompt for its ORIGINAL content type
-          // Use the customPromptsByType variable already fetched at the start of handleSubmit
           const promptsForOriginalType =
-            customPromptsByType[prompt.contentType]?.prompts || {};
+            customPromptsByType[prompt.contentType] || {};
           const isLastPromptForOriginalType =
             Object.keys(promptsForOriginalType).length === 1 &&
             promptsForOriginalType[prompt.id];
 
-          // If it was the default AND the last one, prevent the change
           if (isCurrentDefaultForOriginalType && isLastPromptForOriginalType) {
             const originalContentTypeLabel =
               CONTENT_TYPE_LABELS[prompt.contentType] || prompt.contentType;
@@ -237,27 +228,32 @@ const PromptForm = ({
               `Cannot change content type. This is the last default prompt for "${originalContentTypeLabel}". Create another prompt for this type first, or change the default.`
             );
           }
-          // --- END VALIDATION ---
-          // If changed, remove the prompt from its original content type location
-          if (customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
-            delete customPromptsByType[prompt.contentType].prompts[prompt.id];
+
+          // Remove from old content type location
+          if (customPromptsByType[prompt.contentType]?.[prompt.id]) {
+            delete customPromptsByType[prompt.contentType][prompt.id];
             logger.settings.info(
               `Moved prompt ${prompt.id} from old content type ${prompt.contentType} to ${formData.contentType}`
             );
           }
         }
 
-        // Add/Update the prompt in the new/current content type location
-        customPromptsByType[contentType].prompts[prompt.id] = promptData;
+        // Update the prompt in the correct content type location
+        if (!customPromptsByType[formData.contentType]) {
+          customPromptsByType[formData.contentType] = {};
+        }
+        customPromptsByType[formData.contentType][currentPromptId] = promptObjectToSave;
         success('Prompt updated successfully');
       } else {
         // Create new prompt
-        const promptId =
-          'prompt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-        promptData.id = promptId;
-        promptData.createdAt = promptData.updatedAt;
+        currentPromptId = 'prompt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        promptObjectToSave.createdAt = promptObjectToSave.updatedAt;
 
-        customPromptsByType[contentType].prompts[promptId] = promptData;
+        // Ensure the content type object exists
+        if (!customPromptsByType[contentType]) {
+          customPromptsByType[contentType] = {};
+        }
+        customPromptsByType[contentType][currentPromptId] = promptObjectToSave;
         success('Prompt created successfully');
       }
 

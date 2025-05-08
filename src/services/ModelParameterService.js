@@ -250,12 +250,11 @@ class ModelParameterService {
       const allAdvancedSettings = advancedSettingsResult[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
       const platformSettings = allAdvancedSettings[platformId] || {}; // Get settings for the specific platform
 
-      // Get the mode-specific settings and the platform defaults
+      // Get the mode-specific settings
       const modelModeSettings = platformSettings.models?.[modelId]?.[modeKey] || {};
-      const platformDefaultSettings = platformSettings.default || {};
 
-      // Merge them correctly, giving mode-specific settings precedence
-      const userSettings = { ...platformDefaultSettings, ...modelModeSettings };
+      // Use only model-specific settings (no platform defaults)
+      const userSettings = { ...modelModeSettings };
       logger.service.info(`User settings retrieved for ${platformId}/${modelId} (mode: ${modeKey}):`, userSettings);
 
       // Determine effective toggle values, defaulting to true if not set

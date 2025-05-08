@@ -25,7 +25,7 @@ export async function ensureDefaultPrompts() {
 
     // Iterate through all defined content types
     for (const contentType of Object.values(CONTENT_TYPES)) {
-      const promptsForType = customPromptsByType[contentType]?.prompts || {};
+      const promptsForType = customPromptsByType[contentType] || {};
       const promptIdsForType = Object.keys(promptsForType);
       const currentDefaultId = updatedDefaults[contentType];
 
@@ -77,12 +77,11 @@ export async function loadRelevantPrompts(contentType) {
     const promptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
 
     // Get prompts for the requested type
-    const typePromptsObj = promptsByType[contentType]?.prompts || {};
-
-    // Convert to array and add contentType
-    const relevantPrompts = Object.values(typePromptsObj).map((prompt) => ({
-      ...prompt,
-      contentType: contentType,
+    const typePromptsData = promptsByType[contentType] || {}; // Ensure typePromptsData is what was typePromptsObj
+    const relevantPrompts = Object.entries(typePromptsData).map(([id, promptObjectValue]) => ({
+      id, // The key is the ID
+      prompt: promptObjectValue, // The value is the prompt object {name, content, createdAt, updatedAt}
+      contentType: contentType, // contentType is passed as an argument to loadRelevantPrompts
     }));
 
     // Sort prompts alphabetically by name

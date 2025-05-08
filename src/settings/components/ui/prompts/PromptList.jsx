@@ -30,17 +30,16 @@ const PromptList = ({
           chrome.storage.local.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE),
         ]);
 
-        // Process custom prompts
+        // Process custom prompts with new flatter structure
         const customPromptsByType =
           promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
         const uniquePromptsMap = new Map();
-        Object.entries(customPromptsByType).forEach(([type, data]) => {
-          if (data.prompts) {
-            Object.entries(data.prompts).forEach(([id, prompt]) => {
-              // Use the passed contentTypeLabels prop for consistency
+        Object.entries(customPromptsByType).forEach(([type, promptsInTypeObject]) => {
+          if (promptsInTypeObject && typeof promptsInTypeObject === 'object') {
+            Object.entries(promptsInTypeObject).forEach(([id, promptObjectValue]) => {
               uniquePromptsMap.set(id, {
                 id,
-                prompt,
+                prompt: promptObjectValue, // promptObjectValue is now {name, content, createdAt, updatedAt}
                 contentType: type,
                 contentTypeLabel: contentTypeLabels[type] || type,
               });

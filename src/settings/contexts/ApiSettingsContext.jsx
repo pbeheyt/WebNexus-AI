@@ -192,48 +192,53 @@ export const ApiSettingsProvider = ({ children }) => {
 
   const resetAdvancedModelSettingsToDefaults = useCallback(
     async (platformId, modelId, mode) => {
-        try {
-            const updatedAllAdvancedSettings = JSON.parse(JSON.stringify(allAdvancedSettings)); // Deep copy
-            let settingsChanged = false;
+      try {
+        const updatedAllAdvancedSettings = JSON.parse(JSON.stringify(allAdvancedSettings)); // Deep copy
+        let settingsChanged = false;
 
-            if (updatedAllAdvancedSettings[platformId]?.models?.[modelId]?.[mode]) {
-                delete updatedAllAdvancedSettings[platformId].models[modelId][mode];
-                settingsChanged = true;
+        if (updatedAllAdvancedSettings[platformId]?.models?.[modelId]?.[mode]) {
+          delete updatedAllAdvancedSettings[platformId].models[modelId][mode];
+          settingsChanged = true;
+          logger.settings.info(`Reset advanced settings for ${platformId}/${modelId}/${mode}.`);
 
-                // Clean up model entry if both base and thinking modes are empty
-                if (
-                    !updatedAllAdvancedSettings[platformId].models[modelId].base &&
-                    !updatedAllAdvancedSettings[platformId].models[modelId].thinking
-                ) {
-                    delete updatedAllAdvancedSettings[platformId].models[modelId];
-                }
-                // Clean up 'models' object if it becomes empty
-                if (Object.keys(updatedAllAdvancedSettings[platformId].models || {}).length === 0) {
-                    delete updatedAllAdvancedSettings[platformId].models;
-                }
-                // Clean up platform entry if it becomes entirely empty (no default, no models)
-                if (Object.keys(updatedAllAdvancedSettings[platformId]).length === 0) {
-                    delete updatedAllAdvancedSettings[platformId];
-                }
-            }
+          // Clean up model entry if both base and thinking modes are now empty or non-existent
+          const modelEntry = updatedAllAdvancedSettings[platformId].models[modelId];
+          if (modelEntry && Object.keys(modelEntry).every(key => !modelEntry[key] || Object.keys(modelEntry[key]).length === 0)) {
+            delete updatedAllAdvancedSettings[platformId].models[modelId];
+            logger.settings.info(`Removed empty model entry for ${platformId}/${modelId}.`);
+          }
 
+          // Clean up 'models' object for the platform if it becomes empty
+          if (updatedAllAdvancedSettings[platformId].models && Object.keys(updatedAllAdvancedSettings[platformId].models).length === 0) {
+            delete updatedAllAdvancedSettings[platformId].models;
+            logger.settings.info(`Removed empty 'models' object for platform ${platformId}.`);
+          }
 
-            if (settingsChanged) {
-                await chrome.storage.local.set({
-                    [STORAGE_KEYS.API_ADVANCED_SETTINGS]: updatedAllAdvancedSettings,
-                });
-                setAllAdvancedSettings(() => updatedAllAdvancedSettings);
-            }
-            showSuccessNotification('Advanced settings reset to defaults.');
-            return true;
-        } catch (err) {
-            logger.settings.error('Error resetting advanced settings in context:', err);
-            showErrorNotification(`Failed to reset advanced settings: ${err.message}`);
-            return false;
+          // Clean up platform entry itself if it becomes entirely empty (e.g., only had models and now models is gone)
+          if (Object.keys(updatedAllAdvancedSettings[platformId]).length === 0) {
+            delete updatedAllAdvancedSettings[platformId];
+            logger.settings.info(`Removed empty platform entry for ${platformId}.`);
+          }
+        } else {
+          logger.settings.info(`No settings found to reset for ${platformId}/${modelId}/${mode}.`);
         }
+
+        if (settingsChanged) {
+          await chrome.storage.local.set({
+            [STORAGE_KEYS.API_ADVANCED_SETTINGS]: updatedAllAdvancedSettings,
+          });
+          setAllAdvancedSettings(() => updatedAllAdvancedSettings);
+        }
+        showSuccessNotification('Advanced settings reset to configuration defaults.');
+        return true;
+      } catch (err) {
+        logger.settings.error('Error resetting advanced settings in context:', err);
+        showErrorNotification(`Failed to reset advanced settings: ${err.message}`);
+        return false;
+      }
     },
     [allAdvancedSettings, showErrorNotification, showSuccessNotification]
-);
+  );
 
 
   const contextValue = useMemo(

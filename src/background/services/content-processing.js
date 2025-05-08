@@ -56,7 +56,7 @@ export async function processWithDefaultPromptWebUI(tab) {
       STORAGE_KEYS.CUSTOM_PROMPTS
     );
     const promptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
-    const promptObject = promptsByType[contentType]?.prompts?.[defaultPromptId];
+        const promptObject = promptsByType[contentType]?.[defaultPromptId];
 
     if (!promptObject || !promptObject.content) {
       logger.background.error(

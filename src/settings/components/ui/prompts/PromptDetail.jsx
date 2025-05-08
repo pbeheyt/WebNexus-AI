@@ -41,10 +41,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       const currentDefaults =
         defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
 
-      const promptsForType =
-        customPromptsByType[prompt.contentType]?.prompts || {};
-      const isCurrentDefault =
-        currentDefaults[prompt.contentType] === prompt.id;
+      const promptsForType = customPromptsByType[prompt.contentType] || {};
+      const isCurrentDefault = currentDefaults[prompt.contentType] === prompt.id;
       const otherPromptsExist = Object.keys(promptsForType).length > 1;
 
       // Check if deleting the last default prompt
@@ -55,8 +53,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       }
 
       // Delete the prompt from the custom prompts structure
-      if (customPromptsByType[prompt.contentType]?.prompts?.[prompt.id]) {
-        delete customPromptsByType[prompt.contentType].prompts[prompt.id];
+      if (customPromptsByType[prompt.contentType]?.[prompt.id]) {
+        delete customPromptsByType[prompt.contentType][prompt.id];
       } else {
         // Prompt might already be gone? Log a warning but proceed
         logger.settings.warn(
@@ -65,20 +63,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       }
 
       // Clean up empty content type entry if no prompts remain
-      if (
-        Object.keys(customPromptsByType[prompt.contentType]?.prompts || {})
-          .length === 0
-      ) {
-        // Check if other properties like preferredPromptId or settings exist before deleting
-        if (
-          !customPromptsByType[prompt.contentType]?.preferredPromptId &&
-          !customPromptsByType[prompt.contentType]?.settings
-        ) {
-          delete customPromptsByType[prompt.contentType];
-        } else if (!customPromptsByType[prompt.contentType]?.prompts) {
-          // If prompts object itself was deleted, ensure it's gone
-          delete customPromptsByType[prompt.contentType]?.prompts;
-        }
+      if (Object.keys(customPromptsByType[prompt.contentType] || {}).length === 0) {
+        delete customPromptsByType[prompt.contentType];
       }
 
       // Save updated prompts
