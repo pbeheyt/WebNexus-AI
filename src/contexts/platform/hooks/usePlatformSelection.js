@@ -35,9 +35,7 @@ export function usePlatformSelection(
       }
 
       setIsLoading(true);
-      logger.context.debug(`[usePlatformSelection Effect] Running. Tab ID: ${tabId}, Configs Loaded: ${platformConfigs.length > 0}, Creds Status Changed:`, credentialStatus);
     const determineInitialPlatform = async () => {
-      logger.context.debug(`[usePlatformSelection Effect] determineInitialPlatform executing...`);
       try {
         // Construct available platforms based on credentials (for sidebar)
         const availablePlatforms = platformConfigs.filter((config) =>
@@ -48,7 +46,6 @@ export function usePlatformSelection(
         const availablePlatformIds = new Set(
           availablePlatforms.map((p) => p.id)
         );
-        logger.context.debug(`[usePlatformSelection Effect] Available platform IDs based on creds:`, Array.from(availablePlatformIds));
 
         if (availablePlatforms.length === 0 && interfaceType === INTERFACE_SOURCES.SIDEBAR) {
            setSelectedPlatformId(null); // No platforms available
@@ -66,7 +63,6 @@ export function usePlatformSelection(
           tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
         const lastUsedTabPlatform = tabPlatformPrefs[tabId];
         const globalPlatformPref = globalPreferences[globalStorageKey];
-        logger.context.debug(`[usePlatformSelection Effect] Preferences - Tab: ${lastUsedTabPlatform}, Global (${globalStorageKey}): ${globalPlatformPref}`);
 
         let platformToUse = null;
 
@@ -75,10 +71,9 @@ export function usePlatformSelection(
           interfaceType === INTERFACE_SOURCES.SIDEBAR &&
           lastUsedTabPlatform &&
           platformConfigs.some((p) => p.id === lastUsedTabPlatform) && // Check if it's a known platform
-          availablePlatformIds.has(lastUsedTabPlatform)                 // Check if available based on creds
+          availablePlatformIds.has(lastUsedTabPlatform)                // Check if available based on creds
         ) {
           platformToUse = lastUsedTabPlatform;
-          logger.context.debug(`[usePlatformSelection Effect] Priority 1: Using tab preference for platform: ${platformToUse}`);
         }
 
         // Priority 2: Global preference (if valid and available)
@@ -89,18 +84,15 @@ export function usePlatformSelection(
           availablePlatformIds.has(globalPlatformPref)                // Check if available based on creds
         ) {
           platformToUse = globalPlatformPref;
-          logger.context.debug(`[usePlatformSelection Effect] Priority 2: Using global preference for platform: ${platformToUse}`);
         }
 
         // Priority 3: First available platform (if any)
         if (!platformToUse && availablePlatforms.length > 0) {
           platformToUse = availablePlatforms[0].id;
-          logger.context.debug(`[usePlatformSelection Effect] Priority 3: Using first available platform: ${platformToUse}`);
         }
 
         // Update state only if it changes
         if (platformToUse !== selectedPlatformId) {
-             logger.context.debug(`[usePlatformSelection Effect] Setting selectedPlatformId to: ${platformToUse} (Previous: ${selectedPlatformId})`);
              setSelectedPlatformId(platformToUse);
         }
 
@@ -113,20 +105,18 @@ export function usePlatformSelection(
     };
 
     determineInitialPlatform();
-    // Re-run if dependencies change, especially credentialStatus
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tabId,
     platformConfigs,
     credentialStatus,
     globalStorageKey,
-    interfaceType,
-    selectedPlatformId // Include selectedPlatformId to prevent unnecessary updates if already set
+    interfaceType
   ]);
 
   // Callback to handle platform selection
   const selectPlatform = useCallback(
     async (platformId) => {
-      logger.context.debug(`[usePlatformSelection selectPlatform] Invoked with platformId: ${platformId}. Current selected: ${selectedPlatformId}, Tab ID: ${tabId}`);
       if (!platformConfigs.some((p) => p.id === platformId)) {
         logger.context.error(
           'Attempted to select invalid platform:',
@@ -134,10 +124,9 @@ export function usePlatformSelection(
         );
         return false;
       }
-      if (!tabId || platformId === selectedPlatformId) return true; // No change needed
+      if (!tabId || platformId === selectedPlatformId) return true;
 
       try {
-        logger.context.debug(`[usePlatformSelection selectPlatform] Setting selectedPlatformId to: ${platformId}`);
         setSelectedPlatformId(platformId); // Update state immediately
 
         // Update tab-specific preference ONLY IF SIDEBAR
@@ -151,7 +140,6 @@ export function usePlatformSelection(
           await chrome.storage.local.set({
             [STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]: tabPlatformPrefs,
           });
-          logger.context.debug(`Saved tab preference (Sidebar): Tab ${tabId} -> ${platformId}`);
         }
 
         // Update global preference for new tabs

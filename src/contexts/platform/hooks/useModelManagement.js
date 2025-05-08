@@ -22,7 +22,6 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
 
   // Function to load models and determine initial selection
   const loadModelsAndSelect = useCallback(async () => {
-    logger.context.debug(`[useModelManagement loadModelsAndSelect] Executing for platform: ${selectedPlatformId}, Tab ID: ${tabId}, Interface: ${interfaceType}`);
     if (
       interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
       !selectedPlatformId ||
@@ -132,9 +131,8 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
 
   // Effect to trigger model loading when platform changes
   useEffect(() => {
-    logger.context.debug(`[useModelManagement Effect] Running due to loadModelsAndSelect change. Current selectedPlatformId: ${selectedPlatformId}`);
     loadModelsAndSelect();
-  }, [loadModelsAndSelect, selectedPlatformId]); // Add selectedPlatformId to dependency array for logging clarity
+  }, [loadModelsAndSelect, selectedPlatformId]);
 
   // Callback to handle model selection
   const selectModel = useCallback(
