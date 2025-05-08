@@ -15,7 +15,6 @@ class MistralPlatform extends BasePlatform {
     let editor = document.querySelector(primarySelector);
 
     if (!editor) {
-      this.logger.debug(`[${this.platformId}] Editor not found with primary selector '${primarySelector}', trying fallback '${fallbackSelector}'`);
       editor = document.querySelector(fallbackSelector);
     }
 
@@ -33,7 +32,6 @@ class MistralPlatform extends BasePlatform {
     let button = document.querySelector(primarySelector);
 
      if (!button) {
-      this.logger.debug(`[${this.platformId}] Submit button not found with primary selector '${primarySelector}', trying fallback '${fallbackSelector}'`);
       button = document.querySelector(fallbackSelector);
     }
 

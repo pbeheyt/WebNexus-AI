@@ -106,9 +106,6 @@ class ClaudePlatform extends BasePlatform {
     if (!button) return false;
     const isDisabled =
       button.disabled || button.getAttribute('aria-disabled') === 'true';
-    if (isDisabled) {
-      this.logger.debug(`[${this.platformId}] Button is disabled:`, button);
-    }
     return !isDisabled;
   }
 

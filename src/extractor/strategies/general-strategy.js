@@ -69,13 +69,9 @@ class GeneralExtractorStrategy extends BaseExtractor {
    */
   _isElementVisible(element) {
     if (!element || typeof window.getComputedStyle !== 'function') {
-      this.logger.debug(
-        'Visibility check failed: No element or getComputedStyle unavailable.'
-      );
       return false; // Basic checks
     }
     if (element.nodeType !== Node.ELEMENT_NODE) {
-      this.logger.debug('Visibility check failed: Not an element node.');
       return false; // Only check element nodes
     }
 
@@ -84,7 +80,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
       element.hasAttribute('hidden') ||
       element.getAttribute('aria-hidden') === 'true'
     ) {
-      this.logger.debug(`Element hidden by attribute: ${element.tagName}`);
       return false;
     }
 
@@ -94,7 +89,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
       element.style?.visibility === 'hidden' ||
       element.style?.opacity === '0'
     ) {
-      this.logger.debug(`Element hidden by inline style: ${element.tagName}`);
       return false;
     }
 
@@ -102,9 +96,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
     try {
       const style = window.getComputedStyle(element);
       if (!style) {
-        this.logger.debug(
-          `Could not get computed style for: ${element.tagName}`
-        );
         return false; // Cannot determine visibility
       }
       if (
@@ -112,9 +103,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
         style.visibility === 'hidden' ||
         style.opacity === '0'
       ) {
-        this.logger.debug(
-          `Element hidden by computed style (${style.display}, ${style.visibility}, ${style.opacity}): ${element.tagName}`
-        );
         return false;
       }
     } catch (e) {
@@ -125,7 +113,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
       return false; // Assume hidden if we can't compute style
     }
 
-    this.logger.debug(`Element considered visible: ${element.tagName}`);
     return true;
   }
 
@@ -166,13 +153,11 @@ class GeneralExtractorStrategy extends BaseExtractor {
 
       // Skip noise tags entirely
       if (this.noiseTags.has(element.tagName)) {
-        this.logger.debug(`Skipping noise tag: ${element.tagName}`);
         return '';
       }
 
       // Skip non-visible elements
       if (!this._isElementVisible(element)) {
-        this.logger.debug(`Skipping hidden element: ${element.tagName}`);
         return '';
       }
 
@@ -180,7 +165,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
       let visibleText = '';
       // Handle Shadow DOM if present and open
       if (element.shadowRoot && element.shadowRoot.mode === 'open') {
-        this.logger.debug(`Traversing open Shadow DOM for: ${element.tagName}`);
         for (const childNode of element.shadowRoot.childNodes) {
           visibleText += this._extractVisibleText(childNode);
         }
