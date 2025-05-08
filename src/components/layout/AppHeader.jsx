@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { useUI } from '../../contexts/UIContext';
 import { logger } from '../../shared/logger';
+import { STORAGE_KEYS } from '../../shared/constants';
+import { IconButton } from '../core/IconButton';
+import { Toggle } from '../core/Toggle';
 import {
-  IconButton,
   InfoIcon,
   TextSizeIcon,
   SunIcon,
@@ -13,7 +15,8 @@ import {
   RefreshIcon,
   ChevronDownIcon,
   XIcon,
-} from '../';
+  FloatingButtonIcon
+} from '../icons';
 
 export function AppHeader({
   children,
@@ -36,6 +39,48 @@ export function AppHeader({
   infoButtonAriaLabel,
 }) {
   const { theme, toggleTheme, textSize, toggleTextSize } = useUI();
+  const [showFloatingButton, setShowFloatingButton] = useState(false);
+  const [isFloatingButtonToggleReady, setIsFloatingButtonToggleReady] = useState(false);
+
+  // Load preference for floating button on mount
+  useEffect(() => {
+    const loadPreference = async () => {
+      try {
+        const result = await chrome.storage.sync.get(
+          STORAGE_KEYS.SHOW_FLOATING_ACTION_BUTTON
+        );
+        if (result[STORAGE_KEYS.SHOW_FLOATING_ACTION_BUTTON] !== undefined) {
+          setShowFloatingButton(result[STORAGE_KEYS.SHOW_FLOATING_ACTION_BUTTON]);
+        } else {
+          // If not set, default to false and save it
+          setShowFloatingButton(false);
+          await chrome.storage.sync.set({
+            [STORAGE_KEYS.SHOW_FLOATING_ACTION_BUTTON]: false,
+          });
+        }
+      } catch (error) {
+        logger.popup.error('Error loading floating button preference:', error);
+        setShowFloatingButton(false); // Default to false on error
+      } finally {
+        setIsFloatingButtonToggleReady(true);
+      }
+    };
+    loadPreference();
+  }, []);
+
+  const handleFloatingButtonToggle = async (newCheckedState) => {
+    setShowFloatingButton(newCheckedState);
+    try {
+      await chrome.storage.sync.set({
+        [STORAGE_KEYS.SHOW_FLOATING_ACTION_BUTTON]: newCheckedState,
+      });
+      logger.popup.info(
+        `Floating action button preference set to: ${newCheckedState}`
+      );
+    } catch (error) {
+      logger.popup.error('Error saving floating button preference:', error);
+    }
+  };
 
   const openSettings = () => {
     try {
@@ -76,6 +121,31 @@ export function AppHeader({
       </h1>
 
       <div className='flex items-center gap-1'>
+        {/* Floating Action Button Toggle */}
+        {isFloatingButtonToggleReady && (
+          <div
+            className="flex items-center mr-1"
+            title={
+              showFloatingButton
+                ? 'Hide Floating Action Button on pages'
+                : 'Show Floating Action Button on pages'
+            }
+          >
+            <FloatingButtonIcon className="w-4 h-4 text-theme-secondary mr-1.5" />
+            <Toggle
+              id="floating-button-toggle"
+              checked={showFloatingButton}
+              onChange={handleFloatingButtonToggle}
+              className="w-7 h-3.5" // Slightly smaller toggle
+              aria-label={
+                showFloatingButton
+                  ? 'Disable floating action button'
+                  : 'Enable floating action button'
+              }
+            />
+          </div>
+        )}
+
         {/* Info button */}
         {showInfoButton && (
           <IconButton

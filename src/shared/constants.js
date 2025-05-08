@@ -42,6 +42,7 @@ export const STORAGE_KEYS = {
   POPUP_PLATFORM: 'popup_platform_preference',
   SIDEBAR_PLATFORM: 'sidebar_platform_preference',
   SIDEBAR_MODEL: 'sidebar_model_preference',
+  SHOW_FLOATING_ACTION_BUTTON: 'show_floating_action_button_preference',
 
   // Settings
   API_ADVANCED_SETTINGS: 'api_advanced_settings',

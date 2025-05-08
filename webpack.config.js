@@ -30,6 +30,7 @@ module.exports = {
     sidebar: './src/sidebar/index.jsx',
     'content-script': './src/content/index.js',
     'platform-content': './src/content/platform-content.js',
+    'floatingButton': './src/content/floatingButton.js',
   },
   output: {
     filename: '[name].bundle.js',
