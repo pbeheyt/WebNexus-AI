@@ -321,7 +321,7 @@ export function SidebarChatProvider({ children }) {
     };
     loadChatHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabId]); // Keep modelConfigData dependency out to avoid reload on model change
+  }, [tabId]); // ModelConfigData dependency out to avoid reload on model change
 
   // Get visible messages (filtering out extracted content)
   const visibleMessages = useMemo(() => {
@@ -408,7 +408,7 @@ export function SidebarChatProvider({ children }) {
       id: assistantMessageId,
       role: MESSAGE_ROLES.ASSISTANT,
       content: '',
-      thinkingContent: '', // <-- Add this line
+      thinkingContent: '',
       model: selectedModel,
       platformIconUrl: selectedPlatform.iconUrl,
       platformId: selectedPlatformId,
@@ -647,7 +647,6 @@ export function SidebarChatProvider({ children }) {
       logger.sidebar.info(`Thinking mode preference saved for ${selectedPlatformId}/${selectedModel}: ${newState}`);
     } catch (err) {
       logger.sidebar.error("Error saving thinking mode preference:", err);
-      // Optionally revert state or show error to user
     }
   }, [selectedPlatformId, selectedModel]); // Dependencies for the handler
 

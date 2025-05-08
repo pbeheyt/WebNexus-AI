@@ -31,7 +31,8 @@ class TokenManagementService {
       const tabStats = allTokenStats[tabId] || {};
 
       // Return merged stats, ensuring all default fields are present
-      return { ...this._getEmptyStats(), ...tabStats };
+      const mergedStats = { ...this._getEmptyStats(), ...tabStats };
+      return mergedStats;
     } catch (error) {
       logger.sidebar.error(
         'TokenManagementService: Error getting token statistics:',
@@ -425,7 +426,7 @@ class TokenManagementService {
    * @returns {Object} - Context window status
    */
   static calculateContextStatus(tokenStats, modelConfig) {
-    if (!tokenStats || !modelConfig || !modelConfig.contextWindow) {
+    if (!tokenStats || !modelConfig || !modelConfig.tokens.contextWindow) {
       return {
         warningLevel: 'none',
         percentage: 0,
@@ -438,7 +439,7 @@ class TokenManagementService {
     // as this represents the context the *next* call will potentially build upon.
     // Use inputTokensInLastApiCall which already includes system, history sent, and the last prompt.
     const totalTokensInContext = tokenStats.inputTokensInLastApiCall || 0;
-    const contextWindow = modelConfig.contextWindow;
+    const contextWindow = modelConfig.tokens.contextWindow;
     const tokensRemaining = Math.max(0, contextWindow - totalTokensInContext);
     const percentage =
       contextWindow > 0 ? (totalTokensInContext / contextWindow) * 100 : 0;

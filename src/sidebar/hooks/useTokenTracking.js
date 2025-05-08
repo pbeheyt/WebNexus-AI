@@ -81,7 +81,7 @@ export function useTokenTracking(tabId) {
    */
   const calculateContextStatus = useCallback(
     async (modelConfig) => {
-      if (!tabId || !modelConfig || !modelConfig.contextWindow) {
+      if (!tabId || !modelConfig || !modelConfig.tokens.contextWindow) {
         return {
           warningLevel: 'none',
           percentage: 0,
@@ -107,7 +107,7 @@ export function useTokenTracking(tabId) {
           totalTokens: 0
         };
       } catch (error) {
-        logger.sidebar.error('Error calculating context status:', error);
+        logger.sidebar.error(`[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error before/during static call for tabId: ${tabId}`, error);
         return {
           warningLevel: 'none',
           percentage: 0,
