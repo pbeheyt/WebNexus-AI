@@ -182,17 +182,10 @@ const PromptForm = ({
 
       // Initialize content type if needed
       if (!customPromptsByType[contentType]) {
-        customPromptsByType[contentType] = {
-          prompts: {},
-          preferredPromptId: null,
-          settings: {},
-        };
-      } else if (!customPromptsByType[contentType].prompts) {
-        // Ensure prompts object exists even if the type entry exists
-        customPromptsByType[contentType].prompts = {};
+        customPromptsByType[contentType] = {};
       }
 
-      // Prepare prompt object to save (without contentType field)
+      // Prepare prompt object to save
       const promptObjectToSave = {
         name: name.trim(),
         content: content.trim(),
@@ -239,9 +232,6 @@ const PromptForm = ({
         }
 
         // Update the prompt in the correct content type location
-        if (!customPromptsByType[formData.contentType]) {
-          customPromptsByType[formData.contentType] = {};
-        }
         customPromptsByType[formData.contentType][currentPromptId] = promptObjectToSave;
         success('Prompt updated successfully');
       } else {
@@ -249,10 +239,7 @@ const PromptForm = ({
         currentPromptId = 'prompt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
         promptObjectToSave.createdAt = promptObjectToSave.updatedAt;
 
-        // Ensure the content type object exists
-        if (!customPromptsByType[contentType]) {
-          customPromptsByType[contentType] = {};
-        }
+        // Save the new prompt
         customPromptsByType[contentType][currentPromptId] = promptObjectToSave;
         success('Prompt created successfully');
       }

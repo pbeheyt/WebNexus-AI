@@ -155,10 +155,10 @@ export const ApiSettingsProvider = ({ children }) => {
         const updatedAllAdvancedSettings = JSON.parse(JSON.stringify(allAdvancedSettings)); // Deep copy
 
         if (!updatedAllAdvancedSettings[platformId]) {
-          updatedAllAdvancedSettings[platformId] = { default: {}, models: {} };
+          updatedAllAdvancedSettings[platformId] = { models: {} };
         }
         if (!updatedAllAdvancedSettings[platformId].models) {
-            updatedAllAdvancedSettings[platformId].models = {};
+          updatedAllAdvancedSettings[platformId].models = {};
         }
         if (!updatedAllAdvancedSettings[platformId].models[modelId]) {
             updatedAllAdvancedSettings[platformId].models[modelId] = {};
