@@ -3,7 +3,7 @@
 import SidebarStateManager from '../services/SidebarStateManager.js';
 import { logger } from '../shared/logger.js';
 
-import { initializeExtension, initializeDefaultPrompts } from './initialization.js';
+import { initializeExtension, populateInitialPromptsAndSetDefaults } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
 import {
@@ -41,7 +41,7 @@ async function startBackgroundService() {
     try {
       // This function now handles checking the local flag and populating defaults
       // if necessary, then ensures default pointers are set based on local prompts.
-      await initializeDefaultPrompts();
+      await populateInitialPromptsAndSetDefaults();
       logger.background.info('Prompt initialization check completed.');
     } catch (initError) {
       logger.background.error('Error during startup prompt initialization:', initError);

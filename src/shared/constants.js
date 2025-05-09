@@ -50,8 +50,7 @@ export const STORAGE_KEYS = {
   // Prompt
   PRE_PROMPT: 'prePrompt',
   CUSTOM_PROMPTS: 'custom_prompts_by_type',
-  DEFAULT_PROMPTS_INIT_FLAG: 'default_prompts_initialized_v1',
-  DEFAULT_PROMPTS_BY_TYPE: 'default_prompts_by_type',
+  INITIAL_PROMPTS_POPULATED_V2: 'initial_prompts_populated_v2',
 
   // Content
   CONTENT_READY: 'contentReady',

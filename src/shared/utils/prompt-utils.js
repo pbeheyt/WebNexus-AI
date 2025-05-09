@@ -4,63 +4,65 @@ import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
 
 /**
  * Ensures that every content type with at least one prompt has a valid default prompt assigned.
- * If no default is set or the current default is invalid, it assigns the first available prompt.
- * If a content type has no prompts, it ensures no default is set for it.
- * This function should be called after any operation that modifies the custom prompts structure (create, update, delete).
- * @returns {Promise<boolean>} True if default assignments were changed, false otherwise.
+ * Uses the new _defaultPromptId_ key within the CUSTOM_PROMPTS structure.
+ * @returns {Promise<boolean>} True if changes were made, false otherwise.
  */
 export async function ensureDefaultPrompts() {
   try {
-    const [promptsResult, defaultsResult] = await Promise.all([
-      chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS),
-      chrome.storage.local.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE),
-    ]);
+    const promptsResult = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+    const customPromptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+    let changesMade = false;
 
-    const customPromptsByType =
-      promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
-    const currentDefaults =
-      defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
-    const updatedDefaults = { ...currentDefaults };
-    let defaultsChanged = false;
-
-    // Iterate through all defined content types
     for (const contentType of Object.values(CONTENT_TYPES)) {
-      const promptsForType = customPromptsByType[contentType] || {};
-      const promptIdsForType = Object.keys(promptsForType);
-      const currentDefaultId = updatedDefaults[contentType];
+      const typeData = customPromptsByType[contentType] || {};
+      const currentDefaultId = typeData['_defaultPromptId_'];
+      
+      // Extract actual prompts, excluding the _defaultPromptId_ key
+      const actualPrompts = {};
+      for (const key in typeData) {
+        if (key !== '_defaultPromptId_') {
+          actualPrompts[key] = typeData[key];
+        }
+      }
+      const promptIdsForType = Object.keys(actualPrompts);
 
       if (promptIdsForType.length > 0) {
-        // --- Prompts exist for this type ---
-        const isCurrentDefaultValid =
-          currentDefaultId && promptsForType[currentDefaultId];
+        // Prompts exist for this type
+        const isCurrentDefaultValid = currentDefaultId && actualPrompts[currentDefaultId];
 
         if (!isCurrentDefaultValid) {
-          // No default set, or the existing default ID is no longer valid
-          const newDefaultId = promptIdsForType[0];
-          updatedDefaults[contentType] = newDefaultId;
-          defaultsChanged = true;
+          // Default is missing or invalid, set to the first available prompt
+          if (!customPromptsByType[contentType]) { // Ensure content type object exists
+             customPromptsByType[contentType] = {};
+          }
+          customPromptsByType[contentType]['_defaultPromptId_'] = promptIdsForType[0];
+          changesMade = true;
+          logger.service.info(`Set/fixed default prompt for ${contentType} to ${promptIdsForType[0]}`);
         }
       } else {
-        // --- No prompts exist for this type ---
+        // No prompts exist for this type
         if (currentDefaultId) {
           // A default is set, but there are no prompts, so remove the default setting
-          delete updatedDefaults[contentType];
-          defaultsChanged = true;
+          if (customPromptsByType[contentType]) { // Check if contentType entry exists
+            delete customPromptsByType[contentType]['_defaultPromptId_'];
+             // If the content type object becomes empty after removing _defaultPromptId_, remove the content type object itself
+            if (Object.keys(customPromptsByType[contentType]).length === 0) {
+                delete customPromptsByType[contentType];
+            }
+            changesMade = true;
+            logger.service.info(`Removed default prompt setting for empty content type ${contentType}`);
+          }
         }
       }
     }
 
-    // Save back to storage only if changes were made
-    if (defaultsChanged) {
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]: updatedDefaults,
-      });
-      return true;
+    if (changesMade) {
+      await chrome.storage.local.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
+      logger.service.info('CUSTOM_PROMPTS updated by ensureDefaultPrompts.');
     }
-
-    return false;
+    return changesMade;
   } catch (error) {
-    logger.service.error('Error in ensureDefaultPrompts:', error);
+    logger.service.error('Error in ensureDefaultPrompts (V2):', error);
     return false;
   }
 }
@@ -78,11 +80,13 @@ export async function loadRelevantPrompts(contentType) {
 
     // Get prompts for the requested type
     const typePromptsData = promptsByType[contentType] || {}; // Ensure typePromptsData is what was typePromptsObj
-    const relevantPrompts = Object.entries(typePromptsData).map(([id, promptObjectValue]) => ({
-      id, // The key is the ID
-      prompt: promptObjectValue, // The value is the prompt object {name, content, createdAt, updatedAt}
-      contentType: contentType, // contentType is passed as an argument to loadRelevantPrompts
-    }));
+    const relevantPrompts = Object.entries(typePromptsData)
+      .filter(([key]) => key !== '_defaultPromptId_') // Skip the default prompt ID key
+      .map(([id, promptObjectValue]) => ({
+        id, // The key is the ID
+        prompt: promptObjectValue, // The value is the prompt object {name, content, createdAt, updatedAt}
+        contentType: contentType, // contentType is passed as an argument to loadRelevantPrompts
+      }));
 
     // Sort prompts alphabetically by name
     relevantPrompts.sort((a, b) => a.name.localeCompare(b.name));

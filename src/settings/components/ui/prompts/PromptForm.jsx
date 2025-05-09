@@ -94,12 +94,11 @@ const PromptForm = ({
         return;
       }
       try {
-        const result = await chrome.storage.local.get(
-          STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE
-        );
-        const defaults = result[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
+        const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
+        const customPrompts = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+        const typeData = customPrompts[formData.contentType] || {};
         // Check if this prompt ID is the default for the *currently selected* content type in the form
-        setIsDefaultForType(defaults[formData.contentType] === prompt.id);
+        setIsDefaultForType(typeData['_defaultPromptId_'] === prompt.id);
       } catch (err) {
         logger.settings.error(
           'Error checking default prompt status in form:',
@@ -201,17 +200,22 @@ const PromptForm = ({
         // Handle content type change if needed
         if (prompt.contentType !== formData.contentType) {
           // Validate content type change
-          const defaultsResult = await chrome.storage.local.get(
-            STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE
-          );
-          const currentDefaults =
-            defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {};
-          const isCurrentDefaultForOriginalType =
-            currentDefaults[prompt.contentType] === prompt.id;
-          const promptsForOriginalType =
-            customPromptsByType[prompt.contentType] || {};
-          const isLastPromptForOriginalType =
-            Object.keys(promptsForOriginalType).length === 1 &&
+          // customPromptsByType is already fetched at the start of handleSubmit
+          const originalTypeData = customPromptsByType[prompt.contentType] || {};
+          const isCurrentDefaultForOriginalType = 
+            originalTypeData['_defaultPromptId_'] === prompt.id;
+          
+          // Get actual prompts (excluding _defaultPromptId_)
+          const promptsForOriginalType = {};
+          if (customPromptsByType[prompt.contentType]) {
+              for (const key in customPromptsByType[prompt.contentType]) {
+                  if (key !== '_defaultPromptId_') {
+                      promptsForOriginalType[key] = customPromptsByType[prompt.contentType][key];
+                  }
+              }
+          }
+          const isLastPromptForOriginalType = 
+            Object.keys(promptsForOriginalType).length === 1 && 
             promptsForOriginalType[prompt.id];
 
           if (isCurrentDefaultForOriginalType && isLastPromptForOriginalType) {
