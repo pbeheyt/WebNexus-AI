@@ -11,9 +11,8 @@ import { ContentTypeIcon } from '../../../../components/layout/ContentTypeIcon';
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();
   const [isDefaultForType, setIsDefaultForType] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const TRUNCATE_LENGTH = 200;
-  const needsTruncation = prompt?.prompt?.content?.length > TRUNCATE_LENGTH;
+  const SCROLL_THRESHOLD = 350; // Character count threshold for enabling scroll
+  const contentExceedsThreshold = prompt?.prompt?.content?.length > SCROLL_THRESHOLD;
 
   // Memoize handleDelete
   const handleDelete = useCallback(async () => {
@@ -194,18 +193,9 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       </div>
 
       {/* Prompt Content */}
-      <div className={`prompt-detail-content whitespace-pre-wrap bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary select-none overflow-hidden ${needsTruncation && !isExpanded ? 'line-clamp-5' : ''}`}>
+      <div className={`prompt-detail-content whitespace-pre-wrap bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary select-none overflow-hidden ${contentExceedsThreshold ? 'prompt-content-scrollable' : ''}`}>
         {prompt.prompt.content}
       </div>
-      {needsTruncation && (
-        <button
-          type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-primary hover:underline text-sm ml-2 font-medium"
-        >
-          {isExpanded ? 'Show Less' : 'Show More'}
-        </button>
-      )}
 
       {/* Action Buttons */}
       <div className='prompt-detail-actions flex justify-end gap-3'>
