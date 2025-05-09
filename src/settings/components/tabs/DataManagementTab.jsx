@@ -60,7 +60,6 @@ const DataManagementTab = () => {
     updateLoadingState('export', loadingKeyBase, true);
 
     let result;
-    // Notification messages will still be dynamic based on the selection for clarity
     let successMsg = `${currentOptionObject.name} exported successfully!`;
     let failureMsg = `${currentOptionObject.name} export failed`;
 
@@ -140,11 +139,9 @@ const DataManagementTab = () => {
   };
   
   const isAnyOperationLoading = Object.values(loadingStates).some(Boolean);
-  // Static button labels
   const exportButtonLabel = 'Export';
   const importButtonLabel = 'Import';
   
-  // Loading keys are still dynamic to show specific loading state
   const exportLoadingKey = `export-${currentOptionObject.loadingKeyBase}`;
   const importLoadingKey = `import-${currentOptionObject.loadingKeyBase}`;
 
@@ -166,13 +163,12 @@ const DataManagementTab = () => {
         disabled={isAnyOperationLoading}
       />
 
-      {/* This container is now w-1/2 */}
+      {/* Responsive width container as per your last snippet */}
       <div className='mb-6 p-4 bg-theme-surface border border-theme rounded-lg w-full sm:w-2/3 md:w-1/2 lg:w-1/3'>
         <div className='flex flex-row items-center gap-4'>
-            {/* This div for CustomSelect has flex-grow, so it takes available space */}
+            {/* Select wrapper */}
             <div className='flex-grow w-full'>
                 <label htmlFor="data-type-select" className='block text-sm font-medium text-theme-primary mb-2 sr-only'> 
-                  {/* Screen reader only label as visual is clear */}
                   Select Data Type to Manage
                 </label>
                 <CustomSelect
@@ -183,22 +179,23 @@ const DataManagementTab = () => {
                 disabled={isAnyOperationLoading}
                 />
             </div>
+            {/* Buttons wrapper */}
             <div className='flex gap-3 w-full ml-auto'>
                 <Button
                     onClick={executeExport}
                     disabled={isAnyOperationLoading || loadingStates[exportLoadingKey]}
                     variant='secondary'
-                    className='flex-1' // Allow buttons to take available space
+                    className='flex-1'
                 >
-                    {loadingStates[exportLoadingKey] ? 'Exporting...' : exportButtonLabel}
+                    {exportButtonLabel}
                 </Button>
                 <Button
                     onClick={triggerImport}
                     disabled={isAnyOperationLoading || loadingStates[importLoadingKey]}
                     variant='secondary'
-                    className='flex-1' // Allow buttons to take available space
+                    className='flex-1'
                 >
-                    {loadingStates[importLoadingKey] ? 'Importing...' : importButtonLabel}
+                    {importButtonLabel}
                 </Button>
             </div>
         </div>
