@@ -1,112 +1,152 @@
 // src/settings/components/tabs/DataManagementTab.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 
-import { Button, useNotification } from '../../../components';
+import { Button, useNotification, CustomSelect } from '../../../components';
 import userDataService from '../../../services/UserDataService';
 import { STORAGE_KEYS } from '../../../shared/constants';
+import { logger } from '../../../shared/logger';
+
+const DATA_MANAGEMENT_OPTIONS = [
+  {
+    id: 'all',
+    name: 'All Settings',
+    loadingKeyBase: 'all',
+  },
+  {
+    id: 'prompts',
+    name: 'Prompts',
+    storageKey: STORAGE_KEYS.CUSTOM_PROMPTS,
+    fileTypeName: 'Prompts',
+    loadingKeyBase: 'prompts',
+  },
+  {
+    id: 'credentials',
+    name: 'API Credentials',
+    storageKey: STORAGE_KEYS.API_CREDENTIALS,
+    fileTypeName: 'Credentials',
+    loadingKeyBase: 'credentials',
+  },
+  {
+    id: 'advancedSettings',
+    name: 'Model Settings',
+    storageKey: STORAGE_KEYS.API_ADVANCED_SETTINGS,
+    fileTypeName: 'AdvancedSettings',
+    loadingKeyBase: 'advanced',
+  },
+];
 
 const DataManagementTab = () => {
   const { success: showSuccessNotification, error: showErrorNotification } =
     useNotification();
 
-  const [loadingStates, setLoadingStates] = useState({
-    exportAll: false,
-    importAll: false,
-    exportPrompts: false,
-    importPrompts: false,
-    exportCredentials: false,
-    importCredentials: false,
-    exportAdvanced: false,
-    importAdvanced: false,
-  });
+  const [selectedDataType, setSelectedDataType] = useState(DATA_MANAGEMENT_OPTIONS[0].id); // Default to 'all'
+  const [loadingStates, setLoadingStates] = useState({});
 
   const fileInputRef = useRef(null);
-  const currentImportKey = useRef(null); // To know which single import is active
-  const currentImportName = useRef(null); // For single import file type name
+  const currentImportActionDetails = useRef(null);
 
-  const updateLoadingState = (key, isLoading) => {
+  const updateLoadingState = (actionType, dataTypeBase, isLoading) => {
+    const key = `${actionType}-${dataTypeBase}`;
     setLoadingStates((prev) => ({ ...prev, [key]: isLoading }));
   };
 
-  const handleExport = async (exportFunction, loadingKey, successMessage, failureMessage) => {
-    updateLoadingState(loadingKey, true);
-    const result = await exportFunction();
-    if (result.success) {
-      showSuccessNotification(successMessage);
-    } else {
-      showErrorNotification(`${failureMessage}: ${result.error || 'Unknown error'}`);
-    }
-    updateLoadingState(loadingKey, false);
-  };
+  const currentOptionObject = useMemo(() => {
+    return DATA_MANAGEMENT_OPTIONS.find(opt => opt.id === selectedDataType) || DATA_MANAGEMENT_OPTIONS[0];
+  }, [selectedDataType]);
 
-  const handleImportFileSelect = async (event) => {
-    const file = event.target.files[0];
-    const importType = currentImportKey.current; // 'all' or a specific STORAGE_KEYS
-    const loadingKey = importType === 'all' ? 'importAll' : `import${currentImportName.current}`;
-    
-    if (file && importType) {
-      updateLoadingState(loadingKey, true);
-      let result;
-      if (importType === 'all') {
-        result = await userDataService.importAllSettings(file);
+
+  const executeExport = async () => {
+    const { id, storageKey, fileTypeName, loadingKeyBase } = currentOptionObject;
+    updateLoadingState('export', loadingKeyBase, true);
+
+    let result;
+    // Notification messages will still be dynamic based on the selection for clarity
+    let successMsg = `${currentOptionObject.name} exported successfully!`;
+    let failureMsg = `${currentOptionObject.name} export failed`;
+
+    try {
+      if (id === 'all') {
+        result = await userDataService.exportAllSettings();
       } else {
-        result = await userDataService.importSingleSetting(importType, file);
+        result = await userDataService.exportSingleSetting(storageKey, fileTypeName);
       }
 
       if (result.success) {
-        showSuccessNotification(
-          'Settings imported successfully! Page will now reload.'
-        );
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+        showSuccessNotification(successMsg);
       } else {
-        showErrorNotification(
-          `Import failed: ${result.error || 'Invalid file or unknown error'}`
-        );
-        updateLoadingState(loadingKey, false);
+        showErrorNotification(`${failureMsg}: ${result.error || 'Unknown error'}`);
       }
-      // Reset file input value
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    } catch (err) {
+        logger.settings.error(`Export error for ${id}:`, err);
+        showErrorNotification(`${failureMsg}: ${err.message || 'Unexpected error during export'}`);
+        result = { success: false, error: err.message };
     }
-    currentImportKey.current = null; // Reset after use
-    currentImportName.current = null;
+    updateLoadingState('export', loadingKeyBase, false);
   };
 
-  const triggerImportDialog = (importKey, importName = null) => {
-    currentImportKey.current = importKey;
-    currentImportName.current = importName; // e.g., 'Prompts', 'Credentials'
+  const triggerImport = () => {
+    const { id, storageKey, loadingKeyBase } = currentOptionObject;
+    currentImportActionDetails.current = {
+        keyForStorage: id === 'all' ? 'all' : storageKey,
+        nameForLoading: loadingKeyBase
+    };
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  const renderSection = (title, exportHandler, importTrigger, description, exportLoadingKey, importLoadingKey) => (
-    <div className='mb-6 p-4 bg-theme-surface border border-theme rounded-lg'>
-      <h3 className='text-lg font-medium text-theme-primary mb-2'>{title}</h3>
-      <p className='text-xs text-theme-secondary mb-3'>{description}</p>
-      <div className='flex flex-col sm:flex-row gap-3'>
-        <Button
-          onClick={exportHandler}
-          disabled={Object.values(loadingStates).some(Boolean)}
-          variant='secondary'
-          className='flex-1 sm:flex-none'
-        >
-          {loadingStates[exportLoadingKey] ? 'Exporting...' : `Export ${title}`}
-        </Button>
-        <Button
-          onClick={importTrigger}
-          disabled={Object.values(loadingStates).some(Boolean)}
-          variant='secondary'
-          className='flex-1 sm:flex-none'
-        >
-          {loadingStates[importLoadingKey] ? 'Importing...' : `Import ${title}`}
-        </Button>
-      </div>
-    </div>
-  );
+  const handleFileSelectedForImport = async (event) => {
+    const file = event.target.files[0];
+    if (!file || !currentImportActionDetails.current) {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const { keyForStorage, nameForLoading } = currentImportActionDetails.current;
+    updateLoadingState('import', nameForLoading, true);
+
+    let result;
+    try {
+        if (keyForStorage === 'all') {
+            result = await userDataService.importAllSettings(file);
+        } else {
+            result = await userDataService.importSingleSetting(keyForStorage, file);
+        }
+
+        if (result.success) {
+            showSuccessNotification(
+            `${currentOptionObject.name} imported successfully! Page will now reload.`
+            );
+            setTimeout(() => {
+            window.location.reload();
+            }, 1500);
+        } else {
+            showErrorNotification(
+            `Import failed for ${currentOptionObject.name}: ${result.error || 'Invalid file or unknown error'}`
+            );
+            updateLoadingState('import', nameForLoading, false);
+        }
+    } catch (err) {
+        logger.settings.error(`Import file processing error for ${nameForLoading}:`, err);
+        showErrorNotification(`Import failed: ${err.message || 'Error processing file'}`);
+        updateLoadingState('import', nameForLoading, false);
+        result = { success: false, error: err.message };
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    currentImportActionDetails.current = null;
+  };
+  
+  const isAnyOperationLoading = Object.values(loadingStates).some(Boolean);
+  // Static button labels
+  const exportButtonLabel = 'Export';
+  const importButtonLabel = 'Import';
+  
+  // Loading keys are still dynamic to show specific loading state
+  const exportLoadingKey = `export-${currentOptionObject.loadingKeyBase}`;
+  const importLoadingKey = `import-${currentOptionObject.loadingKeyBase}`;
 
   return (
     <div>
@@ -121,46 +161,48 @@ const DataManagementTab = () => {
         type='file'
         ref={fileInputRef}
         accept='.json'
-        onChange={handleImportFileSelect}
+        onChange={handleFileSelectedForImport}
         style={{ display: 'none' }}
-        disabled={Object.values(loadingStates).some(Boolean)}
+        disabled={isAnyOperationLoading}
       />
 
-        {renderSection(
-          "All Settings",
-          () => handleExport(() => userDataService.exportAllSettings(), 'exportAll', 'All settings exported!', 'Export failed'),
-          () => triggerImportDialog('all'),
-          "Includes Prompts, API Credentials, and Advanced Model Settings.",
-          'exportAll',
-          'importAll'
-        )}
-
-      {renderSection(
-        "Prompts",
-        () => handleExport(() => userDataService.exportSingleSetting(STORAGE_KEYS.CUSTOM_PROMPTS, 'Prompts'), 'exportPrompts', 'Prompts exported!', 'Prompt export failed'),
-        () => triggerImportDialog(STORAGE_KEYS.CUSTOM_PROMPTS, 'Prompts'),
-        "Manages only your custom prompts.",
-        'exportPrompts',
-        'importPrompts'
-      )}
-
-      {renderSection(
-        "API Credentials",
-        () => handleExport(() => userDataService.exportSingleSetting(STORAGE_KEYS.API_CREDENTIALS, 'Credentials'), 'exportCredentials', 'API Credentials exported!', 'Credential export failed'),
-        () => triggerImportDialog(STORAGE_KEYS.API_CREDENTIALS, 'Credentials'),
-        "Manages only your stored API keys.",
-        'exportCredentials',
-        'importCredentials'
-      )}
-
-      {renderSection(
-        "Advanced Settings",
-        () => handleExport(() => userDataService.exportSingleSetting(STORAGE_KEYS.API_ADVANCED_SETTINGS, 'AdvancedSettings'), 'exportAdvanced', 'Advanced Settings exported!', 'Advanced settings export failed'),
-        () => triggerImportDialog(STORAGE_KEYS.API_ADVANCED_SETTINGS, 'AdvancedSettings'),
-        "Manages only your customized model parameters for APIs.",
-        'exportAdvanced',
-        'importAdvanced'
-      )}
+      {/* This container is now w-1/2 */}
+      <div className='mb-6 p-4 bg-theme-surface border border-theme rounded-lg w-full sm:w-2/3 md:w-1/2 lg:w-1/3'>
+        <div className='flex flex-row items-center gap-4'>
+            {/* This div for CustomSelect has flex-grow, so it takes available space */}
+            <div className='flex-grow w-full'>
+                <label htmlFor="data-type-select" className='block text-sm font-medium text-theme-primary mb-2 sr-only'> 
+                  {/* Screen reader only label as visual is clear */}
+                  Select Data Type to Manage
+                </label>
+                <CustomSelect
+                id="data-type-select"
+                options={DATA_MANAGEMENT_OPTIONS.map(opt => ({ id: opt.id, name: opt.name }))}
+                selectedValue={selectedDataType}
+                onChange={setSelectedDataType}
+                disabled={isAnyOperationLoading}
+                />
+            </div>
+            <div className='flex gap-3 w-full ml-auto'>
+                <Button
+                    onClick={executeExport}
+                    disabled={isAnyOperationLoading || loadingStates[exportLoadingKey]}
+                    variant='secondary'
+                    className='flex-1' // Allow buttons to take available space
+                >
+                    {loadingStates[exportLoadingKey] ? 'Exporting...' : exportButtonLabel}
+                </Button>
+                <Button
+                    onClick={triggerImport}
+                    disabled={isAnyOperationLoading || loadingStates[importLoadingKey]}
+                    variant='secondary'
+                    className='flex-1' // Allow buttons to take available space
+                >
+                    {loadingStates[importLoadingKey] ? 'Importing...' : importButtonLabel}
+                </Button>
+            </div>
+        </div>
+      </div>
     </div>
   );
 };
