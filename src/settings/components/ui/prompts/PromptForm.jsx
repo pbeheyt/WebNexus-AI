@@ -170,8 +170,10 @@ const PromptForm = ({
 
       // Check prompt count limit for new prompts
       if (!isEditing) {
-        const existingPromptsForType = customPromptsByType[contentType]?.prompts || {};
-        const currentPromptCount = Object.keys(existingPromptsForType).length;
+        const typeData = customPromptsByType[contentType] || {};
+        // Filter out the _defaultPromptId_ key before counting actual prompts
+        const actualPromptsInType = Object.keys(typeData).filter(key => key !== '_defaultPromptId_');
+        const currentPromptCount = actualPromptsInType.length;
         if (currentPromptCount >= MAX_PROMPTS_PER_TYPE) {
           error(`Cannot add more than ${MAX_PROMPTS_PER_TYPE} prompts for ${CONTENT_TYPE_LABELS[contentType] || contentType}.`);
           setIsSaving(false);
@@ -240,7 +242,7 @@ const PromptForm = ({
         success('Prompt updated successfully');
       } else {
         // Create new prompt
-        currentPromptId = 'prompt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        currentPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         promptObjectToSave.createdAt = promptObjectToSave.updatedAt;
 
         // Save the new prompt
