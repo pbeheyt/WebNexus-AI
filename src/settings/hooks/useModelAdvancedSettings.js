@@ -9,28 +9,31 @@ import {
 } from '../utils/modelSettingsHelper';
 import { MAX_SYSTEM_PROMPT_LENGTH } from '../../shared/constants';
 import { useNotification } from '../../components/feedback/NotificationContext';
-
+import useMinimumLoadingTime from '../../hooks/useMinimumLoadingTime';
 
 export function useModelAdvancedSettings({
-  platform, // Full platform config object
+  platform,
   selectedModelId,
-  advancedSettingsForPlatform, // User's advanced settings for THIS platform from storage
-  onSave, // Prop: async (platformId, modelId, mode, settingsToSave) => Promise<boolean>
-  onReset, // Prop: async (platformId, modelId, mode) => Promise<boolean>
-  // showNotificationError is implicitly available via useNotification hook
+  advancedSettingsForPlatform,
+  onSave,
+  onReset,
 }) {
   const { error: showNotificationError } = useNotification();
   const [currentEditingMode, setCurrentEditingMode] = useState('base');
   const [formValues, setFormValues] = useState({});
-  const [originalValues, setOriginalValues] = useState({}); // To track changes from last saved/loaded state
+  const [originalValues, setOriginalValues] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
-  const [isAtDefaults, setIsAtDefaults] = useState(true); // Compared to config file defaults
-  const [isSaving, setIsSaving] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const [isAtDefaults, setIsAtDefaults] = useState(true);
+  
+  const [isSavingActual, setIsSavingActual] = useState(false);
+  const [isResettingActual, setIsResettingActual] = useState(false);
+  
+  const shouldShowSaving = useMinimumLoadingTime(isSavingActual);
+  const shouldShowResetting = useMinimumLoadingTime(isResettingActual);
+
   const [isAnimatingReset, setIsAnimatingReset] = useState(false);
   const [isFormReady, setIsFormReady] = useState(false);
 
-  // Reset editing mode when the selected model changes
   useEffect(() => {
     setCurrentEditingMode('base');
   }, [selectedModelId]);
@@ -47,12 +50,10 @@ export function useModelAdvancedSettings({
             logger.settings.warn(`useModelAdvancedSettings: No valid model found for platform ${platform.id}. Cannot derive settings.`);
             return null;
         }
-        // Note: This won't automatically change selectedModelId in PlatformDetails,
-        // but prevents errors here. PlatformDetails should handle setting a valid initial selectedModelId.
         logger.settings.info(`useModelAdvancedSettings: selectedModelId '${selectedModelId}' invalid or not found, attempting to use first model '${firstModelId}' for derivation for platform ${platform.id}.`);
          return getDerivedModelSettings({
            platformApiConfig: platform.apiConfig,
-           modelId: firstModelId, // Use first valid model as a fallback for derivation
+           modelId: firstModelId,
            editingMode: currentEditingMode,
            modelsFromPlatform,
          });
@@ -71,25 +72,20 @@ export function useModelAdvancedSettings({
     modelsFromPlatform,
   ]);
 
-  // Initialize and update formValues and originalValues
   useEffect(() => {
-    setIsFormReady(false); // Reset readiness on dependency change
+    setIsFormReady(false);
     if (!derivedSettings || !selectedModelId) {
       setFormValues({});
       setOriginalValues({});
-      // logger.settings.info('useModelAdvancedSettings: derivedSettings or selectedModelId is null, resetting formValues.');
-      setIsFormReady(true); // Set ready even if resetting, to allow UI to clear
+      setIsFormReady(true);
       return;
     }
 
     const { defaultSettings: configDefaults } = derivedSettings;
-
     let userStoredSettingsForModelMode = {};
     if (advancedSettingsForPlatform?.models?.[selectedModelId]?.[currentEditingMode]) {
       userStoredSettingsForModelMode = advancedSettingsForPlatform.models[selectedModelId][currentEditingMode];
     }
-    // No more fallback to platform.default from storage here
-
 
     const initialFormValues = {
       maxTokens: userStoredSettingsForModelMode.maxTokens ?? configDefaults.maxTokens,
@@ -110,14 +106,11 @@ export function useModelAdvancedSettings({
         }
     });
 
-
     setFormValues(initialFormValues);
-    setOriginalValues({ ...initialFormValues }); // Base comparison against this merged state
-    setIsFormReady(true); // Mark form as ready after values are set
+    setOriginalValues({ ...initialFormValues });
+    setIsFormReady(true);
   }, [selectedModelId, currentEditingMode, platform.apiConfig, platform.id, advancedSettingsForPlatform, derivedSettings]);
 
-
-  // Effect to update hasChanges and isAtDefaults whenever formValues, originalValues, or derivedSettings change
   useEffect(() => {
     if (!derivedSettings) {
       setHasChanges(false);
@@ -130,7 +123,6 @@ export function useModelAdvancedSettings({
       checkAreFormValuesAtDefaults(formValues, configDefaults, capabilities, platform.apiConfig)
     );
   }, [formValues, originalValues, derivedSettings, platform.apiConfig]);
-
 
   const handleChange = useCallback(
     (name, newValue) => {
@@ -152,9 +144,9 @@ export function useModelAdvancedSettings({
           const allowed = paramSpec?.allowedValues ?? [];
           updatedValues[name] = (newValue === '' || newValue === null || !allowed.includes(newValue)) ? null : newValue;
         } else if (name === 'includeTemperature' || name === 'includeTopP') {
-          updatedValues[name] = newValue; // Boolean toggle
+          updatedValues[name] = newValue;
         } else {
-          updatedValues[name] = newValue; // systemPrompt and other strings
+          updatedValues[name] = newValue;
         }
         return updatedValues;
       });
@@ -168,19 +160,17 @@ export function useModelAdvancedSettings({
         showNotificationError('Cannot save: Model configuration not fully loaded.');
         return;
     }
-    setIsSaving(true);
+    setIsSavingActual(true);
 
     const { parameterSpecs, capabilities } = derivedSettings;
 
     try {
-      // Validation
       if (formValues.maxTokens === null || formValues.maxTokens === undefined || isNaN(formValues.maxTokens)) {
         throw new Error('Max Tokens is required and must be a number.');
       }
       if (formValues.maxTokens < parameterSpecs.maxTokens.min || formValues.maxTokens > parameterSpecs.maxTokens.max) {
         throw new Error(`Max tokens must be between ${parameterSpecs.maxTokens.min} and ${parameterSpecs.maxTokens.max}.`);
       }
-
       if (capabilities.supportsTemperature !== false && formValues.includeTemperature) {
         if (formValues.temperature === null || formValues.temperature === undefined || isNaN(formValues.temperature)) {
           throw new Error('Temperature is required when enabled and must be a number.');
@@ -189,7 +179,6 @@ export function useModelAdvancedSettings({
           throw new Error(`Temperature must be between ${parameterSpecs.temperature.min} and ${parameterSpecs.temperature.max}.`);
         }
       }
-
       if (capabilities.supportsTopP === true && formValues.includeTopP) {
          if (formValues.topP === null || formValues.topP === undefined || isNaN(formValues.topP)) {
            throw new Error('Top P is required when enabled and must be a number.');
@@ -198,11 +187,9 @@ export function useModelAdvancedSettings({
           throw new Error(`Top P must be between ${parameterSpecs.topP.min} and ${parameterSpecs.topP.max}.`);
         }
       }
-      
       if (platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false && capabilities.supportsSystemPrompt !== false && formValues.systemPrompt && formValues.systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
         throw new Error(`System Prompt cannot exceed ${MAX_SYSTEM_PROMPT_LENGTH} characters.`);
       }
-
       if (parameterSpecs.thinkingBudget) {
           if(formValues.thinkingBudget === null || formValues.thinkingBudget === undefined || isNaN(formValues.thinkingBudget)) {
             throw new Error('Thinking Budget is required and must be a number.');
@@ -231,14 +218,13 @@ export function useModelAdvancedSettings({
       logger.settings.error('Error saving advanced settings in hook:', err);
       showNotificationError(err.message || 'An unknown error occurred during save.');
     } finally {
-      setIsSaving(false);
+      setIsSavingActual(false);
     }
   }, [formValues, platform, selectedModelId, currentEditingMode, onSave, derivedSettings, showNotificationError]);
 
-
   const handleResetClick = useCallback(async () => {
     if (isAtDefaults || !derivedSettings || !selectedModelId) return;
-    setIsResetting(true);
+    setIsResettingActual(true);
     setIsAnimatingReset(true);
 
     try {
@@ -252,8 +238,8 @@ export function useModelAdvancedSettings({
         logger.settings.error('Error resetting settings in hook:', err);
         showNotificationError('Failed to reset settings.');
     } finally {
-      setIsResetting(false);
-      setTimeout(() => setIsAnimatingReset(false), 500);
+      setIsResettingActual(false);
+      setTimeout(() => setIsAnimatingReset(false), 500); // Animation duration
     }
   }, [isAtDefaults, platform.id, selectedModelId, currentEditingMode, onReset, derivedSettings, showNotificationError]);
   
@@ -287,8 +273,8 @@ export function useModelAdvancedSettings({
     handleSubmit,
     handleResetClick,
     toggleEditingMode,
-    isSaving,
-    isResetting,
+    isSaving: shouldShowSaving, // Use derived state for UI
+    isResetting: shouldShowResetting, // Use derived state for UI
     isAnimatingReset,
     hasChanges,
     isAtDefaults,

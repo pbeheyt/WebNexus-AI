@@ -46,6 +46,7 @@ export { OutputTokenIcon } from './icons/OutputTokenIcon';
 export { ContextWindowIcon } from './icons/ContextWindowIcon';
 export { FreeTierIcon } from './icons/FreeTierIcon';
 export { ScrollDownIcon } from './icons/ScrollDownIcon';
+export { SpinnerIcon } from './icons/SpinnerIcon';
 export { NoCredentialsIcon } from './icons/NoCredentialsIcon';
 export { ErrorIcon } from './icons/ErrorIcon';
 

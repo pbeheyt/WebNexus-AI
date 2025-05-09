@@ -12,7 +12,6 @@ import {
   CustomSelect,
 } from '../../../../components';
 import { useModelAdvancedSettings } from '../../../hooks/useModelAdvancedSettings';
-// import { logger } from '../../../../shared/logger'; // Logger can be removed if not used
 
 const AdvancedSettings = ({
   platform,
@@ -87,10 +86,11 @@ const AdvancedSettings = ({
         </h3>
         <IconButton
           icon={RefreshIcon}
-          iconClassName={`w-6 h-6 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''}`}
+          iconClassName={`w-6 h-6 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
           onClick={handleResetClick}
-          disabled={isAtDefaults || isResetting}
+          isLoading={isResetting}
+          disabled={isAtDefaults || isResetting || isSaving}
           ariaLabel='Reset settings to configuration defaults'
           title='Reset settings to configuration defaults'
         />
@@ -341,7 +341,8 @@ const AdvancedSettings = ({
         <div className='form-actions flex justify-end'>
           <Button
             type='submit'
-            disabled={isSaving || !hasChanges || isResetting}
+            isLoading={isSaving}
+            disabled={isSaving || isResetting || !hasChanges}
             variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
             className='px-5 py-2 select-none'
           >

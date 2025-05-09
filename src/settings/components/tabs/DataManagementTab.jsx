@@ -5,6 +5,7 @@ import { Button, useNotification, CustomSelect } from '../../../components';
 import userDataService from '../../../services/UserDataService';
 import { STORAGE_KEYS } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
+import useMinimumLoadingTime from '../../../hooks/useMinimumLoadingTime';
 
 const DATA_MANAGEMENT_OPTIONS = [
   {
@@ -39,25 +40,26 @@ const DataManagementTab = () => {
   const { success: showSuccessNotification, error: showErrorNotification } =
     useNotification();
 
-  const [selectedDataType, setSelectedDataType] = useState(DATA_MANAGEMENT_OPTIONS[0].id); // Default to 'all'
-  const [loadingStates, setLoadingStates] = useState({});
+  const [selectedDataType, setSelectedDataType] = useState(DATA_MANAGEMENT_OPTIONS[0].id);
+  
+  // Store actual processing state
+  const [isExportingActual, setIsExportingActual] = useState(false);
+  const [isImportingActual, setIsImportingActual] = useState(false);
+
+  // Derive UI loading state with minimum duration
+  const shouldShowExportLoading = useMinimumLoadingTime(isExportingActual);
+  const shouldShowImportLoading = useMinimumLoadingTime(isImportingActual);
 
   const fileInputRef = useRef(null);
   const currentImportActionDetails = useRef(null);
-
-  const updateLoadingState = (actionType, dataTypeBase, isLoading) => {
-    const key = `${actionType}-${dataTypeBase}`;
-    setLoadingStates((prev) => ({ ...prev, [key]: isLoading }));
-  };
 
   const currentOptionObject = useMemo(() => {
     return DATA_MANAGEMENT_OPTIONS.find(opt => opt.id === selectedDataType) || DATA_MANAGEMENT_OPTIONS[0];
   }, [selectedDataType]);
 
-
   const executeExport = async () => {
-    const { id, storageKey, fileTypeName, loadingKeyBase } = currentOptionObject;
-    updateLoadingState('export', loadingKeyBase, true);
+    const { id, storageKey, fileTypeName } = currentOptionObject;
+    setIsExportingActual(true);
 
     let result;
     let successMsg = `${currentOptionObject.name} exported successfully!`;
@@ -80,14 +82,14 @@ const DataManagementTab = () => {
         showErrorNotification(`${failureMsg}: ${err.message || 'Unexpected error during export'}`);
         result = { success: false, error: err.message };
     }
-    updateLoadingState('export', loadingKeyBase, false);
+    setIsExportingActual(false);
   };
 
   const triggerImport = () => {
-    const { id, storageKey, loadingKeyBase } = currentOptionObject;
+    const { id, storageKey } = currentOptionObject;
     currentImportActionDetails.current = {
         keyForStorage: id === 'all' ? 'all' : storageKey,
-        nameForLoading: loadingKeyBase
+        nameForLoading: currentOptionObject.loadingKeyBase
     };
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -102,7 +104,7 @@ const DataManagementTab = () => {
     }
 
     const { keyForStorage, nameForLoading } = currentImportActionDetails.current;
-    updateLoadingState('import', nameForLoading, true);
+    setIsImportingActual(true);
 
     let result;
     try {
@@ -119,16 +121,17 @@ const DataManagementTab = () => {
             setTimeout(() => {
             window.location.reload();
             }, 1500);
+            // setIsImportingActual will be set to false by the page reload or timeout if error
         } else {
             showErrorNotification(
             `Import failed for ${currentOptionObject.name}: ${result.error || 'Invalid file or unknown error'}`
             );
-            updateLoadingState('import', nameForLoading, false);
+            setIsImportingActual(false);
         }
     } catch (err) {
         logger.settings.error(`Import file processing error for ${nameForLoading}:`, err);
         showErrorNotification(`Import failed: ${err.message || 'Error processing file'}`);
-        updateLoadingState('import', nameForLoading, false);
+        setIsImportingActual(false);
         result = { success: false, error: err.message };
     }
 
@@ -138,13 +141,10 @@ const DataManagementTab = () => {
     currentImportActionDetails.current = null;
   };
   
-  const isAnyOperationLoading = Object.values(loadingStates).some(Boolean);
+  const isAnyOperationLoadingForUI = shouldShowExportLoading || shouldShowImportLoading;
   const exportButtonLabel = 'Export';
   const importButtonLabel = 'Import';
   
-  const exportLoadingKey = `export-${currentOptionObject.loadingKeyBase}`;
-  const importLoadingKey = `import-${currentOptionObject.loadingKeyBase}`;
-
   return (
     <div>
       <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium select-none'>
@@ -160,13 +160,11 @@ const DataManagementTab = () => {
         accept='.json'
         onChange={handleFileSelectedForImport}
         style={{ display: 'none' }}
-        disabled={isAnyOperationLoading}
+        disabled={isAnyOperationLoadingForUI}
       />
 
-      {/* Responsive width container as per your last snippet */}
       <div className='mb-6 p-4 bg-theme-surface border border-theme rounded-lg w-full sm:w-2/3 md:w-1/2 lg:w-1/3'>
         <div className='flex flex-row items-center gap-4'>
-            {/* Select wrapper */}
             <div className='flex-grow w-full'>
                 <label htmlFor="data-type-select" className='block text-sm font-medium text-theme-primary mb-2 sr-only'> 
                   Select Data Type to Manage
@@ -176,14 +174,14 @@ const DataManagementTab = () => {
                 options={DATA_MANAGEMENT_OPTIONS.map(opt => ({ id: opt.id, name: opt.name }))}
                 selectedValue={selectedDataType}
                 onChange={setSelectedDataType}
-                disabled={isAnyOperationLoading}
+                disabled={isAnyOperationLoadingForUI}
                 />
             </div>
-            {/* Buttons wrapper */}
             <div className='flex gap-3 w-full ml-auto'>
                 <Button
                     onClick={executeExport}
-                    disabled={isAnyOperationLoading || loadingStates[exportLoadingKey]}
+                    disabled={isAnyOperationLoadingForUI}
+                    isLoading={shouldShowExportLoading}
                     variant='secondary'
                     className='flex-1'
                 >
@@ -191,7 +189,8 @@ const DataManagementTab = () => {
                 </Button>
                 <Button
                     onClick={triggerImport}
-                    disabled={isAnyOperationLoading || loadingStates[importLoadingKey]}
+                    disabled={isAnyOperationLoadingForUI}
+                    isLoading={shouldShowImportLoading}
                     variant='secondary'
                     className='flex-1'
                 >
