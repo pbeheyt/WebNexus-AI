@@ -119,7 +119,7 @@
 /* Utility classes */
 @layer utilities {
   .prompt-content-scrollable {
-    max-height: 12rem;
+    max-height: 300px;
     overflow-y: auto;
   }
 

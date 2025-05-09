@@ -353,7 +353,7 @@ const PromptForm = ({
         <textarea
           id='content'
           name='content'
-          className='w-full p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md min-h-[220px] focus-primary break-words'
+          className='w-full p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md focus-primary break-words h-[300px] overflow-y-auto'
           placeholder='Enter your prompt content here...'
           value={formData.content}
           onChange={handleChange}
