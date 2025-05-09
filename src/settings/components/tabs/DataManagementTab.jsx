@@ -1,4 +1,3 @@
-// src/settings/components/tabs/DataManagementTab.jsx
 import React, { useState, useRef, useMemo } from 'react';
 
 import { Button, useNotification, CustomSelect } from '../../../components';
@@ -142,8 +141,9 @@ const DataManagementTab = () => {
   };
   
   const isAnyOperationLoadingForUI = shouldShowExportLoading || shouldShowImportLoading;
-  const exportButtonLabel = 'Export';
-  const importButtonLabel = 'Import';
+  
+  const exportButtonLabel = shouldShowExportLoading ? 'Exporting...' : 'Export Settings';
+  const importButtonLabel = shouldShowImportLoading ? 'Importing...' : 'Import Settings';
   
   return (
     <div>
@@ -163,9 +163,9 @@ const DataManagementTab = () => {
         disabled={isAnyOperationLoadingForUI}
       />
 
-      <div className='mb-6 p-4 bg-theme-surface border border-theme rounded-lg w-full sm:w-2/3 md:w-1/2 lg:w-1/3'>
-        <div className='flex flex-row items-center gap-4'>
-            <div className='flex-grow w-full'>
+      <div className='mb-6 p-4 bg-theme-surface border border-theme rounded-lg w-full sm:w-3/4 md:w-2/3 lg:w-1/2'>
+        <div className='flex flex-row items-center gap-2'>
+            <div className='w-60'> 
                 <label htmlFor="data-type-select" className='block text-sm font-medium text-theme-primary mb-2 sr-only'> 
                   Select Data Type to Manage
                 </label>
@@ -177,7 +177,7 @@ const DataManagementTab = () => {
                 disabled={isAnyOperationLoadingForUI}
                 />
             </div>
-            <div className='flex gap-3 w-full ml-auto'>
+            <div className='flex flex-grow gap-3'>
                 <Button
                     onClick={executeExport}
                     disabled={isAnyOperationLoadingForUI}
