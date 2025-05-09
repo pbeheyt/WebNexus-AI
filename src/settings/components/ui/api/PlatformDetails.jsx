@@ -24,6 +24,7 @@ const PlatformDetails = ({
   const [showApiKey, setShowApiKey] = useState(false);
   
   const [isSavingApiKeyActual, setIsSavingApiKeyActual] = useState(false);
+  const [isRemovingApiKeyActual, setIsRemovingApiKeyActual] = useState(false);
         const shouldShowApiKeySaving = useMinimumLoadingTime(isSavingApiKeyActual, 1000);
   
   const [selectedModelId, setSelectedModelId] = useState(
@@ -80,14 +81,14 @@ const PlatformDetails = ({
     ) {
       return;
     }
-    setIsSavingApiKeyActual(true); // Visually disable buttons during removal too
+    setIsRemovingApiKeyActual(true); // Visually disable buttons during removal too
     const success = await removeApiKeyAction(platform.id);
     if (success) {
       setApiKey('');
       setOriginalApiKey('');
       setHasApiKeyChanges(false);
     }
-    setIsSavingApiKeyActual(false);
+    setIsRemovingApiKeyActual(false);
   };
 
   const handleModelSelect = (modelId) => {
@@ -151,24 +152,44 @@ const PlatformDetails = ({
         </div>
         <div className='form-actions flex justify-end gap-3'>
           {credentials && (
-            <Button
-              variant='danger'
-              onClick={handleRemoveCredentials}
-              className='select-none'
-          isLoading={isSavingApiKeyActual} // Changed from shouldShowApiKeySaving
-          disabled={isSavingApiKeyActual}  // Changed from shouldShowApiKeySaving
-            >
-              Remove Key
-            </Button>
+          <Button
+            variant='danger'
+            onClick={handleRemoveCredentials}
+            className='select-none'
+            isLoading={isRemovingApiKeyActual}
+            loadingText="Removing..."
+            disabled={
+              isRemovingApiKeyActual || // If actual remove op is in progress
+              shouldShowApiKeySaving || // Or if UI is showing saving (min time for save op)
+              !credentials // Or if there's no key to remove
+            }
+          >
+            Remove Key
+          </Button>
           )}
           <Button
             onClick={handleSaveCredentials}
             isLoading={shouldShowApiKeySaving}
-            disabled={shouldShowApiKeySaving || !hasApiKeyChanges}
-            variant={!hasApiKeyChanges ? 'inactive' : 'primary'}
+            loadingText="Saving..."
+            disabled={
+              shouldShowApiKeySaving || // If UI is showing saving (min time for save op)
+              isRemovingApiKeyActual || // Or if actual remove op is in progress
+              (!isSavingApiKeyActual && // Or, if actual saving is done (and not in remove op)
+                ((credentials && !hasApiKeyChanges) || // and it's update mode with no changes
+                (!credentials && !apiKey.trim())))     // or save mode with empty input
+            }
+            variant={
+              (isRemovingApiKeyActual || // If remove is actually happening
+              (!shouldShowApiKeySaving && // OR if save UI loading is done
+                !isSavingApiKeyActual && // AND actual save is done
+                ((credentials && !hasApiKeyChanges) || // AND (update mode with no changes
+                (!credentials && !apiKey.trim()))))     // OR save mode with empty input))
+              ? 'inactive'
+              : 'primary'
+            }
             className='select-none'
           >
-            {isSavingApiKeyActual ? 'Saving...' : credentials ? 'Update Key' : 'Save Key'}
+            {(credentials ? 'Update Key' : 'Save Key')}
           </Button>
         </div>
       </div>
