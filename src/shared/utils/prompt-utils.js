@@ -4,13 +4,13 @@ import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
 
 /**
  * Ensures that every content type with at least one prompt has a valid default prompt assigned.
- * Uses the new _defaultPromptId_ key within the CUSTOM_PROMPTS structure.
+ * Uses the new _defaultPromptId_ key within the PROMPTS structure.
  * @returns {Promise<boolean>} True if changes were made, false otherwise.
  */
 export async function ensureDefaultPrompts() {
   try {
-    const promptsResult = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-    const customPromptsByType = promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+    const promptsResult = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
+    const customPromptsByType = promptsResult[STORAGE_KEYS.PROMPTS] || {};
     let changesMade = false;
 
     for (const contentType of Object.values(CONTENT_TYPES)) {
@@ -57,8 +57,8 @@ export async function ensureDefaultPrompts() {
     }
 
     if (changesMade) {
-      await chrome.storage.local.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
-      logger.service.info('CUSTOM_PROMPTS updated by ensureDefaultPrompts.');
+      await chrome.storage.local.set({ [STORAGE_KEYS.PROMPTS]: customPromptsByType });
+      logger.service.info('PROMPTS updated by ensureDefaultPrompts.');
     }
     return changesMade;
   } catch (error) {
@@ -75,8 +75,8 @@ export async function ensureDefaultPrompts() {
  */
 export async function loadRelevantPrompts(contentType) {
   try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-    const promptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+    const result = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
+    const promptsByType = result[STORAGE_KEYS.PROMPTS] || {};
 
     // Get prompts for the requested type
     const typePromptsData = promptsByType[contentType] || {}; // Ensure typePromptsData is what was typePromptsObj

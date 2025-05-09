@@ -30,10 +30,10 @@ async function populateInitialPromptsAndSetDefaults() {
     }
     const defaultPromptsConfig = await response.json();
 
-    const customPromptsStorage = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-    // Initialize with an empty object if storage is empty or corrupt for CUSTOM_PROMPTS
-    const newCustomPromptsStructure = customPromptsStorage[STORAGE_KEYS.CUSTOM_PROMPTS] && typeof customPromptsStorage[STORAGE_KEYS.CUSTOM_PROMPTS] === 'object' 
-                                      ? { ...customPromptsStorage[STORAGE_KEYS.CUSTOM_PROMPTS] } 
+    const customPromptsStorage = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
+    // Initialize with an empty object if storage is empty or corrupt for PROMPTS
+    const newCustomPromptsStructure = customPromptsStorage[STORAGE_KEYS.PROMPTS] && typeof customPromptsStorage[STORAGE_KEYS.PROMPTS] === 'object' 
+                                      ? { ...customPromptsStorage[STORAGE_KEYS.PROMPTS] } 
                                       : {};
 
     let promptsAddedOrDefaultsChanged = false;
@@ -98,10 +98,10 @@ async function populateInitialPromptsAndSetDefaults() {
     }
 
     if (promptsAddedOrDefaultsChanged) {
-      await chrome.storage.local.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: newCustomPromptsStructure });
-      logger.background.info('Successfully populated initial prompts and set defaults into CUSTOM_PROMPTS.');
+      await chrome.storage.local.set({ [STORAGE_KEYS.PROMPTS]: newCustomPromptsStructure });
+      logger.background.info('Successfully populated initial prompts and set defaults into PROMPTS.');
     } else {
-      logger.background.info('No new initial prompts needed or defaults to set in CUSTOM_PROMPTS.');
+      logger.background.info('No new initial prompts needed or defaults to set in PROMPTS.');
     }
     
     await chrome.storage.local.set({ [flagKey]: true });

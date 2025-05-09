@@ -100,9 +100,9 @@ class ModelParameterService {
   async getUserModelSettings(platformId, modelId) {
     try {
       const result = await chrome.storage.local.get(
-        STORAGE_KEYS.API_ADVANCED_SETTINGS
+        STORAGE_KEYS.API_MODEL_PARAMETERS
       );
-      const advancedSettings = result[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
+      const advancedSettings = result[STORAGE_KEYS.API_MODEL_PARAMETERS] || {};
 
       // Get platform settings
       const platformSettings = advancedSettings[platformId] || {};
@@ -246,8 +246,8 @@ class ModelParameterService {
 
 
       // Get user settings for this model using the provided modelId
-      const advancedSettingsResult = await chrome.storage.local.get(STORAGE_KEYS.API_ADVANCED_SETTINGS);
-      const allAdvancedSettings = advancedSettingsResult[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {};
+      const advancedSettingsResult = await chrome.storage.local.get(STORAGE_KEYS.API_MODEL_PARAMETERS);
+      const allAdvancedSettings = advancedSettingsResult[STORAGE_KEYS.API_MODEL_PARAMETERS] || {};
       const platformSettings = allAdvancedSettings[platformId] || {}; // Get settings for the specific platform
 
       // Get the mode-specific settings

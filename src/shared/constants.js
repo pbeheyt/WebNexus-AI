@@ -45,12 +45,12 @@ export const STORAGE_KEYS = {
   SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
 
   // Settings
-  API_ADVANCED_SETTINGS: 'api_advanced_settings',
+  API_MODEL_PARAMETERS: 'api_model_parameters',
   API_CREDENTIALS: 'api_credentials',
 
   // Prompt
   PRE_PROMPT: 'prePrompt',
-  CUSTOM_PROMPTS: 'custom_prompts_by_type',
+  PROMPTS: 'prompts',
   INITIAL_PROMPTS_POPULATED: 'initial_prompts_populated',
 
   // Content

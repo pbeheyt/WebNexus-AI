@@ -67,7 +67,7 @@ class UserDataService {
                  throw new Error('Data for single setting import must be an object.');
             }
             await chrome.storage.local.set({ [storageKey]: parsedJson.data || {} });
-            if (storageKey === STORAGE_KEYS.CUSTOM_PROMPTS) {
+            if (storageKey === STORAGE_KEYS.PROMPTS) {
               await ensureDefaultPrompts();
             }
           } else { // All settings import
@@ -82,9 +82,9 @@ class UserDataService {
               );
             }
             await chrome.storage.local.set({
-              [STORAGE_KEYS.CUSTOM_PROMPTS]: prompts || {},
+              [STORAGE_KEYS.PROMPTS]: prompts || {},
               [STORAGE_KEYS.API_CREDENTIALS]: credentials || {},
-              [STORAGE_KEYS.API_ADVANCED_SETTINGS]: advancedSettings || {},
+              [STORAGE_KEYS.API_MODEL_PARAMETERS]: advancedSettings || {},
             });
             await ensureDefaultPrompts();
           }
@@ -109,15 +109,15 @@ class UserDataService {
 
   async exportAllSettings() {
     const keysToExport = [
-      STORAGE_KEYS.CUSTOM_PROMPTS,
+      STORAGE_KEYS.PROMPTS,
       STORAGE_KEYS.API_CREDENTIALS,
-      STORAGE_KEYS.API_ADVANCED_SETTINGS,
+      STORAGE_KEYS.API_MODEL_PARAMETERS,
     ];
     const storedData = await chrome.storage.local.get(keysToExport);
     const dataBundle = {
-      prompts: storedData[STORAGE_KEYS.CUSTOM_PROMPTS] || {},
+      prompts: storedData[STORAGE_KEYS.PROMPTS] || {},
       credentials: storedData[STORAGE_KEYS.API_CREDENTIALS] || {},
-      advancedSettings: storedData[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {},
+      advancedSettings: storedData[STORAGE_KEYS.API_MODEL_PARAMETERS] || {},
     };
     return this._handleExport(dataBundle, 'WebNexusAI-AllSettings', 'all');
   }
@@ -137,9 +137,9 @@ class UserDataService {
   async importSingleSetting(storageKey, fileObject) {
     // Determine settingNameFromFileAndType based on storageKey for dataType validation
     let settingNameForType;
-    if (storageKey === STORAGE_KEYS.CUSTOM_PROMPTS) settingNameForType = 'Prompts';
+    if (storageKey === STORAGE_KEYS.PROMPTS) settingNameForType = 'Prompts';
     else if (storageKey === STORAGE_KEYS.API_CREDENTIALS) settingNameForType = 'Credentials';
-    else if (storageKey === STORAGE_KEYS.API_ADVANCED_SETTINGS) settingNameForType = 'AdvancedSettings';
+    else if (storageKey === STORAGE_KEYS.API_MODEL_PARAMETERS) settingNameForType = 'AdvancedSettings';
     else throw new Error('Invalid storage key for single import.');
     
     const expectedDataType = `WebNexusAI-${settingNameForType}`;

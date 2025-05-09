@@ -82,7 +82,7 @@ const AdvancedSettings = ({
     <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
       <div className='flex justify-between items-center mb-6'>
         <h3 className='section-title text-xl font-semibold text-theme-primary select-none'>
-          Advanced Settings
+          Model Parameters
         </h3>
         <IconButton
           icon={RefreshIcon}

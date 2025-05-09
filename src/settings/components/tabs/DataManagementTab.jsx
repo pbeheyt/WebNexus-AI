@@ -15,7 +15,7 @@ const DATA_MANAGEMENT_OPTIONS = [
   {
     id: 'prompts',
     name: 'Prompts',
-    storageKey: STORAGE_KEYS.CUSTOM_PROMPTS,
+    storageKey: STORAGE_KEYS.PROMPTS,
     fileTypeName: 'Prompts',
     loadingKeyBase: 'prompts',
   },
@@ -27,11 +27,11 @@ const DATA_MANAGEMENT_OPTIONS = [
     loadingKeyBase: 'credentials',
   },
   {
-    id: 'advancedSettings',
-    name: 'Model Settings',
-    storageKey: STORAGE_KEYS.API_ADVANCED_SETTINGS,
-    fileTypeName: 'AdvancedSettings',
-    loadingKeyBase: 'advanced',
+    id: 'model-parameters',
+    name: 'Model Parameters',
+    storageKey: STORAGE_KEYS.API_MODEL_PARAMETERS,
+    fileTypeName: 'ModelParameters',
+    loadingKeyBase: 'model-parameters',
   },
 ];
 

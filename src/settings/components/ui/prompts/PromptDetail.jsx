@@ -30,8 +30,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
 
     setIsDeletingActual(true);
     try {
-      const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-      const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+      const result = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
+      const customPromptsByType = result[STORAGE_KEYS.PROMPTS] || {};
       
       const typeData = customPromptsByType[prompt.contentType] || {};
       const isCurrentDefault = typeData['_defaultPromptId_'] === prompt.id;
@@ -63,7 +63,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         delete customPromptsByType[prompt.contentType];
       }
 
-      await chrome.storage.local.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
+      await chrome.storage.local.set({ [STORAGE_KEYS.PROMPTS]: customPromptsByType });
       await ensureDefaultPrompts();
       success('Prompt deleted successfully.');
       onDelete();
@@ -82,8 +82,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         return;
       }
       try {
-        const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-        const customPrompts = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+        const result = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
+        const customPrompts = result[STORAGE_KEYS.PROMPTS] || {};
         const typeData = customPrompts[prompt.contentType] || {};
         setIsDefaultForType(typeData['_defaultPromptId_'] === prompt.id);
       } catch (err) {
@@ -92,8 +92,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       }
     };
     const handleStorageChange = (changes, area) => {
-      if (area === 'local' && changes[STORAGE_KEYS.CUSTOM_PROMPTS]) {
-        const newCustomPrompts = changes[STORAGE_KEYS.CUSTOM_PROMPTS].newValue || {};
+      if (area === 'local' && changes[STORAGE_KEYS.PROMPTS]) {
+        const newCustomPrompts = changes[STORAGE_KEYS.PROMPTS].newValue || {};
         if (prompt && prompt.contentType && prompt.id) {
           const newTypeData = newCustomPrompts[prompt.contentType] || {};
           setIsDefaultForType(newTypeData['_defaultPromptId_'] === prompt.id);
@@ -119,15 +119,15 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     }
     setIsSettingDefaultActual(true);
     try {
-      const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-      const customPrompts = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+      const result = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
+      const customPrompts = result[STORAGE_KEYS.PROMPTS] || {};
       
       if (!customPrompts[prompt.contentType]) {
         customPrompts[prompt.contentType] = {};
       }
       customPrompts[prompt.contentType]['_defaultPromptId_'] = prompt.id;
 
-      await chrome.storage.local.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPrompts });
+      await chrome.storage.local.set({ [STORAGE_KEYS.PROMPTS]: customPrompts });
       success(`"${prompt.prompt.name}" is now the default for ${prompt.contentTypeLabel}.`);
     } catch (err) {
       logger.settings.error('Error setting default prompt:', err);
