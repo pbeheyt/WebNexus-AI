@@ -239,7 +239,7 @@ const PromptForm = ({
 
         // Update the prompt in the correct content type location
         customPromptsByType[formData.contentType][currentPromptId] = promptObjectToSave;
-        success('Prompt updated successfully');
+        success('Prompt updated successfully.');
       } else {
         // Create new prompt
         currentPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -247,7 +247,7 @@ const PromptForm = ({
 
         // Save the new prompt
         customPromptsByType[contentType][currentPromptId] = promptObjectToSave;
-        success('Prompt created successfully');
+        success('Prompt created successfully.');
       }
 
       // Save to storage

@@ -83,7 +83,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       // Use centralized function to ensure default prompts are set correctly
       await ensureDefaultPrompts();
 
-      success('Prompt deleted successfully');
+      success('Prompt deleted successfully.');
       onDelete(); // Notify parent component
     } catch (err) {
       logger.settings.error('Error deleting prompt:', err);
