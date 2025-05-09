@@ -7,35 +7,35 @@ import { Button, useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ensureDefaultPrompts } from '../../../../shared/utils/prompt-utils';
 import { ContentTypeIcon } from '../../../../components/layout/ContentTypeIcon';
+import useMinimumLoadingTime from '../../../../hooks/useMinimumLoadingTime';
 
 const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const { success, error } = useNotification();
   const [isDefaultForType, setIsDefaultForType] = useState(false);
+
+  const [isDeletingActual, setIsDeletingActual] = useState(false);
+  const [isSettingDefaultActual, setIsSettingDefaultActual] = useState(false);
+
+  const shouldShowDeleting = useMinimumLoadingTime(isDeletingActual);
+  const shouldShowSettingDefault = useMinimumLoadingTime(isSettingDefaultActual);
     
-  // Memoize handleDelete
   const handleDelete = useCallback(async () => {
     if (!prompt || !prompt.contentType || !prompt.id) {
       error('Cannot delete: Invalid prompt data.');
       return;
     }
-
-    if (
-      !window.confirm(
-        `Are you sure you want to delete the prompt "${prompt.prompt.name}"?`
-      )
-    ) {
+    if (!window.confirm(`Are you sure you want to delete the prompt "${prompt.prompt.name}"?`)) {
       return;
     }
 
+    setIsDeletingActual(true);
     try {
-      // Get current prompts
       const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
       const customPromptsByType = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
       
       const typeData = customPromptsByType[prompt.contentType] || {};
       const isCurrentDefault = typeData['_defaultPromptId_'] === prompt.id;
       
-      // Get actual prompts (excluding _defaultPromptId_)
       const promptsForType = {};
       for (const key in typeData) {
         if (key !== '_defaultPromptId_') {
@@ -44,52 +44,37 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       }
       const otherPromptsExist = Object.keys(promptsForType).length > 1;
 
-      // Check if deleting the last default prompt
       if (isCurrentDefault && !otherPromptsExist) {
         throw new Error(
           "Cannot delete the only prompt for this content type while it's set as default. Create another prompt or set a different one as default first."
         );
       }
 
-      // Delete the prompt from the custom prompts structure
       if (customPromptsByType[prompt.contentType]?.[prompt.id]) {
         delete customPromptsByType[prompt.contentType][prompt.id];
-        
-        // If the deleted prompt was the default, clear the default setting
         if (customPromptsByType[prompt.contentType]?.['_defaultPromptId_'] === prompt.id) {
           delete customPromptsByType[prompt.contentType]['_defaultPromptId_'];
         }
       } else {
-        // Prompt might already be gone? Log a warning but proceed
-        logger.settings.warn(
-          `Prompt ID ${prompt.id} not found in custom prompts during deletion.`
-        );
+        logger.settings.warn(`Prompt ID ${prompt.id} not found in custom prompts during deletion.`);
       }
 
-      // Clean up empty content type entry if no prompts remain
-      if (customPromptsByType[prompt.contentType] && 
-          Object.keys(customPromptsByType[prompt.contentType]).length === 0) {
+      if (customPromptsByType[prompt.contentType] && Object.keys(customPromptsByType[prompt.contentType]).length === 0) {
         delete customPromptsByType[prompt.contentType];
       }
 
-      // Save updated prompts
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType,
-      });
-
-      // Use centralized function to ensure default prompts are set correctly
+      await chrome.storage.local.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPromptsByType });
       await ensureDefaultPrompts();
-
       success('Prompt deleted successfully.');
-      onDelete(); // Notify parent component
+      onDelete();
     } catch (err) {
       logger.settings.error('Error deleting prompt:', err);
-      // Display the specific error message from the check
       error(`Error deleting prompt: ${err.message}`, 10000);
+    } finally {
+      setIsDeletingActual(false);
     }
   }, [prompt, error, success, onDelete]);
 
-  // Effect to check if the current prompt is the default for its type
   useEffect(() => {
     const checkDefaultStatus = async () => {
       if (!prompt || !prompt.contentType || !prompt.id) {
@@ -103,10 +88,9 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         setIsDefaultForType(typeData['_defaultPromptId_'] === prompt.id);
       } catch (err) {
         logger.settings.error('Error checking default prompt status:', err);
-        setIsDefaultForType(false); // Assume not default on error
+        setIsDefaultForType(false);
       }
     };
-    // Listener for storage changes to update the badge dynamically
     const handleStorageChange = (changes, area) => {
       if (area === 'local' && changes[STORAGE_KEYS.CUSTOM_PROMPTS]) {
         const newCustomPrompts = changes[STORAGE_KEYS.CUSTOM_PROMPTS].newValue || {};
@@ -117,60 +101,51 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       }
     };
 
-    checkDefaultStatus(); // Initial check
-
-    // Add listener
+    checkDefaultStatus();
     if (chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener(handleStorageChange);
     }
-
-    // Cleanup listener on component unmount or when prompt changes
     return () => {
       if (chrome.storage && chrome.storage.onChanged) {
         chrome.storage.onChanged.removeListener(handleStorageChange);
       }
     };
-  }, [prompt]); // Rerun when the prompt prop changes
+  }, [prompt]);
 
-  // Memoize handleSetAsDefault
   const handleSetAsDefault = useCallback(async () => {
     if (!prompt || !prompt.contentType || !prompt.id) {
       error('Cannot set default: Invalid prompt data.');
       return;
     }
+    setIsSettingDefaultActual(true);
     try {
       const result = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
       const customPrompts = result[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
       
       if (!customPrompts[prompt.contentType]) {
-        customPrompts[prompt.contentType] = {}; // Ensure content type object exists
+        customPrompts[prompt.contentType] = {};
       }
       customPrompts[prompt.contentType]['_defaultPromptId_'] = prompt.id;
 
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.CUSTOM_PROMPTS]: customPrompts
-      });
-      // No need to call setIsDefaultForType(true) here, the storage listener will handle it
-      success(
-        `"${prompt.prompt.name}" is now the default for ${prompt.contentTypeLabel}.`
-      );
+      await chrome.storage.local.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: customPrompts });
+      success(`"${prompt.prompt.name}" is now the default for ${prompt.contentTypeLabel}.`);
     } catch (err) {
       logger.settings.error('Error setting default prompt:', err);
       error(`Failed to set default prompt: ${err.message}`);
+    } finally {
+      setIsSettingDefaultActual(false);
     }
   }, [prompt, error, success]);
 
+  const anyActionLoading = shouldShowDeleting || shouldShowSettingDefault;
+
   return (
     <div className='prompt-detail bg-theme-surface rounded-lg p-5 border border-theme'>
-      {/* Header with Conditional Badge */}
       <div className='prompt-detail-header flex items-center justify-between mb-4 pb-3 border-b border-theme'>
         <div className='flex items-center min-w-0'>
-          {' '}
-          {/* Wrapper for title and badge */}
           <h3 className='prompt-detail-title text-lg font-medium text-theme-primary select-none truncate'>
             {prompt.prompt.name}
           </h3>
-          {/* Conditionally render the Default badge */}
           {isDefaultForType && (
             <span className='default-badge ml-3 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full font-medium select-none'>
               Default
@@ -179,7 +154,6 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         </div>
       </div>
 
-      {/* Content Type Display */}
       <div className='prompt-detail-meta mb-4 text-base text-theme-secondary select-none'>
         <div className='inline-flex items-center gap-2'>
           <ContentTypeIcon
@@ -190,34 +164,36 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
         </div>
       </div>
 
-      {/* Prompt Content */}
       <div className={`prompt-detail-content whitespace-pre-wrap bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-theme mb-5 text-sm text-theme-secondary select-none overflow-hidden prompt-content-scrollable`}>
         {prompt.prompt.content}
       </div>
 
-      {/* Action Buttons */}
       <div className='prompt-detail-actions flex justify-end gap-3'>
         <Button
           variant='secondary'
           onClick={handleSetAsDefault}
+          isLoading={shouldShowSettingDefault}
+          disabled={anyActionLoading || isDefaultForType}
           className={`${isDefaultForType ? 'invisible' : ''} select-none`}
         >
-          Set as Default
+          {isSettingDefaultActual ? "Setting..." : "Set as Default"}
         </Button>
         <Button
           variant='secondary'
           onClick={onEdit}
+          disabled={anyActionLoading}
           className='select-none'
         >
           Edit
         </Button>
-
         <Button
           variant='danger'
           onClick={handleDelete}
+          isLoading={shouldShowDeleting}
+          disabled={anyActionLoading}
           className='select-none'
         >
-          Delete
+          {isDeletingActual ? "Deleting..." : "Delete"}
         </Button>
       </div>
     </div>
