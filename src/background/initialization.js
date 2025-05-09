@@ -13,16 +13,16 @@ import { resetState } from './core/state-manager.js';
  * @returns {Promise<boolean>} True if population ran, false if already populated
  */
 async function populateInitialPromptsAndSetDefaults() {
-  const flagKey = STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_V2;
+  const flagKey = STORAGE_KEYS.INITIAL_PROMPTS_POPULATED;
   try {
     const flagResult = await chrome.storage.local.get(flagKey);
     if (flagResult[flagKey] === true) {
-      logger.background.info('Initial prompts already populated (V2). Ensuring defaults are still valid...');
-      await ensureDefaultPrompts(); // This will be the refactored version from prompt-utils.js
+      logger.background.info('Initial prompts already populated. Ensuring defaults are still valid...');
+      await ensureDefaultPrompts();
       return false; // Already populated
     }
 
-    logger.background.info('Populating initial prompts and setting defaults (V2)...');
+    logger.background.info('Populating initial prompts and setting defaults...');
     
     const response = await fetch(chrome.runtime.getURL('prompt-config.json'));
     if (!response.ok) {

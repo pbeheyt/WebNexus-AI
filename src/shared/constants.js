@@ -42,6 +42,7 @@ export const STORAGE_KEYS = {
   POPUP_PLATFORM: 'popup_platform_preference',
   SIDEBAR_PLATFORM: 'sidebar_platform_preference',
   SIDEBAR_MODEL: 'sidebar_model_preference',
+  SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
 
   // Settings
   API_ADVANCED_SETTINGS: 'api_advanced_settings',
@@ -50,7 +51,7 @@ export const STORAGE_KEYS = {
   // Prompt
   PRE_PROMPT: 'prePrompt',
   CUSTOM_PROMPTS: 'custom_prompts_by_type',
-  INITIAL_PROMPTS_POPULATED_V2: 'initial_prompts_populated_v2',
+  INITIAL_PROMPTS_POPULATED: 'initial_prompts_populated',
 
   // Content
   CONTENT_READY: 'contentReady',
@@ -67,7 +68,7 @@ export const STORAGE_KEYS = {
   API_RESPONSE_TIMESTAMP: 'apiResponseTimestamp',
   STREAM_ID: 'streamId',
 
-  // Sidebar
+  // Tabs
   TAB_FORMATTED_CONTENT: 'tab_formatted_content',
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
   TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
@@ -76,7 +77,6 @@ export const STORAGE_KEYS = {
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
   TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
-  SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
 };
 
 // Prompt limits
