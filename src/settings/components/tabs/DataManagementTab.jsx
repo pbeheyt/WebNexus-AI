@@ -29,7 +29,7 @@ const DATA_MANAGEMENT_OPTIONS = [
   {
     id: 'model-parameters',
     name: 'Model Parameters',
-    storageKey: STORAGE_KEYS.API_MODEL_PARAMETERS,
+    storageKey: STORAGE_KEYS.MODEL_PARAMETER_SETTINGS,
     fileTypeName: 'ModelParameters',
     loadingKeyBase: 'model-parameters',
   },
