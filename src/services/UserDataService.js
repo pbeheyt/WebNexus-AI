@@ -60,11 +60,19 @@ class UserDataService {
 
           if (
             !parsedJson ||
-            parsedJson.dataType !== `${expectedDataType}_v1` || // Check versioned dataType
-            typeof parsedJson.data === 'undefined'
+            typeof parsedJson.data === 'undefined' // Basic check for data presence
           ) {
             throw new Error(
-              `Invalid file format or incorrect data type. Expected ${expectedDataType}_v1.`
+              `Invalid file format: Missing essential data structure.`
+            );
+          }
+
+          // Validate that the dataType in the file matches what we expect for this import operation.
+          // For 'AllSettings', expectedDataType is already versioned from the direct call.
+          // For single settings, expectedDataType is now versioned by importSingleSetting.
+          if (parsedJson.dataType !== expectedDataType) {
+            throw new Error(
+              `Invalid file content: Data type mismatch. Expected "${expectedDataType}" but file contains "${parsedJson.dataType || 'unknown'}".`
             );
           }
 
@@ -157,7 +165,7 @@ class UserDataService {
     else if (storageKey === STORAGE_KEYS.MODEL_PARAMETER_SETTINGS) settingNameForType = 'ModelParameters';
     else throw new Error('Invalid storage key for single import.');
     
-    const expectedDataType = `WebNexusAI-${settingNameForType}`;
+    const expectedDataType = `WebNexusAI-${settingNameForType}_v1`; // Ensure _v1 suffix
     return this._handleImport(fileObject, expectedDataType, storageKey);
   }
 }

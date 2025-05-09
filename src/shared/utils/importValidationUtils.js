@@ -1,6 +1,5 @@
 // src/shared/utils/importValidationUtils.js
 import { CONTENT_TYPES, AI_PLATFORMS, MAX_PROMPT_NAME_LENGTH, MAX_PROMPT_CONTENT_LENGTH } from '../constants';
-import { logger } from '../logger';
 
 export function validateCredentialsData(data) {
   if (typeof data !== 'object' || data === null) {
