@@ -24,7 +24,7 @@ const PlatformDetails = ({
   const [showApiKey, setShowApiKey] = useState(false);
   
   const [isSavingApiKeyActual, setIsSavingApiKeyActual] = useState(false);
-  const shouldShowApiKeySaving = useMinimumLoadingTime(isSavingApiKeyActual);
+        const shouldShowApiKeySaving = useMinimumLoadingTime(isSavingApiKeyActual, 1000);
   
   const [selectedModelId, setSelectedModelId] = useState(
     platform.apiConfig?.models?.length > 0
@@ -155,8 +155,8 @@ const PlatformDetails = ({
               variant='danger'
               onClick={handleRemoveCredentials}
               className='select-none'
-              isLoading={shouldShowApiKeySaving} // Use isLoading for remove as well
-              disabled={shouldShowApiKeySaving}
+          isLoading={isSavingApiKeyActual} // Changed from shouldShowApiKeySaving
+          disabled={isSavingApiKeyActual}  // Changed from shouldShowApiKeySaving
             >
               Remove Key
             </Button>
