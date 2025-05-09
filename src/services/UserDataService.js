@@ -2,6 +2,12 @@
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { logger } from '../shared/logger.js';
 import { ensureDefaultPrompts } from '../shared/utils/prompt-utils.js';
+import {
+  validateCredentialsData,
+  validateModelParametersSettingsData,
+  validatePromptsData,
+  validateAllSettingsData,
+} from '../shared/utils/importValidationUtils.js';
 
 class UserDataService {
   _generateFilename(baseName) {
@@ -62,29 +68,38 @@ class UserDataService {
             );
           }
 
+          // Run validation based on import type
+          let validationResult;
+          if (expectedDataType === 'WebNexusAI-AllSettings_v1') {
+            validationResult = validateAllSettingsData(parsedJson.data);
+          } else if (expectedDataType === 'WebNexusAI-Prompts_v1') {
+            validationResult = validatePromptsData(parsedJson.data);
+          } else if (expectedDataType === 'WebNexusAI-Credentials_v1') {
+            validationResult = validateCredentialsData(parsedJson.data);
+          } else if (expectedDataType === 'WebNexusAI-ModelParameters_v1') {
+            validationResult = validateModelParametersSettingsData(parsedJson.data);
+          } else {
+            throw new Error(`Unknown expectedDataType for validation: ${expectedDataType}`);
+          }
+
+          if (!validationResult.isValid) {
+            throw new Error(`Import validation failed: ${validationResult.error}`);
+          }
+
           if (storageKey) { // Single setting import
             if (typeof parsedJson.data !== 'object') {
-                 throw new Error('Data for single setting import must be an object.');
+              throw new Error('Data for single setting import must be an object.');
             }
             await chrome.storage.local.set({ [storageKey]: parsedJson.data || {} });
             if (storageKey === STORAGE_KEYS.PROMPTS) {
               await ensureDefaultPrompts();
             }
           } else { // All settings import
-            const { prompts, credentials, advancedSettings } = parsedJson.data;
-            if (
-              typeof prompts === 'undefined' ||
-              typeof credentials === 'undefined' ||
-              typeof advancedSettings === 'undefined'
-            ) {
-              throw new Error(
-                'AllSettings import file is missing one or more required data sections (prompts, credentials, advancedSettings).'
-              );
-            }
+            const { prompts, credentials, modelParametersSettings } = parsedJson.data;
             await chrome.storage.local.set({
               [STORAGE_KEYS.PROMPTS]: prompts || {},
               [STORAGE_KEYS.API_CREDENTIALS]: credentials || {},
-              [STORAGE_KEYS.API_MODEL_PARAMETERS]: advancedSettings || {},
+              [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: modelParametersSettings || {},
             });
             await ensureDefaultPrompts();
           }
@@ -111,13 +126,13 @@ class UserDataService {
     const keysToExport = [
       STORAGE_KEYS.PROMPTS,
       STORAGE_KEYS.API_CREDENTIALS,
-      STORAGE_KEYS.API_MODEL_PARAMETERS,
+      STORAGE_KEYS.MODEL_PARAMETER_SETTINGS,
     ];
     const storedData = await chrome.storage.local.get(keysToExport);
     const dataBundle = {
       prompts: storedData[STORAGE_KEYS.PROMPTS] || {},
       credentials: storedData[STORAGE_KEYS.API_CREDENTIALS] || {},
-      advancedSettings: storedData[STORAGE_KEYS.API_MODEL_PARAMETERS] || {},
+      modelParametersSettings: storedData[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {},
     };
     return this._handleExport(dataBundle, 'WebNexusAI-AllSettings', 'all');
   }
@@ -139,7 +154,7 @@ class UserDataService {
     let settingNameForType;
     if (storageKey === STORAGE_KEYS.PROMPTS) settingNameForType = 'Prompts';
     else if (storageKey === STORAGE_KEYS.API_CREDENTIALS) settingNameForType = 'Credentials';
-    else if (storageKey === STORAGE_KEYS.API_MODEL_PARAMETERS) settingNameForType = 'AdvancedSettings';
+    else if (storageKey === STORAGE_KEYS.MODEL_PARAMETER_SETTINGS) settingNameForType = 'ModelParameters';
     else throw new Error('Invalid storage key for single import.');
     
     const expectedDataType = `WebNexusAI-${settingNameForType}`;

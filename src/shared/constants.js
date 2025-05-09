@@ -44,9 +44,9 @@ export const STORAGE_KEYS = {
   SIDEBAR_MODEL: 'sidebar_model_preference',
   SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
 
-  // Settings
-  API_MODEL_PARAMETERS: 'api_model_parameters',
-  API_CREDENTIALS: 'api_credentials',
+// Settings
+MODEL_PARAMETER_SETTINGS: 'model_parameter_settings', // Renamed from API_ADVANCED_SETTINGS
+API_CREDENTIALS: 'api_credentials',
 
   // Prompt
   PRE_PROMPT: 'prePrompt',

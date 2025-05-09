@@ -6,16 +6,16 @@ import { Button, useNotification, PlatformIcon } from '../../../../components';
 import { logger } from '../../../../shared/logger';
 import useMinimumLoadingTime from '../../../../hooks/useMinimumLoadingTime';
 
-import AdvancedSettings from './AdvancedSettings';
+import ModelParametersSettings from './ModelParametersSettings';
 
 const PlatformDetails = ({
   platform,
   credentials,
-  advancedSettingsForPlatform,
+  modelParametersForPlatform,
   saveApiKeyAction,
   removeApiKeyAction,
-  saveAdvancedModelSettingsAction,
-  resetAdvancedModelSettingsToDefaultsAction,
+  saveModelParametersSettingsAction,
+  resetModelParametersSettingsToDefaultsAction,
 }) => {
   const { error } = useNotification();
   const [apiKey, setApiKey] = useState('');
@@ -25,7 +25,7 @@ const PlatformDetails = ({
   
   const [isSavingApiKeyActual, setIsSavingApiKeyActual] = useState(false);
   const [isRemovingApiKeyActual, setIsRemovingApiKeyActual] = useState(false);
-        const shouldShowApiKeySaving = useMinimumLoadingTime(isSavingApiKeyActual, 1000);
+  const shouldShowApiKeySaving = useMinimumLoadingTime(isSavingApiKeyActual, 1000);
   
   const [selectedModelId, setSelectedModelId] = useState(
     platform.apiConfig?.models?.length > 0
@@ -81,7 +81,7 @@ const PlatformDetails = ({
     ) {
       return;
     }
-    setIsRemovingApiKeyActual(true); // Visually disable buttons during removal too
+    setIsRemovingApiKeyActual(true);
     const success = await removeApiKeyAction(platform.id);
     if (success) {
       setApiKey('');
@@ -159,9 +159,9 @@ const PlatformDetails = ({
             isLoading={isRemovingApiKeyActual}
             loadingText="Removing..."
             disabled={
-              isRemovingApiKeyActual || // If actual remove op is in progress
-              shouldShowApiKeySaving || // Or if UI is showing saving (min time for save op)
-              !credentials // Or if there's no key to remove
+              isRemovingApiKeyActual ||
+              shouldShowApiKeySaving ||
+              !credentials
             }
           >
             Remove Key
@@ -172,18 +172,18 @@ const PlatformDetails = ({
             isLoading={shouldShowApiKeySaving}
             loadingText="Saving..."
             disabled={
-              shouldShowApiKeySaving || // If UI is showing saving (min time for save op)
-              isRemovingApiKeyActual || // Or if actual remove op is in progress
-              (!isSavingApiKeyActual && // Or, if actual saving is done (and not in remove op)
-                ((credentials && !hasApiKeyChanges) || // and it's update mode with no changes
-                (!credentials && !apiKey.trim())))     // or save mode with empty input
+              shouldShowApiKeySaving ||
+              isRemovingApiKeyActual ||
+              (!isSavingApiKeyActual &&
+                ((credentials && !hasApiKeyChanges) ||
+                (!credentials && !apiKey.trim())))
             }
             variant={
-              (isRemovingApiKeyActual || // If remove is actually happening
-              (!shouldShowApiKeySaving && // OR if save UI loading is done
-                !isSavingApiKeyActual && // AND actual save is done
-                ((credentials && !hasApiKeyChanges) || // AND (update mode with no changes
-                (!credentials && !apiKey.trim()))))     // OR save mode with empty input))
+              (isRemovingApiKeyActual ||
+              (!shouldShowApiKeySaving &&
+                !isSavingApiKeyActual &&
+                ((credentials && !hasApiKeyChanges) ||
+                (!credentials && !apiKey.trim()))))
               ? 'inactive'
               : 'primary'
             }
@@ -194,13 +194,13 @@ const PlatformDetails = ({
         </div>
       </div>
 
-      <AdvancedSettings
+      <ModelParametersSettings
         platform={platform}
         selectedModelId={selectedModelId}
-        advancedSettings={advancedSettingsForPlatform} 
+        modelParametersSettings={modelParametersForPlatform}
         onModelSelect={handleModelSelect}
-        onSettingsUpdate={saveAdvancedModelSettingsAction}
-        onResetToDefaults={resetAdvancedModelSettingsToDefaultsAction}
+        onSettingsUpdate={saveModelParametersSettingsAction}
+        onResetToDefaults={resetModelParametersSettingsToDefaultsAction}
       />
     </div>
   );
@@ -209,11 +209,11 @@ const PlatformDetails = ({
 PlatformDetails.propTypes = {
   platform: PropTypes.object.isRequired,
   credentials: PropTypes.object,
-  advancedSettingsForPlatform: PropTypes.object,
+  modelParametersForPlatform: PropTypes.object,
   saveApiKeyAction: PropTypes.func.isRequired,
   removeApiKeyAction: PropTypes.func.isRequired,
-  saveAdvancedModelSettingsAction: PropTypes.func.isRequired,
-  resetAdvancedModelSettingsToDefaultsAction: PropTypes.func.isRequired,
+  saveModelParametersSettingsAction: PropTypes.func.isRequired,
+  resetModelParametersSettingsToDefaultsAction: PropTypes.func.isRequired,
 };
 
 export default React.memo(PlatformDetails);

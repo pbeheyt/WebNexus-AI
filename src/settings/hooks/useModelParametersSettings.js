@@ -1,4 +1,4 @@
-// src/settings/hooks/useModelAdvancedSettings.js
+// src/settings/hooks/useModelParametersSettings.js
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { logger } from '../../shared/logger';
@@ -11,10 +11,10 @@ import { MAX_SYSTEM_PROMPT_LENGTH } from '../../shared/constants';
 import { useNotification } from '../../components/feedback/NotificationContext';
 import useMinimumLoadingTime from '../../hooks/useMinimumLoadingTime';
 
-export function useModelAdvancedSettings({
+export function useModelParametersSettings({
   platform,
   selectedModelId,
-  advancedSettingsForPlatform,
+  modelParametersForPlatform,
   onSave,
   onReset,
 }) {
@@ -47,10 +47,10 @@ export function useModelAdvancedSettings({
     if (!selectedModelId || !modelsFromPlatform.find(m => m.id === selectedModelId)) {
         const firstModelId = modelsFromPlatform.length > 0 ? modelsFromPlatform[0].id : null;
         if (!firstModelId) {
-            logger.settings.warn(`useModelAdvancedSettings: No valid model found for platform ${platform.id}. Cannot derive settings.`);
+            logger.settings.warn(`useModelParametersSettings: No valid model found for platform ${platform.id}. Cannot derive settings.`);
             return null;
         }
-        logger.settings.info(`useModelAdvancedSettings: selectedModelId '${selectedModelId}' invalid or not found, attempting to use first model '${firstModelId}' for derivation for platform ${platform.id}.`);
+        logger.settings.info(`useModelParametersSettings: selectedModelId '${selectedModelId}' invalid or not found, attempting to use first model '${firstModelId}' for derivation for platform ${platform.id}.`);
          return getDerivedModelSettings({
            platformApiConfig: platform.apiConfig,
            modelId: firstModelId,
@@ -83,8 +83,8 @@ export function useModelAdvancedSettings({
 
     const { defaultSettings: configDefaults } = derivedSettings;
     let userStoredSettingsForModelMode = {};
-    if (advancedSettingsForPlatform?.models?.[selectedModelId]?.[currentEditingMode]) {
-      userStoredSettingsForModelMode = advancedSettingsForPlatform.models[selectedModelId][currentEditingMode];
+    if (modelParametersForPlatform?.models?.[selectedModelId]?.[currentEditingMode]) {
+      userStoredSettingsForModelMode = modelParametersForPlatform.models[selectedModelId][currentEditingMode];
     }
 
     const initialFormValues = {
@@ -109,7 +109,7 @@ export function useModelAdvancedSettings({
     setFormValues(initialFormValues);
     setOriginalValues({ ...initialFormValues });
     setIsFormReady(true);
-  }, [selectedModelId, currentEditingMode, platform.apiConfig, platform.id, advancedSettingsForPlatform, derivedSettings]);
+  }, [selectedModelId, currentEditingMode, platform.apiConfig, platform.id, modelParametersForPlatform, derivedSettings]);
 
   useEffect(() => {
     if (!derivedSettings) {
@@ -215,7 +215,7 @@ export function useModelAdvancedSettings({
         setOriginalValues({ ...formValues });
       }
     } catch (err) {
-      logger.settings.error('Error saving advanced settings in hook:', err);
+      logger.settings.error('Error saving model parameters in hook:', err);
       showNotificationError(err.message || 'An unknown error occurred during save.');
     } finally {
       setIsSavingActual(false);
@@ -235,8 +235,8 @@ export function useModelAdvancedSettings({
         setOriginalValues({ ...configDefaults });
       }
     } catch (err) {
-        logger.settings.error('Error resetting settings in hook:', err);
-        showNotificationError('Failed to reset settings.');
+        logger.settings.error('Error resetting model parameters in hook:', err);
+        showNotificationError('Failed to reset model parameters.');
     } finally {
       setIsResettingActual(false);
       setTimeout(() => setIsAnimatingReset(false), 500); // Animation duration

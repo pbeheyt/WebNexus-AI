@@ -100,17 +100,17 @@ class ModelParameterService {
   async getUserModelSettings(platformId, modelId) {
     try {
       const result = await chrome.storage.local.get(
-        STORAGE_KEYS.API_MODEL_PARAMETERS
+        STORAGE_KEYS.MODEL_PARAMETER_SETTINGS
       );
-      const advancedSettings = result[STORAGE_KEYS.API_MODEL_PARAMETERS] || {};
+      const modelParameterSettingsData = result[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {};
 
-      // Get platform settings
-      const platformSettings = advancedSettings[platformId] || {};
+      // Get platform model parameters
+      const platformModelParameters = modelParameterSettingsData[platformId] || {};
 
       // First try model-specific settings, then fall back to default settings
       const modelSettings =
-        (platformSettings.models && platformSettings.models[modelId]) ||
-        platformSettings.default ||
+        (platformModelParameters.models && platformModelParameters.models[modelId]) ||
+        platformModelParameters.default ||
         {};
 
       logger.service.info(
@@ -244,31 +244,27 @@ class ModelParameterService {
       const modeKey = useThinkingMode && modelConfig?.thinking?.toggleable ? 'thinking' : 'base';
         logger.service.info(`Resolving parameters using mode: ${modeKey}`);
 
-
       // Get user settings for this model using the provided modelId
-      const advancedSettingsResult = await chrome.storage.local.get(STORAGE_KEYS.API_MODEL_PARAMETERS);
-      const allAdvancedSettings = advancedSettingsResult[STORAGE_KEYS.API_MODEL_PARAMETERS] || {};
-      const platformSettings = allAdvancedSettings[platformId] || {}; // Get settings for the specific platform
+      const modelParametersResult = await chrome.storage.local.get(STORAGE_KEYS.MODEL_PARAMETER_SETTINGS);
+      const allModelParameterSettings = modelParametersResult[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {};
+      const platformModelParameters = allModelParameterSettings[platformId] || {};
 
       // Get the mode-specific settings
-      const modelModeSettings = platformSettings.models?.[modelId]?.[modeKey] || {};
-
-      // Use only model-specific settings (no platform defaults)
-      const userSettings = { ...modelModeSettings };
-      logger.service.info(`User settings retrieved for ${platformId}/${modelId} (mode: ${modeKey}):`, userSettings);
+      const userModelModeSettings = platformModelParameters.models?.[modelId]?.[modeKey] || {};
+      logger.service.info(`User settings retrieved for ${platformId}/${modelId} (mode: ${modeKey}):`, userModelModeSettings);
 
       // Determine effective toggle values, defaulting to true if not set
       const effectiveIncludeTemperature =
-        userSettings.includeTemperature ?? true;
-      const effectiveIncludeTopP = userSettings.includeTopP ?? false; // TopP default to false
+        userModelModeSettings.includeTemperature ?? true;
+      const effectiveIncludeTopP = userModelModeSettings.includeTopP ?? false;
 
       // Start with base parameters
       const params = {
         model: modelId,
         tokenParameter: modelConfig.tokens.parameterName,
         maxTokens:
-          userSettings.maxTokens !== undefined
-            ? userSettings.maxTokens
+          userModelModeSettings.maxTokens !== undefined
+            ? userModelModeSettings.maxTokens
             : (modeKey === 'thinking' && modelConfig.thinking?.maxOutput !== undefined)
               ? modelConfig.thinking.maxOutput
               : modelConfig.tokens.maxOutput,
@@ -302,8 +298,8 @@ class ModelParameterService {
         modelConfig?.capabilities?.supportsTemperature !== false;
       if (modelSupportsTemperature && effectiveIncludeTemperature && !thinkingOverridesTemperature) {
         params.temperature =
-          userSettings.temperature !== undefined
-            ? userSettings.temperature
+          userModelModeSettings.temperature !== undefined
+            ? userModelModeSettings.temperature
             : platformApiConfig.temperature.default;
       } else if (thinkingOverridesTemperature && effectiveIncludeTemperature) {
         logger.service.warn(`Temperature included by user but overridden by thinking mode for ${modelId}.`);
@@ -313,8 +309,8 @@ class ModelParameterService {
       const modelSupportsTopP = modelConfig?.capabilities?.supportsTopP === true;
       if (modelSupportsTopP && effectiveIncludeTopP && !thinkingOverridesTopP) {
         params.topP =
-          userSettings.topP !== undefined
-            ? userSettings.topP
+          userModelModeSettings.topP !== undefined
+            ? userModelModeSettings.topP
             : platformApiConfig.topP.default;
       } else if (thinkingOverridesTopP && effectiveIncludeTopP) {
         logger.service.warn(`TopP included by user but overridden by thinking mode for ${modelId}.`);
@@ -322,7 +318,7 @@ class ModelParameterService {
 
       // Add thinking budget if model supports it, thinking is available, AND (it's not toggleable OR thinking is enabled for this request)
       if (modelConfig?.thinking?.budget && modelConfig?.thinking?.available === true && (!modelConfig?.thinking?.toggleable || params.isThinkingEnabledForRequest)) {
-        const userBudget = userSettings.thinkingBudget;
+        const userBudget = userModelModeSettings.thinkingBudget;
         const budgetValue = userBudget !== undefined 
           ? userBudget 
           : modelConfig.thinking.budget.default;
@@ -332,7 +328,7 @@ class ModelParameterService {
 
       // Add reasoning effort if model supports it, thinking is available, AND (it's not toggleable OR thinking is enabled for this request)
       if (modelConfig?.thinking?.reasoningEffort && modelConfig?.thinking?.available === true && (!modelConfig?.thinking?.toggleable || params.isThinkingEnabledForRequest)) {
-        const userEffort = userSettings.reasoningEffort;
+        const userEffort = userModelModeSettings.reasoningEffort;
         if (userEffort !== undefined && userEffort !== null) {
           params.reasoningEffort = userEffort;
           logger.service.info(`Resolved reasoning effort: ${userEffort}`);
@@ -351,10 +347,10 @@ class ModelParameterService {
       params.modelSupportsSystemPrompt = effectiveModelSupportsSystemPrompt;
 
       // Add system prompt ONLY if effectively supported AND user provided one
-      if (params.modelSupportsSystemPrompt && userSettings.systemPrompt) {
-        params.systemPrompt = userSettings.systemPrompt;
+      if (params.modelSupportsSystemPrompt && userModelModeSettings.systemPrompt) {
+        params.systemPrompt = userModelModeSettings.systemPrompt;
         logger.service.info(`Adding system prompt for ${platformId}/${modelId}.`);
-      } else if (userSettings.systemPrompt) {
+      } else if (userModelModeSettings.systemPrompt) {
         if (!platformSupportsSystemPrompt) {
           logger.service.warn(
             `System prompt provided but platform ${platformId} does not support it.`
@@ -384,51 +380,7 @@ class ModelParameterService {
         params.tabId = tabId;
       }
 
-      // Set thinking mode flag if enabled and available for this model
-      // Add thinking budget if in thinking mode and model supports it
-    if (modeKey === 'thinking' && modelConfig?.thinking?.budget) {
-      const userBudget = userSettings.thinkingBudget;
-      // Use user setting if defined, otherwise use default from config, ensure it's not undefined/null before assigning
-      const budgetValue = userBudget !== undefined && userBudget !== null
-        ? userBudget
-        : modelConfig.thinking.budget.default;
-
-      // Add to params only if budgetValue is a valid number (including 0)
-      if (typeof budgetValue === 'number') {
-          params.thinkingBudget = budgetValue;
-          logger.service.info(`Resolved thinking budget: ${budgetValue}`);
-      } else {
-           logger.service.warn(`Could not resolve a valid thinking budget for ${platformId}/${modelId}. UserSetting: ${userBudget}, Default: ${modelConfig.thinking.budget.default}`);
-           // Optionally set to null or don't add the key if resolution fails
-           // params.thinkingBudget = null;
-      }
-    } else if (modeKey === 'thinking') {
-        logger.service.info(`Thinking mode active for ${platformId}/${modelId}, but model config does not specify a budget.`);
-    }
-
-    // Add reasoning effort if model supports it
-    if (modelConfig?.thinking?.reasoningEffort) {
-      const userEffort = userSettings.reasoningEffort;
-      // Use user setting if defined and valid, otherwise use default from config
-      const allowedValues = modelConfig.thinking.reasoningEffort.allowedValues || [];
-      const defaultValue = modelConfig.thinking.reasoningEffort.default;
-
-      if (userEffort !== undefined && userEffort !== null && allowedValues.includes(userEffort)) {
-          params.reasoningEffort = userEffort;
-          logger.service.info(`Resolved reasoning effort from user settings: ${userEffort}`);
-      } else if (defaultValue !== undefined && defaultValue !== null && allowedValues.includes(defaultValue)) {
-          params.reasoningEffort = defaultValue;
-          logger.service.info(`Resolved reasoning effort from model default: ${defaultValue}`);
-          if (userEffort !== undefined && userEffort !== null) {
-              logger.service.warn(`User reasoning effort '${userEffort}' is invalid, falling back to default '${defaultValue}'. Allowed: ${allowedValues.join(', ')}`);
-          }
-      } else {
-          logger.service.warn(`Could not resolve a valid reasoning effort for ${platformId}/${modelId}. UserSetting: ${userEffort}, Default: ${defaultValue}, Allowed: ${allowedValues.join(', ')}`);
-          // Do not add the key if resolution fails
-      }
-    }
-
-    params.isThinkingEnabledForRequest = useThinkingMode && modelConfig?.thinking?.available === true;
+      params.isThinkingEnabledForRequest = useThinkingMode && modelConfig?.thinking?.available === true;
 
       return params;
     } catch (error) {

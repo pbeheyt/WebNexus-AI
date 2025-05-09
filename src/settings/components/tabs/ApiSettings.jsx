@@ -13,12 +13,12 @@ const ApiSettings = () => {
     error: contextError,
     selectedPlatformConfig,
     credentialsForSelectedPlatform,
-    advancedSettingsForSelectedPlatform,
+    modelParametersForSelectedPlatform,
     selectPlatform,
     saveApiKey,
     removeApiKey,
-    saveAdvancedModelSettings,
-    resetAdvancedModelSettingsToDefaults,
+    saveModelParametersSettings,
+    resetModelParametersSettingsToDefaults,
   } = useApiSettings();
 
   if (isLoading) {
@@ -44,7 +44,7 @@ const ApiSettings = () => {
       </h2>
       <p className='section-description text-sm text-theme-secondary mb-6 select-none'>
         Configure API credentials for different AI platforms and customize
-        advanced settings for each model. These settings will be used when
+        model parameters for each model. These settings will be used when
         making API requests directly from the browser extension.
       </p>
 
@@ -60,13 +60,13 @@ const ApiSettings = () => {
           <PlatformDetails
             platform={selectedPlatformConfig}
             credentials={credentialsForSelectedPlatform}
-            advancedSettingsForPlatform={advancedSettingsForSelectedPlatform}
+            modelParametersForPlatform={modelParametersForSelectedPlatform}
             // Pass action handlers from context
             saveApiKeyAction={saveApiKey}
             removeApiKeyAction={removeApiKey}
-            saveAdvancedModelSettingsAction={saveAdvancedModelSettings}
-            resetAdvancedModelSettingsToDefaultsAction={
-              resetAdvancedModelSettingsToDefaults
+            saveModelParametersSettingsAction={saveModelParametersSettings}
+            resetModelParametersSettingsToDefaultsAction={
+              resetModelParametersSettingsToDefaults
             }
           />
         ) : (

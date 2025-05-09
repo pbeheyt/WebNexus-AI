@@ -1,4 +1,4 @@
-// src/settings/components/ui/api/AdvancedSettings.jsx
+// src/settings/components/ui/api/ModelParametersSettings.jsx
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 
@@ -11,12 +11,12 @@ import {
   RefreshIcon,
   CustomSelect,
 } from '../../../../components';
-import { useModelAdvancedSettings } from '../../../hooks/useModelAdvancedSettings';
+import { useModelParametersSettings } from '../../../hooks/useModelParametersSettings';
 
-const AdvancedSettings = ({
+const ModelParametersSettings = ({
   platform,
   selectedModelId, 
-  advancedSettings, 
+  modelParametersSettings, 
   onModelSelect, 
   onSettingsUpdate, 
   onResetToDefaults, 
@@ -44,10 +44,10 @@ const AdvancedSettings = ({
     showBudgetSlider,
     showReasoningEffort,
     modelSupportsSystemPrompt,
-  } = useModelAdvancedSettings({
+  } = useModelParametersSettings({
     platform,
     selectedModelId,
-    advancedSettingsForPlatform: advancedSettings,
+    modelParametersForPlatform: modelParametersSettings,
     onSave: onSettingsUpdate,
     onReset: onResetToDefaults,
     showNotificationError: showNotificationErrorHook,
@@ -354,13 +354,13 @@ const AdvancedSettings = ({
   );
 };
 
-AdvancedSettings.propTypes = {
+ModelParametersSettings.propTypes = {
   platform: PropTypes.object.isRequired,
   selectedModelId: PropTypes.string,
-  advancedSettings: PropTypes.object, 
+  modelParametersSettings: PropTypes.object, // Renamed from advancedSettings
   onModelSelect: PropTypes.func.isRequired,
   onSettingsUpdate: PropTypes.func.isRequired,
   onResetToDefaults: PropTypes.func.isRequired,
 };
 
-export default React.memo(AdvancedSettings);
+export default React.memo(ModelParametersSettings);
