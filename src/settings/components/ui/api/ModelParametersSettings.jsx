@@ -110,26 +110,24 @@ const ModelParametersSettings = ({
             disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
           />
         </div>
+        {showThinkingModeToggle && (
+          <div className="mt-4">
+            <div className='flex items-center gap-3'>
+              <span className='text-sm font-medium text-theme-secondary select-none'>
+                Thinking Mode
+              </span>
+              <Toggle
+                id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
+                checked={currentEditingMode === 'thinking'}
+                onChange={toggleEditingMode}
+                disabled={isSaving || isResetting}
+              />
+            </div>
+          </div>
+        )}
       </SelectorSection>
 
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
-        <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
-          {showThinkingModeToggle && (
-            <div> {/* Removed mb-6 */}
-              <div className='flex items-center gap-3'>
-                <span className='text-base font-semibold text-theme-secondary select-none'>
-                  Thinking Mode
-                </span>
-                <Toggle
-                  id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
-                  checked={currentEditingMode === 'thinking'}
-                  onChange={toggleEditingMode}
-                  disabled={isSaving || isResetting}
-                />
-              </div>
-            </div>
-          )}
-        </div>
 
         <div className='model-specs-section p-5 bg-theme-hover rounded-lg border border-theme mb-6'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
@@ -259,13 +257,12 @@ const ModelParametersSettings = ({
                 className='form-group mt-2'
               />
             )}
+            {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
+                <p className='text-amber-600 text-xs mt-3 select-none'>
+                  It is generally recommended to alter Temperature or Top P, but not both.
+                </p>
+            )}
         </div>
-        )}
-        
-        {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
-            <p className='text-amber-600 text-sm -mt-4 mb-10 select-none'>
-              It is generally recommended to alter Temperature or Top P, but not both.
-            </p>
         )}
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
