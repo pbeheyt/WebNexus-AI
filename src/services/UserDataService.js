@@ -20,7 +20,7 @@ class UserDataService {
     try {
       const exportObject = {
         version: 1,
-        dataType: `${dataType}_v1`, // Add version to dataType
+        dataType: `${dataType}_v1`,
         exportedAt: new Date().toISOString(),
         data: dataToExport,
       };
@@ -60,7 +60,7 @@ class UserDataService {
 
           if (
             !parsedJson ||
-            typeof parsedJson.data === 'undefined' // Basic check for data presence
+            typeof parsedJson.data === 'undefined'
           ) {
             throw new Error(
               `Invalid file format: Missing essential data structure.`
@@ -165,8 +165,54 @@ class UserDataService {
     else if (storageKey === STORAGE_KEYS.MODEL_PARAMETER_SETTINGS) settingNameForType = 'ModelParameters';
     else throw new Error('Invalid storage key for single import.');
     
-    const expectedDataType = `WebNexusAI-${settingNameForType}_v1`; // Ensure _v1 suffix
+    const expectedDataType = `WebNexusAI-${settingNameForType}_v1`;
     return this._handleImport(fileObject, expectedDataType, storageKey);
+  }
+
+  async _resetPrompts() {
+    logger.service.info('Resetting all prompts...');
+    await chrome.storage.local.remove(STORAGE_KEYS.PROMPTS);
+    // Ensure default prompt state is consistent after clearing
+    // This will effectively mean no defaults are set if all prompts are gone.
+    await ensureDefaultPrompts(); 
+    logger.service.info('Prompts reset and default state ensured.');
+  }
+
+  async _resetCredentials() {
+    logger.service.info('Resetting API credentials...');
+    await chrome.storage.local.remove(STORAGE_KEYS.API_CREDENTIALS);
+    logger.service.info('API credentials reset.');
+  }
+
+  async _resetModelParameters() {
+    logger.service.info('Resetting model parameters...');
+    await chrome.storage.local.remove(STORAGE_KEYS.MODEL_PARAMETER_SETTINGS);
+    logger.service.info('Model parameters reset.');
+  }
+
+  async resetSelectedSettings(dataType) {
+    logger.service.info(`Attempting to reset settings for data type: ${dataType}`);
+    try {
+      if (dataType === 'all') {
+        logger.service.info('Resetting all settings...');
+        await this._resetPrompts();
+        await this._resetCredentials();
+        await this._resetModelParameters();
+        logger.service.info('All settings reset successfully.');
+      } else if (dataType === 'prompts') {
+        await this._resetPrompts();
+      } else if (dataType === 'credentials') {
+        await this._resetCredentials();
+      } else if (dataType === 'model-parameters') {
+        await this._resetModelParameters();
+      } else {
+        throw new Error(`Invalid data type "${dataType}" specified for reset.`);
+      }
+      return { success: true };
+    } catch (error) {
+      logger.service.error(`Error resetting settings for ${dataType}:`, error);
+      return { success: false, error: error.message || `Unknown reset error for ${dataType}` };
+    }
   }
 }
 

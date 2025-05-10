@@ -44,10 +44,12 @@ const DataManagementTab = () => {
   // Store actual processing state
   const [isExportingActual, setIsExportingActual] = useState(false);
   const [isImportingActual, setIsImportingActual] = useState(false);
+  const [isResettingActual, setIsResettingActual] = useState(false);
 
   // Derive UI loading state with minimum duration
   const shouldShowExportLoading = useMinimumLoadingTime(isExportingActual);
   const shouldShowImportLoading = useMinimumLoadingTime(isImportingActual);
+  const shouldShowResetLoading = useMinimumLoadingTime(isResettingActual);
 
   const fileInputRef = useRef(null);
   const currentImportActionDetails = useRef(null);
@@ -140,10 +142,43 @@ const DataManagementTab = () => {
     currentImportActionDetails.current = null;
   };
   
-  const isAnyOperationLoadingForUI = shouldShowExportLoading || shouldShowImportLoading;
+  const isAnyOperationLoadingForUI = shouldShowExportLoading || shouldShowImportLoading || shouldShowResetLoading;
   
-  const exportButtonLabel = shouldShowExportLoading ? 'Exporting...' : 'Export Settings';
-  const importButtonLabel = shouldShowImportLoading ? 'Importing...' : 'Import Settings';
+  const executeReset = async () => {
+    const { name: dataTypeName, id: dataTypeId } = currentOptionObject;
+    const confirmationMessage = `Are you sure you want to reset ${dataTypeName.toLowerCase()} settings? This action cannot be undone and will reload the page.`;
+
+    if (!window.confirm(confirmationMessage)) {
+      return;
+    }
+
+    setIsResettingActual(true);
+    try {
+      const result = await userDataService.resetSelectedSettings(dataTypeId);
+
+      if (result.success) {
+        showSuccessNotification(
+          `${dataTypeName} settings reset successfully! Page will now reload.`
+        );
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+        // No need to set setIsResettingActual(false) here as page reloads
+      } else {
+        showErrorNotification(
+          `Reset failed for ${dataTypeName}: ${result.error || 'Unknown error'}`
+        );
+        setIsResettingActual(false); // Set to false only on failure before reload
+      }
+    } catch (err) {
+      logger.settings.error(`Reset error for ${dataTypeName} in component:`, err);
+      showErrorNotification(
+        `Reset failed: ${err.message || 'Unexpected error during reset'}`
+      );
+      setIsResettingActual(false);
+    }
+    // Note: setIsResettingActual(false) is handled on failure or by page reload on success.
+  };
   
   return (
     <div>
@@ -182,19 +217,31 @@ const DataManagementTab = () => {
                     onClick={executeExport}
                     disabled={isAnyOperationLoadingForUI}
                     isLoading={shouldShowExportLoading}
+                    loadingText='Exporting...' // Added loadingText
                     variant='secondary'
                     className='flex-1'
                 >
-                    {exportButtonLabel}
+                    {shouldShowExportLoading ? 'Exporting...' : 'Export Settings'}
                 </Button>
                 <Button
                     onClick={triggerImport}
                     disabled={isAnyOperationLoadingForUI}
                     isLoading={shouldShowImportLoading}
+                    loadingText='Importing...' // Added loadingText
                     variant='secondary'
                     className='flex-1'
                 >
-                    {importButtonLabel}
+                    {shouldShowImportLoading ? 'Importing...' : 'Import Settings'}
+                </Button>
+                <Button
+                    onClick={executeReset}
+                    disabled={isAnyOperationLoadingForUI}
+                    isLoading={shouldShowResetLoading}
+                    loadingText='Resetting...'
+                    variant='danger'
+                    className='flex-1'
+                >
+                    {shouldShowResetLoading ? 'Resetting...' : 'Reset Settings'}
                 </Button>
             </div>
         </div>
