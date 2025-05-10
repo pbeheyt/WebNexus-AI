@@ -217,13 +217,12 @@ class ModelParameterService {
     if (!modelId) {
       throw new Error('Model ID must be provided to resolveParameters');
     }
-
+  
     try {
-        logger.service.info(
-        `Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}`
+      logger.service.info(
+        `Resolving parameters for ${platformId}/${modelId}, Source: ${source || 'N/A'}, Tab: ${tabId || 'N/A'}, useThinkingMode: ${!!useThinkingMode}`
       );
-
-      // Get the full platform config first
+  
       const config = await ConfigService.getApiConfig();
       const platformApiConfig = config?.aiPlatforms?.[platformId];
       if (!platformApiConfig) {
@@ -231,34 +230,42 @@ class ModelParameterService {
           `Platform API configuration not found for ${platformId}`
         );
       }
-
-      // Get model config directly from the platform's API config
+  
       const modelConfig = platformApiConfig?.models?.find(
         (model) => model.id === modelId
       );
       if (!modelConfig) {
         throw new Error(`Model configuration not found for ${modelId}`);
       }
+  
+      // Determine if thinking mode is requested AND actually available/applicable for this model & request
+      const isThinkingAvailableForModel = modelConfig?.thinking?.available === true;
+      const isThinkingToggleable = modelConfig?.thinking?.toggleable === true;
+      const isThinkingEnabledForThisRequest = useThinkingMode && isThinkingAvailableForModel;
+  
+      // Determine the modeKey based on whether thinking is enabled for *this specific request*
+      // If thinking is toggleable and the user wants to use it, modeKey is 'thinking'.
+      // If thinking is available but not toggleable (always on for this model), modeKey is 'thinking'.
+      // Otherwise, modeKey is 'base'.
+      let modeKey = 'base';
+      if (isThinkingAvailableForModel) {
+        if (isThinkingToggleable && useThinkingMode) {
+          modeKey = 'thinking';
+        } else if (!isThinkingToggleable) { // Thinking is available and not toggleable (always on)
+          modeKey = 'thinking';
+        }
+      }
+      logger.service.info(`Resolving parameters using modeKey: ${modeKey}. isThinkingEnabledForThisRequest: ${isThinkingEnabledForThisRequest}`);
 
-      // Determine mode key based on Thinking Mode toggle
-      const modeKey = useThinkingMode && modelConfig?.thinking?.toggleable ? 'thinking' : 'base';
-        logger.service.info(`Resolving parameters using mode: ${modeKey}`);
-
-      // Get user settings for this model using the provided modelId
       const modelParametersResult = await chrome.storage.local.get(STORAGE_KEYS.MODEL_PARAMETER_SETTINGS);
       const allModelParameterSettings = modelParametersResult[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {};
       const platformModelParameters = allModelParameterSettings[platformId] || {};
-
-      // Get the mode-specific settings
       const userModelModeSettings = platformModelParameters.models?.[modelId]?.[modeKey] || {};
-      logger.service.info(`User settings retrieved for ${platformId}/${modelId} (mode: ${modeKey}):`, userModelModeSettings);
+      logger.service.info(`User settings retrieved for ${platformId}/${modelId} (modeKey: ${modeKey}):`, userModelModeSettings);
 
-      // Determine effective toggle values, defaulting to true if not set
-      const effectiveIncludeTemperature =
-        userModelModeSettings.includeTemperature ?? true;
+      const effectiveIncludeTemperature = userModelModeSettings.includeTemperature ?? true;
       const effectiveIncludeTopP = userModelModeSettings.includeTopP ?? false;
 
-      // Start with base parameters
       const params = {
         model: modelId,
         tokenParameter: modelConfig.tokens.parameterName,
@@ -269,72 +276,82 @@ class ModelParameterService {
               ? modelConfig.thinking.maxOutput
               : modelConfig.tokens.maxOutput,
         contextWindow: modelConfig.tokens.contextWindow,
-        modelSupportsSystemPrompt: modelConfig?.capabilities?.supportsSystemPrompt ?? false,
+        modelSupportsSystemPrompt: modelConfig?.capabilities?.supportsSystemPrompt ?? false, // Initial assumption
+        isThinkingEnabledForRequest: isThinkingEnabledForThisRequest, // Store the determined flag
       };
 
-      // Conditionally add modelType if it exists in the config
       if (modelConfig?.modelType) {
         params.modelType = modelConfig.modelType;
       }
 
-      // Determine if thinking mode overrides parameter support
       let thinkingOverridesTemperature = false;
       let thinkingOverridesTopP = false;
 
-      if (modeKey === 'thinking' && modelConfig?.thinking) {
-          logger.service.info(`Checking Thinking Mode parameter overrides for ${platformId}/${modelId}`);
-          if (modelConfig.thinking.supportsTemperature === false) {
-              thinkingOverridesTemperature = true;
-              logger.service.info(`Thinking mode explicitly disables Temperature for ${modelId}.`);
-          }
-          if (modelConfig.thinking.supportsTopP === false) {
-              thinkingOverridesTopP = true;
-              logger.service.info(`Thinking mode explicitly disables TopP for ${modelId}.`);
-          }
+      if (isThinkingEnabledForThisRequest && modelConfig?.thinking) {
+        logger.service.info(`Checking Thinking Mode parameter overrides for ${platformId}/${modelId}`);
+        if (modelConfig.thinking.supportsTemperature === false) {
+          thinkingOverridesTemperature = true;
+          logger.service.info(`Thinking mode explicitly disables Temperature for ${modelId}.`);
+        }
+        if (modelConfig.thinking.supportsTopP === false) {
+          thinkingOverridesTopP = true;
+          logger.service.info(`Thinking mode explicitly disables TopP for ${modelId}.`);
+        }
       }
 
-      // Add temperature ONLY if model supports it AND user included it AND thinking mode doesn't override it
-      const modelSupportsTemperature =
-        modelConfig?.capabilities?.supportsTemperature !== false;
-      if (modelSupportsTemperature && effectiveIncludeTemperature && !thinkingOverridesTemperature) {
+      const modelGenerallySupportsTemperature = modelConfig?.capabilities?.supportsTemperature !== false;
+      if (modelGenerallySupportsTemperature && effectiveIncludeTemperature && !thinkingOverridesTemperature) {
         params.temperature =
           userModelModeSettings.temperature !== undefined
             ? userModelModeSettings.temperature
             : platformApiConfig.temperature.default;
-      } else if (thinkingOverridesTemperature && effectiveIncludeTemperature) {
-        logger.service.info(`Temperature initially intended (by user/default) but not applied for ${modelId} in thinking mode as model configuration overrides it.`);
+      } else if (effectiveIncludeTemperature && (thinkingOverridesTemperature || !modelGenerallySupportsTemperature)) {
+        logger.service.info(`Temperature not applied for ${modelId}: modelSupports=${modelGenerallySupportsTemperature}, userIncluded=${effectiveIncludeTemperature}, thinkingOverride=${thinkingOverridesTemperature}`);
       }
 
-      // Add topP ONLY if model supports it AND user included it AND thinking mode doesn't override it
-      const modelSupportsTopP = modelConfig?.capabilities?.supportsTopP === true;
-      if (modelSupportsTopP && effectiveIncludeTopP && !thinkingOverridesTopP) {
+      const modelGenerallySupportsTopP = modelConfig?.capabilities?.supportsTopP === true;
+      if (modelGenerallySupportsTopP && effectiveIncludeTopP && !thinkingOverridesTopP) {
         params.topP =
           userModelModeSettings.topP !== undefined
             ? userModelModeSettings.topP
             : platformApiConfig.topP.default;
-      } else if (thinkingOverridesTopP && effectiveIncludeTopP) {
-        logger.service.info(`TopP initially intended (by user/default) but not applied for ${modelId} in thinking mode as model configuration overrides it.`);
+      } else if (effectiveIncludeTopP && (thinkingOverridesTopP || !modelGenerallySupportsTopP)) {
+        logger.service.info(`TopP not applied for ${modelId}: modelSupports=${modelGenerallySupportsTopP}, userIncluded=${effectiveIncludeTopP}, thinkingOverride=${thinkingOverridesTopP}`);
       }
 
-      // Add thinking budget if model supports it, thinking is available, AND (it's not toggleable OR thinking is enabled for this request)
-      if (modelConfig?.thinking?.budget && modelConfig?.thinking?.available === true && (!modelConfig?.thinking?.toggleable || useThinkingMode)) {
+      // Add thinking budget if thinking is enabled for this request and the model has budget config
+      if (isThinkingEnabledForThisRequest && modelConfig?.thinking?.budget) {
         const userBudget = userModelModeSettings.thinkingBudget;
-        const budgetValue = userBudget !== undefined 
-          ? userBudget 
+        const budgetValue = userBudget !== undefined
+          ? userBudget
           : modelConfig.thinking.budget.default;
         params.thinkingBudget = budgetValue;
         logger.service.info(`Resolved thinking budget: ${budgetValue}`);
-      } else if (useThinkingMode && modelConfig?.thinking?.available === true) {
-        logger.service.warn(`Thinking mode requested for ${platformId}/${modelId}, but a thinking budget could not be resolved/applied. Check model configuration and conditions.`);
+      } else if (useThinkingMode && isThinkingAvailableForModel && !modelConfig?.thinking?.budget) {
+        logger.service.info(`Thinking mode requested for ${platformId}/${modelId}, but model has no budget configuration.`);
       }
 
-      // Add reasoning effort if model supports it, thinking is available, AND (it's not toggleable OR thinking is enabled for this request)
-      if (modelConfig?.thinking?.reasoningEffort && modelConfig?.thinking?.available === true && (!modelConfig?.thinking?.toggleable || params.isThinkingEnabledForRequest)) {
+      // Add reasoning effort if thinking is enabled for this request and the model has reasoningEffort config
+      if (isThinkingEnabledForThisRequest && modelConfig?.thinking?.reasoningEffort) {
         const userEffort = userModelModeSettings.reasoningEffort;
-        if (userEffort !== undefined && userEffort !== null) {
-          params.reasoningEffort = userEffort;
-          logger.service.info(`Resolved reasoning effort: ${userEffort}`);
+        // Use userEffort if defined, otherwise fallback to model's default reasoning effort
+        const effortValue = userEffort !== undefined
+          ? userEffort
+          : modelConfig.thinking.reasoningEffort.default;
+
+        if (effortValue !== undefined && effortValue !== null) {
+           // Validate against allowedValues if they exist
+          const allowedValues = modelConfig.thinking.reasoningEffort.allowedValues;
+          if (Array.isArray(allowedValues) && allowedValues.length > 0 && !allowedValues.includes(effortValue)) {
+              logger.service.warn(`User/default reasoningEffort "${effortValue}" for ${modelId} is not in allowedValues. Using model's default: ${modelConfig.thinking.reasoningEffort.default}`);
+              params.reasoningEffort = modelConfig.thinking.reasoningEffort.default;
+          } else {
+              params.reasoningEffort = effortValue;
+              logger.service.info(`Resolved reasoning effort: ${effortValue}`);
+          }
         }
+      } else if (useThinkingMode && isThinkingAvailableForModel && !modelConfig?.thinking?.reasoningEffort) {
+           logger.service.info(`Thinking mode requested for ${platformId}/${modelId}, but model has no reasoningEffort configuration.`);
       }
 
       // Calculate effective system prompt support
