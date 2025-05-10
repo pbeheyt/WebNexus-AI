@@ -81,10 +81,9 @@ const ModelParametersSettings = ({
 
   return (
     <>
-      <SelectorSection
-        title='Model to Configure'
-        description={derivedSettings?.resolvedModelConfig?.description || 'No description available for this model.'}
-        actionElement={
+        <SelectorSection
+          title='Model to Configure'
+          actionElement={
           <IconButton
             icon={RefreshIcon}
             iconClassName={`w-5 h-5 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
@@ -138,7 +137,7 @@ const ModelParametersSettings = ({
               <span className='spec-label font-medium text-theme-secondary select-none'>
                 Context window
               </span>
-              <span className='spec-value font-mono select-none'>
+              <span className='spec-value font-mono select-none text-theme-primary'>
                 {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
               </span>
             </div>
@@ -147,7 +146,7 @@ const ModelParametersSettings = ({
                 <span className='spec-label font-medium text-theme-secondary select-none'>
                   Input tokens
                 </span>
-                <span className='spec-value font-mono select-none'>
+                <span className='spec-value font-mono select-none text-theme-primary'>
                   {Math.abs(displaySpecs.inputPrice) < 0.0001
                     ? 'Free'
                     : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
@@ -159,7 +158,7 @@ const ModelParametersSettings = ({
                 <span className='spec-label font-medium text-theme-secondary select-none'>
                   Output tokens
                 </span>
-                <span className='spec-value font-mono select-none'>
+                <span className='spec-value font-mono select-none text-theme-primary'>
                   {Math.abs(displaySpecs.outputPrice) < 0.0001
                     ? 'Free'
                     : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}

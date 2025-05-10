@@ -28,10 +28,10 @@ export function SubTabLayout({
             type='button'
             role='tab'
             aria-selected={activeTabId === tab.id}
-            className={`sub-tab-btn relative py-2 px-4 text-sm cursor-pointer bg-transparent border-none transition-colors select-none -mb-px
+            className={`sub-tab-btn relative py-2 px-4 text-sm cursor-pointer bg-transparent border-none transition-colors select-none
               ${
                 activeTabId === tab.id
-                  ? 'text-primary font-medium border-b-2 border-primary'
+                  ? 'text-primary font-medium after:content-[""] after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-primary'
                   : 'text-theme-secondary hover:text-theme-primary'
               }
             `}
