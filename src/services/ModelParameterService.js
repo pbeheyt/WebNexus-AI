@@ -302,7 +302,7 @@ class ModelParameterService {
             ? userModelModeSettings.temperature
             : platformApiConfig.temperature.default;
       } else if (thinkingOverridesTemperature && effectiveIncludeTemperature) {
-        logger.service.warn(`Temperature included by user but overridden by thinking mode for ${modelId}.`);
+        logger.service.info(`Temperature initially intended (by user/default) but not applied for ${modelId} in thinking mode as model configuration overrides it.`);
       }
 
       // Add topP ONLY if model supports it AND user included it AND thinking mode doesn't override it
@@ -313,7 +313,7 @@ class ModelParameterService {
             ? userModelModeSettings.topP
             : platformApiConfig.topP.default;
       } else if (thinkingOverridesTopP && effectiveIncludeTopP) {
-        logger.service.warn(`TopP included by user but overridden by thinking mode for ${modelId}.`);
+        logger.service.info(`TopP initially intended (by user/default) but not applied for ${modelId} in thinking mode as model configuration overrides it.`);
       }
 
       // Add thinking budget if model supports it, thinking is available, AND (it's not toggleable OR thinking is enabled for this request)
