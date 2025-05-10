@@ -2,6 +2,7 @@
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 
+import SettingsCard from '../common/SettingsCard';
 import {
   Button,
   useNotification,
@@ -170,7 +171,7 @@ const ModelParametersSettings = ({
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
 
         {parameterSpecs.maxTokens && (
-          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+          <SettingsCard className='mb-6'>
             <div className='mb-2'>
               <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
                 Max Tokens
@@ -189,11 +190,11 @@ const ModelParametersSettings = ({
               disabled={isSaving || isResetting}
               className='form-group'
             />
-        </div>
+        </SettingsCard>
         )}
 
         {showTempSection && parameterSpecs.temperature && (
-          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+          <SettingsCard className='mb-6'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
                 Temperature
@@ -223,11 +224,11 @@ const ModelParametersSettings = ({
                 className='form-group mt-2'
               />
             )}
-        </div>
+        </SettingsCard>
         )}
 
         {showTopPSection && parameterSpecs.topP && (
-          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+          <SettingsCard className='mb-6'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
                 Top P
@@ -262,11 +263,11 @@ const ModelParametersSettings = ({
                   It is generally recommended to alter Temperature or Top P, but not both.
                 </p>
             )}
-        </div>
+        </SettingsCard>
         )}
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
-          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+          <SettingsCard className='mb-6'>
             <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
               Thinking Budget
             </span>
@@ -283,11 +284,11 @@ const ModelParametersSettings = ({
               disabled={isSaving || isResetting}
               className='form-group mt-2'
             />
-        </div>
+        </SettingsCard>
         )}
 
         {showReasoningEffort && parameterSpecs.reasoningEffort && (
-          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+          <SettingsCard className='mb-6'>
             <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
               Reasoning Effort
             </span>
@@ -304,11 +305,11 @@ const ModelParametersSettings = ({
                 disabled={isSaving || isResetting}
               />
             </div>
-        </div>
+        </SettingsCard>
         )}
 
         {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && (
-          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+          <SettingsCard className='mb-6'>
             <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
               className='block mb-3 text-base font-semibold text-theme-primary select-none'
@@ -328,7 +329,7 @@ const ModelParametersSettings = ({
               maxLength={parameterSpecs.systemPrompt.maxLength}
               disabled={isSaving || isResetting}
             />
-        </div>
+        </SettingsCard>
         )}
 
         <div className='form-actions flex justify-end'>

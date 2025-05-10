@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 
 import { Button, useNotification, CustomSelect } from '../../../components';
+import SettingsCard from '../ui/common/SettingsCard';
 import userDataService from '../../../services/UserDataService';
 import { STORAGE_KEYS } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
@@ -214,7 +215,7 @@ const DataManagementTab = () => {
       <div className="space-y-6">
 
         {/* Export Settings Group */}
-        <div className="p-5 bg-theme-surface border border-theme rounded-lg">
+        <SettingsCard>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
             <div className="flex-grow">
               <h3 className="text-lg font-medium text-theme-primary mb-1">Export Settings</h3>
@@ -235,10 +236,10 @@ const DataManagementTab = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </SettingsCard>
 
         {/* Import Settings Group */}
-        <div className="p-5 bg-theme-surface border border-theme rounded-lg">
+        <SettingsCard>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
             <div className="flex-grow">
               <h3 className="text-lg font-medium text-theme-primary mb-1">Import Settings</h3>
@@ -259,10 +260,10 @@ const DataManagementTab = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </SettingsCard>
 
         {/* Reset Settings Group */}
-        <div className="p-5 bg-theme-surface border border-theme rounded-lg">
+        <SettingsCard>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
             <div className="flex-grow">
               <h3 className="text-lg font-medium text-theme-primary mb-1">Reset Settings</h3>
@@ -284,7 +285,7 @@ const DataManagementTab = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </SettingsCard>
 
       </div> {/* End of Action Groups Container */}
     </div>

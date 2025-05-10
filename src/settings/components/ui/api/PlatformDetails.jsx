@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { Button, useNotification, PlatformIcon } from '../../../../components';
+import SettingsCard from '../common/SettingsCard';
 import SubTabLayout from '../common/SubTabLayout';
 import { logger } from '../../../../shared/logger';
 import useMinimumLoadingTime from '../../../../hooks/useMinimumLoadingTime';
@@ -139,7 +140,7 @@ const PlatformDetails = ({
         {(currentActiveSubTab) => {
           if (currentActiveSubTab === 'apiKey') {
             return (
-              <div className='settings-section bg-theme-surface p-5 rounded-lg border border-theme'>
+              <SettingsCard className='settings-section'>
                 <h4 className='section-subtitle text-lg font-medium mb-4 text-theme-primary select-none'>
                   API Credentials
                 </h4>
@@ -168,20 +169,20 @@ const PlatformDetails = ({
                 </div>
                 <div className='form-actions flex justify-end gap-3'>
                   {credentials && (
-                  <Button
-                    variant='danger'
-                    onClick={handleRemoveCredentials}
-                    className='select-none'
-                    isLoading={isRemovingApiKeyActual}
-                    loadingText="Removing..."
-                    disabled={
-                      isRemovingApiKeyActual ||
-                      shouldShowApiKeySaving ||
-                      !credentials
-                    }
-                  >
-                    Remove Key
-                  </Button>
+                    <Button
+                      variant='danger'
+                      onClick={handleRemoveCredentials}
+                      className='select-none'
+                      isLoading={isRemovingApiKeyActual}
+                      loadingText="Removing..."
+                      disabled={
+                        isRemovingApiKeyActual ||
+                        shouldShowApiKeySaving ||
+                        !credentials
+                      }
+                    >
+                      Remove Key
+                    </Button>
                   )}
                   <Button
                     onClick={handleSaveCredentials}
@@ -208,7 +209,7 @@ const PlatformDetails = ({
                     {(credentials ? 'Update Key' : 'Save Key')}
                   </Button>
                 </div>
-              </div>
+              </SettingsCard>
             );
           }
           if (currentActiveSubTab === 'modelParams') {
