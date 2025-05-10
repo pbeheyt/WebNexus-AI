@@ -1,5 +1,5 @@
 // src/shared/utils/importValidationUtils.js
-import { CONTENT_TYPES, AI_PLATFORMS, MAX_PROMPT_NAME_LENGTH, MAX_PROMPT_CONTENT_LENGTH } from '../constants';
+import { CONTENT_TYPES, AI_PLATFORMS, MAX_PROMPT_NAME_LENGTH, MAX_PROMPT_CONTENT_LENGTH, MAX_SYSTEM_PROMPT_LENGTH } from '../constants';
 
 export function validateCredentialsData(data) {
   if (typeof data !== 'object' || data === null) {
@@ -86,6 +86,9 @@ export function validateModelParametersSettingsData(data) {
                       case 'systemPrompt':
                       case 'reasoningEffort':
                         if (!(typeof value === 'string' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a string or null.` };
+                        if (paramKey === 'systemPrompt' && typeof value === 'string' && value.length > MAX_SYSTEM_PROMPT_LENGTH) {
+                          return { isValid: false, error: `systemPrompt for ${platformId}/${modelId}/${mode} exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters.` };
+                        }
                         break;
                     }
                   }
