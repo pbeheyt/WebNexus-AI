@@ -124,10 +124,6 @@ const ModelParametersSettings = ({
             </div>
           </div>
         )}
-      </SelectorSection>
-
-      <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
-
         <div className='model-specs-section p-5 bg-theme-hover rounded-lg border border-theme mb-6'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
             Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
@@ -167,11 +163,14 @@ const ModelParametersSettings = ({
             )}
           </div>
         </div>
+      </SelectorSection>
+
+      <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
 
         {parameterSpecs.maxTokens && (
           <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <div className='mb-2'>
-              <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
+              <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
                 Max Tokens
               </span>
             </div>
@@ -194,7 +193,7 @@ const ModelParametersSettings = ({
         {showTempSection && parameterSpecs.temperature && (
           <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <div className='mb-3 flex items-center'>
-              <span className='text-base font-semibold text-theme-secondary mr-3 select-none'>
+              <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
                 Temperature
               </span>
               <Toggle
@@ -228,7 +227,7 @@ const ModelParametersSettings = ({
         {showTopPSection && parameterSpecs.topP && (
           <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <div className='mb-3 flex items-center'>
-              <span className='text-base font-semibold text-theme-secondary mr-3 select-none'>
+              <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
                 Top P
               </span>
               <Toggle
@@ -266,7 +265,7 @@ const ModelParametersSettings = ({
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
           <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
-            <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
+            <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
               Thinking Budget
             </span>
             <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
@@ -287,7 +286,7 @@ const ModelParametersSettings = ({
 
         {showReasoningEffort && parameterSpecs.reasoningEffort && (
           <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
-            <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
+            <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
               Reasoning Effort
             </span>
             <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
@@ -310,7 +309,7 @@ const ModelParametersSettings = ({
           <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
-              className='block mb-3 text-base font-semibold text-theme-secondary select-none'
+              className='block mb-3 text-base font-semibold text-theme-primary select-none'
             >
               System Prompt
             </label>
