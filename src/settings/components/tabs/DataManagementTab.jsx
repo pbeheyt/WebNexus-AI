@@ -194,16 +194,20 @@ const DataManagementTab = () => {
       />
 
       <div className='w-full sm:w-3/4 md:w-2/3 lg:w-1/2'>
-        <SelectorSection title='Select Data Type to Manage:'>
+      <SelectorSection 
+        title='Select Data Type to Manage:'
+        inlineControl={
           <CustomSelect
             id="data-type-select"
             options={DATA_MANAGEMENT_OPTIONS.map(opt => ({ id: opt.id, name: opt.name }))}
             selectedValue={selectedDataType}
             onChange={setSelectedDataType}
             disabled={isAnyOperationLoadingForUI}
-            // className="mb-6" // Removed mb-6 as SelectorSection handles it
           />
-        </SelectorSection>
+        }
+      >
+        {/* No children here for this instance */}
+      </SelectorSection>
       </div>
 
       {/* Action Groups Container */}

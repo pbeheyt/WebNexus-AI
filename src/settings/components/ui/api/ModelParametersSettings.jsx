@@ -95,20 +95,22 @@ const ModelParametersSettings = ({
             title='Reset model parameters to configuration defaults'
           />
         }
-      >
-        <div className='inline-block'> {/* Keep inline-block for CustomSelect sizing behavior */}
-          <CustomSelect
-            id={`${platform.id}-settings-model-selector`}
-            options={modelsFromPlatform.map((model) => ({
-              id: model.id,
-              name: model.id,
-            }))}
-            selectedValue={selectedModelId}
-            onChange={handleModelChange}
-            placeholder='Select Model'
-            disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
-          />
-        </div>
+          inlineControl={
+            <div className='inline-block'>
+              <CustomSelect
+                id={`${platform.id}-settings-model-selector`}
+                options={modelsFromPlatform.map((model) => ({
+                  id: model.id,
+                  name: model.id,
+                }))}
+                selectedValue={selectedModelId}
+                onChange={handleModelChange}
+                placeholder='Select Model'
+                disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
+              />
+            </div>
+          }
+        >
         {showThinkingModeToggle && (
           <div className="mt-4">
             <div className='flex items-center gap-3'>
