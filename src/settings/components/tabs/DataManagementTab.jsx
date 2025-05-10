@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 
-import { Button, useNotification, CustomSelect, ChevronDownIcon } from '../../../components';
+import { Button, useNotification, CustomSelect } from '../../../components';
 import userDataService from '../../../services/UserDataService';
 import { STORAGE_KEYS } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
@@ -39,10 +39,8 @@ const DataManagementTab = () => {
   const { success: showSuccessNotification, error: showErrorNotification } =
     useNotification();
 
-  const [selectedDataType, setSelectedDataType] = useState(DATA_MANAGEMENT_OPTIONS[0].id);
-  const [openSection, setOpenSection] = useState('export'); // Default 'export' section to be open
-  
-  const [isExportingActual, setIsExportingActual] = useState(false);
+     const [selectedDataType, setSelectedDataType] = useState(DATA_MANAGEMENT_OPTIONS[0].id);
+     const [isExportingActual, setIsExportingActual] = useState(false);
   const [isImportingActual, setIsImportingActual] = useState(false);
   const [isResettingActual, setIsResettingActual] = useState(false);
 
@@ -55,13 +53,9 @@ const DataManagementTab = () => {
 
   const currentOptionObject = useMemo(() => {
     return DATA_MANAGEMENT_OPTIONS.find(opt => opt.id === selectedDataType) || DATA_MANAGEMENT_OPTIONS[0];
-  }, [selectedDataType]);
-
-  const toggleSection = (sectionName) => {
-    setOpenSection(prevOpenSection => prevOpenSection === sectionName ? null : sectionName);
-  };
-
-  const executeExport = async () => {
+     }, [selectedDataType]);
+   
+     const executeExport = async () => {
     const { id, storageKey, fileTypeName } = currentOptionObject;
     setIsExportingActual(true);
 
@@ -212,90 +206,83 @@ const DataManagementTab = () => {
         />
       </div>
 
-      {/* Export Section */}
-      <div className="mb-3">
-        <button
-          type="button"
-          onClick={() => toggleSection('export')}
-          className="flex justify-between items-center w-full p-4 bg-theme-surface hover:bg-theme-hover border border-theme rounded-lg text-left text-lg font-medium text-theme-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          aria-expanded={openSection === 'export'}
-          aria-controls="export-content"
-        >
-          <span>Export Settings</span>
-          <ChevronDownIcon className={'w-5 h-5 transition-transform ' + (openSection === 'export' ? 'transform rotate-180' : '')} />
-        </button>
-        {openSection === 'export' && (
-          <div id="export-content" className="p-4 pt-2 border border-t-0 border-theme rounded-b-lg -mt-1"> {/* Adjusted mt to align better */}
-            <p className="text-sm text-theme-secondary mb-4">Export the selected data type (<strong>{currentOptionObject.name}</strong>) to a JSON file. This file can be used later to import these settings.</p>
-            <Button
+      {/* Action Groups Container */}
+      <div className="space-y-6">
+
+        {/* Export Settings Group */}
+        <div className="p-5 bg-theme-surface border border-theme rounded-lg">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div className="flex-grow">
+              <h3 className="text-lg font-medium text-theme-primary mb-1">Export Settings</h3>
+              <p className="text-sm text-theme-secondary mb-3 md:mb-0">
+                Export the selected data type (<strong>{currentOptionObject.name}</strong>) to a JSON file. This file can be used later to import these settings.
+              </p>
+            </div>
+            <div className="flex-shrink-0 md:ml-4">
+              <Button
                 onClick={executeExport}
                 disabled={isAnyOperationLoadingForUI}
                 isLoading={shouldShowExportLoading}
                 loadingText='Exporting...'
                 variant='secondary'
-            >
+                className="w-full md:w-auto"
+              >
                 {shouldShowExportLoading ? 'Exporting...' : `Export ${currentOptionObject.name}`}
-            </Button>
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Import Section */}
-      <div className="mb-3">
-        <button
-          type="button"
-          onClick={() => toggleSection('import')}
-          className="flex justify-between items-center w-full p-4 bg-theme-surface hover:bg-theme-hover border border-theme rounded-lg text-left text-lg font-medium text-theme-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          aria-expanded={openSection === 'import'}
-          aria-controls="import-content"
-        >
-          <span>Import Settings</span>
-          <ChevronDownIcon className={'w-5 h-5 transition-transform ' + (openSection === 'import' ? 'transform rotate-180' : '')} />
-        </button>
-        {openSection === 'import' && (
-          <div id="import-content" className="p-4 pt-2 border border-t-0 border-theme rounded-b-lg -mt-1">
-            <p className="text-sm text-theme-secondary mb-4">Import settings from a JSON file for the selected data type (<strong>{currentOptionObject.name}</strong>). This will <strong className="font-semibold">overwrite any existing settings</strong> for this specific data type. The page will reload automatically after a successful import.</p>
-            <Button
+        {/* Import Settings Group */}
+        <div className="p-5 bg-theme-surface border border-theme rounded-lg">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div className="flex-grow">
+              <h3 className="text-lg font-medium text-theme-primary mb-1">Import Settings</h3>
+              <p className="text-sm text-theme-secondary mb-3 md:mb-0">
+                Import settings from a JSON file for <strong>{currentOptionObject.name}</strong>. This will <strong className="font-semibold">overwrite existing settings</strong> for this data type. The page will reload after a successful import.
+              </p>
+            </div>
+            <div className="flex-shrink-0 md:ml-4">
+              <Button
                 onClick={triggerImport}
                 disabled={isAnyOperationLoadingForUI}
                 isLoading={shouldShowImportLoading}
                 loadingText='Importing...'
                 variant='secondary'
-            >
+                className="w-full md:w-auto"
+              >
                 {shouldShowImportLoading ? 'Importing...' : `Import ${currentOptionObject.name}`}
-            </Button>
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Reset Section */}
-      <div> {/* Removed mb-3 for the last item to maintain consistent bottom spacing with the tab content area */}
-        <button
-          type="button"
-          onClick={() => toggleSection('reset')}
-          className="flex justify-between items-center w-full p-4 bg-theme-surface hover:bg-theme-hover border border-theme rounded-lg text-left text-lg font-medium text-theme-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          aria-expanded={openSection === 'reset'}
-          aria-controls="reset-content"
-        >
-          <span>Reset Settings</span>
-          <ChevronDownIcon className={'w-5 h-5 transition-transform ' + (openSection === 'reset' ? 'transform rotate-180' : '')} />
-        </button>
-        {openSection === 'reset' && (
-          <div id="reset-content" className="p-4 pt-2 border border-t-0 border-theme rounded-b-lg -mt-1">
-            <p className="text-sm text-red-600 dark:text-red-400 mb-1"><strong className="font-semibold">Warning:</strong> This action cannot be undone.</p>
-            <p className="text-sm text-theme-secondary mb-4">Reset settings for the selected data type (<strong>{currentOptionObject.name}</strong>) to their original defaults. The page will reload automatically.</p>
-            <Button
+        {/* Reset Settings Group */}
+        <div className="p-5 bg-theme-surface border border-theme rounded-lg">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div className="flex-grow">
+              <h3 className="text-lg font-medium text-theme-primary mb-1">Reset Settings</h3>
+              <p className="text-sm text-red-600 dark:text-red-400 mb-1"><strong className="font-semibold">Warning:</strong> This action cannot be undone.</p>
+              <p className="text-sm text-theme-secondary mb-3 md:mb-0">
+                Reset settings for <strong>{currentOptionObject.name}</strong> to their original defaults. The page will reload automatically.
+              </p>
+            </div>
+            <div className="flex-shrink-0 md:ml-4">
+              <Button
                 onClick={executeReset}
                 disabled={isAnyOperationLoadingForUI}
                 isLoading={shouldShowResetLoading}
                 loadingText='Resetting...'
                 variant='danger'
-            >
+                className="w-full md:w-auto"
+              >
                 {shouldShowResetLoading ? 'Resetting...' : `Reset ${currentOptionObject.name}`}
-            </Button>
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+
+      </div> {/* End of Action Groups Container */}
     </div>
   );
 };
