@@ -7,6 +7,81 @@ import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
  * Uses the new _defaultPromptId_ key within the PROMPTS structure.
  * @returns {Promise<boolean>} True if changes were made, false otherwise.
  */
+/**
+ * Performs a full repopulation of prompts from prompt-config.json.
+ * It fetches the config, merges/sets prompts in storage, and ensures defaults are set.
+ * This function does NOT manage the INITIAL_PROMPTS_POPULATED flag.
+ * @returns {Promise<boolean>} True if repopulation was successful, false otherwise.
+ */
+export async function performFullPromptRepopulation() {
+  logger.service.info('Starting full prompt repopulation...');
+  try {
+    const response = await fetch(chrome.runtime.getURL('prompt-config.json'));
+    if (!response.ok) {
+      throw new Error(`Failed to fetch prompt-config.json: ${response.statusText}`);
+    }
+    const defaultPromptsConfig = await response.json();
+
+        const newCustomPromptsStructure = {}; // Start fresh for a full repopulation
+
+    let promptsAddedOrDefaultsChanged = false; // To track if any actual changes are made
+
+    for (const contentType in defaultPromptsConfig) {
+      if (Object.hasOwnProperty.call(defaultPromptsConfig, contentType)) {
+        if (!newCustomPromptsStructure[contentType]) {
+          newCustomPromptsStructure[contentType] = {}; // Initialize content type object
+        }
+
+        const defaultPromptsForType = defaultPromptsConfig[contentType];
+        let firstPromptIdForThisType = null;
+
+        for (const defaultPromptName in defaultPromptsForType) {
+          if (Object.hasOwnProperty.call(defaultPromptsForType, defaultPromptName)) {
+            const defaultPromptContent = defaultPromptsForType[defaultPromptName];
+            
+            const newPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            const now = new Date().toISOString();
+            newCustomPromptsStructure[contentType][newPromptId] = {
+              name: defaultPromptName,
+              content: defaultPromptContent,
+              createdAt: now,
+              updatedAt: now,
+            };
+            promptsAddedOrDefaultsChanged = true;
+            if (!firstPromptIdForThisType) {
+              firstPromptIdForThisType = newPromptId;
+            }
+            logger.service.info(`Added initial prompt: "${defaultPromptName}" for type "${contentType}" with ID ${newPromptId} during repopulation.`);
+          }
+        }
+
+        if (firstPromptIdForThisType) {
+          newCustomPromptsStructure[contentType]['_defaultPromptId_'] = firstPromptIdForThisType;
+          promptsAddedOrDefaultsChanged = true;
+          logger.service.info(`Set initial default prompt for "${contentType}" to ID ${firstPromptIdForThisType} during repopulation.`);
+        }
+      }
+    }
+
+    if (promptsAddedOrDefaultsChanged || Object.keys(newCustomPromptsStructure).length > 0) {
+      await chrome.storage.local.set({ [STORAGE_KEYS.PROMPTS]: newCustomPromptsStructure });
+      logger.service.info('Successfully repopulated prompts into PROMPTS storage.');
+    } else {
+      logger.service.info('No new prompts to repopulate from config, or config was empty.');
+      // Ensure an empty object is set if no prompts were found to clear out old data
+      await chrome.storage.local.set({ [STORAGE_KEYS.PROMPTS]: {} });
+    }
+    
+    // Crucially, call ensureDefaultPrompts after repopulating.
+    await ensureDefaultPrompts();
+    logger.service.info('Full prompt repopulation completed and defaults ensured.');
+    return true;
+  } catch (error) {
+    logger.service.error('Error during full prompt repopulation:', error);
+    return false;
+  }
+}
+
 export async function ensureDefaultPrompts() {
   try {
     const promptsResult = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);

@@ -1,7 +1,7 @@
 // src/services/UserDataService.js
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { logger } from '../shared/logger.js';
-import { ensureDefaultPrompts } from '../shared/utils/prompt-utils.js';
+import { ensureDefaultPrompts, performFullPromptRepopulation } from '../shared/utils/prompt-utils.js';
 import {
   validateCredentialsData,
   validateModelParametersSettingsData,
@@ -170,7 +170,7 @@ class UserDataService {
   }
 
   async _resetPrompts() {
-    logger.service.info('Resetting all prompts and triggering repopulation...');
+    logger.service.info('Resetting all prompts and triggering direct repopulation...');
     try {
       // Remove prompts and the population flag
       await chrome.storage.local.remove([
@@ -181,52 +181,21 @@ class UserDataService {
         'Prompts and initial population flag cleared from storage.'
       );
 
-      // Send a message to the background to repopulate prompts
-      // This will also call ensureDefaultPrompts() after repopulation.
-      await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-          { action: 'triggerPromptRepopulation' },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              logger.service.error(
-                'Error sending triggerPromptRepopulation message:',
-                chrome.runtime.lastError.message
-              );
-              reject(
-                new Error(
-                  `Failed to trigger prompt repopulation: ${chrome.runtime.lastError.message}`
-                )
-              );
-            } else if (response && response.success) {
-              logger.service.info(
-                'Background prompt repopulation triggered successfully.'
-              );
-              resolve();
-            } else {
-              logger.service.error(
-                'Background prompt repopulation failed or no response.',
-                response
-              );
-              reject(
-                new Error(
-                  response?.error ||
-                    'Background prompt repopulation failed or no response.'
-                )
-              );
-            }
-          }
-        );
-      });
+      // Directly call the shared repopulation function
+      const repopulationSuccess = await performFullPromptRepopulation();
 
-      logger.service.info(
-        'Prompts reset and repopulation triggered successfully.'
-      );
-      // No need to call ensureDefaultPrompts() here anymore,
-      // as populateInitialPromptsAndSetDefaults in background will handle it.
+      if (repopulationSuccess) {
+        // Set the flag again after successful direct repopulation
+        await chrome.storage.local.set({ [STORAGE_KEYS.INITIAL_PROMPTS_POPULATED]: true });
+        logger.service.info(
+          'Prompts directly repopulated and flag set successfully.'
+        );
+      } else {
+        throw new Error('Direct prompt repopulation failed.');
+      }
     } catch (error) {
-      logger.service.error('Error during prompt reset and repopulation trigger:', error);
-      // Re-throw to be caught by the calling function in DataManagementTab
-      throw error;
+      logger.service.error('Error during prompt reset and direct repopulation:', error);
+      throw error; // Re-throw to be caught by the calling function
     }
   }
 

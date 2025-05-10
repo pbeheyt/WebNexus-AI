@@ -2,15 +2,16 @@
 
 import { logger } from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
-import { ensureDefaultPrompts } from '../shared/utils/prompt-utils.js';
+import { ensureDefaultPrompts, performFullPromptRepopulation } from '../shared/utils/prompt-utils.js';
 import ConfigService from '../services/ConfigService.js';
 
 import { resetState } from './core/state-manager.js';
 
 /**
- * Populates initial prompts from prompt-config.json and sets default prompts.
+ * Populates initial prompts from prompt-config.json and sets default prompts if not already done.
  * Uses the new V2 storage structure with _defaultPromptId_ keys.
- * @returns {Promise<boolean>} True if population ran, false if already populated
+ * Relies on the performFullPromptRepopulation shared utility.
+ * @returns {Promise<boolean>} True if population ran, false if already populated or failed.
  */
 async function populateInitialPromptsAndSetDefaults() {
   const flagKey = STORAGE_KEYS.INITIAL_PROMPTS_POPULATED;
@@ -18,102 +19,25 @@ async function populateInitialPromptsAndSetDefaults() {
     const flagResult = await chrome.storage.local.get(flagKey);
     if (flagResult[flagKey] === true) {
       logger.background.info('Initial prompts already populated. Ensuring defaults are still valid...');
-      await ensureDefaultPrompts();
+      await ensureDefaultPrompts(); // Still good to ensure defaults on subsequent starts.
       return false; // Already populated
     }
 
-    logger.background.info('Populating initial prompts and setting defaults...');
-    
-    const response = await fetch(chrome.runtime.getURL('prompt-config.json'));
-    if (!response.ok) {
-      throw new Error(`Failed to fetch prompt-config.json: ${response.statusText}`);
-    }
-    const defaultPromptsConfig = await response.json();
+    logger.background.info('Initial prompts not populated. Running full repopulation...');
+    const success = await performFullPromptRepopulation();
 
-    const customPromptsStorage = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
-    // Initialize with an empty object if storage is empty or corrupt for PROMPTS
-    const newCustomPromptsStructure = customPromptsStorage[STORAGE_KEYS.PROMPTS] && typeof customPromptsStorage[STORAGE_KEYS.PROMPTS] === 'object' 
-                                      ? { ...customPromptsStorage[STORAGE_KEYS.PROMPTS] } 
-                                      : {};
-
-    let promptsAddedOrDefaultsChanged = false;
-
-    for (const contentType in defaultPromptsConfig) {
-      if (Object.hasOwnProperty.call(defaultPromptsConfig, contentType)) {
-        if (!newCustomPromptsStructure[contentType]) {
-          newCustomPromptsStructure[contentType] = {}; // Initialize content type object
-        }
-
-        const defaultPromptsForType = defaultPromptsConfig[contentType];
-        let firstPromptIdForThisType = null;
-
-        for (const defaultPromptName in defaultPromptsForType) {
-          if (Object.hasOwnProperty.call(defaultPromptsForType, defaultPromptName)) {
-            const defaultPromptContent = defaultPromptsForType[defaultPromptName];
-            
-            // Check if a prompt with this name ALREADY exists under this contentType in the new structure
-            const existingPromptWithSameName = Object.values(newCustomPromptsStructure[contentType] || {}).find(
-              p => typeof p === 'object' && p.name === defaultPromptName
-            );
-
-            if (!existingPromptWithSameName) {
-              const newPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-              const now = new Date().toISOString();
-              newCustomPromptsStructure[contentType][newPromptId] = {
-                name: defaultPromptName,
-                content: defaultPromptContent,
-                createdAt: now,
-                updatedAt: now,
-              };
-              promptsAddedOrDefaultsChanged = true;
-              if (!firstPromptIdForThisType) {
-                firstPromptIdForThisType = newPromptId;
-              }
-              logger.background.info(`Added initial prompt: "${defaultPromptName}" for type "${contentType}" with ID ${newPromptId}`);
-            } else {
-              logger.background.info(`Initial prompt "${defaultPromptName}" for type "${contentType}" already exists or name collision. Skipping.`);
-              if (!firstPromptIdForThisType && existingPromptWithSameName.id /* if old structure had id */) {
-                 // This case is tricky if migrating from an even older structure. For fresh V2, less likely.
-                 // We need an ID for the existing prompt to set it as default if it's the first one we encounter.
-                 // This part might need adjustment if handling very old data. For now, assume new IDs are generated.
-              } else if (!firstPromptIdForThisType) {
-                 // Find the ID of the existing prompt to set it as default
-                 const idOfExisting = Object.entries(newCustomPromptsStructure[contentType] || {}).find(
-                    ([, p]) => typeof p === 'object' && p.name === defaultPromptName
-                 )?.[0];
-                 if (idOfExisting) firstPromptIdForThisType = idOfExisting;
-              }
-            }
-          }
-        }
-
-        // Set the default prompt ID for this content type if one was added/found
-        // and if there isn't already a default set (e.g. from a partial previous run or manual edit)
-        if (firstPromptIdForThisType && !newCustomPromptsStructure[contentType]['_defaultPromptId_']) {
-          newCustomPromptsStructure[contentType]['_defaultPromptId_'] = firstPromptIdForThisType;
-          promptsAddedOrDefaultsChanged = true;
-          logger.background.info(`Set initial default prompt for "${contentType}" to ID ${firstPromptIdForThisType}`);
-        }
-      }
-    }
-
-    if (promptsAddedOrDefaultsChanged) {
-      await chrome.storage.local.set({ [STORAGE_KEYS.PROMPTS]: newCustomPromptsStructure });
-      logger.background.info('Successfully populated initial prompts and set defaults into PROMPTS.');
+    if (success) {
+      await chrome.storage.local.set({ [flagKey]: true });
+      logger.background.info('Set initial prompts populated flag after successful repopulation.');
+      return true; // Population ran
     } else {
-      logger.background.info('No new initial prompts needed or defaults to set in PROMPTS.');
+      logger.background.error('Full prompt repopulation failed during initial setup.');
+      return false; // Population failed
     }
-    
-    await chrome.storage.local.set({ [flagKey]: true });
-    logger.background.info('Set initial prompts populated flag (V2).');
 
-    // After populating, ensure all defaults are valid (handles cases where config might be empty for a type)
-    await ensureDefaultPrompts(); // This will be the refactored version
-
-    return true; // Population ran
   } catch (error) {
-    logger.background.error('Error populating initial prompts (V2):', error);
-    return false; 
+    logger.background.error('Error in populateInitialPromptsAndSetDefaults:', error);
+    return false;
   }
 }
 
