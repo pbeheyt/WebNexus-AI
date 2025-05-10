@@ -196,7 +196,7 @@ const DataManagementTab = () => {
 
       <div className='w-full'>
       <SelectorSection 
-        title='Data Type'
+        title='Data Type Selection'
         inlineControl={
           <CustomSelect
             id="data-type-select"

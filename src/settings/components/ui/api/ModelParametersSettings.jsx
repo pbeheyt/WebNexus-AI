@@ -83,7 +83,7 @@ const ModelParametersSettings = ({
   return (
     <>
         <SelectorSection
-          title='Model'
+          title='Model Selection'
           actionElement={
           <IconButton
             icon={RefreshIcon}
