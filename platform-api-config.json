@@ -69,7 +69,7 @@
           "thinking": {
             "available": true,
             "toggleable": false,
-             "budget": {
+            "budget": {
               "min": 0,
               "max": 24576,
               "default": 8192
@@ -244,7 +244,6 @@
         {
           "id": "o3",
           "description": "Most powerful reasoning model.",
-          "modelType": "reasoning",
           "tokens": {
             "maxOutput": 100000,
             "parameterName": "max_completion_tokens",
@@ -271,7 +270,6 @@
         {
           "id": "o4-mini",
           "description": "Fast, flexible, and intelligent reasoning model.",
-          "modelType": "reasoning",
           "tokens": {
             "maxOutput": 100000,
             "parameterName": "max_completion_tokens",

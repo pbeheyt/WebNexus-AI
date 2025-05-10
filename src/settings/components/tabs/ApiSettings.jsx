@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
 import { useApiSettings } from '../../contexts/ApiSettingsContext';
 
 const ApiSettings = () => {
+  const [activeApiSubTab, setActiveApiSubTab] = useState('apiKey');
+
   const {
     platformConfigs,
     allCredentials,
@@ -13,12 +15,12 @@ const ApiSettings = () => {
     error: contextError,
     selectedPlatformConfig,
     credentialsForSelectedPlatform,
-    advancedSettingsForSelectedPlatform,
+    modelParametersForSelectedPlatform,
     selectPlatform,
     saveApiKey,
     removeApiKey,
-    saveAdvancedModelSettings,
-    resetAdvancedModelSettingsToDefaults,
+    saveModelParametersSettings,
+    resetModelParametersSettingsToDefaults,
   } = useApiSettings();
 
   if (isLoading) {
@@ -44,7 +46,7 @@ const ApiSettings = () => {
       </h2>
       <p className='section-description text-sm text-theme-secondary mb-6 select-none'>
         Configure API credentials for different AI platforms and customize
-        advanced settings for each model. These settings will be used when
+        model parameters for each model. These settings will be used when
         making API requests directly from the browser extension.
       </p>
 
@@ -60,14 +62,16 @@ const ApiSettings = () => {
           <PlatformDetails
             platform={selectedPlatformConfig}
             credentials={credentialsForSelectedPlatform}
-            advancedSettingsForPlatform={advancedSettingsForSelectedPlatform}
+            modelParametersForPlatform={modelParametersForSelectedPlatform}
             // Pass action handlers from context
             saveApiKeyAction={saveApiKey}
             removeApiKeyAction={removeApiKey}
-            saveAdvancedModelSettingsAction={saveAdvancedModelSettings}
-            resetAdvancedModelSettingsToDefaultsAction={
-              resetAdvancedModelSettingsToDefaults
+            saveModelParametersSettingsAction={saveModelParametersSettings}
+            resetModelParametersSettingsToDefaultsAction={
+              resetModelParametersSettingsToDefaults
             }
+            activeSubTab={activeApiSubTab}
+            onSubTabSelect={setActiveApiSubTab}
           />
         ) : (
           <div className='platform-details-panel flex-1 bg-theme-surface p-8 text-center text-sm text-theme-secondary rounded-lg border border-theme'>

@@ -1,7 +1,8 @@
-// src/settings/components/ui/api/AdvancedSettings.jsx
+// src/settings/components/ui/api/ModelParametersSettings.jsx
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 
+import SettingsCard from '../common/SettingsCard';
 import {
   Button,
   useNotification,
@@ -11,12 +12,12 @@ import {
   RefreshIcon,
   CustomSelect,
 } from '../../../../components';
-import { useModelAdvancedSettings } from '../../../hooks/useModelAdvancedSettings';
+import { useModelParametersSettings } from '../../../hooks/useModelParametersSettings';
 
-const AdvancedSettings = ({
+const ModelParametersSettings = ({
   platform,
   selectedModelId, 
-  advancedSettings, 
+  modelParametersSettings, 
   onModelSelect, 
   onSettingsUpdate, 
   onResetToDefaults, 
@@ -44,10 +45,10 @@ const AdvancedSettings = ({
     showBudgetSlider,
     showReasoningEffort,
     modelSupportsSystemPrompt,
-  } = useModelAdvancedSettings({
+  } = useModelParametersSettings({
     platform,
     selectedModelId,
-    advancedSettingsForPlatform: advancedSettings,
+    modelParametersForPlatform: modelParametersSettings,
     onSave: onSettingsUpdate,
     onReset: onResetToDefaults,
     showNotificationError: showNotificationErrorHook,
@@ -66,8 +67,8 @@ const AdvancedSettings = ({
 
   if (!derivedSettings || !isFormReady) {
     return (
-      <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
-        <p className='text-theme-secondary'>Loading model settings...</p>
+      <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+        <p className='text-theme-secondary text-center py-10'>Loading model settings...</p>
       </div>
     );
   }
@@ -79,105 +80,106 @@ const AdvancedSettings = ({
 
 
   return (
-    <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
-      <div className='flex justify-between items-center mb-6'>
-        <h3 className='section-title text-xl font-semibold text-theme-primary select-none'>
-          Advanced Settings
-        </h3>
-        <IconButton
-          icon={RefreshIcon}
-          iconClassName={`w-6 h-6 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''}`}
-          className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-          onClick={handleResetClick}
-          disabled={isAtDefaults || isResetting}
-          ariaLabel='Reset settings to configuration defaults'
-          title='Reset settings to configuration defaults'
-        />
-      </div>
-
-      <div className='form-group mb-6'>
-        <label
-          htmlFor={`${platform.id}-settings-model-selector`}
-          className='block mb-3 text-base font-medium text-theme-secondary select-none'
-        >
-          Model to Configure
-        </label>
-        <div className='inline-block'>
-          <CustomSelect
-            id={`${platform.id}-settings-model-selector`}
-            options={modelsFromPlatform.map((model) => ({
-              id: model.id,
-              name: model.id,
-            }))}
-            selectedValue={selectedModelId}
-            onChange={handleModelChange}
-            placeholder='Select Model'
-            disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
+    <>
+    <SettingsCard className="selector-section-container mb-6">
+      <div className="flex justify-between items-center mb-3">
+        <div className="flex items-center">
+          <h3 className='text-base font-semibold text-theme-primary select-none'>
+            Model Selection
+          </h3>
+          <div className="ml-4">
+            <div className='inline-block'>
+              <CustomSelect
+                id={`${platform.id}-settings-model-selector`}
+                options={modelsFromPlatform.map((model) => ({
+                  id: model.id,
+                  name: model.id,
+                }))}
+                selectedValue={selectedModelId}
+                onChange={handleModelChange}
+                placeholder='Select Model'
+                disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="ml-auto pl-2">
+          <IconButton
+            icon={RefreshIcon}
+            iconClassName={`w-5 h-5 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            onClick={handleResetClick}
+            isLoading={isResetting}
+            disabled={isAtDefaults || isResetting || isSaving}
+            ariaLabel='Reset model parameters to defaults'
+            title='Reset model parameters to configuration defaults'
           />
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
-        {showThinkingModeToggle && (
-          <div className='mb-6'>
-            <div className='flex items-center gap-3'>
-              <span className='text-base font-semibold text-theme-secondary select-none'>
-                Thinking Mode
-              </span>
-              <Toggle
-                id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
-                checked={currentEditingMode === 'thinking'}
-                onChange={toggleEditingMode}
-                disabled={isSaving || isResetting}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className='model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8'>
-          <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
-            Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
-          </h4>
-          <div className='specs-info space-y-2.5'>
-            <div className='spec-item flex justify-between text-sm'>
-              <span className='spec-label font-medium text-theme-secondary select-none'>
-                Context window
-              </span>
-              <span className='spec-value font-mono select-none'>
-                {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
-              </span>
-            </div>
-            {displaySpecs.inputPrice !== undefined && (
-              <div className='spec-item flex justify-between text-sm'>
-                <span className='spec-label font-medium text-theme-secondary select-none'>
-                  Input tokens
-                </span>
-                <span className='spec-value font-mono select-none'>
-                  {Math.abs(displaySpecs.inputPrice) < 0.0001
-                    ? 'Free'
-                    : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
-                </span>
-              </div>
-            )}
-            {displaySpecs.outputPrice !== undefined && (
-              <div className='spec-item flex justify-between text-sm'>
-                <span className='spec-label font-medium text-theme-secondary select-none'>
-                  Output tokens
-                </span>
-                <span className='spec-value font-mono select-none'>
-                  {Math.abs(displaySpecs.outputPrice) < 0.0001
-                    ? 'Free'
-                    : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
-                </span>
-              </div>
-            )}
+      {/* Original children of SelectorSection now direct children of SettingsCard */}
+      {showThinkingModeToggle && (
+        <div className="mt-4">
+          <div className='flex items-center gap-3'>
+            <span className='text-sm font-medium text-theme-secondary select-none'>
+              Thinking Mode
+            </span>
+            <Toggle
+              id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
+              checked={currentEditingMode === 'thinking'}
+              onChange={toggleEditingMode}
+              disabled={isSaving || isResetting}
+            />
           </div>
         </div>
+      )}
+      <div className='model-specs-section bg-theme-hover rounded-lg border border-theme mt-4 p-4'>
+        <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
+          Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
+        </h4>
+        <div className='specs-info space-y-2.5'>
+          <div className='spec-item flex justify-between text-sm'>
+            <span className='spec-label font-medium text-theme-secondary select-none'>
+              Context window
+            </span>
+            <span className='spec-value font-mono select-none text-theme-primary'>
+              {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
+            </span>
+          </div>
+          {displaySpecs.inputPrice !== undefined && (
+            <div className='spec-item flex justify-between text-sm'>
+              <span className='spec-label font-medium text-theme-secondary select-none'>
+                Input tokens
+              </span>
+              <span className='spec-value font-mono select-none text-theme-primary'>
+                {Math.abs(displaySpecs.inputPrice) < 0.0001
+                  ? 'Free'
+                  : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
+              </span>
+            </div>
+          )}
+          {displaySpecs.outputPrice !== undefined && (
+            <div className='spec-item flex justify-between text-sm'>
+              <span className='spec-label font-medium text-theme-secondary select-none'>
+                Output tokens
+              </span>
+              <span className='spec-value font-mono select-none text-theme-primary'>
+                {Math.abs(displaySpecs.outputPrice) < 0.0001
+                  ? 'Free'
+                  : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </SettingsCard>
+
+      <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
 
         {parameterSpecs.maxTokens && (
-          <div className='mb-7'>
+          <SettingsCard className='mb-6'>
             <div className='mb-2'>
-              <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
+              <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
                 Max Tokens
               </span>
             </div>
@@ -194,13 +196,13 @@ const AdvancedSettings = ({
               disabled={isSaving || isResetting}
               className='form-group'
             />
-          </div>
+        </SettingsCard>
         )}
 
         {showTempSection && parameterSpecs.temperature && (
-          <div className='form-group mb-7'>
+          <SettingsCard className='mb-6'>
             <div className='mb-3 flex items-center'>
-              <span className='text-base font-semibold text-theme-secondary mr-3 select-none'>
+              <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
                 Temperature
               </span>
               <Toggle
@@ -228,13 +230,13 @@ const AdvancedSettings = ({
                 className='form-group mt-2'
               />
             )}
-          </div>
+        </SettingsCard>
         )}
 
         {showTopPSection && parameterSpecs.topP && (
-          <div className='form-group mb-7'>
+          <SettingsCard className='mb-6'>
             <div className='mb-3 flex items-center'>
-              <span className='text-base font-semibold text-theme-secondary mr-3 select-none'>
+              <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
                 Top P
               </span>
               <Toggle
@@ -262,18 +264,17 @@ const AdvancedSettings = ({
                 className='form-group mt-2'
               />
             )}
-          </div>
-        )}
-        
-        {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
-            <p className='text-amber-600 text-sm -mt-4 mb-10 select-none'>
-              It is generally recommended to alter Temperature or Top P, but not both.
-            </p>
+            {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
+                <p className='text-amber-600 text-xs mt-3 select-none'>
+                  It is generally recommended to alter Temperature or Top P, but not both.
+                </p>
+            )}
+        </SettingsCard>
         )}
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
-          <div className='form-group mb-7'>
-            <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
+          <SettingsCard className='mb-6'>
+            <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
               Thinking Budget
             </span>
             <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
@@ -289,12 +290,12 @@ const AdvancedSettings = ({
               disabled={isSaving || isResetting}
               className='form-group mt-2'
             />
-          </div>
+        </SettingsCard>
         )}
 
         {showReasoningEffort && parameterSpecs.reasoningEffort && (
-          <div className='form-group mb-7'>
-            <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
+          <SettingsCard className='mb-6'>
+            <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
               Reasoning Effort
             </span>
             <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
@@ -310,14 +311,14 @@ const AdvancedSettings = ({
                 disabled={isSaving || isResetting}
               />
             </div>
-          </div>
+        </SettingsCard>
         )}
 
         {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && (
-          <div className='form-group mb-4'>
+          <SettingsCard className='mb-6'>
             <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
-              className='block mb-3 text-base font-semibold text-theme-secondary select-none'
+              className='block mb-3 text-base font-semibold text-theme-primary select-none'
             >
               System Prompt
             </label>
@@ -334,13 +335,14 @@ const AdvancedSettings = ({
               maxLength={parameterSpecs.systemPrompt.maxLength}
               disabled={isSaving || isResetting}
             />
-          </div>
+        </SettingsCard>
         )}
 
         <div className='form-actions flex justify-end'>
           <Button
             type='submit'
-            disabled={isSaving || !hasChanges || isResetting}
+            isLoading={isSaving}
+            disabled={isSaving || isResetting || !hasChanges}
             variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
             className='px-5 py-2 select-none'
           >
@@ -348,17 +350,17 @@ const AdvancedSettings = ({
           </Button>
         </div>
       </form>
-    </div>
+    </>
   );
 };
 
-AdvancedSettings.propTypes = {
+ModelParametersSettings.propTypes = {
   platform: PropTypes.object.isRequired,
   selectedModelId: PropTypes.string,
-  advancedSettings: PropTypes.object, 
+  modelParametersSettings: PropTypes.object,
   onModelSelect: PropTypes.func.isRequired,
   onSettingsUpdate: PropTypes.func.isRequired,
   onResetToDefaults: PropTypes.func.isRequired,
 };
 
-export default React.memo(AdvancedSettings);
+export default React.memo(ModelParametersSettings);

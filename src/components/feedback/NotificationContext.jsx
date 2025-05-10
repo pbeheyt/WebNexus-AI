@@ -50,14 +50,14 @@ export const NotificationProvider = ({ children }) => {
   );
 
   const error = useCallback(
-    (message, duration = 5000) => {
+    (message, duration = 10000) => {
       showNotification(message, 'error', duration);
     },
     [showNotification]
   );
 
   const warning = useCallback(
-    (message, duration = 4000) => {
+    (message, duration = 3000) => {
       showNotification(message, 'warning', duration);
     },
     [showNotification]

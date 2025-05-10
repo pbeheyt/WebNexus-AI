@@ -118,6 +118,11 @@
 
 /* Utility classes */
 @layer utilities {
+  .prompt-content-scrollable {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
   /* Define the CSS variable for the general icon fill color */
   :root {
     --icon-general-fill-color: #6B7280; /* Default gray for light mode */

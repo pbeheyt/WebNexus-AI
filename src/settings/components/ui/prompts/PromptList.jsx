@@ -24,29 +24,35 @@ const PromptList = ({
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch both custom prompts and default settings
-        const [promptsResult, defaultsResult] = await Promise.all([
-          chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS),
-          chrome.storage.local.get(STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE),
-        ]);
-
-        // Process custom prompts
-        const customPromptsByType =
-          promptsResult[STORAGE_KEYS.CUSTOM_PROMPTS] || {};
+        // Fetch custom prompts which now contain default IDs
+        const result = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
+        const customPromptsByType = result[STORAGE_KEYS.PROMPTS] || {};
+        
+        // Process prompts and extract default IDs
         const uniquePromptsMap = new Map();
-        Object.entries(customPromptsByType).forEach(([type, data]) => {
-          if (data.prompts) {
-            Object.entries(data.prompts).forEach(([id, prompt]) => {
-              // Use the passed contentTypeLabels prop for consistency
-              uniquePromptsMap.set(id, {
-                id,
-                prompt,
-                contentType: type,
-                contentTypeLabel: contentTypeLabels[type] || type,
-              });
+        const newDefaultPromptIds = {};
+        
+        Object.entries(customPromptsByType).forEach(([type, promptsInTypeObject]) => {
+          if (promptsInTypeObject && typeof promptsInTypeObject === 'object') {
+            // Extract default prompt ID for this type if it exists
+            if (promptsInTypeObject['_defaultPromptId_']) {
+              newDefaultPromptIds[type] = promptsInTypeObject['_defaultPromptId_'];
+            }
+            
+            // Process actual prompts (excluding _defaultPromptId_)
+            Object.entries(promptsInTypeObject).forEach(([id, promptObjectValue]) => {
+              if (id !== '_defaultPromptId_') {
+                uniquePromptsMap.set(id, {
+                  id,
+                  prompt: promptObjectValue,
+                  contentType: type,
+                  contentTypeLabel: contentTypeLabels[type] || type,
+                });
+              }
             });
           }
         });
+        
         const allPrompts = Array.from(uniquePromptsMap.values());
         allPrompts.sort(
           (a, b) =>
@@ -54,11 +60,7 @@ const PromptList = ({
             new Date(a.prompt.updatedAt || 0)
         );
         setPrompts(allPrompts);
-
-        // Process and store default prompt IDs
-        setDefaultPromptIds(
-          defaultsResult[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE] || {}
-        ); // Store the defaults object
+        setDefaultPromptIds(newDefaultPromptIds);
       } catch (err) {
         logger.settings.error('Error loading prompts or defaults:', err);
         error('Failed to load prompts or default settings');
@@ -78,14 +80,22 @@ const PromptList = ({
     }
   }, [filterValue, prompts]);
 
-  // Effect to listen for changes in default prompts storage
+  // Effect to listen for changes in custom prompts storage
   useEffect(() => {
     const handleStorageChange = (changes, area) => {
-      if (area === 'local' && changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE]) {
-        logger.settings.info('Default prompts changed, reloading defaults...');
-        const newDefaults =
-          changes[STORAGE_KEYS.DEFAULT_PROMPTS_BY_TYPE].newValue || {};
-        setDefaultPromptIds(newDefaults);
+      if (area === 'local' && changes[STORAGE_KEYS.PROMPTS]) {
+        logger.settings.info('Custom prompts changed, extracting new defaults...');
+        const newCustomPrompts = changes[STORAGE_KEYS.PROMPTS].newValue || {};
+        const newDefaultIds = {};
+        
+        // Extract default prompt IDs from the new structure
+        Object.entries(newCustomPrompts).forEach(([type, typeData]) => {
+          if (typeData && typeData['_defaultPromptId_']) {
+            newDefaultIds[type] = typeData['_defaultPromptId_'];
+          }
+        });
+        
+        setDefaultPromptIds(newDefaultIds);
       }
     };
 

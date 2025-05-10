@@ -25,7 +25,7 @@ export const ApiSettingsProvider = ({ children }) => {
 
   const [platformConfigs, setPlatformConfigs] = useState([]);
   const [allCredentials, setAllCredentials] = useState({});
-  const [allAdvancedSettings, setAllAdvancedSettings] = useState({});
+  const [allModelParameterSettings, setAllModelParameterSettings] = useState({});
   const [selectedPlatformId, setSelectedPlatformId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,15 +43,15 @@ export const ApiSettingsProvider = ({ children }) => {
         ] = await Promise.all([
           ConfigService.getAllPlatformConfigs(),
           chrome.storage.local.get(STORAGE_KEYS.API_CREDENTIALS),
-          chrome.storage.sync.get(STORAGE_KEYS.API_ADVANCED_SETTINGS),
+          chrome.storage.local.get(STORAGE_KEYS.MODEL_PARAMETER_SETTINGS),
         ]);
 
         setPlatformConfigs(loadedPlatformConfigs || []);
         setAllCredentials(
           credentialsResult[STORAGE_KEYS.API_CREDENTIALS] || {}
         );
-        setAllAdvancedSettings(
-          advancedSettingsResult[STORAGE_KEYS.API_ADVANCED_SETTINGS] || {}
+        setAllModelParameterSettings(
+          advancedSettingsResult[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {}
         );
 
         if (loadedPlatformConfigs && loadedPlatformConfigs.length > 0) {
@@ -85,12 +85,12 @@ export const ApiSettingsProvider = ({ children }) => {
     return allCredentials[selectedPlatformId] || null;
   }, [selectedPlatformId, allCredentials]);
 
-  const advancedSettingsForSelectedPlatform = useMemo(() => {
+  const modelParametersForSelectedPlatform = useMemo(() => {
     if (!selectedPlatformId) {
       return {}; // Return empty object if no platform selected
     }
-    return allAdvancedSettings[selectedPlatformId] || {};
-  }, [selectedPlatformId, allAdvancedSettings]);
+    return allModelParameterSettings[selectedPlatformId] || {};
+  }, [selectedPlatformId, allModelParameterSettings]);
 
   // Action Functions
   const selectPlatform = useCallback((platformId) => {
@@ -149,125 +149,129 @@ export const ApiSettingsProvider = ({ children }) => {
     [allCredentials, showErrorNotification, showSuccessNotification]
   );
 
-  const saveAdvancedModelSettings = useCallback(
+  const saveModelParametersSettings = useCallback(
     async (platformId, modelId, mode, settings) => {
       try {
-        const updatedAllAdvancedSettings = JSON.parse(JSON.stringify(allAdvancedSettings)); // Deep copy
+        const updatedAllModelParameterSettings = JSON.parse(JSON.stringify(allModelParameterSettings)); // Deep copy
 
-        if (!updatedAllAdvancedSettings[platformId]) {
-          updatedAllAdvancedSettings[platformId] = { default: {}, models: {} };
+        if (!updatedAllModelParameterSettings[platformId]) {
+          updatedAllModelParameterSettings[platformId] = { models: {} };
         }
-        if (!updatedAllAdvancedSettings[platformId].models) {
-            updatedAllAdvancedSettings[platformId].models = {};
+        if (!updatedAllModelParameterSettings[platformId].models) {
+          updatedAllModelParameterSettings[platformId].models = {};
         }
-        if (!updatedAllAdvancedSettings[platformId].models[modelId]) {
-            updatedAllAdvancedSettings[platformId].models[modelId] = {};
+        if (!updatedAllModelParameterSettings[platformId].models[modelId]) {
+            updatedAllModelParameterSettings[platformId].models[modelId] = {};
         }
         
         // Merge settings into the correct mode key
-        updatedAllAdvancedSettings[platformId].models[modelId][mode] = {
-            ...(updatedAllAdvancedSettings[platformId].models[modelId][mode] || {}),
+        updatedAllModelParameterSettings[platformId].models[modelId][mode] = {
+            ...(updatedAllModelParameterSettings[platformId].models[modelId][mode] || {}),
             ...settings,
         };
 
-        await chrome.storage.sync.set({
-          [STORAGE_KEYS.API_ADVANCED_SETTINGS]: updatedAllAdvancedSettings,
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: updatedAllModelParameterSettings,
         });
-        setAllAdvancedSettings(() => updatedAllAdvancedSettings);
-        showSuccessNotification('Advanced settings saved.');
+        setAllModelParameterSettings(() => updatedAllModelParameterSettings);
+        showSuccessNotification('Model parameters saved.');
         return true;
       } catch (err) {
-        logger.settings.error('Error saving advanced settings in context:', err);
+        logger.settings.error('Error saving model parameters in context:', err);
         const lastError = chrome.runtime.lastError;
         if (lastError?.message?.includes('QUOTA_BYTES')) {
-          showErrorNotification('Sync storage limit reached for advanced settings.', 10000);
+          showErrorNotification('Sync storage limit reached for model parameters.', 10000);
         } else {
-          showErrorNotification(`Failed to save advanced settings: ${err.message}`);
+          showErrorNotification(`Failed to save model parameters: ${err.message}`);
         }
         return false;
       }
     },
-    [allAdvancedSettings, showErrorNotification, showSuccessNotification]
+    [allModelParameterSettings, showErrorNotification, showSuccessNotification]
   );
 
-  const resetAdvancedModelSettingsToDefaults = useCallback(
+  const resetModelParametersSettingsToDefaults = useCallback(
     async (platformId, modelId, mode) => {
-        try {
-            const updatedAllAdvancedSettings = JSON.parse(JSON.stringify(allAdvancedSettings)); // Deep copy
-            let settingsChanged = false;
+      try {
+        const updatedAllModelParameterSettings = JSON.parse(JSON.stringify(allModelParameterSettings)); // Deep copy
+        let settingsChanged = false;
 
-            if (updatedAllAdvancedSettings[platformId]?.models?.[modelId]?.[mode]) {
-                delete updatedAllAdvancedSettings[platformId].models[modelId][mode];
-                settingsChanged = true;
+        if (updatedAllModelParameterSettings[platformId]?.models?.[modelId]?.[mode]) {
+          delete updatedAllModelParameterSettings[platformId].models[modelId][mode];
+          settingsChanged = true;
+          logger.settings.info(`Reset model parameters for ${platformId}/${modelId}/${mode}.`);
 
-                // Clean up model entry if both base and thinking modes are empty
-                if (
-                    !updatedAllAdvancedSettings[platformId].models[modelId].base &&
-                    !updatedAllAdvancedSettings[platformId].models[modelId].thinking
-                ) {
-                    delete updatedAllAdvancedSettings[platformId].models[modelId];
-                }
-                // Clean up 'models' object if it becomes empty
-                if (Object.keys(updatedAllAdvancedSettings[platformId].models || {}).length === 0) {
-                    delete updatedAllAdvancedSettings[platformId].models;
-                }
-                // Clean up platform entry if it becomes entirely empty (no default, no models)
-                if (Object.keys(updatedAllAdvancedSettings[platformId]).length === 0) {
-                    delete updatedAllAdvancedSettings[platformId];
-                }
-            }
+          // Clean up model entry if both base and thinking modes are now empty or non-existent
+          const modelEntry = updatedAllModelParameterSettings[platformId].models[modelId];
+          if (modelEntry && Object.keys(modelEntry).every(key => !modelEntry[key] || Object.keys(modelEntry[key]).length === 0)) {
+            delete updatedAllModelParameterSettings[platformId].models[modelId];
+            logger.settings.info(`Removed empty model entry for ${platformId}/${modelId}.`);
+          }
 
+          // Clean up 'models' object for the platform if it becomes empty
+          if (updatedAllModelParameterSettings[platformId].models && Object.keys(updatedAllModelParameterSettings[platformId].models).length === 0) {
+            delete updatedAllModelParameterSettings[platformId].models;
+            logger.settings.info(`Removed empty 'models' object for platform ${platformId}.`);
+          }
 
-            if (settingsChanged) {
-                await chrome.storage.sync.set({
-                    [STORAGE_KEYS.API_ADVANCED_SETTINGS]: updatedAllAdvancedSettings,
-                });
-                setAllAdvancedSettings(() => updatedAllAdvancedSettings);
-            }
-            showSuccessNotification('Advanced settings reset to defaults.');
-            return true;
-        } catch (err) {
-            logger.settings.error('Error resetting advanced settings in context:', err);
-            showErrorNotification(`Failed to reset advanced settings: ${err.message}`);
-            return false;
+          // Clean up platform entry itself if it becomes entirely empty (e.g., only had models and now models is gone)
+          if (Object.keys(updatedAllModelParameterSettings[platformId]).length === 0) {
+            delete updatedAllModelParameterSettings[platformId];
+            logger.settings.info(`Removed empty platform entry for ${platformId}.`);
+          }
+        } else {
+          logger.settings.info(`No settings found to reset for ${platformId}/${modelId}/${mode}.`);
         }
-    },
-    [allAdvancedSettings, showErrorNotification, showSuccessNotification]
-);
 
+        if (settingsChanged) {
+          await chrome.storage.local.set({
+            [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: updatedAllModelParameterSettings,
+          });
+          setAllModelParameterSettings(() => updatedAllModelParameterSettings);
+        }
+        showSuccessNotification('Model parameters reset to configuration defaults.');
+        return true;
+      } catch (err) {
+        logger.settings.error('Error resetting model parameters in context:', err);
+        showErrorNotification(`Failed to reset model parameters: ${err.message}`);
+        return false;
+      }
+    },
+    [allModelParameterSettings, showErrorNotification, showSuccessNotification]
+  );
 
   const contextValue = useMemo(
     () => ({
       platformConfigs,
       allCredentials,
-      allAdvancedSettings,
+      allModelParameterSettings,
       selectedPlatformId,
       isLoading,
       error,
       selectedPlatformConfig,
       credentialsForSelectedPlatform,
-      advancedSettingsForSelectedPlatform,
+      modelParametersForSelectedPlatform,
       selectPlatform,
       saveApiKey,
       removeApiKey,
-      saveAdvancedModelSettings,
-      resetAdvancedModelSettingsToDefaults,
+      saveModelParametersSettings,
+      resetModelParametersSettingsToDefaults,
     }),
     [
       platformConfigs,
       allCredentials,
-      allAdvancedSettings,
+      allModelParameterSettings,
       selectedPlatformId,
       isLoading,
       error,
       selectedPlatformConfig,
       credentialsForSelectedPlatform,
-      advancedSettingsForSelectedPlatform,
+      modelParametersForSelectedPlatform,
       selectPlatform,
       saveApiKey,
       removeApiKey,
-      saveAdvancedModelSettings,
-      resetAdvancedModelSettingsToDefaults,
+      saveModelParametersSettings,
+      resetModelParametersSettingsToDefaults,
     ]
   );
 

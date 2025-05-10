@@ -2,6 +2,8 @@
 import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 
+import { SpinnerIcon } from '../icons/SpinnerIcon'; // Import SpinnerIcon
+
 export const IconButton = forwardRef(
   (
     {
@@ -10,27 +12,33 @@ export const IconButton = forwardRef(
       className = '',
       onClick,
       disabled,
+      isLoading = false, // Add isLoading prop
       ariaLabel,
       title,
       ...props
     },
     ref
   ) => {
+    const effectiveDisabled = disabled || isLoading;
+
     return (
       <button
         ref={ref}
         type='button'
-        className={`flex items-center justify-center cursor-pointer border-none outline-none transition-colors duration-150 ${className}`}
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={ariaLabel}
-        title={title}
+        className={`flex items-center justify-center cursor-pointer border-none outline-none transition-colors duration-150 ${className} ${isLoading ? 'opacity-80' : ''}`}
+        onClick={effectiveDisabled ? undefined : onClick}
+        disabled={effectiveDisabled}
+        aria-label={isLoading ? 'Loading' : ariaLabel}
+        title={isLoading ? 'Loading...' : title}
         {...props}
       >
-        <IconComponent className={iconClassName} aria-hidden='true' />
+        {isLoading ? (
+          <SpinnerIcon className={iconClassName} aria-hidden="true" />
+        ) : (
+          <IconComponent className={iconClassName} aria-hidden="true" />
+        )}
       </button>
     );
-
   }
 );
 
@@ -42,6 +50,7 @@ IconButton.propTypes = {
   className: PropTypes.string,
   onClick: PropTypes.func,
   disabled: PropTypes.bool,
+  isLoading: PropTypes.bool, // Add propType for isLoading
   ariaLabel: PropTypes.string,
   title: PropTypes.string,
 };

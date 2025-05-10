@@ -2,131 +2,42 @@
 
 import { logger } from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
-import { ensureDefaultPrompts } from '../shared/utils/prompt-utils.js';
+import { ensureDefaultPrompts, performFullPromptRepopulation } from '../shared/utils/prompt-utils.js';
 import ConfigService from '../services/ConfigService.js';
 
 import { resetState } from './core/state-manager.js';
 
 /**
- * Ensures the default prompts from the config file exist in local storage.
- * Runs only if the initialization flag is not set locally for this device.
- * @returns {Promise<boolean>} True if initialization ran, false otherwise.
+ * Populates initial prompts from prompt-config.json and sets default prompts if not already done.
+ * Uses the storage structure with _defaultPromptId_ keys.
+ * Relies on the performFullPromptRepopulation shared utility.
+ * @returns {Promise<boolean>} True if population ran, false if already populated or failed.
  */
-async function ensureLocalDefaultPromptsExist() {
-  const flagKey = STORAGE_KEYS.DEFAULT_PROMPTS_INIT_FLAG;
+async function populateInitialPromptsAndSetDefaults() {
+  const flagKey = STORAGE_KEYS.INITIAL_PROMPTS_POPULATED;
   try {
     const flagResult = await chrome.storage.local.get(flagKey);
-    // Check if the flag is true for *this specific device*
     if (flagResult[flagKey] === true) {
-      logger.background.info('Default prompts flag already set locally. Skipping population.');
-      return false; // Already initialized on this device
+      logger.background.info('Initial prompts already populated. Ensuring defaults are still valid...');
+      await ensureDefaultPrompts(); // Still good to ensure defaults on subsequent starts.
+      return false; // Already populated
     }
 
-    logger.background.info('Local default prompts flag not set. Populating defaults...');
-    // Fetch default prompts from config file
-    const response = await fetch(chrome.runtime.getURL('prompt-config.json'));
-    if (!response.ok) {
-      throw new Error(`Failed to fetch prompt-config.json: ${response.statusText}`);
-    }
-    const defaultPromptsConfig = await response.json();
+    logger.background.info('Initial prompts not populated. Running full repopulation...');
+    const success = await performFullPromptRepopulation();
 
-    // Fetch existing custom prompts from local storage
-    const localResult = await chrome.storage.local.get(STORAGE_KEYS.CUSTOM_PROMPTS);
-    // Ensure we initialize with an empty object if storage is empty or corrupt
-    const promptsByType = typeof localResult[STORAGE_KEYS.CUSTOM_PROMPTS] === 'object' && localResult[STORAGE_KEYS.CUSTOM_PROMPTS] !== null
-      ? { ...localResult[STORAGE_KEYS.CUSTOM_PROMPTS] } // Use spread for a mutable copy
-      : {};
-
-    let promptsAdded = false;
-
-    // Iterate through content types in the default config
-    for (const contentType in defaultPromptsConfig) {
-      if (Object.hasOwnProperty.call(defaultPromptsConfig, contentType)) {
-        // Ensure the content type exists in the local storage structure
-        if (!promptsByType[contentType]) {
-          promptsByType[contentType] = { prompts: {} };
-        } else if (typeof promptsByType[contentType].prompts !== 'object' || promptsByType[contentType].prompts === null) {
-          // Handle case where content type exists but prompts object is missing/invalid
-          promptsByType[contentType].prompts = {};
-        }
-
-        const defaultPromptsForType = defaultPromptsConfig[contentType];
-        const existingPrompts = promptsByType[contentType].prompts;
-
-        // Iterate through default prompts defined for this content type in the config
-        for (const defaultPromptName in defaultPromptsForType) {
-          if (Object.hasOwnProperty.call(defaultPromptsForType, defaultPromptName)) {
-            const defaultPromptContent = defaultPromptsForType[defaultPromptName];
-
-            // Check if a prompt with the same name already exists in local storage for this type
-            const nameExists = Object.values(existingPrompts).some(
-              (prompt) => prompt && typeof prompt === 'object' && prompt.name === defaultPromptName
-            );
-
-            if (!nameExists) {
-              // Prompt doesn't exist locally, create and add it
-              const newPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-              const now = new Date().toISOString();
-              const newPrompt = {
-                id: newPromptId,
-                name: defaultPromptName,
-                content: defaultPromptContent,
-                contentType: contentType, // Use the key from the config
-                createdAt: now,
-                updatedAt: now,
-              };
-              promptsByType[contentType].prompts[newPromptId] = newPrompt;
-              promptsAdded = true;
-              logger.background.info(`Added default prompt locally: "${defaultPromptName}" for type "${contentType}"`);
-            } else {
-               logger.background.info(`Default prompt "${defaultPromptName}" for type "${contentType}" already exists locally. Skipping.`);
-            }
-          }
-        }
-      }
-    }
-
-    // Save the potentially updated custom prompts back to local storage
-    if (promptsAdded) {
-      await chrome.storage.local.set({ [STORAGE_KEYS.CUSTOM_PROMPTS]: promptsByType });
-      logger.background.info('Successfully added/updated custom prompts in local storage.');
+    if (success) {
+      await chrome.storage.local.set({ [flagKey]: true });
+      logger.background.info('Set initial prompts populated flag after successful repopulation.');
+      return true; // Population ran
     } else {
-      logger.background.info('No new default prompts needed to be added locally.');
+      logger.background.error('Full prompt repopulation failed during initial setup.');
+      return false; // Population failed
     }
 
-    // Set the local flag indicating defaults have been populated on this device
-    await chrome.storage.local.set({ [flagKey]: true });
-    logger.background.info('Set local default prompts initialization flag.');
-    return true; // Initialization ran
-
   } catch (error) {
-    logger.background.error('Error ensuring local default prompts exist:', error);
-    return false; // Indicate failure
-  }
-}
-
-/**
- * Initializes default prompts from prompt-config.json into local storage
- * if they haven't been initialized before on this device.
- * Also ensures the default prompt pointers are set correctly afterwards.
- * Intended to be called on install or startup.
- * @returns {Promise<boolean>} True if successful, false otherwise.
- */
-async function initializeDefaultPrompts() {
-  logger.background.info('Running default prompt initialization check...');
-  try {
-    // Step 1: Ensure the base prompts exist locally (runs only if flag not set)
-    await ensureLocalDefaultPromptsExist();
-
-    // Step 2: Always run ensureDefaultPrompts afterwards to set the default pointers
-    // based on the prompts that are now guaranteed to exist locally.
-    await ensureDefaultPrompts();
-    logger.background.info('Ensured default prompt pointers are set.');
-
-    return true; // Indicate overall success of the flow
-  } catch (error) {
-    logger.background.error('Error during full default prompt initialization flow:', error);
-    return false; // Indicate failure
+    logger.background.error('Error in populateInitialPromptsAndSetDefaults:', error);
+    return false;
   }
 }
 
@@ -174,11 +85,11 @@ async function handleInstallation(details) {
   // Call the main initialization function on install.
   // It handles the flag check internally and ensures pointers are set.
   if (details.reason === 'install') {
-     logger.background.info('Reason is "install", running initializeDefaultPrompts...');
-     await initializeDefaultPrompts(); // This now handles the necessary checks and actions
-  } else {
-     logger.background.info(`Reason is "${details.reason}", skipping prompt initialization in handleInstallation.`);
+     logger.background.info('Reason is "install", running populateInitialPromptsAndSetDefaults...');
+     await populateInitialPromptsAndSetDefaults();
   }
+  // No specific call for 'update' needed here for this logic, 
+  // as ensureDefaultPrompts in startBackgroundService will handle consistency.
 
   // --- Set Default Popup Platform Preference ---
   if (details.reason === 'install') {
@@ -242,4 +153,4 @@ async function handleInstallation(details) {
 // Setup installation handler
 chrome.runtime.onInstalled.addListener(handleInstallation);
 
-export { initializeExtension, initializeDefaultPrompts, handleInstallation };
+export { initializeExtension, populateInitialPromptsAndSetDefaults, handleInstallation };
