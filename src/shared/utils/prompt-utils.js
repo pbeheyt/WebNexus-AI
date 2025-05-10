@@ -155,16 +155,17 @@ export async function loadRelevantPrompts(contentType) {
 
     // Get prompts for the requested type
     const typePromptsData = promptsByType[contentType] || {}; // Ensure typePromptsData is what was typePromptsObj
-    const relevantPrompts = Object.entries(typePromptsData)
-      .filter(([key]) => key !== '_defaultPromptId_') // Skip the default prompt ID key
-      .map(([id, promptObjectValue]) => ({
-        id, // The key is the ID
-        prompt: promptObjectValue, // The value is the prompt object {name, content, createdAt, updatedAt}
-        contentType: contentType, // contentType is passed as an argument to loadRelevantPrompts
-      }));
+        const relevantPrompts = Object.entries(typePromptsData)
+          .filter(([key]) => key !== '_defaultPromptId_') // Skip the default prompt ID key
+          .map(([id, promptObjectValue]) => ({
+            id, // The key is the ID
+            ...promptObjectValue, // Spread the properties of promptObjectValue (name, content, createdAt, updatedAt)
+            contentType: contentType, // Add contentType
+            // contentTypeLabel is already added if needed by the caller based on contentType
+          }));
 
-    // Sort prompts alphabetically by name
-    relevantPrompts.sort((a, b) => a.name.localeCompare(b.name));
+        // Sort prompts alphabetically by name (now directly accessible)
+        relevantPrompts.sort((a, b) => a.name.localeCompare(b.name));
 
     return relevantPrompts;
   } catch (error) {
