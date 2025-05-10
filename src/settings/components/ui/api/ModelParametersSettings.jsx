@@ -67,8 +67,8 @@ const ModelParametersSettings = ({
 
   if (!derivedSettings || !isFormReady) {
     return (
-      <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
-        <p className='text-theme-secondary'>Loading model settings...</p>
+      <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+        <p className='text-theme-secondary text-center py-10'>Loading model settings...</p>
       </div>
     );
   }
@@ -80,26 +80,22 @@ const ModelParametersSettings = ({
 
 
   return (
-    <div className='settings-section bg-theme-surface p-6 rounded-lg border border-theme'>
-      <div className='flex justify-between items-center mb-6'>
-        <h3 className='section-title text-xl font-semibold text-theme-primary select-none'>
-          Model Parameters
-        </h3>
-        <IconButton
-          icon={RefreshIcon}
-          iconClassName={`w-6 h-6 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
-          className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-          onClick={handleResetClick}
-          isLoading={isResetting}
-          disabled={isAtDefaults || isResetting || isSaving}
-          ariaLabel='Reset settings to configuration defaults'
-          title='Reset settings to configuration defaults'
-        />
-      </div>
-
+    <>
       <SelectorSection
         title='Model to Configure'
         description={derivedSettings?.resolvedModelConfig?.description || 'No description available for this model.'}
+        actionElement={
+          <IconButton
+            icon={RefreshIcon}
+            iconClassName={`w-5 h-5 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            onClick={handleResetClick}
+            isLoading={isResetting}
+            disabled={isAtDefaults || isResetting || isSaving}
+            ariaLabel='Reset model parameters to defaults'
+            title='Reset model parameters to configuration defaults'
+          />
+        }
       >
         <div className='inline-block'> {/* Keep inline-block for CustomSelect sizing behavior */}
           <CustomSelect
@@ -350,7 +346,7 @@ const ModelParametersSettings = ({
           </Button>
         </div>
       </form>
-    </div>
+    </>
   );
 };
 

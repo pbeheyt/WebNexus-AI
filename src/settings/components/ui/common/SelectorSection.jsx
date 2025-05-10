@@ -12,16 +12,19 @@ import PropTypes from 'prop-types';
  * @param {React.ReactNode} props.children - The main content of the section (e.g., a CustomSelect).
  * @param {string} [props.className=''] - Additional CSS classes for the main container.
  */
-export function SelectorSection({ title, description, children, className = '' }) {
+export function SelectorSection({ title, description, children, className = '', actionElement }) {
   return (
     <div
       className={`selector-section-container p-5 bg-theme-surface border border-theme rounded-lg mb-6 ${className}`}
     >
-      {title && (
-        <h3 className='text-lg font-medium text-theme-primary mb-2 select-none'>
-          {title}
-        </h3>
-      )}
+        {title && (
+          <div className="flex justify-between items-center mb-2">
+            <h3 className='text-lg font-medium text-theme-primary select-none'>
+              {title}
+            </h3>
+            {actionElement && <div className="ml-2">{actionElement}</div>}
+          </div>
+        )}
       {description && (
         <p className='text-sm text-theme-secondary mb-4 select-none'>
           {description}
@@ -37,6 +40,7 @@ SelectorSection.propTypes = {
   description: PropTypes.string,
   children: PropTypes.node.isRequired,
   className: PropTypes.string,
+  actionElement: PropTypes.node,
 };
 
 export default SelectorSection;
