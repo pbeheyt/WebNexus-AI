@@ -13,7 +13,6 @@ import {
   CustomSelect,
 } from '../../../../components';
 import { useModelParametersSettings } from '../../../hooks/useModelParametersSettings';
-import SelectorSection from '../common/SelectorSection';
 
 const ModelParametersSettings = ({
   platform,
@@ -82,22 +81,14 @@ const ModelParametersSettings = ({
 
   return (
     <>
-        <SelectorSection
-          title='Model Selection'
-          actionElement={
-          <IconButton
-            icon={RefreshIcon}
-            iconClassName={`w-5 h-5 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
-            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-            onClick={handleResetClick}
-            isLoading={isResetting}
-            disabled={isAtDefaults || isResetting || isSaving}
-            ariaLabel='Reset model parameters to defaults'
-            title='Reset model parameters to configuration defaults'
-          />
-        }
-          inlineControl={
-            <div className='inline-block'>
+    <SettingsCard className="selector-section-container mb-6">
+      <div className="flex justify-between items-center mb-3"> {/* Mimics internal layout for title/controls/action */}
+        <div className="flex items-center">
+          <h3 className='text-lg font-medium text-theme-primary select-none'>
+            Model Selection
+          </h3>
+          <div className="ml-4">
+            <div className='inline-block'> {/* This div was part of the original inlineControl structure */}
               <CustomSelect
                 id={`${platform.id}-settings-model-selector`}
                 options={modelsFromPlatform.map((model) => ({
@@ -110,63 +101,78 @@ const ModelParametersSettings = ({
                 disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
               />
             </div>
-          }
-        >
-        {showThinkingModeToggle && (
-          <div className="mt-4">
-            <div className='flex items-center gap-3'>
-              <span className='text-sm font-medium text-theme-secondary select-none'>
-                Thinking Mode
-              </span>
-              <Toggle
-                id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
-                checked={currentEditingMode === 'thinking'}
-                onChange={toggleEditingMode}
-                disabled={isSaving || isResetting}
-              />
-            </div>
-          </div>
-        )}
-        <div className='model-specs-section bg-theme-hover rounded-lg border border-theme mt-4 p-4'>
-          <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
-            Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
-          </h4>
-          <div className='specs-info space-y-2.5'>
-            <div className='spec-item flex justify-between text-sm'>
-              <span className='spec-label font-medium text-theme-secondary select-none'>
-                Context window
-              </span>
-              <span className='spec-value font-mono select-none text-theme-primary'>
-                {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
-              </span>
-            </div>
-            {displaySpecs.inputPrice !== undefined && (
-              <div className='spec-item flex justify-between text-sm'>
-                <span className='spec-label font-medium text-theme-secondary select-none'>
-                  Input tokens
-                </span>
-                <span className='spec-value font-mono select-none text-theme-primary'>
-                  {Math.abs(displaySpecs.inputPrice) < 0.0001
-                    ? 'Free'
-                    : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
-                </span>
-              </div>
-            )}
-            {displaySpecs.outputPrice !== undefined && (
-              <div className='spec-item flex justify-between text-sm'>
-                <span className='spec-label font-medium text-theme-secondary select-none'>
-                  Output tokens
-                </span>
-                <span className='spec-value font-mono select-none text-theme-primary'>
-                  {Math.abs(displaySpecs.outputPrice) < 0.0001
-                    ? 'Free'
-                    : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
-                </span>
-              </div>
-            )}
           </div>
         </div>
-      </SelectorSection>
+        <div className="ml-auto pl-2">
+          <IconButton
+            icon={RefreshIcon}
+            iconClassName={`w-5 h-5 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            onClick={handleResetClick}
+            isLoading={isResetting}
+            disabled={isAtDefaults || isResetting || isSaving}
+            ariaLabel='Reset model parameters to defaults'
+            title='Reset model parameters to configuration defaults'
+          />
+        </div>
+      </div>
+
+      {/* Original children of SelectorSection now direct children of SettingsCard */}
+      {showThinkingModeToggle && (
+        <div className="mt-4">
+          <div className='flex items-center gap-3'>
+            <span className='text-sm font-medium text-theme-secondary select-none'>
+              Thinking Mode
+            </span>
+            <Toggle
+              id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
+              checked={currentEditingMode === 'thinking'}
+              onChange={toggleEditingMode}
+              disabled={isSaving || isResetting}
+            />
+          </div>
+        </div>
+      )}
+      <div className='model-specs-section bg-theme-hover rounded-lg border border-theme mt-4 p-4'>
+        <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
+          Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
+        </h4>
+        <div className='specs-info space-y-2.5'>
+          <div className='spec-item flex justify-between text-sm'>
+            <span className='spec-label font-medium text-theme-secondary select-none'>
+              Context window
+            </span>
+            <span className='spec-value font-mono select-none text-theme-primary'>
+              {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
+            </span>
+          </div>
+          {displaySpecs.inputPrice !== undefined && (
+            <div className='spec-item flex justify-between text-sm'>
+              <span className='spec-label font-medium text-theme-secondary select-none'>
+                Input tokens
+              </span>
+              <span className='spec-value font-mono select-none text-theme-primary'>
+                {Math.abs(displaySpecs.inputPrice) < 0.0001
+                  ? 'Free'
+                  : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
+              </span>
+            </div>
+          )}
+          {displaySpecs.outputPrice !== undefined && (
+            <div className='spec-item flex justify-between text-sm'>
+              <span className='spec-label font-medium text-theme-secondary select-none'>
+                Output tokens
+              </span>
+              <span className='spec-value font-mono select-none text-theme-primary'>
+                {Math.abs(displaySpecs.outputPrice) < 0.0001
+                  ? 'Free'
+                  : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </SettingsCard>
 
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
 

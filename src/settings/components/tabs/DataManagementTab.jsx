@@ -6,7 +6,6 @@ import userDataService from '../../../services/UserDataService';
 import { STORAGE_KEYS } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
 import useMinimumLoadingTime from '../../../hooks/useMinimumLoadingTime';
-import SelectorSection from '../ui/common/SelectorSection';
 
 const DATA_MANAGEMENT_OPTIONS = [
   {
@@ -194,21 +193,24 @@ const DataManagementTab = () => {
         disabled={isAnyOperationLoadingForUI}
       />
 
-      <div className='w-fit'>
-      <SelectorSection 
-        title='Data Type Selection'
-        inlineControl={
-          <CustomSelect
-            id="data-type-select"
-            options={DATA_MANAGEMENT_OPTIONS.map(opt => ({ id: opt.id, name: opt.name }))}
-            selectedValue={selectedDataType}
-            onChange={setSelectedDataType}
-            disabled={isAnyOperationLoadingForUI}
-          />
-        }
-      >
-      </SelectorSection>
-      </div>
+    <div className='w-fit'>
+      <SettingsCard className="selector-section-container mb-6">
+        <div className="flex items-center">
+          <h3 className='text-lg font-medium text-theme-primary select-none'>
+            Data Type Selection
+          </h3>
+          <div className="ml-4">
+            <CustomSelect
+              id="data-type-select"
+              options={DATA_MANAGEMENT_OPTIONS.map(opt => ({ id: opt.id, name: opt.name }))}
+              selectedValue={selectedDataType}
+              onChange={setSelectedDataType}
+              disabled={isAnyOperationLoadingForUI}
+            />
+          </div>
+        </div>
+      </SettingsCard>
+    </div>
 
       {/* Action Groups Container */}
       <div className="space-y-6">
@@ -222,7 +224,7 @@ const DataManagementTab = () => {
                 Export the selected data type (<strong>{currentOptionObject.name}</strong>) to a JSON file. This file can be used later to import these settings.
               </p>
             </div>
-            <div className="flex-shrink-0 md:ml-4">
+            <div className="flex-shrink-0 md:ml-10">
               <Button
                 onClick={executeExport}
                 disabled={isAnyOperationLoadingForUI}
@@ -246,7 +248,7 @@ const DataManagementTab = () => {
                 Import settings from a JSON file for <strong>{currentOptionObject.name}</strong>. This will <strong className="font-semibold">overwrite existing settings</strong> for this data type. The page will reload after a successful import.
               </p>
             </div>
-            <div className="flex-shrink-0 md:ml-4">
+            <div className="flex-shrink-0 md:ml-10">
               <Button
                 onClick={triggerImport}
                 disabled={isAnyOperationLoadingForUI}
@@ -271,7 +273,7 @@ const DataManagementTab = () => {
                 Reset settings for <strong>{currentOptionObject.name}</strong> to their original defaults. The page will reload automatically.
               </p>
             </div>
-            <div className="flex-shrink-0 md:ml-4">
+            <div className="flex-shrink-0 md:ml-10">
               <Button
                 onClick={executeReset}
                 disabled={isAnyOperationLoadingForUI}
