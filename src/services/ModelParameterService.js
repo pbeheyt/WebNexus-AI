@@ -317,13 +317,15 @@ class ModelParameterService {
       }
 
       // Add thinking budget if model supports it, thinking is available, AND (it's not toggleable OR thinking is enabled for this request)
-      if (modelConfig?.thinking?.budget && modelConfig?.thinking?.available === true && (!modelConfig?.thinking?.toggleable || params.isThinkingEnabledForRequest)) {
+      if (modelConfig?.thinking?.budget && modelConfig?.thinking?.available === true && (!modelConfig?.thinking?.toggleable || useThinkingMode)) {
         const userBudget = userModelModeSettings.thinkingBudget;
         const budgetValue = userBudget !== undefined 
           ? userBudget 
           : modelConfig.thinking.budget.default;
         params.thinkingBudget = budgetValue;
         logger.service.info(`Resolved thinking budget: ${budgetValue}`);
+      } else if (useThinkingMode && modelConfig?.thinking?.available === true) {
+        logger.service.warn(`Thinking mode requested for ${platformId}/${modelId}, but a thinking budget could not be resolved/applied. Check model configuration and conditions.`);
       }
 
       // Add reasoning effort if model supports it, thinking is available, AND (it's not toggleable OR thinking is enabled for this request)

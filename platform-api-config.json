@@ -69,7 +69,7 @@
           "thinking": {
             "available": true,
             "toggleable": false,
-             "budget": {
+            "budget": {
               "min": 0,
               "max": 24576,
               "default": 8192
