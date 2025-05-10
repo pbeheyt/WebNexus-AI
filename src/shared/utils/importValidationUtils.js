@@ -1,5 +1,6 @@
 // src/shared/utils/importValidationUtils.js
 import { CONTENT_TYPES, AI_PLATFORMS, MAX_PROMPT_NAME_LENGTH, MAX_PROMPT_CONTENT_LENGTH, MAX_SYSTEM_PROMPT_LENGTH } from '../constants';
+import ConfigService from '../../services/ConfigService';
 
 export function validateCredentialsData(data) {
   if (typeof data !== 'object' || data === null) {
@@ -25,7 +26,17 @@ export function validateCredentialsData(data) {
   return { isValid: true };
 }
 
-export function validateModelParametersSettingsData(data) {
+export async function validateModelParametersSettingsData(data) {
+  let apiConfig;
+  try {
+    apiConfig = await ConfigService.getApiConfig();
+    if (!apiConfig || !apiConfig.aiPlatforms) {
+      return { isValid: false, error: 'Failed to load or parse API configuration for validation.' };
+    }
+  } catch (e) {
+    return { isValid: false, error: `Error loading API configuration: ${e.message}` };
+  }
+
   if (typeof data !== 'object' || data === null) {
     return { isValid: false, error: 'Model parameters settings data must be an object.' };
   }
@@ -65,6 +76,33 @@ export function validateModelParametersSettingsData(data) {
                 if (typeof modeSettings !== 'object' || modeSettings === null) {
                   return { isValid: false, error: `Settings for "${mode}" mode of model "${modelId}" on platform "${platformId}" must be an object.` };
                 }
+
+                const platformApiSettings = apiConfig.aiPlatforms[platformId];
+                // The existing check for knownPlatformIds already handles if platformApiSettings is undefined.
+
+                const modelApiSettings = platformApiSettings?.models?.find(m => m.id === modelId);
+                if (!modelApiSettings) {
+                  return { isValid: false, error: `Model ID "${modelId}" not found in current API configuration for platform "${platformId}".` };
+                }
+
+                // Determine effective model settings for the current mode (base or thinking)
+                let effectiveModelTokensConfig = { ...modelApiSettings.tokens };
+                let effectiveModelCapabilities = { ...modelApiSettings.capabilities };
+                let effectiveModelThinkingBudgetConfig = modelApiSettings.thinking?.budget; // Can be undefined
+
+                if (mode === 'thinking' && modelApiSettings.thinking?.available) {
+                  if (modelApiSettings.thinking.maxOutput !== undefined) {
+                    effectiveModelTokensConfig.maxOutput = modelApiSettings.thinking.maxOutput;
+                  }
+                  if (modelApiSettings.thinking.supportsTemperature !== undefined) {
+                    effectiveModelCapabilities.supportsTemperature = modelApiSettings.thinking.supportsTemperature;
+                  }
+                  if (modelApiSettings.thinking.supportsTopP !== undefined) {
+                    effectiveModelCapabilities.supportsTopP = modelApiSettings.thinking.supportsTopP;
+                  }
+                  // Note: thinking.budget is already specific, so effectiveModelThinkingBudgetConfig is fine.
+                }
+
                 // Parameter type checks
                 const params = ['maxTokens', 'temperature', 'topP', 'systemPrompt', 'includeTemperature', 'includeTopP', 'thinkingBudget', 'reasoningEffort'];
                 for (const paramKey of params) {
@@ -72,12 +110,44 @@ export function validateModelParametersSettingsData(data) {
                     const value = modeSettings[paramKey];
                     switch (paramKey) {
                       case 'maxTokens':
+                        if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a number or null.` };
+                        if (typeof value === 'number') {
+                          const minTokens = 1; // Define a sensible minimum
+                          const maxModelTokens = effectiveModelTokensConfig.maxOutput;
+                          if (value < minTokens || value > maxModelTokens) {
+                            return { isValid: false, error: `maxTokens for ${platformId}/${modelId}/${mode} must be between ${minTokens} and ${maxModelTokens}. Found: ${value}.` };
+                          }
+                        }
+                        break;
                       case 'thinkingBudget':
                         if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a number or null.` };
+                        if (typeof value === 'number' && effectiveModelThinkingBudgetConfig) {
+                          if (value < effectiveModelThinkingBudgetConfig.min || value > effectiveModelThinkingBudgetConfig.max) {
+                            return { isValid: false, error: `thinkingBudget for ${platformId}/${modelId}/${mode} must be between ${effectiveModelThinkingBudgetConfig.min} and ${effectiveModelThinkingBudgetConfig.max}. Found: ${value}.` };
+                          }
+                        }
                         break;
                       case 'temperature':
+                        if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a number or null.` };
+                        if (typeof value === 'number' && modeSettings.includeTemperature === true) {
+                          // Only validate range if includeTemperature is true and temperature is supported by effective capabilities
+                          if (effectiveModelCapabilities.supportsTemperature !== false && platformApiSettings.temperature) {
+                            if (value < platformApiSettings.temperature.min || value > platformApiSettings.temperature.max) {
+                              return { isValid: false, error: `temperature for ${platformId}/${modelId}/${mode} must be between ${platformApiSettings.temperature.min} and ${platformApiSettings.temperature.max}. Found: ${value}.` };
+                            }
+                          }
+                        }
+                        break;
                       case 'topP':
                         if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a number or null.` };
+                        if (typeof value === 'number' && modeSettings.includeTopP === true) {
+                          // Only validate range if includeTopP is true and topP is supported by effective capabilities
+                          if (effectiveModelCapabilities.supportsTopP === true && platformApiSettings.topP) {
+                            if (value < platformApiSettings.topP.min || value > platformApiSettings.topP.max) {
+                              return { isValid: false, error: `topP for ${platformId}/${modelId}/${mode} must be between ${platformApiSettings.topP.min} and ${platformApiSettings.topP.max}. Found: ${value}.` };
+                            }
+                          }
+                        }
                         break;
                       case 'includeTemperature':
                       case 'includeTopP':
@@ -188,7 +258,7 @@ export function validatePromptsData(data) {
   return { isValid: true };
 }
 
-export function validateAllSettingsData(data) {
+export async function validateAllSettingsData(data) {
   if (typeof data !== 'object' || data === null) {
     return { isValid: false, error: 'AllSettings data bundle must be an object.' };
   }
@@ -210,7 +280,7 @@ export function validateAllSettingsData(data) {
     return credentialsValidation;
   }
 
-  const modelParamsValidation = validateModelParametersSettingsData(data.modelParametersSettings);
+  const modelParamsValidation = await validateModelParametersSettingsData(data.modelParametersSettings);
   if (!modelParamsValidation.isValid) {
     return modelParamsValidation;
   }
