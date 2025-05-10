@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
 import { useApiSettings } from '../../contexts/ApiSettingsContext';
 
 const ApiSettings = () => {
+  const [activeApiSubTab, setActiveApiSubTab] = useState('apiKey');
+
   const {
     platformConfigs,
     allCredentials,
@@ -68,6 +70,8 @@ const ApiSettings = () => {
             resetModelParametersSettingsToDefaultsAction={
               resetModelParametersSettingsToDefaults
             }
+            activeSubTab={activeApiSubTab}
+            onSubTabSelect={setActiveApiSubTab}
           />
         ) : (
           <div className='platform-details-panel flex-1 bg-theme-surface p-8 text-center text-sm text-theme-secondary rounded-lg border border-theme'>

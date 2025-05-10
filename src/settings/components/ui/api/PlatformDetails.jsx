@@ -17,6 +17,8 @@ const PlatformDetails = ({
   removeApiKeyAction,
   saveModelParametersSettingsAction,
   resetModelParametersSettingsToDefaultsAction,
+  activeSubTab,
+  onSubTabSelect,
 }) => {
   const { error } = useNotification();
   const [apiKey, setApiKey] = useState('');
@@ -27,8 +29,6 @@ const PlatformDetails = ({
   const [isSavingApiKeyActual, setIsSavingApiKeyActual] = useState(false);
   const [isRemovingApiKeyActual, setIsRemovingApiKeyActual] = useState(false);
   const shouldShowApiKeySaving = useMinimumLoadingTime(isSavingApiKeyActual, 1000);
-  
-  const [activeSubTab, setActiveSubTab] = useState('apiKey');
   const subTabs = [
     { id: 'apiKey', label: 'API Key' },
     { id: 'modelParams', label: 'Model Parameters' },
@@ -49,7 +49,6 @@ const PlatformDetails = ({
       setOriginalApiKey('');
     }
     setHasApiKeyChanges(false);
-    setActiveSubTab('apiKey');
 
     const firstModelId = platform.apiConfig?.models?.[0]?.id;
     if (firstModelId) {
@@ -134,7 +133,7 @@ const PlatformDetails = ({
       <SubTabLayout
         tabs={subTabs}
         activeTabId={activeSubTab}
-        onTabSelect={setActiveSubTab}
+        onTabSelect={onSubTabSelect}
         className="mt-2"
       >
         {(currentActiveSubTab) => {
@@ -239,6 +238,8 @@ PlatformDetails.propTypes = {
   removeApiKeyAction: PropTypes.func.isRequired,
   saveModelParametersSettingsAction: PropTypes.func.isRequired,
   resetModelParametersSettingsToDefaultsAction: PropTypes.func.isRequired,
+  activeSubTab: PropTypes.string.isRequired,
+  onSubTabSelect: PropTypes.func.isRequired,
 };
 
 export default React.memo(PlatformDetails);

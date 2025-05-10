@@ -124,7 +124,7 @@ const ModelParametersSettings = ({
             </div>
           </div>
         )}
-        <div className='model-specs-section p-5 bg-theme-hover rounded-lg border border-theme mb-6'>
+        <div className='model-specs-section bg-theme-hover rounded-lg border border-theme mt-4'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
             Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
           </h4>
