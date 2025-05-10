@@ -81,9 +81,9 @@ class UserDataService {
           if (expectedDataType === 'WebNexusAI-AllSettings_v1') {
             validationResult = await validateAllSettingsData(parsedJson.data);
           } else if (expectedDataType === 'WebNexusAI-Prompts_v1') {
-            validationResult = validatePromptsData(parsedJson.data);
+            validationResult = await validatePromptsData(parsedJson.data);
           } else if (expectedDataType === 'WebNexusAI-Credentials_v1') {
-            validationResult = validateCredentialsData(parsedJson.data);
+            validationResult = await validateCredentialsData(parsedJson.data);
           } else if (expectedDataType === 'WebNexusAI-ModelParameters_v1') {
             validationResult = await validateModelParametersSettingsData(parsedJson.data);
           } else {

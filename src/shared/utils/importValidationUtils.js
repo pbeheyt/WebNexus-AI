@@ -86,9 +86,9 @@ export async function validateModelParametersSettingsData(data) {
                 }
 
                 // Determine effective model settings for the current mode (base or thinking)
-                let effectiveModelTokensConfig = { ...modelApiSettings.tokens };
-                let effectiveModelCapabilities = { ...modelApiSettings.capabilities };
-                let effectiveModelThinkingBudgetConfig = modelApiSettings.thinking?.budget; // Can be undefined
+                let effectiveModelTokensConfig = { ...(modelApiSettings.tokens || {}) };
+                let effectiveModelCapabilities = { ...(modelApiSettings.capabilities || {}) };
+                let effectiveModelThinkingConfig = modelApiSettings.thinking;
 
                 if (mode === 'thinking' && modelApiSettings.thinking?.available) {
                   if (modelApiSettings.thinking.maxOutput !== undefined) {
@@ -100,67 +100,81 @@ export async function validateModelParametersSettingsData(data) {
                   if (modelApiSettings.thinking.supportsTopP !== undefined) {
                     effectiveModelCapabilities.supportsTopP = modelApiSettings.thinking.supportsTopP;
                   }
-                  // Note: thinking.budget is already specific, so effectiveModelThinkingBudgetConfig is fine.
                 }
 
-                // Parameter type checks
-                const params = ['maxTokens', 'temperature', 'topP', 'systemPrompt', 'includeTemperature', 'includeTopP', 'thinkingBudget', 'reasoningEffort'];
-                for (const paramKey of params) {
-                  if (Object.prototype.hasOwnProperty.call(modeSettings, paramKey)) {
-                    const value = modeSettings[paramKey];
-                    switch (paramKey) {
-                      case 'maxTokens':
-                        if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a number or null.` };
-                        if (typeof value === 'number') {
-                          const minTokens = 1; // Define a sensible minimum
-                          const maxModelTokens = effectiveModelTokensConfig.maxOutput;
-                          if (value < minTokens || value > maxModelTokens) {
-                            return { isValid: false, error: `maxTokens for ${platformId}/${modelId}/${mode} must be between ${minTokens} and ${maxModelTokens}. Found: ${value}.` };
+                // Parameter type and range checks
+                for (const paramKey of Object.keys(modeSettings)) {
+                  const value = modeSettings[paramKey];
+
+                  switch (paramKey) {
+                    case 'maxTokens':
+                      if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `maxTokens for ${platformId}/${modelId}/${mode} must be a number or null.` };
+                      if (typeof value === 'number') {
+                        const minTokens = 1;
+                        const maxModelTokens = effectiveModelTokensConfig.maxOutput;
+                        if (maxModelTokens === undefined) return { isValid: false, error: `maxOutput configuration missing for ${platformId}/${modelId}/${mode}.`};
+                        if (value < minTokens || value > maxModelTokens) {
+                          return { isValid: false, error: `maxTokens for ${platformId}/${modelId}/${mode} must be between ${minTokens} and ${maxModelTokens}. Found: ${value}.` };
+                        }
+                      }
+                      break;
+                    case 'temperature':
+                      if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `temperature for ${platformId}/${modelId}/${mode} must be a number or null.` };
+                      if (typeof value === 'number' && modeSettings.includeTemperature === true) {
+                        if (effectiveModelCapabilities.supportsTemperature !== false && platformApiSettings.temperature) {
+                          if (value < platformApiSettings.temperature.min || value > platformApiSettings.temperature.max) {
+                            return { isValid: false, error: `temperature for ${platformId}/${modelId}/${mode} must be between ${platformApiSettings.temperature.min} and ${platformApiSettings.temperature.max}. Found: ${value}.` };
                           }
+                        } else if (effectiveModelCapabilities.supportsTemperature === false) {
+                          return { isValid: false, error: `temperature is set for ${platformId}/${modelId}/${mode}, but this model/mode does not support it.` };
                         }
-                        break;
-                      case 'thinkingBudget':
-                        if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a number or null.` };
-                        if (typeof value === 'number' && effectiveModelThinkingBudgetConfig) {
-                          if (value < effectiveModelThinkingBudgetConfig.min || value > effectiveModelThinkingBudgetConfig.max) {
-                            return { isValid: false, error: `thinkingBudget for ${platformId}/${modelId}/${mode} must be between ${effectiveModelThinkingBudgetConfig.min} and ${effectiveModelThinkingBudgetConfig.max}. Found: ${value}.` };
+                      }
+                      break;
+                    case 'topP':
+                      if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `topP for ${platformId}/${modelId}/${mode} must be a number or null.` };
+                      if (typeof value === 'number' && modeSettings.includeTopP === true) {
+                        if (effectiveModelCapabilities.supportsTopP === true && platformApiSettings.topP) {
+                          if (value < platformApiSettings.topP.min || value > platformApiSettings.topP.max) {
+                            return { isValid: false, error: `topP for ${platformId}/${modelId}/${mode} must be between ${platformApiSettings.topP.min} and ${platformApiSettings.topP.max}. Found: ${value}.` };
                           }
+                        } else if (effectiveModelCapabilities.supportsTopP === false || !platformApiSettings.topP) {
+                          return { isValid: false, error: `topP is set for ${platformId}/${modelId}/${mode}, but this model/mode does not support it or platform has no topP config.` };
                         }
-                        break;
-                      case 'temperature':
-                        if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a number or null.` };
-                        if (typeof value === 'number' && modeSettings.includeTemperature === true) {
-                          // Only validate range if includeTemperature is true and temperature is supported by effective capabilities
-                          if (effectiveModelCapabilities.supportsTemperature !== false && platformApiSettings.temperature) {
-                            if (value < platformApiSettings.temperature.min || value > platformApiSettings.temperature.max) {
-                              return { isValid: false, error: `temperature for ${platformId}/${modelId}/${mode} must be between ${platformApiSettings.temperature.min} and ${platformApiSettings.temperature.max}. Found: ${value}.` };
-                            }
-                          }
+                      }
+                      break;
+                    case 'thinkingBudget':
+                      if (value !== null && value !== undefined) { 
+                        if (!effectiveModelThinkingConfig?.budget) {
+                          return { isValid: false, error: `thinkingBudget is defined in import for ${platformId}/${modelId}/${mode}, but this model/mode does not support a thinking budget.` };
                         }
-                        break;
-                      case 'topP':
-                        if (!(typeof value === 'number' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a number or null.` };
-                        if (typeof value === 'number' && modeSettings.includeTopP === true) {
-                          // Only validate range if includeTopP is true and topP is supported by effective capabilities
-                          if (effectiveModelCapabilities.supportsTopP === true && platformApiSettings.topP) {
-                            if (value < platformApiSettings.topP.min || value > platformApiSettings.topP.max) {
-                              return { isValid: false, error: `topP for ${platformId}/${modelId}/${mode} must be between ${platformApiSettings.topP.min} and ${platformApiSettings.topP.max}. Found: ${value}.` };
-                            }
-                          }
+                        if (typeof value !== 'number') return { isValid: false, error: `thinkingBudget for ${platformId}/${modelId}/${mode} must be a number.` };
+                        if (value < effectiveModelThinkingConfig.budget.min || value > effectiveModelThinkingConfig.budget.max) {
+                          return { isValid: false, error: `thinkingBudget for ${platformId}/${modelId}/${mode} must be between ${effectiveModelThinkingConfig.budget.min} and ${effectiveModelThinkingConfig.budget.max}. Found: ${value}.` };
                         }
-                        break;
-                      case 'includeTemperature':
-                      case 'includeTopP':
-                        if (typeof value !== 'boolean') return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a boolean.` };
-                        break;
-                      case 'systemPrompt':
-                      case 'reasoningEffort':
-                        if (!(typeof value === 'string' || value === null)) return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a string or null.` };
-                        if (paramKey === 'systemPrompt' && typeof value === 'string' && value.length > MAX_SYSTEM_PROMPT_LENGTH) {
-                          return { isValid: false, error: `systemPrompt for ${platformId}/${modelId}/${mode} exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters.` };
+                      }
+                      break;
+                    case 'reasoningEffort':
+                      if (value !== null && value !== undefined) { 
+                        const modelReasoningEffortConfig = effectiveModelThinkingConfig?.reasoningEffort;
+                        if (!modelReasoningEffortConfig || !Array.isArray(modelReasoningEffortConfig.allowedValues) || modelReasoningEffortConfig.allowedValues.length === 0) {
+                          return { isValid: false, error: `reasoningEffort is defined in import for ${platformId}/${modelId}/${mode}, but this model/mode does not support or has no configured allowed values for reasoning effort.` };
                         }
-                        break;
-                    }
+                        if (typeof value !== 'string') return { isValid: false, error: `reasoningEffort for ${platformId}/${modelId}/${mode} must be a string.` };
+                        if (!modelReasoningEffortConfig.allowedValues.includes(value)) {
+                          return { isValid: false, error: `Invalid reasoningEffort value "${value}" for ${platformId}/${modelId}/${mode}. Allowed values are: ${modelReasoningEffortConfig.allowedValues.join(', ')}.` };
+                        }
+                      }
+                      break;
+                    case 'systemPrompt':
+                      if (!(typeof value === 'string' || value === null)) return { isValid: false, error: `systemPrompt for ${platformId}/${modelId}/${mode} must be a string or null.` };
+                      if (typeof value === 'string' && value.length > MAX_SYSTEM_PROMPT_LENGTH) {
+                        return { isValid: false, error: `systemPrompt for ${platformId}/${modelId}/${mode} exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters.` };
+                      }
+                      break;
+                    case 'includeTemperature':
+                    case 'includeTopP':
+                      if (typeof value !== 'boolean') return { isValid: false, error: `"${paramKey}" for ${platformId}/${modelId}/${mode} must be a boolean.` };
+                      break;
                   }
                 }
               }
