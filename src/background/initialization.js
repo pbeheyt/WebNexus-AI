@@ -9,7 +9,7 @@ import { resetState } from './core/state-manager.js';
 
 /**
  * Populates initial prompts from prompt-config.json and sets default prompts if not already done.
- * Uses the new V2 storage structure with _defaultPromptId_ keys.
+ * Uses the storage structure with _defaultPromptId_ keys.
  * Relies on the performFullPromptRepopulation shared utility.
  * @returns {Promise<boolean>} True if population ran, false if already populated or failed.
  */
@@ -85,7 +85,7 @@ async function handleInstallation(details) {
   // Call the main initialization function on install.
   // It handles the flag check internally and ensures pointers are set.
   if (details.reason === 'install') {
-     logger.background.info('Reason is "install", running populateInitialPromptsAndSetDefaults (V2)...');
+     logger.background.info('Reason is "install", running populateInitialPromptsAndSetDefaults...');
      await populateInitialPromptsAndSetDefaults();
   }
   // No specific call for 'update' needed here for this logic, 

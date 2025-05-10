@@ -137,7 +137,7 @@ export async function ensureDefaultPrompts() {
     }
     return changesMade;
   } catch (error) {
-    logger.service.error('Error in ensureDefaultPrompts (V2):', error);
+    logger.service.error('Error in ensureDefaultPrompts:', error);
     return false;
   }
 }
@@ -164,7 +164,7 @@ export async function loadRelevantPrompts(contentType) {
             // contentTypeLabel is already added if needed by the caller based on contentType
           }));
 
-        // Sort prompts alphabetically by name (now directly accessible)
+        // Sort prompts alphabetically by name
         relevantPrompts.sort((a, b) => a.name.localeCompare(b.name));
 
     return relevantPrompts;
