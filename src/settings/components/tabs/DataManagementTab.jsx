@@ -194,9 +194,9 @@ const DataManagementTab = () => {
         disabled={isAnyOperationLoadingForUI}
       />
 
-      <div className='w-full mx-auto'>
+      <div className='w-full'>
       <SelectorSection 
-        title='Data Type -'
+        title='Data Type'
         inlineControl={
           <CustomSelect
             id="data-type-select"
@@ -207,7 +207,6 @@ const DataManagementTab = () => {
           />
         }
       >
-        {/* No children here for this instance */}
       </SelectorSection>
       </div>
 

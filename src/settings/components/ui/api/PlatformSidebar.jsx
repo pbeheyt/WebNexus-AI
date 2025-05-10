@@ -36,10 +36,10 @@ const PlatformSidebar = ({
                   platformId={platform.id}
                   iconUrl={platform.iconUrl}
                   altText={`${platform.name} icon`}
-                  className='platform-icon w-6 h-6 mr-3 flex-shrink-0'
+                  className='platform-icon w-7 h-7 mr-3 flex-shrink-0'
                 />
               ) : (
-                <div className='platform-icon-placeholder w-6 h-6 mr-3 rounded-full bg-primary text-white text-sm flex items-center justify-center font-bold flex-shrink-0'>
+                <div className='platform-icon-placeholder w-7 h-7 mr-3 rounded-full bg-primary text-white text-sm flex items-center justify-center font-bold flex-shrink-0'>
                   {platform.name.charAt(0)}
                 </div>
               )}

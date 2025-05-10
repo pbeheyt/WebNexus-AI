@@ -27,7 +27,7 @@ export function SelectorSection({ title, description, children, className = '', 
                   {title}
                 </h3>
               )}
-              {inlineControl && <div className="ml-3">{inlineControl}</div>}
+              {inlineControl && <div className="ml-4">{inlineControl}</div>}
             </div>
             {actionElement && <div className="ml-auto pl-2">{actionElement}</div>}
           </div>
