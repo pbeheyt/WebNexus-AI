@@ -258,7 +258,7 @@ const PromptForm = ({
       noValidate
     >
       <div className='flex items-center mb-5 pb-3 border-b border-theme'>
-        <h3 className='type-heading text-xl font-semibold text-theme-primary select-none'>
+        <h3 className='type-heading text-base font-semibold text-theme-primary select-none'>
           {isEditing ? 'Edit Prompt' : 'Create New Prompt'}
         </h3>
         {isEditing && isDefaultForType && (

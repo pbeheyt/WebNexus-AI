@@ -82,13 +82,13 @@ const ModelParametersSettings = ({
   return (
     <>
     <SettingsCard className="selector-section-container mb-6">
-      <div className="flex justify-between items-center mb-3"> {/* Mimics internal layout for title/controls/action */}
+      <div className="flex justify-between items-center mb-3">
         <div className="flex items-center">
-          <h3 className='text-lg font-medium text-theme-primary select-none'>
+          <h3 className='text-base font-semibold text-theme-primary select-none'>
             Model Selection
           </h3>
           <div className="ml-4">
-            <div className='inline-block'> {/* This div was part of the original inlineControl structure */}
+            <div className='inline-block'>
               <CustomSelect
                 id={`${platform.id}-settings-model-selector`}
                 options={modelsFromPlatform.map((model) => ({

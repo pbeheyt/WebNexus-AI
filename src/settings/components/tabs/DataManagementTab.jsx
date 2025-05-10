@@ -196,7 +196,7 @@ const DataManagementTab = () => {
     <div className='w-fit'>
       <SettingsCard className="selector-section-container mb-6">
         <div className="flex items-center">
-          <h3 className='text-lg font-medium text-theme-primary select-none'>
+          <h3 className='text-base font-semibold text-theme-primary select-none'>
             Data Type Selection
           </h3>
           <div className="ml-4">
@@ -219,7 +219,7 @@ const DataManagementTab = () => {
         <SettingsCard>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
             <div className="flex-grow">
-              <h3 className="text-lg font-medium text-theme-primary mb-1">Export Settings</h3>
+              <h3 className="text-base font-semibold text-theme-primary mb-1">Export Settings</h3>
               <p className="text-sm text-theme-secondary mb-3 md:mb-0">
                 Export the selected data type (<strong>{currentOptionObject.name}</strong>) to a JSON file. This file can be used later to import these settings.
               </p>
@@ -243,7 +243,7 @@ const DataManagementTab = () => {
         <SettingsCard>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
             <div className="flex-grow">
-              <h3 className="text-lg font-medium text-theme-primary mb-1">Import Settings</h3>
+              <h3 className="text-base font-semibold text-theme-primary mb-1">Import Settings</h3>
               <p className="text-sm text-theme-secondary mb-3 md:mb-0">
                 Import settings from a JSON file for <strong>{currentOptionObject.name}</strong>. This will <strong className="font-semibold">overwrite existing settings</strong> for this data type. The page will reload after a successful import.
               </p>
@@ -267,7 +267,7 @@ const DataManagementTab = () => {
         <SettingsCard>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
             <div className="flex-grow">
-              <h3 className="text-lg font-medium text-theme-primary mb-1">Reset Settings</h3>
+              <h3 className="text-base font-semibold text-theme-primary mb-1">Reset Settings</h3>
               <p className="text-sm text-red-600 dark:text-red-400 mb-1"><strong className="font-semibold">Warning:</strong> This action cannot be undone.</p>
               <p className="text-sm text-theme-secondary mb-3 md:mb-0">
                 Reset settings for <strong>{currentOptionObject.name}</strong> to their original defaults. The page will reload automatically.
@@ -288,7 +288,7 @@ const DataManagementTab = () => {
           </div>
         </SettingsCard>
 
-      </div> {/* End of Action Groups Container */}
+      </div>
     </div>
   );
 };
