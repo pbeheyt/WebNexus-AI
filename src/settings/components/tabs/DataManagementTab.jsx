@@ -193,9 +193,9 @@ const DataManagementTab = () => {
         disabled={isAnyOperationLoadingForUI}
       />
 
-      <div className='w-full sm:w-3/4 md:w-2/3 lg:w-1/2'>
+      <div className='w-full mx-auto'>
       <SelectorSection 
-        title='Select Data Type to Manage:'
+        title='Data Type -'
         inlineControl={
           <CustomSelect
             id="data-type-select"

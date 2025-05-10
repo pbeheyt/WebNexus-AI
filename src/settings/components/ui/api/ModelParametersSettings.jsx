@@ -82,7 +82,7 @@ const ModelParametersSettings = ({
   return (
     <>
         <SelectorSection
-          title='Model to Configure'
+          title='Model'
           actionElement={
           <IconButton
             icon={RefreshIcon}
@@ -126,7 +126,7 @@ const ModelParametersSettings = ({
             </div>
           </div>
         )}
-        <div className='model-specs-section bg-theme-hover rounded-lg border border-theme mt-4'>
+        <div className='model-specs-section bg-theme-hover rounded-lg border border-theme mt-4 p-4'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
             Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
           </h4>

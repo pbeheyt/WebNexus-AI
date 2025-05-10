@@ -45,7 +45,7 @@ const PlatformSidebar = ({
               )}
 
               {/* Platform name with truncate */}
-              <span className='platform-name text-theme-secondary truncate'>
+              <span className='platform-name text-theme-secondary text-sm truncate'>
                 {platform.name}
               </span>
             </div>
