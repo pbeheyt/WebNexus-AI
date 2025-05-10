@@ -187,7 +187,7 @@ function Header() {
                   {/* Info Icon and Tooltip */}
                   <div
                     ref={infoIconRef}
-                    className="ml-1.5 cursor-help"
+                    className="ml-3 cursor-help"
                     onMouseEnter={() => setTooltipVisible(true)}
                     onMouseLeave={() => setTooltipVisible(false)}
                     onFocus={() => setTooltipVisible(true)}
@@ -196,7 +196,7 @@ function Header() {
                     role="button"
                     aria-describedby="thinking-mode-tooltip"
                   >
-                    <InfoIcon className="w-3.5 h-3.5 text-theme-secondary" />
+                    <InfoIcon className="w-5 h-5 text-theme-secondary" />
                   </div>
                   <Tooltip
                     show={tooltipVisible}
