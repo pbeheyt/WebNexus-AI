@@ -194,7 +194,7 @@ const DataManagementTab = () => {
         disabled={isAnyOperationLoadingForUI}
       />
 
-      <div className='w-full'>
+      <div className='w-fit'>
       <SelectorSection 
         title='Data Type Selection'
         inlineControl={
