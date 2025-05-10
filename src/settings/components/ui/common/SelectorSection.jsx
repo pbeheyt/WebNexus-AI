@@ -18,8 +18,8 @@ export function SelectorSection({ title, description, children, className = '', 
       className={`selector-section-container p-5 bg-theme-surface border border-theme rounded-lg mb-6 ${className}`}
     >
         {(title || inlineControl || actionElement) && (
-          <div className="flex justify-between items-baseline mb-3">
-            <div className="flex items-baseline">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center">
               {title && (
                 <h3 className='text-lg font-medium text-theme-primary select-none'>
                   {title}
@@ -43,7 +43,7 @@ export function SelectorSection({ title, description, children, className = '', 
 SelectorSection.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.string,
-  children: PropTypes.node.isRequired,
+            children: PropTypes.node,
   className: PropTypes.string,
   actionElement: PropTypes.node,
   inlineControl: PropTypes.node,
