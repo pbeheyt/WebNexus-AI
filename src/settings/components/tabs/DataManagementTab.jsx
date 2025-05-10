@@ -154,26 +154,29 @@ const DataManagementTab = () => {
 
     setIsResettingActual(true);
     try {
+      // This call now internally triggers background repopulation for 'prompts' or 'all'
       const result = await userDataService.resetSelectedSettings(dataTypeId);
 
       if (result.success) {
         showSuccessNotification(
-          `${dataTypeName} settings reset successfully! Page will now reload.`
+          `${dataTypeName} settings reset and repopulated successfully! Page will now reload.`
         );
         setTimeout(() => {
           window.location.reload();
         }, 1500);
         // No need to set setIsResettingActual(false) here as page reloads
       } else {
+        // This error might come from UserDataService itself or from the background communication
         showErrorNotification(
-          `Reset failed for ${dataTypeName}: ${result.error || 'Unknown error'}`
+          `Reset failed for ${dataTypeName}: ${result.error || 'Unknown error during reset process.'}`
         );
         setIsResettingActual(false); // Set to false only on failure before reload
       }
     } catch (err) {
+      // This catch block handles unexpected errors from userDataService or its async operations
       logger.settings.error(`Reset error for ${dataTypeName} in component:`, err);
       showErrorNotification(
-        `Reset failed: ${err.message || 'Unexpected error during reset'}`
+        `Reset failed: ${err.message || 'Unexpected error during reset operation.'}`
       );
       setIsResettingActual(false);
     }

@@ -170,12 +170,64 @@ class UserDataService {
   }
 
   async _resetPrompts() {
-    logger.service.info('Resetting all prompts...');
-    await chrome.storage.local.remove(STORAGE_KEYS.PROMPTS);
-    // Ensure default prompt state is consistent after clearing
-    // This will effectively mean no defaults are set if all prompts are gone.
-    await ensureDefaultPrompts(); 
-    logger.service.info('Prompts reset and default state ensured.');
+    logger.service.info('Resetting all prompts and triggering repopulation...');
+    try {
+      // Remove prompts and the population flag
+      await chrome.storage.local.remove([
+        STORAGE_KEYS.PROMPTS,
+        STORAGE_KEYS.INITIAL_PROMPTS_POPULATED, // Clear the flag
+      ]);
+      logger.service.info(
+        'Prompts and initial population flag cleared from storage.'
+      );
+
+      // Send a message to the background to repopulate prompts
+      // This will also call ensureDefaultPrompts() after repopulation.
+      await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          { action: 'triggerPromptRepopulation' },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              logger.service.error(
+                'Error sending triggerPromptRepopulation message:',
+                chrome.runtime.lastError.message
+              );
+              reject(
+                new Error(
+                  `Failed to trigger prompt repopulation: ${chrome.runtime.lastError.message}`
+                )
+              );
+            } else if (response && response.success) {
+              logger.service.info(
+                'Background prompt repopulation triggered successfully.'
+              );
+              resolve();
+            } else {
+              logger.service.error(
+                'Background prompt repopulation failed or no response.',
+                response
+              );
+              reject(
+                new Error(
+                  response?.error ||
+                    'Background prompt repopulation failed or no response.'
+                )
+              );
+            }
+          }
+        );
+      });
+
+      logger.service.info(
+        'Prompts reset and repopulation triggered successfully.'
+      );
+      // No need to call ensureDefaultPrompts() here anymore,
+      // as populateInitialPromptsAndSetDefaults in background will handle it.
+    } catch (error) {
+      logger.service.error('Error during prompt reset and repopulation trigger:', error);
+      // Re-throw to be caught by the calling function in DataManagementTab
+      throw error;
+    }
   }
 
   async _resetCredentials() {

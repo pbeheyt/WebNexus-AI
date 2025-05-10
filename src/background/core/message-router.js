@@ -15,6 +15,7 @@ import {
 import { handleToggleNativeSidePanelAction } from '../services/sidebar-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
+import { populateInitialPromptsAndSetDefaults } from '../initialization.js';
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -185,4 +186,28 @@ function registerServiceHandlers() {
     handleFetchPdfRequest(message, sendResponse); 
     return true; // Keep channel open for async response
   });
+
+  // Handle request to repopulate initial prompts
+  messageHandlers.set(
+    'triggerPromptRepopulation',
+    async (_message, _sender, sendResponse) => {
+      logger.background.info(
+        'Received triggerPromptRepopulation request. Executing...'
+      );
+      try {
+        await populateInitialPromptsAndSetDefaults();
+        logger.background.info(
+          'Prompt repopulation completed successfully via message trigger.'
+        );
+        sendResponse({ success: true });
+      } catch (error) {
+        logger.background.error(
+          'Error during triggered prompt repopulation:',
+          error
+        );
+        sendResponse({ success: false, error: error.message });
+      }
+      return true; // Keep channel open for async response
+    }
+  );
 }
