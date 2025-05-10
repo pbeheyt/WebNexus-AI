@@ -28,7 +28,7 @@ export function SubTabLayout({
             type='button'
             role='tab'
             aria-selected={activeTabId === tab.id}
-            className={`sub-tab-btn relative py-2 px-4 text-sm cursor-pointer bg-transparent border-none transition-colors select-none
+            className={`sub-tab-btn relative py-2 px-4 text-base cursor-pointer bg-transparent border-none transition-colors select-none
               ${
                 activeTabId === tab.id
                   ? 'text-primary font-medium after:content-[""] after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-primary'
@@ -58,7 +58,7 @@ SubTabLayout.propTypes = {
   ).isRequired,
   activeTabId: PropTypes.string.isRequired,
   onTabSelect: PropTypes.func.isRequired,
-  children: PropTypes.func.isRequired, // Expecting a render prop
+  children: PropTypes.func.isRequired,
   className: PropTypes.string,
 };
 
