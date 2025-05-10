@@ -146,7 +146,7 @@ class UserDataService {
   }
 
   async importAllSettings(fileObject) {
-    return this._handleImport(fileObject, 'WebNexusAI-AllSettings');
+    return this._handleImport(fileObject, 'WebNexusAI-AllSettings_v1');
   }
 
   async exportSingleSetting(storageKey, settingNameForFileAndType) {
