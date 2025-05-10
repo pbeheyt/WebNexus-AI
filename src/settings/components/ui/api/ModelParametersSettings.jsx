@@ -12,6 +12,7 @@ import {
   CustomSelect,
 } from '../../../../components';
 import { useModelParametersSettings } from '../../../hooks/useModelParametersSettings';
+import SelectorSection from '../common/SelectorSection';
 
 const ModelParametersSettings = ({
   platform,
@@ -96,14 +97,11 @@ const ModelParametersSettings = ({
         />
       </div>
 
-      <div className='form-group mb-6'>
-        <label
-          htmlFor={`${platform.id}-settings-model-selector`}
-          className='block mb-3 text-base font-medium text-theme-secondary select-none'
-        >
-          Model to Configure
-        </label>
-        <div className='inline-block'>
+      <SelectorSection
+        title='Model to Configure'
+        description={derivedSettings?.resolvedModelConfig?.description || 'No description available for this model.'}
+      >
+        <div className='inline-block'> {/* Keep inline-block for CustomSelect sizing behavior */}
           <CustomSelect
             id={`${platform.id}-settings-model-selector`}
             options={modelsFromPlatform.map((model) => ({
@@ -116,26 +114,28 @@ const ModelParametersSettings = ({
             disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
           />
         </div>
-      </div>
+      </SelectorSection>
 
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
-        {showThinkingModeToggle && (
-          <div className='mb-6'>
-            <div className='flex items-center gap-3'>
-              <span className='text-base font-semibold text-theme-secondary select-none'>
-                Thinking Mode
-              </span>
-              <Toggle
-                id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
-                checked={currentEditingMode === 'thinking'}
-                onChange={toggleEditingMode}
-                disabled={isSaving || isResetting}
-              />
+        <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+          {showThinkingModeToggle && (
+            <div> {/* Removed mb-6 */}
+              <div className='flex items-center gap-3'>
+                <span className='text-base font-semibold text-theme-secondary select-none'>
+                  Thinking Mode
+                </span>
+                <Toggle
+                  id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
+                  checked={currentEditingMode === 'thinking'}
+                  onChange={toggleEditingMode}
+                  disabled={isSaving || isResetting}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className='model-specs-section p-4 bg-theme-hover rounded-md border border-theme mb-8'>
+        <div className='model-specs-section p-5 bg-theme-hover rounded-lg border border-theme mb-6'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
             Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
           </h4>
@@ -176,7 +176,7 @@ const ModelParametersSettings = ({
         </div>
 
         {parameterSpecs.maxTokens && (
-          <div className='mb-7'>
+          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <div className='mb-2'>
               <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
                 Max Tokens
@@ -195,11 +195,11 @@ const ModelParametersSettings = ({
               disabled={isSaving || isResetting}
               className='form-group'
             />
-          </div>
+        </div>
         )}
 
         {showTempSection && parameterSpecs.temperature && (
-          <div className='form-group mb-7'>
+          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-secondary mr-3 select-none'>
                 Temperature
@@ -229,11 +229,11 @@ const ModelParametersSettings = ({
                 className='form-group mt-2'
               />
             )}
-          </div>
+        </div>
         )}
 
         {showTopPSection && parameterSpecs.topP && (
-          <div className='form-group mb-7'>
+          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-secondary mr-3 select-none'>
                 Top P
@@ -263,7 +263,7 @@ const ModelParametersSettings = ({
                 className='form-group mt-2'
               />
             )}
-          </div>
+        </div>
         )}
         
         {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
@@ -273,7 +273,7 @@ const ModelParametersSettings = ({
         )}
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
-          <div className='form-group mb-7'>
+          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
               Thinking Budget
             </span>
@@ -290,11 +290,11 @@ const ModelParametersSettings = ({
               disabled={isSaving || isResetting}
               className='form-group mt-2'
             />
-          </div>
+        </div>
         )}
 
         {showReasoningEffort && parameterSpecs.reasoningEffort && (
-          <div className='form-group mb-7'>
+          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <span className='block mb-3 text-base font-semibold text-theme-secondary select-none'>
               Reasoning Effort
             </span>
@@ -311,11 +311,11 @@ const ModelParametersSettings = ({
                 disabled={isSaving || isResetting}
               />
             </div>
-          </div>
+        </div>
         )}
 
         {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && (
-          <div className='form-group mb-4'>
+          <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
             <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
               className='block mb-3 text-base font-semibold text-theme-secondary select-none'
@@ -335,7 +335,7 @@ const ModelParametersSettings = ({
               maxLength={parameterSpecs.systemPrompt.maxLength}
               disabled={isSaving || isResetting}
             />
-          </div>
+        </div>
         )}
 
         <div className='form-actions flex justify-end'>

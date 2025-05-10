@@ -5,6 +5,7 @@ import userDataService from '../../../services/UserDataService';
 import { STORAGE_KEYS } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
 import useMinimumLoadingTime from '../../../hooks/useMinimumLoadingTime';
+import SelectorSection from '../ui/common/SelectorSection';
 
 const DATA_MANAGEMENT_OPTIONS = [
   {
@@ -192,18 +193,17 @@ const DataManagementTab = () => {
         disabled={isAnyOperationLoadingForUI}
       />
 
-      <div className='mb-6 w-full sm:w-3/4 md:w-2/3 lg:w-1/2'>
-        <label htmlFor="data-type-select" className='block text-sm font-medium text-theme-primary mb-2'>
-          Select Data Type to Manage:
-        </label>
-        <CustomSelect
-          id="data-type-select"
-          options={DATA_MANAGEMENT_OPTIONS.map(opt => ({ id: opt.id, name: opt.name }))}
-          selectedValue={selectedDataType}
-          onChange={setSelectedDataType}
-          disabled={isAnyOperationLoadingForUI}
-          className="mb-6"
-        />
+      <div className='w-full sm:w-3/4 md:w-2/3 lg:w-1/2'>
+        <SelectorSection title='Select Data Type to Manage:'>
+          <CustomSelect
+            id="data-type-select"
+            options={DATA_MANAGEMENT_OPTIONS.map(opt => ({ id: opt.id, name: opt.name }))}
+            selectedValue={selectedDataType}
+            onChange={setSelectedDataType}
+            disabled={isAnyOperationLoadingForUI}
+            // className="mb-6" // Removed mb-6 as SelectorSection handles it
+          />
+        </SelectorSection>
       </div>
 
       {/* Action Groups Container */}
