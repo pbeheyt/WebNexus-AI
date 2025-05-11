@@ -187,3 +187,37 @@ export async function getSidebarState(message, sender, sendResponse) {
     sendResponse({ success: false, error: error.message });
   }
 }
+
+// Add this new function
+export async function handleCloseCurrentSidePanelRequest(message, sender, sendResponse) {
+  const { tabId } = message;
+
+  if (typeof tabId !== 'number') {
+    logger.background.error('handleCloseCurrentSidePanelRequest: Invalid or missing tabId.', message);
+    sendResponse({ success: false, error: 'Invalid tabId provided.' });
+    return false; // Indicate synchronous response for this error path
+  }
+
+  logger.background.info(`Closing side panel for tab ${tabId} by direct request from sidebar.`);
+
+  try {
+    await SidebarStateManager.setSidebarVisibilityForTab(tabId, false);
+    await chrome.sidePanel.setOptions({ tabId, enabled: false });
+    logger.background.info(`Side panel for tab ${tabId} successfully closed and state updated.`);
+    sendResponse({
+      success: true,
+      tabId,
+      visible: false,
+      message: 'Side panel closed successfully.',
+    });
+  } catch (error) {
+    logger.background.error(`Error closing side panel for tab ${tabId} via direct request:`, error);
+    sendResponse({
+      success: false,
+      error: error.message || 'Failed to close side panel.',
+      tabId,
+      visible: true, // Reflect that the operation might have failed to change visibility
+    });
+  }
+  return true; // Indicate asynchronous response handling
+}

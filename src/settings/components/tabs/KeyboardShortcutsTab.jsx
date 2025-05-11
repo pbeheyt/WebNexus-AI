@@ -109,9 +109,9 @@ export function KeyboardShortcutsTab() {
   return (
     <div className="space-y-6 p-1">
       <SettingsCard title="Global Extension Shortcuts">
-        <div className="text-sm text-theme-secondary mb-4">
-          These shortcuts are managed in Chrome's settings and apply globally. This extension cannot change them directly.
-        </div>
+            <div className="text-sm text-theme-secondary mb-4">
+              Customize the shortcut used <span className="font-semibold">inside the popup window</span> to toggle the sidebar, and <span className="font-semibold">within the sidebar itself</span> to close it. Default is Alt+S.
+            </div>
         {isLoadingCommands ? (
           <p>Loading global shortcuts...</p>
         ) : globalCommands.length > 0 ? (

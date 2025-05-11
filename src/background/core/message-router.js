@@ -12,7 +12,7 @@ import {
   handleProcessContentRequest,
   handleProcessContentViaApiRequest,
 } from '../services/content-processing.js';
-import { handleToggleNativeSidePanelAction } from '../services/sidebar-manager.js';
+import { handleToggleNativeSidePanelAction, handleCloseCurrentSidePanelRequest } from '../services/sidebar-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
 
@@ -179,6 +179,9 @@ function registerServiceHandlers() {
     'toggleNativeSidePanelAction',
     handleToggleNativeSidePanelAction
   );
+
+  // Add this line within registerServiceHandlers
+  messageHandlers.set('closeCurrentSidePanel', handleCloseCurrentSidePanelRequest);
 
   // Handle PDF fetch requests for file:// URLs
   messageHandlers.set('fetchPdfAsBase64', (message, _sender, sendResponse) => {

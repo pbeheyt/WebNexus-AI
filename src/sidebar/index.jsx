@@ -13,15 +13,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('sidebar-root');
   const root = createRoot(container);
 
-  root.render(
-    <UIProvider>
-      <ContentProvider>
-        <SidebarPlatformProvider>
-          <SidebarChatProvider>
-            <SidebarApp />
-          </SidebarChatProvider>
-        </SidebarPlatformProvider>
-      </ContentProvider>
-    </UIProvider>
-  );
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabId = parseInt(urlParams.get('tabId'), 10);
+
+  if (isNaN(tabId)) {
+    console.error('[Sidebar Index] Invalid or missing tabId in URL.');
+    // Optionally render an error message in the sidebar
+    root.render(<div>Error: Missing Tab ID. Cannot initialize sidebar.</div>);
+  } else {
+    root.render(
+      <UIProvider>
+        <ContentProvider>
+          <SidebarPlatformProvider tabId={tabId}>
+            <SidebarChatProvider tabId={tabId}>
+              <SidebarApp tabId={tabId} /> {/* Ensure tabId is passed here */}
+            </SidebarChatProvider>
+          </SidebarPlatformProvider>
+        </ContentProvider>
+      </UIProvider>
+    );
+  }
 });

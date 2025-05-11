@@ -6,12 +6,24 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import PropTypes from 'prop-types';
+
+import { CUSTOM_POPUP_SIDEBAR_SHORTCUT } from '../shared/constants';
+import { logger } from '../shared/logger';
+import { robustSendMessage } from '../shared/utils/message-utils';
+
+const DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG = {
+  key: 's',
+  altKey: true,
+  ctrlKey: false,
+  shiftKey: false,
+  metaKey: false,
+};
 
 import { useSidebarPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
 import { AppHeader, ErrorIcon } from '../components';
-import { logger } from '../shared/logger';
 import { debounce } from '../shared/utils/debounce';
 
 import Header from './components/Header';
@@ -27,6 +39,75 @@ export default function SidebarApp() {
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
+
+  // Inside SidebarApp component, before the return statement:
+  const [popupSidebarShortcut, setPopupSidebarShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
+
+  // Effect to load the custom shortcut
+  useEffect(() => {
+    const loadCustomShortcut = async () => {
+      try {
+        const result = await chrome.storage.sync.get([CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
+        if (result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]) {
+          setPopupSidebarShortcut(result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
+          logger.sidebar.info('Custom popup/sidebar shortcut loaded:', result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
+        } else {
+          logger.sidebar.info('No custom popup/sidebar shortcut found, using default.');
+          setPopupSidebarShortcut(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
+        }
+      } catch (error) {
+        logger.sidebar.error('Error loading custom popup/sidebar shortcut:', error);
+        setPopupSidebarShortcut(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
+      }
+    };
+    loadCustomShortcut();
+  }, []); // Empty dependency array, runs once on mount
+
+  // Effect to listen for the shortcut to close the side panel
+  useEffect(() => {
+    const handleKeyDown = async (event) => {
+      if (!tabId) {
+        logger.sidebar.warn('SidebarApp: tabId prop is missing, cannot handle shortcut.');
+        return;
+      }
+
+      const { key, altKey, ctrlKey, shiftKey, metaKey } = popupSidebarShortcut;
+      if (
+        event.key.toLowerCase() === key.toLowerCase() &&
+        event.altKey === !!altKey &&
+        event.ctrlKey === !!ctrlKey &&
+        event.shiftKey === !!shiftKey &&
+        event.metaKey === !!metaKey
+      ) {
+        event.preventDefault();
+        logger.sidebar.info(`Shortcut pressed in sidebar (tabId: ${tabId}), attempting to close.`);
+        try {
+          const response = await robustSendMessage({
+            action: 'closeCurrentSidePanel',
+            tabId: tabId,
+          });
+          if (response && response.success) {
+            logger.sidebar.info(`Side panel close command acknowledged for tab ${tabId}.`);
+            // The side panel will be closed by the background script.
+            // No explicit window.close() here as the background script handles disabling the panel.
+          } else {
+            logger.sidebar.error(`Failed to close side panel for tab ${tabId}:`, response?.error);
+          }
+        } catch (err) {
+          logger.sidebar.error(`Error sending closeCurrentSidePanel message for tab ${tabId}:`, err);
+        }
+      }
+    };
+
+    // Assuming the side panel's document is the correct target for the event listener
+    document.addEventListener('keydown', handleKeyDown);
+    logger.sidebar.info('Sidebar shortcut listener added.');
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      logger.sidebar.info('Sidebar shortcut listener removed.');
+    };
+  }, [popupSidebarShortcut, tabId]); // Re-bind if shortcut or tabId changes
 
   // Refs for height calculation
   const appHeaderRef = useRef(null);
@@ -318,3 +399,9 @@ export default function SidebarApp() {
     </div>
   );
 }
+
+// Add or modify SidebarApp.propTypes
+SidebarApp.propTypes = {
+  tabId: PropTypes.number.isRequired, // Ensure tabId is a required number prop
+  // ... any other existing props
+};
