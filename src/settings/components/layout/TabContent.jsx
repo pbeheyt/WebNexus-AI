@@ -4,6 +4,7 @@ import { useTabs } from '../../contexts/TabContext';
 import PromptManagement from '../tabs/PromptManagement';
 import ApiSettings from '../tabs/ApiSettings';
 import DataManagementTab from '../tabs/DataManagementTab';
+import KeyboardShortcutsTab from '../tabs/KeyboardShortcutsTab'; // Import the new tab component
 import { ApiSettingsProvider } from '../../contexts/ApiSettingsContext';
 
 const TabContent = () => {
@@ -27,12 +28,20 @@ const TabContent = () => {
         <PromptManagement />
       </div>
 
-      {/* New Data Management Tab Content */}
+      {/* Data Management Tab Content */}
       <div
         className={`relative min-h-[400px] ${activeTab !== TABS.DATA_MANAGEMENT ? 'hidden' : ''}`}
         id={TABS.DATA_MANAGEMENT}
       >
         <DataManagementTab />
+      </div>
+
+      {/* Keyboard Shortcuts Tab Content */}
+      <div
+        className={`relative min-h-[400px] ${activeTab !== TABS.KEYBOARD_SHORTCUTS ? 'hidden' : ''}`}
+        id={TABS.KEYBOARD_SHORTCUTS}
+      >
+        <KeyboardShortcutsTab />
       </div>
     </>
   );

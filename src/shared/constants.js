@@ -101,3 +101,5 @@ export const MESSAGE_ROLES = {
   ASSISTANT: 'assistant',
   SYSTEM: 'system',
 };
+
+export const CUSTOM_POPUP_SIDEBAR_SHORTCUT = 'customPopupSidebarShortcutConfig';

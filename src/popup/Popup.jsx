@@ -1,5 +1,5 @@
 // src/popup/Popup.jsx
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'; // Import useMemo
 
 import { logger } from '../shared/logger';
 import { usePopupPlatform } from '../contexts/platform';
@@ -14,6 +14,7 @@ import {
 import { useContent } from '../contexts/ContentContext';
 import { UnifiedInput } from '../components/input/UnifiedInput';
 import {
+  CUSTOM_POPUP_SIDEBAR_SHORTCUT, // Import the new constant
   STORAGE_KEYS,
   INTERFACE_SOURCES,
   CONTENT_TYPE_LABELS,
@@ -23,6 +24,19 @@ import { robustSendMessage } from '../shared/utils/message-utils';
 
 import { PlatformSelector } from './components/PlatformSelector';
 import { useStatus } from './contexts/StatusContext';
+
+// Add this helper function inside or before the Popup component function
+function formatShortcutToStringDisplay(shortcutObj) {
+  if (!shortcutObj || !shortcutObj.key) return '';
+  const parts = [];
+  if (shortcutObj.metaKey) parts.push('Cmd');
+  if (shortcutObj.ctrlKey) parts.push('Ctrl');
+  if (shortcutObj.altKey) parts.push('Alt');
+  if (shortcutObj.shiftKey) parts.push('Shift');
+  parts.push(shortcutObj.key.toUpperCase());
+  return parts.join(' + ');
+}
+
 
 export function Popup() {
   const {
@@ -51,6 +65,18 @@ export function Popup() {
   const infoButtonRef = useRef(null);
   const includeContextRef = useRef(null);
 
+  // Define default shortcut and add state for the custom shortcut:
+  const DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG = useMemo(() => ({ // Wrap in useMemo
+    key: 's', // Default key
+    altKey: true, // Default Alt
+    ctrlKey: false,
+    shiftKey: false,
+    metaKey: false,
+  }), []); // Empty dependency array as it's a constant object
+
+  const [popupSidebarShortcut, setPopupSidebarShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
+
+
   // Fade in effect for popup
   useEffect(() => {
     setTimeout(() => {
@@ -67,6 +93,28 @@ export function Popup() {
       setIncludeContext(false);
     }
   }, [isInjectable]);
+
+  // Add useEffect to load the custom shortcut:
+  useEffect(() => {
+    const loadCustomShortcut = async () => {
+      try {
+        const result = await chrome.storage.sync.get([CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
+        if (result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]) {
+          setPopupSidebarShortcut(result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
+          logger.popup.info('Custom popup sidebar shortcut loaded:', result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
+        } else {
+          logger.popup.info('No custom popup sidebar shortcut found, using default.');
+          setPopupSidebarShortcut(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG); // Ensure default is set if nothing in storage
+        }
+      } catch (error) {
+        logger.popup.error('Error loading custom popup shortcut:', error);
+        // Fallback to default if error occurs
+        setPopupSidebarShortcut(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
+      }
+    };
+    loadCustomShortcut();
+  }, [DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG]); // Add DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG to dependency array
+
 
   const isToggleDisabled =
     !isInjectable ||
@@ -220,9 +268,24 @@ export function Popup() {
   // Effect for Alt+S shortcut to toggle sidebar
   useEffect(() => {
     const handleKeyDown = async (event) => {
-      if (event.altKey && event.key.toLowerCase() === 's') {
+      if (
+        event.key.toLowerCase() === popupSidebarShortcut.key.toLowerCase() &&
+        event.altKey === !!popupSidebarShortcut.altKey &&
+        event.ctrlKey === !!popupSidebarShortcut.ctrlKey &&
+        event.shiftKey === !!popupSidebarShortcut.shiftKey &&
+        event.metaKey === !!popupSidebarShortcut.metaKey
+      ) {
         event.preventDefault();
-        logger.popup.info('Alt+S pressed, attempting to toggle sidebar.');
+        // Format the detected shortcut for logging
+        const shortcutParts = [];
+        if (popupSidebarShortcut.metaKey) shortcutParts.push('Meta');
+        if (popupSidebarShortcut.ctrlKey) shortcutParts.push('Ctrl');
+        if (popupSidebarShortcut.altKey) shortcutParts.push('Alt');
+        if (popupSidebarShortcut.shiftKey) shortcutParts.push('Shift');
+        shortcutParts.push(popupSidebarShortcut.key.toUpperCase());
+        const detectedShortcutString = shortcutParts.join(' + ');
+        
+        logger.popup.info(`${detectedShortcutString} pressed, attempting to toggle sidebar.`);
         await toggleSidebar();
       }
     };
@@ -234,7 +297,7 @@ export function Popup() {
       document.removeEventListener('keydown', handleKeyDown);
       logger.popup.info('Popup Alt+S shortcut listener removed.');
     };
-  }, [toggleSidebar]); // Re-bind if toggleSidebar changes
+  }, [toggleSidebar, popupSidebarShortcut]); // Re-bind if toggleSidebar or popupSidebarShortcut changes
 
   const handleProcessWithText = async (text) => {
     const combinedDisabled =
@@ -316,7 +379,7 @@ export function Popup() {
         <button
           onClick={toggleSidebar}
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-          title='Toggle Sidebar (Alt+S)' // Updated title to reflect shortcut
+          title={popupSidebarShortcut && popupSidebarShortcut.key ? `Toggle Sidebar (${formatShortcutToStringDisplay(popupSidebarShortcut)})` : 'Toggle Sidebar'} // Updated title to reflect shortcut
           disabled={!currentTab?.id}
         >
           <SidebarIcon className='w-4 h-4 select-none' />

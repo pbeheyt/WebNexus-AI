@@ -49,6 +49,7 @@ export { ScrollDownIcon } from './icons/ScrollDownIcon';
 export { SpinnerIcon } from './icons/SpinnerIcon';
 export { NoCredentialsIcon } from './icons/NoCredentialsIcon';
 export { ErrorIcon } from './icons/ErrorIcon';
+export { KeyIcon } from './icons/KeyIcon'; // Add KeyIcon export
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';
