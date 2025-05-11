@@ -1,5 +1,5 @@
 // src/popup/Popup.jsx
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 import { logger } from '../shared/logger';
 import { usePopupPlatform } from '../contexts/platform';
@@ -9,6 +9,7 @@ import {
   Tooltip,
   SidebarIcon,
   Toggle,
+  ContentTypeIcon, // Ensure ContentTypeIcon is imported if used directly
 } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { UnifiedInput } from '../components/input/UnifiedInput';
@@ -19,7 +20,6 @@ import {
 } from '../shared/constants';
 import { useContentProcessing } from '../hooks/useContentProcessing';
 import { robustSendMessage } from '../shared/utils/message-utils';
-import { ContentTypeIcon } from '../components';
 
 import { PlatformSelector } from './components/PlatformSelector';
 import { useStatus } from './contexts/StatusContext';
@@ -49,18 +49,17 @@ export function Popup() {
   const [isIncludeContextTooltipVisible, setIsIncludeContextTooltipVisible] =
     useState(false);
   const infoButtonRef = useRef(null);
-  const includeContextRef = useRef(null); // This ref will now point to the div containing label and toggle
+  const includeContextRef = useRef(null);
 
   // Fade in effect for popup
   useEffect(() => {
-    // Use setTimeout to ensure the transition applies after the initial render
     setTimeout(() => {
       const rootElement = document.getElementById('root');
       if (rootElement) {
         rootElement.style.opacity = '1';
       }
-    }, 0); // 0ms delay allows the browser to paint the initial state first
-  }, []); // Empty dependency array ensures this runs only once on mount
+    }, 0);
+  }, []);
 
   // Automatically disable includeContext for non-injectable pages
   useEffect(() => {
@@ -69,15 +68,13 @@ export function Popup() {
     }
   }, [isInjectable]);
 
-  // Define Disabled State
   const isToggleDisabled =
     !isInjectable ||
     !isSupported ||
     contentLoading ||
     isProcessingContent ||
-    isProcessing; // Define Disabled State
+    isProcessing;
 
-  // Dynamic tooltip message based on page state
   const getTooltipMessage = () => {
     if (!isSupported) {
       return (
@@ -128,10 +125,8 @@ export function Popup() {
     }
   };
 
-  // Get the appropriate tooltip message
   const tooltipMessage = getTooltipMessage();
 
-  // Listen for messages from background script
   useEffect(() => {
     const messageListener = (message) => {
       if (message.action === 'apiResponseReady') {
@@ -152,19 +147,16 @@ export function Popup() {
     };
   }, [updateStatus]);
 
-  // Function to close the popup
   const closePopup = () => {
     window.close();
   };
 
-  // Function to toggle sidebar with auto-close
-  const toggleSidebar = async () => {
+  const toggleSidebar = useCallback(async () => {
     if (!currentTab?.id) {
       updateStatus('Error: No active tab found.');
       return;
     }
 
-    // Get the full tab object to check URL
     let tabUrl;
     try {
       const tab = await chrome.tabs.get(currentTab.id);
@@ -179,7 +171,6 @@ export function Popup() {
       return;
     }
 
-    // Check if side panel is allowed on this page
     const isAllowed = await robustSendMessage({
       action: 'isSidePanelAllowedPage',
       url: tabUrl,
@@ -192,34 +183,26 @@ export function Popup() {
 
     updateStatus('Toggling sidebar...', true);
     try {
-      // Send message to background to toggle the native side panel state (enable/disable)
       const response = await robustSendMessage({
         action: 'toggleNativeSidePanelAction',
         tabId: currentTab.id,
       });
 
       if (response?.success) {
-        // Background confirmed state update (enabled/disabled)
         updateStatus(
           `Sidebar state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
         );
 
-        // If the panel's intended state is now 'visible', attempt to open it.
-        // This MUST be done here, within the user gesture context.
         if (response.visible) {
           try {
             await chrome.sidePanel.open({ tabId: currentTab.id });
             updateStatus('Sidebar opened successfully.');
-            // Close popup *after* successful open attempt
             window.close();
           } catch (openError) {
             logger.popup.error('Error opening side panel:', openError);
             updateStatus(`Error opening sidebar: ${openError.message}`);
-            // Keep popup open to show the error
           }
         } else {
-          // If the panel was disabled (response.visible is false), just close the popup.
-          // The browser handles closing the panel itself if it was open.
           updateStatus('Sidebar disabled.');
           window.close();
         }
@@ -230,12 +213,29 @@ export function Popup() {
       }
     } catch (error) {
       logger.popup.error('Error in toggleSidebar:', error);
-      updateStatus(`Error: ${error.message}`, false); // Show error, stop loading indicator
-      // Keep popup open to show the error
+      updateStatus(`Error: ${error.message}`, false);
     }
-  };
+  }, [currentTab, updateStatus]);
 
-  // Handler for UnifiedInput submission
+  // Effect for Alt+S shortcut to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = async (event) => {
+      if (event.altKey && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        logger.popup.info('Alt+S pressed, attempting to toggle sidebar.');
+        await toggleSidebar();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    logger.popup.info('Popup Alt+S shortcut listener added.');
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      logger.popup.info('Popup Alt+S shortcut listener removed.');
+    };
+  }, [toggleSidebar]); // Re-bind if toggleSidebar changes
+
   const handleProcessWithText = async (text) => {
     const combinedDisabled =
       !isSupported ||
@@ -263,7 +263,6 @@ export function Popup() {
     updateStatus(`Processing with ${platformName}...`, true);
 
     try {
-      // Clear previous state
       await chrome.storage.local.remove([
         STORAGE_KEYS.CONTENT_READY,
         STORAGE_KEYS.EXTRACTED_CONTENT,
@@ -271,35 +270,28 @@ export function Popup() {
         STORAGE_KEYS.SCRIPT_INJECTED,
         STORAGE_KEYS.PRE_PROMPT,
       ]);
-      // Store the new prompt
       await chrome.storage.local.set({
         [STORAGE_KEYS.PRE_PROMPT]: promptContent,
       });
 
-      // Call the hook function and wait for the result from the background script
       const result = await processContent({
         platformId: selectedPlatformId,
         promptContent: promptContent,
         includeContext: includeContext,
       });
 
-      // Check the result from the background script
       if (result && result.success) {
-        // Close the popup ONLY if the background script confirmed success
         window.close();
       } else {
-        // Background reported an error, display it
         updateStatus(`Error: ${result?.error || 'Processing failed'}`, false);
       }
     } catch (error) {
-      // Catch errors from the hook/message sending itself
       logger.popup.error('Popup process error:', error);
       updateStatus(
         `Error: ${error.message || 'An unexpected error occurred'}`,
         false
       );
     } finally {
-      // Ensure processing state is reset regardless of success or failure
       setIsProcessing(false);
     }
   };
@@ -309,7 +301,7 @@ export function Popup() {
       <AppHeader
         onClose={closePopup}
         className='py-2'
-        showInfoButton={true} // Always show the info button
+        showInfoButton={true}
         infoButtonRef={infoButtonRef}
         onInfoMouseEnter={() => setIsInfoVisible(true)}
         onInfoMouseLeave={() => setIsInfoVisible(false)}
@@ -321,21 +313,18 @@ export function Popup() {
             : 'More information about using this extension'
         }
       >
-        {/* Sidebar toggle button */}
         <button
           onClick={toggleSidebar}
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-          title='Toggle Sidebar'
-          disabled={!currentTab?.id} // Disable if no tab context
+          title='Toggle Sidebar (Alt+S)' // Updated title to reflect shortcut
+          disabled={!currentTab?.id}
         >
           <SidebarIcon className='w-4 h-4 select-none' />
         </button>
       </AppHeader>
 
-      {/* Main Content - Conditionally Rendered */}
       {!contentLoading && (
         <>
-          {/* Platform Selector */}
           <div className='mt-4'>
             <PlatformSelector
               disabled={
@@ -347,16 +336,13 @@ export function Popup() {
             />
           </div>
 
-          {/* Unified Input */}
           <div className='mt-3'>
-            {/* Container for badge/info/toggle OR non-injectable message */}
             <div className='flex justify-between items-center mb-3 px-3'>
               {isInjectable ? (
                 <>
-                  {/* Container for Content Type, Toggle, and Tooltip Trigger */}
                   <div
                     className={`flex items-center gap-1 w-full mt-3 cursor-default`}
-                    ref={includeContextRef} // Ref for tooltip target
+                    ref={includeContextRef}
                     onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
                     onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
                     onFocus={() => setIsIncludeContextTooltipVisible(true)}
@@ -365,18 +351,13 @@ export function Popup() {
                   >
                     {contentTypeLabel ? (
                       <>
-                        {/* Icon */}
                         <ContentTypeIcon
                           contentType={contentType}
                           className='w-5 h-5 text-current'
                         />
-
-                        {/* Label */}
                         <span className='text-sm font-medium truncate ml-1 select-none cursor-default'>
                           {contentTypeLabel}
                         </span>
-
-                        {/* Toggle */}
                         <Toggle
                           id='include-context-toggle'
                           checked={includeContext}
@@ -400,7 +381,6 @@ export function Popup() {
                   </div>
                 </>
               ) : (
-                // Empty div for Non-Injectable Pages (Toggle is not shown here)
                 <div></div>
               )}
             </div>
@@ -420,11 +400,10 @@ export function Popup() {
               contentType={contentType}
               showTokenInfo={false}
               layoutVariant='popup'
-              onCancel={null} // No cancel in popup
+              onCancel={null}
             />
           </div>
 
-          {/* Status Message */}
           <StatusMessage
             message={statusMessage}
             context='popup'
@@ -433,7 +412,6 @@ export function Popup() {
         </>
       )}
 
-      {/* Tooltip for Info Button */}
       <Tooltip
         show={isInfoVisible}
         targetRef={infoButtonRef}
@@ -442,7 +420,6 @@ export function Popup() {
         delay={250}
       />
 
-      {/* Tooltip for Include Context (Content Type Label + Toggle) */}
       <Tooltip
         show={isIncludeContextTooltipVisible}
         targetRef={includeContextRef}
