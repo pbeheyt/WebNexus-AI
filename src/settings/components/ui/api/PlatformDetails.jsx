@@ -141,7 +141,7 @@ const PlatformDetails = ({
           if (currentActiveSubTab === 'apiKey') {
             return (
               <SettingsCard className='settings-section'>
-                <h4 className='section-subtitle text-lg font-medium mb-4 text-theme-primary select-none'>
+                <h4 className='section-subtitle text-base font-semibold mb-4 text-theme-primary select-none'>
                   API Credentials
                 </h4>
                 <div className='form-group mb-4'>
