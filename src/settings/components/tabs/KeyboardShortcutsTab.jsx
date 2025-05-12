@@ -135,7 +135,7 @@ export function KeyboardShortcutsTab() {
                         ? 'Open the WebNexus AI popup' 
                         : (command.description || command.name)}
                     </span>
-                    <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
+                    <span className="font-mono text-xs bg-theme-surface p-2 rounded text-theme-secondary">
                       {(command.shortcut || '').replace(/\+/g, ' + ') || 'Not set'}
                     </span>
                   </li>
@@ -162,7 +162,7 @@ export function KeyboardShortcutsTab() {
               className="flex justify-between items-center py-3 px-3 rounded-md bg-theme-hover mb-6"
             >
               <span className="text-sm text-theme-primary">Current Sidebar Toggle Key</span>
-              <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
+              <span className="font-mono text-xs bg-theme-surface p-2 rounded text-theme-secondary">
                 {formatShortcutToStringDisplay(customPopupShortcut)}
               </span>
             </div>
