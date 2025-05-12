@@ -72,7 +72,6 @@ export function getDerivedModelSettings({
           ? thinkingConfig.supportsSystemPrompt
           : resolvedModelConfig.capabilities.supportsSystemPrompt;
   }
-  // currentTokens, currentPricing, currentCapabilities are now effectively resolvedModelConfig.tokens etc.
 
 
   // --- Calculate Default Settings (based on resolvedModelConfig) ---
@@ -257,4 +256,23 @@ export function checkForFormChanges(currentValues, originalValues) {
     }
   }
   return false;
+}
+
+/**
+ * Maps internal parameter keys to user-friendly display names.
+ * @param {string} paramKey - The internal parameter key (e.g., "maxTokens").
+ * @returns {string} The user-friendly display name.
+ */
+export function getParameterDisplayName(paramKey) {
+  const displayNames = {
+    maxTokens: 'Max Tokens',
+    temperature: 'Temperature',
+    topP: 'Top P',
+    systemPrompt: 'System Prompt',
+    includeTemperature: 'Temperature Toggle',
+    includeTopP: 'Top P Toggle',
+    thinkingBudget: 'Thinking Budget',
+    reasoningEffort: 'Reasoning Effort',
+  };
+  return displayNames[paramKey] || paramKey; // Fallback to key if not found
 }

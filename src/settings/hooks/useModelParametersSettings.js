@@ -6,6 +6,7 @@ import {
   getDerivedModelSettings,
   checkAreFormValuesAtDefaults,
   checkForFormChanges,
+  getParameterDisplayName,
 } from '../utils/modelSettingsHelper';
 import { MAX_SYSTEM_PROMPT_LENGTH } from '../../shared/constants';
 import { useNotification } from '../../components/feedback/NotificationContext';
@@ -210,7 +211,43 @@ export function useModelParametersSettings({
       const settingsToSave = { ...formValues };
       delete settingsToSave.contextWindow;
 
-      const success = await onSave(platform.id, selectedModelId, currentEditingMode, settingsToSave);
+      // Determine changed parameters for notification
+      const changedParamsList = [];
+      if (originalValues) {
+        for (const key in formValues) {
+          if (Object.prototype.hasOwnProperty.call(formValues, key) && key !== 'contextWindow') {
+            const currentValue = formValues[key];
+            const originalValue = originalValues[key];
+            let paramChanged = false;
+
+            if (typeof currentValue === 'boolean') {
+              if (currentValue !== originalValue) {
+                paramChanged = true;
+              }
+            } else if (typeof currentValue === 'string') {
+              if (currentValue.trim() !== (originalValue || '').trim()) {
+                paramChanged = true;
+              }
+            } else if (typeof currentValue === 'number') {
+               // Handle null original values correctly when comparing with numbers
+              if (originalValue === null && currentValue !== null) {
+                  paramChanged = true;
+              } else if (!Object.is(currentValue, originalValue)) {
+                  paramChanged = true;
+              }
+            } else if (currentValue !== originalValue) { // Fallback for other types or null/undefined mismatches
+              paramChanged = true;
+            }
+            
+            if (paramChanged) {
+              changedParamsList.push(getParameterDisplayName(key));
+            }
+          }
+        }
+      }
+      // End - Determine changed parameters
+
+      const success = await onSave(platform.id, selectedModelId, currentEditingMode, settingsToSave, changedParamsList);
       if (success) {
         setOriginalValues({ ...formValues });
       }
@@ -220,7 +257,7 @@ export function useModelParametersSettings({
     } finally {
       setIsSavingActual(false);
     }
-  }, [formValues, platform, selectedModelId, currentEditingMode, onSave, derivedSettings, showNotificationError]);
+  }, [formValues, originalValues, platform, selectedModelId, currentEditingMode, onSave, derivedSettings, showNotificationError]);
 
   const handleResetClick = useCallback(async () => {
     if (isAtDefaults || !derivedSettings || !selectedModelId) return;

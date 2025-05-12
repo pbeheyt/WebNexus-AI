@@ -150,7 +150,7 @@ export const ApiSettingsProvider = ({ children }) => {
   );
 
   const saveModelParametersSettings = useCallback(
-    async (platformId, modelId, mode, settings) => {
+    async (platformId, modelId, mode, settings, changedParamsList = []) => { // Add changedParamsList
       try {
         const updatedAllModelParameterSettings = JSON.parse(JSON.stringify(allModelParameterSettings)); // Deep copy
 
@@ -174,7 +174,18 @@ export const ApiSettingsProvider = ({ children }) => {
           [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: updatedAllModelParameterSettings,
         });
         setAllModelParameterSettings(() => updatedAllModelParameterSettings);
-        showSuccessNotification('Model parameters saved.');
+
+        // Updated success notification
+        let successMessage = `Model parameters for '${modelId}' saved.`;
+        if (changedParamsList.length > 0) {
+          const paramsString = changedParamsList.join(', ');
+          if (changedParamsList.length <= 3) { // Show all if 3 or less
+              successMessage = `Updated ${paramsString} for '${modelId}'.`;
+          } else { // Show count if more than 3
+              successMessage = `Updated ${changedParamsList.length} parameters for '${modelId}'.`;
+          }
+        }
+        showSuccessNotification(successMessage);
         return true;
       } catch (err) {
         logger.settings.error('Error saving model parameters in context:', err);
@@ -229,7 +240,8 @@ export const ApiSettingsProvider = ({ children }) => {
           });
           setAllModelParameterSettings(() => updatedAllModelParameterSettings);
         }
-        showSuccessNotification('Model parameters reset to configuration defaults.');
+        // Updated success notification
+        showSuccessNotification(`Model parameters for '${modelId}' reset to configuration defaults.`);
         return true;
       } catch (err) {
         logger.settings.error('Error resetting model parameters in context:', err);
