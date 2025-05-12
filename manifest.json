@@ -70,14 +70,14 @@
         "default": "Alt+W",
         "mac": "Alt+W"
       },
-      "description": "Open the WebNexus AI popup"
+      "description": "Open the Extension Popup"
     },
     "process-default-prompt": {
       "suggested_key": {
         "default": "Alt+Q",
         "mac": "Alt+Q"
       },
-      "description": "Quick page content process with default prompt via Web UI"
+      "description": "Quick Process with Default Prompt via Web UI"
     }
   }
 }

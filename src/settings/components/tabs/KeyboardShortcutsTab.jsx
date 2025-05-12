@@ -117,9 +117,9 @@ export function KeyboardShortcutsTab() {
         {/* Left Column: Registered Extension Shortcuts */}
         <div className="w-full md:w-1/2 mb-6 md:mb-0">
           <SettingsCard>
-            <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Extension Chrome Shortcuts</h3>
+            <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Chrome Shortcuts</h3>
             <p className="text-sm text-theme-secondary mb-6">
-              These shortcuts are defined by the extension and can be managed on Chrome's extensions page.
+              These shortcuts are defined by the extension and can be managed on Chrome&apos;s extensions page.
             </p>
             {isLoadingCommands ? (
               <p className="text-theme-secondary py-3">Loading global shortcuts...</p>
@@ -132,7 +132,7 @@ export function KeyboardShortcutsTab() {
                   >
                     <span className="text-sm text-theme-primary">
                       {command.name === '_execute_action' 
-                        ? 'Open the WebNexus AI popup' 
+                        ? 'Open the Extension Popup' 
                         : (command.description || command.name)}
                     </span>
                     <span className="font-mono text-xs bg-theme-surface p-2 rounded text-theme-secondary">
@@ -153,15 +153,15 @@ export function KeyboardShortcutsTab() {
         {/* Right Column: Sidebar Toggle Shortcut */}
         <div className="w-full md:w-1/2">
           <SettingsCard>
-            <h3 className="text-base font-semibold text-theme-primary mb-2">Sidebar Toggle Shortcut</h3>
+            <h3 className="text-base font-semibold text-theme-primary mb-2">Side Panel Toggle Shortcut</h3>
             <p className="text-sm text-theme-secondary mb-6">
-              This shortcut is used within the extension's popup to open/close the sidebar, and from within the sidebar itself to close it when focused.
+              This shortcut is used within the extension&apos;s popup to open/close the sidebar, and from within the sidebar itself to close it when focused.
             </p>
             
             <div 
               className="flex justify-between items-center py-3 px-3 rounded-md bg-theme-hover mb-6"
             >
-              <span className="text-sm text-theme-primary">Current Sidebar Toggle Key</span>
+              <span className="text-sm text-theme-primary">Toggle the Side Panel</span>
               <span className="font-mono text-xs bg-theme-surface p-2 rounded text-theme-secondary">
                 {formatShortcutToStringDisplay(customPopupShortcut)}
               </span>
