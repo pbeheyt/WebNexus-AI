@@ -105,15 +105,15 @@ const PromptManagement = () => {
       {/* Master Panel */}
       <div className='master-panel w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-theme pb-3 md:pb-0 md:pr-5'>
         <div className='master-header flex justify-between items-center'>
-          <h2 className='text-lg font-medium select-none'>Prompts</h2>
+          <h2 className='type-heading text-lg font-medium select-none'>Prompts</h2>
           <button
-            className='new-prompt-btn bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1 text-sm font-medium select-none'
+            className='new-prompt-btn bg-primary text-white px-3 py-1 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1 text-sm font-medium select-none'
             onClick={handleNewPrompt}
           >
             + New
           </button>
         </div>
-        <div className='border-b border-theme w-full my-4'></div>
+        <div className='border-b border-theme w-full mt-3 mb-4'></div>
         <p className='section-description text-theme-secondary text-sm mb-6 select-none'>
           Manage your custom prompts for different content types.
         </p>

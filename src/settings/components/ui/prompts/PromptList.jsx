@@ -150,7 +150,7 @@ const PromptList = ({
             <button
               type='button'
               key={item.id}
-              className={`prompt-item rounded-lg p-5 mb-4 shadow-sm cursor-pointer select-none transition-all border border-theme w-full text-left
+              className={`prompt-item rounded-lg p-4 mb-4 shadow-sm cursor-pointer select-none transition-all border border-theme w-full text-left
                 ${
                   selectedPromptId === item.id
                     ? ' bg-theme-hover shadow-sm'

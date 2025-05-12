@@ -199,7 +199,7 @@ const DataManagementTab = () => {
           <h3 className='text-base font-semibold text-theme-primary select-none'>
             Data Type Selection
           </h3>
-          <div className="ml-4">
+          <div className="ml-5">
             <CustomSelect
               id="data-type-select"
               options={DATA_MANAGEMENT_OPTIONS.map(opt => ({ id: opt.id, name: opt.name }))}

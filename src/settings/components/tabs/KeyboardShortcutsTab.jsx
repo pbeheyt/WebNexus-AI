@@ -119,18 +119,18 @@ export function KeyboardShortcutsTab() {
       <p className='section-description text-sm text-theme-secondary mb-6 select-none'>
         Manage your extension&apos;s keyboard shortcuts. Global shortcuts are configured in Chrome&apos;s settings, while the sidebar toggle shortcut can be customized here.
       </p>
-      <div className="flex flex-col md:flex-row md:gap-6 p-1">
+      <div className="flex flex-col md:flex-row md:gap-6">
         {/* Left Column: Registered Extension Shortcuts */}
-        <div className="w-full md:w-1/2 mb-4">
+        <div className="w-full md:w-1/2 mb-6">
           <SettingsCard>
             <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Chrome Shortcuts</h3>
-            <p className="text-sm text-theme-secondary mb-4">
+            <p className="text-sm text-theme-secondary mb-6">
               These shortcuts are defined by the extension and can be managed on Chrome&apos;s extensions page.
             </p>
             {isLoadingCommands ? (
               <p className="text-theme-secondary py-2">Loading global shortcuts...</p>
             ) : globalCommands.length > 0 ? (
-              <ul className="space-y-3 mb-4">
+              <ul className="space-y-3 mb-6">
                 {globalCommands.map((command) => (
                   <li 
                     key={command.name} 
@@ -148,7 +148,7 @@ export function KeyboardShortcutsTab() {
                 ))}
               </ul>
             ) : (
-              <p className="text-theme-secondary py-2 mb-4">No global commands found or API not available.</p>
+              <p className="text-theme-secondary py-2 mb-6">No global commands found or API not available.</p>
             )}
             <Button onClick={handleOpenShortcutsPage} variant="secondary" size="md">
               Manage in Chrome Settings
@@ -160,12 +160,12 @@ export function KeyboardShortcutsTab() {
         <div className="w-full md:w-1/2">
           <SettingsCard>
             <h3 className="text-base font-semibold text-theme-primary mb-2">Side Panel Toggle Shortcut</h3>
-            <p className="text-sm text-theme-secondary mb-4">
+            <p className="text-sm text-theme-secondary mb-6">
               This shortcut is used within the extension&apos;s popup to open/close the sidebar, and from within the sidebar itself to close it when focused.
             </p>
             
             <div 
-              className="flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover mb-4 border border-theme"
+              className="flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover mb-6 border border-theme"
             >
               <span className="text-sm text-theme-primary">Toggle the Side Panel</span>
               <span className="font-mono text-sm bg-theme-surface ml-10 px-2 py-1 rounded text-theme-secondary">
