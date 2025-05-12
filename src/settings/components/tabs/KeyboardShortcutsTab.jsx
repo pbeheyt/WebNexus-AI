@@ -181,13 +181,11 @@ export function KeyboardShortcutsTab() {
       >
         <div>
           <div className="flex items-center gap-10">
-            <div className="w-40">
-              <ShortcutCaptureInput
-                value={editableCustomShortcut}
-                onChange={handleEditableShortcutChange}
-                defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
-              />
-            </div>
+            <ShortcutCaptureInput
+              value={editableCustomShortcut}
+              onChange={handleEditableShortcutChange}
+              defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
+            />
             <div className="flex-shrink-0 flex gap-2"> 
               <Button 
                 onClick={handleSaveCustomShortcut} 

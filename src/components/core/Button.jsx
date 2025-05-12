@@ -62,7 +62,7 @@ export function Button({
   // Disabled class - don't apply if using inactive variant or if loading (loading has its own opacity potentially)
   const disabledStylingClass =
     effectiveDisabled && variant !== 'inactive'
-      ? 'bg-gray-500 text-gray-300 cursor-not-allowed hover:bg-gray-500'
+      ? 'bg-gray-400 text-gray-100 cursor-not-allowed opacity-50'
       : '';
       
   // Loading specific style to ensure content is centered with spinner
