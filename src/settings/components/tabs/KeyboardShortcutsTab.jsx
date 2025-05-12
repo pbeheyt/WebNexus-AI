@@ -9,7 +9,6 @@ import { logger } from '../../../shared/logger';
 
 export function KeyboardShortcutsTab() {
   const [globalCommands, setGlobalCommands] = useState([]);
-  // Initialize with the imported default
   const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
   const [isLoadingCommands, setIsLoadingCommands] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
@@ -76,8 +75,10 @@ export function KeyboardShortcutsTab() {
         setIsSavingShortcut(false);
         return;
       }
+      
       const isFunctionKey = customPopupShortcut.key.toLowerCase().startsWith('f') && !isNaN(parseInt(customPopupShortcut.key.substring(1), 10));
-      const isSpecialKey = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'escape', 'enter', 'tab', 'backspace', 'delete', 'home', 'end', 'pageup', 'pagedown'].includes(customPopupShortcut.key.toLowerCase());
+      const isSpecialKey = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'escape', 'enter', 'tab', 'backspace', 'delete', 'home', 'end', 'pageup', 'pagedown', ' '].includes(customPopupShortcut.key.toLowerCase());
+
 
       if (!isFunctionKey && !isSpecialKey && !customPopupShortcut.altKey && !customPopupShortcut.ctrlKey && !customPopupShortcut.metaKey && !customPopupShortcut.shiftKey) {
         setFeedback('Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.', 'error');
@@ -86,7 +87,7 @@ export function KeyboardShortcutsTab() {
       }
 
       await chrome.storage.sync.set({ [CUSTOM_POPUP_SIDEBAR_SHORTCUT]: customPopupShortcut });
-      setFeedback('Popup sidebar shortcut saved successfully!', 'success');
+      setFeedback('Sidebar toggle shortcut saved successfully!', 'success');
     } catch (error) {
       logger.settings.error('Error saving custom popup shortcut:', error);
       setFeedback(`Error saving shortcut: ${error.message}`, 'error');
@@ -96,52 +97,60 @@ export function KeyboardShortcutsTab() {
   };
 
   return (
-    <div className="space-y-6 p-1">
-      <SettingsCard title="Global Extension Shortcuts">
-            <div className="text-sm text-theme-secondary mb-4">
-              Customize the shortcut used <span className="font-semibold">inside the popup window</span> to toggle the sidebar, and <span className="font-semibold">within the sidebar itself</span> to close it. Default is Alt+S.
-            </div>
-        {isLoadingCommands ? (
-          <p>Loading global shortcuts...</p>
-        ) : globalCommands.length > 0 ? (
-          <ul className="space-y-2 mb-4">
-            {globalCommands.map((command) => (
-              <li key={command.name} className="flex justify-between items-center">
-                <span>{command.description || command.name}</span>
-                <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded">
-                  {command.shortcut || 'Not set'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-theme-secondary">No global commands found or API not available.</p>
-        )}
-        <Button onClick={handleOpenShortcutsPage} variant="secondary" size="md">
-          Manage Extension Shortcuts in Chrome
-        </Button>
-      </SettingsCard>
-
-      <SettingsCard title="Popup Sidebar Toggle Shortcut">
-        <div className="text-sm text-theme-secondary mb-4">
-          Customize the shortcut used <span className="font-semibold">inside the popup window</span> to open or close the main sidebar. Default is Alt+S.
-        </div>
-        <div className="mb-3">
-          <ShortcutCaptureInput
-            value={customPopupShortcut}
-            onChange={handleCustomShortcutChange}
-            defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG} // Use imported default
-          />
-        </div>
-        <Button onClick={handleSaveCustomShortcut} isLoading={isSavingShortcut} loadingText="Saving..." size="md">
-          Save Popup Shortcut
-        </Button>
-        {statusMessage.text && (
-           <div className={`mt-3 text-sm ${statusMessage.type === 'error' ? 'text-error' : statusMessage.type === 'success' ? 'text-success' : 'text-theme-secondary'}`}>
-            {statusMessage.text}
+    <div className="space-y-6 md:space-y-0 md:flex md:flex-row md:gap-6 p-1">
+      {/* Left Column: Registered Extension Shortcuts */}
+      <div className="w-full md:w-1/2">
+        <SettingsCard>
+          <h3 className="text-base font-semibold text-theme-primary mb-1">Registered Extension Shortcuts</h3>
+          <div className="text-sm text-theme-secondary mb-4">
+                These shortcuts are defined by the extension and can be managed on Chrome's extensions page. This extension registers the following global commands:
           </div>
-        )}
-      </SettingsCard>
+          {isLoadingCommands ? (
+            <p className="text-theme-secondary">Loading global shortcuts...</p>
+          ) : globalCommands.length > 0 ? (
+            <ul className="space-y-2 mb-4">
+              {globalCommands.map((command) => (
+                <li key={command.name} className="flex justify-between items-center">
+                  <span className="text-sm text-theme-primary">{command.description || command.name}</span>
+                  <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
+                    {command.shortcut || 'Not set'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-theme-secondary">No global commands found or API not available.</p>
+          )}
+          <Button onClick={handleOpenShortcutsPage} variant="secondary" size="md">
+            Manage in Chrome Settings
+          </Button>
+        </SettingsCard>
+      </div>
+
+      {/* Right Column: Sidebar Toggle Shortcut */}
+      <div className="w-full md:w-1/2">
+        <SettingsCard>
+          <h3 className="text-base font-semibold text-theme-primary mb-1">Sidebar Toggle Shortcut</h3>
+          <div className="text-sm text-theme-secondary mb-4">
+              This shortcut is used within the extension's popup to open/close the sidebar, and from within the sidebar itself to close it. Default: Alt+S.
+          </div>
+          <div className="mb-3">
+            <ShortcutCaptureInput
+              value={customPopupShortcut}
+              onChange={handleCustomShortcutChange}
+              defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
+            />
+          </div>
+          <Button onClick={handleSaveCustomShortcut} isLoading={isSavingShortcut} loadingText="Saving..." size="md">
+            Save Sidebar Shortcut
+          </Button>
+          {statusMessage.text && (
+             <div className={`mt-3 text-sm ${statusMessage.type === 'error' ? 'text-error' : statusMessage.type === 'success' ? 'text-success' : 'text-theme-secondary'}`}>
+              {statusMessage.text}
+            </div>
+          )}
+        </SettingsCard>
+      </div>
     </div>
   );
 }
