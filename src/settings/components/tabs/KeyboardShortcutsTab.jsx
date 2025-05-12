@@ -2,24 +2,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { Button } from '../../../components';
-import { SettingsCard } from '../ui/common/SettingsCard'; // Correct import path for SettingsCard
+import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
-import { CUSTOM_POPUP_SIDEBAR_SHORTCUT } from '../../../shared/constants';
+import { CUSTOM_POPUP_SIDEBAR_SHORTCUT, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
-
-const DEFAULT_POPUP_SHORTCUT = {
-  key: 's',
-  altKey: true,
-  ctrlKey: false,
-  shiftKey: false,
-  metaKey: false,
-};
-
-// Removed unused formatShortcut function
 
 export function KeyboardShortcutsTab() {
   const [globalCommands, setGlobalCommands] = useState([]);
-  const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SHORTCUT);
+  // Initialize with the imported default
+  const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
   const [isLoadingCommands, setIsLoadingCommands] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
   const [statusMessage, setStatusMessageState] = useState({ text: '', type: 'info' });
@@ -37,7 +28,7 @@ export function KeyboardShortcutsTab() {
       try {
         if (chrome.commands && chrome.commands.getAll) {
           const commands = await chrome.commands.getAll();
-          setGlobalCommands(commands.filter(cmd => cmd.name !== '_execute_browser_action' && cmd.name !== '_execute_page_action')); // Filter out older manifest popup commands
+          setGlobalCommands(commands.filter(cmd => cmd.name !== '_execute_browser_action' && cmd.name !== '_execute_page_action'));
         } else {
           logger.settings.warn('chrome.commands API not available.');
           setGlobalCommands([]);
@@ -56,7 +47,7 @@ export function KeyboardShortcutsTab() {
         if (result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]) {
           setCustomPopupShortcut(result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
         } else {
-          setCustomPopupShortcut(DEFAULT_POPUP_SHORTCUT);
+          setCustomPopupShortcut(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
         }
       } catch (error) {
         logger.settings.error('Error loading custom popup shortcut:', error);
@@ -78,15 +69,13 @@ export function KeyboardShortcutsTab() {
 
   const handleSaveCustomShortcut = async () => {
     setIsSavingShortcut(true);
-    setFeedback('Saving...', 'info', 0); // Persistent "Saving..."
+    setFeedback('Saving...', 'info', 0);
     try {
-      // Basic validation: ensure a key is present
       if (!customPopupShortcut || !customPopupShortcut.key || customPopupShortcut.key.trim() === '') {
         setFeedback('Invalid shortcut: Key cannot be empty.', 'error');
         setIsSavingShortcut(false);
         return;
       }
-       // Ensure at least one modifier if the key is not a function key or special key
       const isFunctionKey = customPopupShortcut.key.toLowerCase().startsWith('f') && !isNaN(parseInt(customPopupShortcut.key.substring(1), 10));
       const isSpecialKey = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'escape', 'enter', 'tab', 'backspace', 'delete', 'home', 'end', 'pageup', 'pagedown'].includes(customPopupShortcut.key.toLowerCase());
 
@@ -141,7 +130,7 @@ export function KeyboardShortcutsTab() {
           <ShortcutCaptureInput
             value={customPopupShortcut}
             onChange={handleCustomShortcutChange}
-            defaultShortcut={DEFAULT_POPUP_SHORTCUT}
+            defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG} // Use imported default
           />
         </div>
         <Button onClick={handleSaveCustomShortcut} isLoading={isSavingShortcut} loadingText="Saving..." size="md">

@@ -103,3 +103,11 @@ export const MESSAGE_ROLES = {
 };
 
 export const CUSTOM_POPUP_SIDEBAR_SHORTCUT = 'customPopupSidebarShortcutConfig';
+
+export const DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG = {
+  key: 's',
+  altKey: true,
+  ctrlKey: false,
+  shiftKey: false,
+  metaKey: false,
+};

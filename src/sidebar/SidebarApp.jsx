@@ -6,20 +6,11 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import PropTypes from 'prop-types';
 
-import { CUSTOM_POPUP_SIDEBAR_SHORTCUT } from '../shared/constants';
+import { CUSTOM_POPUP_SIDEBAR_SHORTCUT, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../shared/constants';
 import { logger } from '../shared/logger';
 import { robustSendMessage } from '../shared/utils/message-utils';
-
-const DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG = {
-  key: 's',
-  altKey: true,
-  ctrlKey: false,
-  shiftKey: false,
-  metaKey: false,
-};
-
+import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
 import { useSidebarPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
@@ -39,82 +30,45 @@ export default function SidebarApp() {
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
+  const sidebarAppRef = useRef(null);
 
-  // Inside SidebarApp component, before the return statement:
-  const [popupSidebarShortcut, setPopupSidebarShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
-
-  // Effect to load the custom shortcut
-  useEffect(() => {
-    const loadCustomShortcut = async () => {
-      try {
-        const result = await chrome.storage.sync.get([CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
-        if (result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]) {
-          setPopupSidebarShortcut(result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
-          logger.sidebar.info('Custom popup/sidebar shortcut loaded:', result[CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
-        } else {
-          logger.sidebar.info('No custom popup/sidebar shortcut found, using default.');
-          setPopupSidebarShortcut(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
-        }
-      } catch (error) {
-        logger.sidebar.error('Error loading custom popup/sidebar shortcut:', error);
-        setPopupSidebarShortcut(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
+  // Use the custom hook for shortcut handling
+  const handleCloseShortcut = useCallback(async () => {
+    if (!tabId) {
+      logger.sidebar.warn('SidebarApp: tabId prop is missing, cannot handle close shortcut.');
+      return;
+    }
+    logger.sidebar.info(`Shortcut pressed in sidebar (tabId: ${tabId}), attempting to close.`);
+    try {
+      const response = await robustSendMessage({
+        action: 'closeCurrentSidePanel',
+        tabId: tabId,
+      });
+      if (response && response.success) {
+        logger.sidebar.info(`Side panel close command acknowledged for tab ${tabId}.`);
+      } else {
+        logger.sidebar.error(`Failed to close side panel for tab ${tabId}:`, response?.error);
       }
-    };
-    loadCustomShortcut();
-  }, []); // Empty dependency array, runs once on mount
+    } catch (err) {
+      logger.sidebar.error(`Error sending closeCurrentSidePanel message for tab ${tabId}:`, err);
+    }
+  }, [tabId]);
 
-  // Effect to listen for the shortcut to close the side panel
-  useEffect(() => {
-    const handleKeyDown = async (event) => {
-      if (!tabId) {
-        logger.sidebar.warn('SidebarApp: tabId prop is missing, cannot handle shortcut.');
-        return;
-      }
-
-      const { key, altKey, ctrlKey, shiftKey, metaKey } = popupSidebarShortcut;
-      if (
-        event.key.toLowerCase() === key.toLowerCase() &&
-        event.altKey === !!altKey &&
-        event.ctrlKey === !!ctrlKey &&
-        event.shiftKey === !!shiftKey &&
-        event.metaKey === !!metaKey
-      ) {
-        event.preventDefault();
-        logger.sidebar.info(`Shortcut pressed in sidebar (tabId: ${tabId}), attempting to close.`);
-        try {
-          const response = await robustSendMessage({
-            action: 'closeCurrentSidePanel',
-            tabId: tabId,
-          });
-          if (response && response.success) {
-            logger.sidebar.info(`Side panel close command acknowledged for tab ${tabId}.`);
-            // The side panel will be closed by the background script.
-            // No explicit window.close() here as the background script handles disabling the panel.
-          } else {
-            logger.sidebar.error(`Failed to close side panel for tab ${tabId}:`, response?.error);
-          }
-        } catch (err) {
-          logger.sidebar.error(`Error sending closeCurrentSidePanel message for tab ${tabId}:`, err);
-        }
-      }
-    };
-
-    // Assuming the side panel's document is the correct target for the event listener
-    document.addEventListener('keydown', handleKeyDown);
-    logger.sidebar.info('Sidebar shortcut listener added.');
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      logger.sidebar.info('Sidebar shortcut listener removed.');
-    };
-  }, [popupSidebarShortcut, tabId]); // Re-bind if shortcut or tabId changes
+  // currentShortcutConfig is returned but not directly used for display in SidebarApp
+  useConfigurableShortcut(
+    CUSTOM_POPUP_SIDEBAR_SHORTCUT,
+    DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
+    handleCloseShortcut,
+    logger.sidebar,
+    [handleCloseShortcut]
+  );
 
   // Refs for height calculation
   const appHeaderRef = useRef(null);
   const collapsibleHeaderRef = useRef(null);
   const userInputRef = useRef(null);
-  const [otherUIHeight, setOtherUIHeight] = useState(160); // Default value
-  const rafIdHeightCalc = useRef(null); // Ref for rAF ID
+  const [otherUIHeight, setOtherUIHeight] = useState(160);
+  const rafIdHeightCalc = useRef(null);
 
   // --- Effect to determine Tab ID ---
   useEffect(() => {
@@ -153,6 +107,14 @@ export default function SidebarApp() {
 
     return () => clearTimeout(timer);
   }, [setTabId]);
+
+  // --- Effect for Auto-Focusing Side Panel ---
+  useEffect(() => {
+    if (isReady && tabId && sidebarAppRef.current) {
+      logger.sidebar.info(`Sidebar is ready for tab ${tabId}. Attempting to focus.`);
+      sidebarAppRef.current.focus();
+    }
+  }, [isReady, tabId]);
 
   // --- Effect for Page Navigation Listener ---
   useEffect(() => {
@@ -255,14 +217,11 @@ export default function SidebarApp() {
   }, [isReady, tabId]);
 
   // --- Height Calculation Logic ---
-  // Use useCallback to memoize the calculation function
   const calculateAndSetHeight = useCallback(() => {
-    // Cancel any pending frame before scheduling a new one
     if (rafIdHeightCalc.current) {
       cancelAnimationFrame(rafIdHeightCalc.current);
     }
     
-    // Schedule the height reading in the next animation frame
     rafIdHeightCalc.current = requestAnimationFrame(() => {
       const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
       const collapsibleHeight = headerExpanded
@@ -270,52 +229,45 @@ export default function SidebarApp() {
       : 0;
       const inputHeight = userInputRef.current?.offsetHeight || 0;
       
-      // Ensure all heights are valid numbers before calculating
       if (
         typeof appHeaderHeight === 'number' &&
         typeof collapsibleHeight === 'number' &&
         typeof inputHeight === 'number'
       ) {
         const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
-        const buffer = 2; // Small buffer
+        const buffer = 2;
         setOtherUIHeight(totalHeight + buffer);
-      } else {
-        // logger.sidebar.warn('Could not read all element heights for calculation.');
       }
-      rafIdHeightCalc.current = null; // Reset ref after execution
+      rafIdHeightCalc.current = null;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [headerExpanded, textSize]); // Recalculate if header state or text size changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headerExpanded, textSize]);
   
-  // Create a debounced version of the height calculation function
   const debouncedCalculateHeight = useMemo(
     () => debounce(calculateAndSetHeight, 150),
     [calculateAndSetHeight]
   );
 
-  // Effect to trigger height calculation based on specific state changes
   useEffect(() => {
     if (isReady) {
-      // Only calculate when the app is ready
       calculateAndSetHeight();
     }
-    // Cleanup function for the requestAnimationFrame ref used in calculateAndSetHeight
     return () => {
       if (rafIdHeightCalc.current) {
         cancelAnimationFrame(rafIdHeightCalc.current);
         rafIdHeightCalc.current = null;
       }
     };
-  }, [isReady, headerExpanded, textSize, calculateAndSetHeight]); // Dependencies
+  }, [isReady, headerExpanded, textSize, calculateAndSetHeight]);
 
   // --- Render Logic ---
-  // Apply textSize class to the root div
   return (
     <div
-      className={`flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary ${textSize ? `text-${textSize}` : 'text-sm'}`}
+      ref={sidebarAppRef}
+      tabIndex="-1"
+      className={`flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary ${textSize ? `text-${textSize}` : 'text-sm'} focus:outline-none`}
     >
       {!isReady ? (
-        // ----- Loading State -----
         <div
           className='flex h-full w-full items-center justify-center'
           aria-live='polite'
@@ -327,9 +279,7 @@ export default function SidebarApp() {
           ></div>
         </div>
       ) : tabId ? (
-        // ----- Ready State -----
         <>
-          {/* Wrap AppHeader to attach ref */}
           <div ref={appHeaderRef} className='flex-shrink-0'>
             <AppHeader
               showRefreshButton={true}
@@ -343,7 +293,6 @@ export default function SidebarApp() {
             />
           </div>
 
-          {/* Collapsible header section - Attach ref here */}
           <div
             ref={collapsibleHeaderRef}
             className='relative flex-shrink-0 z-10'
@@ -356,12 +305,10 @@ export default function SidebarApp() {
               }`}
               aria-hidden={!headerExpanded}
             >
-              {/* Render Header content (always mounted, hidden by parent CSS) */}
               <Header />
             </div>
           </div>
 
-          {/* Refresh overlay */}
           {isReady && tabId && isRefreshing && (
             <div className="absolute inset-0 bg-theme-primary/75 dark:bg-theme-primary/75 z-20 flex items-center justify-center pointer-events-auto">
               <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status">
@@ -370,14 +317,12 @@ export default function SidebarApp() {
             </div>
           )}
 
-          {/* Ensure ChatArea takes remaining space */}
           <ChatArea
             className='flex-1 min-h-0 relative z-0'
             otherUIHeight={otherUIHeight}
-            requestHeightRecalculation={debouncedCalculateHeight} // Pass the debounced function
+            requestHeightRecalculation={debouncedCalculateHeight}
           />
 
-          {/* User input at the bottom - Wrap to attach ref */}
           <div
             ref={userInputRef}
             className='flex-shrink-0 relative z-10 border-t border-theme select-none'
@@ -386,7 +331,6 @@ export default function SidebarApp() {
           </div>
         </>
       ) : (
-        // ----- Error State -----
         <div className='flex flex-col h-full w-full items-center justify-center p-4'>
           <div className='text-center text-error'>
             <ErrorIcon className='h-10 w-10 mx-auto mb-2 text-error' />
@@ -400,8 +344,6 @@ export default function SidebarApp() {
   );
 }
 
-// Add or modify SidebarApp.propTypes
 SidebarApp.propTypes = {
-  tabId: PropTypes.number.isRequired, // Ensure tabId is a required number prop
-  // ... any other existing props
+  // tabId is managed internally
 };
