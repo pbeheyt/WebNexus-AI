@@ -1,7 +1,7 @@
 // src/settings/components/tabs/KeyboardShortcutsTab.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 
-import { Button, useNotification } from '../../../components'; // Added useNotification
+import { Button, useNotification, Modal } from '../../../components';
 import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
 import { CUSTOM_POPUP_SIDEBAR_SHORTCUT, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../../../shared/constants';
@@ -12,11 +12,10 @@ export function KeyboardShortcutsTab() {
   const [globalCommands, setGlobalCommands] = useState([]);
   const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
   const [editableCustomShortcut, setEditableCustomShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
-  const [isEditingCustomShortcut, setIsEditingCustomShortcut] = useState(false);
+  const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
   const [isLoadingCommands, setIsLoadingCommands] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
-
-  // Initialize useNotification
+  
   const { success: showSuccessNotification, error: showErrorNotification, info: showInfoNotification } = useNotification();
 
   useEffect(() => {
@@ -32,7 +31,7 @@ export function KeyboardShortcutsTab() {
         }
       } catch (error) {
         logger.settings.error('Error fetching global commands:', error);
-        showErrorNotification('Error fetching global commands.'); // Use toast
+        showErrorNotification('Error fetching global commands.');
       } finally {
         setIsLoadingCommands(false);
       }
@@ -46,14 +45,14 @@ export function KeyboardShortcutsTab() {
         setEditableCustomShortcut(loadedShortcut);
       } catch (error) {
         logger.settings.error('Error loading custom popup shortcut:', error);
-        showErrorNotification('Error loading custom shortcut.'); // Use toast
+        showErrorNotification('Error loading custom shortcut.');
       }
     };
 
     fetchCommands();
     loadCustomShortcut();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // showErrorNotification is stable from useNotification
+  }, []);
 
   const handleOpenShortcutsPage = () => {
     chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
@@ -63,129 +62,142 @@ export function KeyboardShortcutsTab() {
     setEditableCustomShortcut(newShortcut);
   }, []);
 
-  const handleStartEditCustomShortcut = () => {
-    setEditableCustomShortcut(customPopupShortcut);
-    setIsEditingCustomShortcut(true);
+  const handleOpenShortcutModal = () => {
+    setEditableCustomShortcut(customPopupShortcut); 
+    setIsShortcutModalOpen(true);
   };
 
-  const handleCancelEditCustomShortcut = () => {
-    setIsEditingCustomShortcut(false);
-    setEditableCustomShortcut(customPopupShortcut);
+  const handleCloseShortcutModal = () => {
+    setIsShortcutModalOpen(false);
+    setEditableCustomShortcut(customPopupShortcut); 
   };
 
   const handleSaveCustomShortcut = async () => {
     setIsSavingShortcut(true);
-    showInfoNotification('Saving...', 2000); // Use toast
+    showInfoNotification('Saving shortcut...', 2000);
     try {
       if (!editableCustomShortcut || !editableCustomShortcut.key || editableCustomShortcut.key.trim() === '') {
-        showErrorNotification('Invalid shortcut: Key cannot be empty.'); // Use toast
+        showErrorNotification('Invalid shortcut: Key cannot be empty.');
         setIsSavingShortcut(false);
-        return;
+        return; 
       }
-
+      
       const isFunctionKey = editableCustomShortcut.key.toLowerCase().startsWith('f') && !isNaN(parseInt(editableCustomShortcut.key.substring(1), 10));
       const isSpecialKey = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'escape', 'enter', 'tab', 'backspace', 'delete', 'home', 'end', 'pageup', 'pagedown', ' '].includes(editableCustomShortcut.key.toLowerCase());
 
       if (!isFunctionKey && !isSpecialKey && !editableCustomShortcut.altKey && !editableCustomShortcut.ctrlKey && !editableCustomShortcut.metaKey && !editableCustomShortcut.shiftKey) {
-        showErrorNotification('Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.'); // Use toast
+        showErrorNotification('Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.');
         setIsSavingShortcut(false);
-        return;
+        return; 
       }
 
       await chrome.storage.sync.set({ [CUSTOM_POPUP_SIDEBAR_SHORTCUT]: editableCustomShortcut });
       setCustomPopupShortcut(editableCustomShortcut);
-      setIsEditingCustomShortcut(false);
-      showSuccessNotification('Sidebar toggle shortcut saved successfully!'); // Use toast
+      showSuccessNotification('Sidebar toggle shortcut saved successfully!');
+      setIsShortcutModalOpen(false); 
     } catch (error) {
       logger.settings.error('Error saving custom popup shortcut:', error);
-      showErrorNotification(`Error saving shortcut: ${error.message}`); // Use toast
+      showErrorNotification(`Error saving shortcut: ${error.message}`);
     } finally {
       setIsSavingShortcut(false);
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:gap-6 p-1">
-      {/* Left Column: Registered Extension Shortcuts */}
-      <div className="w-full md:w-1/2 mb-6 md:mb-0">
-        <SettingsCard>
-          <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Extension Shortcuts</h3>
-          <p className="text-sm text-theme-secondary mb-6">
-            These shortcuts are defined by the extension and can be managed on Chrome's extensions page. This extension registers the following global commands:
-          </p>
-          {isLoadingCommands ? (
-            <p className="text-theme-secondary py-3">Loading global shortcuts...</p>
-          ) : globalCommands.length > 0 ? (
-            <ul className="space-y-2 mb-6">
-              {globalCommands.map((command) => (
-                <li
-                  key={command.name}
-                  className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700"
-                >
-                  <span className="text-sm text-theme-primary">
-                    {command.name === '_execute_action'
-                      ? 'Open the WebNexus AI popup'
-                      : (command.description || command.name)}
-                  </span>
-                  <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
-                    {(command.shortcut || '').replace(/\+/g, ' + ') || 'Not set'}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-theme-secondary py-3 mb-6">No global commands found or API not available.</p>
-          )}
-          <Button onClick={handleOpenShortcutsPage} variant="secondary" size="md">
-            Manage in Chrome Settings
-          </Button>
-        </SettingsCard>
-      </div>
+    <>
+      <div className="flex flex-col md:flex-row md:gap-6 p-1">
+        {/* Left Column: Registered Extension Shortcuts */}
+        <div className="w-full md:w-1/2 mb-6 md:mb-0">
+          <SettingsCard>
+            <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Extension Shortcuts</h3>
+            <p className="text-sm text-theme-secondary mb-6">
+              These shortcuts are defined by the extension and can be managed on Chrome's extensions page. This extension registers the following global commands:
+            </p>
+            {isLoadingCommands ? (
+              <p className="text-theme-secondary py-3">Loading global shortcuts...</p>
+            ) : globalCommands.length > 0 ? (
+              <ul className="space-y-2 mb-6">
+                {globalCommands.map((command) => (
+                  <li 
+                    key={command.name} 
+                    className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700"
+                  >
+                    <span className="text-sm text-theme-primary">
+                      {command.name === '_execute_action' 
+                        ? 'Open the WebNexus AI popup' 
+                        : (command.description || command.name)}
+                    </span>
+                    <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
+                      {(command.shortcut || '').replace(/\+/g, ' + ') || 'Not set'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-theme-secondary py-3 mb-6">No global commands found or API not available.</p>
+            )}
+            <Button onClick={handleOpenShortcutsPage} variant="secondary" size="md">
+              Manage in Chrome Settings
+            </Button>
+          </SettingsCard>
+        </div>
 
-      {/* Right Column: Sidebar Toggle Shortcut */}
-      <div className="w-full md:w-1/2">
-        <SettingsCard>
-          <h3 className="text-base font-semibold text-theme-primary mb-2">Sidebar Toggle Shortcut</h3>
-          <p className="text-sm text-theme-secondary mb-6">
-            This shortcut is used within the extension's popup to open/close the sidebar, and from within the sidebar itself to close it. Default: {formatShortcutToStringDisplay(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG)}.
-          </p>
-
-          {!isEditingCustomShortcut ? (
-            <>
-              <div
-                className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700 mb-6" // Applied new background, padding and margin
-              >
-                <span className="text-sm text-theme-primary">Current Sidebar Toggle Key</span>
-                <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
-                  {formatShortcutToStringDisplay(customPopupShortcut)}
-                </span>
-              </div>
-              <Button onClick={handleStartEditCustomShortcut} variant="secondary" size="md">
-                Update Shortcut
-              </Button>
-            </>
-          ) : (
-            <div className="mb-3">
-              <div className="mb-4">
-                <ShortcutCaptureInput
-                  value={editableCustomShortcut}
-                  onChange={handleEditableShortcutChange}
-                  defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
-                />
-              </div>
-              <div className="flex gap-3">
-                <Button onClick={handleSaveCustomShortcut} isLoading={isSavingShortcut} loadingText="Saving..." size="md">
-                  Save
-                </Button>
-                <Button onClick={handleCancelEditCustomShortcut} variant="secondary" size="md" disabled={isSavingShortcut}>
-                  Cancel
-                </Button>
-              </div>
+        {/* Right Column: Sidebar Toggle Shortcut */}
+        <div className="w-full md:w-1/2">
+          <SettingsCard>
+            <h3 className="text-base font-semibold text-theme-primary mb-2">Sidebar Toggle Shortcut</h3>
+            <p className="text-sm text-theme-secondary mb-6">
+              This shortcut is used within the extension's popup to open/close the sidebar, and from within the sidebar itself to close it. Default: {formatShortcutToStringDisplay(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG)}.
+            </p>
+            
+            <div 
+              className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700 mb-6"
+            >
+              <span className="text-sm text-theme-primary">Current Sidebar Toggle Key</span>
+              <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
+                {formatShortcutToStringDisplay(customPopupShortcut)}
+              </span>
             </div>
-          )}
-        </SettingsCard>
+            <Button onClick={handleOpenShortcutModal} variant="secondary" size="md">
+              Update Shortcut
+            </Button>
+          </SettingsCard>
+        </div>
       </div>
-    </div>
+
+      <Modal 
+        isOpen={isShortcutModalOpen} 
+        onClose={handleCloseShortcutModal}
+        title="Update Sidebar Toggle Shortcut"
+        widthClass="max-w-sm" // Make modal smaller
+      >
+        <div className="mb-6"> 
+          <ShortcutCaptureInput
+            value={editableCustomShortcut}
+            onChange={handleEditableShortcutChange}
+            defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
+          />
+        </div>
+        <div className="flex justify-end gap-3">
+          <Button 
+            onClick={handleSaveCustomShortcut} 
+            isLoading={isSavingShortcut} 
+            loadingText="Saving..." 
+            size="md"
+          >
+            Save
+          </Button>
+          <Button 
+            onClick={handleCloseShortcutModal} 
+            variant="secondary" 
+            size="md" 
+            disabled={isSavingShortcut}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Modal>
+    </>
   );
 }
 

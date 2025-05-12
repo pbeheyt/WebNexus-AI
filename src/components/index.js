@@ -4,6 +4,7 @@ export { Button } from './core/Button';
 export { Toggle } from './core/Toggle';
 export { CustomSelect } from './core/CustomSelect';
 export { IconButton } from './core/IconButton';
+export { Modal } from './core/Modal'; // Added Modal export
 
 // Feedback components
 export { StatusMessage } from './feedback/StatusMessage';
@@ -49,7 +50,7 @@ export { ScrollDownIcon } from './icons/ScrollDownIcon';
 export { SpinnerIcon } from './icons/SpinnerIcon';
 export { NoCredentialsIcon } from './icons/NoCredentialsIcon';
 export { ErrorIcon } from './icons/ErrorIcon';
-export { KeyIcon } from './icons/KeyIcon'; // Add KeyIcon export
+export { KeyIcon } from './icons/KeyIcon';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';
