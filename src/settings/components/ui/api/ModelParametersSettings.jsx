@@ -67,7 +67,7 @@ const ModelParametersSettings = ({
 
   if (!derivedSettings || !isFormReady) {
     return (
-      <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-6'>
+      <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-4'>
         <p className='text-theme-secondary text-center py-10'>Loading model settings...</p>
       </div>
     );
@@ -81,7 +81,7 @@ const ModelParametersSettings = ({
 
   return (
     <>
-    <SettingsCard className="selector-section-container mb-6">
+    <SettingsCard className="selector-section-container mb-4">
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center">
           <h3 className='text-base font-semibold text-theme-primary select-none'>
@@ -187,7 +187,7 @@ const ModelParametersSettings = ({
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
 
         {parameterSpecs.maxTokens && (
-          <SettingsCard className='mb-6'>
+          <SettingsCard className='mb-4'>
             <div className='mb-2'>
               <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
                 Max Tokens
@@ -210,7 +210,7 @@ const ModelParametersSettings = ({
         )}
 
         {showTempSection && parameterSpecs.temperature && (
-          <SettingsCard className='mb-6'>
+          <SettingsCard className='mb-4'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
                 Temperature
@@ -244,7 +244,7 @@ const ModelParametersSettings = ({
         )}
 
         {showTopPSection && parameterSpecs.topP && (
-          <SettingsCard className='mb-6'>
+          <SettingsCard className='mb-4'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
                 Top P
@@ -283,7 +283,7 @@ const ModelParametersSettings = ({
         )}
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
-          <SettingsCard className='mb-6'>
+          <SettingsCard className='mb-4'>
             <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
               Thinking Budget
             </span>
@@ -304,7 +304,7 @@ const ModelParametersSettings = ({
         )}
 
         {showReasoningEffort && parameterSpecs.reasoningEffort && (
-          <SettingsCard className='mb-6'>
+          <SettingsCard className='mb-4'>
             <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
               Reasoning Effort
             </span>
@@ -325,7 +325,7 @@ const ModelParametersSettings = ({
         )}
 
         {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && (
-          <SettingsCard className='mb-6'>
+          <SettingsCard className='mb-4'>
             <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
               className='block mb-3 text-base font-semibold text-theme-primary select-none'

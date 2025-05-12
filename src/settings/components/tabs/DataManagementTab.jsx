@@ -180,7 +180,7 @@ const DataManagementTab = () => {
       <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium select-none'>
         Data Management
       </h2>
-      <p className='section-description text-sm text-theme-secondary mb-6 select-none'>
+      <p className='section-description text-sm text-theme-secondary mb-4 select-none'>
         Manage your extension settings. Select a data type, then choose an action.
       </p>
 
@@ -194,7 +194,7 @@ const DataManagementTab = () => {
       />
 
     <div className='w-fit'>
-      <SettingsCard className="selector-section-container mb-6">
+      <SettingsCard className="selector-section-container mb-4">
         <div className="flex items-center">
           <h3 className='text-base font-semibold text-theme-primary select-none'>
             Data Type Selection
@@ -213,13 +213,13 @@ const DataManagementTab = () => {
     </div>
 
       {/* Action Groups Container */}
-      <div className="space-y-6">
+      <div className="space-y-4">
 
         {/* Export Settings Group */}
         <SettingsCard>
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
             <div className="flex-grow">
-              <h3 className="text-base font-semibold text-theme-primary mb-1">Export Settings</h3>
+              <h3 className="text-base font-semibold text-theme-primary mb-2">Export Settings</h3>
               <p className="text-sm text-theme-secondary mb-3 md:mb-0">
                 Export the selected data type (<strong>{currentOptionObject.name}</strong>) to a JSON file. This file can be used later to import these settings.
               </p>
@@ -241,9 +241,9 @@ const DataManagementTab = () => {
 
         {/* Import Settings Group */}
         <SettingsCard>
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
             <div className="flex-grow">
-              <h3 className="text-base font-semibold text-theme-primary mb-1">Import Settings</h3>
+              <h3 className="text-base font-semibold text-theme-primary mb-2">Import Settings</h3>
               <p className="text-sm text-theme-secondary mb-3 md:mb-0">
                 Import settings from a JSON file for <strong>{currentOptionObject.name}</strong>. This will <strong className="font-semibold">overwrite existing settings</strong> for this data type. The page will reload after a successful import.
               </p>
@@ -265,9 +265,9 @@ const DataManagementTab = () => {
 
         {/* Reset Settings Group */}
         <SettingsCard>
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
             <div className="flex-grow">
-              <h3 className="text-base font-semibold text-theme-primary mb-1">Reset Settings</h3>
+              <h3 className="text-base font-semibold text-theme-primary mb-2">Reset Settings</h3>
               <p className="text-sm text-red-600 dark:text-red-400 mb-1"><strong className="font-semibold">Warning:</strong> This action cannot be undone.</p>
               <p className="text-sm text-theme-secondary mb-3 md:mb-0">
                 Reset settings for <strong>{currentOptionObject.name}</strong> to their original defaults. The page will reload automatically.
