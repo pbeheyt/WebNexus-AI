@@ -154,7 +154,7 @@ const PromptList = ({
               className={`prompt-item rounded-lg p-5 mb-4 cursor-pointer select-none transition-all border border-theme w-full text-left
                 ${
                   selectedPromptId === item.id
-                    ? ' bg-gray-100 dark:bg-gray-700 shadow-sm'
+                    ? ' bg-theme-hover shadow-sm'
                     : ' bg-white dark:bg-theme-surface'
                 }
               `}

@@ -24,7 +24,7 @@ const PlatformSidebar = ({
             key={platform.id}
             className={`platform-item flex items-center pl-3 pr-8 py-3 rounded-lg cursor-pointer select-none transition-colors relative border border-theme w-full text-left ${
               platform.id === selectedPlatformId
-                ? ' bg-gray-100 dark:bg-gray-700 shadow-sm'
+                ? ' bg-theme-hover shadow-sm'
                 : ' bg-white dark:bg-theme-surface'
             } ${credentials[platform.id] ? 'has-credentials' : ''}`}
             onClick={() => onSelectPlatform(platform.id)}

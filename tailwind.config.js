@@ -73,7 +73,7 @@ module.exports = {
         // Light theme (default)
         '.bg-theme-primary': { backgroundColor: '#F8F8F8' },
         '.bg-theme-surface': { backgroundColor: '#FFFFFF' },
-        '.bg-theme-hover': { backgroundColor: '#E6E6E6' },
+        '.bg-theme-hover': { backgroundColor: '#F3F4F6' },
         '.bg-theme-active': { backgroundColor: 'rgba(255, 123, 0, 0.05)' },
 
         '.text-theme-primary': { color: '#333333' },
@@ -87,7 +87,7 @@ module.exports = {
 
         '.dark .bg-theme-primary': { backgroundColor: '#1E1E1E' },
         '.dark .bg-theme-surface': { backgroundColor: '#2D2D2D' },
-        '.dark .bg-theme-hover': { backgroundColor: '#353535' },
+        '.dark .bg-theme-hover': { backgroundColor: '#4A4A4A' },
         '.dark .bg-theme-active': { backgroundColor: 'rgba(255, 123, 0, 0.1)' },
 
         '.dark .text-theme-primary': { color: '#FFFFFF' },

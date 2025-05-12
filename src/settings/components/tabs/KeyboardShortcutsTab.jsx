@@ -53,7 +53,7 @@ export function KeyboardShortcutsTab() {
     fetchCommands();
     loadCustomShortcut();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // showErrorNotification is stable
+  }, []); 
 
   const handleOpenShortcutsPage = () => {
     chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
@@ -74,7 +74,7 @@ export function KeyboardShortcutsTab() {
     setIsShortcutModalOpen(false);
     setEditableCustomShortcut(customPopupShortcut); 
     setShortcutModalError(''); 
-    clearNotification();
+    clearNotification(); 
   };
 
   const handleSaveCustomShortcut = async () => {
@@ -82,7 +82,6 @@ export function KeyboardShortcutsTab() {
     setShortcutModalError(''); 
     
     try {
-      // --- Client-side Validation First ---
       if (!editableCustomShortcut || !editableCustomShortcut.key || editableCustomShortcut.key.trim() === '') {
         setShortcutModalError('Invalid shortcut: Key cannot be empty.');
         setIsSavingShortcut(false);
@@ -98,8 +97,7 @@ export function KeyboardShortcutsTab() {
         return; 
       }
 
-      // --- If validation passes, show "Saving..." and proceed ---
-      showInfoNotification('Saving shortcut...');
+      showInfoNotification('Saving shortcut...'); 
 
       await chrome.storage.sync.set({ [CUSTOM_POPUP_SIDEBAR_SHORTCUT]: editableCustomShortcut });
       setCustomPopupShortcut(editableCustomShortcut);
@@ -130,7 +128,7 @@ export function KeyboardShortcutsTab() {
                 {globalCommands.map((command) => (
                   <li 
                     key={command.name} 
-                    className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700"
+                    className="flex justify-between items-center py-3 px-3 rounded-md bg-theme-hover"
                   >
                     <span className="text-sm text-theme-primary">
                       {command.name === '_execute_action' 
@@ -161,7 +159,7 @@ export function KeyboardShortcutsTab() {
             </p>
             
             <div 
-              className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700 mb-6"
+              className="flex justify-between items-center py-3 px-3 rounded-md bg-theme-hover mb-6"
             >
               <span className="text-sm text-theme-primary">Current Sidebar Toggle Key</span>
               <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
@@ -179,35 +177,41 @@ export function KeyboardShortcutsTab() {
         isOpen={isShortcutModalOpen} 
         onClose={handleCloseShortcutModal}
         title="Update Sidebar Toggle Shortcut"
-        widthClass="max-w-sm" 
+        widthClass="max-w-sm"
       >
-        <div className="mb-6"> 
-          <ShortcutCaptureInput
-            value={editableCustomShortcut}
-            onChange={handleEditableShortcutChange}
-            defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
-          />
-        </div>
-        {shortcutModalError && (
-          <p className="text-sm text-error -mt-2 mb-4 text-center">{shortcutModalError}</p>
-        )}
-        <div className="flex justify-end gap-3">
-          <Button 
-            onClick={handleSaveCustomShortcut} 
-            isLoading={isSavingShortcut} 
-            loadingText="Saving..." 
-            size="md"
-          >
-            Save
-          </Button>
-          <Button 
-            onClick={handleCloseShortcutModal} 
-            variant="secondary" 
-            size="md" 
-            disabled={isSavingShortcut}
-          >
-            Cancel
-          </Button>
+        <div>
+          <div className="flex items-center gap-10">
+            <div className="w-40">
+              <ShortcutCaptureInput
+                value={editableCustomShortcut}
+                onChange={handleEditableShortcutChange}
+                defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
+              />
+            </div>
+            <div className="flex-shrink-0 flex gap-2"> 
+              <Button 
+                onClick={handleSaveCustomShortcut} 
+                isLoading={isSavingShortcut} 
+                loadingText="Saving..." 
+                size="md"
+                className="px-5" 
+              >
+                Save
+              </Button>
+              <Button 
+                onClick={handleCloseShortcutModal} 
+                variant="secondary" 
+                size="md" 
+                disabled={isSavingShortcut}
+                className="px-5" 
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+          {shortcutModalError && (
+            <p className="text-sm text-error text-center mb-1">{shortcutModalError}</p> 
+          )}
         </div>
       </Modal>
     </>

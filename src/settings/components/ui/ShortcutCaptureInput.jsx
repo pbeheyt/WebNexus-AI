@@ -33,7 +33,7 @@ export function ShortcutCaptureInput({ value, onChange, defaultShortcut }) {
 
   const handleFocus = () => {
     setIsCapturing(true);
-    setInputValue('Press desired keys...');
+    setInputValue('Press keys...');
   };
 
   const handleBlur = () => {
@@ -64,7 +64,7 @@ export function ShortcutCaptureInput({ value, onChange, defaultShortcut }) {
     if (!ALLOWED_NON_MODIFIER_KEYS_REGEX.test(pressedKey) && !FUNCTION_KEYS_REGEX.test(pressedKey) && pressedKey !== ' ') {
       setInputValue('Invalid key. Use A-Z, 0-9, F1-F12, Space with modifiers.');
       setTimeout(() => {
-        if (isCapturing) setInputValue('Press desired keys...');
+        if (isCapturing) setInputValue('Press keys...');
       }, 1500);
       return;
     }
@@ -92,7 +92,7 @@ export function ShortcutCaptureInput({ value, onChange, defaultShortcut }) {
       onKeyDown={handleKeyDown}
       readOnly
       placeholder="Click to set shortcut"
-      className="w-full px-3 py-2 border border-theme rounded-md shadow-sm bg-theme-surface text-theme-primary focus:ring-primary focus:border-primary sm:text-sm"
+      className="w-full px-3 py-2 border border-theme rounded-md bg-theme-hover text-theme-primary focus:ring-primary focus:border-primary sm:text-sm"
     />
   );
 }

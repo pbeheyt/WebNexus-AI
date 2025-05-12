@@ -65,7 +65,7 @@ export function Modal({ isOpen, onClose, title, children, widthClass = 'max-w-md
         // Removed onClick stopPropagation as backdrop click logic is now more precise
       >
         {/* Modal Header */}
-        <div className="flex justify-between items-center pb-3 mb-4 border-b border-theme">
+        <div className="flex justify-between items-center pb-3 mb-6 border-b border-theme">
           {title && (
             <h2 id="modal-title" className="text-lg font-semibold text-theme-primary">
               {title}
