@@ -116,15 +116,19 @@ export function KeyboardShortcutsTab() {
           {isLoadingCommands ? (
             <p className="text-theme-secondary py-3">Loading global shortcuts...</p>
           ) : globalCommands.length > 0 ? (
-            <ul className="space-y-2 mb-6"> {/* Added space-y-2 for spacing between items */}
+            <ul className="space-y-2 mb-6">
               {globalCommands.map((command) => (
                 <li
                   key={command.name}
-                  className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700" // Applied new background and padding
+                  className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700"
                 >
-                  <span className="text-sm text-theme-primary">{command.description || command.name}</span>
+                  <span className="text-sm text-theme-primary">
+                    {command.name === '_execute_action'
+                      ? 'Open the WebNexus AI popup'
+                      : (command.description || command.name)}
+                  </span>
                   <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
-                    {command.shortcut || 'Not set'}
+                    {(command.shortcut || '').replace(/\+/g, ' + ') || 'Not set'}
                   </span>
                 </li>
               ))}
@@ -179,7 +183,6 @@ export function KeyboardShortcutsTab() {
               </div>
             </div>
           )}
-          {/* Local status message display is removed as Toast will be used */}
         </SettingsCard>
       </div>
     </div>
