@@ -71,7 +71,7 @@ module.exports = {
       // Define theme-aware utility classes
       const themeUtilities = {
         // Light theme (default)
-        '.bg-theme-primary': { backgroundColor: '#F8F8F8' },
+        '.bg-theme-primary': { backgroundColor: '#FCFDFD' },
         '.bg-theme-surface': { backgroundColor: '#FFFFFF' },
         '.bg-theme-hover': { backgroundColor: '#F3F4F6' },
         '.bg-theme-active': { backgroundColor: 'rgba(255, 123, 0, 0.05)' },

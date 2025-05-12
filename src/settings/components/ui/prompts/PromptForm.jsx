@@ -295,7 +295,7 @@ const PromptForm = ({
           type='text'
           id='name'
           name='name'
-          className='w-full p-2.5 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md focus-primary'
+          className='w-full p-2.5 bg-theme-hover text-sm text-theme-primary border border-theme rounded-md focus-primary'
           placeholder='Give your prompt a descriptive name'
           value={formData.name}
           onChange={handleChange}
@@ -314,7 +314,7 @@ const PromptForm = ({
         <textarea
           id='content'
           name='content'
-          className='w-full p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md focus-primary break-words h-[300px] overflow-y-auto'
+          className='w-full p-3 bg-theme-hover text-sm text-theme-primary border border-theme rounded-md focus-primary break-words h-[300px] overflow-y-auto'
           placeholder='Enter your prompt content here...'
           value={formData.content}
           onChange={handleChange}
