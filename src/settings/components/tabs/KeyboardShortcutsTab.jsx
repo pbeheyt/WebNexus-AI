@@ -128,14 +128,14 @@ export function KeyboardShortcutsTab() {
                 {globalCommands.map((command) => (
                   <li 
                     key={command.name} 
-                    className="flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover"
+                    className="flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover border border-theme"
                   >
                     <span className="text-sm text-theme-primary">
                       {command.name === '_execute_action' 
                         ? 'Open the Extension Popup' 
                         : (command.description || command.name)}
                     </span>
-                    <span className="font-mono text-sm bg-theme-surface ml-10 p-2 rounded text-theme-secondary">
+                    <span className="font-mono text-sm bg-theme-surface ml-10 px-2 py-1 rounded text-theme-secondary">
                       {(command.shortcut || '').replace(/\+/g, ' + ') || 'Not set'}
                     </span>
                   </li>
@@ -159,10 +159,10 @@ export function KeyboardShortcutsTab() {
             </p>
             
             <div 
-              className="flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover mb-4"
+              className="flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover mb-4 border border-theme"
             >
               <span className="text-sm text-theme-primary">Toggle the Side Panel</span>
-              <span className="font-mono text-sm bg-theme-surface ml-10 p-2 rounded text-theme-secondary">
+              <span className="font-mono text-sm bg-theme-surface ml-10 px-2 py-1 rounded text-theme-secondary">
                 {formatShortcutToStringDisplay(customPopupShortcut)}
               </span>
             </div>
