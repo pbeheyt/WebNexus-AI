@@ -1,7 +1,7 @@
 // src/settings/components/tabs/KeyboardShortcutsTab.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 
-import { Button } from '../../../components';
+import { Button, useNotification } from '../../../components'; // Added useNotification
 import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
 import { CUSTOM_POPUP_SIDEBAR_SHORTCUT, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../../../shared/constants';
@@ -15,14 +15,9 @@ export function KeyboardShortcutsTab() {
   const [isEditingCustomShortcut, setIsEditingCustomShortcut] = useState(false);
   const [isLoadingCommands, setIsLoadingCommands] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
-  const [statusMessage, setStatusMessageState] = useState({ text: '', type: 'info' });
 
-  const setFeedback = (text, type = 'info', duration = 3000) => {
-    setStatusMessageState({ text, type });
-    if (duration > 0) {
-      setTimeout(() => setStatusMessageState({ text: '', type: 'info' }), duration);
-    }
-  };
+  // Initialize useNotification
+  const { success: showSuccessNotification, error: showErrorNotification, info: showInfoNotification } = useNotification();
 
   useEffect(() => {
     const fetchCommands = async () => {
@@ -37,7 +32,7 @@ export function KeyboardShortcutsTab() {
         }
       } catch (error) {
         logger.settings.error('Error fetching global commands:', error);
-        setFeedback('Error fetching global commands.', 'error');
+        showErrorNotification('Error fetching global commands.'); // Use toast
       } finally {
         setIsLoadingCommands(false);
       }
@@ -48,16 +43,17 @@ export function KeyboardShortcutsTab() {
         const result = await chrome.storage.sync.get([CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
         const loadedShortcut = result[CUSTOM_POPUP_SIDEBAR_SHORTCUT] || DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG;
         setCustomPopupShortcut(loadedShortcut);
-        setEditableCustomShortcut(loadedShortcut); // Initialize editable state
+        setEditableCustomShortcut(loadedShortcut);
       } catch (error) {
         logger.settings.error('Error loading custom popup shortcut:', error);
-        setFeedback('Error loading custom shortcut.', 'error');
+        showErrorNotification('Error loading custom shortcut.'); // Use toast
       }
     };
 
     fetchCommands();
     loadCustomShortcut();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // showErrorNotification is stable from useNotification
 
   const handleOpenShortcutsPage = () => {
     chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
@@ -68,41 +64,41 @@ export function KeyboardShortcutsTab() {
   }, []);
 
   const handleStartEditCustomShortcut = () => {
-    setEditableCustomShortcut(customPopupShortcut); // Ensure editable starts with current saved value
+    setEditableCustomShortcut(customPopupShortcut);
     setIsEditingCustomShortcut(true);
   };
 
   const handleCancelEditCustomShortcut = () => {
     setIsEditingCustomShortcut(false);
-    setEditableCustomShortcut(customPopupShortcut); // Reset to saved value
+    setEditableCustomShortcut(customPopupShortcut);
   };
 
   const handleSaveCustomShortcut = async () => {
     setIsSavingShortcut(true);
-    setFeedback('Saving...', 'info', 0);
+    showInfoNotification('Saving...', 2000); // Use toast
     try {
       if (!editableCustomShortcut || !editableCustomShortcut.key || editableCustomShortcut.key.trim() === '') {
-        setFeedback('Invalid shortcut: Key cannot be empty.', 'error');
+        showErrorNotification('Invalid shortcut: Key cannot be empty.'); // Use toast
         setIsSavingShortcut(false);
         return;
       }
-      
+
       const isFunctionKey = editableCustomShortcut.key.toLowerCase().startsWith('f') && !isNaN(parseInt(editableCustomShortcut.key.substring(1), 10));
       const isSpecialKey = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'escape', 'enter', 'tab', 'backspace', 'delete', 'home', 'end', 'pageup', 'pagedown', ' '].includes(editableCustomShortcut.key.toLowerCase());
 
       if (!isFunctionKey && !isSpecialKey && !editableCustomShortcut.altKey && !editableCustomShortcut.ctrlKey && !editableCustomShortcut.metaKey && !editableCustomShortcut.shiftKey) {
-        setFeedback('Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.', 'error');
+        showErrorNotification('Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.'); // Use toast
         setIsSavingShortcut(false);
         return;
       }
 
       await chrome.storage.sync.set({ [CUSTOM_POPUP_SIDEBAR_SHORTCUT]: editableCustomShortcut });
-      setCustomPopupShortcut(editableCustomShortcut); // Update the main display state
-      setIsEditingCustomShortcut(false); // Exit editing mode
-      setFeedback('Sidebar toggle shortcut saved successfully!', 'success');
+      setCustomPopupShortcut(editableCustomShortcut);
+      setIsEditingCustomShortcut(false);
+      showSuccessNotification('Sidebar toggle shortcut saved successfully!'); // Use toast
     } catch (error) {
       logger.settings.error('Error saving custom popup shortcut:', error);
-      setFeedback(`Error saving shortcut: ${error.message}`, 'error');
+      showErrorNotification(`Error saving shortcut: ${error.message}`); // Use toast
     } finally {
       setIsSavingShortcut(false);
     }
@@ -120,9 +116,12 @@ export function KeyboardShortcutsTab() {
           {isLoadingCommands ? (
             <p className="text-theme-secondary py-3">Loading global shortcuts...</p>
           ) : globalCommands.length > 0 ? (
-            <ul className="space-y-0 mb-6">
+            <ul className="space-y-2 mb-6"> {/* Added space-y-2 for spacing between items */}
               {globalCommands.map((command) => (
-                <li key={command.name} className="flex justify-between items-center py-3 border-b border-theme last:border-b-0">
+                <li
+                  key={command.name}
+                  className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700" // Applied new background and padding
+                >
                   <span className="text-sm text-theme-primary">{command.description || command.name}</span>
                   <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
                     {command.shortcut || 'Not set'}
@@ -146,10 +145,12 @@ export function KeyboardShortcutsTab() {
           <p className="text-sm text-theme-secondary mb-6">
             This shortcut is used within the extension's popup to open/close the sidebar, and from within the sidebar itself to close it. Default: {formatShortcutToStringDisplay(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG)}.
           </p>
-          
+
           {!isEditingCustomShortcut ? (
             <>
-              <div className="flex justify-between items-center py-3 border-b border-theme mb-6">
+              <div
+                className="flex justify-between items-center py-3 px-3 rounded-md bg-gray-100 dark:bg-gray-700 mb-6" // Applied new background, padding and margin
+              >
                 <span className="text-sm text-theme-primary">Current Sidebar Toggle Key</span>
                 <span className="font-mono text-xs bg-theme-hover px-2 py-1 rounded text-theme-secondary">
                   {formatShortcutToStringDisplay(customPopupShortcut)}
@@ -178,11 +179,7 @@ export function KeyboardShortcutsTab() {
               </div>
             </div>
           )}
-          {statusMessage.text && (
-             <div className={`mt-4 text-sm ${statusMessage.type === 'error' ? 'text-error' : statusMessage.type === 'success' ? 'text-success' : 'text-theme-secondary'}`}>
-              {statusMessage.text}
-            </div>
-          )}
+          {/* Local status message display is removed as Toast will be used */}
         </SettingsCard>
       </div>
     </div>
