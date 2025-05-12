@@ -15,8 +15,9 @@ export function KeyboardShortcutsTab() {
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
   const [isLoadingCommands, setIsLoadingCommands] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
+  const [shortcutModalError, setShortcutModalError] = useState('');
   
-  const { success: showSuccessNotification, error: showErrorNotification, info: showInfoNotification } = useNotification();
+  const { success: showSuccessNotification, error: showErrorNotification, info: showInfoNotification, clearNotification } = useNotification();
 
   useEffect(() => {
     const fetchCommands = async () => {
@@ -52,7 +53,7 @@ export function KeyboardShortcutsTab() {
     fetchCommands();
     loadCustomShortcut();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // showErrorNotification is stable
 
   const handleOpenShortcutsPage = () => {
     chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
@@ -60,24 +61,30 @@ export function KeyboardShortcutsTab() {
 
   const handleEditableShortcutChange = useCallback((newShortcut) => {
     setEditableCustomShortcut(newShortcut);
+    setShortcutModalError(''); 
   }, []);
 
   const handleOpenShortcutModal = () => {
     setEditableCustomShortcut(customPopupShortcut); 
+    setShortcutModalError(''); 
     setIsShortcutModalOpen(true);
   };
 
   const handleCloseShortcutModal = () => {
     setIsShortcutModalOpen(false);
     setEditableCustomShortcut(customPopupShortcut); 
+    setShortcutModalError(''); 
+    clearNotification();
   };
 
   const handleSaveCustomShortcut = async () => {
     setIsSavingShortcut(true);
-    showInfoNotification('Saving shortcut...', 2000);
+    setShortcutModalError(''); 
+    
     try {
+      // --- Client-side Validation First ---
       if (!editableCustomShortcut || !editableCustomShortcut.key || editableCustomShortcut.key.trim() === '') {
-        showErrorNotification('Invalid shortcut: Key cannot be empty.');
+        setShortcutModalError('Invalid shortcut: Key cannot be empty.');
         setIsSavingShortcut(false);
         return; 
       }
@@ -86,10 +93,13 @@ export function KeyboardShortcutsTab() {
       const isSpecialKey = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'escape', 'enter', 'tab', 'backspace', 'delete', 'home', 'end', 'pageup', 'pagedown', ' '].includes(editableCustomShortcut.key.toLowerCase());
 
       if (!isFunctionKey && !isSpecialKey && !editableCustomShortcut.altKey && !editableCustomShortcut.ctrlKey && !editableCustomShortcut.metaKey && !editableCustomShortcut.shiftKey) {
-        showErrorNotification('Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.');
+        setShortcutModalError('Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.');
         setIsSavingShortcut(false);
         return; 
       }
+
+      // --- If validation passes, show "Saving..." and proceed ---
+      showInfoNotification('Saving shortcut...');
 
       await chrome.storage.sync.set({ [CUSTOM_POPUP_SIDEBAR_SHORTCUT]: editableCustomShortcut });
       setCustomPopupShortcut(editableCustomShortcut);
@@ -169,7 +179,7 @@ export function KeyboardShortcutsTab() {
         isOpen={isShortcutModalOpen} 
         onClose={handleCloseShortcutModal}
         title="Update Sidebar Toggle Shortcut"
-        widthClass="max-w-sm" // Make modal smaller
+        widthClass="max-w-sm" 
       >
         <div className="mb-6"> 
           <ShortcutCaptureInput
@@ -178,6 +188,9 @@ export function KeyboardShortcutsTab() {
             defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
           />
         </div>
+        {shortcutModalError && (
+          <p className="text-sm text-error -mt-2 mb-4 text-center">{shortcutModalError}</p>
+        )}
         <div className="flex justify-end gap-3">
           <Button 
             onClick={handleSaveCustomShortcut} 
