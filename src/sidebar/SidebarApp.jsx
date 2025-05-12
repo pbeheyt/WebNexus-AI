@@ -30,7 +30,6 @@ export default function SidebarApp() {
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
-  const sidebarAppRef = useRef(null);
 
   // Use the custom hook for shortcut handling
   const handleCloseShortcut = useCallback(async () => {
@@ -108,14 +107,6 @@ export default function SidebarApp() {
     return () => clearTimeout(timer);
   }, [setTabId]);
 
-  // --- Effect for Auto-Focusing Side Panel ---
-  useEffect(() => {
-    if (isReady && tabId && sidebarAppRef.current) {
-      logger.sidebar.info(`Sidebar is ready for tab ${tabId}. Attempting to focus.`);
-      sidebarAppRef.current.focus();
-    }
-  }, [isReady, tabId]);
-
   // --- Effect for Page Navigation Listener ---
   useEffect(() => {
     if (!isReady || !tabId) {
@@ -181,7 +172,7 @@ export default function SidebarApp() {
 
     if (!(chrome && chrome.runtime && chrome.runtime.connect)) {
       logger.sidebar.warn(
-        '[SidebarApp] Chrome runtime connect API not available.'
+        'Chrome runtime connect API not available.'
       );
       return;
     }
@@ -191,10 +182,10 @@ export default function SidebarApp() {
       portRef.current = chrome.runtime.connect({ name: portName });
 
       portRef.current.onDisconnect.addListener(() => {
-        logger.sidebar.info(`[SidebarApp] Port disconnected for tab ${tabId}.`);
+        logger.sidebar.info(`Port disconnected for tab ${tabId}.`);
         if (chrome.runtime.lastError) {
           logger.sidebar.error(
-            `[SidebarApp] Disconnect error for tab ${tabId}:`,
+            `Disconnect error for tab ${tabId}:`,
             chrome.runtime.lastError.message
           );
         }
@@ -202,7 +193,7 @@ export default function SidebarApp() {
       });
     } catch (error) {
       logger.sidebar.error(
-        `[SidebarApp] Error connecting to background for tab ${tabId}:`,
+        `Error connecting to background for tab ${tabId}:`,
         error
       );
       portRef.current = null;
@@ -263,9 +254,7 @@ export default function SidebarApp() {
   // --- Render Logic ---
   return (
     <div
-      ref={sidebarAppRef}
-      tabIndex="-1"
-      className={`flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary ${textSize ? `text-${textSize}` : 'text-sm'} focus:outline-none`}
+      className={`flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary ${textSize ? `text-${textSize}` : 'text-sm'}`}
     >
       {!isReady ? (
         <div
