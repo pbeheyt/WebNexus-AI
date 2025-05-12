@@ -6,6 +6,7 @@ const TABS = {
   PROMPT_MANAGEMENT: 'prompt-management',
   API_SETTINGS: 'api-settings',
   DATA_MANAGEMENT: 'data-management', // Added new tab
+  KEYBOARD_SHORTCUTS: 'keyboard-shortcuts', // <<< ADD THIS LINE
 };
 
 const TabContext = createContext(null);
