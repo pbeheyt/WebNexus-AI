@@ -18,11 +18,10 @@ const PlatformSidebar = ({
 
       <ul className='platform-list space-y-2'>
         {platforms.map((platform) => (
-          // Changed from li to button
           <button
             type='button'
             key={platform.id}
-            className={`platform-item flex items-center pl-3 pr-8 py-3 rounded-lg cursor-pointer select-none transition-colors relative border border-theme w-full text-left ${
+            className={`platform-item flex items-center pl-3 pr-8 py-3 shadow-sm rounded-lg cursor-pointer select-none transition-colors relative border border-theme w-full text-left ${
               platform.id === selectedPlatformId
                 ? ' bg-theme-hover shadow-sm'
                 : ' bg-white dark:bg-theme-surface'

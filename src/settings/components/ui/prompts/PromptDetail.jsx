@@ -140,7 +140,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
   const anyActionLoading = shouldShowDeleting || shouldShowSettingDefault;
 
   return (
-    <div className='prompt-detail bg-theme-surface rounded-lg p-5 border border-theme'>
+    <div className='prompt-detail bg-theme-surface shadow-sm rounded-lg p-5 border border-theme'>
       <div className='prompt-detail-header flex items-center justify-between mb-4 pb-3 border-b border-theme'>
         <div className='flex items-center min-w-0'>
           <h3 className='prompt-detail-title text-base font-semibold text-theme-primary select-none truncate'>

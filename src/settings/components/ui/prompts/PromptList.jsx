@@ -147,11 +147,10 @@ const PromptList = ({
       ) : (
         <div className='prompt-list max-h-[550px] overflow-y-auto pr-3'>
           {filteredPrompts.map((item) => (
-            // Changed from div to button
             <button
               type='button'
               key={item.id}
-              className={`prompt-item rounded-lg p-5 mb-4 cursor-pointer select-none transition-all border border-theme w-full text-left
+              className={`prompt-item rounded-lg p-5 mb-4 shadow-sm cursor-pointer select-none transition-all border border-theme w-full text-left
                 ${
                   selectedPromptId === item.id
                     ? ' bg-theme-hover shadow-sm'

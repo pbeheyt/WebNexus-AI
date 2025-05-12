@@ -254,7 +254,7 @@ const PromptForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className='add-prompt-form bg-theme-surface rounded-lg p-6 border border-theme'
+      className='add-prompt-form bg-theme-surface shadow-sm rounded-lg p-6 border border-theme'
       noValidate
     >
       <div className='flex items-center mb-5 pb-3 border-b border-theme'>

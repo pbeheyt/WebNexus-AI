@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
  * @param {Object} [props.otherProps] - Any other props to spread onto the root element.
  */
 export function SettingsCard({ children, className = '', as: Component = 'div', ...otherProps }) {
-  const baseClasses = 'bg-theme-surface p-5 rounded-lg border border-theme';
+  const baseClasses = 'bg-theme-surface p-5 rounded-lg border border-theme shadow-sm';
 
   const combinedClasses = [baseClasses, className].join(' ').trim();
 
