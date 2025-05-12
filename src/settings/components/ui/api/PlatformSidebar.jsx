@@ -16,7 +16,7 @@ const PlatformSidebar = ({
         AI Platforms
       </h3>
 
-      <ul className='platform-list space-y-2'>
+      <ul className='platform-list space-y-3'>
         {platforms.map((platform) => (
           <button
             type='button'
