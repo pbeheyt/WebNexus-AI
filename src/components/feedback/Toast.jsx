@@ -81,7 +81,7 @@ export function Toast({
 
   return (
     <div
-      className={`fixed p-3 bg-theme-surface border-l-4 ${typeClasses[notification?.type || type]} ${positionClasses[position]} rounded shadow-medium transform transition-all duration-300 z-50 inline-block max-w-md ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}
+      className={`fixed p-3 bg-theme-surface  shadow-md border-l-4 ${typeClasses[notification?.type || type]} ${positionClasses[position]} rounded shadow-medium transform transition-all duration-300 z-50 inline-block max-w-md ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}
     >
       <div className='flex justify-between items-center'>
         <div>{notification?.message || message}</div>
