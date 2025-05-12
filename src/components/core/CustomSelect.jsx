@@ -73,7 +73,7 @@ export function CustomSelect({
         type='button'
         onClick={handleTriggerClick}
         disabled={disabled}
-        className={`flex items-center justify-between text-left px-3 py-1.5 h-9 bg-gray-50 dark:bg-gray-700 text-theme-primary border border-theme rounded-md text-sm transition-colors focus-primary ${buttonClassName} ${
+        className={`flex items-center justify-between text-left px-3 py-1.5 h-9 bg-theme-hover text-theme-primary border border-theme rounded-md text-sm transition-colors focus-primary ${buttonClassName} ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-theme-hover'
         }`}
         aria-haspopup='listbox'
