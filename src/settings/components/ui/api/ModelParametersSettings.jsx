@@ -16,11 +16,11 @@ import { useModelParametersSettings } from '../../../hooks/useModelParametersSet
 
 const ModelParametersSettings = ({
   platform,
-  selectedModelId, 
-  modelParametersSettings, 
-  onModelSelect, 
-  onSettingsUpdate, 
-  onResetToDefaults, 
+  selectedModelId,
+  modelParametersSettings,
+  onModelSelect,
+  onSettingsUpdate,
+  onResetToDefaults,
 }) => {
   const { error: showNotificationErrorHook } = useNotification();
 
@@ -103,7 +103,7 @@ const ModelParametersSettings = ({
             </div>
           </div>
         </div>
-        <div className="ml-auto pl-2">
+        <div className="ml-auto pl-2 flex items-center">
           <IconButton
             icon={RefreshIcon}
             iconClassName={`w-5 h-5 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
@@ -114,10 +114,19 @@ const ModelParametersSettings = ({
             ariaLabel='Reset model parameters to defaults'
             title='Reset model parameters to configuration defaults'
           />
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            isLoading={isSaving}
+            disabled={isSaving || isResetting || !hasChanges}
+            variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
+            className='px-5 py-2 select-none ml-5'
+          >
+            {isSaving ? 'Saving...' : 'Save Settings'}
+          </Button>
         </div>
       </div>
 
-      {/* Original children of SelectorSection now direct children of SettingsCard */}
       {showThinkingModeToggle && (
         <div className="mt-4">
           <div className='flex items-center gap-3'>
@@ -174,6 +183,7 @@ const ModelParametersSettings = ({
       </div>
     </SettingsCard>
 
+      {/* The form still wraps all the actual input fields */}
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
 
         {parameterSpecs.maxTokens && (
@@ -337,18 +347,6 @@ const ModelParametersSettings = ({
             />
         </SettingsCard>
         )}
-
-        <div className='form-actions flex justify-end'>
-          <Button
-            type='submit'
-            isLoading={isSaving}
-            disabled={isSaving || isResetting || !hasChanges}
-            variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
-            className='px-5 py-2 select-none'
-          >
-            {isSaving ? 'Saving...' : 'Save Settings'}
-          </Button>
-        </div>
       </form>
     </>
   );
