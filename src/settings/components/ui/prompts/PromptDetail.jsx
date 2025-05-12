@@ -69,7 +69,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       onDelete();
     } catch (err) {
       logger.settings.error('Error deleting prompt:', err);
-      error(`Error deleting prompt: ${err.message}`, 10000);
+      error(`Error deleting prompt: ${err.message}`);
     } finally {
       setIsDeletingActual(false);
     }

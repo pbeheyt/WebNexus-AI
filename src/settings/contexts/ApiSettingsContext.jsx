@@ -180,7 +180,7 @@ export const ApiSettingsProvider = ({ children }) => {
         logger.settings.error('Error saving model parameters in context:', err);
         const lastError = chrome.runtime.lastError;
         if (lastError?.message?.includes('QUOTA_BYTES')) {
-          showErrorNotification('Sync storage limit reached for model parameters.', 10000);
+          showErrorNotification('Sync storage limit reached for model parameters.');
         } else {
           showErrorNotification(`Failed to save model parameters: ${err.message}`);
         }

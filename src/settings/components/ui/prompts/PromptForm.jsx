@@ -231,14 +231,14 @@ const PromptForm = ({
         logger.settings.error('Error saving prompt:', err);
         const lastError = chrome.runtime.lastError;
         if (lastError?.message?.includes('QUOTA_BYTES')) {
-          error('Local storage limit reached. Please remove some prompts.', 10000);
+          error('Local storage limit reached. Please remove some prompts.');
         } else {
-          error(`Error saving prompt: ${err.message}`, 10000);
+          error(`Error saving prompt: ${err.message}`);
         }
       }
     } catch (err) {
       logger.settings.error('Error saving prompt:', err);
-      error(`Error saving prompt: ${err.message}`, 10000);
+      error(`Error saving prompt: ${err.message}`);
     } finally {
       setIsSavingActual(false);
     }
