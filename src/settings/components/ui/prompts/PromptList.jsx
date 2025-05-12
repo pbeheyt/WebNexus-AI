@@ -160,11 +160,11 @@ const PromptList = ({
               onClick={() => onSelectPrompt(item)}
             >
               <div className='prompt-header flex justify-between items-center mb-3'>
-                <h3 className='prompt-title font-medium text-base truncate text-gray-800 dark:text-gray-100 select-none'>
+                <h3 className='prompt-title font-medium text-base truncate text-theme-primary select-none'>
                   {item.prompt.name}
                 </h3>
               </div>
-              <small className='flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs select-none min-h-5'>
+              <small className='flex items-center justify-between text-theme-secondary text-xs select-none min-h-6'>
                 <div className='inline-flex items-center gap-2 select-none'>
                   <ContentTypeIcon
                     contentType={item.contentType}

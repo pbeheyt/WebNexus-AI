@@ -180,7 +180,7 @@ const DataManagementTab = () => {
       <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium select-none'>
         Data Management
       </h2>
-      <p className='section-description text-sm text-theme-secondary mb-4 select-none'>
+      <p className='section-description text-sm text-theme-secondary mb-6 select-none'>
         Manage your extension settings. Select a data type, then choose an action.
       </p>
 
