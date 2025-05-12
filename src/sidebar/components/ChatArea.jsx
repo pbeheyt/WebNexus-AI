@@ -795,15 +795,15 @@ const checkScrollPosition = useCallback(() => {
       <button
         onClick={() => scrollToBottom('smooth')}
         className={`
-          absolute bottom-1 left-1/2 transform -translate-x-1/2 z-10
-          p-1.5 rounded-full
-          text-theme-primary dark:text-theme-primary-dark 
+          absolute bottom-0.5 left-1/2 transform -translate-x-1/2 z-10
+          p-1 rounded-full
+          text-theme-primary dark:text-theme-primary-dark
           transition-opacity duration-300 ease-in-out
           ${showScrollDownButton
-            ? 'opacity-100 bg-theme-primary/50 hover:bg-gray-300/50 dark:theme-primary/50 dark:hover:bg-gray-700/50'
+            ? 'opacity-100 bg-theme-primary/50'
             : 'opacity-0 pointer-events-none'
           }
-      `}
+        `}
         aria-label='Scroll to bottom'
         title='Scroll to bottom'
         aria-hidden={!showScrollDownButton}
