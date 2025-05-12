@@ -22,7 +22,7 @@ export const NotificationProvider = ({ children }) => {
   }, [timeoutId]);
 
   const showNotification = useCallback(
-    (message, type = 'info', duration = 3000) => {
+    (message, type = 'info', duration = 5000) => {
       // Clear any existing notification
       if (timeoutId) {
         clearTimeout(timeoutId);
@@ -43,7 +43,7 @@ export const NotificationProvider = ({ children }) => {
   );
 
   const success = useCallback(
-    (message, duration = 3000) => {
+    (message, duration = 5000) => {
       showNotification(message, 'success', duration);
     },
     [showNotification]
@@ -57,14 +57,14 @@ export const NotificationProvider = ({ children }) => {
   );
 
   const warning = useCallback(
-    (message, duration = 3000) => {
+    (message, duration = 5000) => {
       showNotification(message, 'warning', duration);
     },
     [showNotification]
   );
 
   const info = useCallback(
-    (message, duration = 3000) => {
+    (message, duration = 5000) => {
       showNotification(message, 'info', duration);
     },
     [showNotification]

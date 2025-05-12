@@ -14,7 +14,7 @@ import { useNotification } from './NotificationContext';
 export function Toast({
   message,
   type = 'info',
-  duration = 3000,
+  duration = 5000,
   onClose,
   visible = false,
   position = 'bottom-left',
