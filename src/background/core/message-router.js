@@ -12,7 +12,7 @@ import {
   handleProcessContentRequest,
   handleProcessContentViaApiRequest,
 } from '../services/content-processing.js';
-import { handleToggleNativeSidePanelAction, handleCloseCurrentSidePanelRequest } from '../services/sidepanel-manager.js';
+import { handleToggleSidePanelAction, handleCloseCurrentSidePanelRequest } from '../services/sidepanel-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
 
@@ -174,10 +174,10 @@ function registerServiceHandlers() {
   // Clear specific tab data (for sidepanel refresh)
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
 
-  // Handle requests to toggle the native side panel
+  // Handle requests to toggle the side panel
   messageHandlers.set(
-    'toggleNativeSidePanelAction',
-    handleToggleNativeSidePanelAction
+    'toggleSidePanelAction',
+    handleToggleSidePanelAction
   );
 
   // Add this line within registerServiceHandlers

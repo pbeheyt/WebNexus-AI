@@ -188,7 +188,7 @@ export function Popup() {
     updateStatus('Toggling Side Panel...', true);
     try {
       const response = await robustSendMessage({
-        action: 'toggleNativeSidePanelAction',
+        action: 'toggleSidePanelAction',
         tabId: currentTab.id,
       });
 
