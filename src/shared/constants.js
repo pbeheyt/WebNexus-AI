@@ -119,6 +119,9 @@ export const MAX_PROMPT_NAME_LENGTH = 100;
 export const MAX_PROMPT_CONTENT_LENGTH = 50000;
 export const MAX_SYSTEM_PROMPT_LENGTH = 50000;
 
+// Chat History Limits
+export const MAX_MESSAGES_PER_TAB_HISTORY = 200;
+
 /**
  * Interface sources for API requests
  */

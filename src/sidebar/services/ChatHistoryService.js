@@ -1,7 +1,7 @@
 // src/sidebar/services/ChatHistoryService.js
 
 import { logger } from '../../shared/logger';
-import { STORAGE_KEYS } from '../../shared/constants';
+import { STORAGE_KEYS, MAX_MESSAGES_PER_TAB_HISTORY } from '../../shared/constants';
 
 import TokenManagementService from './TokenManagementService';
 
@@ -9,8 +9,6 @@ import TokenManagementService from './TokenManagementService';
  * Service for managing tab-specific chat histories
  */
 class ChatHistoryService {
-  static STORAGE_KEY = STORAGE_KEYS.TAB_CHAT_HISTORIES;
-  static MAX_MESSAGES_PER_TAB = 200;
 
   /**
    * Get chat history for a specific tab
@@ -27,8 +25,8 @@ class ChatHistoryService {
       }
 
       // Get all tab chat histories
-      const result = await chrome.storage.local.get([this.STORAGE_KEY]);
-      const allTabHistories = result[this.STORAGE_KEY] || {};
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_CHAT_HISTORIES]);
+      const allTabHistories = result[STORAGE_KEYS.TAB_CHAT_HISTORIES] || {};
 
       // Return history for this tab or empty array
       return allTabHistories[tabId] || [];
@@ -93,17 +91,17 @@ class ChatHistoryService {
       }
 
       // Get all tab chat histories
-      const result = await chrome.storage.local.get([this.STORAGE_KEY]);
-      const allTabHistories = result[this.STORAGE_KEY] || {};
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_CHAT_HISTORIES]);
+      const allTabHistories = result[STORAGE_KEYS.TAB_CHAT_HISTORIES] || {};
 
       // Limit number of messages to prevent storage problems
-      const limitedMessages = messages.slice(-this.MAX_MESSAGES_PER_TAB);
+      const limitedMessages = messages.slice(-MAX_MESSAGES_PER_TAB_HISTORY);
 
       // Update history for this tab
       allTabHistories[tabId] = limitedMessages;
 
       // Save updated histories
-      await chrome.storage.local.set({ [this.STORAGE_KEY]: allTabHistories });
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_CHAT_HISTORIES]: allTabHistories });
 
       // Calculate and save token statistics using TokenManagementService, passing options
       await TokenManagementService.calculateAndUpdateStatistics(
@@ -136,14 +134,14 @@ class ChatHistoryService {
       }
 
       // Get all tab chat histories
-      const result = await chrome.storage.local.get([this.STORAGE_KEY]);
-      const allTabHistories = result[this.STORAGE_KEY] || {};
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_CHAT_HISTORIES]);
+      const allTabHistories = result[STORAGE_KEYS.TAB_CHAT_HISTORIES] || {};
 
       // Remove history for this tab
       delete allTabHistories[tabId];
 
       // Save updated histories
-      await chrome.storage.local.set({ [this.STORAGE_KEY]: allTabHistories });
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_CHAT_HISTORIES]: allTabHistories });
 
       // Clear token statistics
       await TokenManagementService.clearTokenStatistics(tabId);
@@ -176,8 +174,8 @@ class ChatHistoryService {
       const activeTabsSet = new Set(activeTabIds.map((id) => id.toString()));
 
       // Get all tab chat histories
-      const result = await chrome.storage.local.get([this.STORAGE_KEY]);
-      const allTabHistories = result[this.STORAGE_KEY] || {};
+      const result = await chrome.storage.local.get([STORAGE_KEYS.TAB_CHAT_HISTORIES]);
+      const allTabHistories = result[STORAGE_KEYS.TAB_CHAT_HISTORIES] || {};
 
       // Check if any cleanup is needed
       let needsCleanup = false;
@@ -195,7 +193,7 @@ class ChatHistoryService {
 
       // Only update storage if something was removed
       if (needsCleanup) {
-        await chrome.storage.local.set({ [this.STORAGE_KEY]: allTabHistories });
+        await chrome.storage.local.set({ [STORAGE_KEYS.TAB_CHAT_HISTORIES]: allTabHistories });
         logger.sidebar.info(
           'TabChatHistory: Cleaned up histories for closed tabs'
         );
