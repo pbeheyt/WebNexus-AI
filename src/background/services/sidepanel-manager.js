@@ -15,7 +15,7 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
   let newState; // To store the final state (true for open, false for closed)
   try {
     logger.background.info(
-      'Handling native sidepanel toggle request (Refactored)'
+      'Handling native sidepanel toggle request'
     );
 
     // Determine the target tab ID
@@ -77,7 +77,7 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
       logger.background.info(
         `Action: Enable sidepanel for tab ${targetTabId}`
       );
-      await SidePanelStateManager.setSidepanelVisibilityForTab(targetTabId, true);
+      await SidePanelStateManager.setSidePanelVisibilityForTab(targetTabId, true);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         path: `sidepanel.html?tabId=${targetTabId}`, // Pass tabId via URL
@@ -92,7 +92,7 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
       logger.background.info(
         `Action: Disable sidepanel for tab ${targetTabId}`
       );
-      await SidePanelStateManager.setSidepanelVisibilityForTab(targetTabId, false);
+      await SidePanelStateManager.setSidePanelVisibilityForTab(targetTabId, false);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         enabled: false,
