@@ -152,21 +152,22 @@ export async function processContent(params) {
         logger.background.warn('Content extraction completed with issues');
       }
 
-      // 3. Get extracted content (Only if extracting)
-      const { extractedContent } = await chrome.storage.local.get(
-        STORAGE_KEYS.EXTRACTED_CONTENT
-      );
+    // 3. Get extracted content (Only if extracting)
+    const storageResult = await chrome.storage.local.get(
+      STORAGE_KEYS.EXTRACTED_CONTENT // This key's value is 'extracted_content'
+    );
+    const extractedContent = storageResult[STORAGE_KEYS.EXTRACTED_CONTENT]; // Access using the actual key string
 
-      if (!extractedContent) {
-        logger.background.error(
-          'processContent: Failed to retrieve extracted content from storage after extraction attempt.'
-        );
-        // Consider returning error or proceeding with null content
-        return {
-          success: false,
-          error: 'Failed to extract content from the page.',
-        };
-      }
+    if (!extractedContent) {
+      logger.background.error(
+        'processContent: Failed to retrieve extracted content from storage after extraction attempt.'
+      );
+      // Consider returning error or proceeding with null content
+      return {
+        success: false,
+        error: 'Failed to extract content from the page.',
+      };
+    }
 
       // 4. Format content (Only if extracting and content exists)
       // Assign to the outer scope variable

@@ -538,17 +538,18 @@ export async function getFormattedContentForTab(tabId) {
  * Get stored content extraction
  * @returns {Promise<Object>} Extracted content
  */
-export async function getExtractedContent() {
-  try {
-    const { extractedContent } = await chrome.storage.local.get(
-      STORAGE_KEYS.EXTRACTED_CONTENT
-    );
-    return extractedContent;
-  } catch (error) {
-    logger.background.error('Error getting extracted content:', error);
-    return null;
-  }
-}
+    export async function getExtractedContent() {
+      try {
+        const storageResult = await chrome.storage.local.get(
+          STORAGE_KEYS.EXTRACTED_CONTENT // This key's value is 'extracted_content'
+        );
+        const extractedContent = storageResult[STORAGE_KEYS.EXTRACTED_CONTENT]; // Access using the actual key string
+        return extractedContent;
+      } catch (error) {
+        logger.background.error('Error getting extracted content:', error);
+        return null;
+      }
+    }
 
 /**
  * Get current AI platform tab information
