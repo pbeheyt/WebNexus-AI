@@ -335,19 +335,21 @@ export const AssistantMessageBubble = memo(
           <div className='flex justify-between items-center pb-4'>
             <div className='text-xs opacity-70 flex items-center space-x-2'>
               {platformIconUrl && (
-                <PlatformIcon
-                  platformId={platformId}
-                  iconUrl={platformIconUrl}
-                  altText='AI Platform'
-                  className='w-3.5 h-3.5'
-                />
+                <div className='select-none'>
+                  <PlatformIcon
+                    platformId={platformId}
+                    iconUrl={platformIconUrl}
+                    altText='AI Platform'
+                    className='w-3.5 h-3.5'
+                  />
+                </div>
               )}
               {model && (
                 <span title={model}>
                   {model}
                 </span>
               )}
-              <div className={`flex gap-1 items-center transition-opacity duration-150 h-4 ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <div className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <div className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'></div>
                 <div
                   className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
