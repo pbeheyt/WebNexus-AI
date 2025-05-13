@@ -11,7 +11,7 @@ export async function resetState() {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]: false,
-      [STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID]: null,
+      [STORAGE_KEYS.WEBUI_INJECTION_TARGET_TAB_ID]: null,
       [STORAGE_KEYS.CONTENT_READY_FLAG]: false,
       [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
       [STORAGE_KEYS.API_PROCESSING_STATUS]: null,
@@ -128,7 +128,7 @@ export async function savePlatformTabInfo(
 ) {
   try {
     await chrome.storage.local.set({
-      [STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID]: tabId,
+      [STORAGE_KEYS.WEBUI_INJECTION_TARGET_TAB_ID]: tabId,
       [STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID]: platformId,
       [STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]: false,
       [STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT]: promptContent,
@@ -137,12 +137,12 @@ export async function savePlatformTabInfo(
 
     // Verify the data was stored correctly
     const verifyData = await chrome.storage.local.get([
-      STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID,
+      STORAGE_KEYS.WEBUI_INJECTION_TARGET_TAB_ID,
       STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID,
       STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG,
     ]);
     logger.background.info(
-      `Storage verification: aiPlatformTabId=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID]}, aiPlatform=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID]}, scriptInjected=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]}`
+      `Storage verification: aiPlatformTabId=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_TARGET_TAB_ID]}, aiPlatform=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID]}, scriptInjected=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]}`
     );
 
     return true;
@@ -557,12 +557,12 @@ export async function getExtractedContent() {
 export async function getPlatformTabInfo() {
   try {
     const result = await chrome.storage.local.get([
-      STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID,
+      STORAGE_KEYS.WEBUI_INJECTION_TARGET_TAB_ID,
       STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID,
       STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG,
     ]);
     return {
-      tabId: result[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID],
+      tabId: result[STORAGE_KEYS.WEBUI_INJECTION_TARGET_TAB_ID],
       platformId: result[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID],
       scriptInjected: result[STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG],
     };
