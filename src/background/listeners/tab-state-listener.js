@@ -1,7 +1,7 @@
 // src/background/listeners/tab-state-listener.js
 
 import { STORAGE_KEYS } from '../../shared/constants.js';
-import SidepanelStateManager from '../../services/SidepanelStateManager.js';
+import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 
 // List of tab-specific storage keys to clear on manual refresh (excluding sidebar visibility)
@@ -225,8 +225,8 @@ export function setupTabStateListener() {
           `General tab data cleanup completed for closed tab ${tabId}.`
         );
 
-        // Use SidepanelStateManager to specifically clean its state for the removed tab
-        await SidepanelStateManager.cleanupTabStates([tabId], null); // Pass removed tabId for targeted cleanup
+        // Use SidePanelStateManager to specifically clean its state for the removed tab
+        await SidePanelStateManager.cleanupTabStates([tabId], null); // Pass removed tabId for targeted cleanup
         logger.background.info(
           `Sidepanel state cleanup completed for closed tab ${tabId}.`
         );
@@ -284,8 +284,8 @@ export async function performStaleTabCleanup() {
       `General stale tab data cleanup processing completed.`
     );
 
-    // Use SidepanelStateManager to clean its state based on valid IDs
-    await SidepanelStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
+    // Use SidePanelStateManager to clean its state based on valid IDs
+    await SidePanelStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
     logger.background.info(`Sidepanel stale state cleanup completed.`);
 
     logger.background.info('Stale tab data cleanup finished successfully.');

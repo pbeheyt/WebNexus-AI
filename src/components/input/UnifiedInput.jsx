@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 import { TextArea } from '../form/TextArea';
-import TokenCounter from '../../sidebar/components/TokenCounter';
+import TokenCounter from '../../sidepanel/components/TokenCounter';
 import { ArrowUpIcon } from '../icons/ArrowUpIcon';
 import { XIcon } from '../icons/XIcon';
 import { IconButton } from '../core/IconButton';

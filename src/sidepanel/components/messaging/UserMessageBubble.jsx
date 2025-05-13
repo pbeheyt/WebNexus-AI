@@ -8,7 +8,7 @@ import {
   EditIcon,
   RerunIcon,
 } from '../../../components';
-import { useSidepanelChat } from '../contexts/SidepanelChatContext';
+import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 
@@ -34,7 +34,7 @@ export const UserMessageBubble = memo(
       const [isEditing, setIsEditing] = useState(false);
       const [editedContent, setEditedContent] = useState(content);
       const { rerunMessage, editAndRerunMessage, isProcessing, isCanceling } =
-        useSidebarChat();
+        useSidePanelChat();
       const { copyState, handleCopy, IconComponent, iconClassName, disabled } =
         useCopyToClipboard(content);
 

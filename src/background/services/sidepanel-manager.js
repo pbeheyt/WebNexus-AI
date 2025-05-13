@@ -1,6 +1,6 @@
-// src/background/services/sidebar-manager.js - Tab-specific native side panel management
+// src/background/services/sidepanel-manager.js - Tab-specific native side panel management
 
-import SidepanelStateManager from '../../services/SidepanelStateManager.js';
+import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
 
@@ -10,12 +10,12 @@ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
  * @param {Object} sender - Message sender, potentially containing `sender.tab.id`.
  * @param {Function} sendResponse - Function to send the response back.
  */
-export async function toggleNativeSidepanel(message, sender, sendResponse) {
+export async function toggleNativeSidePanel(message, sender, sendResponse) {
   let targetTabId;
   let newState; // To store the final state (true for open, false for closed)
   try {
     logger.background.info(
-      'Handling native side panel toggle request (Refactored)'
+      'Handling native sidepanel toggle request (Refactored)'
     );
 
     // Determine the target tab ID
@@ -45,12 +45,12 @@ export async function toggleNativeSidepanel(message, sender, sendResponse) {
     // Check if side panel is allowed on this page
     const isAllowed = isSidePanelAllowedPage(targetTab.url);
     if (!isAllowed) {
-    logger.background.warn(
-      `Attempted to toggle sidepanel on restricted page: ${targetTab.url}`
-    );
+      logger.background.warn(
+        `Attempted to toggle sidepanel on restricted page: ${targetTab.url}`
+      );
       // Force state to closed and disable panel
       newState = false;
-      await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, false);
+      await SidePanelStateManager.setSidePanelVisibilityForTab(targetTabId, false);
       await chrome.sidePanel.setOptions({ tabId: targetTabId, enabled: false });
 
       sendResponse({
@@ -65,7 +65,7 @@ export async function toggleNativeSidepanel(message, sender, sendResponse) {
 
     // Read the current *intended* state from storage
     const currentState =
-      await SidepanelStateManager.getSidepanelVisibilityForTab(targetTabId);
+      await SidePanelStateManager.getSidePanelVisibilityForTab(targetTabId);
     logger.background.info(
       `Current stored visibility for tab ${targetTabId}: ${currentState}`
     );
@@ -75,40 +75,40 @@ export async function toggleNativeSidepanel(message, sender, sendResponse) {
       // Current state is closed, so we intend to open (enable) it
       newState = true;
       logger.background.info(
-        `Action: Enable side panel for tab ${targetTabId}`
+        `Action: Enable sidepanel for tab ${targetTabId}`
       );
-      await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, true);
+      await SidePanelStateManager.setSidepanelVisibilityForTab(targetTabId, true);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         path: `sidepanel.html?tabId=${targetTabId}`, // Pass tabId via URL
         enabled: true,
       });
       logger.background.info(
-        `Side panel enabled and path set for tab ${targetTabId}.`
+        `Sidepanel enabled and path set for tab ${targetTabId}.`
       );
     } else {
       // Current state is open, so we intend to close (disable) it
       newState = false;
       logger.background.info(
-        `Action: Disable side panel for tab ${targetTabId}`
+        `Action: Disable sidepanel for tab ${targetTabId}`
       );
-      await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, false);
+      await SidePanelStateManager.setSidepanelVisibilityForTab(targetTabId, false);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         enabled: false,
       });
-      logger.background.info(`Side panel disabled for tab ${targetTabId}.`);
+      logger.background.info(`Sidepanel disabled for tab ${targetTabId}.`);
     }
 
     sendResponse({
       success: true,
       visible: newState, // Send back the new intended state
       tabId: targetTabId,
-      message: `Side panel state updated for tab ${targetTabId}. Intended visibility: ${newState}.`,
+      message: `Side Panel state updated for tab ${targetTabId}. Intended visibility: ${newState}.`,
     });
   } catch (error) {
     logger.background.error(
-      `Error handling native side panel toggle for tab ${targetTabId || 'unknown'}:`,
+      `Error handling native sidepanel toggle for tab ${targetTabId || 'unknown'}:`,
       error
     );
     // If an error occurred, the actual panel state might not match the intended state.
@@ -129,7 +129,7 @@ export async function toggleNativeSidepanel(message, sender, sendResponse) {
  * @param {function} sendResponse - Function to call to send the response.
  * @returns {boolean} - True to indicate an asynchronous response.
  */
-export function handleToggleNativeSidepanelAction(
+export function handleToggleNativeSidePanelAction(
   message,
   sender,
   sendResponse
@@ -149,7 +149,7 @@ export function handleToggleNativeSidepanelAction(
  * @param {Object} sender - Message sender
  * @param {Function} sendResponse - Response function
  */
-export async function getSidepanelState(message, sender, sendResponse) {
+export async function getSidePanelState(message, sender, sendResponse) {
   try {
     // Get target tab ID (same logic as toggle)
     const tabId = message.tabId || (sender.tab && sender.tab.id);
@@ -172,7 +172,7 @@ export async function getSidepanelState(message, sender, sendResponse) {
       targetTabId = tabId;
     }
 
-    const state = await SidepanelStateManager.getSidepanelState(targetTabId);
+    const state = await SidePanelStateManager.getSidePanelState(targetTabId);
 
     sendResponse({
       success: true,
@@ -189,7 +189,7 @@ export async function getSidepanelState(message, sender, sendResponse) {
 }
 
 // Add this new function
-export async function handleCloseCurrentSidepanelRequest(message, sender, sendResponse) {
+export async function handleCloseCurrentSidePanelRequest(message, sender, sendResponse) {
   const { tabId } = message;
 
   if (typeof tabId !== 'number') {
@@ -201,14 +201,14 @@ export async function handleCloseCurrentSidepanelRequest(message, sender, sendRe
   logger.background.info(`Closing sidepanel for tab ${tabId} by direct request from sidepanel.`);
 
   try {
-    await SidepanelStateManager.setSidepanelVisibilityForTab(tabId, false);
+    await SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false);
     await chrome.sidePanel.setOptions({ tabId, enabled: false });
     logger.background.info(`Sidepanel for tab ${tabId} successfully closed and state updated.`);
     sendResponse({
       success: true,
       tabId,
       visible: false,
-      message: 'Side panel closed successfully.',
+      message: 'Side Panel closed successfully.'
     });
   } catch (error) {
     logger.background.error(`Error closing sidepanel for tab ${tabId} via direct request:`, error);

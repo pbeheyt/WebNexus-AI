@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 
-import { useSidepanelPlatform } from '../../contexts/platform';
+import { useSidePanelPlatform } from '../../contexts/platform';
 
 import { DropdownContext } from './Header';
 
@@ -22,7 +22,7 @@ const ChevronIcon = () => (
 );
 
 function ModelSelector({ className = '', selectedPlatformId = null }) {
-  const { models, selectedModel, selectModel, isLoading } = useSidebarPlatform();
+  const { models, selectedModel, selectModel, isLoading } = useSidePanelPlatform();
 
   const [formattedModels, setFormattedModels] = useState([]);
   const [displayModelId, setDisplayModelId] = useState(selectedModel);

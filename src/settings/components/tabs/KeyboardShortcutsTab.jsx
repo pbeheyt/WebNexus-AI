@@ -117,7 +117,7 @@ export function KeyboardShortcutsTab() {
         Keyboard Shortcuts
       </h2>
       <p className='section-description text-sm text-theme-secondary mb-6'>
-        Manage your extension's keyboard shortcuts. Global shortcuts are configured in Chrome's settings, while the sidepanel toggle shortcut can be customized here.
+        Manage your extension&apos;s keyboard shortcuts. Global shortcuts are configured in Chrome&apos;s settings, while the sidepanel toggle shortcut can be customized here.
       </p>
       <div className="flex flex-col md:flex-row md:gap-6">
         {/* Left Column: Registered Extension Shortcuts */}
@@ -125,7 +125,7 @@ export function KeyboardShortcutsTab() {
           <SettingsCard>
             <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Chrome Shortcuts</h3>
             <p className="text-sm text-theme-secondary mb-6">
-              These shortcuts are defined by the extension and can be managed on Chrome's extensions page.
+              These shortcuts are defined by the extension and can be managed on Chrome&apos;s extensions page.
             </p>
             {isLoadingCommands ? (
               <p className="text-theme-secondary py-2">Loading global shortcuts...</p>
@@ -161,7 +161,7 @@ export function KeyboardShortcutsTab() {
           <SettingsCard>
             <h3 className="text-base font-semibold text-theme-primary mb-2">Side Panel Toggle Shortcut</h3>
             <p className="text-sm text-theme-secondary mb-6">
-              This shortcut is used within the extension's popup to open/close the Side Panel, and from within the Side Panel itself to close it when focused.
+              This shortcut is used within the extension&apos;s popup to open/close the Side Panel, and from within the Side Panel itself to close it when focused.
             </p>
             
             <div 

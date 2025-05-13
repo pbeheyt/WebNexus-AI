@@ -2,11 +2,11 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { UIProvider } from '../contexts/UIContext';
-import { SidepanelPlatformProvider } from '../contexts/platform';
+import { SidePanelPlatformProvider } from '../contexts/platform';
 import { ContentProvider } from '../contexts/ContentContext';
 
-import { SidepanelChatProvider } from './contexts/SidepanelChatContext';
-import SidepanelApp from './SidepanelApp';
+import { SidePanelChatProvider } from './contexts/SidePanelChatContext';
+import SidePanelApp from './SidePanelApp';
 import '../styles/index.css';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,11 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
     root.render(
       <UIProvider>
         <ContentProvider>
-          <SidepanelPlatformProvider tabId={tabId}>
-            <SidepanelChatProvider tabId={tabId}>
-              <SidepanelApp tabId={tabId} /> {/* Ensure tabId is passed here */}
-            </SidepanelChatProvider>
-          </SidepanelPlatformProvider>
+          <SidePanelPlatformProvider tabId={tabId}>
+            <SidePanelChatProvider tabId={tabId}>
+              <SidePanelApp tabId={tabId} />
+            </SidePanelChatProvider>
+          </SidePanelPlatformProvider>
         </ContentProvider>
       </UIProvider>
     );

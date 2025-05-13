@@ -2,8 +2,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { useSidepanelPlatform } from '../../contexts/platform';
-import { useSidepanelChat } from '../contexts/SidepanelChatContext';
+import { useSidePanelPlatform } from '../../contexts/platform';
+import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import { UnifiedInput } from '../../components/input/UnifiedInput';
 import { useContent } from '../../contexts/ContentContext';
 
@@ -13,7 +13,7 @@ UserInput.propTypes = {
 
 export function UserInput({ className = '' }) {
   const { contentType } = useContent();
-  const { hasAnyPlatformCredentials } = useSidebarPlatform();
+  const { hasAnyPlatformCredentials } = useSidePanelPlatform();
   const {
     inputValue,
     setInputValue,
@@ -24,7 +24,7 @@ export function UserInput({ className = '' }) {
     isRefreshing,
     tokenStats,
     contextStatus,
-  } = useSidebarChat();
+  } = useSidePanelChat();
 
   const handleInputChange = (value) => {
     setInputValue(value);

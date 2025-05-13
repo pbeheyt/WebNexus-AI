@@ -12,7 +12,7 @@ import React, {
 import PropTypes from 'prop-types';
 
 import { logger } from '../../shared/logger';
-import { useSidepanelPlatform } from '../../contexts/platform';
+import { useSidePanelPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';
 import { useChatStreaming } from '../hooks/useChatStreaming';
@@ -25,13 +25,13 @@ import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { robustSendMessage } from '../../shared/utils/message-utils';
 
-const SidepanelChatContext = createContext(null);
+const SidePanelChatContext = createContext(null);
 
-SidepanelChatProvider.propTypes = {
+SidePanelChatProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export function SidepanelChatProvider({ children }) {
+export function SidePanelChatProvider({ children }) {
   const {
     selectedPlatformId,
     selectedModel,
@@ -39,7 +39,7 @@ export function SidepanelChatProvider({ children }) {
     tabId,
     platforms,
     getPlatformApiConfig,
-  } = useSidepanelPlatform();
+  } = useSidePanelPlatform();
 
   const { contentType, currentTab } = useContent();
   const [messages, setMessages] = useState([]);
@@ -294,7 +294,7 @@ export function SidepanelChatProvider({ children }) {
   }, [tabId, modelConfigData, tokenStats, calculateContextStatus]);
 
   // Stabilize tokenStats for UI consumers
-  const { isLoading: isPlatformLoading } = useSidepanelPlatform(); // Get loading state outside effect
+  const { isLoading: isPlatformLoading } = useSidePanelPlatform(); // Get loading state outside effect
 
   useEffect(() => {
     if (!isPlatformLoading) {
@@ -653,7 +653,7 @@ export function SidepanelChatProvider({ children }) {
   // --- End Utility Functions ---
 
   return (
-    <SidepanelChatContext.Provider
+    <SidePanelChatContext.Provider
       value={{
         // State
         messages: visibleMessages,
@@ -686,8 +686,8 @@ export function SidepanelChatProvider({ children }) {
       }}
     >
       {children}
-    </SidepanelChatContext.Provider>
+    </SidePanelChatContext.Provider>
   );
 }
 
-export const useSidepanelChat = () => useContext(SidepanelChatContext);
+export const useSidePanelChat = () => useContext(SidePanelChatContext);

@@ -1,6 +1,6 @@
 // src/background/index.js - Entry point for background service worker
 
-import SidepanelStateManager from '../services/SidepanelStateManager.js';
+import SidePanelStateManager from '../services/SidePanelStateManager.js';
 import { logger } from '../shared/logger.js';
 
 import { initializeExtension, populateInitialPromptsAndSetDefaults } from './initialization.js';
@@ -140,7 +140,7 @@ function setupConnectionListener() {
         logger.background.info(`Side panel connected for tab ${tabId}`);
 
         // Mark sidepanel as visible upon connection
-        SidepanelStateManager.setSidepanelVisibilityForTab(tabId, true)
+        SidePanelStateManager.setSidePanelVisibilityForTab(tabId, true)
           .then(() => {
             logger.background.info(
               `Set sidepanel visibility to true for tab ${tabId}`
@@ -163,7 +163,7 @@ function setupConnectionListener() {
             );
           }
           // Mark sidepanel as not visible upon disconnection
-          SidepanelStateManager.setSidepanelVisibilityForTab(tabId, false)
+          SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false)
             .then(() => {
               logger.background.info(
                 `Set sidepanel visibility to false for tab ${tabId}`

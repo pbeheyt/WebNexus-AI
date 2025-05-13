@@ -7,11 +7,11 @@ import React, {
   useMemo,
 } from 'react';
 
-import { STORAGE_KEYS, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../shared/constants'; // Updated import
+import { STORAGE_KEYS, DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG } from '../shared/constants';
 import { logger } from '../shared/logger';
 import { robustSendMessage } from '../shared/utils/message-utils';
 import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
-import { useSidepanelPlatform } from '../contexts/platform';
+import { useSidePanelPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
 import { AppHeader, ErrorIcon } from '../components';
@@ -20,11 +20,11 @@ import { debounce } from '../shared/utils/debounce';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
-import { useSidepanelChat } from './contexts/SidepanelChatContext';
+import { useSidePanelChat } from './contexts/SidePanelChatContext';
 
-export default function SidepanelApp() {
-  const { tabId, setTabId } = useSidebarPlatform();
-  const { resetCurrentTabData, isRefreshing } = useSidebarChat();
+export default function SidePanelApp() {
+  const { tabId, setTabId } = useSidePanelPlatform();
+  const { resetCurrentTabData, isRefreshing } = useSidePanelChat();
   const { updateContentContext } = useContent();
   const { textSize } = useUI();
   const [isReady, setIsReady] = useState(false);
@@ -56,7 +56,7 @@ export default function SidepanelApp() {
   // currentShortcutConfig is returned but not directly used for display in SidebarApp
   useConfigurableShortcut(
     STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT,
-    DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
+    DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
     handleCloseShortcut,
     logger.sidepanel,
     [handleCloseShortcut]
@@ -333,6 +333,6 @@ export default function SidepanelApp() {
   );
 }
 
-SidepanelApp.propTypes = {
+SidePanelApp.propTypes = {
   // tabId is managed internally
 };

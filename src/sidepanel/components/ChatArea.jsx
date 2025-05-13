@@ -10,8 +10,8 @@ import React, {
 import PropTypes from 'prop-types';
 
 import { debounce } from '../../shared/utils/debounce';
-import { useSidepanelChat } from '../contexts/SidepanelChatContext';
-import { useSidepanelPlatform } from '../../contexts/platform';
+import { useSidePanelChat } from '../contexts/SidePanelChatContext';
+import { useSidePanelPlatform } from '../../contexts/platform';
 import { useUI } from '../../contexts/UIContext';
 import { Toggle } from '../../components/core/Toggle';
 import { Tooltip } from '../../components';
@@ -59,7 +59,7 @@ function ChatArea({
     setIsContentExtractionEnabled,
     modelConfigData,
     isThinkingModeEnabled,
-  } = useSidepanelChat();
+  } = useSidePanelChat();
   const { contentType, currentTab } = useContent();
   const { textSize } = useUI();
   const messagesEndRef = useRef(null);
@@ -74,7 +74,7 @@ function ChatArea({
     selectedPlatformId,
     selectedModel,
     hasAnyPlatformCredentials,
-  } = useSidepanelPlatform();
+  } = useSidePanelPlatform();
 
   // --- State ---
   const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false);

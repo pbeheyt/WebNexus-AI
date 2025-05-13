@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, createContext } from 'react';
 
-import { useSidepanelPlatform } from '../../contexts/platform';
-import { useSidepanelChat } from '../contexts/SidepanelChatContext';
+import { useSidePanelPlatform } from '../../contexts/platform';
+import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import { PlatformIcon, ChevronDownIcon, Toggle, InfoIcon, Tooltip } from '../../components';
 
 import ModelSelector from './ModelSelector';
@@ -20,8 +20,8 @@ function Header() {
     selectPlatform,
     hasAnyPlatformCredentials,
     isLoading,
-  } = useSidebarPlatform();
-  const { modelConfigData, isThinkingModeEnabled, toggleThinkingMode } = useSidebarChat();
+  } = useSidePanelPlatform();
+  const { modelConfigData, isThinkingModeEnabled, toggleThinkingMode } = useSidePanelChat();
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const infoIconRef = useRef(null);
   const [openDropdown, setOpenDropdown] = useState(null);

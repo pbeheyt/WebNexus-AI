@@ -70,7 +70,7 @@ class TokenManagementService {
       });
       return true;
     } catch (error) {
-      logger.sidepanel.error(
+      logger.sidepanel.error( // Corrected logger
         'TokenManagementService: Error updating token statistics:',
         error
       );
@@ -237,6 +237,7 @@ class TokenManagementService {
    * @param {Object} [options={}] - Optional parameters like initial stats for reruns.
    * @param {number} [options.initialAccumulatedCost=0] - Starting cost for calculation (used in reruns).
    * @param {number} [options.initialOutputTokens=0] - Starting output tokens for calculation (used in reruns).
+   * @param {boolean} [isThinkingModeEnabled=false] - Whether thinking mode is active
    * @returns {Promise<Object>} - Token statistics
    */
   static async calculateAndUpdateStatistics(
@@ -312,7 +313,7 @@ class TokenManagementService {
         promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
         historyTokensSentInLastApiCall:
           baseStats.historyTokensSentInLastApiCall || 0,
-        systemTokensInLastApiCall: systemTokensInLastApiCall || 0,
+        systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,
         inputTokensInLastApiCall: baseStats.inputTokensInLastApiCall || 0,
         outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0,
         lastApiCallCost: currentCallCost,
@@ -325,7 +326,7 @@ class TokenManagementService {
       // 8. Return the final statistics object
       return finalStatsObject;
     } catch (error) {
-      logger.sidepanel.error(
+      logger.sidepanel.error( // Corrected logger
         'TokenManagementService: Error calculating token statistics:',
         error
       );
@@ -349,12 +350,12 @@ class TokenManagementService {
       const tokens = encode(text);
       return tokens.length;
     } catch (error) {
-      logger.sidepanel.error(
+      logger.sidepanel.error( // Corrected logger
         'TokenManagementService: Error encoding text with gpt-tokenizer:',
         error
       );
       // Fallback on encoding error
-      logger.sidepanel.warn(
+      logger.sidepanel.warn( // Corrected logger
         'TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.'
       );
       return Math.ceil(text.length / 4); // Fallback method: 1 token per 4 chars

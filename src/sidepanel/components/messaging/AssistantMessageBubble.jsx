@@ -7,7 +7,7 @@ import 'katex/dist/katex.min.css';
 
 import { logger } from '../../../shared/logger';
 import { IconButton, RerunIcon, PlatformIcon } from '../../../components';
-import { useSidepanelChat } from '../../contexts/SidepanelChatContext';
+import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 
 import ThinkingBlock from './ThinkingBlock';
 import EnhancedCodeBlock from './EnhancedCodeBlock';
@@ -41,7 +41,7 @@ export const AssistantMessageBubble = memo(
     ) => {
       // Hooks needed for Assistant functionality
       const { rerunAssistantMessage, isProcessing, isCanceling } =
-        useSidepanelChat();
+        useSidePanelChat();
       const {
         copyState: assistantCopyState,
         handleCopy: handleAssistantCopy,

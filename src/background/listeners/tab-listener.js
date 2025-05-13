@@ -9,7 +9,7 @@ import {
   getPlatformTabInfo,
   updateScriptInjectionStatus,
 } from '../core/state-manager.js';
-import SidepanelStateManager from '../../services/SidepanelStateManager.js';
+import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import {
@@ -41,7 +41,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     try {
       logger.background.info(`Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`);
       const isAllowed = isSidePanelAllowedPage(tab.url);
-      const isVisible = await SidepanelStateManager.getSidepanelVisibilityForTab(tabId);
+      const isVisible = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
 
       if (isAllowed) {
         await chrome.sidePanel.setOptions({
@@ -131,7 +131,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     try {
       // Check if the side panel is *intended* to be visible for this tab
       const isVisible =
-        await SidepanelStateManager.getSidepanelVisibilityForTab(tabId);
+        await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
 
       if (isVisible) {
         logger.background.info(
@@ -193,7 +193,7 @@ async function handleTabActivation(activeInfo) {
 
     // Retrieve the intended visibility state for the activated tab
     const isVisible =
-      await SidebarStateManager.getSidebarVisibilityForTab(tabId);
+      await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
 
     // Conditionally set side panel options based on stored visibility
     if (isVisible) {
@@ -230,7 +230,7 @@ async function handleTabCreation(newTab) {
   );
   try {
     // Store the initial visibility state (false) without enabling/disabling the panel itself
-    await SidepanelStateManager.setSidepanelVisibilityForTab(newTab.id, false);
+    await SidePanelStateManager.setSidePanelVisibilityForTab(newTab.id, false);
     logger.background.info(
       `Initial sidepanel state (visible: false) stored for new tab ${newTab.id}`
     );

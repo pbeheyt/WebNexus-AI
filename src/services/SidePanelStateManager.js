@@ -4,7 +4,7 @@ import { STORAGE_KEYS } from '../shared/constants.js';
 /**
  * Service for managing tab-specific sidebar state
  */
-class SidepanelStateManager {
+class SidePanelStateManager {
   /**
    * Toggle sidebar visibility for a specific tab
    * @private
@@ -67,7 +67,7 @@ class SidepanelStateManager {
    * @param {number} tabId - Tab ID
    * @returns {Promise<Object>} Tab-specific sidepanel state
    */
-  async getSidepanelState(tabId) {
+  async getSidePanelState(tabId) {
     try {
       if (!tabId) {
         // Get active tab if no tab ID specified
@@ -105,7 +105,7 @@ class SidepanelStateManager {
    * @param {number} tabId - Tab ID
    * @returns {Promise<boolean>} Visibility state
    */
-  async getSidepanelVisibilityForTab(tabId) {
+  async getSidePanelVisibilityForTab(tabId) {
     try {
       const { [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: tabStates = {} } =
         await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
@@ -123,7 +123,7 @@ class SidepanelStateManager {
    * @param {boolean} visible - Visibility state
    * @returns {Promise<boolean>} Success indicator
    */
-  async setSidepanelVisibilityForTab(tabId, visible) {
+  async setSidePanelVisibilityForTab(tabId, visible) {
     try {
       await this._toggleForTab(tabId, visible);
       return true;
@@ -174,4 +174,4 @@ class SidepanelStateManager {
   }
 }
 
-export default new SidepanelStateManager();
+export default new SidePanelStateManager();
