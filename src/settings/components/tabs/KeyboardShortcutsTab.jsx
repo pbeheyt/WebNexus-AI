@@ -109,6 +109,8 @@ export function KeyboardShortcutsTab() {
 
   const handleSaveCustomShortcut = async () => {
     if (globalCommands && globalCommands.length > 0) {
+      for (const command of globalCommands) {
+
         const globalShortcutObj = parseChromeCommandShortcut(command.shortcut);
         if (globalShortcutObj) {
           const mainKeyMatch = editableCustomShortcut.key.toLowerCase() === globalShortcutObj.key.toLowerCase();

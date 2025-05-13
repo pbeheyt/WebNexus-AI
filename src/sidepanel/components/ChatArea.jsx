@@ -498,12 +498,14 @@ const checkScrollPosition = useCallback(() => {
           {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
           <div className='flex flex-col items-center py-3 w-full min-h-[120px]'>
             {displayPlatformConfig ? (
-              <PlatformIcon
-                platformId={displayPlatformConfig.id}
-                iconUrl={displayPlatformConfig.iconUrl}
-                altText={`${displayPlatformConfig.name || 'Platform'} logo`}
-                className='w-8 h-8 mb-2 object-contain select-none'
-              />
+              <div className='select-none'>
+                <PlatformIcon
+                  platformId={displayPlatformConfig.id}
+                  iconUrl={displayPlatformConfig.iconUrl}
+                  altText={`${displayPlatformConfig.name || 'Platform'} logo`}
+                  className='w-8 h-8 mb-2 object-contain'
+                />
+              </div>
             ) : (
               <div className='w-8 h-8 mb-2 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse select-none'></div>
             )}
