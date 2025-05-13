@@ -113,10 +113,10 @@ export function KeyboardShortcutsTab() {
 
   return (
     <>
-      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium select-none'>
+      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium'>
         Keyboard Shortcuts
       </h2>
-      <p className='section-description text-sm text-theme-secondary mb-6 select-none'>
+      <p className='section-description text-sm text-theme-secondary mb-6'>
         Manage your extension&apos;s keyboard shortcuts. Global shortcuts are configured in Chrome&apos;s settings, while the sidebar toggle shortcut can be customized here.
       </p>
       <div className="flex flex-col md:flex-row md:gap-6">

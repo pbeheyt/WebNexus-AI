@@ -258,18 +258,18 @@ const PromptForm = ({
       noValidate
     >
       <div className='flex items-center mb-5 pb-3 border-b border-theme'>
-        <h3 className='type-heading text-base font-semibold text-theme-primary select-none'>
+        <h3 className='type-heading text-base font-semibold text-theme-primary'>
           {isEditing ? 'Edit Prompt' : 'Create New Prompt'}
         </h3>
         {isEditing && isDefaultForType && (
-          <span className='default-badge ml-3 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full font-medium select-none'>
+          <span className='default-badge ml-3 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full font-medium'>
             Default
           </span>
         )}
       </div>
 
       <div className='form-group mb-6'>
-        <label htmlFor="contentTypeSelect" className='block mb-3 text-base font-medium text-theme-secondary select-none'>
+        <label htmlFor="contentTypeSelect" className='block mb-3 text-base font-medium text-theme-secondary'>
           Content Type
         </label>
         <div className='inline-block'>
@@ -287,7 +287,7 @@ const PromptForm = ({
       <div className='form-group mb-6'>
         <label
           htmlFor='name'
-          className='block mb-3 text-base font-medium text-theme-secondary select-none'
+          className='block mb-3 text-base font-medium text-theme-secondary'
         >
           Prompt Name
         </label>
@@ -307,7 +307,7 @@ const PromptForm = ({
       <div className='form-group mb-6'>
         <label
           htmlFor='content'
-          className='block mb-3 text-base font-medium text-theme-secondary select-none'
+          className='block mb-3 text-base font-medium text-theme-secondary'
         >
           Prompt Content
         </label>

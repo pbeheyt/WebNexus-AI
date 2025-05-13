@@ -41,10 +41,10 @@ const ApiSettings = () => {
 
   return (
     <div>
-      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium select-none'>
+      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium'>
         API Settings
       </h2>
-      <p className='section-description text-sm text-theme-secondary mb-6 select-none'>
+      <p className='section-description text-sm text-theme-secondary mb-6'>
         Configure API credentials for different AI platforms and customize
         model parameters for each model. These settings will be used when
         making API requests directly from the browser extension.
@@ -75,7 +75,7 @@ const ApiSettings = () => {
           />
         ) : (
           <div className='platform-details-panel flex-1 bg-theme-surface p-8 text-center text-sm text-theme-secondary rounded-lg border border-theme'>
-            <p className='select-none'>
+            <p className=''>
               {platformConfigs.length > 0
                 ? 'Select a platform from the list to configure its API settings.'
                 : 'No platforms configured. Check platform-display-config.json and platform-api-config.json.'}

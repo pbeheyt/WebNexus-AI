@@ -8,7 +8,7 @@ import TabContent from './components/layout/TabContent';
 
 const SettingsApp = () => {
   return (
-    <div className='container max-w-7xl mx-auto bg-theme-primary p-7 rounded-lg shadow-theme-medium text-theme-primary select-none cursor-default'>
+    <div className='container max-w-7xl mx-auto bg-theme-primary p-7 rounded-lg shadow-theme-medium text-theme-primary cursor-default'>
       <div className='mb-6'>
         <AppHeader
           showSettingsButton={false}

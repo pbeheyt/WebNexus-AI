@@ -84,7 +84,7 @@ const ModelParametersSettings = ({
     <SettingsCard className="selector-section-container mb-4">
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center">
-          <h3 className='text-base font-semibold text-theme-primary select-none'>
+          <h3 className='text-base font-semibold text-theme-primary'>
             Model Selection
           </h3>
           <div className="ml-5">
@@ -130,7 +130,7 @@ const ModelParametersSettings = ({
       {showThinkingModeToggle && (
         <div className="mt-4">
           <div className='flex items-center gap-3'>
-            <span className='text-sm font-medium text-theme-secondary select-none'>
+            <span className='text-sm font-medium text-theme-secondary'>
               Thinking Mode
             </span>
             <Toggle
@@ -143,24 +143,24 @@ const ModelParametersSettings = ({
         </div>
       )}
       <div className='model-specs-section bg-theme-hover rounded-lg border border-theme mt-6 p-4'>
-        <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary select-none'>
+        <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary'>
           Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
         </h4>
         <div className='specs-info space-y-2.5'>
           <div className='spec-item flex justify-between text-sm'>
-            <span className='spec-label font-medium text-theme-secondary select-none'>
+            <span className='spec-label font-medium text-theme-secondary'>
               Context window
             </span>
-            <span className='spec-value font-mono select-none text-theme-primary'>
+            <span className='spec-value font-mono text-theme-primary'>
               {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
             </span>
           </div>
           {displaySpecs.inputPrice !== undefined && (
             <div className='spec-item flex justify-between text-sm'>
-              <span className='spec-label font-medium text-theme-secondary select-none'>
+              <span className='spec-label font-medium text-theme-secondary'>
                 Input tokens
               </span>
-              <span className='spec-value font-mono select-none text-theme-primary'>
+              <span className='spec-value font-mono text-theme-primary'>
                 {Math.abs(displaySpecs.inputPrice) < 0.0001
                   ? 'Free'
                   : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
@@ -169,10 +169,10 @@ const ModelParametersSettings = ({
           )}
           {displaySpecs.outputPrice !== undefined && (
             <div className='spec-item flex justify-between text-sm'>
-              <span className='spec-label font-medium text-theme-secondary select-none'>
+              <span className='spec-label font-medium text-theme-secondary'>
                 Output tokens
               </span>
-              <span className='spec-value font-mono select-none text-theme-primary'>
+              <span className='spec-value font-mono text-theme-primary'>
                 {Math.abs(displaySpecs.outputPrice) < 0.0001
                   ? 'Free'
                   : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
@@ -189,11 +189,11 @@ const ModelParametersSettings = ({
         {parameterSpecs.maxTokens && (
           <SettingsCard className='mb-4'>
             <div className='mb-2'>
-              <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
+              <span className='block mb-3 text-base font-semibold text-theme-primary'>
                 Max Tokens
               </span>
             </div>
-            <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
+            <p className='help-text text-sm text-theme-secondary mb-3'>
               Maximum number of tokens to generate in the response.
             </p>
             <SliderInput
@@ -212,7 +212,7 @@ const ModelParametersSettings = ({
         {showTempSection && parameterSpecs.temperature && (
           <SettingsCard className='mb-4'>
             <div className='mb-3 flex items-center'>
-              <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
+              <span className='text-base font-semibold text-theme-primary mr-3'>
                 Temperature
               </span>
               <Toggle
@@ -224,7 +224,7 @@ const ModelParametersSettings = ({
                 id={`${platform.id}-${selectedModelId}-include-temperature`}
               />
             </div>
-            <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
+            <p className='help-text text-sm text-theme-secondary mb-3'>
               Controls randomness: lower values are more deterministic, higher
               values more creative.
             </p>
@@ -246,7 +246,7 @@ const ModelParametersSettings = ({
         {showTopPSection && parameterSpecs.topP && (
           <SettingsCard className='mb-4'>
             <div className='mb-3 flex items-center'>
-              <span className='text-base font-semibold text-theme-primary mr-3 select-none'>
+              <span className='text-base font-semibold text-theme-primary mr-3'>
                 Top P
               </span>
               <Toggle
@@ -258,7 +258,7 @@ const ModelParametersSettings = ({
                 id={`${platform.id}-${selectedModelId}-include-topp`}
               />
             </div>
-            <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
+            <p className='help-text text-sm text-theme-secondary mb-3'>
               Alternative to temperature, controls diversity via nucleus
               sampling.
             </p>
@@ -275,7 +275,7 @@ const ModelParametersSettings = ({
               />
             )}
             {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
-                <p className='text-amber-600 text-xs mt-3 select-none'>
+                <p className='text-amber-600 text-xs mt-3'>
                   It is generally recommended to alter Temperature or Top P, but not both.
                 </p>
             )}
@@ -284,10 +284,10 @@ const ModelParametersSettings = ({
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
           <SettingsCard className='mb-4'>
-            <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
+            <span className='block mb-3 text-base font-semibold text-theme-primary'>
               Thinking Budget
             </span>
-            <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
+            <p className='help-text text-sm text-theme-secondary mb-3'>
               Maximum tokens the model can use for internal thinking steps.
             </p>
             <SliderInput
@@ -305,10 +305,10 @@ const ModelParametersSettings = ({
 
         {showReasoningEffort && parameterSpecs.reasoningEffort && (
           <SettingsCard className='mb-4'>
-            <span className='block mb-3 text-base font-semibold text-theme-primary select-none'>
+            <span className='block mb-3 text-base font-semibold text-theme-primary'>
               Reasoning Effort
             </span>
-            <p className='help-text text-sm text-theme-secondary mb-3 select-none'>
+            <p className='help-text text-sm text-theme-secondary mb-3'>
               Controls the amount of internal reasoning the model performs.
             </p>
             <div className='inline-block'>
@@ -328,11 +328,11 @@ const ModelParametersSettings = ({
           <SettingsCard className='mb-4'>
             <label
               htmlFor={`${platform.id}-${selectedModelId}-system-prompt`}
-              className='block mb-3 text-base font-semibold text-theme-primary select-none'
+              className='block mb-3 text-base font-semibold text-theme-primary'
             >
               System Prompt
             </label>
-            <p className='help-text text-sm text-theme-secondary mb-4 select-none'>
+            <p className='help-text text-sm text-theme-secondary mb-4'>
               Optional system prompt to provide context for API requests.
             </p>
             <textarea

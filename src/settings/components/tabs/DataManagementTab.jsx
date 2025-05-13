@@ -177,10 +177,10 @@ const DataManagementTab = () => {
   
   return (
     <div>
-      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium select-none'>
+      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium'>
         Data Management
       </h2>
-      <p className='section-description text-sm text-theme-secondary mb-6 select-none'>
+      <p className='section-description text-sm text-theme-secondary mb-6'>
         Manage your extension settings. Select a data type, then choose an action.
       </p>
 
@@ -196,7 +196,7 @@ const DataManagementTab = () => {
     <div className='w-fit'>
       <SettingsCard className="selector-section-container mb-4">
         <div className="flex items-center">
-          <h3 className='text-base font-semibold text-theme-primary select-none'>
+          <h3 className='text-base font-semibold text-theme-primary'>
             Data Type Selection
           </h3>
           <div className="ml-5">

@@ -119,14 +119,14 @@ const PlatformDetails = ({
           </div>
         )}
         <div className='platform-header-info min-w-0'>
-          <h3 className='platform-title text-xl font-medium mb-2 text-theme-primary truncate select-none'>
+          <h3 className='platform-title text-xl font-medium mb-2 text-theme-primary truncate'>
             {platform.name}
           </h3>
           <div className='platform-actions flex flex-wrap gap-x-3 gap-y-1'>
-            <a href={platform.consoleApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer select-none'>API Console</a>
-            <a href={platform.docApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer select-none'>API Documentation</a>
-            <a href={platform.modelApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer select-none'>Model Documentation</a>
-            <a href={platform.keyApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer select-none'>API Keys</a>
+            <a href={platform.consoleApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer'>API Console</a>
+            <a href={platform.docApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer'>API Documentation</a>
+            <a href={platform.modelApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer'>Model Documentation</a>
+            <a href={platform.keyApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer'>API Keys</a>
           </div>
         </div>
       </div>
@@ -141,11 +141,11 @@ const PlatformDetails = ({
           if (currentActiveSubTab === 'apiKey') {
             return (
               <SettingsCard className='settings-section'>
-                <h4 className='section-subtitle text-base font-semibold mb-4 text-theme-primary select-none'>
+                <h4 className='section-subtitle text-base font-semibold mb-4 text-theme-primary'>
                   API Credentials
                 </h4>
                 <div className='form-group mb-4'>
-                  <label htmlFor={`${platform.id}-api-key`} className='block mb-2 text-sm text-theme-secondary select-none'>API Key</label>
+                  <label htmlFor={`${platform.id}-api-key`} className='block mb-2 text-sm text-theme-secondary'>API Key</label>
                   <div className='relative flex items-center'>
                     <input
                       type={showApiKey ? 'text' : 'password'}

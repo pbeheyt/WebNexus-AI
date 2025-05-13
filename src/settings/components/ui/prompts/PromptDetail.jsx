@@ -143,28 +143,28 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     <div className='prompt-detail bg-theme-surface shadow-sm rounded-lg p-5 border border-theme'>
       <div className='prompt-detail-header flex items-center justify-between mb-4 pb-3 border-b border-theme'>
         <div className='flex items-center min-w-0'>
-          <h3 className='prompt-detail-title text-base font-semibold text-theme-primary select-none truncate'>
+          <h3 className='prompt-detail-title text-base font-semibold text-theme-primary truncate'>
             {prompt.prompt.name}
           </h3>
           {isDefaultForType && (
-            <span className='default-badge ml-3 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full font-medium select-none'>
+            <span className='default-badge ml-3 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full font-medium'>
               Default
             </span>
           )}
         </div>
       </div>
 
-      <div className='prompt-detail-meta mb-4 text-base text-theme-secondary select-none'>
+        <div className='prompt-detail-meta mb-4 text-base text-theme-secondary'>
         <div className='inline-flex items-center gap-2'>
           <ContentTypeIcon
             contentType={prompt.contentType}
-            className='w-4 h-4 flex items-center justify-center select-none'
+            className='w-4 h-4 flex items-center justify-center'
             />
           <span>{prompt.contentTypeLabel}</span>
         </div>
       </div>
 
-      <div className={`prompt-detail-content whitespace-pre-wrap  p-4 rounded-lg bg-theme-hover border border-theme mb-5 text-sm text-theme-primary select-none overflow-hidden prompt-content-scrollable`}>
+      <div className={`prompt-detail-content whitespace-pre-wrap  p-4 rounded-lg bg-theme-hover border border-theme mb-5 text-sm text-theme-primary overflow-hidden prompt-content-scrollable`}>
         {prompt.prompt.content}
       </div>
 

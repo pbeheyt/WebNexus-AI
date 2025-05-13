@@ -21,7 +21,7 @@ const PlatformSidebar = ({
           <button
             type='button'
             key={platform.id}
-            className={`platform-item flex items-center pl-3 pr-8 py-3 shadow-sm rounded-lg cursor-pointer select-none transition-colors relative border border-theme w-full text-left ${
+            className={`platform-item flex items-center pl-3 pr-8 py-3 shadow-sm rounded-lg cursor-pointer transition-colors relative border border-theme w-full text-left ${
               platform.id === selectedPlatformId
                 ? ' bg-theme-hover'
                 : ' bg-theme-surface'
