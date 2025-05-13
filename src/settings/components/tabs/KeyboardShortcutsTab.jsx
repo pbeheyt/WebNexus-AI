@@ -1,6 +1,36 @@
 // src/settings/components/tabs/KeyboardShortcutsTab.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 
+// Helper function to parse chrome.commands shortcut strings
+const parseChromeCommandShortcut = (shortcutString) => {
+  if (!shortcutString || typeof shortcutString !== 'string' || shortcutString.trim() === '') {
+    return null; // No shortcut defined
+  }
+
+  const parts = shortcutString.toLowerCase().split('+');
+  const key = parts.pop(); // The last part is the key
+
+  if (!key) return null; // Should not happen if string is not empty
+
+  const modifiers = {
+    key: key,
+    altKey: parts.includes('alt'),
+    ctrlKey: parts.includes('ctrl') || parts.includes('control'),
+    shiftKey: parts.includes('shift'),
+    metaKey: parts.includes('macctrl') || parts.includes('command') || parts.includes('cmd'), // Meta on Mac often 'MacCtrl' or 'Command'
+  };
+
+  // For Mac, chrome.commands often uses "MacCtrl" for Command key, which we map to metaKey.
+  // If "Ctrl" is present alongside "MacCtrl", it means actual Ctrl, not Command.
+  // This logic tries to be robust but might need refinement based on exact outputs of chrome.commands.getAll() on different OS.
+  // If 'macctrl' was found, it's definitely meta. If 'ctrl' is also there, it means both.
+  // If only 'ctrl' is there, it's ctrlKey, unless it's a Mac and we assume 'ctrl' might mean 'meta' if no other specific mac modifier is present.
+  // However, for simplicity and common cases, the above mapping should cover many scenarios.
+  // A more robust solution might involve checking navigator.platform.
+
+  return modifiers;
+};
+
 import { Button, useNotification, Modal } from '../../../components';
 import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
@@ -78,6 +108,33 @@ export function KeyboardShortcutsTab() {
   };
 
   const handleSaveCustomShortcut = async () => {
+    // Conflict Detection Logic
+    if (globalCommands && globalCommands.length > 0) {
+      for (const command of globalCommands) {
+        if (command.name === '_execute_action' || command.name === 'toggle-feature') {
+          continue;
+        }
+
+        const globalShortcutObj = parseChromeCommandShortcut(command.shortcut);
+        if (globalShortcutObj) {
+          const mainKeyMatch = editableCustomShortcut.key.toLowerCase() === globalShortcutObj.key.toLowerCase();
+          const altMatch = !!editableCustomShortcut.altKey === !!globalShortcutObj.altKey;
+          const ctrlMatch = !!editableCustomShortcut.ctrlKey === !!globalShortcutObj.ctrlKey;
+          const shiftMatch = !!editableCustomShortcut.shiftKey === !!globalShortcutObj.shiftKey;
+          const metaMatch = !!editableCustomShortcut.metaKey === !!globalShortcutObj.metaKey;
+
+          if (mainKeyMatch && altMatch && ctrlMatch && shiftMatch && metaMatch) {
+            setShortcutModalError(
+              `Conflicts with: '${command.description || command.name}'. Choose a different shortcut.`
+            );
+            setIsSavingShortcut(false); // Explicitly set to false here
+            return; // Prevent saving
+          }
+        }
+      }
+    }
+    // End of Conflict Detection Logic
+
     setIsSavingShortcut(true);
     setShortcutModalError(''); 
     
@@ -214,7 +271,7 @@ export function KeyboardShortcutsTab() {
             </div>
           </div>
           {shortcutModalError && (
-            <p className="text-sm text-error text-center mb-1">{shortcutModalError}</p> 
+            <p className="text-sm text-error text-center my-3">{shortcutModalError}</p> 
           )}
         </div>
       </Modal>
