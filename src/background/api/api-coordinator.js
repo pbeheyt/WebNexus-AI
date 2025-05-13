@@ -27,9 +27,9 @@ const activeAbortControllers = new Map();
 
 /**
  * Handle API model requests
- * @param {string} requestType - Type of request
- * @param {Object} message - Message object
- * @param {Function} sendResponse - Response function
+ * @param {string} requestType
+ * @param {Object} message
+ * @param {Function} sendResponse
  */
 export async function handleApiModelRequest(
   requestType,
@@ -125,8 +125,8 @@ export async function handleApiModelRequest(
 
 /**
  * Process content via API with streaming support
- * @param {Object} params - Parameters for content processing
- * @returns {Promise<Object>} Result information
+ * @param {Object} params
+ * @returns {Promise<Object>}
  */
 export async function processContentViaApi(params) {
   const {
@@ -256,62 +256,6 @@ export async function processContentViaApi(params) {
       newlyFormattedContent = null;
     }
 
-    // 4. Get the prompt
-    let promptContent;
-
-    if (customPrompt) {
-      promptContent = customPrompt;
-    } else {
-      throw new Error('No prompt content provided');
-    }
-
-    // 5. Parameter Resolution (Centralized) - Use platformId and modelId from params
-    let resolvedParams = await ModelParameterService.resolveParameters(
-      platformId,
-      modelId,
-      { tabId, source, conversationHistory, useThinkingMode: isThinkingModeEnabled }
-    );
-    resolvedParams.conversationHistory = conversationHistory;
-    logger.background.info(`Resolved parameters:`, resolvedParams);
-
-    // 6. Generate a unique stream ID for this request
-    const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-    // 7. Initialize streaming response (using platformId from params)
-    await initializeStreamResponse(streamId, platformId, resolvedParams.model); // Include model
-
-    // 8. Determine the formatted content to include in the request
-    let formattedContentForRequest = null;
-    const contextAlreadySent = await getTabContextSentFlag(tabId);
-
-    if (!isContentExtractionEnabled) {
-      logger.background.info(`Content inclusion skipped: Toggle is OFF.`);
-      formattedContentForRequest = null;
-    } else if (contextAlreadySent) {
-      logger.background.info(
-        `Content inclusion skipped: Context already sent for tab ${tabId}.`
-      );
-      formattedContentForRequest = null;
-    } else {
-      // Toggle is ON and context not sent yet
-      if (shouldExtract && newlyFormattedContent) {
-        formattedContentForRequest = newlyFormattedContent;
-        logger.background.info(
-          `Including newly extracted/formatted content for tab ${tabId}.`
-        );
-      } else if (initialFormattedContentExists) {
-        formattedContentForRequest = await getFormattedContentForTab(tabId);
-        logger.background.info(
-          `Including pre-existing formatted content for tab ${tabId}.`
-        );
-      } else {
-        logger.background.info(
-          `Content inclusion skipped: Toggle is ON, but no content available for tab ${tabId}.`
-        );
-        formattedContentForRequest = null;
-      }
-    }
-
     if (tabId) {
       try {
         const promptToStoreOrClear = resolvedParams.systemPrompt;
@@ -393,12 +337,12 @@ export async function processContentViaApi(params) {
 
 /**
  * Create a stream handler function
- * @param {string} streamId - Stream identifier
- * @param {string} source - Interface source
- * @param {number} tabId - Tab ID for sidebar integration
- * @param {string} platformId - Platform identifier
- * @param {Object} resolvedParams - Resolved parameters including the model
- * @returns {Function} Chunk handler function
+ * @param {string} streamId
+ * @param {string} source
+ * @param {number} tabId
+ * @param {string} platformId
+ * @param {Object} resolvedParams
+ * @returns {Function}
  */
 function createStreamHandler(
   streamId,
@@ -430,7 +374,7 @@ function createStreamHandler(
     if (!done && (chunk || thinkingChunk)) { // Send if not done and either chunk exists
       fullContent += chunk; // Only accumulate regular content
 
-      if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+      if (source === INTERFACE_SOURCES.SIDEPANEL && tabId) {
         try {
           // **Explicitly construct the inner chunkData object**
           const chunkDataPayload = {
@@ -505,7 +449,7 @@ function createStreamHandler(
       }
 
       // Ensure the final message (success, error, or cancelled) is sent for sidebar
-      if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
+      if (source === INTERFACE_SOURCES.SIDEPANEL && tabId) {
         try {
           const finalMessagePayload = {
             action: 'streamChunk',

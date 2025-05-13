@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-export function SidebarIcon({ className = 'w-4 h-4', ...props }) {
+export function SidepanelIcon({ className = 'w-4 h-4', ...props }) {
   return (
     <svg
       viewBox='0 0 24 24'
@@ -19,8 +19,8 @@ export function SidebarIcon({ className = 'w-4 h-4', ...props }) {
   );
 }
 
-SidebarIcon.propTypes = {
+SidepanelIcon.propTypes = {
   className: PropTypes.string,
 };
 
-export default SidebarIcon;
+export default SidepanelIcon;

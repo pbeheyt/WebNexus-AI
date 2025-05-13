@@ -1,4 +1,4 @@
-// src/sidebar/hooks/useMessageActions.js
+// src/sidepanel/hooks/useMessageActions.js
 
 import { useCallback } from 'react';
 
@@ -77,7 +77,7 @@ const _initiateRerunSequence = async ({
   const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
   // 'isContentExtractionEnabled' below refers to the parameter passed to _initiateRerunSequence (the toggle state)
   const effectiveContentExtractionEnabled = isPageInjectable ? isContentExtractionEnabled : false;
-  logger.sidebar.info(
+  logger.sidepanel.info(
     `[_initiateRerunSequence] Page injectable: ${isPageInjectable}, Toggle state: ${isContentExtractionEnabled}, Effective: ${effectiveContentExtractionEnabled}`
   );
 
@@ -92,7 +92,7 @@ const _initiateRerunSequence = async ({
     isThinkingModeEnabled: isThinkingModeEnabled,
     options: {
       tabId,
-      source: INTERFACE_SOURCES.SIDEBAR,
+      source: INTERFACE_SOURCES.SIDEPANEL,
       ...(rerunStatsRef.current && {
         preTruncationCost: rerunStatsRef.current.preTruncationCost,
         preTruncationOutput: rerunStatsRef.current.preTruncationOutput,
@@ -164,7 +164,7 @@ export function useMessageActions({
         return;
       const index = messages.findIndex((msg) => msg.id === messageId);
       if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'Cannot rerun: Message not found or not a user message.'
         );
         return;
@@ -252,7 +252,7 @@ export function useMessageActions({
         return;
       const index = messages.findIndex((msg) => msg.id === messageId);
       if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'Cannot edit/rerun: Message not found or not a user message.'
         );
         return;
@@ -354,7 +354,7 @@ export function useMessageActions({
         userIndex < 0 ||
         messages[userIndex].role !== MESSAGE_ROLES.USER
       ) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'Cannot rerun assistant message: Invalid message structure or preceding user message not found.',
           { assistantIndex, userIndex }
         );

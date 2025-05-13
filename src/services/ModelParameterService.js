@@ -17,7 +17,7 @@ class ModelParameterService {
    * @param {string} platformId - Platform ID
    * @param {Object} options - Additional options
    * @param {number} [options.tabId] - Tab ID for tab-specific preferences
-   * @param {string} [options.source] - Interface source (popup or sidebar)
+   * @param {string} [options.source] - Interface source (popup or sidepanel)
    * @returns {Promise<string>} Resolved model ID
    */
   async resolveModel(platformId, options = {}) {
@@ -42,9 +42,9 @@ class ModelParameterService {
       }
     }
 
-    // 2. Try source-specific global preference (Sidebar only)
-    if (source === INTERFACE_SOURCES.SIDEBAR) {
-      const storageKey = STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM;
+    // 2. Try source-specific global preference (Sidepanel only)
+    if (source === INTERFACE_SOURCES.SIDEPANEL) {
+      const storageKey = STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM;
 
       try {
         const sourcePrefs = await chrome.storage.sync.get(storageKey);
@@ -165,22 +165,22 @@ class ModelParameterService {
 
   /**
    * Save global model preference for a source
-   * @param {string} source - Interface source (popup or sidebar)
+   * @param {string} source - Interface source (popup or sidepanel)
    * @param {string} platformId - Platform ID
    * @param {string} modelId - Model ID to save
    * @returns {Promise<boolean>} Success indicator
    */
   async saveSourceModelPreference(source, platformId, modelId) {
-    // Only save for sidebar, popup uses last selected via settings or default
-    if (source !== INTERFACE_SOURCES.SIDEBAR) {
+    // Only save for sidepanel, popup uses last selected via settings or default
+    if (source !== INTERFACE_SOURCES.SIDEPANEL) {
       logger.service.warn(
-        `Not saving model preference for non-sidebar source: ${source}`
+        `Not saving model preference for non-sidepanel source: ${source}`
       );
       return false;
     }
 
     try {
-      const storageKey = STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM;
+      const storageKey = STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM;
 
       // Get current preferences
       const prefs = await chrome.storage.sync.get(storageKey);
@@ -208,7 +208,7 @@ class ModelParameterService {
    * @param {string} modelId - The specific model ID to use.
    * @param {Object} options - Additional options
    * @param {number} [options.tabId] - Tab ID for context (e.g., token tracking)
-   * @param {string} [options.source] - Interface source (popup or sidebar)
+   * @param {string} [options.source] - Interface source (popup or sidepanel)
    * @param {Array} [options.conversationHistory] - Optional conversation history for context
    * @returns {Promise<Object>} Resolved parameters object for API calls
    */

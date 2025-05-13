@@ -7,7 +7,7 @@ import 'katex/dist/katex.min.css';
 
 import { logger } from '../../../shared/logger';
 import { IconButton, RerunIcon, PlatformIcon } from '../../../components';
-import { useSidebarChat } from '../../contexts/SidebarChatContext';
+import { useSidepanelChat } from '../../contexts/SidepanelChatContext';
 
 import ThinkingBlock from './ThinkingBlock';
 import EnhancedCodeBlock from './EnhancedCodeBlock';
@@ -41,7 +41,7 @@ export const AssistantMessageBubble = memo(
     ) => {
       // Hooks needed for Assistant functionality
       const { rerunAssistantMessage, isProcessing, isCanceling } =
-        useSidebarChat();
+        useSidepanelChat();
       const {
         copyState: assistantCopyState,
         handleCopy: handleAssistantCopy,
@@ -81,7 +81,7 @@ export const AssistantMessageBubble = memo(
             });
             processed = processedSegments.join('');
           } catch (error) {
-            logger.sidebar.error('Error during math preprocessing:', error);
+            logger.sidepanel.error('Error during math preprocessing:', error);
             processed = content || ''; // Fallback
           }
         } else {

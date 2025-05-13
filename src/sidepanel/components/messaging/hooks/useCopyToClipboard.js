@@ -20,7 +20,7 @@ export const useCopyToClipboard = (textToCopy) => {
       setCopyState('copied');
       setDisplayIconState('copied');
     } catch (error) {
-      logger.sidebar.error('Failed to copy text:', error);
+      logger.sidepanel.error('Failed to copy text:', error);
       setCopyState('error');
       setDisplayIconState('error');
     }

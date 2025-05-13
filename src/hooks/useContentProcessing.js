@@ -9,8 +9,8 @@ import { robustSendMessage } from '../shared/utils/message-utils';
 
 /**
  * Hook for content extraction and processing
- * Supports both popup (web interface) and sidebar (API) paths
- * @param {string} source - Source interface (popup or sidebar)
+ * Supports both popup (web interface) and sidepanel (API) paths
+ * @param {string} source - Source interface (popup or sidepanel)
  * @returns {Object} - Methods and state for content extraction and processing
  */
 export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
@@ -125,7 +125,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
 
   /**
    * Process content directly with API (API path)
-   * Used by sidebar for in-extension chat
+   * Used by sidepanel for in-extension chat
    */
   const processContentViaApi = useCallback(
     async (options = {}) => {
@@ -244,7 +244,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   return {
     // Core processing methods
     processContent, // For popup/web interface path
-    processContentViaApi, // For sidebar/API path
+    processContentViaApi, // For sidepanel/API path
 
     // State management
     reset,

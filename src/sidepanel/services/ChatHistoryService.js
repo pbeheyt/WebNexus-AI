@@ -1,4 +1,4 @@
-// src/sidebar/services/ChatHistoryService.js
+// src/sidepanel/services/ChatHistoryService.js
 
 import { logger } from '../../shared/logger';
 import { STORAGE_KEYS, MAX_MESSAGES_PER_TAB_HISTORY } from '../../shared/constants';
@@ -18,7 +18,7 @@ class ChatHistoryService {
   static async getHistory(tabId) {
     try {
       if (!tabId) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'TabChatHistory: No tabId provided for getHistory'
         );
         return [];
@@ -31,7 +31,7 @@ class ChatHistoryService {
       // Return history for this tab or empty array
       return allTabHistories[tabId] || [];
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TabChatHistory: Error getting chat history:',
         error
       );
@@ -47,7 +47,7 @@ class ChatHistoryService {
   static async getSystemPrompt(tabId) {
     try {
       if (!tabId) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'TabChatHistory: No tabId provided for getSystemPrompt'
         );
         return null;
@@ -62,7 +62,7 @@ class ChatHistoryService {
       // Return system prompts for this tab or null
       return allTabSystemPrompts[tabId] || null;
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TabChatHistory: Error getting system prompt:',
         error
       );
@@ -84,7 +84,7 @@ class ChatHistoryService {
   static async saveHistory(tabId, messages, modelConfig = null, options = {}, isThinkingModeEnabled = false) {
     try {
       if (!tabId) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'TabChatHistory: No tabId provided for saveHistory'
         );
         return false;
@@ -114,7 +114,7 @@ class ChatHistoryService {
 
       return true;
     } catch (error) {
-      logger.sidebar.error('TabChatHistory: Error saving chat history:', error);
+      logger.sidepanel.error('TabChatHistory: Error saving chat history:', error);
       return false;
     }
   }
@@ -127,7 +127,7 @@ class ChatHistoryService {
   static async clearHistory(tabId) {
     try {
       if (!tabId) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'TabChatHistory: No tabId provided for clearHistory'
         );
         return false;
@@ -148,7 +148,7 @@ class ChatHistoryService {
 
       return true;
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TabChatHistory: Error clearing chat history:',
         error
       );
@@ -164,7 +164,7 @@ class ChatHistoryService {
   static async cleanupClosedTabs(activeTabIds) {
     try {
       if (!activeTabIds || !Array.isArray(activeTabIds)) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'TabChatHistory: Invalid activeTabIds for cleanup'
         );
         return false;
@@ -194,14 +194,14 @@ class ChatHistoryService {
       // Only update storage if something was removed
       if (needsCleanup) {
         await chrome.storage.local.set({ [STORAGE_KEYS.TAB_CHAT_HISTORIES]: allTabHistories });
-        logger.sidebar.info(
+        logger.sidepanel.info(
           'TabChatHistory: Cleaned up histories for closed tabs'
         );
       }
 
       return true;
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TabChatHistory: Error cleaning up closed tabs:',
         error
       );

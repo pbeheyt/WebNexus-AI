@@ -26,7 +26,7 @@ import {
  * now refactored to use internal hooks for logic separation and includes error handling.
  *
  * @param {Object} options - Configuration options
- * @param {string} options.interfaceType - Interface type (popup or sidebar)
+ * @param {string} options.interfaceType - Interface type (popup or sidepanel)
  * @param {string} options.globalStorageKey - Key for global preference storage
  * @param {Function} [options.onStatusUpdate=()=>{}] - Optional callback for status updates
  * @returns {Object} Context provider and hook
@@ -143,7 +143,7 @@ export function createTabAwarePlatformContext(options = {}) {
         url: config.url || null,
         iconUrl: config.iconUrl,
         hasCredentials:
-          interfaceType === INTERFACE_SOURCES.SIDEBAR
+          interfaceType === INTERFACE_SOURCES.SIDEPANEL
             ? credentialStatus[config.id] || false
             : true, // Popups don't check/need creds here
       }));
@@ -163,7 +163,7 @@ export function createTabAwarePlatformContext(options = {}) {
         setTabId,
       };
 
-      if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
+      if (interfaceType === INTERFACE_SOURCES.SIDEPANEL) {
         return {
           ...baseValue,
           models: modelError ? [] : models, // Return empty models if model loading failed

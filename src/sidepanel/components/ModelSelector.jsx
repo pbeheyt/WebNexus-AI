@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 
-import { useSidebarPlatform } from '../../contexts/platform';
+import { useSidepanelPlatform } from '../../contexts/platform';
 
 import { DropdownContext } from './Header';
 

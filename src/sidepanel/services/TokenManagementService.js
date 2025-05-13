@@ -1,4 +1,4 @@
-// src/sidebar/services/TokenManagementService.js
+// src/sidepanel/services/TokenManagementService.js
 
 import { encode } from 'gpt-tokenizer';
 
@@ -34,7 +34,7 @@ class TokenManagementService {
       const mergedStats = { ...this._getEmptyStats(), ...tabStats };
       return mergedStats;
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TokenManagementService: Error getting token statistics:',
         error
       );
@@ -70,7 +70,7 @@ class TokenManagementService {
       });
       return true;
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TokenManagementService: Error updating token statistics:',
         error
       );
@@ -221,7 +221,7 @@ class TokenManagementService {
       });
       return true;
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TokenManagementService: Error clearing token statistics:',
         error
       );
@@ -302,17 +302,17 @@ class TokenManagementService {
 
       // 6. Prepare Final Stats Object to Save (Explicitly matching _getEmptyStats structure)
       const finalStatsObject = {
-        // Cumulative stats (use initial output tokens + tokens from this specific call)
+        // Cumulative stats
         outputTokens: isLastError
           ? initialOutputTokens // On error, cumulative output doesn't increase
           : initialOutputTokens + (baseStats.outputTokensInLastApiCall || 0), // On success, add last assistant output
         accumulatedCost: newAccumulatedCost,
 
-        // Last API call stats (from base calculation - these reflect ONLY the last call)
+        // Last API call stats
         promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
         historyTokensSentInLastApiCall:
           baseStats.historyTokensSentInLastApiCall || 0,
-        systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,
+        systemTokensInLastApiCall: systemTokensInLastApiCall || 0,
         inputTokensInLastApiCall: baseStats.inputTokensInLastApiCall || 0,
         outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0,
         lastApiCallCost: currentCallCost,
@@ -325,7 +325,7 @@ class TokenManagementService {
       // 8. Return the final statistics object
       return finalStatsObject;
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TokenManagementService: Error calculating token statistics:',
         error
       );
@@ -349,12 +349,12 @@ class TokenManagementService {
       const tokens = encode(text);
       return tokens.length;
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         'TokenManagementService: Error encoding text with gpt-tokenizer:',
         error
       );
       // Fallback on encoding error
-      logger.sidebar.warn(
+      logger.sidepanel.warn(
         'TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.'
       );
       return Math.ceil(text.length / 4); // Fallback method: 1 token per 4 chars

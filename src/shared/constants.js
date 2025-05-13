@@ -44,13 +44,13 @@ export const STORAGE_KEYS = {
   /** @description ID of the default/last-selected AI platform for the Popup. Synced across devices. */
   POPUP_DEFAULT_PLATFORM_ID: 'popup_default_platform_id',
   /** @description ID of the default/last-selected AI platform for the Sidebar (global). Synced across devices. */
-  SIDEBAR_DEFAULT_PLATFORM_ID: 'sidebar_default_platform_id',
+  SIDEPANEL_DEFAULT_PLATFORM_ID: 'sidepanel_default_platform_id',
   /** @description Map of { platformId: modelId } for default/last-selected models in the Sidebar. Synced. */
-  SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM: 'sidebar_default_model_id_by_platform',
+  SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM: 'sidepanel_default_model_id_by_platform',
   /** @description User's preference for enabling "thinking mode" in the Sidebar, stored as { platformId: { modelId: boolean } }. Synced. */
-  SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
+  SIDEPANEL_THINKING_MODE_PREFERENCE: 'sidepanel_thinking_mode_preference',
   /** @description User's custom keyboard shortcut configuration for toggling the sidebar. Synced. */
-  CUSTOM_SIDEBAR_TOGGLE_SHORTCUT: 'custom_sidebar_toggle_shortcut_config',
+  CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT: 'custom_sidepanel_toggle_shortcut_config',
 
   // --- Core Settings ---
   /** @description User-configured model parameters (temperature, maxTokens, etc.) for each platform/model. Local. */
@@ -108,7 +108,7 @@ export const STORAGE_KEYS = {
   /** @description Last selected/preferred model (per platform) for each tab's Sidebar instance. Local. */
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
   /** @description Visibility state (true/false) of the Sidebar for each tab. Local. */
-  TAB_SIDEBAR_STATES: 'tab_sidebar_states',
+  TAB_SIDEPANEL_STATES: 'tab_sidepanel_states',
   /** @description Flag indicating if page context has already been sent for a tab's Sidebar. Local. */
   TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
 };
@@ -127,7 +127,7 @@ export const MAX_MESSAGES_PER_TAB_HISTORY = 200;
  */
 export const INTERFACE_SOURCES = {
   POPUP: 'popup',
-  SIDEBAR: 'sidebar',
+  SIDEPANEL: 'sidepanel', // Renamed to SIDEPANEL internally
 };
 
 /**
@@ -140,7 +140,7 @@ export const MESSAGE_ROLES = {
 };
 
 // Default value for the custom sidebar toggle shortcut, not the storage key itself
-export const DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG = {
+export const DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG = {
   key: 's',
   altKey: true,
   ctrlKey: false,

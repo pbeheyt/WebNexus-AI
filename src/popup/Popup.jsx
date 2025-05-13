@@ -7,7 +7,7 @@ import {
   AppHeader,
   StatusMessage,
   Tooltip,
-  SidebarIcon,
+  SidepanelIcon,
   Toggle,
   ContentTypeIcon,
 } from '../components';
@@ -17,7 +17,7 @@ import {
   STORAGE_KEYS, // Updated import
   INTERFACE_SOURCES,
   CONTENT_TYPE_LABELS,
-  DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG, // This remains for the default value
+  DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG, // This remains for the default value
 } from '../shared/constants';
 import { formatShortcutToStringDisplay } from '../shared/utils/shortcut-utils';
 import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
@@ -181,11 +181,11 @@ export function Popup() {
     });
 
     if (!isAllowed) {
-      updateStatus('Sidebar cannot be opened on this type of page.', 'warning');
+      updateStatus('Side Panel cannot be opened on this type of page.', 'warning');
       return;
     }
 
-    updateStatus('Toggling sidebar...', true);
+    updateStatus('Toggling Side Panel...', true);
     try {
       const response = await robustSendMessage({
         action: 'toggleNativeSidePanelAction',
@@ -194,20 +194,20 @@ export function Popup() {
 
       if (response?.success) {
         updateStatus(
-          `Sidebar state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
+          `Side Panel state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
         );
 
         if (response.visible) {
           try {
             await chrome.sidePanel.open({ tabId: currentTab.id });
-            updateStatus('Sidebar opened successfully.');
+            updateStatus('Side Panel opened successfully.');
             window.close();
           } catch (openError) {
             logger.popup.error('Error opening side panel:', openError);
-            updateStatus(`Error opening sidebar: ${openError.message}`);
+            updateStatus(`Error opening Side Panel: ${openError.message}`);
           }
         } else {
-          updateStatus('Sidebar disabled.');
+          updateStatus('Side Panel disabled.');
           window.close();
         }
       } else {
@@ -222,8 +222,8 @@ export function Popup() {
   }, [currentTab, updateStatus]);
 
   const { currentShortcutConfig: popupSidebarShortcut } = useConfigurableShortcut(
-    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT,
-    DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
+    STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
+    DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
     toggleSidebar,
     logger.popup,
     [toggleSidebar]
@@ -309,10 +309,10 @@ export function Popup() {
         <button
           onClick={toggleSidebar}
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-          title={popupSidebarShortcut && popupSidebarShortcut.key ? `Toggle Sidebar (${formatShortcutToStringDisplay(popupSidebarShortcut)})` : 'Toggle Sidebar'}
+          title={popupSidebarShortcut && popupSidebarShortcut.key ? `Toggle Side Panel (${formatShortcutToStringDisplay(popupSidebarShortcut)})` : 'Toggle Side Panel'}
           disabled={!currentTab?.id}
         >
-          <SidebarIcon className='w-4 h-4 select-none' />
+          <SidepanelIcon className='w-4 h-4 select-none' />
         </button>
       </AppHeader>
 

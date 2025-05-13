@@ -114,10 +114,10 @@ export const logger = {
     warn: (message, data) => log('settings', 'warn', message, data),
     error: (message, data) => log('settings', 'error', message, data),
   },
-  sidebar: {
-    debug: (message, data) => log('sidebar', 'debug', message, data),
-    info: (message, data) => log('sidebar', 'info', message, data),
-    warn: (message, data) => log('sidebar', 'warn', message, data),
-    error: (message, data) => log('sidebar', 'error', message, data),
+  sidepanel: {
+    debug: (message, data) => log('sidepanel', 'debug', message, data),
+    info: (message, data) => log('sidepanel', 'info', message, data),
+    warn: (message, data) => log('sidepanel', 'warn', message, data),
+    error: (message, data) => log('sidepanel', 'error', message, data),
   },
 };

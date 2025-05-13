@@ -41,7 +41,7 @@ export { SettingsIcon } from './icons/SettingsIcon';
 export { RefreshIcon } from './icons/RefreshIcon';
 export { ChevronDownIcon } from './icons/ChevronDownIcon';
 export { ChevronUpIcon } from './icons/ChevronUpIcon';
-export { SidebarIcon } from './icons/SidebarIcon';
+export { SidepanelIcon } from './icons/SidepanelIcon';
 export { InputTokenIcon } from './icons/InputTokenIcon';
 export { OutputTokenIcon } from './icons/OutputTokenIcon';
 export { ContextWindowIcon } from './icons/ContextWindowIcon';

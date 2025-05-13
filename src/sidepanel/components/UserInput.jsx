@@ -2,8 +2,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { useSidebarPlatform } from '../../contexts/platform';
-import { useSidebarChat } from '../contexts/SidebarChatContext';
+import { useSidepanelPlatform } from '../../contexts/platform';
+import { useSidepanelChat } from '../contexts/SidepanelChatContext';
 import { UnifiedInput } from '../../components/input/UnifiedInput';
 import { useContent } from '../../contexts/ContentContext';
 

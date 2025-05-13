@@ -61,7 +61,7 @@ export const renderWithPlaceholdersRecursive = (children, mathMap) => {
           );
         } else {
           // Use logger imported at the top
-          logger.sidebar.warn(
+          logger.sidepanel.warn(
             `Math placeholder ${placeholder} not found in map. Rendering fallback marker.`
           );
           const fallbackText =

@@ -1,6 +1,6 @@
 // sidepanel_loader.js
 (async function() {
-  console.log('[Sidepanel Loader] Script started.');
+  console.log('[Side Panel Loader] Script started.');
 
   // Attempt to apply dark mode based on system preference immediately
   // This also handles the case where documentElement might not be fully ready for classList
@@ -9,7 +9,7 @@
           document.documentElement.classList.add('dark');
       }
   } catch (e) {
-      console.warn('[Sidepanel Loader] Could not apply initial dark mode via matchMedia:', e);
+      console.warn('[Side Panel Loader] Could not apply initial dark mode via matchMedia:', e);
   }
 
 
@@ -36,7 +36,7 @@
       if (tabIdStr && currentUrl) {
         const tabId = parseInt(tabIdStr, 10);
         if (!isNaN(tabId)) {
-          console.log(`[Sidepanel Loader] Context from URL params: tabId=${tabId}, currentUrl=${currentUrl}`);
+          console.log(`[Side Panel Loader] Context from URL params: tabId=${tabId}, currentUrl=${currentUrl}`);
           resolve({ tabId, currentUrl });
           return;
         }
@@ -46,7 +46,7 @@
       // This part is tricky because the loader needs to identify itself.
       // For now, we will strongly rely on the background command handler to open the loader with context in URL.
       // If it's not there, it's an issue with the calling logic.
-      console.error('[Sidepanel Loader] CRITICAL: tabId or currentUrl not found in loader URL query parameters.');
+      console.error('[Side Panel Loader] CRITICAL: tabId or currentUrl not found in loader URL query parameters.');
       reject(new Error('Loader context (tabId, currentUrl) not found in URL.'));
     });
   }
@@ -55,12 +55,12 @@
     const { tabId, currentUrl } = await getLoaderContext();
 
     if (!tabId || isNaN(tabId) || !currentUrl) {
-      console.error('[Sidepanel Loader] Failed to get valid context (tabId, currentUrl).');
+      console.error('[Side Panel Loader] Failed to get valid context (tabId, currenturl).');
       document.body.textContent = 'Error: Could not initialize sidebar context.';
       return;
     }
 
-    console.log(`[Sidepanel Loader] Context: tabId=${tabId}, currentUrl=${currentUrl}. Requesting final state.`);
+    console.log(`[Side Panel Loader] Context: tabId=${tabId}, currentUrl=${currentUrl}. Requesting final state.`);
 
     chrome.runtime.sendMessage(
       {
@@ -70,28 +70,28 @@
       },
       (response) => {
         if (chrome.runtime.lastError) {
-          console.error('[Sidepanel Loader] Error sending/receiving resolveSidePanelStateAndFinalize:', chrome.runtime.lastError.message);
+          console.error('[Side Panel Loader] Error sending/receiving resolveSidePanelStateAndFinalize:', chrome.runtime.lastError.message);
           document.body.textContent = 'Error: ' + chrome.runtime.lastError.message;
           return;
         }
         if (response && response.error) {
-          console.error('[Sidepanel Loader] Error from background:', response.error);
+          console.error('[Side Panel Loader] Error from background:', response.error);
           document.body.textContent = 'Error: ' + response.error;
         } else if (response && response.status) {
-          console.log('[Sidepanel Loader] Background status:', response.status);
+          console.log('[Side Panel Loader] Background status:', response.status);
           // If the panel was closed by the background, this loader instance will become defunct.
           // If navigated, this loader page will be replaced.
           if (response.status === 'closed_not_allowed' || response.status === 'closed_on_toggle') {
             // Optional: change text or do nothing as panel will be closed by background.
-            document.body.textContent = 'Sidebar closed.';
+            document.body.textContent = 'Side Panel closed.';
           }
         } else {
-            console.warn('[Sidepanel Loader] Unexpected response from background:', response);
+            console.warn('[Side Panel Loader] Unexpected response from background:', response);
         }
       }
     );
   } catch (e) {
-    console.error('[Sidepanel Loader] Initialization error:', e);
-    document.body.textContent = 'Error: Sidebar failed to load. ' + e.message;
+    console.error('[Side Panel Loader] Initialization error:', e);
+    document.body.textContent = 'Error: Side Panel failed to load. ' + e.message;
   }
 })();

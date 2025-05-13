@@ -4,7 +4,7 @@ import { STORAGE_KEYS } from '../shared/constants.js';
 /**
  * Service for managing tab-specific sidebar state
  */
-class SidebarStateManager {
+class SidepanelStateManager {
   /**
    * Toggle sidebar visibility for a specific tab
    * @private
@@ -13,8 +13,8 @@ class SidebarStateManager {
    */
   async _toggleForTab(tabId, visible) {
     // Get current tab states
-    const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } =
-      await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
+    const { [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: tabStates = {} } =
+      await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
 
     // Convert tabId to string for use as object key
     const tabIdStr = tabId.toString();
@@ -33,10 +33,10 @@ class SidebarStateManager {
 
     // Save updated states
     await chrome.storage.local.set({
-      [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates,
+      [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: updatedStates,
     });
 
-    logger.service.info(`Tab ${tabId} sidebar visibility set to ${visible}`);
+    logger.service.info(`Tab ${tabId} sidepanel visibility set to ${visible}`);
   }
 
   /**
@@ -48,9 +48,9 @@ class SidebarStateManager {
    */
   async _getStateForTab(tabId) {
     const result = await chrome.storage.local.get([
-      STORAGE_KEYS.TAB_SIDEBAR_STATES,
-      STORAGE_KEYS.SIDEBAR_DEFAULT_PLATFORM_ID,
-      STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM,
+      STORAGE_KEYS.TAB_SIDEPANEL_STATES,
+      STORAGE_KEYS.SIDEPANEL_DEFAULT_PLATFORM_ID,
+      STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM,
     ]);
 
     const tabStates = result[STORAGE_KEYS.TAB_SIDEBAR_STATES] || {};
@@ -63,11 +63,11 @@ class SidebarStateManager {
   }
 
   /**
-   * Get current sidebar state for specific tab
+   * Get current sidepanel state for specific tab
    * @param {number} tabId - Tab ID
-   * @returns {Promise<Object>} Tab-specific sidebar state
+   * @returns {Promise<Object>} Tab-specific sidepanel state
    */
-  async getSidebarState(tabId) {
+  async getSidepanelState(tabId) {
     try {
       if (!tabId) {
         // Get active tab if no tab ID specified
@@ -91,7 +91,7 @@ class SidebarStateManager {
 
       return this._getStateForTab(tabId);
     } catch (error) {
-      logger.service.error(`Error getting sidebar state for tab ${tabId}:`, error);
+      logger.service.error(`Error getting sidepanel state for tab ${tabId}:`, error);
       return {
         visible: false,
         platform: null,
@@ -101,34 +101,34 @@ class SidebarStateManager {
   }
 
   /**
-   * Get sidebar visibility for specific tab
+   * Get sidepanel visibility for specific tab
    * @param {number} tabId - Tab ID
    * @returns {Promise<boolean>} Visibility state
    */
-  async getSidebarVisibilityForTab(tabId) {
+  async getSidepanelVisibilityForTab(tabId) {
     try {
-      const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } =
-        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
+      const { [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: tabStates = {} } =
+        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
 
       return tabStates[tabId.toString()] === true;
     } catch (error) {
-      logger.service.error(`Error getting sidebar visibility for tab ${tabId}:`, error);
+      logger.service.error(`Error getting sidepanel visibility for tab ${tabId}:`, error);
       return false;
     }
   }
 
   /**
-   * Set sidebar visibility for specific tab
+   * Set sidepanel visibility for specific tab
    * @param {number} tabId - Tab ID
    * @param {boolean} visible - Visibility state
    * @returns {Promise<boolean>} Success indicator
    */
-  async setSidebarVisibilityForTab(tabId, visible) {
+  async setSidepanelVisibilityForTab(tabId, visible) {
     try {
       await this._toggleForTab(tabId, visible);
       return true;
     } catch (error) {
-      logger.service.error(`Error setting sidebar visibility for tab ${tabId}:`, error);
+      logger.service.error(`Error setting sidepanel visibility for tab ${tabId}:`, error);
       return false;
     }
   }
@@ -145,8 +145,8 @@ class SidebarStateManager {
       const activeTabIds = new Set(tabs.map((tab) => tab.id.toString()));
 
       // Get current tab states
-      const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } =
-        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
+      const { [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: tabStates = {} } =
+        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
 
       // Filter out closed tabs
       const updatedStates = {};
@@ -157,21 +157,21 @@ class SidebarStateManager {
           updatedStates[tabId] = state;
         } else {
           stateChanged = true;
-          logger.service.info(`Removing sidebar state for closed tab ${tabId}`);
+          logger.service.info(`Removing sidepanel state for closed tab ${tabId}`);
         }
       });
 
       // Save updated states if changed
       if (stateChanged) {
         await chrome.storage.local.set({
-          [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates,
+          [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: updatedStates,
         });
-        logger.service.info('Tab sidebar states cleaned up');
+        logger.service.info('Tab sidepanel states cleaned up');
       }
     } catch (error) {
-      logger.service.error('Error cleaning up tab sidebar states:', error);
+      logger.service.error('Error cleaning up tab sidepanel states:', error);
     }
   }
 }
 
-export default new SidebarStateManager();
+export default new SidepanelStateManager();

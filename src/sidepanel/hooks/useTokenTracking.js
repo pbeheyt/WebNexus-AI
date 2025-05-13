@@ -1,4 +1,4 @@
-// src/sidebar/hooks/useTokenTracking.js
+// src/sidepanel/hooks/useTokenTracking.js
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -34,7 +34,7 @@ export function useTokenTracking(tabId) {
         const stats = await TokenManagementService.getTokenStatistics(tabId);
         setTokenStats(stats);
       } catch (error) {
-        logger.sidebar.error('Error loading token data:', error);
+        logger.sidepanel.error('Error loading token data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -97,7 +97,7 @@ export function useTokenTracking(tabId) {
           tokenStats,
           modelConfig
         );
-        
+
         // Ensure we always return a valid status object
         return status || {
           warningLevel: 'none',
@@ -107,7 +107,7 @@ export function useTokenTracking(tabId) {
           totalTokens: 0
         };
       } catch (error) {
-        logger.sidebar.error(`[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error before/during static call for tabId: ${tabId}`, error);
+        logger.sidepanel.error(`[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error before/during static call for tabId: ${tabId}`, error);
         return {
           warningLevel: 'none',
           percentage: 0,
@@ -137,7 +137,7 @@ export function useTokenTracking(tabId) {
 
       return success;
     } catch (error) {
-      logger.sidebar.error('Error clearing token data:', error);
+      logger.sidepanel.error('Error clearing token data:', error);
       return false;
     }
   }, [tabId]);
@@ -162,7 +162,7 @@ export function useTokenTracking(tabId) {
         setTokenStats(stats);
         return stats;
       } catch (error) {
-        logger.sidebar.error('Error calculating token statistics:', error);
+        logger.sidepanel.error('Error calculating token statistics:', error);
         return tokenStats;
       }
     },

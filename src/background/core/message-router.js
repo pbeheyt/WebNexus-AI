@@ -12,7 +12,7 @@ import {
   handleProcessContentRequest,
   handleProcessContentViaApiRequest,
 } from '../services/content-processing.js';
-import { handleToggleNativeSidePanelAction, handleCloseCurrentSidePanelRequest } from '../services/sidebar-manager.js';
+import { handleToggleNativeSidePanelAction, handleCloseCurrentSidePanelRequest } from '../services/sidepanel-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
 

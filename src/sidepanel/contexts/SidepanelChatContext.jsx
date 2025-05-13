@@ -1,4 +1,4 @@
-// src/sidebar/contexts/SidebarChatContext.jsx
+// src/sidepanel/contexts/SidepanelChatContext.jsx
 
 import React, {
   createContext,
@@ -12,7 +12,7 @@ import React, {
 import PropTypes from 'prop-types';
 
 import { logger } from '../../shared/logger';
-import { useSidebarPlatform } from '../../contexts/platform';
+import { useSidepanelPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
 import { useTokenTracking } from '../hooks/useTokenTracking';
 import { useChatStreaming } from '../hooks/useChatStreaming';
@@ -25,13 +25,13 @@ import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { robustSendMessage } from '../../shared/utils/message-utils';
 
-const SidebarChatContext = createContext(null);
+const SidepanelChatContext = createContext(null);
 
-SidebarChatProvider.propTypes = {
+SidepanelChatProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export function SidebarChatProvider({ children }) {
+export function SidepanelChatProvider({ children }) {
   const {
     selectedPlatformId,
     selectedModel,
@@ -39,7 +39,7 @@ export function SidebarChatProvider({ children }) {
     tabId,
     platforms,
     getPlatformApiConfig,
-  } = useSidebarPlatform();
+  } = useSidepanelPlatform();
 
   const { contentType, currentTab } = useContent();
   const [messages, setMessages] = useState([]);
@@ -71,7 +71,7 @@ export function SidebarChatProvider({ children }) {
     isProcessing,
     error: processingError,
     reset: resetContentProcessing,
-  } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
+  } = useContentProcessing(INTERFACE_SOURCES.SIDEPANEL);
 
   // Get platform info
   const selectedPlatform = useMemo(
@@ -109,7 +109,7 @@ export function SidebarChatProvider({ children }) {
         });
 
         if (result && result.skippedContext === true) {
-          logger.sidebar.info(
+          logger.sidepanel.info(
             'Context extraction skipped by background:',
             result.reason
           );
@@ -141,7 +141,7 @@ export function SidebarChatProvider({ children }) {
 
         return true; // Indicate stream started successfully
       } catch (error) {
-        logger.sidebar.error('Error initiating API call:', error);
+        logger.sidepanel.error('Error initiating API call:', error);
         const isPortClosedError = error.isPortClosed;
         const systemErrorMessageContent = isPortClosedError
           ? '[System: The connection was interrupted. Please try sending your message again.]'
@@ -247,7 +247,7 @@ export function SidebarChatProvider({ children }) {
       try {
         const config = await getPlatformApiConfig(selectedPlatformId);
         if (!config || !config.models) {
-          logger.sidebar.warn(
+          logger.sidepanel.warn(
             'Platform API configuration missing required structure:',
             {
               platformId: selectedPlatformId,
@@ -261,7 +261,7 @@ export function SidebarChatProvider({ children }) {
         setModelConfigData(modelData);
         setStableModelConfigData(modelData);
       } catch (error) {
-        logger.sidebar.error(
+        logger.sidepanel.error(
           'Failed to load or process platform API configuration:',
           error
         );
@@ -286,7 +286,7 @@ export function SidebarChatProvider({ children }) {
           setStableContextStatus(status);
         }
       } catch (error) {
-        logger.sidebar.error('Error calculating context status:', error);
+        logger.sidepanel.error('Error calculating context status:', error);
         // Don't update stableContextStatus on error - keep previous valid state
       }
     };
@@ -294,7 +294,7 @@ export function SidebarChatProvider({ children }) {
   }, [tabId, modelConfigData, tokenStats, calculateContextStatus]);
 
   // Stabilize tokenStats for UI consumers
-  const { isLoading: isPlatformLoading } = useSidebarPlatform(); // Get loading state outside effect
+  const { isLoading: isPlatformLoading } = useSidepanelPlatform(); // Get loading state outside effect
 
   useEffect(() => {
     if (!isPlatformLoading) {
@@ -316,7 +316,7 @@ export function SidebarChatProvider({ children }) {
         const hasExtracted = history.some((msg) => msg.isExtractedContent);
         setExtractedContentAdded(hasExtracted);
       } catch (error) {
-        logger.sidebar.error('Error loading tab chat history:', error);
+        logger.sidepanel.error('Error loading tab chat history:', error);
       }
     };
     loadChatHistory();
@@ -347,13 +347,13 @@ export function SidebarChatProvider({ children }) {
       // Check if the loaded model config allows toggling
       if (modelConfigData?.thinking?.toggleable === true) {
         try {
-          const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE);
-          const prefs = result[STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE] || {};
+          const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE);
+          const prefs = result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
           const modePref = prefs[selectedPlatformId]?.[selectedModel];
           // Set state based on preference, default to false if undefined
           setIsThinkingModeEnabled(modePref === undefined ? false : modePref);
         } catch (err) {
-          logger.sidebar.error("Error loading thinking mode preference:", err);
+          logger.sidepanel.error("Error loading thinking mode preference:", err);
           setIsThinkingModeEnabled(false); // Default to false on error
         }
       } else {
@@ -465,7 +465,7 @@ export function SidebarChatProvider({ children }) {
       isThinkingModeEnabled: isThinkingModeEnabled,
       options: {
         tabId,
-        source: INTERFACE_SOURCES.SIDEBAR,
+        source: INTERFACE_SOURCES.SIDEPANEL,
         ...(rerunStatsRef.current && {
           preTruncationCost: rerunStatsRef.current.preTruncationCost,
           preTruncationOutput: rerunStatsRef.current.preTruncationOutput,
@@ -490,13 +490,13 @@ export function SidebarChatProvider({ children }) {
 
   const clearFormattedContentForTab = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
-      logger.sidebar.warn(
+      logger.sidepanel.warn(
         'clearFormattedContentForTab called without a valid tabId.'
       );
       return;
     }
     const tabIdKey = tabId.toString();
-    logger.sidebar.info(
+    logger.sidepanel.info(
       `Attempting to clear formatted content for tab: ${tabIdKey}`
     );
     try {
@@ -511,21 +511,21 @@ export function SidebarChatProvider({ children }) {
         await chrome.storage.local.set({
           [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: updatedFormattedContent,
         });
-        logger.sidebar.info(
+        logger.sidepanel.info(
           `Successfully cleared formatted content for tab: ${tabIdKey}`
         );
       } else {
-        logger.sidebar.info(
+        logger.sidepanel.info(
           `No formatted content found in storage for tab: ${tabIdKey}. No action needed.`
         );
       }
       // Only reset the flag, don't clear messages here
       setExtractedContentAdded(false);
-      logger.sidebar.info(
+      logger.sidepanel.info(
         `Reset extractedContentAdded flag for tab: ${tabIdKey}`
       );
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         `Error clearing formatted content for tab ${tabIdKey}:`,
         error
       );
@@ -534,12 +534,12 @@ export function SidebarChatProvider({ children }) {
 
   const resetCurrentTabData = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
-      logger.sidebar.warn('resetCurrentTabData called without a valid tabId.');
+      logger.sidepanel.warn('resetCurrentTabData called without a valid tabId.');
       return;
     }
     // Prevent concurrent refreshes
     if (isRefreshing) {
-        logger.sidebar.warn('Refresh already in progress. Ignoring request.');
+        logger.sidepanel.warn('Refresh already in progress. Ignoring request.');
         return;
     }
 
@@ -554,41 +554,41 @@ export function SidebarChatProvider({ children }) {
       try {
         // 1. Cancel any ongoing stream
         if (streamingMessageId && isProcessing && !isCanceling) {
-          logger.sidebar.info(
+          logger.sidepanel.info(
             'Refresh requested: Cancelling ongoing stream first...'
           );
           await cancelStream(); // Wait for cancellation attempt
-          logger.sidebar.info('Stream cancellation attempted.');
+          logger.sidepanel.info('Stream cancellation attempted.');
         }
 
         // 2. Notify background to clear its data (attempt and log, but don't block local reset on failure)
-        logger.sidebar.info(`Requesting background to clear data for tab ${tabId}`);
+        logger.sidepanel.info(`Requesting background to clear data for tab ${tabId}`);
         try {
             const clearResponse = await robustSendMessage({ action: 'clearTabData', tabId: tabId });
             if (clearResponse && clearResponse.success) {
-                logger.sidebar.info(`Background confirmed clearing data for tab ${tabId}`);
+                logger.sidepanel.info(`Background confirmed clearing data for tab ${tabId}`);
             } else {
-                logger.sidebar.error('Background failed to confirm tab data clear:', clearResponse?.error);
+                logger.sidepanel.error('Background failed to confirm tab data clear:', clearResponse?.error);
                 // Proceed with local reset even if background fails
             }
         } catch (sendError) {
-             logger.sidebar.error('Error sending clearTabData message to background:', sendError);
+             logger.sidepanel.error('Error sending clearTabData message to background:', sendError);
              // Proceed with local reset despite background communication failure
         }
 
         // 3. Reset local state *after* attempting background clear
-        logger.sidebar.info('Resetting local sidebar state...');
+        logger.sidepanel.info('Resetting local sidepanel state...');
         setMessages([]);
         setInputValue('');
         setStreamingMessageId(null);
         setExtractedContentAdded(false);
         setIsCanceling(false); // Ensure canceling state is reset if cancellation happened
         await clearTokenData(); // Clear associated tokens and reset local token state
-        logger.sidebar.info('Local sidebar state reset complete.');
+        logger.sidepanel.info('Local sidepanel state reset complete.');
 
       } catch (error) {
         // Catch errors primarily from stream cancellation or clearTokenData
-        logger.sidebar.error('Error during the refresh process (excluding background communication):', error);
+        logger.sidepanel.error('Error during the refresh process (excluding background communication):', error);
         // Attempt to reset local state even on these errors
         try {
             setMessages([]);
@@ -598,11 +598,11 @@ export function SidebarChatProvider({ children }) {
             setIsCanceling(false);
             await clearTokenData();
         } catch (resetError) {
-            logger.sidebar.error('Error during fallback state reset:', resetError);
+            logger.sidepanel.error('Error during fallback state reset:', resetError);
         }
       } finally {
         // 4. ALWAYS turn off refreshing state
-        logger.sidebar.info('Setting isRefreshing to false in finally block.');
+        logger.sidepanel.info('Setting isRefreshing to false in finally block.');
         setIsRefreshing(false);
       }
     }
@@ -631,8 +631,8 @@ export function SidebarChatProvider({ children }) {
     setIsThinkingModeEnabled(newState);
 
     try {
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE);
-      const prefs = result[STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE] || {};
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE);
+      const prefs = result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
 
       // Ensure platform object exists
       if (!prefs[selectedPlatformId]) {
@@ -643,17 +643,17 @@ export function SidebarChatProvider({ children }) {
       prefs[selectedPlatformId][selectedModel] = newState;
 
       // Save back to storage
-      await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE]: prefs });
-      logger.sidebar.info(`Thinking mode preference saved for ${selectedPlatformId}/${selectedModel}: ${newState}`);
+      await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE]: prefs });
+      logger.sidepanel.info(`Thinking mode preference saved for ${selectedPlatformId}/${selectedModel}: ${newState}`);
     } catch (err) {
-      logger.sidebar.error("Error saving thinking mode preference:", err);
+      logger.sidepanel.error("Error saving thinking mode preference:", err);
     }
   }, [selectedPlatformId, selectedModel]); // Dependencies for the handler
 
   // --- End Utility Functions ---
 
   return (
-    <SidebarChatContext.Provider
+    <SidepanelChatContext.Provider
       value={{
         // State
         messages: visibleMessages,
@@ -686,8 +686,8 @@ export function SidebarChatProvider({ children }) {
       }}
     >
       {children}
-    </SidebarChatContext.Provider>
+    </SidepanelChatContext.Provider>
   );
 }
 
-export const useSidebarChat = () => useContext(SidebarChatContext);
+export const useSidepanelChat = () => useContext(SidepanelChatContext);

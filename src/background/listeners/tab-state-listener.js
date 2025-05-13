@@ -1,7 +1,7 @@
 // src/background/listeners/tab-state-listener.js
 
 import { STORAGE_KEYS } from '../../shared/constants.js';
-import SidebarStateManager from '../../services/SidebarStateManager.js';
+import SidepanelStateManager from '../../services/SidepanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 
 // List of tab-specific storage keys to clear on manual refresh (excluding sidebar visibility)
@@ -23,7 +23,7 @@ const ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP = [
   STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG,
   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
-  STORAGE_KEYS.TAB_SIDEBAR_STATES, // Included for the loop, but handled separately
+  STORAGE_KEYS.TAB_SIDEPANEL_STATES, // Included for the loop, but handled separately
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
   STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
@@ -225,10 +225,10 @@ export function setupTabStateListener() {
           `General tab data cleanup completed for closed tab ${tabId}.`
         );
 
-        // Use SidebarStateManager to specifically clean its state for the removed tab
-        await SidebarStateManager.cleanupTabStates([tabId], null); // Pass removed tabId for targeted cleanup
+        // Use SidepanelStateManager to specifically clean its state for the removed tab
+        await SidepanelStateManager.cleanupTabStates([tabId], null); // Pass removed tabId for targeted cleanup
         logger.background.info(
-          `Sidebar state cleanup completed for closed tab ${tabId}.`
+          `Sidepanel state cleanup completed for closed tab ${tabId}.`
         );
       } catch (error) {
         logger.background.error(
@@ -284,9 +284,9 @@ export async function performStaleTabCleanup() {
       `General stale tab data cleanup processing completed.`
     );
 
-    // Use SidebarStateManager to clean its state based on valid IDs
-    await SidebarStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
-    logger.background.info(`Sidebar stale state cleanup completed.`);
+    // Use SidepanelStateManager to clean its state based on valid IDs
+    await SidepanelStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
+    logger.background.info(`Sidepanel stale state cleanup completed.`);
 
     logger.background.info('Stale tab data cleanup finished successfully.');
   } catch (error) {

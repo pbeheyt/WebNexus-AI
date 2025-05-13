@@ -1,6 +1,6 @@
 // src/background/index.js - Entry point for background service worker
 
-import SidebarStateManager from '../services/SidebarStateManager.js';
+import SidepanelStateManager from '../services/SidepanelStateManager.js';
 import { logger } from '../shared/logger.js';
 
 import { initializeExtension, populateInitialPromptsAndSetDefaults } from './initialization.js';
@@ -139,16 +139,16 @@ function setupConnectionListener() {
       if (!isNaN(tabId)) {
         logger.background.info(`Side panel connected for tab ${tabId}`);
 
-        // Mark sidebar as visible upon connection
-        SidebarStateManager.setSidebarVisibilityForTab(tabId, true)
+        // Mark sidepanel as visible upon connection
+        SidepanelStateManager.setSidepanelVisibilityForTab(tabId, true)
           .then(() => {
             logger.background.info(
-              `Set sidebar visibility to true for tab ${tabId}`
+              `Set sidepanel visibility to true for tab ${tabId}`
             );
           })
           .catch((error) => {
             logger.background.error(
-              `Error setting sidebar visibility to true for tab ${tabId}:`,
+              `Error setting sidepanel visibility to true for tab ${tabId}:`,
               error
             );
           });
@@ -162,16 +162,16 @@ function setupConnectionListener() {
               `Port disconnect error for tab ${tabId}: ${chrome.runtime.lastError.message}`
             );
           }
-          // Mark sidebar as not visible upon disconnection
-          SidebarStateManager.setSidebarVisibilityForTab(tabId, false)
+          // Mark sidepanel as not visible upon disconnection
+          SidepanelStateManager.setSidepanelVisibilityForTab(tabId, false)
             .then(() => {
               logger.background.info(
-                `Set sidebar visibility to false for tab ${tabId}`
+                `Set sidepanel visibility to false for tab ${tabId}`
               );
             })
             .catch((error) => {
               logger.background.error(
-                `Error setting sidebar visibility to false for tab ${tabId}:`,
+                `Error setting sidepanel visibility to false for tab ${tabId}:`,
                 error
               );
             });

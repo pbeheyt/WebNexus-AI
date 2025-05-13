@@ -28,7 +28,7 @@ const MessageBubbleComponent = forwardRef(
       case MESSAGE_ROLES.ASSISTANT:
         return <AssistantMessageBubble ref={ref} role={role} {...props} />;
       default:
-        logger.sidebar.error(`Unknown message role: ${role}`);
+        logger.sidepanel.error(`Unknown message role: ${role}`);
         return null;
     }
   }

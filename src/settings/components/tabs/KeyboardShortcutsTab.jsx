@@ -4,14 +4,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button, useNotification, Modal } from '../../../components';
 import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
-import { STORAGE_KEYS, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../../../shared/constants'; // Updated import
+import { STORAGE_KEYS, DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG } from '../../../shared/constants'; // Updated import
 import { logger } from '../../../shared/logger';
 import { formatShortcutToStringDisplay } from '../../../shared/utils/shortcut-utils';
 
 export function KeyboardShortcutsTab() {
   const [globalCommands, setGlobalCommands] = useState([]);
-  const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
-  const [editableCustomShortcut, setEditableCustomShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
+  const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG);
+  const [editableCustomShortcut, setEditableCustomShortcut] = useState(DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG);
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
   const [isLoadingCommands, setIsLoadingCommands] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
@@ -40,8 +40,8 @@ export function KeyboardShortcutsTab() {
 
     const loadCustomShortcut = async () => {
       try {
-        const result = await chrome.storage.sync.get([STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]);
-        const loadedShortcut = result[STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT] || DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG;
+        const result = await chrome.storage.sync.get([STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT]);
+        const loadedShortcut = result[STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT] || DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG;
         setCustomPopupShortcut(loadedShortcut);
         setEditableCustomShortcut(loadedShortcut);
       } catch (error) {
@@ -99,9 +99,9 @@ export function KeyboardShortcutsTab() {
 
       showInfoNotification('Saving shortcut...'); 
 
-      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]: editableCustomShortcut });
+      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT]: editableCustomShortcut });
       setCustomPopupShortcut(editableCustomShortcut);
-      showSuccessNotification('Sidebar toggle shortcut saved successfully!');
+      showSuccessNotification('Side Panel toggle shortcut saved successfully!');
       setIsShortcutModalOpen(false); 
     } catch (error) {
       logger.settings.error('Error saving custom popup shortcut:', error);
@@ -117,7 +117,7 @@ export function KeyboardShortcutsTab() {
         Keyboard Shortcuts
       </h2>
       <p className='section-description text-sm text-theme-secondary mb-6'>
-        Manage your extension&apos;s keyboard shortcuts. Global shortcuts are configured in Chrome&apos;s settings, while the sidebar toggle shortcut can be customized here.
+        Manage your extension's keyboard shortcuts. Global shortcuts are configured in Chrome's settings, while the sidepanel toggle shortcut can be customized here.
       </p>
       <div className="flex flex-col md:flex-row md:gap-6">
         {/* Left Column: Registered Extension Shortcuts */}
@@ -125,7 +125,7 @@ export function KeyboardShortcutsTab() {
           <SettingsCard>
             <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Chrome Shortcuts</h3>
             <p className="text-sm text-theme-secondary mb-6">
-              These shortcuts are defined by the extension and can be managed on Chrome&apos;s extensions page.
+              These shortcuts are defined by the extension and can be managed on Chrome's extensions page.
             </p>
             {isLoadingCommands ? (
               <p className="text-theme-secondary py-2">Loading global shortcuts...</p>
@@ -156,12 +156,12 @@ export function KeyboardShortcutsTab() {
           </SettingsCard>
         </div>
 
-        {/* Right Column: Sidebar Toggle Shortcut */}
+        {/* Right Column: Sidepanel Toggle Shortcut */}
         <div className="w-full md:w-1/2">
           <SettingsCard>
             <h3 className="text-base font-semibold text-theme-primary mb-2">Side Panel Toggle Shortcut</h3>
             <p className="text-sm text-theme-secondary mb-6">
-              This shortcut is used within the extension&apos;s popup to open/close the sidebar, and from within the sidebar itself to close it when focused.
+              This shortcut is used within the extension's popup to open/close the Side Panel, and from within the Side Panel itself to close it when focused.
             </p>
             
             <div 
@@ -182,7 +182,7 @@ export function KeyboardShortcutsTab() {
       <Modal 
         isOpen={isShortcutModalOpen} 
         onClose={handleCloseShortcutModal}
-        title="Update Sidebar Toggle Shortcut"
+        title="Update Side Panel Toggle Shortcut"
         widthClass="max-w-sm"
       >
         <div>
@@ -190,7 +190,7 @@ export function KeyboardShortcutsTab() {
             <ShortcutCaptureInput
               value={editableCustomShortcut}
               onChange={handleEditableShortcutChange}
-              defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
+              defaultShortcut={DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG}
             />
             <div className="flex-shrink-0 flex gap-2"> 
               <Button 

@@ -1,4 +1,4 @@
-// src/sidebar/components/ChatArea.jsx ---
+// src/sidepanel/components/ChatArea.jsx ---
 import React, {
   useEffect,
   useRef,
@@ -10,8 +10,8 @@ import React, {
 import PropTypes from 'prop-types';
 
 import { debounce } from '../../shared/utils/debounce';
-import { useSidebarChat } from '../contexts/SidebarChatContext';
-import { useSidebarPlatform } from '../../contexts/platform';
+import { useSidepanelChat } from '../contexts/SidepanelChatContext';
+import { useSidepanelPlatform } from '../../contexts/platform';
 import { useUI } from '../../contexts/UIContext';
 import { Toggle } from '../../components/core/Toggle';
 import { Tooltip } from '../../components';
@@ -59,7 +59,7 @@ function ChatArea({
     setIsContentExtractionEnabled,
     modelConfigData,
     isThinkingModeEnabled,
-  } = useSidebarChat();
+  } = useSidepanelChat();
   const { contentType, currentTab } = useContent();
   const { textSize } = useUI();
   const messagesEndRef = useRef(null);
@@ -74,7 +74,7 @@ function ChatArea({
     selectedPlatformId,
     selectedModel,
     hasAnyPlatformCredentials,
-  } = useSidebarPlatform();
+  } = useSidepanelPlatform();
 
   // --- State ---
   const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false);
@@ -294,7 +294,7 @@ const checkScrollPosition = useCallback(() => {
               });
               setInitialScrollCompletedForResponse(true); // Mark as completed after scroll starts
             } else {
-              logger.sidebar.warn(
+              logger.sidepanel.warn(
                 `[ChatArea Scrolling Effect] Element or container not found inside *nested* rAF for ID ${userMessageElementId}.`
               );
               setInitialScrollCompletedForResponse(true); // Still mark as complete
@@ -302,7 +302,7 @@ const checkScrollPosition = useCallback(() => {
           }); // End nested rAF
         }); // End outer rAF
       } else {
-        logger.sidebar.warn(
+        logger.sidepanel.warn(
           `[ChatArea Scrolling Effect] User message element ID not found. Skipping initial scroll.`
         );
         setInitialScrollCompletedForResponse(true); // Still mark as complete
@@ -441,12 +441,12 @@ const checkScrollPosition = useCallback(() => {
           url: chrome.runtime.getURL('settings.html#api-settings'),
         });
       } else {
-        logger.sidebar.warn(
+        logger.sidepanel.warn(
           'Chrome APIs not available. Cannot open settings tab.'
         );
       }
     } catch (error) {
-      logger.sidebar.error('Could not open API options page:', error);
+      logger.sidepanel.error('Could not open API options page:', error);
     }
   };
 
@@ -743,13 +743,13 @@ const checkScrollPosition = useCallback(() => {
                     getComputedStyle(document.documentElement).fontSize
                   );
                   if (isNaN(rootFontSize) || rootFontSize <= 0) {
-                    logger.sidebar.warn(
+                    logger.sidepanel.warn(
                       `Could not parse root font size, falling back to 16px. Value was: ${getComputedStyle(document.documentElement).fontSize}`
                     );
                     rootFontSize = 16;
                   }
                 } catch (e) {
-                  logger.sidebar.error('Error getting root font size:', e);
+                  logger.sidepanel.error('Error getting root font size:', e);
                   rootFontSize = 16;
                 }
                 const minPixelHeight =

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, createContext } from 'react';
 
-import { useSidebarPlatform } from '../../contexts/platform';
-import { useSidebarChat } from '../contexts/SidebarChatContext';
+import { useSidepanelPlatform } from '../../contexts/platform';
+import { useSidepanelChat } from '../contexts/SidepanelChatContext';
 import { PlatformIcon, ChevronDownIcon, Toggle, InfoIcon, Tooltip } from '../../components';
 
 import ModelSelector from './ModelSelector';

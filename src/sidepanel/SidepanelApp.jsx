@@ -11,7 +11,7 @@ import { STORAGE_KEYS, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../shared/c
 import { logger } from '../shared/logger';
 import { robustSendMessage } from '../shared/utils/message-utils';
 import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
-import { useSidebarPlatform } from '../contexts/platform';
+import { useSidepanelPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
 import { AppHeader, ErrorIcon } from '../components';
@@ -20,9 +20,9 @@ import { debounce } from '../shared/utils/debounce';
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
-import { useSidebarChat } from './contexts/SidebarChatContext';
+import { useSidepanelChat } from './contexts/SidepanelChatContext';
 
-export default function SidebarApp() {
+export default function SidepanelApp() {
   const { tabId, setTabId } = useSidebarPlatform();
   const { resetCurrentTabData, isRefreshing } = useSidebarChat();
   const { updateContentContext } = useContent();
@@ -34,22 +34,22 @@ export default function SidebarApp() {
   // Use the custom hook for shortcut handling
   const handleCloseShortcut = useCallback(async () => {
     if (!tabId) {
-      logger.sidebar.warn('SidebarApp: tabId prop is missing, cannot handle close shortcut.');
+      logger.sidepanel.warn('SidepanelApp: tabId prop is missing, cannot handle close shortcut.');
       return;
     }
-    logger.sidebar.info(`Shortcut pressed in sidebar (tabId: ${tabId}), attempting to close.`);
+    logger.sidepanel.info(`Shortcut pressed in sidepanel (tabId: ${tabId}), attempting to close.`);
     try {
       const response = await robustSendMessage({
         action: 'closeCurrentSidePanel',
         tabId: tabId,
       });
       if (response && response.success) {
-        logger.sidebar.info(`Side panel close command acknowledged for tab ${tabId}.`);
+        logger.sidepanel.info(`Side panel close command acknowledged for tab ${tabId}.`);
       } else {
-        logger.sidebar.error(`Failed to close side panel for tab ${tabId}:`, response?.error);
+        logger.sidepanel.error(`Failed to close side panel for tab ${tabId}:`, response?.error);
       }
     } catch (err) {
-      logger.sidebar.error(`Error sending closeCurrentSidePanel message for tab ${tabId}:`, err);
+      logger.sidepanel.error(`Error sending closeCurrentSidePanel message for tab ${tabId}:`, err);
     }
   }, [tabId]);
 
@@ -58,7 +58,7 @@ export default function SidebarApp() {
     STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT,
     DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
     handleCloseShortcut,
-    logger.sidebar,
+    logger.sidepanel,
     [handleCloseShortcut]
   );
 
@@ -71,8 +71,8 @@ export default function SidebarApp() {
 
   // --- Effect to determine Tab ID ---
   useEffect(() => {
-    logger.sidebar.info(
-      'SidebarApp mounted, attempting to determine tab context...'
+    logger.sidepanel.info(
+      'SidepanelApp mounted, attempting to determine tab context...'
     );
     let foundTabId = NaN;
 
@@ -82,15 +82,15 @@ export default function SidebarApp() {
       const parsedTabId = tabIdFromUrl ? parseInt(tabIdFromUrl, 10) : NaN;
 
       if (tabIdFromUrl && !isNaN(parsedTabId)) {
-        logger.sidebar.info(`Found valid tabId ${parsedTabId} in URL.`);
+        logger.sidepanel.info(`Found valid tabId ${parsedTabId} in URL.`);
         foundTabId = parsedTabId;
       } else {
-        logger.sidebar.error(
-          'FATAL: Sidebar loaded without a valid tabId in URL. Cannot initialize.'
+        logger.sidepanel.error(
+          'FATAL: Sidepanel loaded without a valid tabId in URL. Cannot initialize.'
         );
       }
     } catch (error) {
-      logger.sidebar.error('Error parsing tabId from URL:', error);
+      logger.sidepanel.error('Error parsing tabId from URL:', error);
     }
 
     if (!isNaN(foundTabId)) {
@@ -99,8 +99,8 @@ export default function SidebarApp() {
 
     const timer = setTimeout(() => {
       setIsReady(!isNaN(foundTabId));
-      logger.sidebar.info(
-        `Sidebar initialization complete. isReady: ${!isNaN(foundTabId)}, tabId set to: ${foundTabId}`
+      logger.sidepanel.info(
+        `Sidepanel initialization complete. isReady: ${!isNaN(foundTabId)}, tabId set to: ${foundTabId}`
       );
     }, 50);
 
@@ -110,7 +110,7 @@ export default function SidebarApp() {
   // --- Effect for Page Navigation Listener ---
   useEffect(() => {
     if (!isReady || !tabId) {
-      logger.sidebar.info(
+      logger.sidepanel.info(
         `Skipping pageNavigated listener setup (isReady: ${isReady}, tabId: ${tabId})`
       );
       return;
@@ -118,17 +118,17 @@ export default function SidebarApp() {
 
     const messageListener = (message, _sender, _sendResponse) => {
       if (message.action === 'pageNavigated' && message.tabId === tabId) {
-        logger.sidebar.info(
+        logger.sidepanel.info(
           `Received pageNavigated event for current tab ${tabId}:`,
           message
         );
         try {
           updateContentContext(message.newUrl, message.newContentType);
-          logger.sidebar.info(
+          logger.sidepanel.info(
             `Content context updated for tab ${tabId} to URL: ${message.newUrl}, Type: ${message.newContentType}`
           );
         } catch (error) {
-          logger.sidebar.error(
+          logger.sidepanel.error(
             `Error handling pageNavigated event for tab ${tabId}:`,
             error
           );
@@ -138,11 +138,11 @@ export default function SidebarApp() {
 
     if (chrome && chrome.runtime && chrome.runtime.onMessage) {
       chrome.runtime.onMessage.addListener(messageListener);
-      logger.sidebar.info(
+      logger.sidepanel.info(
         `Added runtime message listener for pageNavigated events (tabId: ${tabId})`
       );
     } else {
-      logger.sidebar.warn(
+      logger.sidepanel.warn(
         'Chrome runtime API not available for message listener.'
       );
     }
@@ -150,7 +150,7 @@ export default function SidebarApp() {
     return () => {
       if (chrome && chrome.runtime && chrome.runtime.onMessage) {
         chrome.runtime.onMessage.removeListener(messageListener);
-        logger.sidebar.info(
+        logger.sidepanel.info(
           `Removed runtime message listener for pageNavigated events (tabId: ${tabId})`
         );
       }
@@ -160,7 +160,7 @@ export default function SidebarApp() {
   // --- Effect for Background Connection Port ---
   useEffect(() => {
     if (!isReady || !tabId) {
-      logger.sidebar.info(
+      logger.sidepanel.info(
         `Skipping background port connection (isReady: ${isReady}, tabId: ${tabId})`
       );
       return;
@@ -171,7 +171,7 @@ export default function SidebarApp() {
     }
 
     if (!(chrome && chrome.runtime && chrome.runtime.connect)) {
-      logger.sidebar.warn(
+      logger.sidepanel.warn(
         'Chrome runtime connect API not available.'
       );
       return;
@@ -182,9 +182,9 @@ export default function SidebarApp() {
       portRef.current = chrome.runtime.connect({ name: portName });
 
       portRef.current.onDisconnect.addListener(() => {
-        logger.sidebar.info(`Port disconnected for tab ${tabId}.`);
+        logger.sidepanel.info(`Port disconnected for tab ${tabId}.`);
         if (chrome.runtime.lastError) {
-          logger.sidebar.error(
+          logger.sidepanel.error(
             `Disconnect error for tab ${tabId}:`,
             chrome.runtime.lastError.message
           );
@@ -192,7 +192,7 @@ export default function SidebarApp() {
         portRef.current = null;
       });
     } catch (error) {
-      logger.sidebar.error(
+      logger.sidepanel.error(
         `Error connecting to background for tab ${tabId}:`,
         error
       );
@@ -324,7 +324,7 @@ export default function SidebarApp() {
           <div className='text-center text-error'>
             <ErrorIcon className='h-10 w-10 mx-auto mb-2 text-error' />
             <p className='font-semibold'>Initialization Error</p>
-            <p className='text-sm'>Sidebar context could not be determined.</p>
+            <p className='text-sm'>Side Panel context could not be determined.</p>
             <p className='text-xs mt-2'>(Missing or invalid tabId)</p>
           </div>
         </div>
@@ -333,6 +333,6 @@ export default function SidebarApp() {
   );
 }
 
-SidebarApp.propTypes = {
+SidepanelApp.propTypes = {
   // tabId is managed internally
 };

@@ -27,7 +27,7 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
         <BlockMath math={content} />
       );
     } catch (error) {
-      logger.sidebar.error('Math rendering error:', error);
+      logger.sidepanel.error('Math rendering error:', error);
       setRenderError(true);
       return null;
     }

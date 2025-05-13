@@ -8,7 +8,7 @@ import {
   EditIcon,
   RerunIcon,
 } from '../../../components';
-import { useSidebarChat } from '../../contexts/SidebarChatContext';
+import { useSidepanelChat } from '../contexts/SidepanelChatContext';
 
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 

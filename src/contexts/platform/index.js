@@ -4,6 +4,6 @@ export {
   usePopupPlatform,
 } from './PopupPlatformContext';
 export {
-  SidebarPlatformProvider,
-  useSidebarPlatform,
-} from './SidebarPlatformContext';
+  SidepanelPlatformProvider,
+  useSidepanelPlatform,
+} from './SidepanelPlatformContext';

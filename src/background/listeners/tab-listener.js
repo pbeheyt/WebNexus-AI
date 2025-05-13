@@ -9,7 +9,7 @@ import {
   getPlatformTabInfo,
   updateScriptInjectionStatus,
 } from '../core/state-manager.js';
-import SidebarStateManager from '../../services/SidebarStateManager.js';
+import SidepanelStateManager from '../../services/SidepanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import {
@@ -41,7 +41,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     try {
       logger.background.info(`Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`);
       const isAllowed = isSidePanelAllowedPage(tab.url);
-      const isVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
+      const isVisible = await SidepanelStateManager.getSidepanelVisibilityForTab(tabId);
 
       if (isAllowed) {
         await chrome.sidePanel.setOptions({
@@ -49,13 +49,13 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
           path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
           enabled: isVisible, // Enable based on stored visibility
         });
-        logger.background.info(`Side panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
+        logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
       } else {
         await chrome.sidePanel.setOptions({
           tabId: tabId,
           enabled: false, // Force disable if not allowed
         });
-        logger.background.info(`Side panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
+        logger.background.info(`Side Panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
       }
     } catch (error) {
       logger.background.error(`Error setting side panel options during onUpdated for tab ${tabId}:`, error);
@@ -131,7 +131,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     try {
       // Check if the side panel is *intended* to be visible for this tab
       const isVisible =
-        await SidebarStateManager.getSidebarVisibilityForTab(tabId);
+        await SidepanelStateManager.getSidepanelVisibilityForTab(tabId);
 
       if (isVisible) {
         logger.background.info(
@@ -203,14 +203,14 @@ async function handleTabActivation(activeInfo) {
         path: `sidepanel.html?tabId=${tabId}`,
         enabled: true,
       });
-      logger.background.info(`Side panel enabled for activated tab ${tabId}`);
+      logger.background.info(`Side Panel enabled for activated tab ${tabId}`);
     } else {
       // Disable the panel if it shouldn't be visible
       await chrome.sidePanel.setOptions({
         tabId: tabId,
         enabled: false,
       });
-      logger.background.info(`Side panel disabled for activated tab ${tabId}`);
+      logger.background.info(`Side Panel disabled for activated tab ${tabId}`);
     }
   } catch (error) {
     logger.background.error(
@@ -230,13 +230,13 @@ async function handleTabCreation(newTab) {
   );
   try {
     // Store the initial visibility state (false) without enabling/disabling the panel itself
-    await SidebarStateManager.setSidebarVisibilityForTab(newTab.id, false);
+    await SidepanelStateManager.setSidepanelVisibilityForTab(newTab.id, false);
     logger.background.info(
-      `Initial sidebar state (visible: false) stored for new tab ${newTab.id}`
+      `Initial sidepanel state (visible: false) stored for new tab ${newTab.id}`
     );
   } catch (error) {
     logger.background.error(
-      `Error storing initial side panel state for new tab ${newTab.id}:`,
+      `Error storing initial sidepanel state for new tab ${newTab.id}:`,
       error
     );
   }
