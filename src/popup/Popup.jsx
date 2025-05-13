@@ -290,7 +290,7 @@ export function Popup() {
   };
 
   return (
-    <div className='min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme cursor-default'>
+    <div className='w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme cursor-default'>
       <AppHeader
         onClose={closePopup}
         className='py-2'

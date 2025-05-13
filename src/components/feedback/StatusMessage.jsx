@@ -32,7 +32,7 @@ export function StatusMessage({
 
   return (
     <div
-      className={`text-xs px-3 ${typeClasses[type]} ${className}`}
+      className={`text-xs px-3 ${typeClasses[type]} ${className} break-words`}
       role={roleValue}
       aria-live={ariaLiveValue}
       aria-atomic="true" // Ensures the entire message is announced when it changes
