@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from 'react';
 
-import { CUSTOM_POPUP_SIDEBAR_SHORTCUT, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../shared/constants';
+import { STORAGE_KEYS, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../shared/constants'; // Updated import
 import { logger } from '../shared/logger';
 import { robustSendMessage } from '../shared/utils/message-utils';
 import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
@@ -55,7 +55,7 @@ export default function SidebarApp() {
 
   // currentShortcutConfig is returned but not directly used for display in SidebarApp
   useConfigurableShortcut(
-    CUSTOM_POPUP_SIDEBAR_SHORTCUT,
+    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT, // Updated key
     DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
     handleCloseShortcut,
     logger.sidebar,

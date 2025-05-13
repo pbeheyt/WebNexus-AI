@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button, useNotification, Modal } from '../../../components';
 import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
-import { CUSTOM_POPUP_SIDEBAR_SHORTCUT, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../../../shared/constants';
+import { STORAGE_KEYS, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../../../shared/constants'; // Updated import
 import { logger } from '../../../shared/logger';
 import { formatShortcutToStringDisplay } from '../../../shared/utils/shortcut-utils';
 
@@ -40,8 +40,8 @@ export function KeyboardShortcutsTab() {
 
     const loadCustomShortcut = async () => {
       try {
-        const result = await chrome.storage.sync.get([CUSTOM_POPUP_SIDEBAR_SHORTCUT]);
-        const loadedShortcut = result[CUSTOM_POPUP_SIDEBAR_SHORTCUT] || DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG;
+        const result = await chrome.storage.sync.get([STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]); // Updated key
+        const loadedShortcut = result[STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT] || DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG; // Updated key
         setCustomPopupShortcut(loadedShortcut);
         setEditableCustomShortcut(loadedShortcut);
       } catch (error) {
@@ -99,7 +99,7 @@ export function KeyboardShortcutsTab() {
 
       showInfoNotification('Saving shortcut...'); 
 
-      await chrome.storage.sync.set({ [CUSTOM_POPUP_SIDEBAR_SHORTCUT]: editableCustomShortcut });
+      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]: editableCustomShortcut }); // Updated key
       setCustomPopupShortcut(editableCustomShortcut);
       showSuccessNotification('Sidebar toggle shortcut saved successfully!');
       setIsShortcutModalOpen(false); 

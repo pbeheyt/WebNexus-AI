@@ -14,11 +14,10 @@ import {
 import { useContent } from '../contexts/ContentContext';
 import { UnifiedInput } from '../components/input/UnifiedInput';
 import {
-  CUSTOM_POPUP_SIDEBAR_SHORTCUT,
-  STORAGE_KEYS,
+  STORAGE_KEYS, // Updated import
   INTERFACE_SOURCES,
   CONTENT_TYPE_LABELS,
-  DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
+  DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG, // This remains for the default value
 } from '../shared/constants';
 import { formatShortcutToStringDisplay } from '../shared/utils/shortcut-utils';
 import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
@@ -223,7 +222,7 @@ export function Popup() {
   }, [currentTab, updateStatus]);
 
   const { currentShortcutConfig: popupSidebarShortcut } = useConfigurableShortcut(
-    CUSTOM_POPUP_SIDEBAR_SHORTCUT,
+    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT, // Updated key
     DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
     toggleSidebar,
     logger.popup,

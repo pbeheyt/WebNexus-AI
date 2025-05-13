@@ -43,9 +43,10 @@ export const STORAGE_KEYS = {
   SIDEBAR_PLATFORM: 'sidebar_platform_preference',
   SIDEBAR_MODEL: 'sidebar_model_preference',
   SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
+  CUSTOM_SIDEBAR_TOGGLE_SHORTCUT: 'customSidebarToggleShortcutConfig',
 
 // Settings
-MODEL_PARAMETER_SETTINGS: 'model_parameter_settings', // Renamed from API_ADVANCED_SETTINGS
+MODEL_PARAMETER_SETTINGS: 'model_parameter_settings',
 API_CREDENTIALS: 'api_credentials',
 
   // Prompt
@@ -102,8 +103,7 @@ export const MESSAGE_ROLES = {
   SYSTEM: 'system',
 };
 
-export const CUSTOM_POPUP_SIDEBAR_SHORTCUT = 'customPopupSidebarShortcutConfig';
-
+// Default value for the custom sidebar toggle shortcut, not the storage key itself
 export const DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG = {
   key: 's',
   altKey: true,
