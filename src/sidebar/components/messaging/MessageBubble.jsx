@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { logger } from '../../../shared/logger';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 
-// Import role-specific components (ensure these are correctly imported above)
+// Import role-specific components
 import { SystemMessageBubble } from './SystemMessageBubble';
 import { UserMessageBubble } from './UserMessageBubble';
 import { AssistantMessageBubble } from './AssistantMessageBubble';
@@ -37,9 +37,7 @@ const MessageBubbleComponent = forwardRef(
 // Add propTypes to the core component
 MessageBubbleComponent.propTypes = {
   role: PropTypes.oneOf(Object.values(MESSAGE_ROLES)).isRequired,
-  // Include any other props passed directly to MessageBubble if needed
-  id: PropTypes.string, // Example: Include props used before delegation
-  // Add other common props if necessary
+  id: PropTypes.string,
 };
 
 // Add displayName

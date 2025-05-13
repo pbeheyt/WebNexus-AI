@@ -333,7 +333,7 @@ export const AssistantMessageBubble = memo(
 
           {/* Footer section */}
           <div className='flex justify-between items-center pb-4'>
-            <div className='text-xs opacity-70 flex items-center space-x-2 select-none'>
+            <div className='text-xs opacity-70 flex items-center space-x-2'>
               {platformIconUrl && (
                 <PlatformIcon
                   platformId={platformId}
