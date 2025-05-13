@@ -139,7 +139,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
         );
         const newContentType = determineContentType(tab.url);
 
-        // Send message to the runtime (listened to by SidebarApp)
+        // Send message to the runtime (listened to by SidePanelApp)
         chrome.runtime.sendMessage({
           action: 'pageNavigated',
           tabId: tabId,

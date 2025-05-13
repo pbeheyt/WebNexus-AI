@@ -1,4 +1,4 @@
-// src/sidebar/components/UserInput.jsx
+// src/sidepanel/components/UserInput.jsx
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -52,7 +52,7 @@ export function UserInput({ className = '' }) {
       showTokenInfo={true}
       tokenStats={tokenStats}
       contextStatus={contextStatus}
-      layoutVariant='sidebar'
+      layoutVariant='sidepanel'
       className={className}
     />
   );

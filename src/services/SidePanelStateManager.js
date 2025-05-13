@@ -2,11 +2,11 @@ import { logger } from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 
 /**
- * Service for managing tab-specific sidebar state
+ * Service for managing tab-specific sidepanel state
  */
 class SidePanelStateManager {
   /**
-   * Toggle sidebar visibility for a specific tab
+   * Toggle sidepanel visibility for a specific tab
    * @private
    * @param {number} tabId - Tab ID
    * @param {boolean|undefined} visible - Visibility state (undefined to toggle)
@@ -41,10 +41,10 @@ class SidePanelStateManager {
 
   /**
   /**
-   * Get sidebar state for a specific tab
+   * Get sidepanel state for a specific tab
    * @private
    * @param {number} tabId - Tab ID
-   * @returns {Promise<Object>} Tab-specific sidebar state
+   * @returns {Promise<Object>} Tab-specific sidepanel state
    */
   async _getStateForTab(tabId) {
     const result = await chrome.storage.local.get([
@@ -53,12 +53,12 @@ class SidePanelStateManager {
       STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM,
     ]);
 
-    const tabStates = result[STORAGE_KEYS.TAB_SIDEBAR_STATES] || {};
+    const tabStates = result[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
 
     return {
       visible: tabStates[tabId.toString()] === true,
-      platform: result[STORAGE_KEYS.SIDEBAR_DEFAULT_PLATFORM_ID] || null,
-      model: result[STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM] || null,
+      platform: result[STORAGE_KEYS.SIDEPANEL_DEFAULT_PLATFORM_ID] || null,
+      model: result[STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM] || null,
     };
   }
 
@@ -78,7 +78,7 @@ class SidePanelStateManager {
         const activeTab = tabs[0];
 
         if (!activeTab || !activeTab.id) {
-          logger.service.warn('No active tab found for getSidebarState');
+          logger.service.warn('No active tab found for getSidepanelState');
           return {
             visible: false,
             platform: null,

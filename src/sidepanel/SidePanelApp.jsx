@@ -1,4 +1,4 @@
-// src/sidebar/SidebarApp.jsx
+// src/sidepanel/SidePanelApp.jsx
 import React, {
   useEffect,
   useState,
@@ -53,9 +53,9 @@ export default function SidePanelApp() {
     }
   }, [tabId]);
 
-  // currentShortcutConfig is returned but not directly used for display in SidebarApp
+  // currentShortcutConfig is returned but not directly used for display in SidePanelApp
   useConfigurableShortcut(
-    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT,
+    STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
     DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
     handleCloseShortcut,
     logger.sidepanel,

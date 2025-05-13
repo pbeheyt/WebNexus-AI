@@ -1,4 +1,4 @@
-// src/components/icons/SidebarIcon.jsx
+// src/components/icons/SidepanelIcon.jsx
 import React from 'react';
 import PropTypes from 'prop-types';
 

@@ -1,4 +1,4 @@
-// src/sidebar/components/messaging/MessageBubble.jsx
+// src/sidepanel/components/messaging/MessageBubble.jsx
 import React, { memo, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 

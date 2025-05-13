@@ -10,7 +10,7 @@ import SidePanelApp from './SidePanelApp';
 import '../styles/index.css';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('sidebar-root');
+  const container = document.getElementById('sidepanel-root');
   const root = createRoot(container);
 
   const urlParams = new URLSearchParams(window.location.search);

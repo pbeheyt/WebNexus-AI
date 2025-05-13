@@ -181,7 +181,7 @@ function Header() {
                     checked={isThinkingModeEnabled}
                     onChange={toggleThinkingMode}
                     aria-label="Toggle Thinking Mode"
-                    id="thinking-mode-toggle-sidebar"
+                    id="thinking-mode-toggle-sidepanel"
                     disabled={!hasAnyPlatformCredentials || isLoading}
                   />
                   {/* Info Icon and Tooltip */}

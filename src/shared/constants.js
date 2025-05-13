@@ -43,13 +43,13 @@ export const STORAGE_KEYS = {
   TEXT_SIZE_PREFERENCE: 'text_size_preference',
   /** @description ID of the default/last-selected AI platform for the Popup. Synced across devices. */
   POPUP_DEFAULT_PLATFORM_ID: 'popup_default_platform_id',
-  /** @description ID of the default/last-selected AI platform for the Sidebar (global). Synced across devices. */
+  /** @description ID of the default/last-selected AI platform for the Sidepanel (global). Synced across devices. */
   SIDEPANEL_DEFAULT_PLATFORM_ID: 'sidepanel_default_platform_id',
-  /** @description Map of { platformId: modelId } for default/last-selected models in the Sidebar. Synced. */
+  /** @description Map of { platformId: modelId } for default/last-selected models in the Sidepanel. Synced. */
   SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM: 'sidepanel_default_model_id_by_platform',
-  /** @description User's preference for enabling "thinking mode" in the Sidebar, stored as { platformId: { modelId: boolean } }. Synced. */
+  /** @description User's preference for enabling "thinking mode" in the Sidepanel, stored as { platformId: { modelId: boolean } }. Synced. */
   SIDEPANEL_THINKING_MODE_PREFERENCE: 'sidepanel_thinking_mode_preference',
-  /** @description User's custom keyboard shortcut configuration for toggling the sidebar. Synced. */
+  /** @description User's custom keyboard shortcut configuration for toggling the sidepanel. Synced. */
   CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT: 'custom_sidepanel_toggle_shortcut_config',
 
   // --- Core Settings ---
@@ -82,7 +82,7 @@ export const STORAGE_KEYS = {
   /** @description The tab ID of the AI platform's website opened for Web UI injection. Local. */
   WEBUI_INJECTION_TARGET_TAB_ID: 'webui_injection_target_tab_id',
 
-  // --- API Processing State (Direct API calls from Sidebar) ---
+  // --- API Processing State (Direct API calls from Sidepanel) ---
   /** @description Current status of API processing (e.g., 'streaming', 'completed', 'error'). Local. */
   API_PROCESSING_STATUS: 'api_processing_status',
   /** @description The response object or content received from the API. Local. */
@@ -94,22 +94,22 @@ export const STORAGE_KEYS = {
   /** @description Unique identifier for an active API stream. Local. */
   API_STREAM_ID: 'api_stream_id',
 
-  // --- Tab-Specific Data (Primarily for Sidebar context persistence per tab) ---
-  /** @description Formatted page content specific to a tab, for Sidebar context. Local. */
+  // --- Tab-Specific Data (Primarily for Sidepanel context persistence per tab) ---
+  /** @description Formatted page content specific to a tab, for Sidepanel context. Local. */
   TAB_FORMATTED_CONTENT: 'tab_formatted_content',
-  /** @description Chat history for each tab's Sidebar instance. Local. */
+  /** @description Chat history for each tab's Sidepanel instance. Local. */
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
-  /** @description System prompt configured for each tab's Sidebar instance. Local. */
+  /** @description System prompt configured for each tab's Sidepanel instance. Local. */
   TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
-  /** @description Token usage statistics for each tab's Sidebar instance. Local. */
+  /** @description Token usage statistics for each tab's Sidepanel instance. Local. */
   TAB_TOKEN_STATISTICS: 'tab_token_statistics',
-  /** @description Last selected/preferred platform for each tab's Sidebar instance. Local. */
+  /** @description Last selected/preferred platform for each tab's Sidepanel instance. Local. */
   TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
-  /** @description Last selected/preferred model (per platform) for each tab's Sidebar instance. Local. */
+  /** @description Last selected/preferred model (per platform) for each tab's Sidepanel instance. Local. */
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
-  /** @description Visibility state (true/false) of the Sidebar for each tab. Local. */
+  /** @description Visibility state (true/false) of the Sidepanel for each tab. Local. */
   TAB_SIDEPANEL_STATES: 'tab_sidepanel_states',
-  /** @description Flag indicating if page context has already been sent for a tab's Sidebar. Local. */
+  /** @description Flag indicating if page context has already been sent for a tab's Sidepanel. Local. */
   TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
 };
 
@@ -139,7 +139,7 @@ export const MESSAGE_ROLES = {
   SYSTEM: 'system',
 };
 
-// Default value for the custom sidebar toggle shortcut, not the storage key itself
+// Default value for the custom sidepanel toggle shortcut, not the storage key itself
 export const DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG = {
   key: 's',
   altKey: true,

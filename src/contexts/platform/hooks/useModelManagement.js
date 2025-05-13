@@ -8,10 +8,10 @@ import { INTERFACE_SOURCES } from '../../../shared/constants';
 import ConfigService from '../../../services/ConfigService';
 
 /**
- * Hook to manage fetching available models and selecting the active model (Sidebar only).
+ * Hook to manage fetching available models and selecting the active model (Sidepanel only).
  * @param {string|null} selectedPlatformId - The ID of the currently selected platform.
  * @param {number|null} tabId - The current tab ID.
- * @param {string} interfaceType - The type of interface (e.g., 'sidebar', 'popup').
+ * @param {string} interfaceType - The type of interface (e.g., 'sidepanel', 'popup').
  * @returns {{models: Array, selectedModelId: string|null, selectModel: Function, isLoading: boolean, error: Error|null}}
  */
 export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
@@ -23,7 +23,7 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
   // Function to load models and determine initial selection
   const loadModelsAndSelect = useCallback(async () => {
     if (
-      interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
+      interfaceType !== INTERFACE_SOURCES.SIDEPANEL ||
       !selectedPlatformId ||
       !tabId
     ) {
@@ -138,7 +138,7 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
   const selectModel = useCallback(
     async (modelId) => {
       if (
-        interfaceType !== INTERFACE_SOURCES.SIDEBAR ||
+        interfaceType !== INTERFACE_SOURCES.SIDEPANEL ||
         !selectedPlatformId ||
         !tabId ||
         modelId === selectedModelId || // No change needed

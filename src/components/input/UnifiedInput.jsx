@@ -11,7 +11,7 @@ import { IconButton } from '../core/IconButton';
 import { PromptDropdown } from './PromptDropdown';
 
 /**
- * Unified input component for both popup and sidebar, supporting direct input
+ * Unified input component for both popup and sidepanel, supporting direct input
  * and custom prompt selection via dropdown. Uses rem units for height to adapt to font size.
  */
 export function UnifiedInput({
@@ -52,7 +52,7 @@ export function UnifiedInput({
   };
 
   const handleSubmit = () => {
-    if (layoutVariant === 'sidebar' && isProcessing && onCancel) {
+    if (layoutVariant === 'sidepanel' && isProcessing && onCancel) {
       onCancel();
     } else if (value.trim() && !disabled && !isProcessing) {
       onSubmit(value);
@@ -80,22 +80,22 @@ export function UnifiedInput({
     }
   };
 
-  // --- Sidebar Specific Button Logic ---
-  const isStreamingActive = layoutVariant === 'sidebar' && isProcessing;
-  const sidebarButtonStyle = isStreamingActive
+  // --- Sidepanel Specific Button Logic ---
+  const isStreamingActive = layoutVariant === 'sidepanel' && isProcessing;
+  const sidepanelButtonStyle = isStreamingActive
     ? 'bg-red-500 hover:bg-red-600 text-white' // Base styles
     : !value.trim() || disabled
       ? 'bg-gray-400 text-white' // Disabled state handled by IconButton, only need bg here
       : 'bg-orange-600 hover:bg-orange-700 text-white'; // Active state
-  const sidebarButtonLabel = isStreamingActive
+  const sidepanelButtonLabel = isStreamingActive
     ? 'Cancel generation'
     : 'Send message';
-  const sidebarButtonDisabled =
+  const sidepanelButtonDisabled =
     (!value.trim() && !isStreamingActive) ||
     disabled ||
     (isStreamingActive && isCanceling);
-  const sidebarIconSize = 'w-4 h-4';
-  const sidebarButtonSize = 'w-6 h-6 rounded';
+  const sidepanelIconSize = 'w-4 h-4';
+  const sidepanelButtonSize = 'w-6 h-6 rounded';
 
   // --- Popup Specific Button Logic ---
   const popupSendButtonDisabled = !value.trim() || disabled || isProcessing;
@@ -106,11 +106,11 @@ export function UnifiedInput({
   const popupButtonSize = 'w-5 h-5 rounded';
 
   // --- Define styles with rem units ---
-  const sidebarStyle = { minHeight: '5rem', maxHeight: '12rem' };
+  const sidepanelStyle = { minHeight: '5rem', maxHeight: '12rem' };
   const popupStyle = { minHeight: '4.5rem', maxHeight: '12rem' };
 
   // --- Render Logic ---
-  if (layoutVariant === 'sidebar') {
+  if (layoutVariant === 'sidepanel') {
     return (
       <div className={`flex flex-col ${className}`}>
         {/* Token Counter */}
@@ -143,7 +143,7 @@ export function UnifiedInput({
                 placeholder='Type a prompt or select one...'
                 disabled={disabled || isProcessing}
                 autoResize={true}
-                style={sidebarStyle}
+                style={sidepanelStyle}
                 className='flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable text-sm'
               />
             </div>
@@ -153,12 +153,12 @@ export function UnifiedInput({
               {/* Send/Cancel Button */}
               <IconButton
                 icon={isStreamingActive ? XIcon : ArrowUpIcon}
-                iconClassName={`${sidebarIconSize} select-none`}
-                className={`${sidebarButtonStyle} ${sidebarButtonSize} ${isCanceling ? 'opacity-70' : ''}`}
+                iconClassName={`${sidepanelIconSize} select-none`}
+                className={`${sidepanelButtonStyle} ${sidepanelButtonSize} ${isCanceling ? 'opacity-70' : ''}`}
                 onClick={handleSubmit}
-                disabled={sidebarButtonDisabled}
-                ariaLabel={sidebarButtonLabel}
-                title={sidebarButtonLabel}
+                disabled={sidepanelButtonDisabled}
+                ariaLabel={sidepanelButtonLabel}
+                title={sidepanelButtonLabel}
               />
 
               {/* Prompt Selection Button */}
@@ -168,7 +168,7 @@ export function UnifiedInput({
                   type='button'
                   onClick={() => setIsDropdownOpen((prev) => !prev)}
                   disabled={disabled || isProcessing}
-                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 ${sidebarButtonSize} ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 ${sidepanelButtonSize} ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label='Select prompt'
                   title='Select a custom prompt'
                 >
@@ -280,6 +280,6 @@ UnifiedInput.propTypes = {
   showTokenInfo: PropTypes.bool,
   tokenStats: PropTypes.object,
   contextStatus: PropTypes.object,
-  layoutVariant: PropTypes.oneOf(['popup', 'sidebar']).isRequired,
+  layoutVariant: PropTypes.oneOf(['popup', 'sidepanel']).isRequired,
   className: PropTypes.string,
 };

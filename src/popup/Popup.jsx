@@ -155,7 +155,7 @@ export function Popup() {
     window.close();
   };
 
-  const toggleSidebar = useCallback(async () => {
+  const toggleSidepanel = useCallback(async () => {
     if (!currentTab?.id) {
       updateStatus('Error: No active tab found.');
       return;
@@ -212,21 +212,21 @@ export function Popup() {
         }
       } else {
         throw new Error(
-          response?.error || 'Failed to toggle sidebar state in background.'
+          response?.error || 'Failed to toggle sidepanel state in background.'
         );
       }
     } catch (error) {
-      logger.popup.error('Error in toggleSidebar:', error);
+      logger.popup.error('Error in toggleSidepanel:', error);
       updateStatus(`Error: ${error.message}`, false);
     }
   }, [currentTab, updateStatus]);
 
-  const { currentShortcutConfig: popupSidebarShortcut } = useConfigurableShortcut(
+  const { currentShortcutConfig: popupSidepanelShortcut } = useConfigurableShortcut(
     STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
     DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
-    toggleSidebar,
+    toggleSidepanel,
     logger.popup,
-    [toggleSidebar]
+    [toggleSidepanel]
   );
 
   const handleProcessWithText = async (text) => {
@@ -307,9 +307,9 @@ export function Popup() {
         }
       >
         <button
-          onClick={toggleSidebar}
+          onClick={toggleSidepanel}
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-          title={popupSidebarShortcut && popupSidebarShortcut.key ? `Toggle Side Panel (${formatShortcutToStringDisplay(popupSidebarShortcut)})` : 'Toggle Side Panel'}
+          title={popupSidepanelShortcut && popupSidepanelShortcut.key ? `Toggle Side Panel (${formatShortcutToStringDisplay(popupSidepanelShortcut)})` : 'Toggle Side Panel'}
           disabled={!currentTab?.id}
         >
           <SidepanelIcon className='w-4 h-4 select-none' />

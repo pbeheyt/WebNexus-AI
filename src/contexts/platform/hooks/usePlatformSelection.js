@@ -9,8 +9,8 @@ import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../../shared/constants';
  * @param {number|null} tabId - The current tab ID.
  * @param {string} globalStorageKey - The storage key for the global platform preference.
  * @param {Array} platformConfigs - Array of platform configuration objects.
- * @param {Object} credentialStatus - Object mapping platform IDs to credential availability (Sidebar only).
- * @param {string} interfaceType - The type of interface (e.g., 'sidebar', 'popup').
+ * @param {Object} credentialStatus - Object mapping platform IDs to credential availability (Sidepanel only).
+ * @param {string} interfaceType - The type of interface (e.g., 'sidepanel', 'popup').
  * @param {Function} onPlatformSelected - Callback function when platform selection changes.
  * @returns {{selectedPlatformId: string|null, selectPlatform: Function, isLoading: boolean}}
  */
@@ -37,9 +37,9 @@ export function usePlatformSelection(
       setIsLoading(true);
     const determineInitialPlatform = async () => {
       try {
-        // Construct available platforms based on credentials (for sidebar)
+        // Construct available platforms based on credentials (for sidepanel)
         const availablePlatforms = platformConfigs.filter((config) =>
-          interfaceType === INTERFACE_SOURCES.SIDEBAR
+          interfaceType === INTERFACE_SOURCES.SIDEPANEL
             ? credentialStatus[config.id] || false
             : true
         );
@@ -47,7 +47,7 @@ export function usePlatformSelection(
           availablePlatforms.map((p) => p.id)
         );
 
-        if (availablePlatforms.length === 0 && interfaceType === INTERFACE_SOURCES.SIDEBAR) {
+        if (availablePlatforms.length === 0 && interfaceType === INTERFACE_SOURCES.SIDEPANEL) {
            setSelectedPlatformId(null); // No platforms available
            setIsLoading(false);
            return;
@@ -66,9 +66,9 @@ export function usePlatformSelection(
 
         let platformToUse = null;
 
-        // Priority 1: Tab-specific preference (ONLY IF SIDEBAR)
+        // Priority 1: Tab-specific preference (ONLY IF SIDEPANEL)
         if (
-          interfaceType === INTERFACE_SOURCES.SIDEBAR &&
+          interfaceType === INTERFACE_SOURCES.SIDEPANEL &&
           lastUsedTabPlatform &&
           platformConfigs.some((p) => p.id === lastUsedTabPlatform) && // Check if it's a known platform
           availablePlatformIds.has(lastUsedTabPlatform)                // Check if available based on creds
@@ -129,8 +129,8 @@ export function usePlatformSelection(
       try {
         setSelectedPlatformId(platformId); // Update state immediately
 
-        // Update tab-specific preference ONLY IF SIDEBAR
-        if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
+        // Update tab-specific preference ONLY IF SIDEPANEL
+        if (interfaceType === INTERFACE_SOURCES.SIDEPANEL) {
           const tabPreferences = await chrome.storage.local.get(
             STORAGE_KEYS.TAB_PLATFORM_PREFERENCES
           );

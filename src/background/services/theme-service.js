@@ -32,15 +32,15 @@ export async function handleThemeOperation(message, sendResponse) {
           [STORAGE_KEYS.THEME_PREFERENCE]: theme,
         });
 
-        // Notify only tabs with active sidebars about theme change
-        const sidebarStateResult = await chrome.storage.local.get(
-          STORAGE_KEYS.TAB_SIDEBAR_STATES
+        // Notify only tabs with active sidepanels about theme change
+        const sidepanelStateResult = await chrome.storage.local.get(
+          STORAGE_KEYS.TAB_SIDEPANEL_STATES
         );
-        const sidebarStates =
-          sidebarStateResult[STORAGE_KEYS.TAB_SIDEBAR_STATES] || {};
+        const sidepanelStates =
+          sidepanelStateResult[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
         const targetTabIds = [];
 
-        for (const [tabIdStr, isVisible] of Object.entries(sidebarStates)) {
+        for (const [tabIdStr, isVisible] of Object.entries(sidepanelStates)) {
           if (isVisible) {
             const tabId = parseInt(tabIdStr, 10);
             // Basic check if parsing was successful (tab IDs should always be numbers)
@@ -48,7 +48,7 @@ export async function handleThemeOperation(message, sendResponse) {
               targetTabIds.push(tabId);
             } else {
               logger.background.warn(
-                `Invalid tab ID found in sidebar states: ${tabIdStr}`
+                `Invalid tab ID found in sidepanel states: ${tabIdStr}`
               );
             }
           }
@@ -67,11 +67,11 @@ export async function handleThemeOperation(message, sendResponse) {
                 error.message.includes('Receiving end does not exist'))
             ) {
               logger.background.warn(
-                `Could not send theme update to active sidebar tab ${tabId}: Receiving end does not exist.`
+                `Could not send theme update to active sidepanel tab ${tabId}: Receiving end does not exist.`
               );
             } else {
               logger.background.error(
-                `Failed to send theme update to active sidebar tab ${tabId}:`,
+                `Failed to send theme update to active sidepanel tab ${tabId}:`,
                 error
               );
             }

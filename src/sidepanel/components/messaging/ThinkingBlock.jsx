@@ -1,4 +1,4 @@
-// src/sidebar/components/messaging/ThinkingBlock.jsx
+// src/sidepanel/components/messaging/ThinkingBlock.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';

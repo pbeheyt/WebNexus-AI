@@ -1,4 +1,4 @@
-// src/sidebar/components/messaging/utils/parseTextAndMath.js
+// src/sidepanel/components/messaging/utils/parseTextAndMath.js
 
 /**
  * Parses text and math expressions from a given string.

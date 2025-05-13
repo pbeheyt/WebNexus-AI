@@ -646,7 +646,7 @@ const checkScrollPosition = useCallback(() => {
                   onMouseLeave={() => setIsIncludeTooltipVisible(false)}
                   onFocus={() => setIsIncludeTooltipVisible(true)}
                   onBlur={() => setIsIncludeTooltipVisible(false)}
-                  aria-describedby='include-context-tooltip-sidebar'
+                  aria-describedby='include-context-tooltip-sidepanel'
                 >
                   <ContentTypeIcon
                     contentType={contentType}
@@ -672,7 +672,7 @@ const checkScrollPosition = useCallback(() => {
                   targetRef={includeToggleRef}
                   message='Send content along with your prompt.'
                   position='top'
-                  id='include-context-tooltip-sidebar'
+                  id='include-context-tooltip-sidepanel'
                 />
               </>
             ) : (

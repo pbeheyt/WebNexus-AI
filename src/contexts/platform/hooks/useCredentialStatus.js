@@ -6,10 +6,10 @@ import { logger } from '../../../shared/logger';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../../shared/constants';
 
 /**
- * Hook to fetch and manage API credential status, specifically for the Sidebar.
+ * Hook to fetch and manage API credential status, specifically for the Sidepanel.
  * Listens for changes in credential storage.
  * @param {Array} platformConfigs - Array of platform configuration objects.
- * @param {string} interfaceType - The type of interface (e.g., 'sidebar', 'popup').
+ * @param {string} interfaceType - The type of interface (e.g., 'sidepanel', 'popup').
  * @returns {{credentialStatus: Object, hasAnyPlatformCredentials: boolean, isLoading: boolean, error: Error|null}}
  */
 export function useCredentialStatus(platformConfigs, interfaceType) {
@@ -17,12 +17,12 @@ export function useCredentialStatus(platformConfigs, interfaceType) {
   const [hasAnyPlatformCredentials, setHasAnyPlatformCredentials] =
     useState(false);
   const [isLoading, setIsLoading] = useState(
-    interfaceType === INTERFACE_SOURCES.SIDEBAR
-  ); // Only loading for sidebar initially
+    interfaceType === INTERFACE_SOURCES.SIDEPANEL
+  ); // Only loading for sidepanel initially
   const [error, setError] = useState(null);
 
   const fetchCredentials = useCallback(async () => {
-    if (interfaceType !== INTERFACE_SOURCES.SIDEBAR || !platformConfigs.length) {
+    if (interfaceType !== INTERFACE_SOURCES.SIDEPANEL || !platformConfigs.length) {
       setIsLoading(false);
       setCredentialStatus({});
       setHasAnyPlatformCredentials(false); // No creds needed/checked for popup
@@ -63,9 +63,9 @@ export function useCredentialStatus(platformConfigs, interfaceType) {
     fetchCredentials();
   }, [fetchCredentials]);
 
-  // Listener for credential changes in storage (only for sidebar)
+  // Listener for credential changes in storage (only for sidepanel)
   useEffect(() => {
-    if (interfaceType !== INTERFACE_SOURCES.SIDEBAR) {
+    if (interfaceType !== INTERFACE_SOURCES.SIDEPANEL) {
       return; // No listener needed for popup
     }
 

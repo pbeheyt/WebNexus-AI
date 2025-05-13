@@ -4,7 +4,7 @@ import { STORAGE_KEYS } from '../../shared/constants.js';
 import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 
-// List of tab-specific storage keys to clear on manual refresh (excluding sidebar visibility)
+// List of tab-specific storage keys to clear on manual refresh (excluding sidepanel visibility)
 const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR = [
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
@@ -13,11 +13,11 @@ const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR = [
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
   STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-  // Note: TAB_SIDEBAR_STATES is intentionally excluded to preserve visibility state during manual refresh.
+  // Note: TAB_SIDEPANEL_STATES is intentionally excluded to preserve visibility state during manual refresh.
 ];
 
 // List of all storage keys that are tab-specific and need automatic cleanup (used for onRemoved/periodic cleanup)
-// This includes TAB_SIDEBAR_STATES which is handled by SidebarStateManager.cleanupTabStates
+// This includes TAB_SIDEPANEL_STATES which is handled by SidePanelStateManager.cleanupTabStates
 const ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP = [
   STORAGE_KEYS.TAB_FORMATTED_CONTENT,
   STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG,
@@ -76,7 +76,7 @@ export async function clearSingleTabData(tabId) {
 }
 
 /**
- * Handles the 'clearTabData' message request from the UI (e.g., sidebar refresh button).
+ * Handles the 'clearTabData' message request from the UI (e.g., sidepanel refresh button).
  * @param {object} message - The message object containing the tabId.
  * @param {chrome.runtime.MessageSender} sender - The sender of the message.
  * @param {function} sendResponse - Function to call to send the response.
@@ -216,8 +216,8 @@ export function setupTabStateListener() {
       try {
         // Clean up all general tab-specific storage keys
         for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP) {
-          // Skip sidebar state in this loop; handled separately below.
-          if (storageKey !== STORAGE_KEYS.TAB_SIDEBAR_STATES) {
+          // Skip sidepanel state in this loop; handled separately below.
+          if (storageKey !== STORAGE_KEYS.TAB_SIDEPANEL_STATES) {
             await cleanupTabStorage(storageKey, tabId, null); // Pass tabId for single removal, validTabIds=null
           }
         }
@@ -275,8 +275,8 @@ export async function performStaleTabCleanup() {
 
     // Clean up all general tab-specific storage keys based on the valid IDs
     for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP) {
-      // Skip sidebar state in this loop; handled separately below.
-      if (storageKey !== STORAGE_KEYS.TAB_SIDEBAR_STATES) {
+      // Skip sidepanel state in this loop; handled separately below.
+      if (storageKey !== STORAGE_KEYS.TAB_SIDEPANEL_STATES) {
         await cleanupTabStorage(storageKey, null, validTabIds); // Pass validTabIds for periodic removal, tabId=null
       }
     }

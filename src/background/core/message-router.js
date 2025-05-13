@@ -51,7 +51,7 @@ export function setupMessageRouter() {
       return false;
     }
 
-    // Handle getCurrentTabId for tab-specific sidebar functionality
+    // Handle getCurrentTabId for tab-specific sidepanel functionality
     if (message.action === 'getCurrentTabId') {
       sendResponse({ tabId: sender.tab ? sender.tab.id : null });
       return false;
@@ -171,7 +171,7 @@ function registerServiceHandlers() {
     return true; // Keep channel open for async response
   });
 
-  // Clear specific tab data (for sidebar refresh)
+  // Clear specific tab data (for sidepanel refresh)
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
 
   // Handle requests to toggle the native side panel

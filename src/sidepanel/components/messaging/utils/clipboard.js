@@ -13,7 +13,7 @@ export const copyToClipboard = async (text) => {
       await navigator.clipboard.writeText(text);
       return;
     } catch (error) {
-      logger.sidebar.warn(
+      logger.sidepanel.warn(
         'navigator.clipboard.writeText failed, falling back:',
         error
       );
@@ -37,7 +37,7 @@ export const copyToClipboard = async (text) => {
       throw new Error('Fallback copy method (execCommand) failed');
     }
   } catch (error) {
-    logger.sidebar.error('Fallback copy method failed:', error);
+    logger.sidepanel.error('Fallback copy method failed:', error);
     throw error;
   } finally {
     document.body.removeChild(textarea);
