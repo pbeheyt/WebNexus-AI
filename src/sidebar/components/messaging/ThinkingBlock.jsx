@@ -48,7 +48,7 @@ const ThinkingBlock = ({ thinkingContent }) => {
         aria-controls={`thinking-content-${React.useId()}`} // Generate unique ID
       >
         <div className='flex items-center'>
-        <span className='text-xs italic text-gray-600 dark:text-gray-400 select-none'>
+        <span className='text-xs italic text-gray-600 dark:text-gray-400'>
           Thinking Process
         </span>
         </div>

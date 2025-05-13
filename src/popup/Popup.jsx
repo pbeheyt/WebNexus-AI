@@ -83,7 +83,7 @@ export function Popup() {
   const getTooltipMessage = () => {
     if (!isSupported) {
       return (
-        <div className='text-xs text-theme-primary text-left w-full p-1.5 select-none'>
+        <div className='text-xs text-theme-primary text-left w-full p-1.5'>
           <p>
             This extension cannot access the current page. You can still send
             your prompt to the selected AI platform.
@@ -92,7 +92,7 @@ export function Popup() {
       );
     } else if (!isInjectable) {
       return (
-        <div className='text-xs text-theme-primary text-left w-full p-1.5 select-none'>
+        <div className='text-xs text-theme-primary text-left w-full p-1.5'>
           <p className='mb-1.5'>
             Content extraction is not supported for this page. You can still
             send your prompt to the selected AI platform.
@@ -110,7 +110,7 @@ export function Popup() {
       );
     } else {
       return (
-        <div className='text-xs text-theme-primary text-left w-full p-1.5 select-none'>
+        <div className='text-xs text-theme-primary text-left w-full p-1.5'>
           <p className='mb-1.5'>
             Extract this{' '}
             <span className='font-medium'>{contentTypeLabel || 'content'}</span>{' '}
@@ -291,7 +291,7 @@ export function Popup() {
   };
 
   return (
-    <div className='min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme select-none cursor-default'>
+    <div className='min-w-[350px] px-4 bg-theme-primary text-theme-primary border border-theme cursor-default'>
       <AppHeader
         onClose={closePopup}
         className='py-2'
@@ -349,7 +349,7 @@ export function Popup() {
                           contentType={contentType}
                           className='w-5 h-5 text-current'
                         />
-                        <span className='text-sm font-medium truncate ml-1 select-none cursor-default'>
+                        <span className='text-sm font-medium truncate ml-1 cursor-default'>
                           {contentTypeLabel}
                         </span>
                         <Toggle
@@ -368,7 +368,7 @@ export function Popup() {
                         />
                       </>
                     ) : (
-                      <span className='text-sm text-theme-secondary select-none cursor-default'>
+                      <span className='text-sm text-theme-secondary cursor-default'>
                         Detecting type...
                       </span>
                     )}
@@ -401,7 +401,7 @@ export function Popup() {
           <StatusMessage
             message={statusMessage}
             context='popup'
-            className='py-3 select-none'
+            className='py-3'
           />
         </>
       )}

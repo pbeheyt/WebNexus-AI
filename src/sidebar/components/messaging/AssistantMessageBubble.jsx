@@ -343,7 +343,7 @@ export const AssistantMessageBubble = memo(
                 />
               )}
               {model && (
-                <span title={model} className='select-none'>
+                <span title={model}>
                   {model}
                 </span>
               )}

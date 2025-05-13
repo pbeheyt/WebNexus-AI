@@ -157,7 +157,7 @@ function Header() {
                                 altText=''
                                 className='w-4 h-4'
                               />
-                              <span className='text-sm select-none'>
+                              <span className='text-sm'>
                                 {platform.name}
                               </span>
                             </div>
@@ -217,9 +217,9 @@ function Header() {
           ) : (
             // When no credentials, show message
             <div className='flex-grow py-1.5 h-9 flex items-center'>
-              <span className='text-theme-secondary text-sm select-none'>
-                No API credentials configured.
-              </span>
+          <span className='text-theme-secondary text-sm'>
+            No API credentials configured.
+          </span>
             </div>
           )}
 

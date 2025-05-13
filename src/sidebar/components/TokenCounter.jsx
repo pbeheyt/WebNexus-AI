@@ -91,7 +91,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
           >
             <InputTokenIcon className='w-3 h-3 mr-1 select-none' />
-            <span className='select-none'>
+            <span>
               {inputTokensInLastApiCall.toLocaleString()}
             </span>
             <Tooltip
@@ -111,7 +111,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
           >
             <OutputTokenIcon className='w-3 h-3 mr-1 select-none' />
-            <span className='select-none'>{outputTokens.toLocaleString()}</span>
+            <span>{outputTokens.toLocaleString()}</span>
             <Tooltip
               show={hoveredElement === 'outputTokens'}
               message={tooltipContent.outputTokens}
@@ -130,7 +130,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onFocus={() => setHoveredElement('lastCost')}
             onBlur={() => setHoveredElement(null)}
           >
-            <span className='select-none'>({formatCost(lastApiCallCost)})</span>
+            <span>({formatCost(lastApiCallCost)})</span>
             <Tooltip
               show={hoveredElement === 'lastCost'}
               message={tooltipContent.lastCost}
@@ -147,7 +147,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onFocus={() => setHoveredElement('cost')}
             onBlur={() => setHoveredElement(null)}
           >
-            <span className='select-none'>{formattedCost}</span>
+            <span>{formattedCost}</span>
             <Tooltip
               show={hoveredElement === 'cost'}
               message={tooltipContent.cost}
@@ -185,8 +185,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onFocus={() => setHoveredElement('prompt')}
               onBlur={() => setHoveredElement(null)}
             >
-              <span className='text-xs font-medium select-none'>Prompt</span>
-              <span className='select-none'>
+              <span className='text-xs font-medium'>Prompt</span>
+              <span>
                 {promptTokensInLastApiCall.toLocaleString()}
               </span>
               <Tooltip
@@ -205,8 +205,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onFocus={() => setHoveredElement('historySent')}
               onBlur={() => setHoveredElement(null)}
             >
-              <span className='text-xs font-medium select-none'>History</span>
-              <span className='select-none'>
+              <span className='text-xs font-medium'>History</span>
+              <span>
                 {historyTokensSentInLastApiCall.toLocaleString()}
               </span>
               <Tooltip
@@ -225,8 +225,8 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
               onFocus={() => setHoveredElement('system')}
               onBlur={() => setHoveredElement(null)}
             >
-              <span className='text-xs font-medium select-none'>System</span>
-              <span className='select-none'>
+              <span className='text-xs font-medium'>System</span>
+              <span>
                 {systemTokensInLastApiCall.toLocaleString()}
               </span>
               <Tooltip
@@ -247,7 +247,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onFocus={() => setHoveredElement('contextWindow')}
             onBlur={() => setHoveredElement(null)}
           >
-            <div className='h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full mr-2 select-none'>
+            <div className='h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full mr-2'>
               <div
                 className={`h-1.5 rounded-full ${
                   contextData.warningLevel === 'critical'
@@ -263,7 +263,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
                 }}
               ></div>
             </div>
-            <span className='text-xs whitespace-nowrap select-none'>
+            <span className='text-xs whitespace-nowrap'>
               {Math.min(100, contextData.percentage || 0).toFixed(1)}%
             </span>
             <Tooltip

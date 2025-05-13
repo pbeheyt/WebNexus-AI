@@ -67,7 +67,7 @@ const EnhancedCodeBlock = memo(
         {/* Minimal header with language display */}
         <div className='relative bg-gray-200 dark:bg-gray-800 px-3 py-1.5 flex justify-between items-center rounded-t-lg'>
           {/* Language name */}
-          <span className='text-gray-600 dark:text-gray-400 font-mono text-xs select-none'>
+          <span className='text-gray-600 dark:text-gray-400 font-mono text-xs'>
             {displayLanguage}
           </span>
 

@@ -90,15 +90,15 @@ export function PromptDropdown({
     >
       {error && <div className='px-3 py-1.5 text-sm text-red-500'>{error}</div>}
       {!error && prompts.length === 0 && (
-        <div className={`px-3 py-1.5 ${className} text-theme-muted`}>
-          No prompts available.
-        </div>
+          <div className={`px-3 py-1.5 ${className} text-theme-muted`}>
+            No prompts available.
+          </div>
       )}
       {!error && prompts.length > 0 && prompts.map((prompt) => (
         <button
           key={prompt.id}
           onClick={() => onSelectPrompt(prompt)}
-          className={`block w-full text-left px-3 py-1.5 ${className} text-theme-base hover:bg-theme-hover rounded cursor-pointer whitespace-nowrap select-none overflow-hidden text-ellipsis`}
+          className={`block w-full text-left px-3 py-1.5 ${className} text-theme-base hover:bg-theme-hover rounded cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis`}
           role='option'
           aria-selected='false'
         >

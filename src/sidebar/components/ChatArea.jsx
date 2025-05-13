@@ -467,11 +467,11 @@ const checkScrollPosition = useCallback(() => {
             aria-label='Configure API Credentials in Settings'
           >
             <NoCredentialsIcon className='w-8 h-8 mb-3 text-theme-secondary select-none' />
-            <h3 className='text-base font-semibold mb-2 select-none'>
+            <h3 className='text-base font-semibold mb-2'>
               API Credentials Required
             </h3>
-            <p className='text-sm select-none'>
-              Click here to configure API keys in settings.
+            <p className='text-sm'>
+              Click here to configure API keys in the settings.
             </p>
           </button>
         </div>
@@ -496,7 +496,7 @@ const checkScrollPosition = useCallback(() => {
           className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3`}
         >
           {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
-          <div className='flex flex-col items-center py-3 w-full min-h-[120px] select-none'>
+          <div className='flex flex-col items-center py-3 w-full min-h-[120px]'>
             {displayPlatformConfig ? (
               <PlatformIcon
                 platformId={displayPlatformConfig.id}
@@ -510,17 +510,17 @@ const checkScrollPosition = useCallback(() => {
             {modelReady ? (
               <>
                 <div
-                  className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium select-none'
+                  className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium'
                   title={displayModelConfig.id}
                 >
                   {displayModelConfig.name || displayModelConfig.id}
                 </div>
                 {displayModelConfig.description && (
-                  <p className='text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto select-none'>
+                  <p className='text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto'>
                     {displayModelConfig.description}
                   </p>
                 )}
-                <div className='flex flex-row flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-theme-secondary mt-1 select-none'>
+                <div className='flex flex-row flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-theme-secondary mt-1'>
                   {dynamicSpecs.inputPrice === 0 &&
                   dynamicSpecs.outputPrice === 0 ? (
                     <div
@@ -627,10 +627,10 @@ const checkScrollPosition = useCallback(() => {
 
           {/* SECTION 2: Start a conversation message Section */}
           <div className='flex flex-col items-center py-3 w-full'>
-            <h3 className='text-base font-semibold mb-2 select-none'>
-              Start a conversation
-            </h3>
-            <p className='text-xs max-w-xs mx-auto select-none'>
+          <h3 className='text-base font-semibold mb-2'>
+            Start a conversation
+          </h3>
+            <p className='text-xs max-w-xs mx-auto'>
               {getWelcomeMessage(contentType, isPageInjectable)}
             </p>
           </div>
@@ -640,7 +640,7 @@ const checkScrollPosition = useCallback(() => {
             {isPageInjectable ? (
               <>
                 <div
-                  className='flex items-center gap-1 text-xs text-theme-secondary cursor-default select-none'
+                  className='flex items-center gap-1 text-xs text-theme-secondary cursor-default'
                   ref={includeToggleRef}
                   onMouseEnter={() => setIsIncludeTooltipVisible(true)}
                   onMouseLeave={() => setIsIncludeTooltipVisible(false)}
@@ -652,7 +652,7 @@ const checkScrollPosition = useCallback(() => {
                     contentType={contentType}
                     className='w-6 h-6 text-current'
                   />
-                  <span className='text-base font-medium ml-2 select-none'>
+                  <span className='text-base font-medium ml-2'>
                     {CONTENT_TYPE_LABELS[contentType] || 'Content'}
                   </span>
                   <Toggle
@@ -677,7 +677,7 @@ const checkScrollPosition = useCallback(() => {
               </>
             ) : (
               <div className='mb-2'>
-                <span className='text-xs text-theme-secondary select-none'>
+                <span className='text-xs text-theme-secondary'>
                   This page content cannot be extracted.
                 </span>
               </div>

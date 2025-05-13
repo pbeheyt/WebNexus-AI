@@ -114,7 +114,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
         aria-haspopup='listbox'
         aria-expanded={isOpen}
       >
-        <span className='truncate mr-1 select-none'>{displayedModelName}</span>
+        <span className='truncate mr-1'>{displayedModelName}</span>
         <span className='text-theme-secondary flex-shrink-0 select-none'>
           <ChevronIcon />
         </span>
@@ -141,7 +141,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
                 key={model.id}
                 role='option' // ARIA role for item
                 aria-selected={displayModelId === model.id}
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap select-none ${
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap ${
                   displayModelId === model.id ? 'font-medium bg-theme-hover' : ''
                 }`}
                 onClick={() => handleModelChange(model.id)}
