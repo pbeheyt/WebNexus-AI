@@ -40,8 +40,8 @@ export function KeyboardShortcutsTab() {
 
     const loadCustomShortcut = async () => {
       try {
-        const result = await chrome.storage.sync.get([STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]); // Updated key
-        const loadedShortcut = result[STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT] || DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG; // Updated key
+        const result = await chrome.storage.sync.get([STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]);
+        const loadedShortcut = result[STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT] || DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG;
         setCustomPopupShortcut(loadedShortcut);
         setEditableCustomShortcut(loadedShortcut);
       } catch (error) {
@@ -99,7 +99,7 @@ export function KeyboardShortcutsTab() {
 
       showInfoNotification('Saving shortcut...'); 
 
-      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]: editableCustomShortcut }); // Updated key
+      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]: editableCustomShortcut });
       setCustomPopupShortcut(editableCustomShortcut);
       showSuccessNotification('Sidebar toggle shortcut saved successfully!');
       setIsShortcutModalOpen(false); 

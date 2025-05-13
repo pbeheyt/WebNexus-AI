@@ -222,7 +222,7 @@ export function Popup() {
   }, [currentTab, updateStatus]);
 
   const { currentShortcutConfig: popupSidebarShortcut } = useConfigurableShortcut(
-    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT, // Updated key
+    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT,
     DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
     toggleSidebar,
     logger.popup,

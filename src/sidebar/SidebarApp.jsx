@@ -55,7 +55,7 @@ export default function SidebarApp() {
 
   // currentShortcutConfig is returned but not directly used for display in SidebarApp
   useConfigurableShortcut(
-    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT, // Updated key
+    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT,
     DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
     handleCloseShortcut,
     logger.sidebar,
