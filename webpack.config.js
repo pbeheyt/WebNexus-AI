@@ -96,7 +96,4 @@ module.exports = {
   performance: {
     hints: isProduction ? 'warning' : false,
   },
-  performance: {
-    hints: isProduction ? 'warning' : false, // Show hints only in production
-  },
 };
