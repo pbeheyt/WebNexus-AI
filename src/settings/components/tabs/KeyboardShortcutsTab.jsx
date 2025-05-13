@@ -108,13 +108,7 @@ export function KeyboardShortcutsTab() {
   };
 
   const handleSaveCustomShortcut = async () => {
-    // Conflict Detection Logic
     if (globalCommands && globalCommands.length > 0) {
-      for (const command of globalCommands) {
-        if (command.name === '_execute_action' || command.name === 'toggle-feature') {
-          continue;
-        }
-
         const globalShortcutObj = parseChromeCommandShortcut(command.shortcut);
         if (globalShortcutObj) {
           const mainKeyMatch = editableCustomShortcut.key.toLowerCase() === globalShortcutObj.key.toLowerCase();
@@ -133,7 +127,6 @@ export function KeyboardShortcutsTab() {
         }
       }
     }
-    // End of Conflict Detection Logic
 
     setIsSavingShortcut(true);
     setShortcutModalError(''); 
