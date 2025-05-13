@@ -10,8 +10,8 @@ import { logger } from '../../shared/logger.js';
 export async function resetState() {
   try {
     await chrome.storage.local.set({
-      [STORAGE_KEYS.SCRIPT_INJECTED]: false,
-      [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: null,
+      [STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]: false,
+      [STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID]: null,
       [STORAGE_KEYS.CONTENT_READY]: false,
       [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
       [STORAGE_KEYS.API_PROCESSING_STATUS]: null,
@@ -128,21 +128,21 @@ export async function savePlatformTabInfo(
 ) {
   try {
     await chrome.storage.local.set({
-      [STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]: tabId,
-      [STORAGE_KEYS.INJECTION_PLATFORM]: platformId,
-      [STORAGE_KEYS.SCRIPT_INJECTED]: false,
-      [STORAGE_KEYS.PRE_PROMPT]: promptContent,
-      [STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION]: formattedContentString,
+      [STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID]: tabId,
+      [STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID]: platformId,
+      [STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]: false,
+      [STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT]: promptContent,
+      [STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT]: formattedContentString,
     });
 
     // Verify the data was stored correctly
     const verifyData = await chrome.storage.local.get([
-      STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID,
-      STORAGE_KEYS.INJECTION_PLATFORM,
-      STORAGE_KEYS.SCRIPT_INJECTED,
+      STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID,
+      STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID,
+      STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG,
     ]);
     logger.background.info(
-      `Storage verification: aiPlatformTabId=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID]}, aiPlatform=${verifyData[STORAGE_KEYS.INJECTION_PLATFORM]}, scriptInjected=${verifyData[STORAGE_KEYS.SCRIPT_INJECTED]}`
+      `Storage verification: aiPlatformTabId=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID]}, aiPlatform=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID]}, scriptInjected=${verifyData[STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]}`
     );
 
     return true;
@@ -160,7 +160,7 @@ export async function savePlatformTabInfo(
 export async function updateScriptInjectionStatus(injected) {
   try {
     await chrome.storage.local.set({
-      [STORAGE_KEYS.SCRIPT_INJECTED]: injected,
+      [STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]: injected,
     });
     logger.background.info(`Updated script injection status: ${injected}`);
   } catch (error) {
@@ -557,14 +557,14 @@ export async function getExtractedContent() {
 export async function getPlatformTabInfo() {
   try {
     const result = await chrome.storage.local.get([
-      STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID,
-      STORAGE_KEYS.INJECTION_PLATFORM,
-      STORAGE_KEYS.SCRIPT_INJECTED,
+      STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID,
+      STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID,
+      STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG,
     ]);
     return {
-      tabId: result[STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID],
-      platformId: result[STORAGE_KEYS.INJECTION_PLATFORM],
-      scriptInjected: result[STORAGE_KEYS.SCRIPT_INJECTED],
+      tabId: result[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID],
+      platformId: result[STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID],
+      scriptInjected: result[STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG],
     };
   } catch (error) {
     logger.background.error('Error getting platform tab info:', error);

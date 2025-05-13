@@ -259,12 +259,12 @@ export function Popup() {
       await chrome.storage.local.remove([
         STORAGE_KEYS.CONTENT_READY,
         STORAGE_KEYS.EXTRACTED_CONTENT,
-        STORAGE_KEYS.INJECTION_PLATFORM_TAB_ID,
-        STORAGE_KEYS.SCRIPT_INJECTED,
-        STORAGE_KEYS.PRE_PROMPT,
+        STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID,
+        STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG,
+        STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
       ]);
       await chrome.storage.local.set({
-        [STORAGE_KEYS.PRE_PROMPT]: promptContent,
+        [STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT]: promptContent,
       });
 
       const result = await processContent({

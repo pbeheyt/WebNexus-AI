@@ -44,7 +44,7 @@ class ModelParameterService {
 
     // 2. Try source-specific global preference (Sidebar only)
     if (source === INTERFACE_SOURCES.SIDEBAR) {
-      const storageKey = STORAGE_KEYS.SIDEBAR_MODEL;
+      const storageKey = STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM;
 
       try {
         const sourcePrefs = await chrome.storage.sync.get(storageKey);
@@ -180,7 +180,7 @@ class ModelParameterService {
     }
 
     try {
-      const storageKey = STORAGE_KEYS.SIDEBAR_MODEL;
+      const storageKey = STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM;
 
       // Get current preferences
       const prefs = await chrome.storage.sync.get(storageKey);

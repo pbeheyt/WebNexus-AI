@@ -8,7 +8,7 @@ const {
   useTabAwarePlatform: useSidebarPlatform,
 } = createTabAwarePlatformContext({
   interfaceType: INTERFACE_SOURCES.SIDEBAR,
-  globalStorageKey: STORAGE_KEYS.SIDEBAR_PLATFORM,
+  globalStorageKey: STORAGE_KEYS.SIDEBAR_DEFAULT_PLATFORM_ID,
 });
 
 export { SidebarPlatformProvider, useSidebarPlatform };

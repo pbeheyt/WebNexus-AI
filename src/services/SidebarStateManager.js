@@ -49,16 +49,16 @@ class SidebarStateManager {
   async _getStateForTab(tabId) {
     const result = await chrome.storage.local.get([
       STORAGE_KEYS.TAB_SIDEBAR_STATES,
-      STORAGE_KEYS.SIDEBAR_PLATFORM,
-      STORAGE_KEYS.SIDEBAR_MODEL,
+      STORAGE_KEYS.SIDEBAR_DEFAULT_PLATFORM_ID,
+      STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM,
     ]);
 
     const tabStates = result[STORAGE_KEYS.TAB_SIDEBAR_STATES] || {};
 
     return {
       visible: tabStates[tabId.toString()] === true,
-      platform: result[STORAGE_KEYS.SIDEBAR_PLATFORM] || null,
-      model: result[STORAGE_KEYS.SIDEBAR_MODEL] || null,
+      platform: result[STORAGE_KEYS.SIDEBAR_DEFAULT_PLATFORM_ID] || null,
+      model: result[STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM] || null,
     };
   }
 

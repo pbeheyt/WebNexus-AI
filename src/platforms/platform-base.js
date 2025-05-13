@@ -381,18 +381,18 @@ class BasePlatform extends PlatformInterface {
       `[${this.platformId}] Starting template method processContent`
     );
     chrome.storage.local.get(
-      [STORAGE_KEYS.PRE_PROMPT, STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION],
+      [STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT, STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT],
       async (result) => {
         try {
           this.logger.info(`[${this.platformId}] Retrieved data from storage`, {
-            hasPrompt: !!result[STORAGE_KEYS.PRE_PROMPT],
+            hasPrompt: !!result[STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT],
             hasFormattedContent:
-              !!result[STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION],
+              !!result[STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT],
           });
 
-          const prePrompt = result[STORAGE_KEYS.PRE_PROMPT];
+          const prePrompt = result[STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT];
           const formattedContentString =
-            result[STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION];
+            result[STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT];
 
           if (!prePrompt) {
             throw new Error('Missing prompt data in storage');
@@ -503,8 +503,8 @@ class BasePlatform extends PlatformInterface {
             // Clear the data after successful processing and verification
             chrome.storage.local.remove([
               STORAGE_KEYS.EXTRACTED_CONTENT,
-              STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
-              STORAGE_KEYS.PRE_PROMPT,
+              STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
+              STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
               STORAGE_KEYS.CONTENT_READY,
             ]);
             // --- End Success Logic ---
@@ -515,8 +515,8 @@ class BasePlatform extends PlatformInterface {
             // Still attempt to clear storage as the process is 'done' from the extension's perspective
             chrome.storage.local.remove([
               STORAGE_KEYS.EXTRACTED_CONTENT,
-              STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
-              STORAGE_KEYS.PRE_PROMPT,
+              STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
+              STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
               STORAGE_KEYS.CONTENT_READY,
             ]);
             // Throw an error to indicate the overall process failed due to verification
@@ -532,8 +532,8 @@ class BasePlatform extends PlatformInterface {
 
           chrome.storage.local.remove([
             STORAGE_KEYS.EXTRACTED_CONTENT,
-            STORAGE_KEYS.FORMATTED_CONTENT_FOR_INJECTION,
-            STORAGE_KEYS.PRE_PROMPT,
+            STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
+            STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
             STORAGE_KEYS.CONTENT_READY,
           ]);
         }

@@ -102,7 +102,7 @@ async function handleInstallation(details) {
       if (platformList && platformList.length > 0) {
         const defaultPlatformId = platformList[0].id; // Use the ID of the first platform
           await chrome.storage.sync.set({
-            [STORAGE_KEYS.POPUP_PLATFORM]: defaultPlatformId,
+            [STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID]: defaultPlatformId,
           });
         logger.background.info(
           `Default popup platform set to: ${defaultPlatformId}`

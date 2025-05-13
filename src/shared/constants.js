@@ -36,47 +36,80 @@ export const AI_PLATFORMS = {
  * Storage keys used throughout the extension
  */
 export const STORAGE_KEYS = {
-  // Preferences
+  // --- UI Preferences ---
+  /** @description User's preferred theme (e.g., 'light', 'dark'). Synced across devices. */
   THEME_PREFERENCE: 'theme_preference',
+  /** @description User's preferred text size (e.g., 'sm', 'base', 'lg'). Synced across devices. */
   TEXT_SIZE_PREFERENCE: 'text_size_preference',
-  POPUP_PLATFORM: 'popup_platform_preference',
-  SIDEBAR_PLATFORM: 'sidebar_platform_preference',
-  SIDEBAR_MODEL: 'sidebar_model_preference',
+  /** @description ID of the default/last-selected AI platform for the Popup. Synced across devices. */
+  POPUP_DEFAULT_PLATFORM_ID: 'popup_default_platform_id',
+  /** @description ID of the default/last-selected AI platform for the Sidebar (global). Synced across devices. */
+  SIDEBAR_DEFAULT_PLATFORM_ID: 'sidebar_default_platform_id',
+  /** @description Map of { platformId: modelId } for default/last-selected models in the Sidebar. Synced. */
+  SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM: 'sidebar_default_model_id_by_platform',
+  /** @description User's preference for enabling "thinking mode" in the Sidebar, stored as { platformId: { modelId: boolean } }. Synced. */
   SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
-  CUSTOM_SIDEBAR_TOGGLE_SHORTCUT: 'customSidebarToggleShortcutConfig',
+  /** @description User's custom keyboard shortcut configuration for toggling the sidebar. Synced. */
+  CUSTOM_SIDEBAR_TOGGLE_SHORTCUT: 'custom_sidebar_toggle_shortcut_config',
 
-// Settings
-MODEL_PARAMETER_SETTINGS: 'model_parameter_settings',
-API_CREDENTIALS: 'api_credentials',
+  // --- Core Settings ---
+  /** @description User-configured model parameters (temperature, maxTokens, etc.) for each platform/model. Local. */
+  MODEL_PARAMETER_SETTINGS: 'model_parameter_settings',
+  /** @description API keys for different AI platforms. Local. */
+  API_CREDENTIALS: 'api_credentials',
 
-  // Prompt
-  PRE_PROMPT: 'prePrompt',
+  // --- Prompts & WebUI Injection State ---
+  /** @description The prompt content to be auto-filled when opening an AI platform's Web UI. Local. */
+  WEBUI_INJECTION_PROMPT_CONTENT: 'webui_injection_prompt_content',
+  /** @description Stores all user-created custom prompts, organized by content type. Local. */
   PROMPTS: 'prompts',
+  /** @description Flag indicating if initial default prompts have been populated from config. Local. */
   INITIAL_PROMPTS_POPULATED: 'initial_prompts_populated',
 
-  // Content
-  CONTENT_READY: 'contentReady',
-  EXTRACTED_CONTENT: 'extractedContent',
-  SCRIPT_INJECTED: 'scriptInjected',
-  FORMATTED_CONTENT_FOR_INJECTION: 'formatted_content_for_injection',
-  INJECTION_PLATFORM: 'injectionPlatform',
-  INJECTION_PLATFORM_TAB_ID: 'injectionPlatformTabId',
+  // --- Content Extraction State (General) ---
+  /** @description Flag indicating if content has been successfully extracted from the current page. Local. */
+  CONTENT_READY: 'content_ready',
+  /** @description Object containing the extracted content from the current page. Local. */
+  EXTRACTED_CONTENT: 'extracted_content',
 
-  // API
-  API_PROCESSING_STATUS: 'apiProcessingStatus',
-  API_RESPONSE: 'apiResponse',
-  API_PROCESSING_ERROR: 'apiProcessingError',
-  API_RESPONSE_TIMESTAMP: 'apiResponseTimestamp',
-  STREAM_ID: 'streamId',
+  // --- WebUI Injection Specific State (Content sent to AI platform websites) ---
+  /** @description Flag indicating if the content script for Web UI injection has been successfully injected. Local. */
+  WEBUI_INJECTION_SCRIPT_INJECTED_FLAG: 'webui_injection_script_injected_flag',
+  /** @description The formatted content string prepared for Web UI injection. Local. */
+  WEBUI_INJECTION_FORMATTED_CONTENT: 'webui_injection_formatted_content',
+  /** @description The ID of the AI platform targeted for Web UI injection. Local. */
+  WEBUI_INJECTION_PLATFORM_ID: 'webui_injection_platform_id',
+  /** @description The tab ID of the AI platform's website opened for Web UI injection. Local. */
+  WEBUI_INJECTION_TARGET_TAB_ID: 'webui_injection_target_tab_id',
 
-  // Tabs
+  // --- API Processing State (Direct API calls from Sidebar) ---
+  /** @description Current status of API processing (e.g., 'streaming', 'completed', 'error'). Local. */
+  API_PROCESSING_STATUS: 'api_processing_status',
+  /** @description The response object or content received from the API. Local. */
+  API_RESPONSE: 'api_response',
+  /** @description Error message if API processing failed. Local. */
+  API_PROCESSING_ERROR: 'api_processing_error',
+  /** @description Timestamp of the last API response. Local. */
+  API_RESPONSE_TIMESTAMP: 'api_response_timestamp',
+  /** @description Unique identifier for an active API stream. Local. */
+  STREAM_ID: 'stream_id',
+
+  // --- Tab-Specific Data (Primarily for Sidebar context persistence per tab) ---
+  /** @description Formatted page content specific to a tab, for Sidebar context. Local. */
   TAB_FORMATTED_CONTENT: 'tab_formatted_content',
+  /** @description Chat history for each tab's Sidebar instance. Local. */
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
+  /** @description System prompt configured for each tab's Sidebar instance. Local. */
   TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
+  /** @description Token usage statistics for each tab's Sidebar instance. Local. */
   TAB_TOKEN_STATISTICS: 'tab_token_statistics',
+  /** @description Last selected/preferred platform for each tab's Sidebar instance. Local. */
   TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
+  /** @description Last selected/preferred model (per platform) for each tab's Sidebar instance. Local. */
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
+  /** @description Visibility state (true/false) of the Sidebar for each tab. Local. */
   TAB_SIDEBAR_STATES: 'tab_sidebar_states',
+  /** @description Flag indicating if page context has already been sent for a tab's Sidebar. Local. */
   TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
 };
 

@@ -66,9 +66,9 @@ export async function processWithDefaultPromptWebUI(tab) {
 
     // 3. Get the last used popup platform
     const platformResult = await chrome.storage.sync.get(
-      STORAGE_KEYS.POPUP_PLATFORM
+      STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID
     );
-    const platformId = platformResult[STORAGE_KEYS.POPUP_PLATFORM] || 'chatgpt';
+    const platformId = platformResult[STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID] || 'chatgpt';
     logger.background.info(`Using platform: ${platformId} for popup flow.`);
 
     // 4. Call processContent
