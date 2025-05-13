@@ -52,30 +52,6 @@ class ExtractorFactory {
     return this.activeExtractor;
   }
 
-  /**
-   * Reinitialize extractor based on selection state change
-   * @returns {BaseExtractor} The reinitialized extractor
-   */
-  static reinitialize() {
-    // Clean up existing extractor
-    if (this.activeExtractor) {
-      this.activeExtractor.cleanup();
-      this.activeExtractor = null;
-    }
-
-    // Create new extractor with current URL
-    const url = window.location.href;
-    const contentType = determineContentType(url);
-
-    this.logger.info(`Creating new extractor for content type: ${contentType}`);
-
-    // Create and initialize the new extractor
-    this.activeExtractor = this.createExtractor(url);
-    this.activeExtractor.initialize();
-
-    return this.activeExtractor;
-  }
-
   static cleanup() {
     if (this.activeExtractor) {
       this.activeExtractor.cleanup();
