@@ -1,5 +1,6 @@
 // src/extractor/base-extractor.js
 import { logger } from '../shared/logger.js';
+import { STORAGE_KEYS } from '../shared/constants.js';
 
 class BaseExtractor {
   constructor(contentType) {
@@ -91,11 +92,11 @@ class BaseExtractor {
   async saveToStorage(data) {
     try {
       await chrome.storage.local.set({
-        extractedContent: {
+        [STORAGE_KEYS.EXTRACTED_CONTENT]: {
           ...data,
           contentType: this.contentType,
         },
-        contentReady: true,
+        [STORAGE_KEYS.CONTENT_READY_FLAG]: true,
       });
 
       this.logger.info(`${this.contentType} data saved to storage`);
@@ -108,13 +109,13 @@ class BaseExtractor {
 
       // Save error message to storage
       await chrome.storage.local.set({
-        extractedContent: {
+        [STORAGE_KEYS.EXTRACTED_CONTENT]: {
           error: true,
           message: error.message || 'Unknown error occurred',
           extractedAt: new Date().toISOString(),
           contentType: this.contentType,
         },
-        contentReady: true,
+        [STORAGE_KEYS.CONTENT_READY_FLAG]: true,
       });
 
       return false;
