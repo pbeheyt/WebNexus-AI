@@ -51,11 +51,6 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "platform-display-config.json",
-        "platform-api-config.json",
-        "prompt-config.json",
-        "dist/*.bundle.js",
-        "images/*.png",
         "dist/pdf.worker.mjs",
         "dist/cmaps/*"
       ],
