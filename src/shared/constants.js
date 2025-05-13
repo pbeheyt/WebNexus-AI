@@ -68,7 +68,7 @@ export const STORAGE_KEYS = {
 
   // --- Content Extraction State (General) ---
   /** @description Flag indicating if content has been successfully extracted from the current page. Local. */
-  CONTENT_READY_FLAG: 'Content_ready_flag',
+  CONTENT_READY_FLAG: 'content_ready_flag',
   /** @description Object containing the extracted content from the current page. Local. */
   EXTRACTED_CONTENT: 'extracted_content',
 
@@ -92,7 +92,7 @@ export const STORAGE_KEYS = {
   /** @description Timestamp of the last API response. Local. */
   API_RESPONSE_TIMESTAMP: 'api_response_timestamp',
   /** @description Unique identifier for an active API stream. Local. */
-  API_API_STREAM_ID: 'api_API_STREAM_ID',
+  API_STREAM_ID: 'api_stream_id',
 
   // --- Tab-Specific Data (Primarily for Sidebar context persistence per tab) ---
   /** @description Formatted page content specific to a tab, for Sidebar context. Local. */
