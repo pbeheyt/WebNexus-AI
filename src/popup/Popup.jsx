@@ -257,7 +257,7 @@ export function Popup() {
 
     try {
       await chrome.storage.local.remove([
-        STORAGE_KEYS.CONTENT_READY,
+        STORAGE_KEYS.CONTENT_READY_FLAG,
         STORAGE_KEYS.EXTRACTED_CONTENT,
         STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID,
         STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG,

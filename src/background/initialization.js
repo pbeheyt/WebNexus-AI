@@ -14,7 +14,7 @@ import { resetState } from './core/state-manager.js';
  * @returns {Promise<boolean>} True if population ran, false if already populated or failed.
  */
 async function populateInitialPromptsAndSetDefaults() {
-  const flagKey = STORAGE_KEYS.INITIAL_PROMPTS_POPULATED;
+  const flagKey = STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_FLAG;
   try {
     const flagResult = await chrome.storage.local.get(flagKey);
     if (flagResult[flagKey] === true) {

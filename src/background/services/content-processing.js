@@ -36,8 +36,8 @@ export async function processWithDefaultPromptWebUI(tab) {
     );
 
     // 1. Get the default prompt ID and content from PROMPTS
-    const promptsResult = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
-    const customPrompts = promptsResult[STORAGE_KEYS.PROMPTS] || {};
+    const promptsResult = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
+    const customPrompts = promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
     const typeData = customPrompts[contentType] || {};
     const defaultPromptId = typeData['_defaultPromptId_'];
 
@@ -50,7 +50,7 @@ export async function processWithDefaultPromptWebUI(tab) {
     logger.background.info(`Found default prompt ID: ${defaultPromptId}`);
 
     // 2. Get the actual prompt content from the same result
-    const promptsByType = promptsResult[STORAGE_KEYS.PROMPTS] || {};
+    const promptsByType = promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
         const promptObject = promptsByType[contentType]?.[defaultPromptId];
 
     if (!promptObject || !promptObject.content) {

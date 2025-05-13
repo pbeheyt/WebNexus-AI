@@ -99,13 +99,13 @@ class UserDataService {
               throw new Error('Data for single setting import must be an object.');
             }
             await chrome.storage.local.set({ [storageKey]: parsedJson.data || {} });
-            if (storageKey === STORAGE_KEYS.PROMPTS) {
+            if (storageKey === STORAGE_KEYS.USER_CUSTOM_PROMPTS) {
               await ensureDefaultPrompts();
             }
           } else { // All settings import
             const { prompts, credentials, modelParametersSettings } = parsedJson.data;
             await chrome.storage.local.set({
-              [STORAGE_KEYS.PROMPTS]: prompts || {},
+              [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: prompts || {},
               [STORAGE_KEYS.API_CREDENTIALS]: credentials || {},
               [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: modelParametersSettings || {},
             });
@@ -132,13 +132,13 @@ class UserDataService {
 
   async exportAllSettings() {
     const keysToExport = [
-      STORAGE_KEYS.PROMPTS,
+      STORAGE_KEYS.USER_CUSTOM_PROMPTS,
       STORAGE_KEYS.API_CREDENTIALS,
       STORAGE_KEYS.MODEL_PARAMETER_SETTINGS,
     ];
     const storedData = await chrome.storage.local.get(keysToExport);
     const dataBundle = {
-      prompts: storedData[STORAGE_KEYS.PROMPTS] || {},
+      prompts: storedData[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {},
       credentials: storedData[STORAGE_KEYS.API_CREDENTIALS] || {},
       modelParametersSettings: storedData[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {},
     };
@@ -160,7 +160,7 @@ class UserDataService {
   async importSingleSetting(storageKey, fileObject) {
     // Determine settingNameFromFileAndType based on storageKey for dataType validation
     let settingNameForType;
-    if (storageKey === STORAGE_KEYS.PROMPTS) settingNameForType = 'Prompts';
+    if (storageKey === STORAGE_KEYS.USER_CUSTOM_PROMPTS) settingNameForType = 'Prompts';
     else if (storageKey === STORAGE_KEYS.API_CREDENTIALS) settingNameForType = 'Credentials';
     else if (storageKey === STORAGE_KEYS.MODEL_PARAMETER_SETTINGS) settingNameForType = 'ModelParameters';
     else throw new Error('Invalid storage key for single import.');
@@ -174,8 +174,8 @@ class UserDataService {
     try {
       // Remove prompts and the population flag
       await chrome.storage.local.remove([
-        STORAGE_KEYS.PROMPTS,
-        STORAGE_KEYS.INITIAL_PROMPTS_POPULATED, // Clear the flag
+        STORAGE_KEYS.USER_CUSTOM_PROMPTS,
+        STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_FLAG, // Clear the flag
       ]);
       logger.service.info(
         'Prompts and initial population flag cleared from storage.'
@@ -186,7 +186,7 @@ class UserDataService {
 
       if (repopulationSuccess) {
         // Set the flag again after successful direct repopulation
-        await chrome.storage.local.set({ [STORAGE_KEYS.INITIAL_PROMPTS_POPULATED]: true });
+        await chrome.storage.local.set({ [STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_FLAG]: true });
         logger.service.info(
           'Prompts directly repopulated and flag set successfully.'
         );

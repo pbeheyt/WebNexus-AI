@@ -62,13 +62,13 @@ export const STORAGE_KEYS = {
   /** @description The prompt content to be auto-filled when opening an AI platform's Web UI. Local. */
   WEBUI_INJECTION_PROMPT_CONTENT: 'webui_injection_prompt_content',
   /** @description Stores all user-created custom prompts, organized by content type. Local. */
-  PROMPTS: 'prompts',
+  USER_CUSTOM_PROMPTS: 'user_custom_prompts',
   /** @description Flag indicating if initial default prompts have been populated from config. Local. */
-  INITIAL_PROMPTS_POPULATED: 'initial_prompts_populated',
+  INITIAL_PROMPTS_POPULATED_FLAG: 'initial_prompts_populated_flag',
 
   // --- Content Extraction State (General) ---
   /** @description Flag indicating if content has been successfully extracted from the current page. Local. */
-  CONTENT_READY: 'content_ready',
+  CONTENT_READY_FLAG: 'Content_ready_flag',
   /** @description Object containing the extracted content from the current page. Local. */
   EXTRACTED_CONTENT: 'extracted_content',
 
@@ -92,7 +92,7 @@ export const STORAGE_KEYS = {
   /** @description Timestamp of the last API response. Local. */
   API_RESPONSE_TIMESTAMP: 'api_response_timestamp',
   /** @description Unique identifier for an active API stream. Local. */
-  STREAM_ID: 'stream_id',
+  API_API_STREAM_ID: 'api_API_STREAM_ID',
 
   // --- Tab-Specific Data (Primarily for Sidebar context persistence per tab) ---
   /** @description Formatted page content specific to a tab, for Sidebar context. Local. */

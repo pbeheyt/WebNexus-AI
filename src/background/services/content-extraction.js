@@ -20,7 +20,7 @@ export async function extractContent(tabId, url) {
       `Cannot extract content from non-injectable URL: ${url}`
     );
     await chrome.storage.local.set({
-      [STORAGE_KEYS.CONTENT_READY]: false,
+      [STORAGE_KEYS.CONTENT_READY_FLAG]: false,
       [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
     });
     return false;
@@ -59,7 +59,7 @@ export async function extractContent(tabId, url) {
     const storageListener = (changes, area) => {
       if (
         area === 'local' &&
-        changes[STORAGE_KEYS.CONTENT_READY]?.newValue === true
+        changes[STORAGE_KEYS.CONTENT_READY_FLAG]?.newValue === true
       ) {
         clearTimeout(timeoutId); // Ensure timeout is cleared on success
         chrome.storage.onChanged.removeListener(storageListener);

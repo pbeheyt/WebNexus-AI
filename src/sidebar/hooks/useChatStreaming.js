@@ -379,8 +379,8 @@ export function useChatStreaming({
   const cancelStream = useCallback(async () => {
     if (!streamingMessageId || !isProcessing || isCanceling) return;
 
-    const { [STORAGE_KEYS.STREAM_ID]: streamId } =
-      await chrome.storage.local.get(STORAGE_KEYS.STREAM_ID);
+    const { [STORAGE_KEYS.API_STREAM_ID]: streamId } =
+      await chrome.storage.local.get(STORAGE_KEYS.API_STREAM_ID);
     setIsCanceling(true);
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);

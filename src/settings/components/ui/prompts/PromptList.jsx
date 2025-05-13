@@ -25,8 +25,8 @@ const PromptList = ({
     const loadData = async () => {
       try {
         // Fetch custom prompts which now contain default IDs
-        const result = await chrome.storage.local.get(STORAGE_KEYS.PROMPTS);
-        const customPromptsByType = result[STORAGE_KEYS.PROMPTS] || {};
+        const result = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
+        const customPromptsByType = result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
         
         // Process prompts and extract default IDs
         const uniquePromptsMap = new Map();
@@ -83,9 +83,9 @@ const PromptList = ({
   // Effect to listen for changes in custom prompts storage
   useEffect(() => {
     const handleStorageChange = (changes, area) => {
-      if (area === 'local' && changes[STORAGE_KEYS.PROMPTS]) {
+      if (area === 'local' && changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS]) {
         logger.settings.info('Custom prompts changed, extracting new defaults...');
-        const newCustomPrompts = changes[STORAGE_KEYS.PROMPTS].newValue || {};
+        const newCustomPrompts = changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS].newValue || {};
         const newDefaultIds = {};
         
         // Extract default prompt IDs from the new structure

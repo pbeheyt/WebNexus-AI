@@ -505,7 +505,7 @@ class BasePlatform extends PlatformInterface {
               STORAGE_KEYS.EXTRACTED_CONTENT,
               STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
               STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
-              STORAGE_KEYS.CONTENT_READY,
+              STORAGE_KEYS.CONTENT_READY_FLAG,
             ]);
             // --- End Success Logic ---
           } else {
@@ -517,7 +517,7 @@ class BasePlatform extends PlatformInterface {
               STORAGE_KEYS.EXTRACTED_CONTENT,
               STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
               STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
-              STORAGE_KEYS.CONTENT_READY,
+              STORAGE_KEYS.CONTENT_READY_FLAG,
             ]);
             // Throw an error to indicate the overall process failed due to verification
             throw new Error(`Post-click verification failed for ${this.platformId}. Interaction may not have succeeded.`);
@@ -534,7 +534,7 @@ class BasePlatform extends PlatformInterface {
             STORAGE_KEYS.EXTRACTED_CONTENT,
             STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
             STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
-            STORAGE_KEYS.CONTENT_READY,
+            STORAGE_KEYS.CONTENT_READY_FLAG,
           ]);
         }
       }

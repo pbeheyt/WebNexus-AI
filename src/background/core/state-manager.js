@@ -12,7 +12,7 @@ export async function resetState() {
     await chrome.storage.local.set({
       [STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG]: false,
       [STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID_TAB_ID]: null,
-      [STORAGE_KEYS.CONTENT_READY]: false,
+      [STORAGE_KEYS.CONTENT_READY_FLAG]: false,
       [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
       [STORAGE_KEYS.API_PROCESSING_STATUS]: null,
       [STORAGE_KEYS.API_RESPONSE]: null,
@@ -102,7 +102,7 @@ export async function storeSystemPromptForTab(tabId, systemPrompt) {
 export async function resetExtractionState() {
   try {
     await chrome.storage.local.set({
-      [STORAGE_KEYS.CONTENT_READY]: false,
+      [STORAGE_KEYS.CONTENT_READY_FLAG]: false,
       [STORAGE_KEYS.EXTRACTED_CONTENT]: null,
     });
     logger.background.info('Extraction state reset');
@@ -177,7 +177,7 @@ export async function saveExtractedContent(content) {
   try {
     await chrome.storage.local.set({
       [STORAGE_KEYS.EXTRACTED_CONTENT]: content,
-      [STORAGE_KEYS.CONTENT_READY]: true,
+      [STORAGE_KEYS.CONTENT_READY_FLAG]: true,
     });
     logger.background.info('Extracted content saved');
   } catch (error) {
@@ -205,7 +205,7 @@ export async function initializeStreamResponse(streamId, platformId) {
     await chrome.storage.local.set({
       [STORAGE_KEYS.API_PROCESSING_STATUS]: 'streaming',
       [STORAGE_KEYS.API_RESPONSE]: initialResponse,
-      [STORAGE_KEYS.STREAM_ID]: streamId,
+      [STORAGE_KEYS.API_STREAM_ID]: streamId,
     });
     logger.background.info(`Stream response initialized: ${streamId}`);
   } catch (error) {
