@@ -127,7 +127,7 @@ export const MAX_MESSAGES_PER_TAB_HISTORY = 200;
  */
 export const INTERFACE_SOURCES = {
   POPUP: 'popup',
-  SIDEPANEL: 'sidepanel', // Renamed to SIDEPANEL internally
+  SIDEPANEL: 'sidepanel',
 };
 
 /**

@@ -27,9 +27,9 @@ const activeAbortControllers = new Map();
 
 /**
  * Handle API model requests
- * @param {string} requestType
- * @param {Object} message
- * @param {Function} sendResponse
+ * @param {string} requestType - Type of request
+ * @param {Object} message - Message object
+ * @param {Function} sendResponse - Response function
  */
 export async function handleApiModelRequest(
   requestType,
@@ -125,8 +125,8 @@ export async function handleApiModelRequest(
 
 /**
  * Process content via API with streaming support
- * @param {Object} params
- * @returns {Promise<Object>}
+ * @param {Object} params - Parameters for content processing
+ * @returns {Promise<Object>} Result information
  */
 export async function processContentViaApi(params) {
   const {
@@ -135,11 +135,11 @@ export async function processContentViaApi(params) {
     promptId = null,
     platformId,
     modelId,
-    source = INTERFACE_SOURCES.POPUP,
+    source = INTERFACE_SOURCES.POPUP, // Default to POPUP if source not specified
     customPrompt = null,
     conversationHistory = [],
-          isContentExtractionEnabled,
-          isThinkingModeEnabled,
+    isContentExtractionEnabled,
+    isThinkingModeEnabled,
   } = params;
 
   if (!platformId || !modelId) {
@@ -164,20 +164,17 @@ export async function processContentViaApi(params) {
     let extractedContent = null;
     let newlyFormattedContent = null; // To hold content formatted in this run
     const contentType = determineContentType(url);
-    const isFirstUserMessage = conversationHistory.length === 0;
-    logger.background.info(
-      `Is this the first user message (history empty)? ${isFirstUserMessage}`
-    );
+    // const isFirstUserMessage = conversationHistory.length === 0; // Not used directly here, but good for context
+    // logger.background.info(
+    //   `Is this the first user message (history empty)? ${isFirstUserMessage}`
+    // );
 
-    // 1. Decide whether to extract content based on existence, user request, and message history
-    const initialFormattedContentExists =
-      await hasFormattedContentForTab(tabId);
-    // Extraction depends on toggle state, content existence, and injectability.
-    const canInject = isInjectablePage(url); // Check if page allows injection
+    // 1. Decide whether to extract content based on existence, user request, and injectability
+    const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
+    const canInject = isInjectablePage(url);
     const shouldExtract =
       isContentExtractionEnabled && !initialFormattedContentExists && canInject;
 
-    // Log if extraction is skipped specifically due to non-injectable URL (even if toggle is on)
     if (
       isContentExtractionEnabled &&
       !initialFormattedContentExists &&
@@ -186,39 +183,30 @@ export async function processContentViaApi(params) {
       logger.background.info(
         `First message: Skipping extraction for tab ${tabId} because URL (${url}) is not injectable.`
       );
-      // Return immediately indicating context was skipped, preventing further processing for this message
       return {
-        success: true, // The operation itself didn't fail, it just skipped context
+        success: true,
         skippedContext: true,
         reason: 'Content extraction not supported on this page type.',
-        contentType: contentType, // Pass content type back if needed by UI
+        contentType: contentType,
       };
     }
 
-    // Example log update:
     if (shouldExtract) {
       logger.background.info(
         `Extraction enabled and content needed: Extraction will proceed for tab ${tabId} (injectable: ${canInject}, exists: ${initialFormattedContentExists}).`
       );
-      // Reset previous extraction state (ensure this happens ONLY if extracting)
       await resetExtractionState();
-
-      // Extract content
       logger.background.info(`Content type determined: ${contentType}`);
-      await extractContent(tabId, url); // url should be available here
-      extractedContent = await getExtractedContent(); // Assign to the outer scope variable
+      await extractContent(tabId, url);
+      extractedContent = await getExtractedContent();
 
       if (!extractedContent) {
         logger.background.warn(
           `Failed to extract content for tab ${tabId}, proceeding without it.`
         );
-        newlyFormattedContent = null; // Ensure null if extraction failed
+        newlyFormattedContent = null;
       } else {
         logger.background.info('Content extraction completed.');
-        // Format and Store Content
-        logger.background.info(
-          `Formatting extracted content (type: ${contentType})...`
-        );
         newlyFormattedContent = ContentFormatter.formatContent(
           extractedContent,
           contentType
@@ -228,12 +216,10 @@ export async function processContentViaApi(params) {
           `Formatted and stored content for tab ${tabId}.`
         );
       }
-      // Ensure these are null if extraction happened but failed
       if (!newlyFormattedContent) {
         extractedContent = null;
       }
     } else {
-      // Log the reason why extraction was skipped based on the new logic
       if (!isContentExtractionEnabled) {
         logger.background.info(
           `Extraction skipped for tab ${tabId}: Toggle is OFF.`
@@ -246,16 +232,56 @@ export async function processContentViaApi(params) {
         logger.background.info(
           `Extraction skipped for tab ${tabId}: Page is not injectable (${url}).`
         );
-      } else {
-        logger.background.warn(
-          `Extraction skipped for tab ${tabId} for unknown reason. Conditions: enabled=${isContentExtractionEnabled}, exists=${initialFormattedContentExists}, canInject=${canInject}`
-        );
       }
-      // Ensure these are null if extraction didn't happen
       extractedContent = null;
       newlyFormattedContent = null;
     }
 
+    let promptContent;
+    if (customPrompt) {
+      promptContent = customPrompt;
+    } else {
+      throw new Error('No prompt content provided');
+    }
+
+    let resolvedParams = await ModelParameterService.resolveParameters(
+      platformId,
+      modelId,
+      { tabId, source, conversationHistory, useThinkingMode: isThinkingModeEnabled }
+    );
+    resolvedParams.conversationHistory = conversationHistory;
+    logger.background.info(`Resolved parameters:`, resolvedParams);
+
+    const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    await initializeStreamResponse(streamId, platformId, resolvedParams.model);
+
+    let formattedContentForRequest = null;
+    const contextAlreadySent = await getTabContextSentFlag(tabId);
+
+    if (!isContentExtractionEnabled) {
+      logger.background.info(`Content inclusion skipped: Toggle is OFF.`);
+    } else if (contextAlreadySent) {
+      logger.background.info(
+        `Content inclusion skipped: Context already sent for tab ${tabId}.`
+      );
+    } else {
+      if (shouldExtract && newlyFormattedContent) {
+        formattedContentForRequest = newlyFormattedContent;
+        logger.background.info(
+          `Including newly extracted/formatted content for tab ${tabId}.`
+        );
+      } else if (initialFormattedContentExists) {
+        formattedContentForRequest = await getFormattedContentForTab(tabId);
+        logger.background.info(
+          `Including pre-existing formatted content for tab ${tabId}.`
+        );
+      } else {
+        logger.background.info(
+          `Content inclusion skipped: Toggle is ON, but no content available for tab ${tabId}.`
+        );
+      }
+    }
+    
     if (tabId) {
       try {
         const promptToStoreOrClear = resolvedParams.systemPrompt;
@@ -271,18 +297,16 @@ export async function processContentViaApi(params) {
       }
     }
 
-    // Set the flag *before* the API call if context is being included in this request
     if (formattedContentForRequest !== null) {
-        await setTabContextSentFlag(tabId, true);
-        logger.background.info(`Context included in this request. Set context sent flag for tab ${tabId}.`);
+      await setTabContextSentFlag(tabId, true);
+      logger.background.info(`Context included in this request. Set context sent flag for tab ${tabId}.`);
     }
 
-    // 10. Create unified request configuration
     const requestConfig = {
       prompt: promptContent,
-      resolvedParams: resolvedParams, // Pass the whole resolved params object ( includes history)
-      formattedContent: formattedContentForRequest, // Pass the formatted content string or null
-      streaming: true, // Always true for this function
+      resolvedParams: resolvedParams,
+      formattedContent: formattedContentForRequest,
+      streaming: true,
       onChunk: createStreamHandler(
         streamId,
         source,
@@ -292,40 +316,34 @@ export async function processContentViaApi(params) {
       ),
     };
 
-    // 11. Process with API (using platformId from params)
     const controller = new AbortController();
     activeAbortControllers.set(streamId, controller);
-    requestConfig.abortSignal = controller.signal; // Add signal to request config
+    requestConfig.abortSignal = controller.signal;
 
     try {
       logger.background.info(
         'Calling ApiServiceManager.processWithUnifiedConfig with config:',
         requestConfig
       );
-      // Pass platformId from params directly
       const apiResponse = await ApiServiceManager.processWithUnifiedConfig(
         platformId,
         requestConfig
       );
 
-      // If we get here without an error, streaming completed successfully
-
       return {
         success: true,
         streamId,
         response: apiResponse,
-        contentType: contentType, // Use the variable determined earlier
+        contentType: contentType,
       };
     } catch (processingError) {
-      // Handle API processing errors
       await setApiProcessingError(processingError.message);
-      throw processingError; // Re-throw to be caught by the outer catch
+      throw processingError;
     } finally {
       activeAbortControllers.delete(streamId);
       logger.background.info(`Removed AbortController for stream: ${streamId}`);
     }
   } catch (error) {
-    // This outer catch handles errors from setup (extraction, param resolution) AND re-thrown processing errors
     logger.background.error('API content processing error:', error);
     await setApiProcessingError(error.message);
     return {
@@ -337,12 +355,12 @@ export async function processContentViaApi(params) {
 
 /**
  * Create a stream handler function
- * @param {string} streamId
- * @param {string} source
- * @param {number} tabId
- * @param {string} platformId
- * @param {Object} resolvedParams
- * @returns {Function}
+ * @param {string} streamId - Stream identifier
+ * @param {string} source - Interface source
+ * @param {number} tabId - Tab ID for sidepanel integration
+ * @param {string} platformId - Platform identifier
+ * @param {Object} resolvedParams - Resolved parameters including the model
+ * @returns {Function} Chunk handler function
  */
 function createStreamHandler(
   streamId,
@@ -352,69 +370,58 @@ function createStreamHandler(
   resolvedParams
 ) {
   let fullContent = '';
-  // Use the resolved model from the start
   const modelToUse = resolvedParams.model;
 
   return async function handleChunk(chunkData) {
     if (!chunkData) return;
 
-    // Extract potential chunks
     const chunk = typeof chunkData.chunk === 'string' ? chunkData.chunk : '';
-    const thinkingChunk = typeof chunkData.thinkingChunk === 'string' ? chunkData.thinkingChunk : ''; // Get thinking chunk
+    const thinkingChunk = typeof chunkData.thinkingChunk === 'string' ? chunkData.thinkingChunk : '';
     const done = !!chunkData.done;
 
-    // Model should be consistent, but log if chunkData provides a different one
     if (chunkData.model && chunkData.model !== modelToUse) {
       logger.background.warn(
         `Stream chunk reported model ${chunkData.model}, but expected ${modelToUse}`
       );
     }
 
-    // Process intermediate chunks (regular or thinking)
-    if (!done && (chunk || thinkingChunk)) { // Send if not done and either chunk exists
-      fullContent += chunk; // Only accumulate regular content
+    if (!done && (chunk || thinkingChunk)) {
+      fullContent += chunk;
 
       if (source === INTERFACE_SOURCES.SIDEPANEL && tabId) {
         try {
-          // **Explicitly construct the inner chunkData object**
           const chunkDataPayload = {
-              done: false,
-              model: modelToUse,
+            done: false,
+            model: modelToUse,
           };
           if (chunk) {
-              chunkDataPayload.chunk = chunk;
+            chunkDataPayload.chunk = chunk;
           }
           if (thinkingChunk) {
-              chunkDataPayload.thinkingChunk = thinkingChunk;
+            chunkDataPayload.thinkingChunk = thinkingChunk;
           }
 
-          // Prepare the full message payload for the sidebar
           const messagePayload = {
             action: 'streamChunk',
             streamId,
-            chunkData: chunkDataPayload, // Use the explicitly constructed object
+            chunkData: chunkDataPayload,
           };
-
-          // Send the payload
           chrome.runtime.sendMessage(messagePayload);
-
         } catch (err) {
           logger.background.warn('Error sending stream chunk:', err);
         }
       }
     }
 
-    // Handle stream completion or error
     if (done) {
       const finalChunkData = {
-        chunk: '', // Final message doesn't need the 'chunk' prop itself
+        chunk: '',
         done: true,
         model: modelToUse,
         fullContent: chunkData.fullContent || fullContent,
-        thinkingChunk: null, // Explicitly nullify thinkingChunk in final message
+        thinkingChunk: null,
       };
 
-      // Check for user cancellation first
       if (
         chunkData.error === 'Cancelled by user' ||
         (chunkData.error instanceof Error &&
@@ -423,17 +430,12 @@ function createStreamHandler(
         logger.background.info(
           `Stream ${streamId} cancelled by user. Processing partial content.`
         );
-        // Complete successfully to save partial state, but mark as cancelled for UI
-        await completeStreamResponse(fullContent, modelToUse, platformId); // No error passed
-        finalChunkData.cancelled = true; // Add cancellation flag
-        // Do NOT add finalChunkData.error
+        await completeStreamResponse(fullContent, modelToUse, platformId);
+        finalChunkData.cancelled = true;
       } else if (chunkData.error) {
-        // Handle other errors
-        // chunkData.error should now be the pre-formatted string from extractApiErrorMessage or similar
         const errorMessage = chunkData.error;
         logger.background.error(`Stream ended with error: ${errorMessage}`);
         await setApiProcessingError(errorMessage);
-        // Pass modelToUse and error to completeStreamResponse
         await completeStreamResponse(
           fullContent,
           modelToUse,
@@ -442,21 +444,17 @@ function createStreamHandler(
         );
         finalChunkData.error = errorMessage;
       } else {
-        // Handle successful completion
         logger.background.info(`Stream ${streamId} completed successfully.`);
-        // Pass modelToUse to completeStreamResponse
         await completeStreamResponse(fullContent, modelToUse, platformId);
       }
 
-      // Ensure the final message (success, error, or cancelled) is sent for sidebar
       if (source === INTERFACE_SOURCES.SIDEPANEL && tabId) {
         try {
           const finalMessagePayload = {
             action: 'streamChunk',
             streamId,
-            chunkData: finalChunkData, // Send the final chunk data object
+            chunkData: finalChunkData,
           };
-          // Use runtime API for sidebar communication
           chrome.runtime.sendMessage(finalMessagePayload);
         } catch (err) {
           logger.background.warn(

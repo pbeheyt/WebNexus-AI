@@ -27,7 +27,7 @@ module.exports = {
     background: './src/background/index.js',
     popup: './src/popup/index.jsx',
     settings: './src/settings/index.jsx',
-      sidebar: './src/sidepanel/index.jsx',
+    sidebar: './src/sidepanel/index.jsx',
     'content-script': './src/content/index.js',
     'platform-content': './src/content/platform-content.js',
   },
@@ -51,7 +51,7 @@ module.exports = {
                 '@babel/preset-env',
                 {
                   targets: {
-                    chrome: '130',
+                    chrome: '130', // Or your target Chrome version
                   },
                   useBuiltIns: 'usage',
                   corejs: 3,

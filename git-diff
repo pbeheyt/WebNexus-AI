@@ -1,0 +1,2912 @@
+diff --git a/sidepanel_loader.html b/sidepanel_loader.html
+index bd2ddd5..b3f4503 100644
+--- a/sidepanel_loader.html
++++ b/sidepanel_loader.html
+@@ -2,7 +2,7 @@
+ <html>
+ <head>
+   <meta charset="utf-8">
+-  <title>Loading Sidebar...</title>
++  <title>Loading Side Panel...</title>
+   <style>
+     body {
+       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+@@ -33,7 +33,7 @@
+   </style>
+ </head>
+ <body>
+-  <p>Loading sidebar...</p>
++  <p>Loading Side Panel...</p>
+   <!-- Assuming sidepanel_loader.js is in the same directory or correctly pathed by webpack -->
+   <script src="sidepanel_loader.js"></script>
+ </body>
+diff --git a/sidepanel_loader.js b/sidepanel_loader.js
+index 15f7e41..d2542ed 100644
+--- a/sidepanel_loader.js
++++ b/sidepanel_loader.js
+@@ -1,6 +1,6 @@
+ // sidepanel_loader.js
+ (async function() {
+-  console.log('[Sidepanel Loader] Script started.');
++  console.log('[Side Panel Loader] Script started.');
+ 
+   // Attempt to apply dark mode based on system preference immediately
+   // This also handles the case where documentElement might not be fully ready for classList
+@@ -9,7 +9,7 @@
+           document.documentElement.classList.add('dark');
+       }
+   } catch (e) {
+-      console.warn('[Sidepanel Loader] Could not apply initial dark mode via matchMedia:', e);
++      console.warn('[Side Panel Loader] Could not apply initial dark mode via matchMedia:', e);
+   }
+ 
+ 
+@@ -36,7 +36,7 @@
+       if (tabIdStr && currentUrl) {
+         const tabId = parseInt(tabIdStr, 10);
+         if (!isNaN(tabId)) {
+-          console.log(`[Sidepanel Loader] Context from URL params: tabId=${tabId}, currentUrl=${currentUrl}`);
++          console.log(`[Side Panel Loader] Context from URL params: tabId=${tabId}, currentUrl=${currentUrl}`);
+           resolve({ tabId, currentUrl });
+           return;
+         }
+@@ -46,7 +46,7 @@
+       // This part is tricky because the loader needs to identify itself.
+       // For now, we will strongly rely on the background command handler to open the loader with context in URL.
+       // If it's not there, it's an issue with the calling logic.
+-      console.error('[Sidepanel Loader] CRITICAL: tabId or currentUrl not found in loader URL query parameters.');
++      console.error('[Side Panel Loader] CRITICAL: tabId or currentUrl not found in loader URL query parameters.');
+       reject(new Error('Loader context (tabId, currentUrl) not found in URL.'));
+     });
+   }
+@@ -55,12 +55,12 @@
+     const { tabId, currentUrl } = await getLoaderContext();
+ 
+     if (!tabId || isNaN(tabId) || !currentUrl) {
+-      console.error('[Sidepanel Loader] Failed to get valid context (tabId, currentUrl).');
++      console.error('[Side Panel Loader] Failed to get valid context (tabId, currenturl).');
+       document.body.textContent = 'Error: Could not initialize sidebar context.';
+       return;
+     }
+ 
+-    console.log(`[Sidepanel Loader] Context: tabId=${tabId}, currentUrl=${currentUrl}. Requesting final state.`);
++    console.log(`[Side Panel Loader] Context: tabId=${tabId}, currentUrl=${currentUrl}. Requesting final state.`);
+ 
+     chrome.runtime.sendMessage(
+       {
+@@ -70,28 +70,28 @@
+       },
+       (response) => {
+         if (chrome.runtime.lastError) {
+-          console.error('[Sidepanel Loader] Error sending/receiving resolveSidePanelStateAndFinalize:', chrome.runtime.lastError.message);
++          console.error('[Side Panel Loader] Error sending/receiving resolveSidePanelStateAndFinalize:', chrome.runtime.lastError.message);
+           document.body.textContent = 'Error: ' + chrome.runtime.lastError.message;
+           return;
+         }
+         if (response && response.error) {
+-          console.error('[Sidepanel Loader] Error from background:', response.error);
++          console.error('[Side Panel Loader] Error from background:', response.error);
+           document.body.textContent = 'Error: ' + response.error;
+         } else if (response && response.status) {
+-          console.log('[Sidepanel Loader] Background status:', response.status);
++          console.log('[Side Panel Loader] Background status:', response.status);
+           // If the panel was closed by the background, this loader instance will become defunct.
+           // If navigated, this loader page will be replaced.
+           if (response.status === 'closed_not_allowed' || response.status === 'closed_on_toggle') {
+             // Optional: change text or do nothing as panel will be closed by background.
+-            document.body.textContent = 'Sidebar closed.';
++            document.body.textContent = 'Side Panel closed.';
+           }
+         } else {
+-            console.warn('[Sidepanel Loader] Unexpected response from background:', response);
++            console.warn('[Side Panel Loader] Unexpected response from background:', response);
+         }
+       }
+     );
+   } catch (e) {
+-    console.error('[Sidepanel Loader] Initialization error:', e);
+-    document.body.textContent = 'Error: Sidebar failed to load. ' + e.message;
++    console.error('[Side Panel Loader] Initialization error:', e);
++    document.body.textContent = 'Error: Side Panel failed to load. ' + e.message;
+   }
+ })();
+diff --git a/src/background/api/api-coordinator.js b/src/background/api/api-coordinator.js
+index 8a5f8d6..91c4632 100644
+--- a/src/background/api/api-coordinator.js
++++ b/src/background/api/api-coordinator.js
+@@ -27,9 +27,9 @@ const activeAbortControllers = new Map();
+ 
+ /**
+  * Handle API model requests
+- * @param {string} requestType - Type of request
+- * @param {Object} message - Message object
+- * @param {Function} sendResponse - Response function
++ * @param {string} requestType
++ * @param {Object} message
++ * @param {Function} sendResponse
+  */
+ export async function handleApiModelRequest(
+   requestType,
+@@ -125,8 +125,8 @@ export async function handleApiModelRequest(
+ 
+ /**
+  * Process content via API with streaming support
+- * @param {Object} params - Parameters for content processing
+- * @returns {Promise<Object>} Result information
++ * @param {Object} params
++ * @returns {Promise<Object>}
+  */
+ export async function processContentViaApi(params) {
+   const {
+@@ -256,62 +256,6 @@ export async function processContentViaApi(params) {
+       newlyFormattedContent = null;
+     }
+ 
+-    // 4. Get the prompt
+-    let promptContent;
+-
+-    if (customPrompt) {
+-      promptContent = customPrompt;
+-    } else {
+-      throw new Error('No prompt content provided');
+-    }
+-
+-    // 5. Parameter Resolution (Centralized) - Use platformId and modelId from params
+-    let resolvedParams = await ModelParameterService.resolveParameters(
+-      platformId,
+-      modelId,
+-      { tabId, source, conversationHistory, useThinkingMode: isThinkingModeEnabled }
+-    );
+-    resolvedParams.conversationHistory = conversationHistory;
+-    logger.background.info(`Resolved parameters:`, resolvedParams);
+-
+-    // 6. Generate a unique stream ID for this request
+-    const streamId = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+-
+-    // 7. Initialize streaming response (using platformId from params)
+-    await initializeStreamResponse(streamId, platformId, resolvedParams.model); // Include model
+-
+-    // 8. Determine the formatted content to include in the request
+-    let formattedContentForRequest = null;
+-    const contextAlreadySent = await getTabContextSentFlag(tabId);
+-
+-    if (!isContentExtractionEnabled) {
+-      logger.background.info(`Content inclusion skipped: Toggle is OFF.`);
+-      formattedContentForRequest = null;
+-    } else if (contextAlreadySent) {
+-      logger.background.info(
+-        `Content inclusion skipped: Context already sent for tab ${tabId}.`
+-      );
+-      formattedContentForRequest = null;
+-    } else {
+-      // Toggle is ON and context not sent yet
+-      if (shouldExtract && newlyFormattedContent) {
+-        formattedContentForRequest = newlyFormattedContent;
+-        logger.background.info(
+-          `Including newly extracted/formatted content for tab ${tabId}.`
+-        );
+-      } else if (initialFormattedContentExists) {
+-        formattedContentForRequest = await getFormattedContentForTab(tabId);
+-        logger.background.info(
+-          `Including pre-existing formatted content for tab ${tabId}.`
+-        );
+-      } else {
+-        logger.background.info(
+-          `Content inclusion skipped: Toggle is ON, but no content available for tab ${tabId}.`
+-        );
+-        formattedContentForRequest = null;
+-      }
+-    }
+-
+     if (tabId) {
+       try {
+         const promptToStoreOrClear = resolvedParams.systemPrompt;
+@@ -393,12 +337,12 @@ export async function processContentViaApi(params) {
+ 
+ /**
+  * Create a stream handler function
+- * @param {string} streamId - Stream identifier
+- * @param {string} source - Interface source
+- * @param {number} tabId - Tab ID for sidebar integration
+- * @param {string} platformId - Platform identifier
+- * @param {Object} resolvedParams - Resolved parameters including the model
+- * @returns {Function} Chunk handler function
++ * @param {string} streamId
++ * @param {string} source
++ * @param {number} tabId
++ * @param {string} platformId
++ * @param {Object} resolvedParams
++ * @returns {Function}
+  */
+ function createStreamHandler(
+   streamId,
+@@ -430,7 +374,7 @@ function createStreamHandler(
+     if (!done && (chunk || thinkingChunk)) { // Send if not done and either chunk exists
+       fullContent += chunk; // Only accumulate regular content
+ 
+-      if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
++      if (source === INTERFACE_SOURCES.SIDEPANEL && tabId) {
+         try {
+           // **Explicitly construct the inner chunkData object**
+           const chunkDataPayload = {
+@@ -505,7 +449,7 @@ function createStreamHandler(
+       }
+ 
+       // Ensure the final message (success, error, or cancelled) is sent for sidebar
+-      if (source === INTERFACE_SOURCES.SIDEBAR && tabId) {
++      if (source === INTERFACE_SOURCES.SIDEPANEL && tabId) {
+         try {
+           const finalMessagePayload = {
+             action: 'streamChunk',
+@@ -523,4 +467,4 @@ function createStreamHandler(
+       }
+     }
+   };
+-}
+\ No newline at end of file
++}
+diff --git a/src/background/core/message-router.js b/src/background/core/message-router.js
+index 6f60eff..2abd395 100644
+--- a/src/background/core/message-router.js
++++ b/src/background/core/message-router.js
+@@ -12,7 +12,7 @@ import {
+   handleProcessContentRequest,
+   handleProcessContentViaApiRequest,
+ } from '../services/content-processing.js';
+-import { handleToggleNativeSidePanelAction, handleCloseCurrentSidePanelRequest } from '../services/sidebar-manager.js';
++import { handleToggleNativeSidePanelAction, handleCloseCurrentSidePanelRequest } from '../services/sidepanel-manager.js';
+ import { handleThemeOperation } from '../services/theme-service.js';
+ import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
+ 
+diff --git a/src/background/index.js b/src/background/index.js
+index 030828e..50cd792 100644
+--- a/src/background/index.js
++++ b/src/background/index.js
+@@ -1,6 +1,6 @@
+ // src/background/index.js - Entry point for background service worker
+ 
+-import SidebarStateManager from '../services/SidebarStateManager.js';
++import SidepanelStateManager from '../services/SidepanelStateManager.js';
+ import { logger } from '../shared/logger.js';
+ 
+ import { initializeExtension, populateInitialPromptsAndSetDefaults } from './initialization.js';
+@@ -139,16 +139,16 @@ function setupConnectionListener() {
+       if (!isNaN(tabId)) {
+         logger.background.info(`Side panel connected for tab ${tabId}`);
+ 
+-        // Mark sidebar as visible upon connection
+-        SidebarStateManager.setSidebarVisibilityForTab(tabId, true)
++        // Mark sidepanel as visible upon connection
++        SidepanelStateManager.setSidepanelVisibilityForTab(tabId, true)
+           .then(() => {
+             logger.background.info(
+-              `Set sidebar visibility to true for tab ${tabId}`
++              `Set sidepanel visibility to true for tab ${tabId}`
+             );
+           })
+           .catch((error) => {
+             logger.background.error(
+-              `Error setting sidebar visibility to true for tab ${tabId}:`,
++              `Error setting sidepanel visibility to true for tab ${tabId}:`,
+               error
+             );
+           });
+@@ -162,16 +162,16 @@ function setupConnectionListener() {
+               `Port disconnect error for tab ${tabId}: ${chrome.runtime.lastError.message}`
+             );
+           }
+-          // Mark sidebar as not visible upon disconnection
+-          SidebarStateManager.setSidebarVisibilityForTab(tabId, false)
++          // Mark sidepanel as not visible upon disconnection
++          SidepanelStateManager.setSidepanelVisibilityForTab(tabId, false)
+             .then(() => {
+               logger.background.info(
+-                `Set sidebar visibility to false for tab ${tabId}`
++                `Set sidepanel visibility to false for tab ${tabId}`
+               );
+             })
+             .catch((error) => {
+               logger.background.error(
+-                `Error setting sidebar visibility to false for tab ${tabId}:`,
++                `Error setting sidepanel visibility to false for tab ${tabId}:`,
+                 error
+               );
+             });
+diff --git a/src/background/initialization.js b/src/background/initialization.js
+index e72d8ee..afa1698 100644
+--- a/src/background/initialization.js
++++ b/src/background/initialization.js
+@@ -51,21 +51,21 @@ async function initializeExtension() {
+     await resetState();
+     logger.background.info('Volatile state reset complete');
+ 
+-    // Reset all tab sidebar visibility states to false
++    // Reset all tab sidepanel visibility states to false
+     logger.background.info(
+-      'Resetting all tab sidebar visibility states to false...'
++      'Resetting all tab sidepanel visibility states to false...'
+     );
+     const tabs = await chrome.tabs.query({});
+-    const initialSidebarStates = {};
++    const initialSidepanelStates = {};
+     for (const tab of tabs) {
+       if (tab.id) {
+-        initialSidebarStates[tab.id.toString()] = false;
++        initialSidepanelStates[tab.id.toString()] = false;
+       }
+     }
+     await chrome.storage.local.set({
+-      [STORAGE_KEYS.TAB_SIDEBAR_STATES]: initialSidebarStates,
++      [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: initialSidepanelStates,
+     });
+-    logger.background.info('All tab sidebar visibility states reset.');
++    logger.background.info('All tab sidepanel visibility states reset.');
+ 
+     return true;
+   } catch (error) {
+diff --git a/src/background/listeners/tab-listener.js b/src/background/listeners/tab-listener.js
+index 64c4643..a786022 100644
+--- a/src/background/listeners/tab-listener.js
++++ b/src/background/listeners/tab-listener.js
+@@ -9,7 +9,7 @@ import {
+   getPlatformTabInfo,
+   updateScriptInjectionStatus,
+ } from '../core/state-manager.js';
+-import SidebarStateManager from '../../services/SidebarStateManager.js';
++import SidepanelStateManager from '../../services/SidepanelStateManager.js';
+ import { logger } from '../../shared/logger.js';
+ import { STORAGE_KEYS } from '../../shared/constants.js';
+ import {
+@@ -41,7 +41,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
+     try {
+       logger.background.info(`Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`);
+       const isAllowed = isSidePanelAllowedPage(tab.url);
+-      const isVisible = await SidebarStateManager.getSidebarVisibilityForTab(tabId);
++      const isVisible = await SidepanelStateManager.getSidepanelVisibilityForTab(tabId);
+ 
+       if (isAllowed) {
+         await chrome.sidePanel.setOptions({
+@@ -49,13 +49,13 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
+           path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
+           enabled: isVisible, // Enable based on stored visibility
+         });
+-        logger.background.info(`Side panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
++        logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
+       } else {
+         await chrome.sidePanel.setOptions({
+           tabId: tabId,
+           enabled: false, // Force disable if not allowed
+         });
+-        logger.background.info(`Side panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
++        logger.background.info(`Side Panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
+       }
+     } catch (error) {
+       logger.background.error(`Error setting side panel options during onUpdated for tab ${tabId}:`, error);
+@@ -131,7 +131,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
+     try {
+       // Check if the side panel is *intended* to be visible for this tab
+       const isVisible =
+-        await SidebarStateManager.getSidebarVisibilityForTab(tabId);
++        await SidepanelStateManager.getSidepanelVisibilityForTab(tabId);
+ 
+       if (isVisible) {
+         logger.background.info(
+@@ -203,14 +203,14 @@ async function handleTabActivation(activeInfo) {
+         path: `sidepanel.html?tabId=${tabId}`,
+         enabled: true,
+       });
+-      logger.background.info(`Side panel enabled for activated tab ${tabId}`);
++      logger.background.info(`Side Panel enabled for activated tab ${tabId}`);
+     } else {
+       // Disable the panel if it shouldn't be visible
+       await chrome.sidePanel.setOptions({
+         tabId: tabId,
+         enabled: false,
+       });
+-      logger.background.info(`Side panel disabled for activated tab ${tabId}`);
++      logger.background.info(`Side Panel disabled for activated tab ${tabId}`);
+     }
+   } catch (error) {
+     logger.background.error(
+@@ -230,13 +230,13 @@ async function handleTabCreation(newTab) {
+   );
+   try {
+     // Store the initial visibility state (false) without enabling/disabling the panel itself
+-    await SidebarStateManager.setSidebarVisibilityForTab(newTab.id, false);
++    await SidepanelStateManager.setSidepanelVisibilityForTab(newTab.id, false);
+     logger.background.info(
+-      `Initial sidebar state (visible: false) stored for new tab ${newTab.id}`
++      `Initial sidepanel state (visible: false) stored for new tab ${newTab.id}`
+     );
+   } catch (error) {
+     logger.background.error(
+-      `Error storing initial side panel state for new tab ${newTab.id}:`,
++      `Error storing initial sidepanel state for new tab ${newTab.id}:`,
+       error
+     );
+   }
+diff --git a/src/background/listeners/tab-state-listener.js b/src/background/listeners/tab-state-listener.js
+index 149d60c..50a551d 100644
+--- a/src/background/listeners/tab-state-listener.js
++++ b/src/background/listeners/tab-state-listener.js
+@@ -1,7 +1,7 @@
+ // src/background/listeners/tab-state-listener.js
+ 
+ import { STORAGE_KEYS } from '../../shared/constants.js';
+-import SidebarStateManager from '../../services/SidebarStateManager.js';
++import SidepanelStateManager from '../../services/SidepanelStateManager.js';
+ import { logger } from '../../shared/logger.js';
+ 
+ // List of tab-specific storage keys to clear on manual refresh (excluding sidebar visibility)
+@@ -23,7 +23,7 @@ const ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP = [
+   STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG,
+   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
+   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
+-  STORAGE_KEYS.TAB_SIDEBAR_STATES, // Included for the loop, but handled separately
++  STORAGE_KEYS.TAB_SIDEPANEL_STATES, // Included for the loop, but handled separately
+   STORAGE_KEYS.TAB_CHAT_HISTORIES,
+   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+   STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
+@@ -225,10 +225,10 @@ export function setupTabStateListener() {
+           `General tab data cleanup completed for closed tab ${tabId}.`
+         );
+ 
+-        // Use SidebarStateManager to specifically clean its state for the removed tab
+-        await SidebarStateManager.cleanupTabStates([tabId], null); // Pass removed tabId for targeted cleanup
++        // Use SidepanelStateManager to specifically clean its state for the removed tab
++        await SidepanelStateManager.cleanupTabStates([tabId], null); // Pass removed tabId for targeted cleanup
+         logger.background.info(
+-          `Sidebar state cleanup completed for closed tab ${tabId}.`
++          `Sidepanel state cleanup completed for closed tab ${tabId}.`
+         );
+       } catch (error) {
+         logger.background.error(
+@@ -284,9 +284,9 @@ export async function performStaleTabCleanup() {
+       `General stale tab data cleanup processing completed.`
+     );
+ 
+-    // Use SidebarStateManager to clean its state based on valid IDs
+-    await SidebarStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
+-    logger.background.info(`Sidebar stale state cleanup completed.`);
++    // Use SidepanelStateManager to clean its state based on valid IDs
++    await SidepanelStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
++    logger.background.info(`Sidepanel stale state cleanup completed.`);
+ 
+     logger.background.info('Stale tab data cleanup finished successfully.');
+   } catch (error) {
+diff --git a/src/background/services/sidebar-manager.js b/src/background/services/sidepanel-manager.js
+similarity index 85%
+rename from src/background/services/sidebar-manager.js
+rename to src/background/services/sidepanel-manager.js
+index f54da38..8140d05 100644
+--- a/src/background/services/sidebar-manager.js
++++ b/src/background/services/sidepanel-manager.js
+@@ -1,6 +1,6 @@
+ // src/background/services/sidebar-manager.js - Tab-specific native side panel management
+ 
+-import SidebarStateManager from '../../services/SidebarStateManager.js';
++import SidepanelStateManager from '../../services/SidepanelStateManager.js';
+ import { logger } from '../../shared/logger.js';
+ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
+ 
+@@ -10,7 +10,7 @@ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
+  * @param {Object} sender - Message sender, potentially containing `sender.tab.id`.
+  * @param {Function} sendResponse - Function to send the response back.
+  */
+-export async function toggleNativeSidePanel(message, sender, sendResponse) {
++export async function toggleNativeSidepanel(message, sender, sendResponse) {
+   let targetTabId;
+   let newState; // To store the final state (true for open, false for closed)
+   try {
+@@ -45,9 +45,9 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
+     // Check if side panel is allowed on this page
+     const isAllowed = isSidePanelAllowedPage(targetTab.url);
+     if (!isAllowed) {
+-      logger.background.warn(
+-        `Attempted to toggle sidebar on restricted page: ${targetTab.url}`
+-      );
++    logger.background.warn(
++      `Attempted to toggle sidepanel on restricted page: ${targetTab.url}`
++    );
+       // Force state to closed and disable panel
+       newState = false;
+       await SidebarStateManager.setSidebarVisibilityForTab(targetTabId, false);
+@@ -55,7 +55,7 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
+ 
+       sendResponse({
+         success: false,
+-        error: 'Sidebar cannot be opened on this page.',
++        error: 'Side Panel cannot be opened on this page.',
+         tabId: targetTabId,
+         visible: false,
+         code: 'RESTRICTED_PAGE',
+@@ -65,7 +65,7 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
+ 
+     // Read the current *intended* state from storage
+     const currentState =
+-      await SidebarStateManager.getSidebarVisibilityForTab(targetTabId);
++      await SidepanelStateManager.getSidepanelVisibilityForTab(targetTabId);
+     logger.background.info(
+       `Current stored visibility for tab ${targetTabId}: ${currentState}`
+     );
+@@ -129,7 +129,7 @@ export async function toggleNativeSidePanel(message, sender, sendResponse) {
+  * @param {function} sendResponse - Function to call to send the response.
+  * @returns {boolean} - True to indicate an asynchronous response.
+  */
+-export function handleToggleNativeSidePanelAction(
++export function handleToggleNativeSidepanelAction(
+   message,
+   sender,
+   sendResponse
+@@ -144,12 +144,12 @@ export function handleToggleNativeSidePanelAction(
+ }
+ 
+ /**
+- * Get sidebar state for specific tab
++ * Get sidepanel state for specific tab
+  * @param {Object} message - Message object
+  * @param {Object} sender - Message sender
+  * @param {Function} sendResponse - Response function
+  */
+-export async function getSidebarState(message, sender, sendResponse) {
++export async function getSidepanelState(message, sender, sendResponse) {
+   try {
+     // Get target tab ID (same logic as toggle)
+     const tabId = message.tabId || (sender.tab && sender.tab.id);
+@@ -172,7 +172,7 @@ export async function getSidebarState(message, sender, sendResponse) {
+       targetTabId = tabId;
+     }
+ 
+-    const state = await SidebarStateManager.getSidebarState(targetTabId);
++    const state = await SidepanelStateManager.getSidepanelState(targetTabId);
+ 
+     sendResponse({
+       success: true,
+@@ -181,7 +181,7 @@ export async function getSidebarState(message, sender, sendResponse) {
+     });
+   } catch (error) {
+     logger.background.error(
+-      'Error handling tab-specific sidebar state query:',
++      'Error handling tab-specific sidepanel state query:',
+       error
+     );
+     sendResponse({ success: false, error: error.message });
+@@ -189,7 +189,7 @@ export async function getSidebarState(message, sender, sendResponse) {
+ }
+ 
+ // Add this new function
+-export async function handleCloseCurrentSidePanelRequest(message, sender, sendResponse) {
++export async function handleCloseCurrentSidepanelRequest(message, sender, sendResponse) {
+   const { tabId } = message;
+ 
+   if (typeof tabId !== 'number') {
+@@ -198,12 +198,12 @@ export async function handleCloseCurrentSidePanelRequest(message, sender, sendRe
+     return false; // Indicate synchronous response for this error path
+   }
+ 
+-  logger.background.info(`Closing side panel for tab ${tabId} by direct request from sidebar.`);
++  logger.background.info(`Closing sidepanel for tab ${tabId} by direct request from sidepanel.`);
+ 
+   try {
+-    await SidebarStateManager.setSidebarVisibilityForTab(tabId, false);
++    await SidepanelStateManager.setSidepanelVisibilityForTab(tabId, false);
+     await chrome.sidePanel.setOptions({ tabId, enabled: false });
+-    logger.background.info(`Side panel for tab ${tabId} successfully closed and state updated.`);
++    logger.background.info(`Sidepanel for tab ${tabId} successfully closed and state updated.`);
+     sendResponse({
+       success: true,
+       tabId,
+@@ -211,7 +211,7 @@ export async function handleCloseCurrentSidePanelRequest(message, sender, sendRe
+       message: 'Side panel closed successfully.',
+     });
+   } catch (error) {
+-    logger.background.error(`Error closing side panel for tab ${tabId} via direct request:`, error);
++    logger.background.error(`Error closing sidepanel for tab ${tabId} via direct request:`, error);
+     sendResponse({
+       success: false,
+       error: error.message || 'Failed to close side panel.',
+diff --git a/src/components/icons/SidebarIcon.jsx b/src/components/icons/SidepanelIcon.jsx
+similarity index 80%
+rename from src/components/icons/SidebarIcon.jsx
+rename to src/components/icons/SidepanelIcon.jsx
+index 18b15da..b4bbc31 100644
+--- a/src/components/icons/SidebarIcon.jsx
++++ b/src/components/icons/SidepanelIcon.jsx
+@@ -2,7 +2,7 @@
+ import React from 'react';
+ import PropTypes from 'prop-types';
+ 
+-export function SidebarIcon({ className = 'w-4 h-4', ...props }) {
++export function SidepanelIcon({ className = 'w-4 h-4', ...props }) {
+   return (
+     <svg
+       viewBox='0 0 24 24'
+@@ -19,8 +19,8 @@ export function SidebarIcon({ className = 'w-4 h-4', ...props }) {
+   );
+ }
+ 
+-SidebarIcon.propTypes = {
++SidepanelIcon.propTypes = {
+   className: PropTypes.string,
+ };
+ 
+-export default SidebarIcon;
++export default SidepanelIcon;
+diff --git a/src/components/index.js b/src/components/index.js
+index 189f837..490c548 100644
+--- a/src/components/index.js
++++ b/src/components/index.js
+@@ -41,7 +41,7 @@ export { SettingsIcon } from './icons/SettingsIcon';
+ export { RefreshIcon } from './icons/RefreshIcon';
+ export { ChevronDownIcon } from './icons/ChevronDownIcon';
+ export { ChevronUpIcon } from './icons/ChevronUpIcon';
+-export { SidebarIcon } from './icons/SidebarIcon';
++export { SidepanelIcon } from './icons/SidepanelIcon';
+ export { InputTokenIcon } from './icons/InputTokenIcon';
+ export { OutputTokenIcon } from './icons/OutputTokenIcon';
+ export { ContextWindowIcon } from './icons/ContextWindowIcon';
+@@ -54,4 +54,4 @@ export { KeyIcon } from './icons/KeyIcon';
+ 
+ // Input components
+ export { PromptDropdown } from './input/PromptDropdown';
+-export { UnifiedInput } from './input/UnifiedInput';
+\ No newline at end of file
++export { UnifiedInput } from './input/UnifiedInput';
+diff --git a/src/contexts/platform/SidebarPlatformContext.jsx b/src/contexts/platform/SidepanelPlatformContext.jsx
+similarity index 69%
+rename from src/contexts/platform/SidebarPlatformContext.jsx
+rename to src/contexts/platform/SidepanelPlatformContext.jsx
+index 4ec1641..fa0c249 100644
+--- a/src/contexts/platform/SidebarPlatformContext.jsx
++++ b/src/contexts/platform/SidepanelPlatformContext.jsx
+@@ -4,11 +4,11 @@ import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../shared/constants';
+ import { createTabAwarePlatformContext } from './TabAwarePlatformContext';
+ 
+ const {
+-  TabAwarePlatformProvider: SidebarPlatformProvider,
+-  useTabAwarePlatform: useSidebarPlatform,
++  TabAwarePlatformProvider: SidepanelPlatformProvider,
++  useTabAwarePlatform: useSidepanelPlatform,
+ } = createTabAwarePlatformContext({
+   interfaceType: INTERFACE_SOURCES.SIDEBAR,
+   globalStorageKey: STORAGE_KEYS.SIDEBAR_DEFAULT_PLATFORM_ID,
+ });
+ 
+-export { SidebarPlatformProvider, useSidebarPlatform };
++export { SidepanelPlatformProvider, useSidepanelPlatform };
+diff --git a/src/contexts/platform/TabAwarePlatformContext.jsx b/src/contexts/platform/TabAwarePlatformContext.jsx
+index b9294cd..d97c813 100644
+--- a/src/contexts/platform/TabAwarePlatformContext.jsx
++++ b/src/contexts/platform/TabAwarePlatformContext.jsx
+@@ -26,7 +26,7 @@ import {
+  * now refactored to use internal hooks for logic separation and includes error handling.
+  *
+  * @param {Object} options - Configuration options
+- * @param {string} options.interfaceType - Interface type (popup or sidebar)
++ * @param {string} options.interfaceType - Interface type (popup or sidepanel)
+  * @param {string} options.globalStorageKey - Key for global preference storage
+  * @param {Function} [options.onStatusUpdate=()=>{}] - Optional callback for status updates
+  * @returns {Object} Context provider and hook
+@@ -143,7 +143,7 @@ export function createTabAwarePlatformContext(options = {}) {
+         url: config.url || null,
+         iconUrl: config.iconUrl,
+         hasCredentials:
+-          interfaceType === INTERFACE_SOURCES.SIDEBAR
++          interfaceType === INTERFACE_SOURCES.SIDEPANEL
+             ? credentialStatus[config.id] || false
+             : true, // Popups don't check/need creds here
+       }));
+@@ -163,7 +163,7 @@ export function createTabAwarePlatformContext(options = {}) {
+         setTabId,
+       };
+ 
+-      if (interfaceType === INTERFACE_SOURCES.SIDEBAR) {
++      if (interfaceType === INTERFACE_SOURCES.SIDEPANEL) {
+         return {
+           ...baseValue,
+           models: modelError ? [] : models, // Return empty models if model loading failed
+diff --git a/src/contexts/platform/index.js b/src/contexts/platform/index.js
+index 6777f3a..410427e 100644
+--- a/src/contexts/platform/index.js
++++ b/src/contexts/platform/index.js
+@@ -4,6 +4,6 @@ export {
+   usePopupPlatform,
+ } from './PopupPlatformContext';
+ export {
+-  SidebarPlatformProvider,
+-  useSidebarPlatform,
+-} from './SidebarPlatformContext';
++  SidepanelPlatformProvider,
++  useSidepanelPlatform,
++} from './SidepanelPlatformContext';
+diff --git a/src/hooks/useContentProcessing.js b/src/hooks/useContentProcessing.js
+index 595665f..4687a7a 100644
+--- a/src/hooks/useContentProcessing.js
++++ b/src/hooks/useContentProcessing.js
+@@ -9,8 +9,8 @@ import { robustSendMessage } from '../shared/utils/message-utils';
+ 
+ /**
+  * Hook for content extraction and processing
+- * Supports both popup (web interface) and sidebar (API) paths
+- * @param {string} source - Source interface (popup or sidebar)
++ * Supports both popup (web interface) and sidepanel (API) paths
++ * @param {string} source - Source interface (popup or sidepanel)
+  * @returns {Object} - Methods and state for content extraction and processing
+  */
+ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
+@@ -125,7 +125,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
+ 
+   /**
+    * Process content directly with API (API path)
+-   * Used by sidebar for in-extension chat
++   * Used by sidepanel for in-extension chat
+    */
+   const processContentViaApi = useCallback(
+     async (options = {}) => {
+@@ -244,7 +244,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
+   return {
+     // Core processing methods
+     processContent, // For popup/web interface path
+-    processContentViaApi, // For sidebar/API path
++    processContentViaApi, // For sidepanel/API path
+ 
+     // State management
+     reset,
+diff --git a/src/popup/Popup.jsx b/src/popup/Popup.jsx
+index d2341a6..6956279 100644
+--- a/src/popup/Popup.jsx
++++ b/src/popup/Popup.jsx
+@@ -7,7 +7,7 @@ import {
+   AppHeader,
+   StatusMessage,
+   Tooltip,
+-  SidebarIcon,
++  SidepanelIcon,
+   Toggle,
+   ContentTypeIcon,
+ } from '../components';
+@@ -17,7 +17,7 @@ import {
+   STORAGE_KEYS, // Updated import
+   INTERFACE_SOURCES,
+   CONTENT_TYPE_LABELS,
+-  DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG, // This remains for the default value
++  DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG, // This remains for the default value
+ } from '../shared/constants';
+ import { formatShortcutToStringDisplay } from '../shared/utils/shortcut-utils';
+ import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
+@@ -181,11 +181,11 @@ export function Popup() {
+     });
+ 
+     if (!isAllowed) {
+-      updateStatus('Sidebar cannot be opened on this type of page.', 'warning');
++      updateStatus('Side Panel cannot be opened on this type of page.', 'warning');
+       return;
+     }
+ 
+-    updateStatus('Toggling sidebar...', true);
++    updateStatus('Toggling Side Panel...', true);
+     try {
+       const response = await robustSendMessage({
+         action: 'toggleNativeSidePanelAction',
+@@ -194,20 +194,20 @@ export function Popup() {
+ 
+       if (response?.success) {
+         updateStatus(
+-          `Sidebar state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
++          `Side Panel state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
+         );
+ 
+         if (response.visible) {
+           try {
+             await chrome.sidePanel.open({ tabId: currentTab.id });
+-            updateStatus('Sidebar opened successfully.');
++            updateStatus('Side Panel opened successfully.');
+             window.close();
+           } catch (openError) {
+             logger.popup.error('Error opening side panel:', openError);
+-            updateStatus(`Error opening sidebar: ${openError.message}`);
++            updateStatus(`Error opening Side Panel: ${openError.message}`);
+           }
+         } else {
+-          updateStatus('Sidebar disabled.');
++          updateStatus('Side Panel disabled.');
+           window.close();
+         }
+       } else {
+@@ -222,8 +222,8 @@ export function Popup() {
+   }, [currentTab, updateStatus]);
+ 
+   const { currentShortcutConfig: popupSidebarShortcut } = useConfigurableShortcut(
+-    STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT,
+-    DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
++    STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
++    DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
+     toggleSidebar,
+     logger.popup,
+     [toggleSidebar]
+@@ -309,10 +309,10 @@ export function Popup() {
+         <button
+           onClick={toggleSidebar}
+           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
+-          title={popupSidebarShortcut && popupSidebarShortcut.key ? `Toggle Sidebar (${formatShortcutToStringDisplay(popupSidebarShortcut)})` : 'Toggle Sidebar'}
++          title={popupSidebarShortcut && popupSidebarShortcut.key ? `Toggle Side Panel (${formatShortcutToStringDisplay(popupSidebarShortcut)})` : 'Toggle Side Panel'}
+           disabled={!currentTab?.id}
+         >
+-          <SidebarIcon className='w-4 h-4 select-none' />
++          <SidepanelIcon className='w-4 h-4 select-none' />
+         </button>
+       </AppHeader>
+ 
+@@ -426,4 +426,4 @@ export function Popup() {
+       />
+     </div>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/src/services/ModelParameterService.js b/src/services/ModelParameterService.js
+index b85d00c..fbe7651 100644
+--- a/src/services/ModelParameterService.js
++++ b/src/services/ModelParameterService.js
+@@ -17,7 +17,7 @@ class ModelParameterService {
+    * @param {string} platformId - Platform ID
+    * @param {Object} options - Additional options
+    * @param {number} [options.tabId] - Tab ID for tab-specific preferences
+-   * @param {string} [options.source] - Interface source (popup or sidebar)
++   * @param {string} [options.source] - Interface source (popup or sidepanel)
+    * @returns {Promise<string>} Resolved model ID
+    */
+   async resolveModel(platformId, options = {}) {
+@@ -42,9 +42,9 @@ class ModelParameterService {
+       }
+     }
+ 
+-    // 2. Try source-specific global preference (Sidebar only)
+-    if (source === INTERFACE_SOURCES.SIDEBAR) {
+-      const storageKey = STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM;
++    // 2. Try source-specific global preference (Sidepanel only)
++    if (source === INTERFACE_SOURCES.SIDEPANEL) {
++      const storageKey = STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM;
+ 
+       try {
+         const sourcePrefs = await chrome.storage.sync.get(storageKey);
+@@ -165,22 +165,22 @@ class ModelParameterService {
+ 
+   /**
+    * Save global model preference for a source
+-   * @param {string} source - Interface source (popup or sidebar)
++   * @param {string} source - Interface source (popup or sidepanel)
+    * @param {string} platformId - Platform ID
+    * @param {string} modelId - Model ID to save
+    * @returns {Promise<boolean>} Success indicator
+    */
+   async saveSourceModelPreference(source, platformId, modelId) {
+-    // Only save for sidebar, popup uses last selected via settings or default
+-    if (source !== INTERFACE_SOURCES.SIDEBAR) {
++    // Only save for sidepanel, popup uses last selected via settings or default
++    if (source !== INTERFACE_SOURCES.SIDEPANEL) {
+       logger.service.warn(
+-        `Not saving model preference for non-sidebar source: ${source}`
++        `Not saving model preference for non-sidepanel source: ${source}`
+       );
+       return false;
+     }
+ 
+     try {
+-      const storageKey = STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM;
++      const storageKey = STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM;
+ 
+       // Get current preferences
+       const prefs = await chrome.storage.sync.get(storageKey);
+@@ -208,7 +208,7 @@ class ModelParameterService {
+    * @param {string} modelId - The specific model ID to use.
+    * @param {Object} options - Additional options
+    * @param {number} [options.tabId] - Tab ID for context (e.g., token tracking)
+-   * @param {string} [options.source] - Interface source (popup or sidebar)
++   * @param {string} [options.source] - Interface source (popup or sidepanel)
+    * @param {Array} [options.conversationHistory] - Optional conversation history for context
+    * @returns {Promise<Object>} Resolved parameters object for API calls
+    */
+diff --git a/src/services/SidebarStateManager.js b/src/services/SidepanelStateManager.js
+similarity index 67%
+rename from src/services/SidebarStateManager.js
+rename to src/services/SidepanelStateManager.js
+index 84a4c6e..ff32218 100644
+--- a/src/services/SidebarStateManager.js
++++ b/src/services/SidepanelStateManager.js
+@@ -4,7 +4,7 @@ import { STORAGE_KEYS } from '../shared/constants.js';
+ /**
+  * Service for managing tab-specific sidebar state
+  */
+-class SidebarStateManager {
++class SidepanelStateManager {
+   /**
+    * Toggle sidebar visibility for a specific tab
+    * @private
+@@ -13,8 +13,8 @@ class SidebarStateManager {
+    */
+   async _toggleForTab(tabId, visible) {
+     // Get current tab states
+-    const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } =
+-      await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
++    const { [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: tabStates = {} } =
++      await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
+ 
+     // Convert tabId to string for use as object key
+     const tabIdStr = tabId.toString();
+@@ -33,10 +33,10 @@ class SidebarStateManager {
+ 
+     // Save updated states
+     await chrome.storage.local.set({
+-      [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates,
++      [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: updatedStates,
+     });
+ 
+-    logger.service.info(`Tab ${tabId} sidebar visibility set to ${visible}`);
++    logger.service.info(`Tab ${tabId} sidepanel visibility set to ${visible}`);
+   }
+ 
+   /**
+@@ -48,9 +48,9 @@ class SidebarStateManager {
+    */
+   async _getStateForTab(tabId) {
+     const result = await chrome.storage.local.get([
+-      STORAGE_KEYS.TAB_SIDEBAR_STATES,
+-      STORAGE_KEYS.SIDEBAR_DEFAULT_PLATFORM_ID,
+-      STORAGE_KEYS.SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM,
++      STORAGE_KEYS.TAB_SIDEPANEL_STATES,
++      STORAGE_KEYS.SIDEPANEL_DEFAULT_PLATFORM_ID,
++      STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM,
+     ]);
+ 
+     const tabStates = result[STORAGE_KEYS.TAB_SIDEBAR_STATES] || {};
+@@ -63,11 +63,11 @@ class SidebarStateManager {
+   }
+ 
+   /**
+-   * Get current sidebar state for specific tab
++   * Get current sidepanel state for specific tab
+    * @param {number} tabId - Tab ID
+-   * @returns {Promise<Object>} Tab-specific sidebar state
++   * @returns {Promise<Object>} Tab-specific sidepanel state
+    */
+-  async getSidebarState(tabId) {
++  async getSidepanelState(tabId) {
+     try {
+       if (!tabId) {
+         // Get active tab if no tab ID specified
+@@ -91,7 +91,7 @@ class SidebarStateManager {
+ 
+       return this._getStateForTab(tabId);
+     } catch (error) {
+-      logger.service.error(`Error getting sidebar state for tab ${tabId}:`, error);
++      logger.service.error(`Error getting sidepanel state for tab ${tabId}:`, error);
+       return {
+         visible: false,
+         platform: null,
+@@ -101,34 +101,34 @@ class SidebarStateManager {
+   }
+ 
+   /**
+-   * Get sidebar visibility for specific tab
++   * Get sidepanel visibility for specific tab
+    * @param {number} tabId - Tab ID
+    * @returns {Promise<boolean>} Visibility state
+    */
+-  async getSidebarVisibilityForTab(tabId) {
++  async getSidepanelVisibilityForTab(tabId) {
+     try {
+-      const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } =
+-        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
++      const { [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: tabStates = {} } =
++        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
+ 
+       return tabStates[tabId.toString()] === true;
+     } catch (error) {
+-      logger.service.error(`Error getting sidebar visibility for tab ${tabId}:`, error);
++      logger.service.error(`Error getting sidepanel visibility for tab ${tabId}:`, error);
+       return false;
+     }
+   }
+ 
+   /**
+-   * Set sidebar visibility for specific tab
++   * Set sidepanel visibility for specific tab
+    * @param {number} tabId - Tab ID
+    * @param {boolean} visible - Visibility state
+    * @returns {Promise<boolean>} Success indicator
+    */
+-  async setSidebarVisibilityForTab(tabId, visible) {
++  async setSidepanelVisibilityForTab(tabId, visible) {
+     try {
+       await this._toggleForTab(tabId, visible);
+       return true;
+     } catch (error) {
+-      logger.service.error(`Error setting sidebar visibility for tab ${tabId}:`, error);
++      logger.service.error(`Error setting sidepanel visibility for tab ${tabId}:`, error);
+       return false;
+     }
+   }
+@@ -145,8 +145,8 @@ class SidebarStateManager {
+       const activeTabIds = new Set(tabs.map((tab) => tab.id.toString()));
+ 
+       // Get current tab states
+-      const { [STORAGE_KEYS.TAB_SIDEBAR_STATES]: tabStates = {} } =
+-        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEBAR_STATES);
++      const { [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: tabStates = {} } =
++        await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
+ 
+       // Filter out closed tabs
+       const updatedStates = {};
+@@ -157,21 +157,21 @@ class SidebarStateManager {
+           updatedStates[tabId] = state;
+         } else {
+           stateChanged = true;
+-          logger.service.info(`Removing sidebar state for closed tab ${tabId}`);
++          logger.service.info(`Removing sidepanel state for closed tab ${tabId}`);
+         }
+       });
+ 
+       // Save updated states if changed
+       if (stateChanged) {
+         await chrome.storage.local.set({
+-          [STORAGE_KEYS.TAB_SIDEBAR_STATES]: updatedStates,
++          [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: updatedStates,
+         });
+-        logger.service.info('Tab sidebar states cleaned up');
++        logger.service.info('Tab sidepanel states cleaned up');
+       }
+     } catch (error) {
+-      logger.service.error('Error cleaning up tab sidebar states:', error);
++      logger.service.error('Error cleaning up tab sidepanel states:', error);
+     }
+   }
+ }
+ 
+-export default new SidebarStateManager();
++export default new SidepanelStateManager();
+diff --git a/src/settings/components/tabs/KeyboardShortcutsTab.jsx b/src/settings/components/tabs/KeyboardShortcutsTab.jsx
+index 63e3899..e9e42f2 100644
+--- a/src/settings/components/tabs/KeyboardShortcutsTab.jsx
++++ b/src/settings/components/tabs/KeyboardShortcutsTab.jsx
+@@ -4,14 +4,14 @@ import React, { useState, useEffect, useCallback } from 'react';
+ import { Button, useNotification, Modal } from '../../../components';
+ import { SettingsCard } from '../ui/common/SettingsCard';
+ import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
+-import { STORAGE_KEYS, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../../../shared/constants'; // Updated import
++import { STORAGE_KEYS, DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG } from '../../../shared/constants'; // Updated import
+ import { logger } from '../../../shared/logger';
+ import { formatShortcutToStringDisplay } from '../../../shared/utils/shortcut-utils';
+ 
+ export function KeyboardShortcutsTab() {
+   const [globalCommands, setGlobalCommands] = useState([]);
+-  const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
+-  const [editableCustomShortcut, setEditableCustomShortcut] = useState(DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG);
++  const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG);
++  const [editableCustomShortcut, setEditableCustomShortcut] = useState(DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG);
+   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
+   const [isLoadingCommands, setIsLoadingCommands] = useState(true);
+   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
+@@ -40,8 +40,8 @@ export function KeyboardShortcutsTab() {
+ 
+     const loadCustomShortcut = async () => {
+       try {
+-        const result = await chrome.storage.sync.get([STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]);
+-        const loadedShortcut = result[STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT] || DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG;
++        const result = await chrome.storage.sync.get([STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT]);
++        const loadedShortcut = result[STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT] || DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG;
+         setCustomPopupShortcut(loadedShortcut);
+         setEditableCustomShortcut(loadedShortcut);
+       } catch (error) {
+@@ -99,9 +99,9 @@ export function KeyboardShortcutsTab() {
+ 
+       showInfoNotification('Saving shortcut...'); 
+ 
+-      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT]: editableCustomShortcut });
++      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT]: editableCustomShortcut });
+       setCustomPopupShortcut(editableCustomShortcut);
+-      showSuccessNotification('Sidebar toggle shortcut saved successfully!');
++      showSuccessNotification('Side Panel toggle shortcut saved successfully!');
+       setIsShortcutModalOpen(false); 
+     } catch (error) {
+       logger.settings.error('Error saving custom popup shortcut:', error);
+@@ -117,7 +117,7 @@ export function KeyboardShortcutsTab() {
+         Keyboard Shortcuts
+       </h2>
+       <p className='section-description text-sm text-theme-secondary mb-6'>
+-        Manage your extension&apos;s keyboard shortcuts. Global shortcuts are configured in Chrome&apos;s settings, while the sidebar toggle shortcut can be customized here.
++        Manage your extension's keyboard shortcuts. Global shortcuts are configured in Chrome's settings, while the sidepanel toggle shortcut can be customized here.
+       </p>
+       <div className="flex flex-col md:flex-row md:gap-6">
+         {/* Left Column: Registered Extension Shortcuts */}
+@@ -125,7 +125,7 @@ export function KeyboardShortcutsTab() {
+           <SettingsCard>
+             <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Chrome Shortcuts</h3>
+             <p className="text-sm text-theme-secondary mb-6">
+-              These shortcuts are defined by the extension and can be managed on Chrome&apos;s extensions page.
++              These shortcuts are defined by the extension and can be managed on Chrome's extensions page.
+             </p>
+             {isLoadingCommands ? (
+               <p className="text-theme-secondary py-2">Loading global shortcuts...</p>
+@@ -156,12 +156,12 @@ export function KeyboardShortcutsTab() {
+           </SettingsCard>
+         </div>
+ 
+-        {/* Right Column: Sidebar Toggle Shortcut */}
++        {/* Right Column: Sidepanel Toggle Shortcut */}
+         <div className="w-full md:w-1/2">
+           <SettingsCard>
+             <h3 className="text-base font-semibold text-theme-primary mb-2">Side Panel Toggle Shortcut</h3>
+             <p className="text-sm text-theme-secondary mb-6">
+-              This shortcut is used within the extension&apos;s popup to open/close the sidebar, and from within the sidebar itself to close it when focused.
++              This shortcut is used within the extension's popup to open/close the Side Panel, and from within the Side Panel itself to close it when focused.
+             </p>
+             
+             <div 
+@@ -182,7 +182,7 @@ export function KeyboardShortcutsTab() {
+       <Modal 
+         isOpen={isShortcutModalOpen} 
+         onClose={handleCloseShortcutModal}
+-        title="Update Sidebar Toggle Shortcut"
++        title="Update Side Panel Toggle Shortcut"
+         widthClass="max-w-sm"
+       >
+         <div>
+@@ -190,7 +190,7 @@ export function KeyboardShortcutsTab() {
+             <ShortcutCaptureInput
+               value={editableCustomShortcut}
+               onChange={handleEditableShortcutChange}
+-              defaultShortcut={DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG}
++              defaultShortcut={DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG}
+             />
+             <div className="flex-shrink-0 flex gap-2"> 
+               <Button 
+@@ -222,4 +222,4 @@ export function KeyboardShortcutsTab() {
+   );
+ }
+ 
+-export default KeyboardShortcutsTab;
+\ No newline at end of file
++export default KeyboardShortcutsTab;
+diff --git a/src/shared/constants.js b/src/shared/constants.js
+index 156aeb0..5f5f2b1 100644
+--- a/src/shared/constants.js
++++ b/src/shared/constants.js
+@@ -44,13 +44,13 @@ export const STORAGE_KEYS = {
+   /** @description ID of the default/last-selected AI platform for the Popup. Synced across devices. */
+   POPUP_DEFAULT_PLATFORM_ID: 'popup_default_platform_id',
+   /** @description ID of the default/last-selected AI platform for the Sidebar (global). Synced across devices. */
+-  SIDEBAR_DEFAULT_PLATFORM_ID: 'sidebar_default_platform_id',
++  SIDEPANEL_DEFAULT_PLATFORM_ID: 'sidepanel_default_platform_id',
+   /** @description Map of { platformId: modelId } for default/last-selected models in the Sidebar. Synced. */
+-  SIDEBAR_DEFAULT_MODEL_ID_BY_PLATFORM: 'sidebar_default_model_id_by_platform',
++  SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM: 'sidepanel_default_model_id_by_platform',
+   /** @description User's preference for enabling "thinking mode" in the Sidebar, stored as { platformId: { modelId: boolean } }. Synced. */
+-  SIDEBAR_THINKING_MODE_PREFERENCE: 'sidebar_thinking_mode_preference',
++  SIDEPANEL_THINKING_MODE_PREFERENCE: 'sidepanel_thinking_mode_preference',
+   /** @description User's custom keyboard shortcut configuration for toggling the sidebar. Synced. */
+-  CUSTOM_SIDEBAR_TOGGLE_SHORTCUT: 'custom_sidebar_toggle_shortcut_config',
++  CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT: 'custom_sidepanel_toggle_shortcut_config',
+ 
+   // --- Core Settings ---
+   /** @description User-configured model parameters (temperature, maxTokens, etc.) for each platform/model. Local. */
+@@ -108,7 +108,7 @@ export const STORAGE_KEYS = {
+   /** @description Last selected/preferred model (per platform) for each tab's Sidebar instance. Local. */
+   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
+   /** @description Visibility state (true/false) of the Sidebar for each tab. Local. */
+-  TAB_SIDEBAR_STATES: 'tab_sidebar_states',
++  TAB_SIDEPANEL_STATES: 'tab_sidepanel_states',
+   /** @description Flag indicating if page context has already been sent for a tab's Sidebar. Local. */
+   TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
+ };
+@@ -127,7 +127,7 @@ export const MAX_MESSAGES_PER_TAB_HISTORY = 200;
+  */
+ export const INTERFACE_SOURCES = {
+   POPUP: 'popup',
+-  SIDEBAR: 'sidebar',
++  SIDEPANEL: 'sidepanel', // Renamed to SIDEPANEL internally
+ };
+ 
+ /**
+@@ -140,10 +140,10 @@ export const MESSAGE_ROLES = {
+ };
+ 
+ // Default value for the custom sidebar toggle shortcut, not the storage key itself
+-export const DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG = {
++export const DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG = {
+   key: 's',
+   altKey: true,
+   ctrlKey: false,
+   shiftKey: false,
+   metaKey: false,
+-};
+\ No newline at end of file
++};
+diff --git a/src/shared/logger.js b/src/shared/logger.js
+index 2d2f3cb..824fae1 100644
+--- a/src/shared/logger.js
++++ b/src/shared/logger.js
+@@ -114,10 +114,10 @@ export const logger = {
+     warn: (message, data) => log('settings', 'warn', message, data),
+     error: (message, data) => log('settings', 'error', message, data),
+   },
+-  sidebar: {
+-    debug: (message, data) => log('sidebar', 'debug', message, data),
+-    info: (message, data) => log('sidebar', 'info', message, data),
+-    warn: (message, data) => log('sidebar', 'warn', message, data),
+-    error: (message, data) => log('sidebar', 'error', message, data),
++  sidepanel: {
++    debug: (message, data) => log('sidepanel', 'debug', message, data),
++    info: (message, data) => log('sidepanel', 'info', message, data),
++    warn: (message, data) => log('sidepanel', 'warn', message, data),
++    error: (message, data) => log('sidepanel', 'error', message, data),
+   },
+-};
+\ No newline at end of file
++};
+diff --git a/src/sidebar/index.jsx b/src/sidebar/index.jsx
+deleted file mode 100644
+index 78c6ac2..0000000
+--- a/src/sidebar/index.jsx
++++ /dev/null
+@@ -1,36 +0,0 @@
+-import React from 'react';
+-import { createRoot } from 'react-dom/client';
+-
+-import { UIProvider } from '../contexts/UIContext';
+-import { SidebarPlatformProvider } from '../contexts/platform';
+-import { ContentProvider } from '../contexts/ContentContext';
+-
+-import { SidebarChatProvider } from './contexts/SidebarChatContext';
+-import SidebarApp from './SidebarApp';
+-import '../styles/index.css';
+-
+-document.addEventListener('DOMContentLoaded', () => {
+-  const container = document.getElementById('sidebar-root');
+-  const root = createRoot(container);
+-
+-  const urlParams = new URLSearchParams(window.location.search);
+-  const tabId = parseInt(urlParams.get('tabId'), 10);
+-
+-  if (isNaN(tabId)) {
+-    console.error('[Sidebar Index] Invalid or missing tabId in URL.');
+-    // Optionally render an error message in the sidebar
+-    root.render(<div>Error: Missing Tab ID. Cannot initialize sidebar.</div>);
+-  } else {
+-    root.render(
+-      <UIProvider>
+-        <ContentProvider>
+-          <SidebarPlatformProvider tabId={tabId}>
+-            <SidebarChatProvider tabId={tabId}>
+-              <SidebarApp tabId={tabId} /> {/* Ensure tabId is passed here */}
+-            </SidebarChatProvider>
+-          </SidebarPlatformProvider>
+-        </ContentProvider>
+-      </UIProvider>
+-    );
+-  }
+-});
+diff --git a/src/sidebar/SidebarApp.jsx b/src/sidepanel/SidepanelApp.jsx
+similarity index 84%
+rename from src/sidebar/SidebarApp.jsx
+rename to src/sidepanel/SidepanelApp.jsx
+index 0024a80..01d554b 100644
+--- a/src/sidebar/SidebarApp.jsx
++++ b/src/sidepanel/SidepanelApp.jsx
+@@ -11,7 +11,7 @@ import { STORAGE_KEYS, DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG } from '../shared/c
+ import { logger } from '../shared/logger';
+ import { robustSendMessage } from '../shared/utils/message-utils';
+ import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
+-import { useSidebarPlatform } from '../contexts/platform';
++import { useSidepanelPlatform } from '../contexts/platform';
+ import { useContent } from '../contexts/ContentContext';
+ import { useUI } from '../contexts/UIContext';
+ import { AppHeader, ErrorIcon } from '../components';
+@@ -20,9 +20,9 @@ import { debounce } from '../shared/utils/debounce';
+ import Header from './components/Header';
+ import ChatArea from './components/ChatArea';
+ import { UserInput } from './components/UserInput';
+-import { useSidebarChat } from './contexts/SidebarChatContext';
++import { useSidepanelChat } from './contexts/SidepanelChatContext';
+ 
+-export default function SidebarApp() {
++export default function SidepanelApp() {
+   const { tabId, setTabId } = useSidebarPlatform();
+   const { resetCurrentTabData, isRefreshing } = useSidebarChat();
+   const { updateContentContext } = useContent();
+@@ -34,22 +34,22 @@ export default function SidebarApp() {
+   // Use the custom hook for shortcut handling
+   const handleCloseShortcut = useCallback(async () => {
+     if (!tabId) {
+-      logger.sidebar.warn('SidebarApp: tabId prop is missing, cannot handle close shortcut.');
++      logger.sidepanel.warn('SidepanelApp: tabId prop is missing, cannot handle close shortcut.');
+       return;
+     }
+-    logger.sidebar.info(`Shortcut pressed in sidebar (tabId: ${tabId}), attempting to close.`);
++    logger.sidepanel.info(`Shortcut pressed in sidepanel (tabId: ${tabId}), attempting to close.`);
+     try {
+       const response = await robustSendMessage({
+         action: 'closeCurrentSidePanel',
+         tabId: tabId,
+       });
+       if (response && response.success) {
+-        logger.sidebar.info(`Side panel close command acknowledged for tab ${tabId}.`);
++        logger.sidepanel.info(`Side panel close command acknowledged for tab ${tabId}.`);
+       } else {
+-        logger.sidebar.error(`Failed to close side panel for tab ${tabId}:`, response?.error);
++        logger.sidepanel.error(`Failed to close side panel for tab ${tabId}:`, response?.error);
+       }
+     } catch (err) {
+-      logger.sidebar.error(`Error sending closeCurrentSidePanel message for tab ${tabId}:`, err);
++      logger.sidepanel.error(`Error sending closeCurrentSidePanel message for tab ${tabId}:`, err);
+     }
+   }, [tabId]);
+ 
+@@ -58,7 +58,7 @@ export default function SidebarApp() {
+     STORAGE_KEYS.CUSTOM_SIDEBAR_TOGGLE_SHORTCUT,
+     DEFAULT_POPUP_SIDEBAR_SHORTCUT_CONFIG,
+     handleCloseShortcut,
+-    logger.sidebar,
++    logger.sidepanel,
+     [handleCloseShortcut]
+   );
+ 
+@@ -71,8 +71,8 @@ export default function SidebarApp() {
+ 
+   // --- Effect to determine Tab ID ---
+   useEffect(() => {
+-    logger.sidebar.info(
+-      'SidebarApp mounted, attempting to determine tab context...'
++    logger.sidepanel.info(
++      'SidepanelApp mounted, attempting to determine tab context...'
+     );
+     let foundTabId = NaN;
+ 
+@@ -82,15 +82,15 @@ export default function SidebarApp() {
+       const parsedTabId = tabIdFromUrl ? parseInt(tabIdFromUrl, 10) : NaN;
+ 
+       if (tabIdFromUrl && !isNaN(parsedTabId)) {
+-        logger.sidebar.info(`Found valid tabId ${parsedTabId} in URL.`);
++        logger.sidepanel.info(`Found valid tabId ${parsedTabId} in URL.`);
+         foundTabId = parsedTabId;
+       } else {
+-        logger.sidebar.error(
+-          'FATAL: Sidebar loaded without a valid tabId in URL. Cannot initialize.'
++        logger.sidepanel.error(
++          'FATAL: Sidepanel loaded without a valid tabId in URL. Cannot initialize.'
+         );
+       }
+     } catch (error) {
+-      logger.sidebar.error('Error parsing tabId from URL:', error);
++      logger.sidepanel.error('Error parsing tabId from URL:', error);
+     }
+ 
+     if (!isNaN(foundTabId)) {
+@@ -99,8 +99,8 @@ export default function SidebarApp() {
+ 
+     const timer = setTimeout(() => {
+       setIsReady(!isNaN(foundTabId));
+-      logger.sidebar.info(
+-        `Sidebar initialization complete. isReady: ${!isNaN(foundTabId)}, tabId set to: ${foundTabId}`
++      logger.sidepanel.info(
++        `Sidepanel initialization complete. isReady: ${!isNaN(foundTabId)}, tabId set to: ${foundTabId}`
+       );
+     }, 50);
+ 
+@@ -110,7 +110,7 @@ export default function SidebarApp() {
+   // --- Effect for Page Navigation Listener ---
+   useEffect(() => {
+     if (!isReady || !tabId) {
+-      logger.sidebar.info(
++      logger.sidepanel.info(
+         `Skipping pageNavigated listener setup (isReady: ${isReady}, tabId: ${tabId})`
+       );
+       return;
+@@ -118,17 +118,17 @@ export default function SidebarApp() {
+ 
+     const messageListener = (message, _sender, _sendResponse) => {
+       if (message.action === 'pageNavigated' && message.tabId === tabId) {
+-        logger.sidebar.info(
++        logger.sidepanel.info(
+           `Received pageNavigated event for current tab ${tabId}:`,
+           message
+         );
+         try {
+           updateContentContext(message.newUrl, message.newContentType);
+-          logger.sidebar.info(
++          logger.sidepanel.info(
+             `Content context updated for tab ${tabId} to URL: ${message.newUrl}, Type: ${message.newContentType}`
+           );
+         } catch (error) {
+-          logger.sidebar.error(
++          logger.sidepanel.error(
+             `Error handling pageNavigated event for tab ${tabId}:`,
+             error
+           );
+@@ -138,11 +138,11 @@ export default function SidebarApp() {
+ 
+     if (chrome && chrome.runtime && chrome.runtime.onMessage) {
+       chrome.runtime.onMessage.addListener(messageListener);
+-      logger.sidebar.info(
++      logger.sidepanel.info(
+         `Added runtime message listener for pageNavigated events (tabId: ${tabId})`
+       );
+     } else {
+-      logger.sidebar.warn(
++      logger.sidepanel.warn(
+         'Chrome runtime API not available for message listener.'
+       );
+     }
+@@ -150,7 +150,7 @@ export default function SidebarApp() {
+     return () => {
+       if (chrome && chrome.runtime && chrome.runtime.onMessage) {
+         chrome.runtime.onMessage.removeListener(messageListener);
+-        logger.sidebar.info(
++        logger.sidepanel.info(
+           `Removed runtime message listener for pageNavigated events (tabId: ${tabId})`
+         );
+       }
+@@ -160,7 +160,7 @@ export default function SidebarApp() {
+   // --- Effect for Background Connection Port ---
+   useEffect(() => {
+     if (!isReady || !tabId) {
+-      logger.sidebar.info(
++      logger.sidepanel.info(
+         `Skipping background port connection (isReady: ${isReady}, tabId: ${tabId})`
+       );
+       return;
+@@ -171,7 +171,7 @@ export default function SidebarApp() {
+     }
+ 
+     if (!(chrome && chrome.runtime && chrome.runtime.connect)) {
+-      logger.sidebar.warn(
++      logger.sidepanel.warn(
+         'Chrome runtime connect API not available.'
+       );
+       return;
+@@ -182,9 +182,9 @@ export default function SidebarApp() {
+       portRef.current = chrome.runtime.connect({ name: portName });
+ 
+       portRef.current.onDisconnect.addListener(() => {
+-        logger.sidebar.info(`Port disconnected for tab ${tabId}.`);
++        logger.sidepanel.info(`Port disconnected for tab ${tabId}.`);
+         if (chrome.runtime.lastError) {
+-          logger.sidebar.error(
++          logger.sidepanel.error(
+             `Disconnect error for tab ${tabId}:`,
+             chrome.runtime.lastError.message
+           );
+@@ -192,7 +192,7 @@ export default function SidebarApp() {
+         portRef.current = null;
+       });
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         `Error connecting to background for tab ${tabId}:`,
+         error
+       );
+@@ -324,7 +324,7 @@ export default function SidebarApp() {
+           <div className='text-center text-error'>
+             <ErrorIcon className='h-10 w-10 mx-auto mb-2 text-error' />
+             <p className='font-semibold'>Initialization Error</p>
+-            <p className='text-sm'>Sidebar context could not be determined.</p>
++            <p className='text-sm'>Side Panel context could not be determined.</p>
+             <p className='text-xs mt-2'>(Missing or invalid tabId)</p>
+           </div>
+         </div>
+@@ -333,6 +333,6 @@ export default function SidebarApp() {
+   );
+ }
+ 
+-SidebarApp.propTypes = {
++SidepanelApp.propTypes = {
+   // tabId is managed internally
+-};
+\ No newline at end of file
++};
+diff --git a/src/sidebar/components/ChatArea.jsx b/src/sidepanel/components/ChatArea.jsx
+similarity index 98%
+rename from src/sidebar/components/ChatArea.jsx
+rename to src/sidepanel/components/ChatArea.jsx
+index ae374f0..1ce0381 100644
+--- a/src/sidebar/components/ChatArea.jsx
++++ b/src/sidepanel/components/ChatArea.jsx
+@@ -1,4 +1,4 @@
+-// src/sidebar/components/ChatArea.jsx ---
++// src/sidepanel/components/ChatArea.jsx ---
+ import React, {
+   useEffect,
+   useRef,
+@@ -10,8 +10,8 @@ import React, {
+ import PropTypes from 'prop-types';
+ 
+ import { debounce } from '../../shared/utils/debounce';
+-import { useSidebarChat } from '../contexts/SidebarChatContext';
+-import { useSidebarPlatform } from '../../contexts/platform';
++import { useSidepanelChat } from '../contexts/SidepanelChatContext';
++import { useSidepanelPlatform } from '../../contexts/platform';
+ import { useUI } from '../../contexts/UIContext';
+ import { Toggle } from '../../components/core/Toggle';
+ import { Tooltip } from '../../components';
+@@ -59,7 +59,7 @@ function ChatArea({
+     setIsContentExtractionEnabled,
+     modelConfigData,
+     isThinkingModeEnabled,
+-  } = useSidebarChat();
++  } = useSidepanelChat();
+   const { contentType, currentTab } = useContent();
+   const { textSize } = useUI();
+   const messagesEndRef = useRef(null);
+@@ -74,7 +74,7 @@ function ChatArea({
+     selectedPlatformId,
+     selectedModel,
+     hasAnyPlatformCredentials,
+-  } = useSidebarPlatform();
++  } = useSidepanelPlatform();
+ 
+   // --- State ---
+   const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false);
+@@ -294,7 +294,7 @@ const checkScrollPosition = useCallback(() => {
+               });
+               setInitialScrollCompletedForResponse(true); // Mark as completed after scroll starts
+             } else {
+-              logger.sidebar.warn(
++              logger.sidepanel.warn(
+                 `[ChatArea Scrolling Effect] Element or container not found inside *nested* rAF for ID ${userMessageElementId}.`
+               );
+               setInitialScrollCompletedForResponse(true); // Still mark as complete
+@@ -302,7 +302,7 @@ const checkScrollPosition = useCallback(() => {
+           }); // End nested rAF
+         }); // End outer rAF
+       } else {
+-        logger.sidebar.warn(
++        logger.sidepanel.warn(
+           `[ChatArea Scrolling Effect] User message element ID not found. Skipping initial scroll.`
+         );
+         setInitialScrollCompletedForResponse(true); // Still mark as complete
+@@ -441,12 +441,12 @@ const checkScrollPosition = useCallback(() => {
+           url: chrome.runtime.getURL('settings.html#api-settings'),
+         });
+       } else {
+-        logger.sidebar.warn(
++        logger.sidepanel.warn(
+           'Chrome APIs not available. Cannot open settings tab.'
+         );
+       }
+     } catch (error) {
+-      logger.sidebar.error('Could not open API options page:', error);
++      logger.sidepanel.error('Could not open API options page:', error);
+     }
+   };
+ 
+@@ -743,13 +743,13 @@ const checkScrollPosition = useCallback(() => {
+                     getComputedStyle(document.documentElement).fontSize
+                   );
+                   if (isNaN(rootFontSize) || rootFontSize <= 0) {
+-                    logger.sidebar.warn(
++                    logger.sidepanel.warn(
+                       `Could not parse root font size, falling back to 16px. Value was: ${getComputedStyle(document.documentElement).fontSize}`
+                     );
+                     rootFontSize = 16;
+                   }
+                 } catch (e) {
+-                  logger.sidebar.error('Error getting root font size:', e);
++                  logger.sidepanel.error('Error getting root font size:', e);
+                   rootFontSize = 16;
+                 }
+                 const minPixelHeight =
+diff --git a/src/sidebar/components/Header.jsx b/src/sidepanel/components/Header.jsx
+similarity index 98%
+rename from src/sidebar/components/Header.jsx
+rename to src/sidepanel/components/Header.jsx
+index 92fb248..4e31078 100644
+--- a/src/sidebar/components/Header.jsx
++++ b/src/sidepanel/components/Header.jsx
+@@ -1,7 +1,7 @@
+ import React, { useEffect, useState, useRef, createContext } from 'react';
+ 
+-import { useSidebarPlatform } from '../../contexts/platform';
+-import { useSidebarChat } from '../contexts/SidebarChatContext';
++import { useSidepanelPlatform } from '../../contexts/platform';
++import { useSidepanelChat } from '../contexts/SidepanelChatContext';
+ import { PlatformIcon, ChevronDownIcon, Toggle, InfoIcon, Tooltip } from '../../components';
+ 
+ import ModelSelector from './ModelSelector';
+diff --git a/src/sidebar/components/ModelSelector.jsx b/src/sidepanel/components/ModelSelector.jsx
+similarity index 98%
+rename from src/sidebar/components/ModelSelector.jsx
+rename to src/sidepanel/components/ModelSelector.jsx
+index 5d7f29c..74840b5 100644
+--- a/src/sidebar/components/ModelSelector.jsx
++++ b/src/sidepanel/components/ModelSelector.jsx
+@@ -1,7 +1,7 @@
+ import React, { useEffect, useState, useContext, useRef } from 'react';
+ import PropTypes from 'prop-types';
+ 
+-import { useSidebarPlatform } from '../../contexts/platform';
++import { useSidepanelPlatform } from '../../contexts/platform';
+ 
+ import { DropdownContext } from './Header';
+ 
+diff --git a/src/sidebar/components/TokenCounter.jsx b/src/sidepanel/components/TokenCounter.jsx
+similarity index 100%
+rename from src/sidebar/components/TokenCounter.jsx
+rename to src/sidepanel/components/TokenCounter.jsx
+diff --git a/src/sidebar/components/UserInput.jsx b/src/sidepanel/components/UserInput.jsx
+similarity index 91%
+rename from src/sidebar/components/UserInput.jsx
+rename to src/sidepanel/components/UserInput.jsx
+index b2d9ba9..bb930a3 100644
+--- a/src/sidebar/components/UserInput.jsx
++++ b/src/sidepanel/components/UserInput.jsx
+@@ -2,8 +2,8 @@
+ import React from 'react';
+ import PropTypes from 'prop-types';
+ 
+-import { useSidebarPlatform } from '../../contexts/platform';
+-import { useSidebarChat } from '../contexts/SidebarChatContext';
++import { useSidepanelPlatform } from '../../contexts/platform';
++import { useSidepanelChat } from '../contexts/SidepanelChatContext';
+ import { UnifiedInput } from '../../components/input/UnifiedInput';
+ import { useContent } from '../../contexts/ContentContext';
+ 
+diff --git a/src/sidebar/components/messaging/AssistantMessageBubble.jsx b/src/sidepanel/components/messaging/AssistantMessageBubble.jsx
+similarity index 98%
+rename from src/sidebar/components/messaging/AssistantMessageBubble.jsx
+rename to src/sidepanel/components/messaging/AssistantMessageBubble.jsx
+index 12cf77e..a15087e 100644
+--- a/src/sidebar/components/messaging/AssistantMessageBubble.jsx
++++ b/src/sidepanel/components/messaging/AssistantMessageBubble.jsx
+@@ -7,7 +7,7 @@ import 'katex/dist/katex.min.css';
+ 
+ import { logger } from '../../../shared/logger';
+ import { IconButton, RerunIcon, PlatformIcon } from '../../../components';
+-import { useSidebarChat } from '../../contexts/SidebarChatContext';
++import { useSidepanelChat } from '../../contexts/SidepanelChatContext';
+ 
+ import ThinkingBlock from './ThinkingBlock';
+ import EnhancedCodeBlock from './EnhancedCodeBlock';
+@@ -41,7 +41,7 @@ export const AssistantMessageBubble = memo(
+     ) => {
+       // Hooks needed for Assistant functionality
+       const { rerunAssistantMessage, isProcessing, isCanceling } =
+-        useSidebarChat();
++        useSidepanelChat();
+       const {
+         copyState: assistantCopyState,
+         handleCopy: handleAssistantCopy,
+@@ -81,7 +81,7 @@ export const AssistantMessageBubble = memo(
+             });
+             processed = processedSegments.join('');
+           } catch (error) {
+-            logger.sidebar.error('Error during math preprocessing:', error);
++            logger.sidepanel.error('Error during math preprocessing:', error);
+             processed = content || ''; // Fallback
+           }
+         } else {
+diff --git a/src/sidebar/components/messaging/EnhancedCodeBlock.jsx b/src/sidepanel/components/messaging/EnhancedCodeBlock.jsx
+similarity index 100%
+rename from src/sidebar/components/messaging/EnhancedCodeBlock.jsx
+rename to src/sidepanel/components/messaging/EnhancedCodeBlock.jsx
+diff --git a/src/sidebar/components/messaging/MathFormulaBlock.jsx b/src/sidepanel/components/messaging/MathFormulaBlock.jsx
+similarity index 97%
+rename from src/sidebar/components/messaging/MathFormulaBlock.jsx
+rename to src/sidepanel/components/messaging/MathFormulaBlock.jsx
+index 458f3a5..cdf775d 100644
+--- a/src/sidebar/components/messaging/MathFormulaBlock.jsx
++++ b/src/sidepanel/components/messaging/MathFormulaBlock.jsx
+@@ -27,7 +27,7 @@ const MathFormulaBlock = memo(({ content, inline = false }) => {
+         <BlockMath math={content} />
+       );
+     } catch (error) {
+-      logger.sidebar.error('Math rendering error:', error);
++      logger.sidepanel.error('Math rendering error:', error);
+       setRenderError(true);
+       return null;
+     }
+diff --git a/src/sidebar/components/messaging/MessageBubble.jsx b/src/sidepanel/components/messaging/MessageBubble.jsx
+similarity index 95%
+rename from src/sidebar/components/messaging/MessageBubble.jsx
+rename to src/sidepanel/components/messaging/MessageBubble.jsx
+index ad55c6f..dc8ccb2 100644
+--- a/src/sidebar/components/messaging/MessageBubble.jsx
++++ b/src/sidepanel/components/messaging/MessageBubble.jsx
+@@ -28,7 +28,7 @@ const MessageBubbleComponent = forwardRef(
+       case MESSAGE_ROLES.ASSISTANT:
+         return <AssistantMessageBubble ref={ref} role={role} {...props} />;
+       default:
+-        logger.sidebar.error(`Unknown message role: ${role}`);
++        logger.sidepanel.error(`Unknown message role: ${role}`);
+         return null;
+     }
+   }
+diff --git a/src/sidebar/components/messaging/SystemMessageBubble.jsx b/src/sidepanel/components/messaging/SystemMessageBubble.jsx
+similarity index 100%
+rename from src/sidebar/components/messaging/SystemMessageBubble.jsx
+rename to src/sidepanel/components/messaging/SystemMessageBubble.jsx
+diff --git a/src/sidebar/components/messaging/ThinkingBlock.jsx b/src/sidepanel/components/messaging/ThinkingBlock.jsx
+similarity index 100%
+rename from src/sidebar/components/messaging/ThinkingBlock.jsx
+rename to src/sidepanel/components/messaging/ThinkingBlock.jsx
+diff --git a/src/sidebar/components/messaging/UserMessageBubble.jsx b/src/sidepanel/components/messaging/UserMessageBubble.jsx
+similarity index 98%
+rename from src/sidebar/components/messaging/UserMessageBubble.jsx
+rename to src/sidepanel/components/messaging/UserMessageBubble.jsx
+index 7fab8dc..cdfcc75 100644
+--- a/src/sidebar/components/messaging/UserMessageBubble.jsx
++++ b/src/sidepanel/components/messaging/UserMessageBubble.jsx
+@@ -8,7 +8,7 @@ import {
+   EditIcon,
+   RerunIcon,
+ } from '../../../components';
+-import { useSidebarChat } from '../../contexts/SidebarChatContext';
++import { useSidepanelChat } from '../contexts/SidepanelChatContext';
+ 
+ import { useCopyToClipboard } from './hooks/useCopyToClipboard';
+ 
+diff --git a/src/sidebar/components/messaging/hooks/useCopyToClipboard.js b/src/sidepanel/components/messaging/hooks/useCopyToClipboard.js
+similarity index 97%
+rename from src/sidebar/components/messaging/hooks/useCopyToClipboard.js
+rename to src/sidepanel/components/messaging/hooks/useCopyToClipboard.js
+index 01f8759..3470729 100644
+--- a/src/sidebar/components/messaging/hooks/useCopyToClipboard.js
++++ b/src/sidepanel/components/messaging/hooks/useCopyToClipboard.js
+@@ -20,7 +20,7 @@ export const useCopyToClipboard = (textToCopy) => {
+       setCopyState('copied');
+       setDisplayIconState('copied');
+     } catch (error) {
+-      logger.sidebar.error('Failed to copy text:', error);
++      logger.sidepanel.error('Failed to copy text:', error);
+       setCopyState('error');
+       setDisplayIconState('error');
+     }
+diff --git a/src/sidebar/components/messaging/utils/clipboard.js b/src/sidepanel/components/messaging/utils/clipboard.js
+similarity index 100%
+rename from src/sidebar/components/messaging/utils/clipboard.js
+rename to src/sidepanel/components/messaging/utils/clipboard.js
+diff --git a/src/sidebar/components/messaging/utils/markdownUtils.js b/src/sidepanel/components/messaging/utils/markdownUtils.js
+similarity index 99%
+rename from src/sidebar/components/messaging/utils/markdownUtils.js
+rename to src/sidepanel/components/messaging/utils/markdownUtils.js
+index bbdb292..6880181 100644
+--- a/src/sidebar/components/messaging/utils/markdownUtils.js
++++ b/src/sidepanel/components/messaging/utils/markdownUtils.js
+@@ -61,7 +61,7 @@ export const renderWithPlaceholdersRecursive = (children, mathMap) => {
+           );
+         } else {
+           // Use logger imported at the top
+-          logger.sidebar.warn(
++          logger.sidepanel.warn(
+             `Math placeholder ${placeholder} not found in map. Rendering fallback marker.`
+           );
+           const fallbackText =
+diff --git a/src/sidebar/components/messaging/utils/parseTextAndMath.js b/src/sidepanel/components/messaging/utils/parseTextAndMath.js
+similarity index 100%
+rename from src/sidebar/components/messaging/utils/parseTextAndMath.js
+rename to src/sidepanel/components/messaging/utils/parseTextAndMath.js
+diff --git a/src/sidebar/contexts/SidebarChatContext.jsx b/src/sidepanel/contexts/SidepanelChatContext.jsx
+similarity index 88%
+rename from src/sidebar/contexts/SidebarChatContext.jsx
+rename to src/sidepanel/contexts/SidepanelChatContext.jsx
+index 4f336db..4e8a97f 100644
+--- a/src/sidebar/contexts/SidebarChatContext.jsx
++++ b/src/sidepanel/contexts/SidepanelChatContext.jsx
+@@ -1,4 +1,4 @@
+-// src/sidebar/contexts/SidebarChatContext.jsx
++// src/sidepanel/contexts/SidepanelChatContext.jsx
+ 
+ import React, {
+   createContext,
+@@ -12,7 +12,7 @@ import React, {
+ import PropTypes from 'prop-types';
+ 
+ import { logger } from '../../shared/logger';
+-import { useSidebarPlatform } from '../../contexts/platform';
++import { useSidepanelPlatform } from '../../contexts/platform';
+ import { useContent } from '../../contexts/ContentContext';
+ import { useTokenTracking } from '../hooks/useTokenTracking';
+ import { useChatStreaming } from '../hooks/useChatStreaming';
+@@ -25,13 +25,13 @@ import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
+ import { isInjectablePage } from '../../shared/utils/content-utils';
+ import { robustSendMessage } from '../../shared/utils/message-utils';
+ 
+-const SidebarChatContext = createContext(null);
++const SidepanelChatContext = createContext(null);
+ 
+-SidebarChatProvider.propTypes = {
++SidepanelChatProvider.propTypes = {
+   children: PropTypes.node.isRequired,
+ };
+ 
+-export function SidebarChatProvider({ children }) {
++export function SidepanelChatProvider({ children }) {
+   const {
+     selectedPlatformId,
+     selectedModel,
+@@ -39,7 +39,7 @@ export function SidebarChatProvider({ children }) {
+     tabId,
+     platforms,
+     getPlatformApiConfig,
+-  } = useSidebarPlatform();
++  } = useSidepanelPlatform();
+ 
+   const { contentType, currentTab } = useContent();
+   const [messages, setMessages] = useState([]);
+@@ -71,7 +71,7 @@ export function SidebarChatProvider({ children }) {
+     isProcessing,
+     error: processingError,
+     reset: resetContentProcessing,
+-  } = useContentProcessing(INTERFACE_SOURCES.SIDEBAR);
++  } = useContentProcessing(INTERFACE_SOURCES.SIDEPANEL);
+ 
+   // Get platform info
+   const selectedPlatform = useMemo(
+@@ -109,7 +109,7 @@ export function SidebarChatProvider({ children }) {
+         });
+ 
+         if (result && result.skippedContext === true) {
+-          logger.sidebar.info(
++          logger.sidepanel.info(
+             'Context extraction skipped by background:',
+             result.reason
+           );
+@@ -141,7 +141,7 @@ export function SidebarChatProvider({ children }) {
+ 
+         return true; // Indicate stream started successfully
+       } catch (error) {
+-        logger.sidebar.error('Error initiating API call:', error);
++        logger.sidepanel.error('Error initiating API call:', error);
+         const isPortClosedError = error.isPortClosed;
+         const systemErrorMessageContent = isPortClosedError
+           ? '[System: The connection was interrupted. Please try sending your message again.]'
+@@ -247,7 +247,7 @@ export function SidebarChatProvider({ children }) {
+       try {
+         const config = await getPlatformApiConfig(selectedPlatformId);
+         if (!config || !config.models) {
+-          logger.sidebar.warn(
++          logger.sidepanel.warn(
+             'Platform API configuration missing required structure:',
+             {
+               platformId: selectedPlatformId,
+@@ -261,7 +261,7 @@ export function SidebarChatProvider({ children }) {
+         setModelConfigData(modelData);
+         setStableModelConfigData(modelData);
+       } catch (error) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'Failed to load or process platform API configuration:',
+           error
+         );
+@@ -286,7 +286,7 @@ export function SidebarChatProvider({ children }) {
+           setStableContextStatus(status);
+         }
+       } catch (error) {
+-        logger.sidebar.error('Error calculating context status:', error);
++        logger.sidepanel.error('Error calculating context status:', error);
+         // Don't update stableContextStatus on error - keep previous valid state
+       }
+     };
+@@ -294,7 +294,7 @@ export function SidebarChatProvider({ children }) {
+   }, [tabId, modelConfigData, tokenStats, calculateContextStatus]);
+ 
+   // Stabilize tokenStats for UI consumers
+-  const { isLoading: isPlatformLoading } = useSidebarPlatform(); // Get loading state outside effect
++  const { isLoading: isPlatformLoading } = useSidepanelPlatform(); // Get loading state outside effect
+ 
+   useEffect(() => {
+     if (!isPlatformLoading) {
+@@ -316,7 +316,7 @@ export function SidebarChatProvider({ children }) {
+         const hasExtracted = history.some((msg) => msg.isExtractedContent);
+         setExtractedContentAdded(hasExtracted);
+       } catch (error) {
+-        logger.sidebar.error('Error loading tab chat history:', error);
++        logger.sidepanel.error('Error loading tab chat history:', error);
+       }
+     };
+     loadChatHistory();
+@@ -347,13 +347,13 @@ export function SidebarChatProvider({ children }) {
+       // Check if the loaded model config allows toggling
+       if (modelConfigData?.thinking?.toggleable === true) {
+         try {
+-          const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE);
+-          const prefs = result[STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE] || {};
++          const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE);
++          const prefs = result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
+           const modePref = prefs[selectedPlatformId]?.[selectedModel];
+           // Set state based on preference, default to false if undefined
+           setIsThinkingModeEnabled(modePref === undefined ? false : modePref);
+         } catch (err) {
+-          logger.sidebar.error("Error loading thinking mode preference:", err);
++          logger.sidepanel.error("Error loading thinking mode preference:", err);
+           setIsThinkingModeEnabled(false); // Default to false on error
+         }
+       } else {
+@@ -465,7 +465,7 @@ export function SidebarChatProvider({ children }) {
+       isThinkingModeEnabled: isThinkingModeEnabled,
+       options: {
+         tabId,
+-        source: INTERFACE_SOURCES.SIDEBAR,
++        source: INTERFACE_SOURCES.SIDEPANEL,
+         ...(rerunStatsRef.current && {
+           preTruncationCost: rerunStatsRef.current.preTruncationCost,
+           preTruncationOutput: rerunStatsRef.current.preTruncationOutput,
+@@ -490,13 +490,13 @@ export function SidebarChatProvider({ children }) {
+ 
+   const clearFormattedContentForTab = useCallback(async () => {
+     if (tabId === null || tabId === undefined) {
+-      logger.sidebar.warn(
++      logger.sidepanel.warn(
+         'clearFormattedContentForTab called without a valid tabId.'
+       );
+       return;
+     }
+     const tabIdKey = tabId.toString();
+-    logger.sidebar.info(
++    logger.sidepanel.info(
+       `Attempting to clear formatted content for tab: ${tabIdKey}`
+     );
+     try {
+@@ -511,21 +511,21 @@ export function SidebarChatProvider({ children }) {
+         await chrome.storage.local.set({
+           [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: updatedFormattedContent,
+         });
+-        logger.sidebar.info(
++        logger.sidepanel.info(
+           `Successfully cleared formatted content for tab: ${tabIdKey}`
+         );
+       } else {
+-        logger.sidebar.info(
++        logger.sidepanel.info(
+           `No formatted content found in storage for tab: ${tabIdKey}. No action needed.`
+         );
+       }
+       // Only reset the flag, don't clear messages here
+       setExtractedContentAdded(false);
+-      logger.sidebar.info(
++      logger.sidepanel.info(
+         `Reset extractedContentAdded flag for tab: ${tabIdKey}`
+       );
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         `Error clearing formatted content for tab ${tabIdKey}:`,
+         error
+       );
+@@ -534,12 +534,12 @@ export function SidebarChatProvider({ children }) {
+ 
+   const resetCurrentTabData = useCallback(async () => {
+     if (tabId === null || tabId === undefined) {
+-      logger.sidebar.warn('resetCurrentTabData called without a valid tabId.');
++      logger.sidepanel.warn('resetCurrentTabData called without a valid tabId.');
+       return;
+     }
+     // Prevent concurrent refreshes
+     if (isRefreshing) {
+-        logger.sidebar.warn('Refresh already in progress. Ignoring request.');
++        logger.sidepanel.warn('Refresh already in progress. Ignoring request.');
+         return;
+     }
+ 
+@@ -554,41 +554,41 @@ export function SidebarChatProvider({ children }) {
+       try {
+         // 1. Cancel any ongoing stream
+         if (streamingMessageId && isProcessing && !isCanceling) {
+-          logger.sidebar.info(
++          logger.sidepanel.info(
+             'Refresh requested: Cancelling ongoing stream first...'
+           );
+           await cancelStream(); // Wait for cancellation attempt
+-          logger.sidebar.info('Stream cancellation attempted.');
++          logger.sidepanel.info('Stream cancellation attempted.');
+         }
+ 
+         // 2. Notify background to clear its data (attempt and log, but don't block local reset on failure)
+-        logger.sidebar.info(`Requesting background to clear data for tab ${tabId}`);
++        logger.sidepanel.info(`Requesting background to clear data for tab ${tabId}`);
+         try {
+             const clearResponse = await robustSendMessage({ action: 'clearTabData', tabId: tabId });
+             if (clearResponse && clearResponse.success) {
+-                logger.sidebar.info(`Background confirmed clearing data for tab ${tabId}`);
++                logger.sidepanel.info(`Background confirmed clearing data for tab ${tabId}`);
+             } else {
+-                logger.sidebar.error('Background failed to confirm tab data clear:', clearResponse?.error);
++                logger.sidepanel.error('Background failed to confirm tab data clear:', clearResponse?.error);
+                 // Proceed with local reset even if background fails
+             }
+         } catch (sendError) {
+-             logger.sidebar.error('Error sending clearTabData message to background:', sendError);
++             logger.sidepanel.error('Error sending clearTabData message to background:', sendError);
+              // Proceed with local reset despite background communication failure
+         }
+ 
+         // 3. Reset local state *after* attempting background clear
+-        logger.sidebar.info('Resetting local sidebar state...');
++        logger.sidepanel.info('Resetting local sidepanel state...');
+         setMessages([]);
+         setInputValue('');
+         setStreamingMessageId(null);
+         setExtractedContentAdded(false);
+         setIsCanceling(false); // Ensure canceling state is reset if cancellation happened
+         await clearTokenData(); // Clear associated tokens and reset local token state
+-        logger.sidebar.info('Local sidebar state reset complete.');
++        logger.sidepanel.info('Local sidepanel state reset complete.');
+ 
+       } catch (error) {
+         // Catch errors primarily from stream cancellation or clearTokenData
+-        logger.sidebar.error('Error during the refresh process (excluding background communication):', error);
++        logger.sidepanel.error('Error during the refresh process (excluding background communication):', error);
+         // Attempt to reset local state even on these errors
+         try {
+             setMessages([]);
+@@ -598,11 +598,11 @@ export function SidebarChatProvider({ children }) {
+             setIsCanceling(false);
+             await clearTokenData();
+         } catch (resetError) {
+-            logger.sidebar.error('Error during fallback state reset:', resetError);
++            logger.sidepanel.error('Error during fallback state reset:', resetError);
+         }
+       } finally {
+         // 4. ALWAYS turn off refreshing state
+-        logger.sidebar.info('Setting isRefreshing to false in finally block.');
++        logger.sidepanel.info('Setting isRefreshing to false in finally block.');
+         setIsRefreshing(false);
+       }
+     }
+@@ -631,8 +631,8 @@ export function SidebarChatProvider({ children }) {
+     setIsThinkingModeEnabled(newState);
+ 
+     try {
+-      const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE);
+-      const prefs = result[STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE] || {};
++      const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE);
++      const prefs = result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
+ 
+       // Ensure platform object exists
+       if (!prefs[selectedPlatformId]) {
+@@ -643,17 +643,17 @@ export function SidebarChatProvider({ children }) {
+       prefs[selectedPlatformId][selectedModel] = newState;
+ 
+       // Save back to storage
+-      await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEBAR_THINKING_MODE_PREFERENCE]: prefs });
+-      logger.sidebar.info(`Thinking mode preference saved for ${selectedPlatformId}/${selectedModel}: ${newState}`);
++      await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE]: prefs });
++      logger.sidepanel.info(`Thinking mode preference saved for ${selectedPlatformId}/${selectedModel}: ${newState}`);
+     } catch (err) {
+-      logger.sidebar.error("Error saving thinking mode preference:", err);
++      logger.sidepanel.error("Error saving thinking mode preference:", err);
+     }
+   }, [selectedPlatformId, selectedModel]); // Dependencies for the handler
+ 
+   // --- End Utility Functions ---
+ 
+   return (
+-    <SidebarChatContext.Provider
++    <SidepanelChatContext.Provider
+       value={{
+         // State
+         messages: visibleMessages,
+@@ -686,8 +686,8 @@ export function SidebarChatProvider({ children }) {
+       }}
+     >
+       {children}
+-    </SidebarChatContext.Provider>
++    </SidepanelChatContext.Provider>
+   );
+ }
+ 
+-export const useSidebarChat = () => useContext(SidebarChatContext);
++export const useSidepanelChat = () => useContext(SidepanelChatContext);
+diff --git a/src/sidepanel/hooks/useChatStreaming.js b/src/sidepanel/hooks/useChatStreaming.js
+new file mode 100644
+index 0000000..04a6465
+--- /dev/null
++++ b/src/sidepanel/hooks/useChatStreaming.js
+@@ -0,0 +1,441 @@
++// src/sidepanel/hooks/useChatStreaming.js ---
++import { useEffect, useCallback, useRef } from 'react';
++
++import { logger } from '../../shared/logger';
++import { MESSAGE_ROLES, STORAGE_KEYS } from '../../shared/constants';
++
++/**
++ * Custom hook to manage chat streaming logic, including receiving chunks,
++ * updating UI, handling completion/errors/cancellation, and managing cancellation requests.
++ *
++ * @param {object} args - Dependencies passed from the parent context.
++ * @param {number} args.tabId - The current tab ID.
++ * @param {function} args.setMessages - State setter for the messages array.
++ * @param {Array} args.messages - Current messages array (read-only).
++ * @param {object} args.modelConfigData - Configuration for the selected model.
++ * @param {string} args.selectedModel - ID of the selected model.
++ * @param {object} args.selectedPlatform - Details of the selected platform.
++ * @param {object} args.tokenStats - Current token statistics (read-only).
++ * @param {React.MutableRefObject} args.rerunStatsRef - Ref holding stats before a rerun/edit.
++ * @param {function} args.setExtractedContentAdded - State setter for extracted content flag.
++ * @param {boolean} args.isProcessing - Flag indicating if an API call is in progress.
++ * @param {boolean} args.isCanceling - Flag indicating if cancellation is in progress.
++ * @param {function} args.setIsCanceling - State setter for cancellation flag.
++ * @param {string|null} args.streamingMessageId - ID of the message currently being streamed.
++ * @param {function} args.setStreamingMessageId - State setter for streaming message ID.
++ * @param {React.MutableRefObject} args.batchedStreamingContentRef - Ref for buffering stream chunks.
++ * @param {React.MutableRefObject} args.rafIdRef - Ref for requestAnimationFrame ID.
++ * @param {object} args.ChatHistoryService - Service for chat history management.
++ * @param {object} args.TokenManagementService - Service for token management.
++ * @param {function} args.robustSendMessage - Utility for sending messages to background.
++ * @param {boolean} args.extractedContentAdded - Flag indicating if extracted content has been added.
++ * @returns {object} - Object containing the cancelStream function.
++ */
++export function useChatStreaming({
++  tabId,
++  setMessages,
++  messages,
++  modelConfigData,
++  selectedModel,
++  rerunStatsRef,
++  setExtractedContentAdded,
++  isProcessing,
++  isCanceling,
++  setIsCanceling,
++  streamingMessageId,
++  setStreamingMessageId,
++  batchedStreamingContentRef,
++  rafIdRef,
++  ChatHistoryService,
++  TokenManagementService,
++  robustSendMessage,
++  extractedContentAdded,
++  isThinkingModeEnabled = false,
++}) {
++  const batchedThinkingContentRef = useRef(''); // Buffer for thinking chunks
++  // --- State Update Logic (using requestAnimationFrame) ---
++  const performThinkingStreamingStateUpdate = useCallback(() => {
++    rafIdRef.current = null; // Reset the ref
++    const messageId = streamingMessageId; // Read current streaming ID
++    const accumulatedThinkingContent = batchedThinkingContentRef.current; // Read thinking buffer
++
++    if (!messageId) return; // Safety check
++
++    setMessages((prevMessages) =>
++      prevMessages.map((msg) =>
++        msg.id === messageId
++          ? {
++              ...msg,
++              thinkingContent: accumulatedThinkingContent, // Update thinkingContent
++              isStreaming: true,
++            }
++          : msg
++      )
++    );
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [streamingMessageId, batchedThinkingContentRef, rafIdRef, setMessages]);
++
++  const performStreamingStateUpdate = useCallback(() => {
++    rafIdRef.current = null; // Reset the ref after the frame executes
++    const messageId = streamingMessageId; // Read current streaming ID from state
++    const accumulatedContent = batchedStreamingContentRef.current; // Read buffered content
++
++    if (!messageId) return; // Safety check
++
++    setMessages((prevMessages) =>
++      prevMessages.map((msg) =>
++        msg.id === messageId
++          ? {
++              ...msg,
++              content: accumulatedContent, // Update with the full batched content
++              isStreaming: true, // Keep streaming flag true during debounced updates
++            }
++          : msg
++      )
++    );
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [streamingMessageId, batchedStreamingContentRef, rafIdRef, setMessages]); // Dependencies: relevant state/refs/setters
++
++  // --- Stream Completion Handler ---
++  const handleStreamComplete = useCallback(
++    async (
++      messageId,
++      finalContentInput,
++      finalThinkingContentInput, // <-- Add this parameter
++      model,
++      isError = false,
++      isCancelled = false
++    ) => {
++      // Retrieve rerun stats *before* saving history
++      const savedStats = rerunStatsRef.current;
++      const retrievedPreTruncationCost = savedStats?.preTruncationCost || 0;
++      const retrievedPreTruncationOutput = savedStats?.preTruncationOutput || 0;
++
++      try {
++        let finalOutputTokensForMessage = 0; // Default to 0
++        let finalContent = finalContentInput || ''; // Use mutable variable for content
++        let finalThinkingContent = finalThinkingContentInput || ''; // Use mutable variable
++
++        if (isCancelled) {
++            // Calculate tokens based on content *before* adding notice
++            const regularTokens = TokenManagementService.estimateTokens(finalContent);
++            const thinkingTokens = TokenManagementService.estimateTokens(finalThinkingContent);
++            finalOutputTokensForMessage = regularTokens + thinkingTokens;
++            // Append notice for display (only to regular content)
++            finalContent += '\n\n_Stream cancelled by user._';
++            // Keep finalThinkingContent as is
++        } else if (isError) {
++            // Errors don't count towards output tokens
++            finalOutputTokensForMessage = 0;
++            finalThinkingContent = ''; // Clear thinking content on error
++            // finalContent is already the error message passed in finalContentInput
++        } else {
++            // Normal completion: Calculate combined tokens
++            const regularTokens = TokenManagementService.estimateTokens(finalContent);
++            const thinkingTokens = TokenManagementService.estimateTokens(finalThinkingContent);
++            finalOutputTokensForMessage = regularTokens + thinkingTokens;
++            // finalContent and finalThinkingContent are already the complete content passed in
++        }
++
++        // Update message with final content (using the potentially modified finalContent)
++        let updatedMessages = messages.map((msg) => {
++          if (msg.id === messageId) {
++            return {
++              ...msg,
++              content: finalContent, // Use the potentially modified regular content
++              thinkingContent: finalThinkingContent, // Set the final thinking content
++              isStreaming: false,
++              model: model || selectedModel,
++              platformIconUrl: msg.platformIconUrl,
++              platformId: msg.platformId,
++              timestamp: new Date().toISOString(),
++              outputTokens: finalOutputTokensForMessage, // Use the correctly calculated token count
++              role: isError ? MESSAGE_ROLES.SYSTEM : msg.role, // Keep error role handling
++            };
++          }
++          return msg;
++        });
++
++        // If content not added yet, add extracted content message
++        if (!extractedContentAdded && !isError) {
++          try {
++            // Get formatted content from storage
++            const result = await chrome.storage.local.get([
++              STORAGE_KEYS.TAB_FORMATTED_CONTENT,
++            ]);
++            const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
++
++            if (allTabContents) {
++              const tabIdKey = tabId.toString();
++              const extractedContent = allTabContents[tabIdKey];
++
++              if (
++                extractedContent &&
++                typeof extractedContent === 'string' &&
++                extractedContent.trim()
++              ) {
++                const contentMessage = {
++                  id: `extracted_${Date.now()}`,
++                  role: MESSAGE_ROLES.USER,
++                  content: extractedContent,
++                  timestamp: new Date().toISOString(),
++                  inputTokens:
++                    TokenManagementService.estimateTokens(extractedContent),
++                  outputTokens: 0,
++                  isExtractedContent: true,
++                };
++
++                // Add extracted content at beginning
++                updatedMessages = [contentMessage, ...updatedMessages];
++
++                // Mark as added to prevent duplicate additions
++                setExtractedContentAdded(true);
++              }
++            }
++          } catch (extractError) {
++            logger.sidepanel.error(
++              'Error adding extracted content:',
++              extractError
++            );
++          }
++        }
++
++        // Set messages with all updates at once
++        setMessages(updatedMessages);
++        batchedStreamingContentRef.current = ''; // Clear buffer on completion
++        batchedThinkingContentRef.current = ''; // Clear thinking buffer on completion
++
++        // Save history, passing the retrieved initial stats
++        if (tabId) {
++          const messageBeingUpdated = updatedMessages.find(msg => msg.id === messageId);
++          const correctModelConfigForHistory = messageBeingUpdated?.requestModelConfigSnapshot || modelConfigData;
++          await ChatHistoryService.saveHistory(
++            tabId,
++            updatedMessages,
++            correctModelConfigForHistory,
++            {
++              initialAccumulatedCost: retrievedPreTruncationCost,
++              initialOutputTokens: retrievedPreTruncationOutput,
++            },
++            isThinkingModeEnabled
++          );
++        }
++      } catch (error) {
++        logger.sidepanel.error('Error handling stream completion:', error);
++      } finally {
++        // Clear the ref after saving history, regardless of success or error
++        rerunStatsRef.current = null;
++      }
++    },
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++    [
++      messages,
++      selectedModel,
++      extractedContentAdded,
++      tabId,
++      modelConfigData,
++      rerunStatsRef,
++      batchedStreamingContentRef,
++      setMessages,
++      setExtractedContentAdded,
++      ChatHistoryService,
++      TokenManagementService,
++    ] // Ensure all dependencies used inside are listed
++  );
++
++  // --- Effect for Handling Stream Chunks ---
++  useEffect(() => {
++    /**
++     * Processes incoming message chunks from the background script during an active stream.
++     * Handles error chunks, completion chunks (including cancellation), and intermediate content chunks.
++     * Updates the UI live and calls `handleStreamComplete` to finalize the message state.
++     * Resets streaming-related state variables upon stream completion, error, or cancellation.
++     *
++     * @param {object} message - The message object received from `chrome.runtime.onMessage`.
++     */
++    const handleStreamChunk = async (message) => {
++      if (message.action === 'streamChunk' && streamingMessageId) {
++        const { chunkData } = message;
++
++        if (!chunkData) {
++          logger.sidepanel.error('Invalid chunk data received:', message);
++          return;
++        }
++
++        if (chunkData.error) {
++          const errorMessage = chunkData.error;
++          logger.sidepanel.error('Stream error:', errorMessage);
++          await handleStreamComplete(
++            streamingMessageId,
++            errorMessage,
++            '', // No thinking content on error
++            chunkData.model || null,
++            true // isError
++          );
++          setStreamingMessageId(null);
++          setIsCanceling(false);
++          return;
++        }
++
++        if (chunkData.done) {
++          // --- Stream Done Handling ---
++          if (rafIdRef.current !== null) {
++            cancelAnimationFrame(rafIdRef.current);
++            rafIdRef.current = null;
++          }
++
++          let finalContent = chunkData.fullContent || batchedStreamingContentRef.current;
++          // Ensure we capture the final thinking content from the buffer before clearing
++          let finalThinkingContent = batchedThinkingContentRef.current;
++
++          if (chunkData.cancelled === true) {
++            logger.sidepanel.info(
++              `Stream ${message.streamId} received cancellation signal.`
++            );
++            await handleStreamComplete(
++              streamingMessageId,
++              finalContent, // Pass regular content
++              finalThinkingContent, // Pass thinking content
++              chunkData.model,
++              false, // isError
++              true // isCancelled
++            );
++          } else if (chunkData.error) {
++            const errorMessage = chunkData.error;
++            logger.sidepanel.error(
++              `Stream ${message.streamId} error:`,
++              errorMessage
++            );
++            await handleStreamComplete(
++              streamingMessageId,
++              errorMessage, // Pass error message as regular content
++              '', // No thinking content on error
++              chunkData.model || null,
++              true, // isError
++              false // isCancelled
++            );
++          } else {
++            // Normal completion
++            await handleStreamComplete(
++              streamingMessageId,
++              finalContent, // Pass regular content
++              finalThinkingContent, // Pass thinking content
++              chunkData.model,
++              false, // isError
++              false // isCancelled
++            );
++          }
++          setStreamingMessageId(null);
++          setIsCanceling(false);
++          // Clear both buffers on completion/error/cancel
++          batchedStreamingContentRef.current = '';
++          batchedThinkingContentRef.current = '';
++
++        } else if (chunkData.thinkingChunk) {
++          // --- Handle Thinking Chunk ---
++          batchedThinkingContentRef.current += chunkData.thinkingChunk;
++          // Use a separate state update function for thinking content
++          if (rafIdRef.current === null) {
++            rafIdRef.current = requestAnimationFrame(
++              performThinkingStreamingStateUpdate // Call the new function
++            );
++          }
++        } else if (chunkData.chunk) {
++          // --- Handle Regular Content Chunk ---
++          const chunkContent = typeof chunkData.chunk === 'string'
++            ? chunkData.chunk
++            : chunkData.chunk
++              ? JSON.stringify(chunkData.chunk)
++              : '';
++          batchedStreamingContentRef.current += chunkContent;
++          if (rafIdRef.current === null) {
++            rafIdRef.current = requestAnimationFrame(
++              performStreamingStateUpdate // Call the existing function
++            );
++          }
++        }
++      }
++    };
++
++    chrome.runtime.onMessage.addListener(handleStreamChunk);
++
++    return () => {
++      chrome.runtime.onMessage.removeListener(handleStreamChunk);
++      if (rafIdRef.current !== null) {
++        cancelAnimationFrame(rafIdRef.current);
++        rafIdRef.current = null;
++      }
++    };
++  }, [
++    streamingMessageId,
++    handleStreamComplete,
++    setStreamingMessageId,
++    setIsCanceling,
++    batchedStreamingContentRef,
++    rafIdRef,
++    performStreamingStateUpdate,
++    performThinkingStreamingStateUpdate,
++  ]); // Dependencies for the listener effect
++
++  // --- Stream Cancellation Logic ---
++  const cancelStream = useCallback(async () => {
++    if (!streamingMessageId || !isProcessing || isCanceling) return;
++
++    const { [STORAGE_KEYS.API_STREAM_ID]: streamId } =
++      await chrome.storage.local.get(STORAGE_KEYS.API_STREAM_ID);
++    setIsCanceling(true);
++    if (rafIdRef.current !== null) {
++      cancelAnimationFrame(rafIdRef.current);
++      rafIdRef.current = null;
++    }
++
++    try {
++      batchedThinkingContentRef.current = ''; // Clear thinking buffer on cancel
++      await robustSendMessage({
++        action: 'cancelStream',
++        streamId: streamId,
++      });
++    } catch (error) {
++      logger.sidepanel.error('Error cancelling stream:', error);
++      setStreamingMessageId(null);
++    } finally {
++      setIsCanceling(false);
++    }
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [
++    streamingMessageId,
++    isProcessing,
++    isCanceling,
++    setIsCanceling,
++    rafIdRef,
++    batchedThinkingContentRef,
++    messages, // Need current messages for update
++    extractedContentAdded, // Need flag state
++    tabId,
++    modelConfigData,
++    setMessages,
++    setExtractedContentAdded,
++    setStreamingMessageId,
++    ChatHistoryService,
++    TokenManagementService,
++    robustSendMessage,
++  ]); // Dependencies for cancelStream
++
++  // --- Effect for Escape Key Cancellation ---
++  useEffect(() => {
++    const handleGlobalKeyDown = (event) => {
++      if (event.key === 'Escape' && isProcessing && !isCanceling) {
++        cancelStream();
++      }
++    };
++
++    document.addEventListener('keydown', handleGlobalKeyDown);
++
++    return () => {
++      document.removeEventListener('keydown', handleGlobalKeyDown);
++    };
++  }, [isProcessing, isCanceling, cancelStream]); // Dependencies for Escape listener
++
++  // Return the functions managed by this hook
++  return { cancelStream };
++}
+diff --git a/src/sidebar/hooks/useMessageActions.js b/src/sidepanel/hooks/useMessageActions.js
+similarity index 98%
+rename from src/sidebar/hooks/useMessageActions.js
+rename to src/sidepanel/hooks/useMessageActions.js
+index a28cbcd..3bfafc5 100644
+--- a/src/sidebar/hooks/useMessageActions.js
++++ b/src/sidepanel/hooks/useMessageActions.js
+@@ -1,4 +1,4 @@
+-// src/sidebar/hooks/useMessageActions.js
++// src/sidepanel/hooks/useMessageActions.js
+ 
+ import { useCallback } from 'react';
+ 
+@@ -77,7 +77,7 @@ const _initiateRerunSequence = async ({
+   const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
+   // 'isContentExtractionEnabled' below refers to the parameter passed to _initiateRerunSequence (the toggle state)
+   const effectiveContentExtractionEnabled = isPageInjectable ? isContentExtractionEnabled : false;
+-  logger.sidebar.info(
++  logger.sidepanel.info(
+     `[_initiateRerunSequence] Page injectable: ${isPageInjectable}, Toggle state: ${isContentExtractionEnabled}, Effective: ${effectiveContentExtractionEnabled}`
+   );
+ 
+@@ -92,7 +92,7 @@ const _initiateRerunSequence = async ({
+     isThinkingModeEnabled: isThinkingModeEnabled,
+     options: {
+       tabId,
+-      source: INTERFACE_SOURCES.SIDEBAR,
++      source: INTERFACE_SOURCES.SIDEPANEL,
+       ...(rerunStatsRef.current && {
+         preTruncationCost: rerunStatsRef.current.preTruncationCost,
+         preTruncationOutput: rerunStatsRef.current.preTruncationOutput,
+@@ -164,7 +164,7 @@ export function useMessageActions({
+         return;
+       const index = messages.findIndex((msg) => msg.id === messageId);
+       if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'Cannot rerun: Message not found or not a user message.'
+         );
+         return;
+@@ -252,7 +252,7 @@ export function useMessageActions({
+         return;
+       const index = messages.findIndex((msg) => msg.id === messageId);
+       if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'Cannot edit/rerun: Message not found or not a user message.'
+         );
+         return;
+@@ -354,7 +354,7 @@ export function useMessageActions({
+         userIndex < 0 ||
+         messages[userIndex].role !== MESSAGE_ROLES.USER
+       ) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'Cannot rerun assistant message: Invalid message structure or preceding user message not found.',
+           { assistantIndex, userIndex }
+         );
+diff --git a/src/sidebar/hooks/useTokenTracking.js b/src/sidepanel/hooks/useTokenTracking.js
+similarity index 92%
+rename from src/sidebar/hooks/useTokenTracking.js
+rename to src/sidepanel/hooks/useTokenTracking.js
+index 1237c5d..b95ba31 100644
+--- a/src/sidebar/hooks/useTokenTracking.js
++++ b/src/sidepanel/hooks/useTokenTracking.js
+@@ -1,4 +1,4 @@
+-// src/sidebar/hooks/useTokenTracking.js
++// src/sidepanel/hooks/useTokenTracking.js
+ 
+ import { useState, useEffect, useCallback } from 'react';
+ 
+@@ -34,7 +34,7 @@ export function useTokenTracking(tabId) {
+         const stats = await TokenManagementService.getTokenStatistics(tabId);
+         setTokenStats(stats);
+       } catch (error) {
+-        logger.sidebar.error('Error loading token data:', error);
++        logger.sidepanel.error('Error loading token data:', error);
+       } finally {
+         setIsLoading(false);
+       }
+@@ -97,7 +97,7 @@ export function useTokenTracking(tabId) {
+           tokenStats,
+           modelConfig
+         );
+-        
++
+         // Ensure we always return a valid status object
+         return status || {
+           warningLevel: 'none',
+@@ -107,7 +107,7 @@ export function useTokenTracking(tabId) {
+           totalTokens: 0
+         };
+       } catch (error) {
+-        logger.sidebar.error(`[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error before/during static call for tabId: ${tabId}`, error);
++        logger.sidepanel.error(`[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error before/during static call for tabId: ${tabId}`, error);
+         return {
+           warningLevel: 'none',
+           percentage: 0,
+@@ -137,7 +137,7 @@ export function useTokenTracking(tabId) {
+ 
+       return success;
+     } catch (error) {
+-      logger.sidebar.error('Error clearing token data:', error);
++      logger.sidepanel.error('Error clearing token data:', error);
+       return false;
+     }
+   }, [tabId]);
+@@ -162,7 +162,7 @@ export function useTokenTracking(tabId) {
+         setTokenStats(stats);
+         return stats;
+       } catch (error) {
+-        logger.sidebar.error('Error calculating token statistics:', error);
++        logger.sidepanel.error('Error calculating token statistics:', error);
+         return tokenStats;
+       }
+     },
+diff --git a/src/sidepanel/index.jsx b/src/sidepanel/index.jsx
+new file mode 100644
+index 0000000..7962a61
+--- /dev/null
++++ b/src/sidepanel/index.jsx
+@@ -0,0 +1,36 @@
++import React from 'react';
++import { createRoot } from 'react-dom/client';
++
++import { UIProvider } from '../contexts/UIContext';
++import { SidepanelPlatformProvider } from '../contexts/platform';
++import { ContentProvider } from '../contexts/ContentContext';
++
++import { SidepanelChatProvider } from './contexts/SidepanelChatContext';
++import SidepanelApp from './SidepanelApp';
++import '../styles/index.css';
++
++document.addEventListener('DOMContentLoaded', () => {
++  const container = document.getElementById('sidebar-root');
++  const root = createRoot(container);
++
++  const urlParams = new URLSearchParams(window.location.search);
++  const tabId = parseInt(urlParams.get('tabId'), 10);
++
++  if (isNaN(tabId)) {
++    console.error('[Sidepanel Index] Invalid or missing tabId in URL.');
++    // Optionally render an error message in the sidepanel
++    root.render(<div>Error: Missing Tab ID. Cannot initialize Side Panel.</div>);
++  } else {
++    root.render(
++      <UIProvider>
++        <ContentProvider>
++          <SidepanelPlatformProvider tabId={tabId}>
++            <SidepanelChatProvider tabId={tabId}>
++              <SidepanelApp tabId={tabId} /> {/* Ensure tabId is passed here */}
++            </SidepanelChatProvider>
++          </SidepanelPlatformProvider>
++        </ContentProvider>
++      </UIProvider>
++    );
++  }
++});
+diff --git a/src/sidebar/services/ChatHistoryService.js b/src/sidepanel/services/ChatHistoryService.js
+similarity index 94%
+rename from src/sidebar/services/ChatHistoryService.js
+rename to src/sidepanel/services/ChatHistoryService.js
+index d3ddff9..a7a5482 100644
+--- a/src/sidebar/services/ChatHistoryService.js
++++ b/src/sidepanel/services/ChatHistoryService.js
+@@ -1,4 +1,4 @@
+-// src/sidebar/services/ChatHistoryService.js
++// src/sidepanel/services/ChatHistoryService.js
+ 
+ import { logger } from '../../shared/logger';
+ import { STORAGE_KEYS, MAX_MESSAGES_PER_TAB_HISTORY } from '../../shared/constants';
+@@ -18,7 +18,7 @@ class ChatHistoryService {
+   static async getHistory(tabId) {
+     try {
+       if (!tabId) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'TabChatHistory: No tabId provided for getHistory'
+         );
+         return [];
+@@ -31,7 +31,7 @@ class ChatHistoryService {
+       // Return history for this tab or empty array
+       return allTabHistories[tabId] || [];
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TabChatHistory: Error getting chat history:',
+         error
+       );
+@@ -47,7 +47,7 @@ class ChatHistoryService {
+   static async getSystemPrompt(tabId) {
+     try {
+       if (!tabId) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'TabChatHistory: No tabId provided for getSystemPrompt'
+         );
+         return null;
+@@ -62,7 +62,7 @@ class ChatHistoryService {
+       // Return system prompts for this tab or null
+       return allTabSystemPrompts[tabId] || null;
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TabChatHistory: Error getting system prompt:',
+         error
+       );
+@@ -84,7 +84,7 @@ class ChatHistoryService {
+   static async saveHistory(tabId, messages, modelConfig = null, options = {}, isThinkingModeEnabled = false) {
+     try {
+       if (!tabId) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'TabChatHistory: No tabId provided for saveHistory'
+         );
+         return false;
+@@ -114,7 +114,7 @@ class ChatHistoryService {
+ 
+       return true;
+     } catch (error) {
+-      logger.sidebar.error('TabChatHistory: Error saving chat history:', error);
++      logger.sidepanel.error('TabChatHistory: Error saving chat history:', error);
+       return false;
+     }
+   }
+@@ -127,7 +127,7 @@ class ChatHistoryService {
+   static async clearHistory(tabId) {
+     try {
+       if (!tabId) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'TabChatHistory: No tabId provided for clearHistory'
+         );
+         return false;
+@@ -148,7 +148,7 @@ class ChatHistoryService {
+ 
+       return true;
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TabChatHistory: Error clearing chat history:',
+         error
+       );
+@@ -164,7 +164,7 @@ class ChatHistoryService {
+   static async cleanupClosedTabs(activeTabIds) {
+     try {
+       if (!activeTabIds || !Array.isArray(activeTabIds)) {
+-        logger.sidebar.error(
++        logger.sidepanel.error(
+           'TabChatHistory: Invalid activeTabIds for cleanup'
+         );
+         return false;
+@@ -194,14 +194,14 @@ class ChatHistoryService {
+       // Only update storage if something was removed
+       if (needsCleanup) {
+         await chrome.storage.local.set({ [STORAGE_KEYS.TAB_CHAT_HISTORIES]: allTabHistories });
+-        logger.sidebar.info(
++        logger.sidepanel.info(
+           'TabChatHistory: Cleaned up histories for closed tabs'
+         );
+       }
+ 
+       return true;
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TabChatHistory: Error cleaning up closed tabs:',
+         error
+       );
+diff --git a/src/sidebar/services/TokenManagementService.js b/src/sidepanel/services/TokenManagementService.js
+similarity index 97%
+rename from src/sidebar/services/TokenManagementService.js
+rename to src/sidepanel/services/TokenManagementService.js
+index 9f29490..89f1bc4 100644
+--- a/src/sidebar/services/TokenManagementService.js
++++ b/src/sidepanel/services/TokenManagementService.js
+@@ -1,4 +1,4 @@
+-// src/sidebar/services/TokenManagementService.js
++// src/sidepanel/services/TokenManagementService.js
+ 
+ import { encode } from 'gpt-tokenizer';
+ 
+@@ -34,7 +34,7 @@ class TokenManagementService {
+       const mergedStats = { ...this._getEmptyStats(), ...tabStats };
+       return mergedStats;
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TokenManagementService: Error getting token statistics:',
+         error
+       );
+@@ -70,7 +70,7 @@ class TokenManagementService {
+       });
+       return true;
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TokenManagementService: Error updating token statistics:',
+         error
+       );
+@@ -221,7 +221,7 @@ class TokenManagementService {
+       });
+       return true;
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TokenManagementService: Error clearing token statistics:',
+         error
+       );
+@@ -302,17 +302,17 @@ class TokenManagementService {
+ 
+       // 6. Prepare Final Stats Object to Save (Explicitly matching _getEmptyStats structure)
+       const finalStatsObject = {
+-        // Cumulative stats (use initial output tokens + tokens from this specific call)
++        // Cumulative stats
+         outputTokens: isLastError
+           ? initialOutputTokens // On error, cumulative output doesn't increase
+           : initialOutputTokens + (baseStats.outputTokensInLastApiCall || 0), // On success, add last assistant output
+         accumulatedCost: newAccumulatedCost,
+ 
+-        // Last API call stats (from base calculation - these reflect ONLY the last call)
++        // Last API call stats
+         promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
+         historyTokensSentInLastApiCall:
+           baseStats.historyTokensSentInLastApiCall || 0,
+-        systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,
++        systemTokensInLastApiCall: systemTokensInLastApiCall || 0,
+         inputTokensInLastApiCall: baseStats.inputTokensInLastApiCall || 0,
+         outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0,
+         lastApiCallCost: currentCallCost,
+@@ -325,7 +325,7 @@ class TokenManagementService {
+       // 8. Return the final statistics object
+       return finalStatsObject;
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TokenManagementService: Error calculating token statistics:',
+         error
+       );
+@@ -349,12 +349,12 @@ class TokenManagementService {
+       const tokens = encode(text);
+       return tokens.length;
+     } catch (error) {
+-      logger.sidebar.error(
++      logger.sidepanel.error(
+         'TokenManagementService: Error encoding text with gpt-tokenizer:',
+         error
+       );
+       // Fallback on encoding error
+-      logger.sidebar.warn(
++      logger.sidepanel.warn(
+         'TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.'
+       );
+       return Math.ceil(text.length / 4); // Fallback method: 1 token per 4 chars
+diff --git a/webpack.config.js b/webpack.config.js
+index fef6dec..4feb8c0 100644
+--- a/webpack.config.js
++++ b/webpack.config.js
+@@ -27,7 +27,7 @@ module.exports = {
+     background: './src/background/index.js',
+     popup: './src/popup/index.jsx',
+     settings: './src/settings/index.jsx',
+-    sidebar: './src/sidebar/index.jsx',
++      sidebar: './src/sidepanel/index.jsx',
+     'content-script': './src/content/index.js',
+     'platform-content': './src/content/platform-content.js',
+   },
