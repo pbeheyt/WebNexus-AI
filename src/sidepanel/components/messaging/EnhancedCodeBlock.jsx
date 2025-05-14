@@ -1,7 +1,7 @@
 // src/components/EnhancedCodeBlock.jsx
 import React, { useState, memo, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/async-languages/prism';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
 import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
