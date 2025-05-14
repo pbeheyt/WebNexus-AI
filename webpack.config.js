@@ -19,6 +19,14 @@ module.exports = {
         {
           from: 'node_modules/pdfjs-dist/cmaps/',
           to: 'cmaps/'
+        },
+        {
+          from: 'LICENSE.md',
+          to: 'LICENSE.md'
+        },
+        {
+          from: 'NOTICES.txt',
+          to: 'NOTICES.txt'
         }
       ]
     })
