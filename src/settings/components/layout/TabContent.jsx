@@ -1,23 +1,29 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 
 import { useTabs } from '../../contexts/TabContext';
-import PromptManagement from '../tabs/PromptManagement';
-import ApiSettings from '../tabs/ApiSettings';
-import DataManagementTab from '../tabs/DataManagementTab';
-import KeyboardShortcutsTab from '../tabs/KeyboardShortcutsTab'; // Import the new tab component
+const LazyPromptManagement = lazy(() => import('../tabs/PromptManagement'));
+const LazyApiSettings = lazy(() => import('../tabs/ApiSettings'));
+const LazyDataManagementTab = lazy(() => import('../tabs/DataManagementTab'));
+const LazyKeyboardShortcutsTab = lazy(() => import('../tabs/KeyboardShortcutsTab'));
 import { ApiSettingsProvider } from '../../contexts/ApiSettingsContext';
 
 const TabContent = () => {
   const { TABS, activeTab } = useTabs();
   return (
-    <>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status">
+          <span className="sr-only">Loading tab content...</span>
+        </div>
+      </div>
+    }>
       {/* Render both tabs but hide the inactive one */}
       <div
         className={`relative min-h-[400px] ${activeTab !== TABS.API_SETTINGS ? 'hidden' : ''}`}
         id={TABS.API_SETTINGS}
       >
         <ApiSettingsProvider>
-          <ApiSettings />
+          <LazyApiSettings />
         </ApiSettingsProvider>
       </div>
 
@@ -25,7 +31,7 @@ const TabContent = () => {
         className={`relative min-h-[400px] ${activeTab !== TABS.PROMPT_MANAGEMENT ? 'hidden' : ''}`}
         id={TABS.PROMPT_MANAGEMENT}
       >
-        <PromptManagement />
+        <LazyPromptManagement />
       </div>
 
       {/* Data Management Tab Content */}
@@ -33,7 +39,7 @@ const TabContent = () => {
         className={`relative min-h-[400px] ${activeTab !== TABS.DATA_MANAGEMENT ? 'hidden' : ''}`}
         id={TABS.DATA_MANAGEMENT}
       >
-        <DataManagementTab />
+        <LazyDataManagementTab />
       </div>
 
       {/* Keyboard Shortcuts Tab Content */}
@@ -41,9 +47,9 @@ const TabContent = () => {
         className={`relative min-h-[400px] ${activeTab !== TABS.KEYBOARD_SHORTCUTS ? 'hidden' : ''}`}
         id={TABS.KEYBOARD_SHORTCUTS}
       >
-        <KeyboardShortcutsTab />
+        <LazyKeyboardShortcutsTab />
       </div>
-    </>
+    </Suspense>
   );
 };
 
