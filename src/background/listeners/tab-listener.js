@@ -127,74 +127,85 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
 
   // --- Platform Tab Injection Logic ---
   if (changeInfo.status === 'complete' && tab.url) {
-    try {
-      
-      // Get the current AI platform tab information
-      const {
-        tabId: aiPlatformTabId,
-        platformId,
-        scriptInjected,
-      } = await getPlatformTabInfo();
+    // Check if we've already initiated platform script injection for this tab in this load sequence.
+    if (platformScriptInjectedTabs.has(tabId)) {
+      logger.background.info(`Platform script injection sequence already processed for tab ${tabId} during this load. Skipping platform injection block.`);
+    } else {
+      // Only proceed if we haven't started injection for this tab in this sequence.
+      try {
+        const {
+          tabId: aiPlatformTabIdFromStorage, // Renamed to avoid conflict with outer tabId
+          platformId,
+          scriptInjected, // Persistent flag from storage
+        } = await getPlatformTabInfo();
 
-      // Check if this is our AI platform tab
-      if (tabId !== aiPlatformTabId || scriptInjected) {
-        return;
-      }
+        // Ensure this is the specific tab we are targeting for AI platform interaction
+        // and that the persistent scriptInjected flag indicates it's not yet done.
+        if (tabId === aiPlatformTabIdFromStorage && !scriptInjected) {
+          const isPlatform = isPlatformTab(tabId, tab.url, platformId);
 
-      // Check if this is a platform tab based on URL
-      const isPlatform = isPlatformTab(tabId, tab.url, platformId);
-      if (!isPlatform) {
-        return;
-      }
+          if (isPlatform) {
+            // If all conditions match (correct tab, not yet injected persistently, is a platform URL),
+            // then mark this tab in our in-memory set to prevent re-entry from rapid 'complete' events
+            // for THIS specific load sequence.
+            platformScriptInjectedTabs.add(tabId);
+            logger.background.info(`Marked platformScriptInjectedTabs for tab ${tabId} as injection sequence is now starting.`);
 
-      logger.background.info(
-        `${platformId} tab detected and loaded: ${tabId}`,
-        { url: tab.url }
-      );
+            logger.background.info(
+              `${platformId} tab detected and loaded: ${tabId}`,
+              { url: tab.url }
+            );
 
-      // Get the appropriate content script
-      const contentScript = getPlatformContentScript(platformId);
+            const contentScript = getPlatformContentScript(platformId);
 
-      // Final guard before actual injection
-      if (platformScriptInjectedTabs.has(tabId)) {
-        logger.background.info(`Platform script injection already attempted for tab ${tabId} in this load sequence. Skipping actual injection.`);
-        return; // Exit this specific logic block if already attempted
-      }
-      platformScriptInjectedTabs.add(tabId);
-      logger.background.info(`Marked platformScriptInjectedTabs for tab ${tabId} before injection attempt.`);
+            logger.background.info(
+              `Injecting ${platformId} content script into tab: ${tabId}`
+            );
+            const injectionSuccess = await injectContentScript(tabId, contentScript);
 
-      // Inject content script
-      logger.background.info(
-        `Injecting ${platformId} content script into tab: ${tabId}`
-      );
-      const injectionSuccess = await injectContentScript(tabId, contentScript);
+            if (!injectionSuccess) {
+              logger.background.error(
+                `Failed to inject platform content script for ${platformId}`
+              );
+              // If injection fails, remove from the in-memory set so it can be retried on a *genuinely new* load.
+              // The persistent 'scriptInjected' flag remains false.
+              platformScriptInjectedTabs.delete(tabId);
+              logger.background.info(`Cleared platformScriptInjectedTabs for tab ${tabId} due to injection failure.`);
+            } else {
+              logger.background.info(
+                `Setting scriptInjected (persistent) flag to true for tab: ${tabId}`
+              );
+              await updateScriptInjectionStatus(true); // Update persistent storage
 
-      if (!injectionSuccess) {
+              // Verify extracted content is available (or any other post-injection logic)
+              const { [STORAGE_KEYS.EXTRACTED_CONTENT]: extractedContentAfterInjection } = await chrome.storage.local.get(
+                STORAGE_KEYS.EXTRACTED_CONTENT
+              );
+              logger.background.info('Content available for AI platform after injection:', {
+                hasContent: !!extractedContentAfterInjection,
+                contentType: extractedContentAfterInjection?.contentType,
+              });
+            }
+          }
+        } else if (tabId === aiPlatformTabIdFromStorage && scriptInjected) {
+          logger.background.info(`Platform script already persistently injected in tab ${tabId} (claude). Skipping platform injection block.`);
+          // Ensure it's marked in the in-memory set as well if it wasn't already,
+          // to prevent re-entry even if the onUpdated fires again for this load.
+          if (!platformScriptInjectedTabs.has(tabId)) {
+              platformScriptInjectedTabs.add(tabId);
+              logger.background.info(`Ensured platformScriptInjectedTabs is set for tab ${tabId} as script was already persistently injected.`);
+          }
+        }
+      } catch (error) {
         logger.background.error(
-          `Failed to inject platform content script for ${platformId}`
+          `Error during platform tab injection logic for tab ${tabId}:`,
+          error
         );
-        return;
+        // Optional: If an error occurs, consider if tabId should be removed from platformScriptInjectedTabs
+        // This depends on whether the error implies the sequence should be re-attemptable for this load.
+        // For now, we'll leave it, as errors here are usually post-marking or during async ops.
       }
-
-      logger.background.info(
-        `Setting scriptInjected flag to true for tab: ${tabId}`
-      );
-      await updateScriptInjectionStatus(true);
-
-      // Verify extracted content is available
-      const { extractedContent } = await chrome.storage.local.get(
-        STORAGE_KEYS.EXTRACTED_CONTENT
-      );
-      logger.background.info('Content available for AI platform:', {
-        hasContent: !!extractedContent,
-        contentType: extractedContent?.contentType,
-      });
-    } catch (error) {
-      logger.background.error(
-        `Error handling platform tab injection for tab ${tabId}:`,
-        error
-      );
-    }
+    } // Closes the 'else' for the main platformScriptInjectedTabs.has(tabId) check
   }
 
   // --- Side Panel Navigation Detection Logic ---
