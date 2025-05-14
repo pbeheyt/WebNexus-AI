@@ -1,5 +1,9 @@
 // src/background/listeners/tab-listener.js - Tab update monitoring
 
+// In-memory sets to track processing state for tabs during a load sequence
+const platformScriptInjectedTabs = new Set();
+const sidePanelOptionsSetForLoad = new Set(); // Renamed for clarity
+
 import {
   isPlatformTab,
   getPlatformContentScript,
@@ -24,9 +28,26 @@ export function setupTabListener() {
   chrome.tabs.onUpdated.addListener(handleTabUpdate);
   chrome.tabs.onActivated.addListener(handleTabActivation); // Add activation listener
   chrome.tabs.onCreated.addListener(handleTabCreation); // Add creation listener
+  chrome.tabs.onRemoved.addListener(handleTabRemoval); // Add removal listener
   logger.background.info(
-    'Tab update, activation, and creation listeners initialized'
+    'Tab update, activation, creation, and removal listeners initialized'
   ); // Update log message
+}
+
+/**
+ * Handle tab removal events to clean up in-memory sets
+ * @param {number} tabId - The ID of the tab that was removed
+ */
+function handleTabRemoval(tabId) {
+  if (platformScriptInjectedTabs.has(tabId)) {
+    platformScriptInjectedTabs.delete(tabId);
+    logger.background.info(`Removed tab ${tabId} from platformScriptInjectedTabs.`);
+  }
+  if (sidePanelOptionsSetForLoad.has(tabId)) {
+    sidePanelOptionsSetForLoad.delete(tabId);
+    logger.background.info(`Removed tab ${tabId} from sidePanelOptionsSetForLoad.`);
+  }
+  // Note: Persistent storage cleanup for tab removal is handled in tab-state-listener.js
 }
 
 /**
@@ -36,26 +57,46 @@ export function setupTabListener() {
  * @param {Object} tab - Tab information
  */
 async function handleTabUpdate(tabId, changeInfo, tab) {
+  // If a new navigation is starting, clear our in-memory flags for this tab
+  if (changeInfo.status === 'loading' || (changeInfo.url && tab.url !== changeInfo.url)) {
+    if (platformScriptInjectedTabs.has(tabId)) {
+      platformScriptInjectedTabs.delete(tabId);
+      logger.background.info(`Cleared platformScriptInjectedTabs flag for tab ${tabId} due to new navigation.`);
+    }
+    if (sidePanelOptionsSetForLoad.has(tabId)) {
+      sidePanelOptionsSetForLoad.delete(tabId);
+      logger.background.info(`Cleared sidePanelOptionsSetForLoad flag for tab ${tabId} due to new navigation.`);
+    }
+  }
+
   // --- Side Panel State Check on Completion ---
   if (changeInfo.status === 'complete' && tab.url) {
     try {
-      logger.background.info(`Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`);
-      const isAllowed = isSidePanelAllowedPage(tab.url);
-      const isVisible = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
-
-      if (isAllowed) {
-        await chrome.sidePanel.setOptions({
-          tabId: tabId,
-          path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
-          enabled: isVisible, // Enable based on stored visibility
-        });
-        logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
+      // Guard against setting side panel options multiple times for the same load
+      if (sidePanelOptionsSetForLoad.has(tabId)) {
+        logger.background.info(`Side panel options already set for tab ${tabId} during this load sequence. Skipping.`);
+        // We still need to let the platform injection logic run below, so don't return entirely.
       } else {
-        await chrome.sidePanel.setOptions({
-          tabId: tabId,
-          enabled: false, // Force disable if not allowed
-        });
-        logger.background.info(`Side Panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
+        logger.background.info(`Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`);
+        const isAllowed = isSidePanelAllowedPage(tab.url);
+        const isVisible = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+
+        if (isAllowed) {
+          await chrome.sidePanel.setOptions({
+            tabId: tabId,
+            path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
+            enabled: isVisible, // Enable based on stored visibility
+          });
+          logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
+        } else {
+          await chrome.sidePanel.setOptions({
+            tabId: tabId,
+            enabled: false, // Force disable if not allowed
+          });
+          logger.background.info(`Side Panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
+        }
+        sidePanelOptionsSetForLoad.add(tabId);
+        logger.background.info(`Marked sidePanelOptionsSetForLoad for tab ${tabId}.`);
       }
     } catch (error) {
       logger.background.error(`Error setting side panel options during onUpdated for tab ${tabId}:`, error);
@@ -65,6 +106,12 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
   // --- Platform Tab Injection Logic ---
   if (changeInfo.status === 'complete' && tab.url) {
     try {
+      // Guard against re-injecting platform script for the same load sequence
+      if (platformScriptInjectedTabs.has(tabId) && scriptInjected) {
+        logger.background.info(`Platform script already processed for tab ${tabId} (in-memory or persistent). Skipping injection block.`);
+        return;
+      }
+      
       // Get the current AI platform tab information
       const {
         tabId: aiPlatformTabId,
@@ -90,6 +137,14 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
 
       // Get the appropriate content script
       const contentScript = getPlatformContentScript(platformId);
+
+      // Final guard before actual injection
+      if (platformScriptInjectedTabs.has(tabId)) {
+        logger.background.info(`Platform script injection already attempted for tab ${tabId} in this load sequence. Skipping actual injection.`);
+        return; // Exit this specific logic block if already attempted
+      }
+      platformScriptInjectedTabs.add(tabId);
+      logger.background.info(`Marked platformScriptInjectedTabs for tab ${tabId} before injection attempt.`);
 
       // Inject content script
       logger.background.info(
