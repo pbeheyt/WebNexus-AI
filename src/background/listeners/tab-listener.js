@@ -106,11 +106,6 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
   // --- Platform Tab Injection Logic ---
   if (changeInfo.status === 'complete' && tab.url) {
     try {
-      // Guard against re-injecting platform script for the same load sequence
-      if (platformScriptInjectedTabs.has(tabId) && scriptInjected) {
-        logger.background.info(`Platform script already processed for tab ${tabId} (in-memory or persistent). Skipping injection block.`);
-        return;
-      }
       
       // Get the current AI platform tab information
       const {
