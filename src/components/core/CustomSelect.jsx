@@ -66,7 +66,7 @@ export function CustomSelect({
 
   return (
     // Use inline-block to allow the container to size based on its content (the button)
-    <div ref={dropdownRef} className={`relative inline-block ${className}`}>
+    <div ref={dropdownRef} className={`relative inline-block select-none ${className}`}>
       {/* Trigger Button */}
       <button
         ref={triggerRef}
