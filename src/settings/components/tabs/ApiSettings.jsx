@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import PlatformSidebar from '../ui/api/PlatformSidebar';
 import PlatformDetails from '../ui/api/PlatformDetails';
 import { useApiSettings } from '../../contexts/ApiSettingsContext';
+import { SpinnerIcon } from '../../../components';
 
 const ApiSettings = () => {
   const [activeApiSubTab, setActiveApiSubTab] = useState('apiKey');
@@ -25,8 +26,9 @@ const ApiSettings = () => {
 
   if (isLoading) {
     return (
-      <div className='text-center p-10 text-theme-secondary select-none'>
-        Loading API settings...
+      <div className='flex items-center justify-center min-h-[200px] text-theme-secondary select-none'>
+        <SpinnerIcon className="w-8 h-8" />
+        <span className="ml-2">Loading API settings...</span>
       </div>
     );
   }

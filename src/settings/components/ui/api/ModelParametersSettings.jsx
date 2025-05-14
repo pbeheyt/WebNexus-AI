@@ -11,6 +11,7 @@ import {
   IconButton,
   RefreshIcon,
   CustomSelect,
+  SpinnerIcon,
 } from '../../../../components';
 import { useModelParametersSettings } from '../../../hooks/useModelParametersSettings';
 
@@ -68,7 +69,10 @@ const ModelParametersSettings = ({
   if (!derivedSettings || !isFormReady) {
     return (
       <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-4'>
-        <p className='text-theme-secondary text-center py-10'>Loading model settings...</p>
+        <div className='flex items-center justify-center text-theme-secondary text-center py-10'>
+          <SpinnerIcon className="w-8 h-8" />
+          <span className="ml-2">Loading model settings...</span>
+        </div>
       </div>
     );
   }

@@ -31,7 +31,7 @@ const parseChromeCommandShortcut = (shortcutString) => {
   return modifiers;
 };
 
-import { Button, useNotification, Modal } from '../../../components';
+import { Button, useNotification, Modal, SpinnerIcon } from '../../../components';
 import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
 import { STORAGE_KEYS, DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG } from '../../../shared/constants'; // Updated import
@@ -180,7 +180,10 @@ export function KeyboardShortcutsTab() {
               These shortcuts are defined by the extension and can be managed on Chrome&apos;s extensions page.
             </p>
             {isLoadingCommands ? (
-              <p className="text-theme-secondary py-2">Loading global shortcuts...</p>
+              <div className="flex items-center justify-center py-2 text-theme-secondary">
+                <SpinnerIcon className="w-6 h-6" />
+                <span className="ml-2">Loading global shortcuts...</span>
+              </div>
             ) : globalCommands.length > 0 ? (
               <ul className="space-y-3 mb-6">
                 {globalCommands.map((command) => (

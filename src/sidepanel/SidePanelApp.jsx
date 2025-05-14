@@ -14,7 +14,7 @@ import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
 import { useSidePanelPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
-import { AppHeader, ErrorIcon } from '../components';
+import { AppHeader, ErrorIcon, SpinnerIcon } from '../components';
 import { debounce } from '../shared/utils/debounce';
 
 import Header from './components/Header';
@@ -262,10 +262,8 @@ export default function SidePanelApp() {
           aria-live='polite'
           aria-busy='true'
         >
-          <div
-            className='w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin'
-            role='status'
-          ></div>
+          <SpinnerIcon className="w-8 h-8 text-theme-secondary" />
+          <span className="sr-only">Loading...</span>
         </div>
       ) : tabId ? (
         <>
@@ -300,9 +298,8 @@ export default function SidePanelApp() {
 
           {isReady && tabId && isRefreshing && (
             <div className="absolute inset-0 bg-theme-primary/75 dark:bg-theme-primary/75 z-20 flex items-center justify-center pointer-events-auto">
-              <div className="w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin" role="status">
-                <span className="sr-only">Refreshing...</span>
-              </div>
+              <SpinnerIcon className="w-8 h-8 text-theme-secondary" />
+              <span className="sr-only">Refreshing...</span>
             </div>
           )}
 
