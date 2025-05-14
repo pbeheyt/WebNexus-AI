@@ -378,23 +378,25 @@ export function Popup() {
               )}
             </div>
 
-            <UnifiedInput
-              value={inputText}
-              onChange={setInputText}
-              onSubmit={handleProcessWithText}
-              disabled={
-                !isSupported ||
-                contentLoading ||
-                isProcessingContent ||
-                isProcessing ||
-                (includeContext && !isInjectable)
-              }
-              isProcessing={isProcessingContent || isProcessing}
-              contentType={contentType}
-              showTokenInfo={false}
-              layoutVariant='popup'
-              onCancel={null}
-            />
+            <div className='select-none'>
+              <UnifiedInput
+                value={inputText}
+                onChange={setInputText}
+                onSubmit={handleProcessWithText}
+                disabled={
+                  !isSupported ||
+                  contentLoading ||
+                  isProcessingContent ||
+                  isProcessing ||
+                  (includeContext && !isInjectable)
+                }
+                isProcessing={isProcessingContent || isProcessing}
+                contentType={contentType}
+                showTokenInfo={false}
+                layoutVariant='popup'
+                onCancel={null}
+              />
+            </div>
           </div>
 
           <StatusMessage
