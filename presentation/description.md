@@ -22,7 +22,7 @@ WebNexus AI connects you to Gemini, ChatGPT, Claude, DeepSeek, Grok, and Mistral
 
 ## Core Features
 
-*   **Content Analysis:** Extracts information from web pages (main article/text content), YouTube transcripts, Reddit posts/comments, and PDFs.
+*   **Content Analysis:** Extracts the primary article or main textual content from web pages, aiming to exclude common website boilerplate. Also processes YouTube transcripts, Reddit posts/comments, and PDFs.
 *   **Supported Platforms:** Works with Gemini, ChatGPT, Claude, DeepSeek, Grok, and Mistral via both API (Side Panel) and Web UI modes.
 *   **Prompt Management:** Create, save, edit, and set default prompts (used by Quick Actions) in `Settings > Prompts`. **Note:** To accommodate potentially numerous and lengthy prompts within browser storage limits, custom prompts are saved locally (`chrome.storage.local`) and **will not** automatically sync across different devices.
 *   **Secure API Key Handling (Side Panel):** Keys stored locally (`chrome.storage.local`) on your computer, never sent to WebNexus AI developers. Sent directly to the AI platform's API endpoint only. *Note: Local storage is vulnerable if your computer is compromised.*
@@ -30,7 +30,8 @@ WebNexus AI connects you to Gemini, ChatGPT, Claude, DeepSeek, Grok, and Mistral
 
 ## Usage Notes
 
-*   **Website Content Extraction:** Extracts the main text content from web pages. Works best on standard article/blog layouts. Complex or highly dynamic sites might result in incomplete extraction. **Tip:** For comments (YouTube, Reddit), scroll to load all desired content *before* processing the content.
+*   **Website Content Extraction (General Pages):** For general web pages, the extension attempts to identify and extract the main article or primary textual content. This process aims to provide focused content for AI analysis by excluding common website boilerplate such as headers, footers, and navigation elements.
+*   **YouTube & Reddit Content:** For YouTube videos and Reddit posts, scroll the page to load all desired comments *before* initiating processing. Scrolling allows the extension to access all dynamically loaded comment data present on the page at the time of extraction.
 *   **Web UI Automation:** Relies on current AI website structures. Significant site changes (infrequent) might temporarily affect auto-filling; functionality is maintained via updates.
 *   **Token Estimation (Side Panel):** The token count shown is an **estimate for guidance purposes only**, calculated using OpenAI's TikToken for consistency. Actual token counts billed by platforms like Claude, Gemini, Mistral etc., may differ (often 10-30% higher) due to their unique tokenizers. Please refer to the official platform dashboard for accurate billing information.
 
