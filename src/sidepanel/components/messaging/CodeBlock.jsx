@@ -1,4 +1,4 @@
-// src/components/EnhancedCodeBlock.jsx
+// src/components/CodeBlock.jsx
 import React, { useState, memo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -81,7 +81,7 @@ SyntaxHighlighter.registerLanguage('ini', ini);
 SyntaxHighlighter.registerLanguage('makefile', makefile);
 
 /**
- * Enhanced CodeBlock with syntax highlighting and copy functionality.
+ * CodeBlock with syntax highlighting and copy functionality.
  * This version allows the code block to grow vertically to fit its content.
  * @param {Object} props - Component props
  * @param {string} props.className - Class containing language information
@@ -89,7 +89,7 @@ SyntaxHighlighter.registerLanguage('makefile', makefile);
  * @param {boolean} props.isStreaming - Whether the content is still streaming
  * @returns {JSX.Element} - A formatted code block with syntax highlighting
  */
-const EnhancedCodeBlock = memo(
+const CodeBlock = memo(
   ({ className, children, isStreaming = false }) => {
     const codeContent = String(children).replace(/\n$/, '');
     const { copyState, handleCopy, IconComponent, iconClassName, disabled } =
@@ -186,12 +186,12 @@ const EnhancedCodeBlock = memo(
   }
 );
 
-EnhancedCodeBlock.displayName = 'EnhancedCodeBlock';
+CodeBlock.displayName = 'CodeBlock';
 
-EnhancedCodeBlock.propTypes = {
+CodeBlock.propTypes = {
   className: PropTypes.string,
   children: PropTypes.node,
   isStreaming: PropTypes.bool,
 };
 
-export default EnhancedCodeBlock;
+export default CodeBlock;

@@ -10,7 +10,7 @@ import { IconButton, RerunIcon, PlatformIcon } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 
 import ThinkingBlock from './ThinkingBlock';
-import EnhancedCodeBlock from './EnhancedCodeBlock';
+import CodeBlock from './CodeBlock.jsx';
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 import { parseTextAndMath } from './utils/parseTextAndMath';
 import {
@@ -206,12 +206,12 @@ export const AssistantMessageBubble = memo(
               );
               const codeContent = node.children[0].children?.[0]?.value || '';
               return (
-                <EnhancedCodeBlock
+                <CodeBlock
                   className={languageClass}
                   isStreaming={isStreaming}
                 >
                   {codeContent}
-                </EnhancedCodeBlock>
+                </CodeBlock>
               );
             }
             const processedChildren = hasMathPlaceholders
@@ -298,7 +298,7 @@ export const AssistantMessageBubble = memo(
             );
           },
         }),
-        [hasMathPlaceholders, mathMap, isStreaming] // isStreaming dependency for EnhancedCodeBlock
+        [hasMathPlaceholders, mathMap, isStreaming] // isStreaming dependency for CodeBlock
       ); // Dependencies for markdownComponents memo
       // --- End Memoized Component Overrides ---
 
