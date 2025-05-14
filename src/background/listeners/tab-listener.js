@@ -57,15 +57,37 @@ function handleTabRemoval(tabId) {
  * @param {Object} tab - Tab information
  */
 async function handleTabUpdate(tabId, changeInfo, tab) {
-  // If a new navigation is starting, clear our in-memory flags for this tab
+  // Determine if a significant navigation event has occurred
+  let isNewPageLoadOrDomainChange = false;
+  if (changeInfo.status === 'loading') {
+    isNewPageLoadOrDomainChange = true;
+  } else if (changeInfo.url && tab.url) {
+    try {
+      const oldUrl = new URL(tab.url);
+      const newUrl = new URL(changeInfo.url);
+      if (oldUrl.hostname !== newUrl.hostname) {
+        isNewPageLoadOrDomainChange = true;
+      }
+    } catch (e) {
+      // If URL parsing fails, assume it's a significant change to be safe
+      logger.background.warn(`URL parsing failed during navigation check for tab ${tabId}: ${e.message}. Assuming significant change.`);
+      isNewPageLoadOrDomainChange = true;
+    }
+  }
+
+  // Clear platformScriptInjectedTabs on any URL change or loading status (existing broader logic)
   if (changeInfo.status === 'loading' || (changeInfo.url && tab.url !== changeInfo.url)) {
     if (platformScriptInjectedTabs.has(tabId)) {
       platformScriptInjectedTabs.delete(tabId);
-      logger.background.info(`Cleared platformScriptInjectedTabs flag for tab ${tabId} due to new navigation.`);
+      logger.background.info(`Cleared platformScriptInjectedTabs flag for tab ${tabId} due to navigation/load.`);
     }
+  }
+
+  // Clear sidePanelOptionsSetForLoad only on new page load or domain change
+  if (isNewPageLoadOrDomainChange) {
     if (sidePanelOptionsSetForLoad.has(tabId)) {
       sidePanelOptionsSetForLoad.delete(tabId);
-      logger.background.info(`Cleared sidePanelOptionsSetForLoad flag for tab ${tabId} due to new navigation.`);
+      logger.background.info(`Cleared sidePanelOptionsSetForLoad flag for tab ${tabId} due to new page load or domain change.`);
     }
   }
 
