@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 
-import MathFormulaBlock from '../MathFormulaBlock';
+const LazyMathFormulaBlock = lazy(() => import('../MathFormulaBlock'));
 import { logger } from '../../../../shared/logger';
 
 // Placeholder Regex - matches @@MATH_(BLOCK|INLINE)_(\d+)@@
@@ -53,11 +53,15 @@ export const renderWithPlaceholdersRecursive = (children, mathMap) => {
         const mathData = mathMap.get(placeholder);
         if (mathData) {
           parts.push(
-            <MathFormulaBlock
-              key={`${placeholder}-${index}-${lastIndex}`}
-              content={mathData.content}
-              inline={mathData.inline}
-            />
+            <Suspense 
+              key={`${placeholder}-${index}-${lastIndex}-suspense`} 
+              fallback={<span className="text-xs italic text-theme-secondary">Loading math...</span>}
+            >
+              <LazyMathFormulaBlock
+                content={mathData.content}
+                inline={mathData.inline}
+              />
+            </Suspense>
           );
         } else {
           // Use logger imported at the top
