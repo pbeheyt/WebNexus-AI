@@ -1,5 +1,6 @@
 // src/extractor/strategies/reddit-strategy.js
 import BaseExtractor from '../base-extractor.js';
+import { normalizeText } from '../utils/text-utils.js';
 
 class RedditExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -12,20 +13,15 @@ class RedditExtractorStrategy extends BaseExtractor {
   async extractAndSaveContent() {
     try {
       this.logger.info('Starting Reddit post data extraction...');
-
-      // Extract all post data
       const postData = await this.extractData();
-
-      // Save to Chrome storage
       await this.saveToStorage(postData);
     } catch (error) {
       this.logger.error('Error in Reddit content extraction:', error);
-
-      // Save error message to storage
       await this.saveToStorage({
         error: true,
         message: error.message || 'Unknown error occurred',
         extractedAt: new Date().toISOString(),
+        contentType: this.contentType,
       });
     }
   }
@@ -36,74 +32,66 @@ class RedditExtractorStrategy extends BaseExtractor {
    */
   async extractData() {
     try {
-      // Extract basic post metadata
-      const title = this.extractPostTitle();
-      const content = this.extractPostContent();
-      const score = this.extractPostScore();
-      const author = this.extractAuthor();
-      const subreddit = this.extractSubreddit();
+      const rawTitle = this.extractPostTitle();
+      const rawContent = this.extractPostContent();
+      const score = this.extractPostScore(); // Score is not text for normalization
+      const rawAuthor = this.extractAuthor();
+      const rawSubreddit = this.extractSubreddit();
 
-      // Extract comments
       this.logger.info('Starting Reddit comment extraction...');
-      const comments = await this.extractComments();
+      const comments = await this.extractComments(); // Comments are normalized within extractComments
       this.logger.info('Comment extraction complete, found:', comments.length);
 
-      // Get post URL for reference
-      const postUrl = window.location.href;
+      const postUrl = window.location.href; // URL not normalized
 
-      // Return the complete post data object
       return {
-        postTitle: title,
-        postContent: content,
+        postTitle: normalizeText(rawTitle),
+        postContent: normalizeText(rawContent),
         postScore: score,
-        postAuthor: author,
-        subreddit,
+        postAuthor: normalizeText(rawAuthor),
+        subreddit: normalizeText(rawSubreddit),
         comments,
         postUrl,
         extractedAt: new Date().toISOString(),
+        contentType: this.contentType,
       };
     } catch (error) {
       this.logger.error('Error extracting Reddit post data:', error);
-
-      // Return what we could get, with error message
       return {
-        postTitle: this.extractPostTitle(),
-        postContent: 'Error extracting content: ' + error.message,
+        postTitle: normalizeText(this.extractPostTitle()), // Attempt normalization even in error
+        postContent: `Error extracting content: ${error.message}`, // Error message
         postScore: this.extractPostScore(),
-        postAuthor: this.extractAuthor(),
-        subreddit: this.extractSubreddit(),
+        postAuthor: normalizeText(this.extractAuthor()),
+        subreddit: normalizeText(this.extractSubreddit()),
         comments: [],
         error: true,
         message: error.message || 'Unknown error occurred',
         extractedAt: new Date().toISOString(),
+        contentType: this.contentType,
       };
     }
   }
 
   /**
-   * Extract the post title from the page
-   * @returns {string} The post title
+   * Extract the post title from the page (raw)
+   * @returns {string} The raw post title
    */
   extractPostTitle() {
-    // Try multiple selectors to improve reliability
     const selectors = ['h1', 'h1.text-neutral-content'];
-
     for (const selector of selectors) {
       const titleElement = document.querySelector(selector);
-      if (titleElement && titleElement.textContent.trim()) {
-        return titleElement.textContent.trim();
+      if (titleElement && titleElement.textContent) {
+        return titleElement.textContent; // Return raw, normalize in extractData
       }
     }
-
     return 'Title not found';
   }
 
   /**
-   * Extract the post content from the page
-   * @returns {string} The post content
+   * Extract the post content from the page (raw, with paragraph separation)
+   * @returns {string} The raw post content
    */
   extractPostContent() {
-    // Try multiple selectors to improve reliability
     const selectors = [
       '.text-neutral-content[slot="text-body"] .mb-sm .md.text-14',
       '.RichTextJSON-root',
@@ -114,313 +102,208 @@ class RedditExtractorStrategy extends BaseExtractor {
       const contentElement = document.querySelector(selector);
       if (contentElement) {
         let postContent = '';
-
-        // Get all paragraphs
         const paragraphs = contentElement.querySelectorAll('p');
         if (paragraphs.length > 0) {
-          paragraphs.forEach((paragraph) => {
-            postContent += paragraph.textContent.trim() + '\n\n';
+          paragraphs.forEach((paragraph, index) => {
+            postContent += paragraph.textContent;
+            if (index < paragraphs.length - 1) {
+              postContent += '\n\n'; // Use double newline for paragraph separation initially
+            }
           });
-          return postContent.trim();
+          return postContent; // Return raw, normalize in extractData
         } else {
-          // Fallback - use the entire content element
-          return contentElement.textContent.trim();
+          return contentElement.textContent; // Return raw, normalize in extractData
         }
       }
     }
-
     return 'Post content not found';
   }
 
+  /**
+   * Extract post score
+   * @returns {string|null}
+   */
   extractPostScore() {
     const postElement = document.querySelector('shreddit-post');
     if (postElement && postElement.hasAttribute('score')) {
-      const score = postElement.getAttribute('score');
-      return score;
+      return postElement.getAttribute('score');
     }
-
     const scoreSelectors = [
       'div[id^="vote-arrows-"] > div',
       '[data-testid="post-score"]',
     ];
-
     for (const selector of scoreSelectors) {
       const scoreElement = document.querySelector(selector);
       if (scoreElement && scoreElement.textContent) {
         const scoreText = scoreElement.textContent.trim();
-        // Basic normalization (remove non-digits, handle 'k')
         if (scoreText.toLowerCase().includes('k')) {
-          const score = String(
-            Math.round(parseFloat(scoreText.replace(/k/i, '')) * 1000)
-          );
-          this.logger.info(
-            `Post score found and normalized from text selector '${selector}': ${score}`
-          );
-          return score;
-        } else {
-          const score = scoreText.replace(/[^\d]/g, ''); // Remove non-digits
-          if (score) {
-            return score;
-          }
+          return String(Math.round(parseFloat(scoreText.replace(/k/i, '')) * 1000));
         }
+        const score = scoreText.replace(/[^\d]/g, '');
+        if (score) return score;
       }
     }
-
     return null;
   }
 
   /**
-   * Extract the author username from the page
-   * @returns {string} The post author username
+   * Extract the author username from the page (raw)
+   * @returns {string} The raw post author username
    */
   extractAuthor() {
-    // Try multiple selectors to improve reliability
     const selectors = [
       'span[slot="authorName"] a.author-name',
       'a[data-testid="post_author_link"]',
       'a[data-click-id="user"]',
       '.author-link',
     ];
-
     for (const selector of selectors) {
       const authorElement = document.querySelector(selector);
-      if (authorElement && authorElement.textContent.trim()) {
-        return authorElement.textContent.trim();
+      if (authorElement && authorElement.textContent) {
+        return authorElement.textContent; // Return raw
       }
     }
-
     return 'Unknown author';
   }
 
   /**
-   * Extract the subreddit name from the page
-   * @returns {string} The subreddit name
+   * Extract the subreddit name from the page (raw)
+   * @returns {string} The raw subreddit name
    */
   extractSubreddit() {
-    // Try multiple selectors to improve reliability
     const selectors = [
       'a[data-testid="subreddit-name"]',
       'a[data-click-id="subreddit"]',
       '.subreddit-link',
     ];
-
     for (const selector of selectors) {
       const subredditElement = document.querySelector(selector);
-      if (subredditElement && subredditElement.textContent.trim()) {
-        return subredditElement.textContent.trim();
+      if (subredditElement && subredditElement.textContent) {
+        return subredditElement.textContent; // Return raw
       }
     }
-
-    // Fallback - try to extract from URL
     const urlMatch = window.location.pathname.match(/r\/([^/]+)/);
     if (urlMatch && urlMatch[1]) {
-      return `r/${urlMatch[1]}`;
+      return `r/${urlMatch[1]}`; // Return raw
     }
-
     return 'Unknown subreddit';
   }
 
-  /**
-   * Wait for comments to be loaded in the DOM
-   * @returns {Promise} Promise that resolves when comments are available
-   */
   waitForComments() {
     return new Promise((resolve) => {
-      // If comments are already present, resolve immediately
-      const selectors = [
-        'shreddit-comment',
-        'div[data-testid="comment"]',
-        '.Comment',
-      ];
-
+      const selectors = ['shreddit-comment', 'div[data-testid="comment"]', '.Comment'];
       for (const selector of selectors) {
         if (document.querySelectorAll(selector).length > 0) {
-          resolve();
-          return;
+          resolve(); return;
         }
       }
-
-      // Otherwise, watch for changes
-      const observer = new MutationObserver((_mutations) => {
+      const observer = new MutationObserver(() => {
         for (const selector of selectors) {
           if (document.querySelectorAll(selector).length > 0) {
-            observer.disconnect();
-            resolve();
-            return;
+            observer.disconnect(); resolve(); return;
           }
         }
       });
-
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-
-      // Timeout after 5 seconds to prevent infinite waiting
-      setTimeout(() => {
-        observer.disconnect();
-        resolve();
-      }, 5000);
+      observer.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => { observer.disconnect(); resolve(); }, 5000);
     });
   }
 
-  /**
-   * Extract comments from the Reddit post
-   * @returns {Promise<Array>} Promise resolving to array of comment objects
-   */
   async extractComments() {
     try {
       this.logger.info(`Extracting all visible Reddit comments...`);
-
-      // Wait for comments to be loaded
       await this.waitForComments();
-
-      // Try multiple selectors for comments to improve reliability
-      const commentSelectors = [
-        'shreddit-comment',
-        'div[data-testid="comment"]',
-        '.Comment',
-      ];
-
+      const commentSelectors = ['shreddit-comment', 'div[data-testid="comment"]', '.Comment'];
       let commentElements = [];
-
       for (const selector of commentSelectors) {
         const elements = document.querySelectorAll(selector);
         if (elements && elements.length > 0) {
           commentElements = elements;
-          this.logger.info(
-            `Found ${elements.length} comments using selector: ${selector}`
-          );
+          this.logger.info(`Found ${elements.length} comments using selector: ${selector}`);
           break;
         }
       }
-
       if (commentElements.length === 0) {
         this.logger.info('No comments found or comments not loaded yet');
         return [];
       }
 
-      // Extract data from each comment
       const comments = [];
-
-      for (let i = 0; i < commentElements.length; i++) {
-        const commentElement = commentElements[i];
-
-        // Extract author (handle different selectors)
+      for (const commentElement of commentElements) {
         let author = 'Unknown user';
         const authorSelectors = [
-          'a[data-testid="comment_author_link"]',
-          'a[data-click-id="user"]',
-          '[data-testid="comment_author_icon"]+a',
-          'a.author',
+          'a[data-testid="comment_author_link"]', 'a[data-click-id="user"]',
+          '[data-testid="comment_author_icon"]+a', 'a.author',
         ];
-
         for (const selector of authorSelectors) {
           const authorElement = commentElement.querySelector(selector);
-          if (authorElement && authorElement.textContent.trim()) {
-            author = authorElement.textContent.trim();
+          if (authorElement && authorElement.textContent) {
+            author = authorElement.textContent.trim(); // Trim here as it's simple
             break;
           }
         }
-
-        // Try getAttribute for shreddit-comment
         if (author === 'Unknown user' && commentElement.getAttribute) {
           author = commentElement.getAttribute('author') || author;
         }
 
-        // Extract comment text (handle different selectors)
-        let commentContent = '';
-        const contentSelectors = [
-          '.md.text-14',
-          '[data-testid="comment-content"]',
-          'div[data-click-id="text"]',
-        ];
-
+        let rawCommentContent = '';
+        const contentSelectors = ['.md.text-14', '[data-testid="comment-content"]', 'div[data-click-id="text"]'];
         for (const selector of contentSelectors) {
           const contentElement = commentElement.querySelector(selector);
           if (contentElement) {
             const paragraphs = contentElement.querySelectorAll('p');
             if (paragraphs.length > 0) {
-              paragraphs.forEach((paragraph) => {
-                commentContent += paragraph.textContent.trim() + '\n\n';
+              paragraphs.forEach((paragraph, index) => {
+                rawCommentContent += paragraph.textContent;
+                if (index < paragraphs.length - 1) {
+                  rawCommentContent += '\n\n'; // Double newline for paragraph separation
+                }
               });
-              commentContent = commentContent.trim();
-              break;
             } else {
-              commentContent = contentElement.textContent.trim();
-              break;
+              rawCommentContent = contentElement.textContent;
             }
+            break;
           }
         }
 
-        // Score extraction
         let score = '0';
-
-        // Method 1: Direct attribute access for shreddit-comment elements
-        if (
-          commentElement.tagName &&
-          commentElement.tagName.toLowerCase() === 'shreddit-comment' &&
-          commentElement.hasAttribute('score')
-        ) {
+        if (commentElement.tagName?.toLowerCase() === 'shreddit-comment' && commentElement.hasAttribute('score')) {
           score = commentElement.getAttribute('score');
-        }
-        // Method 2: Access through action row with proper null checks
-        else {
-          const commentActionRow = commentElement.querySelector(
-            'shreddit-comment-action-row'
-          );
-          if (commentActionRow && commentActionRow.hasAttribute('score')) {
+        } else {
+          const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
+          if (commentActionRow?.hasAttribute('score')) {
             score = commentActionRow.getAttribute('score');
-          }
-          // Method 3: Try alternative selectors for score display elements
-          else {
+          } else {
             const scoreSelectors = [
-              '[data-testid="vote-score"]',
-              'div[data-click-id="upvote"]',
-              'div[class*="score"]',
-              '.vote-count',
-              '.score[title]',
-              '.text-neutral-content.text-12',
-              'span[aria-label*="votes"]',
-              'button[aria-label*="upvoted"]',
+              '[data-testid="vote-score"]', 'div[data-click-id="upvote"]', 'div[class*="score"]',
+              '.vote-count', '.score[title]', '.text-neutral-content.text-12',
+              'span[aria-label*="votes"]', 'button[aria-label*="upvoted"]',
               'faceplate-tracker[noun="upvote"] .text-neutral-content-weak',
             ];
-
             for (const selector of scoreSelectors) {
               const scoreElement = commentElement.querySelector(selector);
-              if (scoreElement && scoreElement.textContent.trim()) {
-                score = scoreElement.textContent.trim();
-                break;
+              if (scoreElement?.textContent?.trim()) {
+                score = scoreElement.textContent.trim(); break;
               }
             }
           }
         }
-
-        // Normalize score value
         if (score) {
-          // Handle scores with "k" suffix (e.g., "1.2k")
           if (typeof score === 'string' && score.includes('k')) {
-            score = String(
-              Math.round(parseFloat(score.replace('k', '')) * 1000)
-            );
-          }
-          // Remove non-numeric characters
-          else if (typeof score === 'string') {
-            const numericScore = score.replace(/[^\d.-]/g, '');
-            score = numericScore || '0';
+            score = String(Math.round(parseFloat(score.replace('k', '')) * 1000));
+          } else if (typeof score === 'string') {
+            score = score.replace(/[^\d.-]/g, '') || '0';
           }
         }
 
-        // Add comment to the list if it has content
-        if (commentContent) {
+        if (rawCommentContent.trim()) {
           comments.push({
-            author,
-            content: commentContent,
+            author: normalizeText(author), // Normalize author here too
+            content: normalizeText(rawCommentContent), // Apply normalization
             popularity: score,
           });
         }
       }
-
       return comments;
     } catch (error) {
       this.logger.error('Error extracting comments:', error);

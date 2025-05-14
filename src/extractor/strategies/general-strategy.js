@@ -2,6 +2,7 @@
 import { Readability } from '@mozilla/readability';
 
 import BaseExtractor from '../base-extractor.js';
+import { normalizeText } from '../utils/text-utils.js';
 
 class GeneralExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -59,18 +60,18 @@ class GeneralExtractorStrategy extends BaseExtractor {
   async extractData() {
     // Initialize with basic metadata, which might be overridden by Readability
     let title = this.extractPageTitle();
-    const url = this.extractPageUrl();
+    const url = this.extractPageUrl(); // URL doesn't need newline normalization
     let description = this.extractMetaDescription();
     let author = this.extractAuthor();
     let content = '';
     let isSelection = false;
 
     try {
-      const selectedText = window.getSelection().toString().trim();
-      isSelection = !!selectedText;
+      const selectedText = window.getSelection().toString(); // Don't trim here, let normalizeText handle it
+      isSelection = !!selectedText.trim(); // Check for actual content before trimming for isSelection flag
 
-      if (selectedText) {
-        content = this._moderateCleanText(selectedText);
+      if (isSelection) {
+        content = normalizeText(this._moderateCleanText(selectedText)); // Apply moderate clean then normalize
         this.logger.info('Used user-selected text as content.');
       } else {
         isSelection = false;
@@ -79,7 +80,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
         const readabilityOptions = {
           charThreshold: 150,
           nbTopCandidates: 7,
-          // debug: true, // Uncomment for Readability's internal logging
         };
 
         const documentClone = document.cloneNode(true);
@@ -87,30 +87,30 @@ class GeneralExtractorStrategy extends BaseExtractor {
         const article = reader.parse();
 
         if (article && article.textContent && article.textContent.trim() !== '') {
-          content = this._moderateCleanText(article.textContent);
+          content = normalizeText(this._moderateCleanText(article.textContent));
           this.logger.info(`Readability.js extracted main content (${content.length} chars).`);
 
           if (article.title && article.title.trim() !== '') {
-            title = article.title.trim();
+            title = article.title; // Will be normalized before final assignment
           }
           if (article.byline && article.byline.trim() !== '') {
-            author = article.byline.trim(); // Readability's byline is preferred
+            author = article.byline; // Readability's byline is preferred, will be normalized
           }
           if ((!description || description.trim() === '') && article.excerpt && article.excerpt.trim() !== '') {
-            description = this._moderateCleanText(article.excerpt.trim());
+            description = this._moderateCleanText(article.excerpt); // Apply moderate clean then normalize
           }
         } else {
-          content = 'Readability.js did not identify sufficient main content.';
+          content = 'Readability.js did not identify sufficient main content.'; // This is a status, not content to normalize
           this.logger.warn('Readability.js parsing returned no significant content.');
         }
       }
 
       return {
-        pageTitle: title,
+        pageTitle: normalizeText(title),
         pageUrl: url,
-        pageDescription: description,
-        pageAuthor: author,
-        content: content,
+        pageDescription: normalizeText(description),
+        pageAuthor: normalizeText(author),
+        content: content, // Already normalized if it's actual content
         isSelection: isSelection,
         extractedAt: new Date().toISOString(),
         contentType: this.contentType,
@@ -118,11 +118,11 @@ class GeneralExtractorStrategy extends BaseExtractor {
     } catch (error) {
       this.logger.error('Critical error during page data extraction:', error);
       return {
-        pageTitle: title,
+        pageTitle: normalizeText(title),
         pageUrl: url,
-        pageDescription: description,
-        pageAuthor: author,
-        content: `Extraction error: ${error.message}`,
+        pageDescription: normalizeText(description),
+        pageAuthor: normalizeText(author),
+        content: `Extraction error: ${error.message}`, // Error message, not typical content
         error: true,
         message: error.message || 'Unknown error in extractData',
         extractedAt: new Date().toISOString(),
@@ -136,7 +136,8 @@ class GeneralExtractorStrategy extends BaseExtractor {
    * @returns {string} The page title or a default string.
    */
   extractPageTitle() {
-    return document.title ? document.title.trim() : 'Unknown Title';
+    // Raw extraction, normalization happens in extractData
+    return document.title ? document.title : 'Unknown Title';
   }
 
   /**
@@ -149,12 +150,13 @@ class GeneralExtractorStrategy extends BaseExtractor {
 
   /**
    * Extracts the meta description content from the page.
-   * @returns {string|null} The cleaned meta description, or null if not found.
+   * @returns {string|null} The raw meta description, or null if not found.
    */
   extractMetaDescription() {
     const metaElement = document.querySelector('meta[name="description"]');
     if (metaElement && metaElement.getAttribute('content')) {
-      return this._moderateCleanText(metaElement.getAttribute('content'));
+      // Raw extraction, _moderateCleanText and normalizeText happens in extractData
+      return metaElement.getAttribute('content');
     }
     return null;
   }
@@ -162,7 +164,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
   /**
    * Attempts to extract the author SOLELY from standard meta tags.
    * This serves as an initial value if Readability.js does not provide an author (`byline`).
-   * @returns {string|null} The extracted author name from meta tags, or null if not found.
+   * @returns {string|null} The extracted raw author name from meta tags, or null if not found.
    */
   extractAuthor() {
     // Prioritize standard meta tags for author information.
@@ -174,8 +176,9 @@ class GeneralExtractorStrategy extends BaseExtractor {
     for (const selector of metaSelectors) {
       const metaElement = document.querySelector(selector);
       if (metaElement && metaElement.getAttribute('content')) {
-        const authorText = metaElement.getAttribute('content').trim();
-        if (authorText) {
+        const authorText = metaElement.getAttribute('content');
+        if (authorText.trim()) {
+          // Raw extraction, normalization happens in extractData
           return authorText;
         }
       }

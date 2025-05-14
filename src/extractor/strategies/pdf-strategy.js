@@ -2,6 +2,7 @@
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 
 import BaseExtractor from '../base-extractor.js';
+import { normalizeText } from '../utils/text-utils.js';
 
 // Helper to convert Base64 to ArrayBuffer
 function _base64ToArrayBuffer(base64) {
@@ -41,6 +42,7 @@ class PdfExtractorStrategy extends BaseExtractor {
         error: true,
         message: error.message || 'Unknown error occurred',
         extractedAt: new Date().toISOString(),
+        contentType: this.contentType, // Ensure contentType is passed
       });
     }
   }
@@ -52,10 +54,10 @@ class PdfExtractorStrategy extends BaseExtractor {
   async extractPdfContent() {
     const pdfUrl = window.location.href;
     let pdfDataArrayBuffer;
+    let rawTitle = this.extractPdfTitle(); // Get raw title early
 
     try {
       if (pdfUrl.startsWith('file://')) {
-        // === Fetch via Background Script for file:// URLs ===
         this.logger.info(`Requesting PDF fetch from background for: ${pdfUrl}`);
         const response = await chrome.runtime.sendMessage({
           action: 'fetchPdfAsBase64',
@@ -70,10 +72,9 @@ class PdfExtractorStrategy extends BaseExtractor {
           throw new Error(response?.error || 'Failed to fetch PDF data from background script.');
         }
       } else {
-        // === Direct Fetch for http/https URLs ===
         this.logger.info(`Fetching PDF directly (non-file URL): ${pdfUrl}`);
         const response = await fetch(pdfUrl, {
-          credentials: 'omit', // Use omit for non-file URLs unless specifically needed
+          credentials: 'omit',
           cache: 'no-store',
         });
 
@@ -84,7 +85,6 @@ class PdfExtractorStrategy extends BaseExtractor {
         this.logger.info('Successfully fetched PDF data directly.');
       }
 
-      // === Common PDF Parsing Logic ===
       this.logger.info('Loading PDF document with pdfjsLib...');
       const loadingTask = getDocument({
         data: pdfDataArrayBuffer,
@@ -94,11 +94,8 @@ class PdfExtractorStrategy extends BaseExtractor {
 
       const pdf = await loadingTask.promise;
       const pageCount = pdf.numPages;
+      const metadata = await this.extractBasicMetadata(pdf); // metadata values will be normalized later
 
-      // Extract basic metadata
-      const metadata = await this.extractBasicMetadata(pdf);
-
-      // Extract text content from each page
       let fullText = '';
       let isSearchable = false;
 
@@ -108,50 +105,50 @@ class PdfExtractorStrategy extends BaseExtractor {
 
         if (textContent.items && textContent.items.length > 0) {
           isSearchable = true;
-
-          // Process text with simple layout preservation
           let lastY;
-          let text = '';
-
+          let pageText = '';
           for (const item of textContent.items) {
-            if (
-              lastY !== undefined &&
-              Math.abs(lastY - item.transform[5]) > 5
-            ) {
-              text += '\n';
+            if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
+              pageText += '\n'; // Intentional single newline for layout
             }
-
-            text += item.str + ' ';
+            pageText += item.str + (item.str.endsWith(' ') ? '' : ' '); // Add space if not already there
             lastY = item.transform[5];
           }
-
-          fullText += `\n--- Page ${i} ---\n\n${text.trim()}\n\n`;
+          fullText += `\n--- Page ${i} ---\n\n${pageText.trim()}\n\n`; // Keep page separators
         } else {
           fullText += `\n--- Page ${i} ---\n\n[No text content found on this page]\n\n`;
         }
       }
+      
+      const finalTitle = normalizeText(metadata.title || rawTitle || 'Unknown PDF');
+      const finalContent = normalizeText(fullText); // Normalize the assembled text
 
-      // Build and return the complete data object
       return {
-        pdfTitle: this.extractPdfTitle() || metadata.title || 'Unknown PDF',
-        pdfUrl: pdfUrl, // Use the original URL for reference
-        content: fullText.trim(),
-        metadata: metadata,
+        pdfTitle: finalTitle,
+        pdfUrl: pdfUrl,
+        content: finalContent,
+        metadata: {
+          author: normalizeText(metadata.author),
+          creationDate: metadata.creationDate, // Dates are not typically text normalized
+          title: normalizeText(metadata.title), // Normalize metadata title as well
+          pageCount: pageCount,
+        },
         pageCount: pageCount,
         extractedAt: new Date().toISOString(),
         ocrRequired: !isSearchable,
+        contentType: this.contentType,
       };
 
     } catch (error) {
       this.logger.error('PDF content extraction error:', error);
-      // Ensure the error object includes the original pdfUrl
       return {
-         pdfTitle: this.extractPdfTitle() || 'Error Processing PDF',
-         pdfUrl: pdfUrl, // Include URL in error object
-         content: `Error extracting PDF content: ${error.message}`,
+         pdfTitle: normalizeText(rawTitle || 'Error Processing PDF'),
+         pdfUrl: pdfUrl,
+         content: `Error extracting PDF content: ${error.message}`, // Error message, not typical content
          error: true,
          message: error.message || 'Unknown error occurred during PDF processing',
          extractedAt: new Date().toISOString(),
+         contentType: this.contentType,
        };
     }
   }
@@ -159,7 +156,7 @@ class PdfExtractorStrategy extends BaseExtractor {
   /**
    * Extract basic PDF metadata
    * @param {Object} pdf - The loaded PDF document
-   * @returns {Object} Basic metadata
+   * @returns {Object} Basic metadata (raw strings)
    */
   async extractBasicMetadata(pdf) {
     const metadata = {
@@ -179,37 +176,35 @@ class PdfExtractorStrategy extends BaseExtractor {
     } catch (error) {
       this.logger.warn('Failed to extract PDF metadata:', error);
     }
-
+    // Return raw strings; normalization happens in extractPdfContent
     return metadata;
   }
 
   /**
-   * Extract the PDF title from the document or URL
-   * @returns {string} The PDF title
+   * Extract the PDF title from the document or URL (raw)
+   * @returns {string} The raw PDF title
    */
   extractPdfTitle() {
-    // Try to get from document title
+    // Raw extraction, normalization happens in extractPdfContent
     const documentTitle = document.title;
     if (documentTitle && !documentTitle.includes('PDF viewer')) {
-      return documentTitle.replace('.pdf', '').trim();
+      return documentTitle.replace('.pdf', ''); // Basic cleaning, full trim by normalizeText
     }
 
-    // Try basic viewer elements
     const titleElement = document.querySelector(
       '#toolbar #file-name, .pdf-title, .document-title'
     );
     if (titleElement) {
-      return titleElement.textContent.trim();
+      return titleElement.textContent;
     }
 
-    // Fall back to filename from URL
     const urlParts = window.location.pathname.split('/');
     const fileName = urlParts[urlParts.length - 1];
     if (fileName.endsWith('.pdf')) {
       return fileName.replace('.pdf', '');
     }
 
-    return 'Unknown PDF Document';
+    return 'Unknown PDF Document'; // Default if no other title found
   }
 }
 
