@@ -82,7 +82,7 @@
         },
         {
           "id": "gemini-2.0-flash",
-          "description": "Balanced multimodal model delivering excellent performance across all tasks.",
+          "description": "Balanced model delivering excellent performance across all tasks.",
           "tokens": {
             "maxOutput": 8192,
             "parameterName": "maxOutputTokens",
