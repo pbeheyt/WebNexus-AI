@@ -13,9 +13,6 @@ class RedditExtractorStrategy extends BaseExtractor {
     try {
       this.logger.info('Starting Reddit post data extraction...');
 
-      // Add small delay to ensure dynamic content is loaded
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       // Extract all post data
       const postData = await this.extractData();
 
