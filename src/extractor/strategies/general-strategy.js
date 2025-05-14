@@ -1,10 +1,12 @@
 // src/extractor/strategies/general-strategy.js
 import { Readability } from '@mozilla/readability';
+
 import BaseExtractor from '../base-extractor.js';
 
 class GeneralExtractorStrategy extends BaseExtractor {
   constructor() {
     super('general');
+    // This strategy relies on Mozilla's Readability.js for main content extraction.
   }
 
   /**
@@ -59,7 +61,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
     let title = this.extractPageTitle();
     const url = this.extractPageUrl();
     let description = this.extractMetaDescription();
-    let author = this.extractAuthor(); // Fallback author extraction
+    let author = this.extractAuthor();
     let content = '';
     let isSelection = false;
 
@@ -74,18 +76,12 @@ class GeneralExtractorStrategy extends BaseExtractor {
         isSelection = false;
         this.logger.info('No user selection. Attempting Readability.js extraction.');
 
-        // Configuration options for Readability.js
-        // These values are chosen to balance capturing enough content without being overly aggressive.
         const readabilityOptions = {
-          // Lowered from Readability's default of 500 to better capture moderately sized articles.
           charThreshold: 150,
-          // Slightly increased from Readability's default of 5 to consider more candidate sections.
           nbTopCandidates: 7,
-          // For development/troubleshooting, uncomment to enable Readability's internal logging:
-          // debug: true,
+          // debug: true, // Uncomment for Readability's internal logging
         };
 
-        // Readability mutates the DOM, so a clone of the document is used.
         const documentClone = document.cloneNode(true);
         const reader = new Readability(documentClone, readabilityOptions);
         const article = reader.parse();
@@ -94,12 +90,11 @@ class GeneralExtractorStrategy extends BaseExtractor {
           content = this._moderateCleanText(article.textContent);
           this.logger.info(`Readability.js extracted main content (${content.length} chars).`);
 
-          // Override initial metadata if Readability provides non-empty, potentially better values.
           if (article.title && article.title.trim() !== '') {
             title = article.title.trim();
           }
           if (article.byline && article.byline.trim() !== '') {
-            author = article.byline.trim();
+            author = article.byline.trim(); // Readability's byline is preferred
           }
           if ((!description || description.trim() === '') && article.excerpt && article.excerpt.trim() !== '') {
             description = this._moderateCleanText(article.excerpt.trim());
@@ -122,7 +117,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
       };
     } catch (error) {
       this.logger.error('Critical error during page data extraction:', error);
-      // Return collected data along with error information
       return {
         pageTitle: title,
         pageUrl: url,
@@ -166,12 +160,12 @@ class GeneralExtractorStrategy extends BaseExtractor {
   }
 
   /**
-   * Attempts to extract the author from meta tags or common author-related elements.
-   * This serves as a fallback if Readability.js does not provide an author (`byline`).
-   * @returns {string|null} The extracted author name, or null if not found.
+   * Attempts to extract the author SOLELY from standard meta tags.
+   * This serves as an initial value if Readability.js does not provide an author (`byline`).
+   * @returns {string|null} The extracted author name from meta tags, or null if not found.
    */
   extractAuthor() {
-    // Prioritize standard meta tags for author information
+    // Prioritize standard meta tags for author information.
     const metaSelectors = [
       'meta[name="author"]',
       'meta[property="author"]',
@@ -186,51 +180,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
         }
       }
     }
-
-    // Fallback to common class names or attributes if meta tags fail
-    const commonAuthorSelectors = [
-      '.author',
-      '.byline', // Often used for author credit
-      '.post-author',
-      '.entry-author',
-      '[rel="author"]', // Semantic attribute for author links
-      'a[href*="/author/"]', // Links pointing to an author page
-      '.author-name',
-      '[data-testid="author-name"]', // Common in JS frameworks
-      '[itemprop="author"]', // Schema.org microdata
-    ];
-
-    for (const selector of commonAuthorSelectors) {
-      const authorElements = document.querySelectorAll(selector);
-      for (const authorElement of authorElements) {
-        // Prefer a more specific name element within the found author container
-        const nameNode =
-          authorElement.querySelector(
-            '.author-name, [data-testid="author-name"], [itemprop="name"]'
-          ) || authorElement; // Default to the container itself
-
-        if (nameNode && nameNode.textContent) {
-          let name = nameNode.textContent.trim();
-          if (name) {
-            name = name.replace(/^by\s+/i, '').trim(); // Remove "By " prefix
-            if (name) {
-              return name;
-            }
-          }
-        }
-        // If specific nameNode failed, but the main authorElement has text (and is different)
-        if (nameNode !== authorElement && authorElement.textContent) {
-            let mainElementText = authorElement.textContent.trim();
-            if (mainElementText) {
-                mainElementText = mainElementText.replace(/^by\s+/i, '').trim();
-                if (mainElementText) {
-                    return mainElementText;
-                }
-            }
-        }
-      }
-    }
-    return null;
+    return null; // No author found via meta tags
   }
 }
 
