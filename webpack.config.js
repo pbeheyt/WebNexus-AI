@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const isProduction = process.env.NODE_ENV === 'production';
 const TerserPlugin = require('terser-webpack-plugin');
 
@@ -29,7 +30,9 @@ module.exports = {
           to: 'NOTICES.txt'
         }
       ]
-    })
+    }),
+    // Conditionally add BundleAnalyzerPlugin
+    ...(process.env.ANALYZE === 'true' ? [new BundleAnalyzerPlugin()] : [])
   ],
   entry: {
     background: './src/background/index.js',

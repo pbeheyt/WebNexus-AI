@@ -1,12 +1,84 @@
 // src/components/EnhancedCodeBlock.jsx
 import React, { useState, memo, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/async-languages/prism';
 import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
+import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
+import java from 'react-syntax-highlighter/dist/esm/languages/prism/java';
+import csharp from 'react-syntax-highlighter/dist/esm/languages/prism/csharp';
+import cpp from 'react-syntax-highlighter/dist/esm/languages/prism/cpp';
+import c from 'react-syntax-highlighter/dist/esm/languages/prism/c';
+import go from 'react-syntax-highlighter/dist/esm/languages/prism/go';
+import ruby from 'react-syntax-highlighter/dist/esm/languages/prism/ruby';
+import php from 'react-syntax-highlighter/dist/esm/languages/prism/php';
+import swift from 'react-syntax-highlighter/dist/esm/languages/prism/swift';
+import kotlin from 'react-syntax-highlighter/dist/esm/languages/prism/kotlin';
+import rust from 'react-syntax-highlighter/dist/esm/languages/prism/rust';
+import html from 'react-syntax-highlighter/dist/esm/languages/prism/markup'; // HTML is often under 'markup'
+import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
+import scss from 'react-syntax-highlighter/dist/esm/languages/prism/scss';
+import less from 'react-syntax-highlighter/dist/esm/languages/prism/less';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import yaml from 'react-syntax-highlighter/dist/esm/languages/prism/yaml';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
+import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
+import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
+import xml from 'react-syntax-highlighter/dist/esm/languages/prism/markup'; // XML also often under 'markup'
+import diff from 'react-syntax-highlighter/dist/esm/languages/prism/diff';
+import ini from 'react-syntax-highlighter/dist/esm/languages/prism/ini';
+import makefile from 'react-syntax-highlighter/dist/esm/languages/prism/makefile';
 
 import { IconButton } from '../../../components';
 
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
+
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('js', javascript);
+SyntaxHighlighter.registerLanguage('jsx', jsx);
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('ts', typescript);
+SyntaxHighlighter.registerLanguage('tsx', tsx);
+SyntaxHighlighter.registerLanguage('python', python);
+SyntaxHighlighter.registerLanguage('py', python);
+SyntaxHighlighter.registerLanguage('java', java);
+SyntaxHighlighter.registerLanguage('csharp', csharp);
+SyntaxHighlighter.registerLanguage('cs', csharp);
+SyntaxHighlighter.registerLanguage('dotnet', csharp);
+SyntaxHighlighter.registerLanguage('cpp', cpp);
+SyntaxHighlighter.registerLanguage('c++', cpp);
+SyntaxHighlighter.registerLanguage('c', c);
+SyntaxHighlighter.registerLanguage('go', go);
+SyntaxHighlighter.registerLanguage('golang', go);
+SyntaxHighlighter.registerLanguage('ruby', ruby);
+SyntaxHighlighter.registerLanguage('rb', ruby);
+SyntaxHighlighter.registerLanguage('php', php);
+SyntaxHighlighter.registerLanguage('swift', swift);
+SyntaxHighlighter.registerLanguage('kotlin', kotlin);
+SyntaxHighlighter.registerLanguage('kt', kotlin);
+SyntaxHighlighter.registerLanguage('rust', rust);
+SyntaxHighlighter.registerLanguage('rs', rust);
+SyntaxHighlighter.registerLanguage('html', html);
+SyntaxHighlighter.registerLanguage('css', css);
+SyntaxHighlighter.registerLanguage('scss', scss);
+SyntaxHighlighter.registerLanguage('less', less);
+SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('yaml', yaml);
+SyntaxHighlighter.registerLanguage('yml', yaml);
+SyntaxHighlighter.registerLanguage('markdown', markdown);
+SyntaxHighlighter.registerLanguage('md', markdown);
+SyntaxHighlighter.registerLanguage('mkd', markdown);
+SyntaxHighlighter.registerLanguage('sql', sql);
+SyntaxHighlighter.registerLanguage('bash', bash);
+SyntaxHighlighter.registerLanguage('shell', bash);
+SyntaxHighlighter.registerLanguage('sh', bash);
+SyntaxHighlighter.registerLanguage('xml', xml);
+SyntaxHighlighter.registerLanguage('diff', diff);
+SyntaxHighlighter.registerLanguage('ini', ini);
+SyntaxHighlighter.registerLanguage('makefile', makefile);
 
 /**
  * Enhanced CodeBlock with syntax highlighting and copy functionality.
