@@ -215,8 +215,8 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     let lastTimestampTime = -config.timestampInterval;
 
     transcriptData.forEach((segment, index) => {
-      const currentOffset = segment.offset / 1000; // Assuming offset is in milliseconds
-      const currentText = this.decodeDoubleEncodedEntities(segment.text.trim()); // Use the new decoding function
+      const currentOffset = segment.offset;
+      const currentText = this.decodeDoubleEncodedEntities(segment.text.trim());
       const currentTime = Math.floor(currentOffset);
 
       if (currentTime >= lastTimestampTime + config.timestampInterval) {
@@ -242,12 +242,6 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
-  /**
-   * Decodes HTML entities from a string using DOM parsing.
-   * Handles various encodings, including double-encoded entities like &#39;.
-   * @param {string} text - The text containing HTML entities.
-   * @returns {string} The decoded text.
-   */
   /**
    * Decodes HTML entities from a string using DOM parsing.
    * Handles various encodings, including double-encoded entities like &#39;.
