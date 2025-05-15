@@ -97,19 +97,6 @@ class ClaudePlatform extends BasePlatform {
 
 
   /**
-   * Check if a button element is currently enabled and ready for interaction.
-   * @param {HTMLElement} button - The button element to check.
-   * @returns {boolean} True if the button is enabled, false otherwise.
-   * @private
-   */
-  _isButtonEnabled(button) {
-    if (!button) return false;
-    const isDisabled =
-      button.disabled || button.getAttribute('aria-disabled') === 'true';
-    return !isDisabled;
-  }
-
-  /**
    * Find Claude's submit button using more robust strategies.
    * Checks for visibility, enabled state, and pointer-events. Returns null if checks fail, allowing retry.
    * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
@@ -126,11 +113,12 @@ class ClaudePlatform extends BasePlatform {
       },
       async (el) => { // conditionFn
         if (!el) return false;
-        const isEnabled = this._isButtonEnabled(el);
+        const isEnabled = this._isButtonEnabled(el); // Use the new BasePlatform helper
         const isVisible = this._isVisibleElement(el);
         const pointerEvents = window.getComputedStyle(el).pointerEvents;
         const hasPointerEvents = pointerEvents !== 'none';
         
+        // Keep existing logging if desired, or simplify
         let logMessage = `[${this.platformId}] Claude button check:`;
         let allConditionsMet = true;
 

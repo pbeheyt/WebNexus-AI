@@ -23,15 +23,49 @@ class GeminiPlatform extends BasePlatform {
     return editor;
   }
 
-  findSubmitButton() {
-    // Exact selector based on provided HTML
-    const button = document.querySelector('button.send-button');
-    if (!button) {
-      this.logger.error(
-        `[${this.platformId}] Submit button not found using selector.`
-      );
+  /**
+   * Find Gemini's submit button, waiting for it to be ready.
+   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
+   */
+  async findSubmitButton() {
+    this.logger.info(
+      `[${this.platformId}] Attempting to find and wait for Gemini submit button readiness...`
+    );
+    // Selector based on observed HTML: 'button.send-button'
+    // This button also has a 'send' icon inside an mat-icon component.
+    const selector = 'button.send-button';
+
+    const buttonElement = await this._waitForElementState(
+      () => { // elementSelectorFn
+        const button = document.querySelector(selector);
+        if (button) {
+          this.logger.debug(`[${this.platformId}] Submit button candidate found using selector: ${selector}`);
+        } else {
+          this.logger.debug(`[${this.platformId}] Submit button candidate not found by selector ${selector} on this poll.`);
+        }
+        return button;
+      },
+      async (el) => { // conditionFn
+        if (!el) return false;
+        const isEnabled = this._isButtonEnabled(el);
+        const isVisible = this._isVisibleElement(el);
+        const pointerEvents = window.getComputedStyle(el).pointerEvents;
+        const hasPointerEvents = pointerEvents !== 'none';
+        // Gemini's button might also have specific classes when active, e.g., not having 'disabled' related classes.
+        // For now, the general checks should suffice.
+        return isEnabled && isVisible && hasPointerEvents;
+      },
+      5000, // timeoutMs
+      300,  // pollIntervalMs
+      'Gemini submit button readiness'
+    );
+
+    if (buttonElement) {
+      this.logger.info(`[${this.platformId}] Gemini submit button found and ready.`);
+    } else {
+      this.logger.warn(`[${this.platformId}] Gemini submit button did not become ready within the timeout.`);
     }
-    return button;
+    return buttonElement;
   }
 
   /**

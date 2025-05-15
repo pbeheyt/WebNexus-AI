@@ -95,6 +95,19 @@ class BasePlatform extends PlatformInterface {
   }
 
   /**
+   * Checks if a button element is currently enabled and ready for interaction.
+   * @param {HTMLElement} button - The button element to check.
+   * @returns {boolean} True if the button is enabled, false otherwise.
+   * @protected
+   */
+  _isButtonEnabled(button) {
+    if (!button) return false;
+    const isDisabled =
+      button.disabled || button.getAttribute('aria-disabled') === 'true';
+    return !isDisabled;
+  }
+
+  /**
    * Default implementation for inserting text into an editor element.
    * Subclasses should override this if the platform uses a non-standard input (e.g., contenteditable div).
    * @param {HTMLElement} editorElement - The editor element.
@@ -286,7 +299,7 @@ class BasePlatform extends PlatformInterface {
       element.style.visibility === 'hidden' ||
       element.style.display === 'none'
     ) {
-      this.logger.warn(
+      this.logger.debug( // Changed to debug for less noise unless critical
         `[${this.platformId}] Element hidden by attribute/style:`,
         element
       );
@@ -301,7 +314,7 @@ class BasePlatform extends PlatformInterface {
       style.opacity === '0' ||
       style.pointerEvents === 'none'
     ) {
-      this.logger.warn(
+      this.logger.debug( // Changed to debug
         `[${this.platformId}] Element hidden by computed style: display=${style.display}, visibility=${style.visibility}, opacity=${style.opacity}, pointerEvents=${style.pointerEvents}`,
         element
       );
@@ -313,13 +326,13 @@ class BasePlatform extends PlatformInterface {
     if (rect.width === 0 || rect.height === 0) {
       // Allow zero height for textareas which might start small
       if (element.tagName !== 'TEXTAREA') {
-        this.logger.warn(
+        this.logger.debug( // Changed to debug
           `[${this.platformId}] Element has zero dimensions: width=${rect.width}, height=${rect.height}`,
           element
         );
         return false;
       } else {
-        this.logger.info(
+        this.logger.debug( // Changed to debug
           `[${this.platformId}] Textarea has zero height, allowing as potentially visible.`
         );
       }
@@ -333,7 +346,7 @@ class BasePlatform extends PlatformInterface {
       rect.left > window.innerWidth - threshold ||
       rect.top > window.innerHeight - threshold
     ) {
-      this.logger.warn(
+      this.logger.debug( // Changed to debug
         `[${this.platformId}] Element is positioned off-screen:`,
         rect,
         element
@@ -341,48 +354,30 @@ class BasePlatform extends PlatformInterface {
       return false;
     }
 
-    // Check if the element or its parent is hidden via overflow
+    // Simplified parent overflow check
     let currentParent = element.parentElement;
-    const elemRectForOverflowCheck = element.getBoundingClientRect(); // Get element's rect once for this loop
+    const elemRectForOverflowCheck = element.getBoundingClientRect();
 
-    while (currentParent) {
+    while (currentParent && currentParent !== document.body) {
       const parentStyle = window.getComputedStyle(currentParent);
-      if (
-        parentStyle.overflow === 'hidden' ||
-        parentStyle.overflowX === 'hidden' ||
-        parentStyle.overflowY === 'hidden'
-      ) {
+      if (parentStyle.overflow === 'hidden' || parentStyle.overflowX === 'hidden' || parentStyle.overflowY === 'hidden') {
         const parentRect = currentParent.getBoundingClientRect();
 
-        // Condition 1: Parent has no renderable dimensions (and is trying to clip)
-        if (parentRect.width === 0 || parentRect.height === 0) {
-          this.logger.warn(
-            `[${this.platformId}] Element hidden by parent overflow: Parent has zero dimensions.`,
-            element,
-            currentParent
+        // Check if the element is completely outside the parent's visible area
+        const isOutsideParent =
+          elemRectForOverflowCheck.right <= parentRect.left ||
+          elemRectForOverflowCheck.left >= parentRect.right ||
+          elemRectForOverflowCheck.bottom <= parentRect.top ||
+          elemRectForOverflowCheck.top >= parentRect.bottom;
+
+        if (isOutsideParent) {
+          this.logger.debug( // Changed to debug
+            `[${this.platformId}] Element hidden by parent '${currentParent.tagName}' with overflow: hidden. Element is outside parent's bounds.`,
+            element
           );
           return false;
         }
-
-        // Condition 2: Element is *entirely* clipped by the parent
-        // Check if the element's viewport is completely outside the parent's viewport
-        const isEntirelyClipped =
-          elemRectForOverflowCheck.right <= parentRect.left ||  // Entirely to the left
-          elemRectForOverflowCheck.left >= parentRect.right || // Entirely to the right
-          elemRectForOverflowCheck.bottom <= parentRect.top || // Entirely above
-          elemRectForOverflowCheck.top >= parentRect.bottom;   // Entirely below
-
-        if (isEntirelyClipped) {
-          this.logger.warn(
-            `[${this.platformId}] Element hidden by parent overflow: Element is entirely clipped.`,
-            element,
-            currentParent
-          );
-          return false;
-        }
-        // If partially clipped, it's considered visible for this check's purpose.
       }
-      if (currentParent === document.body) break;
       currentParent = currentParent.parentElement;
     }
 
@@ -481,9 +476,9 @@ class BasePlatform extends PlatformInterface {
           // 1. Find Editor
           const editorElement = await this.findEditorElement();
           if (!editorElement) {
-            this.logger.error(`[${this.platformId}] Editor element not found.`);
+            this.logger.error(`[${this.platformId}] Critical: Editor element not found during processContent.`);
             throw new Error(
-              `Could not find the editor element on ${this.platformId}.`
+              `Could not find the editor element on ${this.platformId}. Automation cannot proceed.`
             );
           }
           this.logger.info(`[${this.platformId}] Found editor element.`);
@@ -537,10 +532,10 @@ class BasePlatform extends PlatformInterface {
           // Check if a button element was found after retries
           if (!submitButton) {
             this.logger.error(
-              `[${this.platformId}] Submit button element not found after ${maxButtonRetries} attempts.`
+              `[${this.platformId}] Critical: Submit button element not found after ${maxButtonRetries} attempts during processContent.`
             );
             throw new Error(
-              `Could not find the submit button element on ${this.platformId} after multiple attempts.`
+              `Could not find the submit button element on ${this.platformId} after multiple attempts. Automation cannot proceed.`
             );
           }
           this.logger.info(

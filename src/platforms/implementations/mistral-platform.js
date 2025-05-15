@@ -9,38 +9,81 @@ class MistralPlatform extends BasePlatform {
     return window.location.hostname === 'chat.mistral.ai';
   }
 
+  /**
+   * Find Mistral's editor element
+   * @returns {HTMLElement|null} The editor element or null if not found
+   */
   findEditorElement() {
+    // Strategy 1: Preferred name attribute selector (specific to Mistral's form structure)
     const primarySelector = 'textarea[name="message.text"]';
+    // Strategy 2: Fallback class-based selector (less stable - may change with UI updates)
     const fallbackSelector = 'textarea.border-default.ring-offset-background';
     let editor = document.querySelector(primarySelector);
 
-    if (!editor) {
-      editor = document.querySelector(fallbackSelector);
+    if (editor) {
+      this.logger.info(`[${this.platformId}] Found editor element using primary selector: '${primarySelector}'.`);
+      return editor;
+    }
+    
+    editor = document.querySelector(fallbackSelector);
+    if (editor) {
+      this.logger.info(`[${this.platformId}] Found editor element using fallback selector: '${fallbackSelector}'.`);
+      return editor;
     }
 
-    if (!editor) {
-      this.logger.error(
-        `[${this.platformId}] Editor element not found using selectors '${primarySelector}' or '${fallbackSelector}'.`
-      );
-    }
-    return editor;
+    this.logger.error(
+      `[${this.platformId}] Editor element not found using selectors '${primarySelector}' or '${fallbackSelector}'.`
+    );
+    return null;
   }
 
-  findSubmitButton() {
+  /**
+   * Find Mistral's submit button, waiting for it to be ready.
+   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
+   */
+  async findSubmitButton() {
+    this.logger.info(
+      `[${this.platformId}] Attempting to find and wait for Mistral submit button readiness...`
+    );
+    // Primary selector: button with type="submit" containing an SVG (usually the send icon)
     const primarySelector = 'button[type="submit"]:has(svg)';
+    // Fallback selector: button with type="submit" and a class indicating it's an inverted color button (common pattern)
     const fallbackSelector = 'button[type="submit"][class*="bg-inverted"]';
-    let button = document.querySelector(primarySelector);
 
-     if (!button) {
-      button = document.querySelector(fallbackSelector);
-    }
+    const buttonElement = await this._waitForElementState(
+      () => { // elementSelectorFn
+        let button = document.querySelector(primarySelector);
+        if (button) {
+          this.logger.debug(`[${this.platformId}] Submit button candidate found using primary selector: ${primarySelector}`);
+          return button;
+        }
+        button = document.querySelector(fallbackSelector);
+        if (button) {
+          this.logger.debug(`[${this.platformId}] Submit button candidate found using fallback selector: ${fallbackSelector}`);
+          return button;
+        }
+        this.logger.debug(`[${this.platformId}] Submit button candidate not found by any strategy on this poll.`);
+        return null;
+      },
+      async (el) => { // conditionFn
+        if (!el) return false;
+        const isEnabled = this._isButtonEnabled(el);
+        const isVisible = this._isVisibleElement(el);
+        const pointerEvents = window.getComputedStyle(el).pointerEvents;
+        const hasPointerEvents = pointerEvents !== 'none';
+        return isEnabled && isVisible && hasPointerEvents;
+      },
+      5000, // timeoutMs
+      300,  // pollIntervalMs
+      'Mistral submit button readiness'
+    );
 
-    if (!button) {
-      this.logger.error(
-        `[${this.platformId}] Submit button not found using selectors '${primarySelector}' or '${fallbackSelector}'.`
-      );
+    if (buttonElement) {
+      this.logger.info(`[${this.platformId}] Mistral submit button found and ready.`);
+    } else {
+      this.logger.warn(`[${this.platformId}] Mistral submit button did not become ready within the timeout.`);
     }
-    return button;
+    return buttonElement;
   }
 
   /**

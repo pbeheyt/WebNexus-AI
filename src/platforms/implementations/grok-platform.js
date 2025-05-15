@@ -103,91 +103,61 @@ class GrokPlatform extends BasePlatform {
   }
 
   /**
-   * Find the Grok submit button using more robust strategies.
-   * @returns {HTMLElement|null} The submit button or null if not found
+   * Find the Grok submit button using robust strategies, waiting for it to be ready.
+   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
    */
-  findSubmitButton() {
+  async findSubmitButton() {
     this.logger.info(
-      `[${this.platformId}] Attempting to find submit button...`
+      `[${this.platformId}] Attempting to find and wait for Grok submit button readiness...`
     );
 
-    // --- Strategy 1: Specific SVG Path ---
-    try {
-      // Look for the button containing the specific SVG path for the send arrow
-      const svgPathSelector = 'button[type="submit"] svg path[d^="M5 11L12 4"]';
-      const pathElement = document.querySelector(svgPathSelector);
-      if (pathElement) {
-        const button = pathElement.closest('button[type="submit"]');
-        // Check visibility *and* ensure it's not disabled
-        if (
-          button &&
-          this._isVisibleElement(button) &&
-          !button.disabled &&
-          button.getAttribute('aria-disabled') !== 'true'
-        ) {
-          this.logger.info(
-            `[${this.platformId}] Found submit button using Strategy 1 (SVG Path)`
-          );
-          return button;
-        } else if (button) {
-          this.logger.warn(
-            `[${this.platformId}] Strategy 1: Found button via SVG, but it's hidden or disabled.`,
-            button
-          );
+    const buttonElement = await this._waitForElementState(
+      () => { // elementSelectorFn
+        // Strategy 1: Specific SVG Path (most reliable if path is stable)
+        const svgPathSelector = 'button[type="submit"] svg path[d^="M5 11L12 4"]';
+        const pathElement = document.querySelector(svgPathSelector);
+        if (pathElement) {
+          const button = pathElement.closest('button[type="submit"]');
+          if (button) {
+            this.logger.debug(`[${this.platformId}] Submit button candidate found via SVG Path.`);
+            return button;
+          }
         }
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 1 submit button search:`,
-        e
-      );
-    }
 
-    // --- Strategy 2: Structural Position ---
-    // Look for the button within the absolute positioned bottom bar, in the ml-auto container
-    try {
-      const bottomBarSelector =
-        'form div[class*="absolute inset-x-0 bottom-0"]'; // Anchor within the form
-      const bottomBar = document.querySelector(bottomBarSelector);
-      if (bottomBar) {
-        // Look for the button within the right-aligned container
-        const submitButton = bottomBar.querySelector(
-          'div[class*="ml-auto"] button[type="submit"]'
-        );
-        // Check visibility *and* ensure it's not disabled
-        if (
-          submitButton &&
-          this._isVisibleElement(submitButton) &&
-          !submitButton.disabled &&
-          submitButton.getAttribute('aria-disabled') !== 'true'
-        ) {
-          this.logger.info(
-            `[${this.platformId}] Found submit button using Strategy 2 (Structural Position)`
-          );
-          return submitButton;
-        } else if (submitButton) {
-          this.logger.warn(
-            `[${this.platformId}] Strategy 2: Found button via structure, but it's hidden or disabled.`,
-            submitButton
-          );
+        // Strategy 2: Structural Position (within form's bottom bar, right-aligned)
+        const bottomBarSelector = 'form div[class*="absolute inset-x-0 bottom-0"]';
+        const bottomBar = document.querySelector(bottomBarSelector);
+        if (bottomBar) {
+          const button = bottomBar.querySelector('div[class*="ml-auto"] button[type="submit"]');
+          if (button) {
+            this.logger.debug(`[${this.platformId}] Submit button candidate found via Structural Position.`);
+            return button;
+          }
         }
-      } else {
-        this.logger.warn(
-          `[${this.platformId}] Strategy 2: Bottom action bar not found.`
-        );
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 2 submit button search:`,
-        e
-      );
-    }
-
-    this.logger.error(
-      `[${this.platformId}] Submit button not found using any strategy.`
+        this.logger.debug(`[${this.platformId}] Submit button candidate not found by any primary strategy on this poll.`);
+        return null;
+      },
+      async (el) => { // conditionFn
+        if (!el) return false;
+        const isEnabled = this._isButtonEnabled(el);
+        const isVisible = this._isVisibleElement(el);
+        const pointerEvents = window.getComputedStyle(el).pointerEvents;
+        const hasPointerEvents = pointerEvents !== 'none';
+        return isEnabled && isVisible && hasPointerEvents;
+      },
+      5000, // timeoutMs
+      300,  // pollIntervalMs
+      'Grok submit button readiness'
     );
-    return null;
+
+    if (buttonElement) {
+      this.logger.info(`[${this.platformId}] Grok submit button found and ready.`);
+    } else {
+      this.logger.warn(`[${this.platformId}] Grok submit button did not become ready within the timeout.`);
+    }
+    return buttonElement;
   }
+
 
   /**
    * Checks if the Grok editor element is empty.
