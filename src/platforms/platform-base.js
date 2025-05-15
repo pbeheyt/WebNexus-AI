@@ -342,35 +342,105 @@ class BasePlatform extends PlatformInterface {
     }
 
     // Check if the element or its parent is hidden via overflow
-    let parent = element.parentElement;
-    while (parent) {
-      const parentStyle = window.getComputedStyle(parent);
+    let currentParent = element.parentElement;
+    const elemRectForOverflowCheck = element.getBoundingClientRect(); // Get element's rect once for this loop
+
+    while (currentParent) {
+      const parentStyle = window.getComputedStyle(currentParent);
       if (
         parentStyle.overflow === 'hidden' ||
         parentStyle.overflowX === 'hidden' ||
         parentStyle.overflowY === 'hidden'
       ) {
-        const parentRect = parent.getBoundingClientRect();
-        // Check if the element is outside the parent's visible bounds
-        if (
-          rect.top < parentRect.top ||
-          rect.bottom > parentRect.bottom ||
-          rect.left < parentRect.left ||
-          rect.right > parentRect.right
-        ) {
+        const parentRect = currentParent.getBoundingClientRect();
+
+        // Condition 1: Parent has no renderable dimensions (and is trying to clip)
+        if (parentRect.width === 0 || parentRect.height === 0) {
           this.logger.warn(
-            `[${this.platformId}] Element hidden by parent overflow:`,
+            `[${this.platformId}] Element hidden by parent overflow: Parent has zero dimensions.`,
             element,
-            parent
+            currentParent
           );
-          // return false; // Be cautious with this check, might be too strict
+          return false;
         }
+
+        // Condition 2: Element is *entirely* clipped by the parent
+        // Check if the element's viewport is completely outside the parent's viewport
+        const isEntirelyClipped =
+          elemRectForOverflowCheck.right <= parentRect.left ||  // Entirely to the left
+          elemRectForOverflowCheck.left >= parentRect.right || // Entirely to the right
+          elemRectForOverflowCheck.bottom <= parentRect.top || // Entirely above
+          elemRectForOverflowCheck.top >= parentRect.bottom;   // Entirely below
+
+        if (isEntirelyClipped) {
+          this.logger.warn(
+            `[${this.platformId}] Element hidden by parent overflow: Element is entirely clipped.`,
+            element,
+            currentParent
+          );
+          return false;
+        }
+        // If partially clipped, it's considered visible for this check's purpose.
       }
-      if (parent === document.body) break;
-      parent = parent.parentElement;
+      if (currentParent === document.body) break;
+      currentParent = currentParent.parentElement;
     }
 
     return true;
+  }
+
+  /**
+   * Waits for an element to be found by a selector function and meet a specific condition.
+   * @param {function} elementSelectorFn - A synchronous function that attempts to find and return the DOM element.
+   * @param {function} conditionFn - An asynchronous or synchronous function that takes the found element and returns true if the desired state is met.
+   * @param {number} [timeoutMs=3000] - Maximum time in milliseconds to wait.
+   * @param {number} [pollIntervalMs=200] - How often in milliseconds to check.
+   * @param {string} [description='element state'] - Description for logging.
+   * @returns {Promise<HTMLElement|null>} The element if condition met, or null on timeout/error.
+   * @protected
+   */
+  async _waitForElementState(elementSelectorFn, conditionFn, timeoutMs = 3000, pollIntervalMs = 200, description = 'element state') {
+    this.logger.info(`[${this.platformId}] Waiting for ${description} (Timeout: ${timeoutMs}ms, Interval: ${pollIntervalMs}ms)...`);
+    const startTime = Date.now();
+
+    return new Promise((resolve) => {
+      const checkCondition = async () => {
+        let element = null;
+        try {
+          element = elementSelectorFn();
+        } catch (selectorError) {
+          this.logger.error(`[${this.platformId}] Error in elementSelectorFn for ${description}:`, selectorError);
+          // Continue polling unless timed out, as the selector might work later
+        }
+
+        if (element) {
+          try {
+            const conditionMet = await conditionFn(element);
+            if (conditionMet) {
+              this.logger.info(`[${this.platformId}] Condition for ${description} met successfully.`);
+              resolve(element);
+              return;
+            }
+            // If condition not met, continue polling
+          } catch (error) {
+            this.logger.error(`[${this.platformId}] Error in conditionFn for ${description}:`, error);
+            // Continue polling unless timed out, error in conditionFn doesn't mean element is bad
+          }
+        } else {
+          // Element not found by selectorFn on this attempt, will retry if not timed out.
+          // this.logger.debug(`[${this.platformId}] Element for ${description} not found by selector on this poll.`);
+        }
+
+        if (Date.now() - startTime > timeoutMs) {
+          this.logger.warn(`[${this.platformId}] Timeout reached waiting for ${description}.`);
+          resolve(null);
+        } else {
+          setTimeout(checkCondition, pollIntervalMs);
+        }
+      };
+      // Initial call to start the polling
+      checkCondition();
+    });
   }
 
   /**
@@ -409,7 +479,7 @@ class BasePlatform extends PlatformInterface {
 
           // --- Template Method Steps ---
           // 1. Find Editor
-          const editorElement = this.findEditorElement();
+          const editorElement = await this.findEditorElement();
           if (!editorElement) {
             this.logger.error(`[${this.platformId}] Editor element not found.`);
             throw new Error(
@@ -448,7 +518,7 @@ class BasePlatform extends PlatformInterface {
           const buttonRetryDelay = 500; // ms
 
           for (let attempt = 1; attempt <= maxButtonRetries; attempt++) {
-            submitButton = this.findSubmitButton();
+            submitButton = await this.findSubmitButton();
           if (submitButton) {
             this.logger.info(
               `[${this.platformId}] Found submit button on attempt ${attempt}.`

@@ -111,58 +111,59 @@ class ClaudePlatform extends BasePlatform {
 
   /**
    * Find Claude's submit button using more robust strategies.
-   * Checks for visibility and enabled state. Returns null if checks fail, allowing retry.
-   * @returns {HTMLElement|null} The submit button or null if not found/ready
+   * Checks for visibility, enabled state, and pointer-events. Returns null if checks fail, allowing retry.
+   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
    */
-  findSubmitButton() {
+  async findSubmitButton() {
     this.logger.info(
-      `[${this.platformId}] Attempting to find submit button using selector...`
+      `[${this.platformId}] Attempting to find and wait for Claude submit button readiness...`
     );
 
-    const selector = 'button[aria-label*="message" i] svg';
-    let buttonElement = null;
+    const buttonElement = await this._waitForElementState(
+      () => { // elementSelectorFn
+        const svgElement = document.querySelector('button[aria-label*="message" i] svg');
+        return svgElement ? svgElement.closest('button') : null;
+      },
+      async (el) => { // conditionFn
+        if (!el) return false;
+        const isEnabled = this._isButtonEnabled(el);
+        const isVisible = this._isVisibleElement(el);
+        const pointerEvents = window.getComputedStyle(el).pointerEvents;
+        const hasPointerEvents = pointerEvents !== 'none';
+        
+        let logMessage = `[${this.platformId}] Claude button check:`;
+        let allConditionsMet = true;
 
-    try {
-      const svgElement = document.querySelector(selector);
-      if (svgElement) {
-        buttonElement = svgElement.closest('button');
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during submit button search with selector (${selector}):`,
-        e
-      );
-      return null; // Return null on error
-    }
+        if (!isEnabled) {
+            logMessage += ' Not enabled.';
+            allConditionsMet = false;
+        }
+        if (!isVisible) {
+            logMessage += ' Not visible.';
+            allConditionsMet = false;
+        }
+        if (!hasPointerEvents) {
+            logMessage += ` pointer-events is '${pointerEvents}'.`;
+            allConditionsMet = false;
+        }
 
-    // Check if the button element itself was found
-    if (!buttonElement) {
-      // Log error only if the element wasn't found by the selector *on this attempt*
-      this.logger.error(
-        `[${this.platformId}] Submit button element not found using selector (${selector}) on this attempt.`
-      );
-      return null;
-    }
-
-    // If button element is found, perform checks
-    this.logger.info(
-      `[${this.platformId}] Found button element via selector. Performing visibility and enabled checks...`
+        if (!allConditionsMet) {
+            this.logger.debug(logMessage, el);
+        }
+        
+        return isEnabled && isVisible && hasPointerEvents;
+      },
+      5000, // timeoutMs
+      300,  // pollIntervalMs
+      'Claude submit button readiness'
     );
-    const isEnabled = this._isButtonEnabled(buttonElement);
-    const isVisible = this._isVisibleElement(buttonElement);
 
-    if (isEnabled && isVisible) {
-      this.logger.info(
-        `[${this.platformId}] Found valid (visible and enabled) submit button.`
-      );
-      return buttonElement; // Return the valid button
+    if (buttonElement) {
+      this.logger.info(`[${this.platformId}] Claude submit button found and ready.`);
+      return buttonElement;
     } else {
-      // Log detailed warning if checks fail, but still return null for retry mechanism
-      this.logger.warn(
-        `[${this.platformId}] Button element found, but failed checks: Visible=${isVisible}, Enabled=${isEnabled}. Returning null for retry.`,
-        { element: buttonElement }
-      );
-      return null; // IMPORTANT: Return null so platform-base retry logic continues
+      this.logger.warn(`[${this.platformId}] Claude submit button did not become ready within the timeout. This attempt will return null.`);
+      return null;
     }
   }
 
