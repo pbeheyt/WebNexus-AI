@@ -51,8 +51,6 @@ class GeminiPlatform extends BasePlatform {
         const isVisible = this._isVisibleElement(el);
         const pointerEvents = window.getComputedStyle(el).pointerEvents;
         const hasPointerEvents = pointerEvents !== 'none';
-        // Gemini's button might also have specific classes when active, e.g., not having 'disabled' related classes.
-        // For now, the general checks should suffice.
         return isEnabled && isVisible && hasPointerEvents;
       },
       5000, // timeoutMs

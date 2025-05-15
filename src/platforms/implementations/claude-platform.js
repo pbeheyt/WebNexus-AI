@@ -113,12 +113,11 @@ class ClaudePlatform extends BasePlatform {
       },
       async (el) => { // conditionFn
         if (!el) return false;
-        const isEnabled = this._isButtonEnabled(el); // Use the new BasePlatform helper
+        const isEnabled = this._isButtonEnabled(el);
         const isVisible = this._isVisibleElement(el);
         const pointerEvents = window.getComputedStyle(el).pointerEvents;
         const hasPointerEvents = pointerEvents !== 'none';
         
-        // Keep existing logging if desired, or simplify
         let logMessage = `[${this.platformId}] Claude button check:`;
         let allConditionsMet = true;
 

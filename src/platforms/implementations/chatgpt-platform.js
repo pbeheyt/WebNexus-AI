@@ -46,7 +46,6 @@ class ChatGptPlatform extends BasePlatform {
    * @returns {HTMLElement|null} The submit button or null if not found
    */
   findSubmitButton() {
-    // This method remains the same as the previous version, targeting the final button state
     this.logger.info(
       `[${this.platformId}] Attempting to find submit button (post-wait/text insertion)...`
     );
