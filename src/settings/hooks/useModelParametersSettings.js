@@ -34,6 +34,7 @@ export function useModelParametersSettings({
 
   const [isAnimatingReset, setIsAnimatingReset] = useState(false);
   const [isFormReady, setIsFormReady] = useState(false);
+const [isModeTransitioning, setIsModeTransitioning] = useState(false);
 
   useEffect(() => {
     setCurrentEditingMode('base');
@@ -110,6 +111,7 @@ export function useModelParametersSettings({
     setFormValues(initialFormValues);
     setOriginalValues({ ...initialFormValues });
     setIsFormReady(true);
+    setIsModeTransitioning(false); // Ensure this line is added here
   }, [selectedModelId, currentEditingMode, platform.apiConfig, platform.id, modelParametersForPlatform, derivedSettings]);
 
   useEffect(() => {
@@ -282,6 +284,7 @@ export function useModelParametersSettings({
   
   const toggleEditingMode = useCallback(() => {
     if (derivedSettings?.resolvedModelConfig?.thinking?.toggleable) {
+        setIsModeTransitioning(true); // Add this line
         setCurrentEditingMode(prev => prev === 'base' ? 'thinking' : 'base');
     }
   }, [derivedSettings]);
@@ -324,5 +327,6 @@ export function useModelParametersSettings({
     modelSupportsSystemPrompt,
     modelsFromPlatform,
     isFormReady,
+    isModeTransitioning,
   };
 }

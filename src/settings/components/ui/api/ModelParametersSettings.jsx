@@ -40,6 +40,7 @@ const ModelParametersSettings = ({
     isAtDefaults,
     modelsFromPlatform,
     isFormReady,
+    isModeTransitioning,
     showThinkingModeToggle,
     showTempSection,
     showTopPSection,
@@ -66,7 +67,7 @@ const ModelParametersSettings = ({
     return typeof price === 'number' ? price.toFixed(2) : price;
   };
 
-  if (!derivedSettings || !isFormReady) {
+  if (!derivedSettings || !isFormReady || isModeTransitioning) {
     return (
       <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-4'>
         <div className='flex items-center justify-center text-theme-secondary text-center py-10'>
