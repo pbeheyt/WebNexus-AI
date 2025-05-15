@@ -216,7 +216,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
 
     transcriptData.forEach((segment, index) => {
       const currentOffset = segment.offset / 1000; // Assuming offset is in milliseconds
-      const currentText = this.decodeDoubleEncodedEntities(segment.text.trim());
+      const currentText = this.decodeDoubleEncodedEntities(segment.text.trim()); // Use the new decoding function
       const currentTime = Math.floor(currentOffset);
 
       if (currentTime >= lastTimestampTime + config.timestampInterval) {
@@ -242,25 +242,41 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
+  /**
+   * Decodes HTML entities from a string using DOM parsing.
+   * Handles various encodings, including double-encoded entities like &#39;.
+   * @param {string} text - The text containing HTML entities.
+   * @returns {string} The decoded text.
+   */
+  /**
+   * Decodes HTML entities from a string using DOM parsing.
+   * Handles various encodings, including double-encoded entities like &#39;.
+   * @param {string} text - The text containing HTML entities.
+   * @returns {string} The decoded text.
+   */
   decodeDoubleEncodedEntities(text) {
-    if (!text) return '';
-    let decoded = text.replace(/&/g, '&');
-    const entities = {
-      '&#39;': "'",
-      '&quot;': '"',
-      '&lt;': '<',
-      '&gt;': '>',
-      '&nbsp;': ' ',
-      '&#34;': '"',
-      '&#60;': '<',
-      '&#62;': '>',
-      '&#160;': ' ',
-    };
-    for (const [entity, char] of Object.entries(entities)) {
-      decoded = decoded.replace(new RegExp(entity, 'g'), char);
+    if (typeof text !== 'string' || !text) {
+      // Return null or undefined as is, convert other non-string falsy values to empty string
+      return text === null || typeof text === 'undefined' ? text : '';
     }
-    decoded = decoded.replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec));
-    return decoded;
+    try {
+      // Using a div and textContent is often more robust for full decoding
+      const decoderElement = document.createElement('div');
+      decoderElement.innerHTML = text;
+      let decodedText = decoderElement.textContent || decoderElement.innerText || "";
+
+      // If after one pass, we still have `&`, it implies deeper encoding.
+      // This is a simple way to handle one extra layer of `&` encoding.
+      if (decodedText.includes('&')) {
+          decoderElement.innerHTML = decodedText; // Put the partially decoded text back
+          decodedText = decoderElement.textContent || decoderElement.innerText || "";
+      }
+      return decodedText;
+
+    } catch (e) {
+      this.logger.error('Error decoding HTML entities:', e);
+      return text; // Fallback to original text if decoding fails
+    }
   }
 }
 
