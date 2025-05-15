@@ -11,7 +11,7 @@ WebNexus AI connects you to Gemini, ChatGPT, Claude, DeepSeek, Grok, and Mistral
             *   **Context Menu (`Right-Click`):** Choose "Process in Web UI...".
             *   **Keyboard Shortcut (`Alt+Q`):** Instantly process the page.
 
-2.  **Side Panel (Direct API Interaction):**
+2.  **Side Panel (Direct API Interaction):**run away turn away
     *   Chat directly with specific AI models via their API for analysis.
     *   Requires configuring your API keys in `Settings > API Settings`.
     *   Maintains conversation history per tab.

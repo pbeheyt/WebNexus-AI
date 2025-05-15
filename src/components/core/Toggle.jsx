@@ -21,7 +21,7 @@ export function Toggle({
   return (
     <button
       type='button'
-      className={`relative inline-block border-none bg-transparent p-0 ${className}`}
+      className={`relative inline-block border-none bg-transparent select-none p-0 ${className}`}
       onClick={
         disabled
           ? undefined
