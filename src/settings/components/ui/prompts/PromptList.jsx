@@ -1,5 +1,5 @@
 // src/settings/components/ui/prompts/PromptList.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
@@ -7,6 +7,7 @@ import { useNotification } from '../../../../components';
 import { STORAGE_KEYS } from '../../../../shared/constants';
 import { ContentTypeIcon } from '../../../../components/layout/ContentTypeIcon';
 import { CustomSelect } from '../../../../components/core/CustomSelect';
+import SettingsCard from '../../ui/common/SettingsCard';
 
 const PromptList = ({
   filterValue,
@@ -19,27 +20,24 @@ const PromptList = ({
   const [prompts, setPrompts] = useState([]);
   const [filteredPrompts, setFilteredPrompts] = useState([]);
   const [defaultPromptIds, setDefaultPromptIds] = useState({});
+  
+  const promptListRef = useRef(null);
+  const [promptListHasScrollbar, setPromptListHasScrollbar] = useState(false);
 
-  // Load prompts and default settings when component mounts or dependencies change
+  // Load prompts and default settings
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch custom prompts which now contain default IDs
         const result = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
         const customPromptsByType = result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-        
-        // Process prompts and extract default IDs
         const uniquePromptsMap = new Map();
         const newDefaultPromptIds = {};
         
         Object.entries(customPromptsByType).forEach(([type, promptsInTypeObject]) => {
           if (promptsInTypeObject && typeof promptsInTypeObject === 'object') {
-            // Extract default prompt ID for this type if it exists
             if (promptsInTypeObject['_defaultPromptId_']) {
               newDefaultPromptIds[type] = promptsInTypeObject['_defaultPromptId_'];
             }
-            
-            // Process actual prompts (excluding _defaultPromptId_)
             Object.entries(promptsInTypeObject).forEach(([id, promptObjectValue]) => {
               if (id !== '_defaultPromptId_') {
                 uniquePromptsMap.set(id, {
@@ -54,11 +52,7 @@ const PromptList = ({
         });
         
         const allPrompts = Array.from(uniquePromptsMap.values());
-        allPrompts.sort(
-          (a, b) =>
-            new Date(b.prompt.updatedAt || 0) -
-            new Date(a.prompt.updatedAt || 0)
-        );
+        allPrompts.sort((a, b) => new Date(b.prompt.updatedAt || 0) - new Date(a.prompt.updatedAt || 0));
         setPrompts(allPrompts);
         setDefaultPromptIds(newDefaultPromptIds);
       } catch (err) {
@@ -67,34 +61,39 @@ const PromptList = ({
       }
     };
     loadData();
-  }, [contentTypeLabels, error]); // Dependency on contentTypeLabels prop
+  }, [contentTypeLabels, error]);
 
-  // Filter prompts based on the filterValue prop from the parent
+  // Filter prompts
   useEffect(() => {
     if (filterValue === 'all') {
       setFilteredPrompts(prompts);
     } else {
-      setFilteredPrompts(
-        prompts.filter((item) => item.contentType === filterValue)
-      );
+      setFilteredPrompts(prompts.filter((item) => item.contentType === filterValue));
     }
   }, [filterValue, prompts]);
 
-  // Effect to listen for changes in custom prompts storage
+  // Check for scrollbar on prompt list when filteredPrompts changes
+  useEffect(() => {
+    if (promptListRef.current) {
+      const hasScrollbar = promptListRef.current.scrollHeight > promptListRef.current.clientHeight;
+      setPromptListHasScrollbar(hasScrollbar);
+    } else {
+      setPromptListHasScrollbar(false);
+    }
+  }, [filteredPrompts]);
+
+  // Listen for storage changes
   useEffect(() => {
     const handleStorageChange = (changes, area) => {
       if (area === 'local' && changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS]) {
         logger.settings.info('Custom prompts changed, extracting new defaults...');
         const newCustomPrompts = changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS].newValue || {};
         const newDefaultIds = {};
-        
-        // Extract default prompt IDs from the new structure
         Object.entries(newCustomPrompts).forEach(([type, typeData]) => {
           if (typeData && typeData['_defaultPromptId_']) {
             newDefaultIds[type] = typeData['_defaultPromptId_'];
           }
         });
-        
         setDefaultPromptIds(newDefaultIds);
       }
     };
@@ -102,16 +101,13 @@ const PromptList = ({
     if (chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener(handleStorageChange);
     }
-
-    // Cleanup listener on component unmount
     return () => {
       if (chrome.storage && chrome.storage.onChanged) {
         chrome.storage.onChanged.removeListener(handleStorageChange);
       }
     };
-  }, []); // Empty dependency array ensures this runs once on mount and cleans up on unmount
+  }, []);
 
-  // Format options for the CustomSelect component
   const filterOptions = useMemo(
     () => [
       ...Object.entries(contentTypeLabels).map(([type, label]) => ({
@@ -120,22 +116,30 @@ const PromptList = ({
       })),
     ],
     [contentTypeLabels]
-  ); // Dependency on contentTypeLabels prop
+  );
+
+  // Dynamically set the className for the prompt-list div
+  const promptListClasses = `prompt-list max-h-[550px] overflow-y-auto ${promptListHasScrollbar ? 'pr-3' : ''}`;
 
   return (
     <>
-      <div className='form-group mb-4'>
-        <CustomSelect
-          options={filterOptions}
-          selectedValue={filterValue}
-          onChange={onFilterChange}
-          placeholder='Filter by Content Type'
-          buttonClassName='bg-white'
-        />
-      </div>
+      <SettingsCard className="mb-4"> 
+          <h3 className='text-base font-semibold text-theme-primary mb-3'>
+            Content Type Selection
+          </h3>
+          <CustomSelect
+            options={filterOptions}
+            selectedValue={filterValue}
+            onChange={onFilterChange}
+            placeholder='Filter by Content Type'
+          />
+      </SettingsCard>
 
       {filteredPrompts.length === 0 ? (
-        <div className='empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme'>
+        <div 
+          ref={promptListRef} // Ref for scrollbar check even when empty
+          className={`empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme ${promptListHasScrollbar ? 'pr-3' : ''}`}
+        >
           <p className='text-sm'>
             No prompts available
             {filterValue !== 'all'
@@ -145,7 +149,10 @@ const PromptList = ({
           </p>
         </div>
       ) : (
-        <div className='prompt-list max-h-[550px] overflow-y-auto pr-3'>
+        <div 
+          ref={promptListRef}
+          className={promptListClasses} // Apply dynamic classes here
+        >
           {filteredPrompts.map((item) => (
             <button
               type='button'
