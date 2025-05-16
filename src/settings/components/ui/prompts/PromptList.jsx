@@ -124,7 +124,7 @@ const PromptList = ({
   return (
     <>
       <SettingsCard className="mb-4"> 
-          <h3 className='text-base font-semibold text-theme-primary mb-3'>
+          <h3 className='text-base font-semibold text-theme-primary mb-4'>
             Content Type Selection
           </h3>
           <CustomSelect
