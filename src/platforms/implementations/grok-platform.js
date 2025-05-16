@@ -10,11 +10,7 @@ class GrokPlatform extends BasePlatform {
   }
 
   isCurrentPlatform() {
-    // Grok might be at x.com/i/grok or grok.x.com or grok.com
-    // For now, let's assume grok.com or a path on x.com
-    const hostname = window.location.hostname;
-    const pathname = window.location.pathname;
-    return hostname.includes('grok.com') || (hostname.includes('x.com') && pathname.includes('/grok'));
+    return window.location.href.includes('grok.com');
   }
 
   /**
