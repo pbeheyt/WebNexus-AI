@@ -56,8 +56,6 @@ export function getDerivedModelSettings({
         thinkingConfig.maxOutput !== undefined
           ? thinkingConfig.maxOutput
           : resolvedModelConfig.tokens.maxOutput;
-    // contextWindow is typically not overridden by thinking mode, but can be if needed:
-    // resolvedModelConfig.tokens.contextWindow = thinkingConfig.contextWindow ?? resolvedModelConfig.tokens.contextWindow;
 
     resolvedModelConfig.capabilities.supportsTemperature =
         thinkingConfig.supportsTemperature !== undefined
@@ -111,7 +109,7 @@ export function getDerivedModelSettings({
   // --- Derive Parameter Specs (for sliders, inputs) ---
   const parameterSpecs = {
     maxTokens: {
-      min: 1, // Or a more sensible minimum like 16, or from config if available
+      min: 1,
       max: resolvedModelConfig.tokens.maxOutput,
       step: 1,
       parameterName: resolvedModelConfig.tokens.parameterName,
@@ -141,12 +139,25 @@ export function getDerivedModelSettings({
     } : null,
   };
 
+  // --- Calculate Effective Visibility for Temp and TopP sections ---
+  const modelSupportsTemp = resolvedModelConfig.capabilities?.supportsTemperature !== false ?? true;
+  const modelSupportsTopP = resolvedModelConfig.capabilities?.supportsTopP === true ?? false;
+
+  const thinkingOverridesTemp = (editingMode === 'thinking') && (resolvedModelConfig.thinking?.supportsTemperature === false);
+  const thinkingOverridesTopP = (editingMode === 'thinking') && (resolvedModelConfig.thinking?.supportsTopP === false);
+  
+  const effectiveShowTempSection = modelSupportsTemp && !thinkingOverridesTemp;
+  const effectiveShowTopPSection = modelSupportsTopP && !thinkingOverridesTopP;
+
+
   return {
     resolvedModelConfig, // The model config after applying mode-specific overrides
     defaultSettings,     // Default values for form fields (config-derived, not user-saved)
     displaySpecs,        // Specs for UI display (pricing, context window)
     parameterSpecs,      // Constraints for form inputs (min/max/step)
     capabilities: resolvedModelConfig.capabilities, // Effective capabilities for the current model/mode
+    effectiveShowTempSection, // Centralized visibility flag for Temperature section
+    effectiveShowTopPSection,   // Centralized visibility flag for Top P section
   };
 }
 

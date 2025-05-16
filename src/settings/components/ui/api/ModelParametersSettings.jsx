@@ -42,8 +42,8 @@ const ModelParametersSettings = ({
     modelsFromPlatform,
     isFormReady,
     showThinkingModeToggle,
-    showTempSection,
-    showTopPSection,
+    effectiveShowTempSection, // Use the derived flag
+    effectiveShowTopPSection,  // Use the derived flag
     showBudgetSlider,
     showReasoningEffort,
     modelSupportsSystemPrompt,
@@ -215,7 +215,7 @@ const ModelParametersSettings = ({
         </SettingsCard>
         )}
 
-        {showTempSection && parameterSpecs.temperature && (
+        {effectiveShowTempSection && parameterSpecs.temperature && (
           <SettingsCard className='mb-4'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-primary mr-3'>
@@ -249,7 +249,7 @@ const ModelParametersSettings = ({
         </SettingsCard>
         )}
 
-        {showTopPSection && parameterSpecs.topP && (
+        {effectiveShowTopPSection && parameterSpecs.topP && (
           <SettingsCard className='mb-4'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-primary mr-3'>
@@ -280,7 +280,7 @@ const ModelParametersSettings = ({
                 className='form-group mt-2'
               />
             )}
-            {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
+            {effectiveShowTempSection && effectiveShowTopPSection && formValues.includeTemperature && formValues.includeTopP && (
                 <p className='text-amber-600 text-xs mt-3'>
                   It is generally recommended to alter Temperature or Top P, but not both.
                 </p>

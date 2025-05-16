@@ -300,16 +300,10 @@ export function useModelParametersSettings({
 
   const showThinkingModeToggle = derivedSettings?.resolvedModelConfig?.thinking?.toggleable ?? false;
   const isThinkingModeActive = currentEditingMode === 'thinking';
-
-  const modelSupportsTemp = derivedSettings?.capabilities?.supportsTemperature !== false ?? true;
-  const modelSupportsTopP = derivedSettings?.capabilities?.supportsTopP === true ?? false;
   const modelSupportsSystemPrompt = (derivedSettings?.capabilities?.supportsSystemPrompt !== false && platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false) ?? true;
-
-  const thinkingOverridesTemp = isThinkingModeActive && (derivedSettings?.resolvedModelConfig?.thinking?.supportsTemperature === false);
-  const thinkingOverridesTopP = isThinkingModeActive && (derivedSettings?.resolvedModelConfig?.thinking?.supportsTopP === false);
   
-  const showTempSection = modelSupportsTemp && !thinkingOverridesTemp;
-  const showTopPSection = modelSupportsTopP && !thinkingOverridesTopP;
+  const effectiveShowTempSection = derivedSettings?.effectiveShowTempSection ?? false;
+  const effectiveShowTopPSection = derivedSettings?.effectiveShowTopPSection ?? false;
   
   const showBudgetSlider = derivedSettings?.parameterSpecs?.thinkingBudget && derivedSettings?.resolvedModelConfig?.thinking?.available === true && (isThinkingModeActive || !derivedSettings?.resolvedModelConfig?.thinking?.toggleable);
   const showReasoningEffort = derivedSettings?.parameterSpecs?.reasoningEffort && derivedSettings?.resolvedModelConfig?.thinking?.available === true && (isThinkingModeActive || !derivedSettings?.resolvedModelConfig?.thinking?.toggleable);
@@ -329,8 +323,8 @@ export function useModelParametersSettings({
     isAtDefaults,
     showThinkingModeToggle,
     isThinkingModeActive,
-    showTempSection,
-    showTopPSection,
+    effectiveShowTempSection,
+    effectiveShowTopPSection,
     showBudgetSlider,
     showReasoningEffort,
     modelSupportsSystemPrompt,
