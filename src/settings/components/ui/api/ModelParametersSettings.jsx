@@ -42,11 +42,13 @@ const ModelParametersSettings = ({
     modelsFromPlatform,
     isFormReady,
     showThinkingModeToggle,
-    effectiveShowTempSection, // Use the derived flag
-    effectiveShowTopPSection,  // Use the derived flag
+    // isThinkingModeActive, // Not directly used for rendering logic here, but available
+    showTempSection,
+    showTopPSection,
     showBudgetSlider,
     showReasoningEffort,
     modelSupportsSystemPrompt,
+    isTransitioningMode, // Added from hook
   } = useModelParametersSettings({
     platform,
     selectedModelId,
@@ -104,7 +106,7 @@ const ModelParametersSettings = ({
                 selectedValue={selectedModelId}
                 onChange={handleModelChange}
                 placeholder='Select Model'
-                disabled={modelsFromPlatform.length === 0 || isSaving || isResetting}
+                disabled={modelsFromPlatform.length === 0 || isSaving || isResetting || isTransitioningMode}
               />
             </div>
           </div>
@@ -116,7 +118,7 @@ const ModelParametersSettings = ({
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             onClick={handleResetClick}
             isLoading={isResetting}
-            disabled={isAtDefaults || isResetting || isSaving}
+            disabled={isAtDefaults || isResetting || isSaving || isTransitioningMode}
             ariaLabel='Reset model parameters to defaults'
             title='Reset model parameters to configuration defaults'
           />
@@ -124,8 +126,8 @@ const ModelParametersSettings = ({
             type="button"
             onClick={handleSubmit}
             isLoading={isSaving}
-            disabled={isSaving || isResetting || !hasChanges}
-            variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
+            disabled={isSaving || isResetting || !hasChanges || isTransitioningMode}
+            variant={!hasChanges || isResetting || isTransitioningMode ? 'inactive' : 'primary'}
             className='px-5 py-2 select-none'
           >
             {isSaving ? 'Saving...' : 'Save Settings'}
@@ -143,7 +145,7 @@ const ModelParametersSettings = ({
               id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
               checked={currentEditingMode === 'thinking'}
               onChange={toggleEditingMode}
-              disabled={isSaving || isResetting}
+              disabled={isSaving || isResetting || isTransitioningMode}
             />
           </div>
         </div>
@@ -209,13 +211,13 @@ const ModelParametersSettings = ({
               min={parameterSpecs.maxTokens.min}
               max={parameterSpecs.maxTokens.max}
               step={parameterSpecs.maxTokens.step}
-              disabled={isSaving || isResetting}
+              disabled={isSaving || isResetting || isTransitioningMode}
               className='form-group'
             />
         </SettingsCard>
         )}
 
-        {effectiveShowTempSection && parameterSpecs.temperature && (
+        {showTempSection && parameterSpecs.temperature && (
           <SettingsCard className='mb-4'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-primary mr-3'>
@@ -226,7 +228,7 @@ const ModelParametersSettings = ({
                 onChange={(newCheckedState) =>
                   handleChange('includeTemperature', newCheckedState)
                 }
-                disabled={isSaving || isResetting}
+                disabled={isSaving || isResetting || isTransitioningMode}
                 id={`${platform.id}-${selectedModelId}-include-temperature`}
               />
             </div>
@@ -242,14 +244,14 @@ const ModelParametersSettings = ({
                 min={parameterSpecs.temperature.min}
                 max={parameterSpecs.temperature.max}
                 step={parameterSpecs.temperature.step}
-                disabled={isSaving || isResetting}
+                disabled={isSaving || isResetting || isTransitioningMode}
                 className='form-group mt-2'
               />
             )}
         </SettingsCard>
         )}
 
-        {effectiveShowTopPSection && parameterSpecs.topP && (
+        {showTopPSection && parameterSpecs.topP && (
           <SettingsCard className='mb-4'>
             <div className='mb-3 flex items-center'>
               <span className='text-base font-semibold text-theme-primary mr-3'>
@@ -260,7 +262,7 @@ const ModelParametersSettings = ({
                 onChange={(newCheckedState) =>
                   handleChange('includeTopP', newCheckedState)
                 }
-                disabled={isSaving || isResetting}
+                disabled={isSaving || isResetting || isTransitioningMode}
                 id={`${platform.id}-${selectedModelId}-include-topp`}
               />
             </div>
@@ -276,11 +278,11 @@ const ModelParametersSettings = ({
                 min={parameterSpecs.topP.min}
                 max={parameterSpecs.topP.max}
                 step={parameterSpecs.topP.step}
-                disabled={isSaving || isResetting}
+                disabled={isSaving || isResetting || isTransitioningMode}
                 className='form-group mt-2'
               />
             )}
-            {effectiveShowTempSection && effectiveShowTopPSection && formValues.includeTemperature && formValues.includeTopP && (
+            {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
                 <p className='text-amber-600 text-xs mt-3'>
                   It is generally recommended to alter Temperature or Top P, but not both.
                 </p>
@@ -303,7 +305,7 @@ const ModelParametersSettings = ({
               min={parameterSpecs.thinkingBudget.min}
               max={parameterSpecs.thinkingBudget.max}
               step={parameterSpecs.thinkingBudget.step}
-              disabled={isSaving || isResetting}
+              disabled={isSaving || isResetting || isTransitioningMode}
               className='form-group mt-2'
             />
         </SettingsCard>
@@ -324,7 +326,7 @@ const ModelParametersSettings = ({
                 selectedValue={formValues.reasoningEffort ?? parameterSpecs.reasoningEffort.default}
                 onChange={(selectedValue) => handleChange('reasoningEffort', selectedValue)}
                 placeholder='Select Effort Level'
-                disabled={isSaving || isResetting}
+                disabled={isSaving || isResetting || isTransitioningMode}
               />
             </div>
         </SettingsCard>
@@ -349,7 +351,7 @@ const ModelParametersSettings = ({
               value={formValues.systemPrompt ?? ''}
               onChange={(e) => handleChange('systemPrompt', e.target.value)}
               maxLength={parameterSpecs.systemPrompt.maxLength}
-              disabled={isSaving || isResetting}
+              disabled={isSaving || isResetting || isTransitioningMode}
             />
         </SettingsCard>
         )}
