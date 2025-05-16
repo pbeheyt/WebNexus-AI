@@ -31,7 +31,7 @@ export function SubTabLayout({
             className={`sub-tab-btn relative py-2 px-4 text-base cursor-pointer bg-transparent border-none transition-colors select-none
               ${
                 activeTabId === tab.id
-                  ? 'text-primary font-medium after:content-[""] after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-primary'
+                  ? 'text-primary font-semibold after:content-[""] after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-primary'
                   : 'text-theme-secondary hover:text-theme-primary'
               }
             `}

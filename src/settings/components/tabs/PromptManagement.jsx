@@ -105,9 +105,9 @@ const PromptManagement = () => {
       {/* Master Panel */}
       <div className='master-panel w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-theme pb-3 md:pb-0 md:pr-5'>
         <div className='master-header flex justify-between items-center'>
-          <h2 className='type-heading text-lg font-medium'>Prompts</h2>
+          <h2 className='type-heading text-lg font-semibold'>Prompts</h2>
           <button
-            className='new-prompt-btn bg-primary text-white px-3 py-1 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1 text-sm font-medium select-none'
+            className='new-prompt-btn bg-primary text-white px-3 py-1 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1 text-sm font-semibold select-none'
             onClick={handleNewPrompt}
           >
             + New

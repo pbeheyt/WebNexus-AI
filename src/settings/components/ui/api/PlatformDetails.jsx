@@ -143,7 +143,7 @@ const PlatformDetails = ({
           </div>
         )}
         <div className='platform-header-info min-w-0'>
-          <h3 className='platform-title text-xl font-medium mb-2 text-theme-primary truncate'>
+          <h3 className='platform-title text-xl font-semibold mb-2 text-theme-primary truncate'>
             {platform.name}
           </h3>
           <div className='platform-actions flex flex-wrap gap-x-3 gap-y-1'>

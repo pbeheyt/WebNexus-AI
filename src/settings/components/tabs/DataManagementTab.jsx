@@ -177,7 +177,7 @@ const DataManagementTab = () => {
   
   return (
     <div>
-      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium'>
+      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-semibold'>
         Data Management
       </h2>
       <p className='section-description text-sm text-theme-secondary mb-6'>

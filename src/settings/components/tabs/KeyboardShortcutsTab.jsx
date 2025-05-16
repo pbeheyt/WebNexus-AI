@@ -165,7 +165,7 @@ export function KeyboardShortcutsTab() {
 
   return (
     <>
-      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-medium'>
+      <h2 className='type-heading mb-4 pb-3 border-b border-theme text-lg font-semibold'>
         Keyboard Shortcuts
       </h2>
       <p className='section-description text-sm text-theme-secondary mb-6'>

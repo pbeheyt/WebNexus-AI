@@ -137,7 +137,7 @@ const ModelParametersSettings = ({
       {showThinkingModeToggle && (
         <div className="mt-4">
           <div className='flex items-center gap-3'>
-            <span className='text-sm font-medium text-theme-secondary'>
+            <span className='text-sm font-semibold text-theme-secondary'>
               Thinking Mode
             </span>
             <Toggle
@@ -155,7 +155,7 @@ const ModelParametersSettings = ({
         </h4>
         <div className='specs-info space-y-2.5'>
           <div className='spec-item flex justify-between text-sm'>
-            <span className='spec-label font-medium text-theme-secondary'>
+            <span className='spec-label font-semibold text-theme-secondary'>
               Context window
             </span>
             <span className='spec-value font-mono text-theme-primary'>
@@ -164,7 +164,7 @@ const ModelParametersSettings = ({
           </div>
           {displaySpecs.inputPrice !== undefined && (
             <div className='spec-item flex justify-between text-sm'>
-              <span className='spec-label font-medium text-theme-secondary'>
+              <span className='spec-label font-semibold text-theme-secondary'>
                 Input tokens
               </span>
               <span className='spec-value font-mono text-theme-primary'>
@@ -176,7 +176,7 @@ const ModelParametersSettings = ({
           )}
           {displaySpecs.outputPrice !== undefined && (
             <div className='spec-item flex justify-between text-sm'>
-              <span className='spec-label font-medium text-theme-secondary'>
+              <span className='spec-label font-semibold text-theme-secondary'>
                 Output tokens
               </span>
               <span className='spec-value font-mono text-theme-primary'>

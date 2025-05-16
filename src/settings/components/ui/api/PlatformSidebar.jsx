@@ -12,7 +12,7 @@ const PlatformSidebar = ({
 }) => {
   return (
     <div className='platform-sidebar flex-none border-r border-theme pr-5'>
-      <h3 className='text-lg font-medium mb-4 text-theme-primary'>
+      <h3 className='text-lg font-semibold mb-4 text-theme-primary'>
         AI Platforms
       </h3>
 
