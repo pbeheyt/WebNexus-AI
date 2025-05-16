@@ -119,7 +119,7 @@ const PromptList = ({
   );
 
   // Dynamically set the className for the prompt-list div
-  const promptListClasses = `prompt-list max-h-[550px] overflow-y-auto ${promptListHasScrollbar ? 'pr-3' : ''}`;
+  const promptListClasses = `prompt-list max-h-[550px] overflow-y-auto ${promptListHasScrollbar ? 'pr-4' : ''}`;
 
   return (
     <>
@@ -140,7 +140,7 @@ const PromptList = ({
       {filteredPrompts.length === 0 ? (
         <div 
           ref={promptListRef} // Ref for scrollbar check even when empty
-          className={`empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme ${promptListHasScrollbar ? 'pr-3' : ''}`}
+          className={`empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme ${promptListHasScrollbar ? 'pr-4' : ''}`}
         >
           <p className='text-sm'>
             No prompts available
