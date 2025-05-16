@@ -1,5 +1,5 @@
 // src/settings/hooks/useModelParametersSettings.js
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import { logger } from '../../shared/logger';
 import {
@@ -21,23 +21,44 @@ export function useModelParametersSettings({
   onReady,
 }) {
   const { error: showNotificationError } = useNotification();
+
+  // Core state
   const [currentEditingMode, setCurrentEditingMode] = useState('base');
   const [formValues, setFormValues] = useState({});
-  const [originalValues, setOriginalValues] = useState({});
+  const [originalValues, setOriginalValues] = useState({}); // For change detection
+  const [derivedSettings, setDerivedSettings] = useState(null); // Holds all calculated specs
+
+  // UI interaction state
   const [hasChanges, setHasChanges] = useState(false);
   const [isAtDefaults, setIsAtDefaults] = useState(true);
+  const [isFormReady, setIsFormReady] = useState(false); // Overall readiness for display
 
+  // Action loading states
   const [isSavingActual, setIsSavingActual] = useState(false);
   const [isResettingActual, setIsResettingActual] = useState(false);
-
   const shouldShowSaving = useMinimumLoadingTime(isSavingActual);
   const shouldShowResetting = useMinimumLoadingTime(isResettingActual);
-
   const [isAnimatingReset, setIsAnimatingReset] = useState(false);
-  const [isFormReady, setIsFormReady] = useState(false);
+
+  // Mode transition specific state
+  const [isTransitioningMode, setIsTransitioningMode] = useState(false);
+  const [pendingMode, setPendingMode] = useState(null);
+  const [pendingDerivedSettings, setPendingDerivedSettings] = useState(null);
+  const [pendingFormValues, setPendingFormValues] = useState(null);
+  const isMounted = useRef(false); // To prevent premature onReady calls during initial mount
 
   useEffect(() => {
-    setCurrentEditingMode('base');
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Reset editing mode when model changes
+  useEffect(() => {
+    if (isMounted.current) { // Only reset if mounted and not during initial setup
+      setCurrentEditingMode('base');
+    }
   }, [selectedModelId]);
 
   const modelsFromPlatform = useMemo(
@@ -45,49 +66,30 @@ export function useModelParametersSettings({
     [platform.apiConfig?.models]
   );
 
-  const derivedSettings = useMemo(() => {
-    if (!selectedModelId || !modelsFromPlatform.find(m => m.id === selectedModelId)) {
-        const firstModelId = modelsFromPlatform.length > 0 ? modelsFromPlatform[0].id : null;
-        if (!firstModelId) {
-            logger.settings.warn(`useModelParametersSettings: No valid model found for platform ${platform.id}. Cannot derive settings.`);
-            return null;
-        }
-        logger.settings.info(`useModelParametersSettings: selectedModelId '${selectedModelId}' invalid or not found, attempting to use first model '${firstModelId}' for derivation for platform ${platform.id}.`);
-         return getDerivedModelSettings({
-           platformApiConfig: platform.apiConfig,
-           modelId: firstModelId,
-           editingMode: currentEditingMode,
-           modelsFromPlatform,
-         });
-    }
-    return getDerivedModelSettings({
+  // Effect for initial load and model/platform changes (NOT mode toggles)
+  useEffect(() => {
+    if (isTransitioningMode) return; // Skip if a mode transition is active
+
+    setIsFormReady(false);
+    logger.settings.debug(`useMPS: Initial load/model change for ${selectedModelId}. isTransitioningMode: ${isTransitioningMode}`);
+
+    const newDerivedSettings = getDerivedModelSettings({
       platformApiConfig: platform.apiConfig,
       modelId: selectedModelId,
-      editingMode: currentEditingMode,
+      editingMode: currentEditingMode, // Use currentEditingMode here
       modelsFromPlatform,
     });
-  }, [
-    platform.apiConfig,
-    platform.id,
-    selectedModelId,
-    currentEditingMode,
-    modelsFromPlatform,
-  ]);
+    setDerivedSettings(newDerivedSettings);
 
-  useEffect(() => {
-    setIsFormReady(false);
-    if (!derivedSettings || !selectedModelId) {
+    if (!newDerivedSettings || !selectedModelId) {
       setFormValues({});
       setOriginalValues({});
       setIsFormReady(true);
-      // Call onReady if it's a function, even if derivedSettings is null, to signal readiness (or lack thereof)
-      if (typeof onReady === 'function') {
-        onReady();
-      }
+      if (typeof onReady === 'function' && isMounted.current) onReady();
       return;
     }
 
-    const { defaultSettings: configDefaults } = derivedSettings;
+    const { defaultSettings: configDefaults } = newDerivedSettings;
     let userStoredSettingsForModelMode = {};
     if (modelParametersForPlatform?.models?.[selectedModelId]?.[currentEditingMode]) {
       userStoredSettingsForModelMode = modelParametersForPlatform.models[selectedModelId][currentEditingMode];
@@ -103,29 +105,97 @@ export function useModelParametersSettings({
       thinkingBudget: userStoredSettingsForModelMode.thinkingBudget ?? configDefaults.thinkingBudget,
       reasoningEffort: userStoredSettingsForModelMode.reasoningEffort ?? configDefaults.reasoningEffort,
     };
-    
+
     Object.keys(initialFormValues).forEach(key => {
-        if (initialFormValues[key] === undefined && !(key in configDefaults)) {
-            if ((key === 'maxTokens' || key === 'thinkingBudget') && initialFormValues[key] == null) initialFormValues[key] = derivedSettings.parameterSpecs?.[key]?.min ?? 0;
-            if ((key === 'temperature' || key === 'topP') && initialFormValues[key] == null) initialFormValues[key] = derivedSettings.parameterSpecs?.[key]?.min ?? 0;
-            if (key === 'systemPrompt' && initialFormValues[key] == null) initialFormValues[key] = '';
-        }
+      if (initialFormValues[key] === undefined && !(key in configDefaults)) {
+        if ((key === 'maxTokens' || key === 'thinkingBudget') && initialFormValues[key] == null) initialFormValues[key] = newDerivedSettings.parameterSpecs?.[key]?.min ?? 0;
+        if ((key === 'temperature' || key === 'topP') && initialFormValues[key] == null) initialFormValues[key] = newDerivedSettings.parameterSpecs?.[key]?.min ?? 0;
+        if (key === 'systemPrompt' && initialFormValues[key] == null) initialFormValues[key] = '';
+      }
     });
 
     setFormValues(initialFormValues);
     setOriginalValues({ ...initialFormValues });
     setIsFormReady(true);
 
-    // Call onReady only when isFormReady becomes true, onReady is a valid function,
-    // and initialFormValues are actually set (meaning derivedSettings was valid and processed).
-    if (initialFormValues && Object.keys(initialFormValues).length > 0 && typeof onReady === 'function') {
+    if (typeof onReady === 'function' && isMounted.current && Object.keys(initialFormValues).length > 0) {
       onReady();
     }
-  }, [selectedModelId, currentEditingMode, platform.apiConfig, platform.id, modelParametersForPlatform, derivedSettings, onReady]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedModelId, platform.apiConfig, modelParametersForPlatform, modelsFromPlatform]); // currentEditingMode removed to prevent re-triggering by mode toggle finalization
 
 
+  // Effect to recalculate derived settings and form values when pendingMode changes
   useEffect(() => {
-    if (!derivedSettings) {
+    if (isTransitioningMode && pendingMode) {
+      logger.settings.debug(`useMPS: Recalculating for pendingMode: ${pendingMode}`);
+      const newPendingDerivedSettings = getDerivedModelSettings({
+        platformApiConfig: platform.apiConfig,
+        modelId: selectedModelId,
+        editingMode: pendingMode,
+        modelsFromPlatform,
+      });
+      setPendingDerivedSettings(newPendingDerivedSettings);
+
+      if (!newPendingDerivedSettings) {
+        setPendingFormValues({}); // Or handle error appropriately
+        return;
+      }
+
+      const { defaultSettings: configDefaults } = newPendingDerivedSettings;
+      let userStoredSettingsForModelMode = {};
+      if (modelParametersForPlatform?.models?.[selectedModelId]?.[pendingMode]) {
+        userStoredSettingsForModelMode = modelParametersForPlatform.models[selectedModelId][pendingMode];
+      }
+
+      const newPendingFormVals = {
+        maxTokens: userStoredSettingsForModelMode.maxTokens ?? configDefaults.maxTokens,
+        temperature: userStoredSettingsForModelMode.temperature ?? configDefaults.temperature,
+        topP: userStoredSettingsForModelMode.topP ?? configDefaults.topP,
+        systemPrompt: userStoredSettingsForModelMode.systemPrompt ?? configDefaults.systemPrompt,
+        includeTemperature: userStoredSettingsForModelMode.includeTemperature ?? configDefaults.includeTemperature,
+        includeTopP: userStoredSettingsForModelMode.includeTopP ?? configDefaults.includeTopP,
+        thinkingBudget: userStoredSettingsForModelMode.thinkingBudget ?? configDefaults.thinkingBudget,
+        reasoningEffort: userStoredSettingsForModelMode.reasoningEffort ?? configDefaults.reasoningEffort,
+      };
+      Object.keys(newPendingFormVals).forEach(key => {
+        if (newPendingFormVals[key] === undefined && !(key in configDefaults)) {
+            if ((key === 'maxTokens' || key === 'thinkingBudget') && newPendingFormVals[key] == null) newPendingFormVals[key] = newPendingDerivedSettings.parameterSpecs?.[key]?.min ?? 0;
+            if ((key === 'temperature' || key === 'topP') && newPendingFormVals[key] == null) newPendingFormVals[key] = newPendingDerivedSettings.parameterSpecs?.[key]?.min ?? 0;
+            if (key === 'systemPrompt' && newPendingFormVals[key] == null) newPendingFormVals[key] = '';
+        }
+      });
+      setPendingFormValues(newPendingFormVals);
+    }
+  }, [isTransitioningMode, pendingMode, platform.apiConfig, selectedModelId, modelParametersForPlatform, modelsFromPlatform]);
+
+  // Effect to finalize mode transition
+  useEffect(() => {
+    if (isTransitioningMode && pendingMode && pendingDerivedSettings && pendingFormValues) {
+      logger.settings.debug(`useMPS: Finalizing mode transition to: ${pendingMode}`);
+      setCurrentEditingMode(pendingMode);
+      setDerivedSettings(pendingDerivedSettings);
+      setFormValues(pendingFormValues);
+      setOriginalValues({ ...pendingFormValues }); // New baseline after mode change
+
+      // Reset pending states
+      setIsTransitioningMode(false);
+      setPendingMode(null);
+      setPendingDerivedSettings(null);
+      setPendingFormValues(null);
+      setIsFormReady(true); // Ensure form is marked as ready
+
+      if (typeof onReady === 'function' && isMounted.current) {
+        logger.settings.debug(`useMPS: Calling onReady after mode transition to ${pendingMode}`);
+        onReady();
+      }
+    }
+  }, [isTransitioningMode, pendingMode, pendingDerivedSettings, pendingFormValues, onReady]);
+
+
+  // Effect to update hasChanges and isAtDefaults
+  useEffect(() => {
+    if (!derivedSettings || !isFormReady) {
       setHasChanges(false);
       setIsAtDefaults(true);
       return;
@@ -135,10 +205,12 @@ export function useModelParametersSettings({
     setIsAtDefaults(
       checkAreFormValuesAtDefaults(formValues, configDefaults, capabilities, platform.apiConfig)
     );
-  }, [formValues, originalValues, derivedSettings, platform.apiConfig]);
+  }, [formValues, originalValues, derivedSettings, platform.apiConfig, isFormReady]);
+
 
   const handleChange = useCallback(
     (name, newValue) => {
+      if (isTransitioningMode) return; // Prevent changes while transitioning
       setFormValues((prevValues) => {
         const updatedValues = { ...prevValues };
         const paramSpec = derivedSettings?.parameterSpecs?.[name];
@@ -164,11 +236,13 @@ export function useModelParametersSettings({
         return updatedValues;
       });
     },
-    [derivedSettings]
+    [derivedSettings, isTransitioningMode]
   );
 
   const handleSubmit = useCallback(async (event) => {
     if (event) event.preventDefault();
+    if (isTransitioningMode) return; // Prevent save while transitioning
+
     if (!derivedSettings || !selectedModelId) {
         showNotificationError('Cannot save: Model configuration not fully loaded.');
         return;
@@ -223,7 +297,6 @@ export function useModelParametersSettings({
       const settingsToSave = { ...formValues };
       delete settingsToSave.contextWindow;
 
-      // Determine changed parameters for notification
       const changedParamsList = [];
       if (originalValues) {
         for (const key in formValues) {
@@ -231,37 +304,22 @@ export function useModelParametersSettings({
             const currentValue = formValues[key];
             const originalValue = originalValues[key];
             let paramChanged = false;
-
             if (typeof currentValue === 'boolean') {
-              if (currentValue !== originalValue) {
-                paramChanged = true;
-              }
+              if (currentValue !== originalValue) paramChanged = true;
             } else if (typeof currentValue === 'string') {
-              if (currentValue.trim() !== (originalValue || '').trim()) {
-                paramChanged = true;
-              }
+              if (currentValue.trim() !== (originalValue || '').trim()) paramChanged = true;
             } else if (typeof currentValue === 'number') {
-               // Handle null original values correctly when comparing with numbers
-              if (originalValue === null && currentValue !== null) {
-                  paramChanged = true;
-              } else if (!Object.is(currentValue, originalValue)) {
-                  paramChanged = true;
-              }
-            } else if (currentValue !== originalValue) { // Fallback for other types or null/undefined mismatches
-              paramChanged = true;
-            }
-            
-            if (paramChanged) {
-              changedParamsList.push(getParameterDisplayName(key));
-            }
+              if (originalValue === null && currentValue !== null) paramChanged = true;
+              else if (!Object.is(currentValue, originalValue)) paramChanged = true;
+            } else if (currentValue !== originalValue) paramChanged = true;
+            if (paramChanged) changedParamsList.push(getParameterDisplayName(key));
           }
         }
       }
-      // End - Determine changed parameters
 
       const success = await onSave(platform.id, selectedModelId, currentEditingMode, settingsToSave, changedParamsList);
       if (success) {
-        setOriginalValues({ ...formValues });
+        setOriginalValues({ ...formValues }); // Update baseline on successful save
       }
     } catch (err) {
       logger.settings.error('Error saving model parameters in hook:', err);
@@ -269,35 +327,50 @@ export function useModelParametersSettings({
     } finally {
       setIsSavingActual(false);
     }
-  }, [formValues, originalValues, platform, selectedModelId, currentEditingMode, onSave, derivedSettings, showNotificationError]);
+  }, [formValues, originalValues, platform, selectedModelId, currentEditingMode, onSave, derivedSettings, showNotificationError, isTransitioningMode]);
 
   const handleResetClick = useCallback(async () => {
-    if (isAtDefaults || !derivedSettings || !selectedModelId) return;
+    if (isAtDefaults || !derivedSettings || !selectedModelId || isTransitioningMode) return;
     setIsResettingActual(true);
     setIsAnimatingReset(true);
 
     try {
       const success = await onReset(platform.id, selectedModelId, currentEditingMode);
       if (success) {
-        const { defaultSettings: configDefaults } = derivedSettings;
-        setFormValues({ ...configDefaults });
-        setOriginalValues({ ...configDefaults });
+        // Re-fetch default settings based on the current derivedSettings
+        // This ensures that if derivedSettings itself has changed (e.g. due to config update),
+        // we reset to the *new* defaults.
+        const { defaultSettings: newConfigDefaults } = getDerivedModelSettings({
+            platformApiConfig: platform.apiConfig,
+            modelId: selectedModelId,
+            editingMode: currentEditingMode,
+            modelsFromPlatform,
+        });
+
+        setFormValues({ ...newConfigDefaults });
+        setOriginalValues({ ...newConfigDefaults }); // Update baseline on successful reset
       }
     } catch (err) {
         logger.settings.error('Error resetting model parameters in hook:', err);
         showNotificationError('Failed to reset model parameters.');
     } finally {
       setIsResettingActual(false);
-      setTimeout(() => setIsAnimatingReset(false), 500); // Animation duration
+      setTimeout(() => setIsAnimatingReset(false), 500);
     }
-  }, [isAtDefaults, platform.id, selectedModelId, currentEditingMode, onReset, derivedSettings, showNotificationError]);
-  
-  const toggleEditingMode = useCallback(() => {
-    if (derivedSettings?.resolvedModelConfig?.thinking?.toggleable) {
-        setCurrentEditingMode(prev => prev === 'base' ? 'thinking' : 'base');
-    }
-  }, [derivedSettings]);
+  }, [isAtDefaults, platform.id, platform.apiConfig, selectedModelId, currentEditingMode, onReset, derivedSettings, showNotificationError, modelsFromPlatform, isTransitioningMode]);
 
+  const toggleEditingMode = useCallback(() => {
+    if (isTransitioningMode) return; // Prevent toggling if already transitioning
+
+    if (derivedSettings?.resolvedModelConfig?.thinking?.toggleable) {
+        setIsTransitioningMode(true);
+        const targetMode = currentEditingMode === 'base' ? 'thinking' : 'base';
+        setPendingMode(targetMode);
+        logger.settings.debug(`useMPS: Initiating mode transition to: ${targetMode}`);
+    }
+  }, [derivedSettings, currentEditingMode, isTransitioningMode]);
+
+  // Memoized values for UI rendering based on derivedSettings
   const showThinkingModeToggle = derivedSettings?.resolvedModelConfig?.thinking?.toggleable ?? false;
   const isThinkingModeActive = currentEditingMode === 'thinking';
 
@@ -307,17 +380,17 @@ export function useModelParametersSettings({
 
   const thinkingOverridesTemp = isThinkingModeActive && (derivedSettings?.resolvedModelConfig?.thinking?.supportsTemperature === false);
   const thinkingOverridesTopP = isThinkingModeActive && (derivedSettings?.resolvedModelConfig?.thinking?.supportsTopP === false);
-  
+
   const showTempSection = modelSupportsTemp && !thinkingOverridesTemp;
   const showTopPSection = modelSupportsTopP && !thinkingOverridesTopP;
-  
+
   const showBudgetSlider = derivedSettings?.parameterSpecs?.thinkingBudget && derivedSettings?.resolvedModelConfig?.thinking?.available === true && (isThinkingModeActive || !derivedSettings?.resolvedModelConfig?.thinking?.toggleable);
   const showReasoningEffort = derivedSettings?.parameterSpecs?.reasoningEffort && derivedSettings?.resolvedModelConfig?.thinking?.available === true && (isThinkingModeActive || !derivedSettings?.resolvedModelConfig?.thinking?.toggleable);
 
   return {
     formValues,
     currentEditingMode,
-    derivedSettings,
+    derivedSettings, // This will be the one corresponding to currentEditingMode
     handleChange,
     handleSubmit,
     handleResetClick,
@@ -336,5 +409,6 @@ export function useModelParametersSettings({
     modelSupportsSystemPrompt,
     modelsFromPlatform,
     isFormReady,
+    isTransitioningMode, // Expose this if UI needs to disable toggle during transition
   };
 }
