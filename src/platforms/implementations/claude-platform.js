@@ -18,119 +18,36 @@ class ClaudePlatform extends BasePlatform {
   }
 
   /**
-   * Find Claude's editor element using more robust strategies.
-   * @returns {HTMLElement|null} The editor element or null if not found
+   * Provides an array of CSS selectors for finding Claude's editor element.
+   * @returns {string[]} Array of CSS selector strings.
+   * @protected
    */
-  findEditorElement() {
-    this.logger.info(
-      `[${this.platformId}] Attempting to find editor element...`
-    );
-
-    // Strategy 1: Look for contenteditable inside the known wrapper
-    try {
-      const wrapper = document.querySelector('div[aria-label*="Claude"]'); // Find wrapper by aria-label
-      if (wrapper) {
-        const editor = wrapper.querySelector(
-          'div[contenteditable="true"].ProseMirror'
-        );
-        if (editor && this._isVisibleElement(editor)) {
-          this.logger.info(
-            `[${this.platformId}] Found editor using Strategy 1 (Wrapper + Contenteditable)`
-          );
-          return editor;
-        }
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 1 editor search:`,
-        e
-      );
-    }
-
-    // Strategy 2: Look for contenteditable containing the placeholder paragraph
-    try {
-      // Use partial match for placeholder text to handle language variations
-      const placeholderParagraph = document.querySelector(
-        'p[data-placeholder*="Claude"]'
-      );
-      if (placeholderParagraph) {
-        const editor = placeholderParagraph.closest(
-          'div[contenteditable="true"].ProseMirror'
-        );
-        if (editor && this._isVisibleElement(editor)) {
-          this.logger.info(
-            `[${this.platformId}] Found editor using Strategy 2 (Placeholder Parent)`
-          );
-          return editor;
-        }
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 2 editor search:`,
-        e
-      );
-    }
-
-    // Strategy 3: Find the most prominent contenteditable div
-    try {
-      const editors = document.querySelectorAll(
-        'div[contenteditable="true"].ProseMirror'
-      );
-      // Find the first one that's visible (usually the main input)
-      for (const editor of editors) {
-        if (this._isVisibleElement(editor)) {
-          this.logger.info(
-            `[${this.platformId}] Found editor using Strategy 3 (Visible Contenteditable)`
-          );
-          return editor;
-        }
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 3 editor search:`,
-        e
-      );
-    }
-
-    return null;
+  _getEditorSelectors() {
+    return [
+      // Strategy 1: Wrapper + Contenteditable (Preferred)
+      'div[aria-label*="Claude"] div[contenteditable="true"].ProseMirror',
+      // Strategy 2: Placeholder Parent
+      'p[data-placeholder*="Claude"] > div[contenteditable="true"].ProseMirror', // If placeholder is parent of editor
+      'p[data-placeholder*="Message Claude"] ~ div[contenteditable="true"].ProseMirror', // If editor is sibling after placeholder
+      'div[contenteditable="true"].ProseMirror:has(p[data-placeholder*="Claude"])', // If placeholder is child of editor
+      // Strategy 3: Visible Contenteditable (More generic fallback)
+      'div[contenteditable="true"].ProseMirror',
+    ];
   }
 
-
   /**
-   * Find Claude's submit button using more robust strategies.
-   * Checks for visibility, enabled state, and pointer-events. Returns null if checks fail, allowing retry.
-   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
+   * Provides an array of CSS selectors for finding Claude's submit button.
+   * @returns {string[]} Array of CSS selector strings.
+   * @protected
    */
-  async findSubmitButton() {
-    this.logger.info(
-      `[${this.platformId}] Attempting to find and wait for ${this.platformId} submit button readiness...`
-    );
-
-    const buttonElement = await this._waitForElementState(
-      () => { // elementSelectorFn
-        const svgElement = document.querySelector('button[aria-label*="message" i] svg');
-        return svgElement ? svgElement.closest('button') : null;
-      },
-      async (el) => { // conditionFn
-        if (!el) return false;
-        const isEnabled = this._isButtonEnabled(el);
-        const isVisible = this._isVisibleElement(el);
-        const pointerEvents = window.getComputedStyle(el).pointerEvents;
-        const hasPointerEvents = pointerEvents !== 'none';
-        
-        return isEnabled && isVisible && hasPointerEvents;
-      },
-      5000, // timeoutMs
-      300,  // pollIntervalMs
-      `${this.platformId} submit button readiness`
-    );
-
-    if (buttonElement) {
-      this.logger.info(`[${this.platformId}] ${this.platformId} submit button found and ready.`);
-    } else {
-      this.logger.warn(`[${this.platformId}] ${this.platformId} submit button did not become ready within the timeout.`);
-    }
-    return buttonElement;
+  _getSubmitButtonSelectors() {
+    return [
+      'button[aria-label*="Send Message" i]', // Primary, case-insensitive, more specific
+      'button[aria-label*="Envoyer le message" i]', // French for "Send Message"
+      'button[aria-label*="message" i]:has(svg)', // Button with "message" in aria-label containing an SVG
+      // Fallback: A button with an SVG child that looks like a send icon
+      'button:has(svg path[d^="M3.478"])', // Common start of send icon path data
+    ];
   }
 
   /**
@@ -141,9 +58,7 @@ class ClaudePlatform extends BasePlatform {
    * @protected
    */
   async _insertTextIntoEditor(editorElement, text) {
-    // Default options of _insertTextIntoContentEditable should work for Claude (uses <p>)
-    // The specific class removal `editorElement.classList.remove('is-empty', 'is-editor-empty');`
-    // should be implicitly handled by `editorElement.innerHTML = '';` in the base method.
+    // Claude uses <p> tags within its ProseMirror editor.
     return super._insertTextIntoContentEditable(editorElement, text);
   }
 
@@ -154,9 +69,22 @@ class ClaudePlatform extends BasePlatform {
    * @protected
    */
   _isEditorEmpty(editorElement) {
-    return (editorElement.textContent || editorElement.innerText || '').trim() === '';
-  }
+    // Claude's ProseMirror editor often has a <p><br></p> structure when empty.
+    const html = editorElement.innerHTML.trim().toLowerCase();
+    const text = (editorElement.textContent || editorElement.innerText || '').trim();
 
+    if (text === '') {
+        // If textContent is empty, check for common empty structures
+        if (html === '<p><br></p>' || html === '<p></p>' || html === '') {
+            return true;
+        }
+        // Also consider if it only contains a placeholder attribute
+        if (editorElement.querySelector('p[data-placeholder]')) {
+            return true;
+        }
+    }
+    return false;
+  }
 }
 
 export default ClaudePlatform;

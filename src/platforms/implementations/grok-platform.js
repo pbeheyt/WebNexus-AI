@@ -10,152 +10,65 @@ class GrokPlatform extends BasePlatform {
   }
 
   isCurrentPlatform() {
-    return window.location.hostname === 'grok.com';
+    // Grok might be at x.com/i/grok or grok.x.com or grok.com
+    // For now, let's assume grok.com or a path on x.com
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+    return hostname.includes('grok.com') || (hostname.includes('x.com') && pathname.includes('/grok'));
   }
 
   /**
-   * Find the active Grok editor element using more robust strategies.
-   * @returns {HTMLElement|null} The editor element or null if not found
+   * Provides an array of CSS selectors for finding Grok's editor element.
+   * @returns {string[]} Array of CSS selector strings.
+   * @protected
    */
-  findEditorElement() {
-    this.logger.info(
-      `[${this.platformId}] Attempting to find editor element...`
-    );
-
-    // --- Strategy 1: Query Bar Parent + Attributes ---
-    try {
-      const queryBar = document.querySelector('div.query-bar'); // Find the main input container
-      if (queryBar) {
-        // More specific check first
-        const editor = queryBar.querySelector(
-          'textarea[dir="auto"][style*="resize: none"]'
-        );
-        if (editor && this._isVisibleElement(editor)) {
-          this.logger.info(
-            `[${this.platformId}] Found editor using Strategy 1a (Query Bar + Attributes)`
-          );
-          return editor;
-        }
-        // Simpler version within query bar if the style one fails
-        const simplerEditor = queryBar.querySelector('textarea[dir="auto"]');
-        if (simplerEditor && this._isVisibleElement(simplerEditor)) {
-          this.logger.info(
-            `[${this.platformId}] Found editor using Strategy 1b (Query Bar + dir=auto)`
-          );
-          return simplerEditor;
-        }
-      } else {
-        this.logger.warn(
-          `[${this.platformId}] Strategy 1: Query Bar container not found.`
-        );
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 1 editor search:`,
-        e
-      );
-    }
-
-    // --- Strategy 2: Attributes Only ---
-    try {
-      const textareas = document.querySelectorAll(
-        'textarea[dir="auto"][style*="resize: none"]'
-      );
-      for (const editor of textareas) {
-        if (this._isVisibleElement(editor)) {
-          this.logger.info(
-            `[${this.platformId}] Found editor using Strategy 2 (Attributes Only)`
-          );
-          return editor;
-        }
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 2 editor search:`,
-        e
-      );
-    }
-
-    // --- Strategy 3: Broader dir=auto ---
-    try {
-      const textareasDirAuto = document.querySelectorAll(
-        'textarea[dir="auto"]'
-      );
-      for (const editor of textareasDirAuto) {
-        if (this._isVisibleElement(editor)) {
-          this.logger.info(
-            `[${this.platformId}] Found editor using Strategy 3 (Broader dir=auto)`
-          );
-          return editor;
-        }
-      }
-    } catch (e) {
-      this.logger.warn(
-        `[${this.platformId}] Error during Strategy 3 editor search:`,
-        e
-      );
-    }
-
-    this.logger.error(
-      `[${this.platformId}] Editor element not found using any strategy.`
-    );
-    return null;
+  _getEditorSelectors() {
+    return [
+      // Strategy 1a: Query Bar Parent + Specific Attributes (Preferred)
+      'div.query-bar textarea[dir="auto"][style*="resize: none"]',
+      // Strategy 1b: Query Bar Parent + Simpler Attributes
+      'div.query-bar textarea[dir="auto"]',
+      // Strategy 2: Attributes Only (if query-bar class changes)
+      'textarea[dir="auto"][style*="resize: none"]',
+      // Strategy 3: Broader dir=auto (most generic textarea)
+      'textarea[dir="auto"][placeholder*="Ask Grok" i]',
+      'textarea[dir="auto"][data-testid="grok-chat-input"]', // Hypothetical stable test ID
+      'textarea[dir="auto"]',
+    ];
   }
 
   /**
-   * Find the Grok submit button using robust strategies, waiting for it to be ready.
-   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
+   * Provides an array of CSS selectors for finding Grok's submit button.
+   * @returns {string[]} Array of CSS selector strings.
+   * @protected
    */
-  async findSubmitButton() {
+  _getSubmitButtonSelectors() {
+    return [
+      // Strategy 1: Specific SVG Path (most reliable if path is stable)
+      'button[type="submit"]:has(svg path[d^="M5 11L12 4"])', // Send icon path
+      // Strategy 2: Structural Position (within form's bottom bar, right-aligned)
+      'form div[class*="absolute inset-x-0 bottom-0"] div[class*="ml-auto"] button[type="submit"]',
+      // Strategy 3: Data-testid (if available and stable)
+      'button[data-testid="grok-send-button"]', // Hypothetical stable test ID
+      // Strategy 4: Aria-label
+      'button[type="submit"][aria-label*="Send" i]',
+      'button[type="submit"][aria-label*="Post" i]', // Sometimes "Post" is used
+    ];
+  }
+
+  /**
+   * Override: Insert text into Grok's editor.
+   * Grok uses a standard textarea, so the base implementation is suitable.
+   * @param {HTMLElement} editorElement - The editor element (textarea).
+   * @param {string} text - The text to insert.
+   * @returns {Promise<boolean>} - True if successful, false otherwise.
+   * @protected
+   */
+  async _insertTextIntoEditor(editorElement, text) {
     this.logger.info(
-      `[${this.platformId}] Attempting to find and wait for ${this.platformId} submit button readiness...`
+      `[${this.platformId}] Using base _insertTextIntoEditor for Grok.`
     );
-
-    const buttonElement = await this._waitForElementState(
-      () => { // elementSelectorFn
-        // Strategy 1: Specific SVG Path (most reliable if path is stable)
-        const svgPathSelector = 'button[type="submit"] svg path[d^="M5 11L12 4"]';
-        const pathElement = document.querySelector(svgPathSelector);
-        if (pathElement) {
-          const button = pathElement.closest('button[type="submit"]');
-          if (button) {
-            this.logger.debug(`[${this.platformId}] Submit button candidate found via SVG Path.`);
-            return button;
-          }
-        }
-
-        // Strategy 2: Structural Position (within form's bottom bar, right-aligned)
-        const bottomBarSelector = 'form div[class*="absolute inset-x-0 bottom-0"]';
-        const bottomBar = document.querySelector(bottomBarSelector);
-        if (bottomBar) {
-          const button = bottomBar.querySelector('div[class*="ml-auto"] button[type="submit"]');
-          if (button) {
-            this.logger.debug(`[${this.platformId}] Submit button candidate found via Structural Position.`);
-            return button;
-          }
-        }
-        this.logger.debug(`[${this.platformId}] Submit button candidate not found by any primary strategy on this poll.`);
-        return null;
-      },
-      async (el) => { // conditionFn
-        if (!el) return false;
-        const isEnabled = this._isButtonEnabled(el);
-        const isVisible = this._isVisibleElement(el);
-        const pointerEvents = window.getComputedStyle(el).pointerEvents;
-        const hasPointerEvents = pointerEvents !== 'none';
-        return isEnabled && isVisible && hasPointerEvents;
-      },
-      5000, // timeoutMs
-      300,  // pollIntervalMs
-      `${this.platformId} submit button readiness`
-    );
-
-    if (buttonElement) {
-      this.logger.info(`[${this.platformId}] ${this.platformId} submit button found and ready.`);
-    } else {
-      this.logger.warn(`[${this.platformId}] ${this.platformId} submit button did not become ready within the timeout.`);
-    }
-    return buttonElement;
+    return super._insertTextIntoEditor(editorElement, text);
   }
 
 
@@ -166,9 +79,9 @@ class GrokPlatform extends BasePlatform {
    * @protected
    */
   _isEditorEmpty(editorElement) {
+    // Standard check for textarea value
     return (editorElement.value || '').trim() === '';
   }
-
 }
 
 export default GrokPlatform;

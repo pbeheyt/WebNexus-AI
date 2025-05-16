@@ -18,78 +18,32 @@ class ChatGptPlatform extends BasePlatform {
   }
 
   /**
-   * Find ChatGPT's editor element (the contenteditable div)
-   * @returns {HTMLElement|null} The editor element or null if not found
+   * Provides an array of CSS selectors for finding ChatGPT's editor element.
+   * @returns {string[]} Array of CSS selector strings.
+   * @protected
    */
-  findEditorElement() {
-    this.logger.info(
-      `[${this.platformId}] Attempting to find editor element (#prompt-textarea)...`
-    );
-    // The div now has the ID
-    const editor = document.querySelector(
-      'div#prompt-textarea[contenteditable="true"]'
-    );
-    if (!editor) {
-      this.logger.error(
-        `[${this.platformId}] Editor element (div#prompt-textarea) not found.`
-      );
-    } else {
-      this.logger.info(
-        `[${this.platformId}] Found editor element (div#prompt-textarea).`
-      );
-    }
-    return editor;
+  _getEditorSelectors() {
+    return [
+      'div#prompt-textarea[contenteditable="true"]', // Primary selector based on ID and contenteditable
+      'textarea#prompt-textarea', // Fallback if it changes to a textarea with the same ID
+    ];
   }
 
   /**
-   * Find ChatGPT's submit button using ID and data-testid, waiting for it to be ready.
-   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
+   * Provides an array of CSS selectors for finding ChatGPT's submit button.
+   * @returns {string[]} Array of CSS selector strings.
+   * @protected
    */
-  async findSubmitButton() {
-    this.logger.info(
-      `[${this.platformId}] Attempting to find and wait for ${this.platformId} submit button readiness...`
-    );
-
-    const buttonElement = await this._waitForElementState(
-      () => { // elementSelectorFn
-        let button = document.querySelector('#composer-submit-button');
-        if (button) {
-          this.logger.debug(`[${this.platformId}] Submit button candidate found using ID #composer-submit-button.`);
-          return button;
-        }
-        button = document.querySelector('button[data-testid="send-button"]');
-        if (button) {
-          this.logger.debug(`[${this.platformId}] Submit button candidate found using data-testid="send-button".`);
-          return button;
-        }
-        const ariaSelector = 'button[aria-label*="Send" i], button[aria-label*="Envoyer" i]';
-        button = document.querySelector(ariaSelector);
-        if (button) {
-          this.logger.debug(`[${this.platformId}] Submit button candidate found using aria-label.`);
-        } else {
-           this.logger.debug(`[${this.platformId}] Submit button candidate not found by any strategy on this poll.`);
-        }
-        return button; // Returns null if not found by any strategy
-      },
-      async (el) => { // conditionFn
-        if (!el) return false;
-        const isEnabled = this._isButtonEnabled(el);
-        const isVisible = this._isVisibleElement(el);
-        const pointerEvents = window.getComputedStyle(el).pointerEvents;
-        const hasPointerEvents = pointerEvents !== 'none';
-        return isEnabled && isVisible && hasPointerEvents;
-      },
-      5000, // timeoutMs
-      300,  // pollIntervalMs
-      `${this.platformId} submit button readiness`
-    );
-
-    if (buttonElement) {
-      this.logger.info(`[${this.platformId}] ${this.platformId} submit button found and ready.`);
-    } else {
-      this.logger.warn(`[${this.platformId}] ${this.platformId} submit button did not become ready within the timeout.`);
-    }
-    return buttonElement;
+  _getSubmitButtonSelectors() {
+    return [
+      '#composer-submit-button',                // Preferred ID selector
+      'button[data-testid="send-button"]',      // Data-testid attribute selector
+      'button[aria-label*="Send" i]',           // Aria-label for "Send" (case-insensitive)
+      'button[aria-label*="Envoyer" i]',        // French Aria-label for "Send" (case-insensitive)
+      // Fallback: A button with an SVG child that looks like a send icon
+      'button:has(svg path[d^="M.5 1.163A1 1 0 0"])',
+      'button:has(svg path[d*="M2 12s-1-1-1-3"])', // Another common send icon path start
+    ];
   }
 
   /**
@@ -100,7 +54,7 @@ class ChatGptPlatform extends BasePlatform {
    * @protected
    */
   async _insertTextIntoEditor(editorElement, text) {
-    // Default options of _insertTextIntoContentEditable should work for ChatGPT (uses <p>)
+    // ChatGPT uses <p> tags within its contenteditable div.
     return super._insertTextIntoContentEditable(editorElement, text);
   }
 
@@ -111,9 +65,18 @@ class ChatGptPlatform extends BasePlatform {
    * @protected
    */
   _isEditorEmpty(editorElement) {
-    return (editorElement.textContent || editorElement.innerText || '').trim() === '';
+    // Check textContent, then innerText. Also check if it only contains a <br> tag or placeholder structure.
+    const text = (editorElement.textContent || editorElement.innerText || '').trim();
+    if (text === '') {
+        // Check if the only child is a <p> with a <br> or empty
+        if (editorElement.children.length === 1 && editorElement.firstElementChild.tagName === 'P') {
+            const pElement = editorElement.firstElementChild;
+            return (pElement.innerHTML.trim() === '<br>' || pElement.innerHTML.trim() === '' || pElement.textContent.trim() === '');
+        }
+        return true;
+    }
+    return false;
   }
-
 }
 
 export default ChatGptPlatform;
