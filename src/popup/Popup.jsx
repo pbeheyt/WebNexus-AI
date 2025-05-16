@@ -98,10 +98,9 @@ export function Popup() {
           </p>
           <p>
             Open the <span className='font-medium'>Side Panel</span>
-            <span
-              dangerouslySetInnerHTML={{
-                __html: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/><line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/></svg>`,
-              }}
+            <SidepanelIcon
+              className="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary"
+              strokeWidth="2.5"
             />{' '}
             to have your AI conversation directly alongside the page.
           </p>
@@ -117,10 +116,9 @@ export function Popup() {
           </p>
           <p>
             Open the <span className='font-medium'>Side Panel</span>
-            <span
-              dangerouslySetInnerHTML={{
-                __html: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/><line x1="15" y1="3" x2="15" y2="21" stroke="currentColor"/></svg>`,
-              }}
+            <SidepanelIcon
+              className="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary"
+              strokeWidth="2.5"
             />{' '}
             to have your AI conversation directly alongside the page.
           </p>
