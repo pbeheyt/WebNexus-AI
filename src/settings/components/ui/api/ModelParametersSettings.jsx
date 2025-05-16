@@ -42,13 +42,12 @@ const ModelParametersSettings = ({
     modelsFromPlatform,
     isFormReady,
     showThinkingModeToggle,
-    // isThinkingModeActive, // Not directly used for rendering logic here, but available
     showTempSection,
     showTopPSection,
     showBudgetSlider,
     showReasoningEffort,
     modelSupportsSystemPrompt,
-    isTransitioningMode, // Added from hook
+    isTransitioningMode,
   } = useModelParametersSettings({
     platform,
     selectedModelId,

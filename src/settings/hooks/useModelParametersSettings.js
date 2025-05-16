@@ -31,7 +31,7 @@ export function useModelParametersSettings({
   // UI interaction state
   const [hasChanges, setHasChanges] = useState(false);
   const [isAtDefaults, setIsAtDefaults] = useState(true);
-  const [isFormReady, setIsFormReady] = useState(false); // Overall readiness for display
+  const [isFormReady, setIsFormReady] = useState(false); 
 
   // Action loading states
   const [isSavingActual, setIsSavingActual] = useState(false);
@@ -76,7 +76,7 @@ export function useModelParametersSettings({
     const newDerivedSettings = getDerivedModelSettings({
       platformApiConfig: platform.apiConfig,
       modelId: selectedModelId,
-      editingMode: currentEditingMode, // Use currentEditingMode here
+      editingMode: currentEditingMode,
       modelsFromPlatform,
     });
     setDerivedSettings(newDerivedSettings);
@@ -122,8 +122,7 @@ export function useModelParametersSettings({
       onReady();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedModelId, platform.apiConfig, modelParametersForPlatform, modelsFromPlatform]); // currentEditingMode removed to prevent re-triggering by mode toggle finalization
-
+  }, [selectedModelId, platform.apiConfig, modelParametersForPlatform, modelsFromPlatform]);
 
   // Effect to recalculate derived settings and form values when pendingMode changes
   useEffect(() => {
@@ -138,7 +137,7 @@ export function useModelParametersSettings({
       setPendingDerivedSettings(newPendingDerivedSettings);
 
       if (!newPendingDerivedSettings) {
-        setPendingFormValues({}); // Or handle error appropriately
+        setPendingFormValues({});
         return;
       }
 
@@ -176,14 +175,14 @@ export function useModelParametersSettings({
       setCurrentEditingMode(pendingMode);
       setDerivedSettings(pendingDerivedSettings);
       setFormValues(pendingFormValues);
-      setOriginalValues({ ...pendingFormValues }); // New baseline after mode change
+      setOriginalValues({ ...pendingFormValues });
 
       // Reset pending states
       setIsTransitioningMode(false);
       setPendingMode(null);
       setPendingDerivedSettings(null);
       setPendingFormValues(null);
-      setIsFormReady(true); // Ensure form is marked as ready
+      setIsFormReady(true);
 
       if (typeof onReady === 'function' && isMounted.current) {
         logger.settings.debug(`useMPS: Calling onReady after mode transition to ${pendingMode}`);
@@ -390,7 +389,7 @@ export function useModelParametersSettings({
   return {
     formValues,
     currentEditingMode,
-    derivedSettings, // This will be the one corresponding to currentEditingMode
+    derivedSettings,
     handleChange,
     handleSubmit,
     handleResetClick,
@@ -409,6 +408,6 @@ export function useModelParametersSettings({
     modelSupportsSystemPrompt,
     modelsFromPlatform,
     isFormReady,
-    isTransitioningMode, // Expose this if UI needs to disable toggle during transition
+    isTransitioningMode,
   };
 }
