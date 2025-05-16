@@ -135,7 +135,7 @@ const PromptList = ({
           />
       </SettingsCard>
 
-      <div className='border-b border-theme mb-6'></div>
+      <div className='border-b border-theme mb-6 select-none'></div>
 
       {filteredPrompts.length === 0 ? (
         <div 

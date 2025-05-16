@@ -88,7 +88,7 @@ const ModelParametersSettings = ({
 
   return (
     <>
-    <SettingsCard className="selector-section-container mb-4">
+    <SettingsCard className="selector-section-container mb-6">
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center">
           <h3 className='text-base font-semibold text-theme-primary'>
@@ -149,7 +149,10 @@ const ModelParametersSettings = ({
           </div>
         </div>
       )}
-      <div className='model-specs-section bg-theme-hover rounded-lg border border-theme mt-6 p-4'>
+
+      <div className='border-b border-theme my-4 select-none'></div>
+
+      <div className='model-specs-section bg-theme-hover rounded-lg border border-theme p-4'>
         <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary'>
           Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
         </h4>
@@ -189,6 +192,8 @@ const ModelParametersSettings = ({
         </div>
       </div>
     </SettingsCard>
+
+    <div className='border-b border-theme mb-6 select-none'></div>
 
       {/* The form still wraps all the actual input fields */}
       <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>

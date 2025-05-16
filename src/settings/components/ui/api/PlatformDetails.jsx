@@ -167,7 +167,6 @@ const PlatformDetails = ({
             onSubTabSelect(tabId); // Inform parent of selection
           }
         }}
-        className="mt-2"
       >
         {(_currentActiveIntendedSubTabParam) => {
           const showApiKeyContent = displayedSubTabContentId === 'apiKey';

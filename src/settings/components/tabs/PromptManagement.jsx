@@ -113,7 +113,7 @@ const PromptManagement = () => {
             + New
           </button>
         </div>
-        <div className='border-b border-theme w-full mt-3 mb-4'></div>
+        <div className='border-b border-theme w-full mt-3 mb-4 select-none'></div>
         <p className='section-description text-theme-secondary text-sm mb-6'>
           Manage your custom prompts for different content types.
         </p>

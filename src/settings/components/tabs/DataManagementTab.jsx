@@ -212,7 +212,7 @@ const DataManagementTab = () => {
       </SettingsCard>
     </div>
 
-    <div className='border-b border-theme mb-6'></div>
+    <div className='border-b border-theme mb-6 select-none'></div>
 
       {/* Action Groups Container */}
       <div className="space-y-4">

@@ -21,7 +21,7 @@ export function SubTabLayout({
 }) {
   return (
     <div className={`sub-tab-layout ${className}`}>
-      <div className='sub-tab-navigation flex border-b border-theme mb-5'>
+      <div className='sub-tab-navigation flex border-b border-theme mb-6'>
         {tabs.map((tab) => (
           <button
             key={tab.id}
