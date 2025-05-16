@@ -51,6 +51,8 @@ export const STORAGE_KEYS = {
   SIDEPANEL_THINKING_MODE_PREFERENCE: 'sidepanel_thinking_mode_preference',
   /** @description User's custom keyboard shortcut configuration for toggling the sidepanel. Synced. */
   CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT: 'custom_sidepanel_toggle_shortcut_config',
+  /** @description User's custom keyboard shortcut configuration for opening the sidepanel and executing the default prompt. Synced. */
+  CUSTOM_SIDEPANEL_DEFAULT_PROMPT_SHORTCUT: 'custom_sidepanel_default_prompt_shortcut_config',
 
   // --- Core Settings ---
   /** @description User-configured model parameters (temperature, maxTokens, etc.) for each platform/model. Local. */
@@ -142,6 +144,15 @@ export const MESSAGE_ROLES = {
 // Default value for the custom sidepanel toggle shortcut, not the storage key itself
 export const DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG = {
   key: 's',
+  altKey: true,
+  ctrlKey: false,
+  shiftKey: false,
+  metaKey: false,
+};
+
+// Default value for the custom "Open Side Panel & Process Default Prompt" shortcut
+export const DEFAULT_POPUP_SIDEPANEL_DEFAULT_PROMPT_SHORTCUT_CONFIG = {
+  key: 'd', // Using 'd' for "default prompt"
   altKey: true,
   ctrlKey: false,
   shiftKey: false,

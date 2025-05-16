@@ -30,7 +30,7 @@ export function Button({
 }) {
   // Base classes
   const baseClasses =
-    'inline-flex items-center justify-center rounded-lg font-medium transition-colors transition-opacity duration-200';
+    'inline-flex items-center justify-center rounded-lg font-medium transition-colors transition-opacity duration-200 select-none';
 
   // Size classes
   const sizeClasses = {
