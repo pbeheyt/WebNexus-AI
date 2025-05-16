@@ -22,6 +22,7 @@ const ModelParametersSettings = ({
   onModelSelect,
   onSettingsUpdate,
   onResetToDefaults,
+  onReady,
 }) => {
   const { error: showNotificationErrorHook } = useNotification();
 
@@ -53,6 +54,7 @@ const ModelParametersSettings = ({
     onSave: onSettingsUpdate,
     onReset: onResetToDefaults,
     showNotificationError: showNotificationErrorHook,
+    onReady,
   });
 
   const handleModelChange = useCallback(
@@ -363,6 +365,7 @@ ModelParametersSettings.propTypes = {
   onModelSelect: PropTypes.func.isRequired,
   onSettingsUpdate: PropTypes.func.isRequired,
   onResetToDefaults: PropTypes.func.isRequired,
+  onReady: PropTypes.func,
 };
 
 export default React.memo(ModelParametersSettings);

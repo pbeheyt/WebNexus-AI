@@ -18,6 +18,7 @@ export function useModelParametersSettings({
   modelParametersForPlatform,
   onSave,
   onReset,
+  onReady,
 }) {
   const { error: showNotificationError } = useNotification();
   const [currentEditingMode, setCurrentEditingMode] = useState('base');
@@ -25,10 +26,10 @@ export function useModelParametersSettings({
   const [originalValues, setOriginalValues] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
   const [isAtDefaults, setIsAtDefaults] = useState(true);
-  
+
   const [isSavingActual, setIsSavingActual] = useState(false);
   const [isResettingActual, setIsResettingActual] = useState(false);
-  
+
   const shouldShowSaving = useMinimumLoadingTime(isSavingActual);
   const shouldShowResetting = useMinimumLoadingTime(isResettingActual);
 
@@ -79,6 +80,10 @@ export function useModelParametersSettings({
       setFormValues({});
       setOriginalValues({});
       setIsFormReady(true);
+      // Call onReady if it's a function, even if derivedSettings is null, to signal readiness (or lack thereof)
+      if (typeof onReady === 'function') {
+        onReady();
+      }
       return;
     }
 
@@ -110,7 +115,14 @@ export function useModelParametersSettings({
     setFormValues(initialFormValues);
     setOriginalValues({ ...initialFormValues });
     setIsFormReady(true);
-  }, [selectedModelId, currentEditingMode, platform.apiConfig, platform.id, modelParametersForPlatform, derivedSettings]);
+
+    // Call onReady only when isFormReady becomes true, onReady is a valid function,
+    // and initialFormValues are actually set (meaning derivedSettings was valid and processed).
+    if (initialFormValues && Object.keys(initialFormValues).length > 0 && typeof onReady === 'function') {
+      onReady();
+    }
+  }, [selectedModelId, currentEditingMode, platform.apiConfig, platform.id, modelParametersForPlatform, derivedSettings, onReady]);
+
 
   useEffect(() => {
     if (!derivedSettings) {
@@ -310,8 +322,8 @@ export function useModelParametersSettings({
     handleSubmit,
     handleResetClick,
     toggleEditingMode,
-    isSaving: shouldShowSaving, // Use derived state for UI
-    isResetting: shouldShowResetting, // Use derived state for UI
+    isSaving: shouldShowSaving,
+    isResetting: shouldShowResetting,
     isAnimatingReset,
     hasChanges,
     isAtDefaults,
