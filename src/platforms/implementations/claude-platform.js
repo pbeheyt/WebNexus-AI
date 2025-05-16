@@ -103,7 +103,7 @@ class ClaudePlatform extends BasePlatform {
    */
   async findSubmitButton() {
     this.logger.info(
-      `[${this.platformId}] Attempting to find and wait for Claude submit button readiness...`
+      `[${this.platformId}] Attempting to find and wait for ${this.platformId} submit button readiness...`
     );
 
     const buttonElement = await this._waitForElementState(
@@ -118,40 +118,19 @@ class ClaudePlatform extends BasePlatform {
         const pointerEvents = window.getComputedStyle(el).pointerEvents;
         const hasPointerEvents = pointerEvents !== 'none';
         
-        let logMessage = `[${this.platformId}] Claude button check:`;
-        let allConditionsMet = true;
-
-        if (!isEnabled) {
-            logMessage += ' Not enabled.';
-            allConditionsMet = false;
-        }
-        if (!isVisible) {
-            logMessage += ' Not visible.';
-            allConditionsMet = false;
-        }
-        if (!hasPointerEvents) {
-            logMessage += ` pointer-events is '${pointerEvents}'.`;
-            allConditionsMet = false;
-        }
-
-        if (!allConditionsMet) {
-            this.logger.debug(logMessage, el);
-        }
-        
         return isEnabled && isVisible && hasPointerEvents;
       },
       5000, // timeoutMs
       300,  // pollIntervalMs
-      'Claude submit button readiness'
+      `${this.platformId} submit button readiness`
     );
 
     if (buttonElement) {
-      this.logger.info(`[${this.platformId}] Claude submit button found and ready.`);
-      return buttonElement;
+      this.logger.info(`[${this.platformId}] ${this.platformId} submit button found and ready.`);
     } else {
-      this.logger.warn(`[${this.platformId}] Claude submit button did not become ready within the timeout. This attempt will return null.`);
-      return null;
+      this.logger.warn(`[${this.platformId}] ${this.platformId} submit button did not become ready within the timeout.`);
     }
+    return buttonElement;
   }
 
   /**
@@ -162,56 +141,10 @@ class ClaudePlatform extends BasePlatform {
    * @protected
    */
   async _insertTextIntoEditor(editorElement, text) {
-    try {
-      this.logger.info(
-        `[${this.platformId}] Inserting text into Claude editor`
-      );
-      // Clear existing content
-      editorElement.innerHTML = '';
-
-      // Split the text into lines and create paragraphs
-      const lines = text.split('\n');
-
-      lines.forEach((line, _index) => {
-        const p = document.createElement('p');
-        // Use textContent to prevent potential XSS if text contained HTML
-        p.textContent = line || '\u00A0'; // Use non-breaking space for empty lines to maintain structure
-        editorElement.appendChild(p);
-
-        // Add a line break element between paragraphs for visual spacing if needed by Claude's editor
-        // if (index < lines.length - 1) {
-        //   editorElement.appendChild(document.createElement('br'));
-        // }
-      });
-
-      // Remove common empty state classes (might not be strictly necessary after setting innerHTML)
-      editorElement.classList.remove('is-empty', 'is-editor-empty');
-
-      // Trigger input event using the base class helper
-      this._dispatchEvents(editorElement, ['input']);
-
-      // Try to focus the editor
-      try {
-        editorElement.focus();
-      } catch (focusError) {
-        this.logger.warn(
-          `[${this.platformId}] Could not focus Claude editor:`,
-          focusError
-        );
-        // Continue anyway, focus might not be critical
-      }
-
-      this.logger.info(
-        `[${this.platformId}] Successfully inserted text into Claude editor.`
-      );
-      return true;
-    } catch (error) {
-      this.logger.error(
-        `[${this.platformId}] Error inserting text into Claude editor:`,
-        error
-      );
-      return false;
-    }
+    // Default options of _insertTextIntoContentEditable should work for Claude (uses <p>)
+    // The specific class removal `editorElement.classList.remove('is-empty', 'is-editor-empty');`
+    // should be implicitly handled by `editorElement.innerHTML = '';` in the base method.
+    return super._insertTextIntoContentEditable(editorElement, text);
   }
 
   /**

@@ -108,7 +108,7 @@ class GrokPlatform extends BasePlatform {
    */
   async findSubmitButton() {
     this.logger.info(
-      `[${this.platformId}] Attempting to find and wait for Grok submit button readiness...`
+      `[${this.platformId}] Attempting to find and wait for ${this.platformId} submit button readiness...`
     );
 
     const buttonElement = await this._waitForElementState(
@@ -147,13 +147,13 @@ class GrokPlatform extends BasePlatform {
       },
       5000, // timeoutMs
       300,  // pollIntervalMs
-      'Grok submit button readiness'
+      `${this.platformId} submit button readiness`
     );
 
     if (buttonElement) {
-      this.logger.info(`[${this.platformId}] Grok submit button found and ready.`);
+      this.logger.info(`[${this.platformId}] ${this.platformId} submit button found and ready.`);
     } else {
-      this.logger.warn(`[${this.platformId}] Grok submit button did not become ready within the timeout.`);
+      this.logger.warn(`[${this.platformId}] ${this.platformId} submit button did not become ready within the timeout.`);
     }
     return buttonElement;
   }

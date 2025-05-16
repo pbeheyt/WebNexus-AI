@@ -43,7 +43,7 @@ class MistralPlatform extends BasePlatform {
    */
   async findSubmitButton() {
     this.logger.info(
-      `[${this.platformId}] Attempting to find and wait for Mistral submit button readiness...`
+      `[${this.platformId}] Attempting to find and wait for ${this.platformId} submit button readiness...`
     );
     // Primary selector: button with type="submit" containing an SVG (usually the send icon)
     const primarySelector = 'button[type="submit"]:has(svg)';
@@ -75,50 +75,30 @@ class MistralPlatform extends BasePlatform {
       },
       5000, // timeoutMs
       300,  // pollIntervalMs
-      'Mistral submit button readiness'
+      `${this.platformId} submit button readiness`
     );
 
     if (buttonElement) {
-      this.logger.info(`[${this.platformId}] Mistral submit button found and ready.`);
+      this.logger.info(`[${this.platformId}] ${this.platformId} submit button found and ready.`);
     } else {
-      this.logger.warn(`[${this.platformId}] Mistral submit button did not become ready within the timeout.`);
+      this.logger.warn(`[${this.platformId}] ${this.platformId} submit button did not become ready within the timeout.`);
     }
     return buttonElement;
   }
 
   /**
    * Override: Insert text into Mistral's editor using specific event sequence.
+   * This platform uses a standard textarea, so the base class method is suitable.
    * @param {HTMLElement} editorElement - The editor element (textarea).
    * @param {string} text - The text to insert.
    * @returns {Promise<boolean>} - True if successful, false otherwise.
    * @protected
    */
   async _insertTextIntoEditor(editorElement, text) {
-    try {
-      this.logger.info(
-        `[${this.platformId}] Inserting text into Mistral editor with specific events`
-      );
-      // Focus first to ensure proper state
-      editorElement.focus();
-
-      // Set value directly
-      editorElement.value = text;
-
-      // Trigger comprehensive set of events to ensure React state updates
-      // Use base helper for standard events
-      this._dispatchEvents(editorElement, ['input', 'change']);
-
-      this.logger.info(
-        `[${this.platformId}] Successfully inserted text into Mistral editor.`
-      );
-      return true;
-    } catch (error) {
-      this.logger.error(
-        `[${this.platformId}] Error inserting text into Mistral editor:`,
-        error
-      );
-      return false;
-    }
+    this.logger.info(
+      `[${this.platformId}] Using base _insertTextIntoEditor for Mistral.`
+    );
+    return super._insertTextIntoEditor(editorElement, text);
   }
 
   /**

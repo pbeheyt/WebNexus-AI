@@ -137,12 +137,58 @@ class BasePlatform extends PlatformInterface {
   }
 
   /**
-   * Default implementation for clicking the submit button.
-   * Subclasses should override this if the platform requires a non-standard click simulation.
-   * @param {HTMLElement} buttonElement - The submit button element.
+   * Helper method for inserting text into contenteditable div editors.
+   * @param {HTMLElement} editorElement - The contenteditable editor element.
+   * @param {string} text - The text to insert.
+   * @param {object} [options={}] - Optional parameters.
+   * @param {string} [options.lineElementTag='p'] - The HTML tag to use for each line of text.
+   * @param {boolean} [options.clearExisting=true] - Whether to clear existing content.
+   * @param {string[]} [options.dispatchEvents=['input', 'change']] - Events to dispatch after insertion.
    * @returns {Promise<boolean>} - True if successful, false otherwise.
    * @protected
    */
+  async _insertTextIntoContentEditable(editorElement, text, options = {}) {
+    const defaultOptions = {
+      lineElementTag: 'p',
+      clearExisting: true,
+      dispatchEvents: ['input', 'change'],
+    };
+    const effectiveOptions = { ...defaultOptions, ...options };
+
+    try {
+      this.logger.info(
+        `[${this.platformId}] Inserting text into contenteditable editor with tag <${effectiveOptions.lineElementTag}> (Clear: ${effectiveOptions.clearExisting})`
+      );
+
+      editorElement.focus();
+
+      if (effectiveOptions.clearExisting) {
+        editorElement.innerHTML = '';
+      }
+
+      const lines = text.split('\n');
+      lines.forEach((line) => {
+        const p = document.createElement(effectiveOptions.lineElementTag);
+        p.textContent = line || '\u00A0'; // Use non-breaking space for empty lines
+        editorElement.appendChild(p);
+      });
+
+      this._dispatchEvents(editorElement, effectiveOptions.dispatchEvents);
+
+      this.logger.info(
+        `[${this.platformId}] Successfully inserted text into contenteditable editor.`
+      );
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `[${this.platformId}] Error inserting text into contenteditable editor:`,
+        error
+      );
+      return false;
+    }
+  }
+
+
   /**
    * Simulates a realistic click sequence (mousedown -> mouseup -> click)
    * @param {HTMLElement} buttonElement - The button element to click
@@ -214,12 +260,6 @@ class BasePlatform extends PlatformInterface {
   }
 
   /**
-   * Verifies if submission was likely attempted by checking UI cues after clicking the submit button.
-   * Checks if the submit button became disabled OR if the editor element became empty.
-   * @returns {Promise<boolean>} True if verification passes (button disabled or editor empty), false otherwise.
-   * @protected
-   */
-  /**
    * Verifies if submission was likely successful by polling to check if the editor element became empty
    * after clicking the submit button.
    * @returns {Promise<boolean>} True if verification passes (editor becomes empty within timeout), false otherwise.
@@ -274,7 +314,7 @@ class BasePlatform extends PlatformInterface {
           resolve(false); // Timeout reached
         } else {
           // Schedule next check
-          setTimeout(checkEditor, pollInterval);
+          setTimeout(checkEditor, pollInterval); // CORRECTED: Was pollIntervalMs
         }
       };
 

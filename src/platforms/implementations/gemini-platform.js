@@ -29,7 +29,7 @@ class GeminiPlatform extends BasePlatform {
    */
   async findSubmitButton() {
     this.logger.info(
-      `[${this.platformId}] Attempting to find and wait for Gemini submit button readiness...`
+      `[${this.platformId}] Attempting to find and wait for ${this.platformId} submit button readiness...`
     );
     // Selector based on observed HTML: 'button.send-button'
     // This button also has a 'send' icon inside an mat-icon component.
@@ -55,13 +55,13 @@ class GeminiPlatform extends BasePlatform {
       },
       5000, // timeoutMs
       300,  // pollIntervalMs
-      'Gemini submit button readiness'
+      `${this.platformId} submit button readiness`
     );
 
     if (buttonElement) {
-      this.logger.info(`[${this.platformId}] Gemini submit button found and ready.`);
+      this.logger.info(`[${this.platformId}] ${this.platformId} submit button found and ready.`);
     } else {
-      this.logger.warn(`[${this.platformId}] Gemini submit button did not become ready within the timeout.`);
+      this.logger.warn(`[${this.platformId}] ${this.platformId} submit button did not become ready within the timeout.`);
     }
     return buttonElement;
   }
@@ -74,48 +74,11 @@ class GeminiPlatform extends BasePlatform {
    * @protected
    */
   async _insertTextIntoEditor(editorElement, text) {
-    try {
-      this.logger.info(
-        `[${this.platformId}] Inserting text into Gemini editor (Quill)`
-      );
-      // Focus the editor
-      editorElement.focus();
-
-      // Clear existing content and set new content
-      editorElement.innerHTML = '';
-
-      // Create paragraph for each line
-      const paragraphs = text.split('\n');
-      paragraphs.forEach((paragraph) => {
-        const p = document.createElement('p');
-        if (paragraph.trim()) {
-          p.textContent = paragraph;
-        } else {
-          // Empty paragraph with br for line breaks
-          p.appendChild(document.createElement('br'));
-        }
-        editorElement.appendChild(p);
-      });
-
-      // Remove placeholder class if present
-      if (editorElement.classList.contains('ql-blank')) {
-        editorElement.classList.remove('ql-blank');
-      }
-
-      // Trigger input events using base class helper
-      this._dispatchEvents(editorElement, ['input', 'change']);
-
-      this.logger.info(
-        `[${this.platformId}] Successfully inserted text into Gemini editor.`
-      );
-      return true;
-    } catch (error) {
-      this.logger.error(
-        `[${this.platformId}] Error inserting text into Gemini editor:`,
-        error
-      );
-      return false;
-    }
+    // Gemini uses <p> elements for lines within its Quill editor.
+    // The class `ql-blank` is managed by Quill based on content.
+    // Clearing innerHTML and then appending new <p> elements, followed by dispatching events,
+    // is the standard way to interact with such editors.
+    return super._insertTextIntoContentEditable(editorElement, text);
   }
 
   /**

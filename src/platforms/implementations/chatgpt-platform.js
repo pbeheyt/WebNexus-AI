@@ -42,46 +42,54 @@ class ChatGptPlatform extends BasePlatform {
   }
 
   /**
-   * Find ChatGPT's submit button using ID and data-testid.
-   * @returns {HTMLElement|null} The submit button or null if not found
+   * Find ChatGPT's submit button using ID and data-testid, waiting for it to be ready.
+   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready
    */
-  findSubmitButton() {
+  async findSubmitButton() {
     this.logger.info(
-      `[${this.platformId}] Attempting to find submit button (post-wait/text insertion)...`
+      `[${this.platformId}] Attempting to find and wait for ${this.platformId} submit button readiness...`
     );
-    let button = null;
 
-    // Strategy 1: Find by ID
-    button = document.querySelector('#composer-submit-button');
-    if (button) {
-      this.logger.info(
-        `[${this.platformId}] Found button using ID #composer-submit-button.`
-      );
-      return button;
-    }
-
-    // Strategy 2: Find by data-testid
-    button = document.querySelector('button[data-testid="send-button"]');
-    if (button) {
-      this.logger.info(
-        `[${this.platformId}] Found button using data-testid="send-button".`
-      );
-      return button;
-    }
-
-    // Strategy 3: Find by aria-label
-    const ariaSelector =
-      'button[aria-label*="Send" i], button[aria-label*="Envoyer" i]';
-    button = document.querySelector(ariaSelector);
-    if (button) {
-      this.logger.info(`[${this.platformId}] Found button using aria-label.`);
-      return button;
-    }
-
-    this.logger.error(
-      `[${this.platformId}] Submit button not found using any strategy (ID, data-testid, aria-label).`
+    const buttonElement = await this._waitForElementState(
+      () => { // elementSelectorFn
+        let button = document.querySelector('#composer-submit-button');
+        if (button) {
+          this.logger.debug(`[${this.platformId}] Submit button candidate found using ID #composer-submit-button.`);
+          return button;
+        }
+        button = document.querySelector('button[data-testid="send-button"]');
+        if (button) {
+          this.logger.debug(`[${this.platformId}] Submit button candidate found using data-testid="send-button".`);
+          return button;
+        }
+        const ariaSelector = 'button[aria-label*="Send" i], button[aria-label*="Envoyer" i]';
+        button = document.querySelector(ariaSelector);
+        if (button) {
+          this.logger.debug(`[${this.platformId}] Submit button candidate found using aria-label.`);
+        } else {
+           this.logger.debug(`[${this.platformId}] Submit button candidate not found by any strategy on this poll.`);
+        }
+        return button; // Returns null if not found by any strategy
+      },
+      async (el) => { // conditionFn
+        if (!el) return false;
+        const isEnabled = this._isButtonEnabled(el);
+        const isVisible = this._isVisibleElement(el);
+        const pointerEvents = window.getComputedStyle(el).pointerEvents;
+        const hasPointerEvents = pointerEvents !== 'none';
+        return isEnabled && isVisible && hasPointerEvents;
+      },
+      5000, // timeoutMs
+      300,  // pollIntervalMs
+      `${this.platformId} submit button readiness`
     );
-    return null;
+
+    if (buttonElement) {
+      this.logger.info(`[${this.platformId}] ${this.platformId} submit button found and ready.`);
+    } else {
+      this.logger.warn(`[${this.platformId}] ${this.platformId} submit button did not become ready within the timeout.`);
+    }
+    return buttonElement;
   }
 
   /**
@@ -92,42 +100,8 @@ class ChatGptPlatform extends BasePlatform {
    * @protected
    */
   async _insertTextIntoEditor(editorElement, text) {
-    try {
-      this.logger.info(
-        `[${this.platformId}] Inserting text into ChatGPT contenteditable editor`
-      );
-
-      // 1. Focus the editor element
-      editorElement.focus();
-
-      // 2. Clear existing content (usually a <p><br></p> or similar placeholder)
-      editorElement.innerHTML = '';
-
-      // 3. Create and append paragraphs for each line of text
-      const lines = text.split('\n');
-      lines.forEach((line) => {
-        const p = document.createElement('p');
-        // Use textContent to prevent HTML injection issues
-        // Use non-breaking space for empty lines to maintain structure in contenteditable
-        p.textContent = line || '\u00A0';
-        editorElement.appendChild(p);
-      });
-
-      // 4. Dispatch events to notify the framework (React) of the change
-      // 'input' is crucial for React state updates in contenteditable
-      this._dispatchEvents(editorElement, ['input', 'change']);
-
-      this.logger.info(
-        `[${this.platformId}] Successfully inserted text into contenteditable editor.`
-      );
-      return true;
-    } catch (error) {
-      this.logger.error(
-        `[${this.platformId}] Error inserting text into contenteditable editor:`,
-        error
-      );
-      return false;
-    }
+    // Default options of _insertTextIntoContentEditable should work for ChatGPT (uses <p>)
+    return super._insertTextIntoContentEditable(editorElement, text);
   }
 
   /**
