@@ -32,13 +32,17 @@ class MistralPlatform extends BasePlatform {
    */
   _getSubmitButtonSelectors() {
     return [
-      // Primary selector: button with type="submit" containing an SVG (send icon)
-      'button[type="submit"]:has(svg)',
-      // Fallback selector: button with type="submit" and a class indicating inverted color
-      'button[type="submit"][class*="bg-inverted"]',
-      // Aria-label based selector
-      'button[type="submit"][aria-label*="Send" i]',
-      'button[type="submit"][aria-label*="Envoyer" i]', // French
+      // Primary: Targets the button containing the specific SVG icon by its ID.
+      'button[type="submit"]:has(svg[id="a"])',
+
+      // Secondary Fallback: Targets a submit button with a class that might indicate its primary action state.
+      'button[type="submit"][class*="bg-state-primary"]',
+
+      // Tertiary Fallback (less reliable due to localization):
+      // Targets a submit button that has an aria-label (any aria-label).
+      // The actual content of the aria-label is not checked here, only its presence.
+      // The readiness check in platform-base.js will handle aria-disabled.
+      'button[type="submit"][aria-label]',
     ];
   }
 
