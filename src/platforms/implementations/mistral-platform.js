@@ -62,6 +62,17 @@ class MistralPlatform extends BasePlatform {
   }
 
   /**
+   * Gets the platform-specific wait time in milliseconds before attempting to find the submit button.
+   * Subclasses can override this to adjust timing.
+   * @returns {Promise<number>} Milliseconds to wait.
+   * @protected
+   */
+  async _getPreSubmitWaitMs() {
+    this.logger.info(`[${this.platformId}] Using specific pre-submit wait of 50ms.`);
+    return 50;
+  }
+
+  /**
    * Checks if the Mistral editor element is empty.
    * @param {HTMLElement} editorElement - The editor element to check.
    * @returns {boolean} True if the editor is empty, false otherwise.

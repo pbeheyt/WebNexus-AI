@@ -47,8 +47,8 @@ class BasePlatform extends PlatformInterface {
     const observerConfig = { childList: true, subtree: true };
     let retryCount = 0;
 
-    const observer = new MutationObserver(async () => { // Made async to await findEditorElement
-      const editorElement = await this.findEditorElement(); // findEditorElement is now async
+    const observer = new MutationObserver(async () => {
+      const editorElement = await this.findEditorElement();
 
       if (editorElement && !this.processingStarted) {
         this.logger.info(
@@ -64,7 +64,7 @@ class BasePlatform extends PlatformInterface {
           this.logger.error(
             `[${this.platformId}] Failed to find editor element after maximum retries in observer. Automation cannot proceed.`
           );
-          // Optionally, clear storage here if automation cannot proceed
+          // Clear storage here if automation cannot proceed
           // to prevent stale data if the tab is left open.
           chrome.storage.local.remove([
             STORAGE_KEYS.EXTRACTED_CONTENT,
@@ -134,8 +134,9 @@ class BasePlatform extends PlatformInterface {
   }
 
   /**
-   * Finds the submit button using configured selectors and waits for it to be ready.
-   * @returns {Promise<HTMLElement|null>} The submit button or null if not found/ready.
+   * Finds the submit button using configured selectors and waits for it to be ready,
+   * or returns a special value if the editor empties early.
+   * @returns {Promise<HTMLElement|null|"EDITOR_EMPTIED_EARLY">} The submit button, null on timeout, or "EDITOR_EMPTIED_EARLY".
    */
   async findSubmitButton() {
     this.logger.info(`[${this.platformId}] Attempting to find submit button using configured selectors...`);
@@ -149,7 +150,29 @@ class BasePlatform extends PlatformInterface {
         return null;
     }
 
-    const buttonElement = await this._waitForElementState(
+    const earlyExitCheck = async () => {
+      // Attempt to find the editor quickly.
+      // This uses a non-waiting find, as it's part of a poll.
+      const editorSelectors = this._getEditorSelectors();
+      let editorElement = null;
+      for (const editorSelector of editorSelectors) {
+          try {
+              const foundElement = document.querySelector(editorSelector);
+              if (foundElement) {
+                  editorElement = foundElement;
+                  break;
+              }
+          } catch (e) { /* ignore selector error during this quick check */ }
+      }
+
+      if (editorElement && this._isEditorEmpty(editorElement)) {
+        this.logger.info(`[${this.platformId}] findSubmitButton: Editor emptied while polling for submit button.`);
+        return true; // Signal early exit
+      }
+      return false;
+    };
+
+    const buttonOrEarlyExit = await this._waitForElementState(
       selectors,
       async (el) => { // Condition for submit button readiness
         if (!el) return false;
@@ -161,15 +184,20 @@ class BasePlatform extends PlatformInterface {
       },
       5000, // timeoutMs
       300,  // pollIntervalMs
-      `${this.platformId} submit button`
+      `${this.platformId} submit button`,
+      earlyExitCheck // Pass the early exit condition checker
     );
 
-    if (buttonElement) {
+    if (buttonOrEarlyExit === "EARLY_EXIT_CONDITION_MET") {
+      this.logger.info(`[${this.platformId}] Submit button search exited early: Editor emptied.`);
+      return "EDITOR_EMPTIED_EARLY"; // Return specific string
+    } else if (buttonOrEarlyExit instanceof HTMLElement) {
       this.logger.info(`[${this.platformId}] Submit button found and ready.`);
+      return buttonOrEarlyExit; // Return the button element
     } else {
-      this.logger.warn(`[${this.platformId}] Submit button did not become ready within the timeout.`);
+      this.logger.warn(`[${this.platformId}] Submit button did not become ready within the timeout, and editor did not empty early.`);
+      return null; // Return null if timeout without early exit or finding button
     }
-    return buttonElement;
   }
 
 
@@ -181,6 +209,16 @@ class BasePlatform extends PlatformInterface {
    */
   async _wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Gets the platform-specific wait time in milliseconds before attempting to find the submit button.
+   * Subclasses can override this to adjust timing.
+   * @returns {Promise<number>} Milliseconds to wait.
+   * @protected
+   */
+  async _getPreSubmitWaitMs() {
+    return 200; // Default wait time
   }
 
   /**
@@ -224,7 +262,7 @@ class BasePlatform extends PlatformInterface {
       );
       editorElement.focus();
       editorElement.value = text; // Standard for textarea/input
-      this._dispatchEvents(editorElement, ['input', 'change', 'blur', 'focus']); // Added common events
+      this._dispatchEvents(editorElement, ['input', 'change', 'blur', 'focus']);
       this.logger.info(
         `[${this.platformId}] Successfully inserted text into editor.`
       );
@@ -384,7 +422,7 @@ class BasePlatform extends PlatformInterface {
 
   /**
    * Verifies if submission was likely successful by polling to check if the editor element became empty
-   * after clicking the submit button.
+   * after an interaction attempt.
    * @returns {Promise<boolean>} True if verification passes (editor becomes empty within timeout), false otherwise.
    * @protected
    */
@@ -394,30 +432,31 @@ class BasePlatform extends PlatformInterface {
     const startTime = Date.now();
 
     this.logger.info(
-      `[${this.platformId}] Starting post-click verification polling (Interval: ${pollInterval}ms, Timeout: ${maxWaitTime}ms)...`
+      `[${this.platformId}] Starting post-interaction verification polling (Interval: ${pollInterval}ms, Timeout: ${maxWaitTime}ms)... Checking for empty editor.`
     );
 
     return new Promise((resolve) => {
       const checkEditor = async () => {
-        let isEditorEmpty = false;
         try {
           // Re-find the editor element in each check, as it might be replaced or re-rendered.
-          const editorElement = await this.findEditorElement(); // findEditorElement is async
+          // For simplicity in this step, let's try a direct query first.
+          const editorSelectors = this._getEditorSelectors();
+          let editorElement = null;
+          for (const selector of editorSelectors) {
+              try {
+                  const foundElement = document.querySelector(selector);
+                  if (foundElement) {
+                      editorElement = foundElement;
+                      break;
+                  }
+              } catch (e) { /* ignore */ }
+          }
           
-          if (editorElement === null) {
+          if (editorElement === null || this._isEditorEmpty(editorElement)) {
             this.logger.info(
-              `[${this.platformId}] Verification polling PASSED: Editor element no longer found (assumed submitted or page changed).`
+              `[${this.platformId}] Verification polling PASSED: Editor element no longer found or is empty.`
             );
             resolve(true);
-            return;
-          }
-
-          isEditorEmpty = this._isEditorEmpty(editorElement);
-          if (isEditorEmpty) {
-            this.logger.info(
-              `[${this.platformId}] Verification polling PASSED: Editor is empty.`
-            );
-            resolve(true); 
             return;
           }
         } catch (error) {
@@ -425,6 +464,7 @@ class BasePlatform extends PlatformInterface {
             `[${this.platformId}] Verification polling: Error checking editor state:`,
             error
           );
+          // Continue polling on error to see if it resolves
         }
 
         if (Date.now() - startTime > maxWaitTime) {
@@ -541,15 +581,30 @@ class BasePlatform extends PlatformInterface {
    * @param {number} [timeoutMs=3000] - Maximum time in milliseconds to wait.
    * @param {number} [pollIntervalMs=200] - How often in milliseconds to check.
    * @param {string} [description='element state'] - Description for logging.
-   * @returns {Promise<HTMLElement|null>} The element if condition met, or null on timeout/error.
+   * @param {function|null} [checkEarlyExitConditionFn=null] - Optional async function to check for early exit.
+   * @returns {Promise<HTMLElement|null|"EARLY_EXIT_CONDITION_MET">} The element if condition met, null on timeout, or "EARLY_EXIT_CONDITION_MET".
    * @protected
    */
-  async _waitForElementState(selectorStringsArray, conditionFn, timeoutMs = 3000, pollIntervalMs = 200, description = 'element state') {
+  async _waitForElementState(selectorStringsArray, conditionFn, timeoutMs = 3000, pollIntervalMs = 200, description = 'element state', checkEarlyExitConditionFn = null) {
     this.logger.info(`[${this.platformId}] Waiting for ${description} (Timeout: ${timeoutMs}ms, Interval: ${pollIntervalMs}ms)...`);
     const startTime = Date.now();
 
     return new Promise((resolve) => {
       const checkCondition = async () => {
+        if (checkEarlyExitConditionFn) {
+          try {
+            const earlyExitMet = await checkEarlyExitConditionFn();
+            if (earlyExitMet) {
+              this.logger.info(`[${this.platformId}] Early exit condition met for ${description}.`);
+              resolve("EARLY_EXIT_CONDITION_MET"); // Special string to indicate early exit
+              return;
+            }
+          } catch (earlyExitError) {
+            this.logger.warn(`[${this.platformId}] Error checking early exit condition for ${description}:`, earlyExitError);
+            // Continue polling as if early exit wasn't met or error occurred
+          }
+        }
+
         let element = null;
         let successfulSelector = null;
 
@@ -662,40 +717,51 @@ class BasePlatform extends PlatformInterface {
             `[${this.platformId}] Text insertion step completed.`
           );
 
-          await this._wait(500); 
+          await this._wait(await this._getPreSubmitWaitMs());
           this.logger.info(`[${this.platformId}] Wait step completed.`);
 
-          const submitButton = await this.findSubmitButton();
-          if (!submitButton) {
-            this.logger.error(
-              `[${this.platformId}] Critical: Submit button element not found during processContent.`
-            );
-            throw new Error( // Throw
-              `Could not find the submit button element on ${this.platformId}. Automation cannot proceed.`
-            );
-          }
-          this.logger.info(
-            `[${this.platformId}] Found submit button element. Proceeding to click attempt.`
-          );
-          
-          try {
-            await this._clickSubmitButton(submitButton);
-            this.logger.info(`[${this.platformId}] Submit button click attempt finished.`);
-          } catch (clickError) {
-            this.logger.error(`[${this.platformId}] Error occurred during _clickSubmitButton attempt (will proceed to verification):`, clickError);
-          }
+          const submitButtonOrEarlyExit = await this.findSubmitButton();
 
-          const verificationSuccess = await this._verifySubmissionAttempted();
-
-          if (verificationSuccess) {
-            this.logger.info(`[${this.platformId}] Post-click verification successful.`);
+          if (submitButtonOrEarlyExit === "EDITOR_EMPTIED_EARLY") {
             this.logger.info(
-              `[${this.platformId}] Content successfully processed and submitted.`
+              `[${this.platformId}] Submission successful: Editor emptied before explicit submit button interaction.`
             );
-          } else {
-            this.logger.warn(`[${this.platformId}] Post-click verification failed. The interaction may not have been fully processed by the platform.`);
-            // Do not throw an error here, just log, as the click was attempted.
-            // The main goal is to clear storage.
+            // Submission is considered successful, skip click and specific verification for click
+          } else if (submitButtonOrEarlyExit instanceof HTMLElement) {
+            const submitButton = submitButtonOrEarlyExit;
+            this.logger.info(
+              `[${this.platformId}] Found submit button element. Proceeding to click attempt.`
+            );
+            
+            try {
+              await this._clickSubmitButton(submitButton);
+              this.logger.info(`[${this.platformId}] Submit button click attempt finished.`);
+            } catch (clickError) {
+              this.logger.error(`[${this.platformId}] Error occurred during _clickSubmitButton attempt:`, clickError);
+              // Even if click fails, proceed to verification as platform might have reacted
+            }
+
+            const verificationSuccess = await this._verifySubmissionAttempted(); // No argument passed
+
+            if (verificationSuccess) {
+              this.logger.info(`[${this.platformId}] Post-interaction verification successful.`);
+              this.logger.info(
+                `[${this.platformId}] Content successfully processed and submitted.`
+              );
+            } else {
+              this.logger.warn(`[${this.platformId}] Post-interaction verification failed. The interaction may not have been fully processed by the platform.`);
+            }
+          } else { // submitButtonOrEarlyExit is null (timeout)
+            this.logger.warn(
+              `[${this.platformId}] Submit button not found or not ready within timeout, and editor did not empty early. Attempting verification as a fallback.`
+            );
+            // Attempt verification even if button wasn't found, as platform might auto-process
+            const verificationSuccess = await this._verifySubmissionAttempted(); // No argument passed
+            if (verificationSuccess) {
+              this.logger.info(`[${this.platformId}] Fallback verification successful (editor emptied).`);
+            } else {
+              this.logger.warn(`[${this.platformId}] Fallback verification failed (editor did not empty). Automation may not have succeeded.`);
+            }
           }
         } catch (error) { // Catches errors from findEditor, insertText, findSubmitButton, or verification
           this.logger.error(
