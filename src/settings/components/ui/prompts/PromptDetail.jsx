@@ -174,7 +174,11 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
           onClick={handleSetAsDefault}
           isLoading={shouldShowSettingDefault}
           disabled={anyActionLoading || isDefaultForType}
-          className={`${isDefaultForType ? 'invisible' : ''} select-none`}
+          className={`select-none transition-all duration-300 ease-in-out ${
+            isDefaultForType
+              ? 'opacity-0 pointer-events-none'
+              : 'opacity-100 pointer-events-auto'
+          }`}
         >
           {isSettingDefaultActual ? "Setting..." : "Set as Default"}
         </Button>
