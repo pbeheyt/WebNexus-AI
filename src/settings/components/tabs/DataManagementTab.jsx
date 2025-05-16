@@ -194,7 +194,7 @@ const DataManagementTab = () => {
       />
 
     <div className='w-fit'>
-      <SettingsCard className="selector-section-container mb-4">
+      <SettingsCard className="selector-section-container mb-6">
         <div className="flex items-center">
           <h3 className='text-base font-semibold text-theme-primary'>
             Data Type Selection
@@ -211,6 +211,8 @@ const DataManagementTab = () => {
         </div>
       </SettingsCard>
     </div>
+
+    <div className='border-b border-theme mb-6'></div>
 
       {/* Action Groups Container */}
       <div className="space-y-4">

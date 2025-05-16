@@ -123,7 +123,7 @@ const PromptList = ({
 
   return (
     <>
-      <SettingsCard className="mb-4"> 
+      <SettingsCard className="mb-6"> 
           <h3 className='text-base font-semibold text-theme-primary mb-4'>
             Content Type Selection
           </h3>
@@ -134,6 +134,8 @@ const PromptList = ({
             placeholder='Filter by Content Type'
           />
       </SettingsCard>
+
+      <div className='border-b border-theme mb-6'></div>
 
       {filteredPrompts.length === 0 ? (
         <div 
@@ -151,7 +153,7 @@ const PromptList = ({
       ) : (
         <div 
           ref={promptListRef}
-          className={promptListClasses} // Apply dynamic classes here
+          className={promptListClasses}
         >
           {filteredPrompts.map((item) => (
             <button
