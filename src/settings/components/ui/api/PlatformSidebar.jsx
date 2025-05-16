@@ -29,7 +29,7 @@ const PlatformSidebar = ({
             onClick={() => onSelectPlatform(platform.id)}
           >
             {/* Icon and Name container */}
-            <div className='flex items-center flex-grow min-w-0 mr-3'>
+            <div className='flex items-center flex-grow min-w-0 mr-3 select-none'>
               {platform.iconUrl ? (
                 <PlatformIcon
                   platformId={platform.id}
