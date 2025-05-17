@@ -15,6 +15,7 @@ import {
   TextArea,
 } from '../../../../components';
 import { useModelParametersSettings } from '../../../hooks/useModelParametersSettings';
+import { MAX_SYSTEM_PROMPT_LENGTH } from '../../../../shared/constants';
 
 const ModelParametersSettings = ({
   platform,
@@ -355,7 +356,7 @@ const ModelParametersSettings = ({
                 placeholder='Enter a system prompt for API requests'
                 value={formValues.systemPrompt ?? ''}
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}
-                maxLength={parameterSpecs.systemPrompt.maxLength}
+                maxLength={MAX_SYSTEM_PROMPT_LENGTH}
                 disabled={isSaving || isResetting || isTransitioningMode}
                 className="system-prompt-input bg-theme-hover text-sm border border-theme rounded-md"
                 style={{ minHeight: '120px' }}

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
-import { Button, useNotification, CustomSelect } from '../../../../components';
+import { Button, useNotification, CustomSelect, TextArea } from '../../../../components';
 import {
   STORAGE_KEYS,
   CONTENT_TYPES,
@@ -311,16 +311,20 @@ const PromptForm = ({
         >
           Prompt Content
         </label>
-        <textarea
-          id='content'
-          name='content'
-          className='w-full p-3 bg-theme-hover text-sm text-theme-primary border border-theme rounded-md focus-primary break-words h-[300px] overflow-y-auto'
-          placeholder='Enter your prompt content here...'
-          value={formData.content}
-          onChange={handleChange}
-          maxLength={MAX_PROMPT_CONTENT_LENGTH}
-          disabled={shouldShowSaving} // Disable if UI loading state is active
-        />
+        <div className='select-none'>
+          <TextArea
+            id='content'
+            name='content'
+            placeholder='Enter your prompt content here...'
+            value={formData.content}
+            onChange={handleChange}
+            maxLength={MAX_PROMPT_CONTENT_LENGTH}
+            disabled={shouldShowSaving} // Disable if UI loading state is active
+            className="bg-theme-hover text-sm border border-theme rounded-md"
+            style={{ minHeight: '120px' }}
+            autoResize={true}
+            />
+        </div>
       </div>
 
       <div className='form-actions flex justify-end gap-4 mt-7'>
