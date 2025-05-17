@@ -313,10 +313,6 @@ async function handleTabCreation(newTab) {
   );
   try {
     // Store the initial visibility state (false) without enabling/disabling the panel itself
-    await SidePanelStateManager.setSidePanelVisibilityForTab(newTab.id, false);
-    logger.background.info(
-      `Initial sidepanel state (visible: false) stored for new tab ${newTab.id}`
-    );
   } catch (error) {
     logger.background.error(
       `Error storing initial sidepanel state for new tab ${newTab.id}:`,

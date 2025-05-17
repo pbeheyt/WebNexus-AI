@@ -226,9 +226,9 @@ export function setupTabStateListener() {
         );
 
         // Use SidePanelStateManager to specifically clean its state for the removed tab
-        await SidePanelStateManager.cleanupTabStates([tabId], null); // Pass removed tabId for targeted cleanup
+        await SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false); // This will now delete the key if it exists
         logger.background.info(
-          `Sidepanel state cleanup completed for closed tab ${tabId}.`
+          `Sidepanel state (visibility set to false/key removed) for closed tab ${tabId}.`
         );
       } catch (error) {
         logger.background.error(
@@ -285,8 +285,8 @@ export async function performStaleTabCleanup() {
     );
 
     // Use SidePanelStateManager to clean its state based on valid IDs
-    await SidePanelStateManager.cleanupTabStates(null, validTabIds); // Pass validTabIds for periodic cleanup
-    logger.background.info(`Sidepanel stale state cleanup completed.`);
+        await SidePanelStateManager.cleanupTabStates(); // Call without arguments
+        logger.background.info(`SidePanelStateManager stale state cleanup completed.`);
 
     logger.background.info('Stale tab data cleanup finished successfully.');
   } catch (error) {

@@ -51,21 +51,6 @@ async function initializeExtension() {
     await resetState();
     logger.background.info('Volatile state reset complete');
 
-    // Reset all tab sidepanel visibility states to false
-    logger.background.info(
-      'Resetting all tab sidepanel visibility states to false...'
-    );
-    const tabs = await chrome.tabs.query({});
-    const initialSidepanelStates = {};
-    for (const tab of tabs) {
-      if (tab.id) {
-        initialSidepanelStates[tab.id.toString()] = false;
-      }
-    }
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: initialSidepanelStates,
-    });
-    logger.background.info('All tab sidepanel visibility states reset.');
 
     return true;
   } catch (error) {

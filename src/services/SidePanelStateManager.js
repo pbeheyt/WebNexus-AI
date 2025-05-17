@@ -18,25 +18,30 @@ class SidePanelStateManager {
 
     // Convert tabId to string for use as object key
     const tabIdStr = tabId.toString();
+    const updatedStates = { ...tabStates }; // Create a mutable copy
 
-    // Determine new visibility
+    // Determine new visibility state
+    let newVisibilityState;
     if (visible === undefined) {
-      // Toggle current state
-      visible = !(tabStates[tabIdStr] === true);
+      // Toggle current state: if it's currently true (present), set to false (delete), else set to true (add)
+      newVisibilityState = !(updatedStates[tabIdStr] === true);
+    } else {
+      newVisibilityState = visible;
     }
 
     // Update tab state
-    const updatedStates = {
-      ...tabStates,
-      [tabIdStr]: visible,
-    };
+    if (newVisibilityState === true) {
+      updatedStates[tabIdStr] = true; // Store true if visible
+    } else {
+      delete updatedStates[tabIdStr]; // Delete key if not visible (default state)
+    }
 
     // Save updated states
     await chrome.storage.local.set({
       [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: updatedStates,
     });
 
-    logger.service.info(`Tab ${tabId} sidepanel visibility set to ${visible}`);
+    logger.service.info(`Tab ${tabId} sidepanel visibility intention set to ${newVisibilityState} (stored as: ${updatedStates[tabIdStr] === true ? 'true' : 'absent/false'}).`);
   }
 
   /**
@@ -54,9 +59,13 @@ class SidePanelStateManager {
     ]);
 
     const tabStates = result[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
+    const tabIdStr = tabId.toString();
+
+    // If tabIdStr is not in tabStates, it means visible is false (default by absence)
+    const isVisible = tabStates[tabIdStr] === true;
 
     return {
-      visible: tabStates[tabId.toString()] === true,
+      visible: isVisible,
       platform: result[STORAGE_KEYS.SIDEPANEL_DEFAULT_PLATFORM_ID] || null,
       model: result[STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM] || null,
     };
@@ -110,10 +119,12 @@ class SidePanelStateManager {
       const { [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: tabStates = {} } =
         await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
 
+      // If tabId.toString() is not a key in tabStates, it's considered false (default by absence)
+      // Otherwise, it's true (as only true values are stored).
       return tabStates[tabId.toString()] === true;
     } catch (error) {
       logger.service.error(`Error getting sidepanel visibility for tab ${tabId}:`, error);
-      return false;
+      return false; // Default to false on error
     }
   }
 
@@ -152,12 +163,13 @@ class SidePanelStateManager {
       const updatedStates = {};
       let stateChanged = false;
 
-      Object.entries(tabStates).forEach(([tabId, state]) => {
-        if (activeTabIds.has(tabId)) {
-          updatedStates[tabId] = state;
+      Object.entries(tabStates).forEach(([tabIdStr, state]) => {
+        // Only keep entries for active tabs. Since we only store 'true', state will be true.
+        if (activeTabIds.has(tabIdStr)) {
+          updatedStates[tabIdStr] = state; // Keep the 'true' value
         } else {
-          stateChanged = true;
-          logger.service.info(`Removing sidepanel state for closed tab ${tabId}`);
+          stateChanged = true; // An entry for a closed tab was present, so it's removed
+          logger.service.info(`Removing sidepanel state for closed tab ${tabIdStr} during cleanup.`);
         }
       });
 
@@ -166,7 +178,9 @@ class SidePanelStateManager {
         await chrome.storage.local.set({
           [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: updatedStates,
         });
-        logger.service.info('Tab sidepanel states cleaned up');
+        logger.service.info('Tab sidepanel states cleaned up.');
+      } else {
+        logger.service.info('No stale sidepanel states to clean up.');
       }
     } catch (error) {
       logger.service.error('Error cleaning up tab sidepanel states:', error);
