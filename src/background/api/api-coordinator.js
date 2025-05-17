@@ -164,8 +164,7 @@ export async function processContentViaApi(params) {
     let extractedContent = null;
     let newlyFormattedContent = null; // To hold content formatted in this run
     const contentType = determineContentType(url);
-    // const isFirstUserMessage = conversationHistory.length === 0; // Not used directly here, but good for context
-    // logger.background.info(
+        // logger.background.info(
     //   `Is this the first user message (history empty)? ${isFirstUserMessage}`
     // );
 

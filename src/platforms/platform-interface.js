@@ -38,14 +38,6 @@ class PlatformInterface {
     throw new Error('findSubmitButton must be implemented by subclasses');
   }
 
-  /**
-   * Insert text into the editor and submit it
-   * @param {string} text - The text to insert and submit
-   * @returns {Promise<boolean>} Success status
-   */
-  async insertAndSubmitText(_text) {
-    throw new Error('insertAndSubmitText must be implemented by subclasses');
-  }
 
   /**
    * Initialize the platform integration
