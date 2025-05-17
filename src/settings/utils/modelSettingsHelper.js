@@ -90,14 +90,12 @@ export function getDerivedModelSettings({ platformIdForLogging,
     defaultSettings.temperature = platformApiConfig.temperature.default;
   } else {
     defaultSettings.includeTemperature = false;
-    // delete defaultSettings.temperature; // No need to delete, just won't be used if includeTemperature is false
   }
 
   if (resolvedModelConfig.capabilities.supportsTopP === true && platformApiConfig.topP) {
     defaultSettings.topP = platformApiConfig.topP.default;
   } else {
     defaultSettings.includeTopP = false;
-    // delete defaultSettings.topP;
   }
 
 

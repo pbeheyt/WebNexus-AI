@@ -4,7 +4,7 @@ export { Button } from './core/Button';
 export { Toggle } from './core/Toggle';
 export { CustomSelect } from './core/CustomSelect';
 export { IconButton } from './core/IconButton';
-export { Modal } from './core/Modal'; // Added Modal export
+export { Modal } from './core/Modal';
 
 // Feedback components
 export { StatusMessage } from './feedback/StatusMessage';

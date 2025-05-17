@@ -2,4 +2,4 @@
 export * from './ApiSettings';
 export * from './DataManagementTab';
 export * from './PromptManagement';
-export * from './KeyboardShortcutsTab'; // Add this line
+export * from './KeyboardShortcutsTab';

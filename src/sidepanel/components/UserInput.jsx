@@ -67,7 +67,7 @@ export function UserInput({ className = '' }) {
         isContentLoading: contentLoading
       });
     }
-  }, [messages.length, platformName, contentType, isPageInjectable, contentLoading, platformLoading, isContentExtractionEnabled]); // Added isContentExtractionEnabled
+  }, [messages.length, platformName, contentType, isPageInjectable, contentLoading, platformLoading, isContentExtractionEnabled]);
 
   return (
     <UnifiedInput

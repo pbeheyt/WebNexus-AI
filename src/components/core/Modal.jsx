@@ -47,7 +47,7 @@ export function Modal({ isOpen, onClose, title, children, widthClass = 'max-w-md
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       ref={backdropRef}
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-in-out outline-none" // Added outline-none for focus state
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-in-out outline-none"
       onClick={handleBackdropClick}
       onKeyDown={handleBackdropKeyDown}
       role="dialog" // Role is appropriate
@@ -62,7 +62,6 @@ export function Modal({ isOpen, onClose, title, children, widthClass = 'max-w-md
         ref={contentRef}
         className={`bg-theme-surface p-6 rounded-lg shadow-xl relative ${widthClass} w-full transform transition-all duration-300 ease-in-out outline-none`}
         tabIndex="-1" 
-        // Removed onClick stopPropagation as backdrop click logic is now more precise
       >
         {/* Modal Header */}
         <div className="flex justify-between items-center pb-3 mb-6 border-b border-theme">

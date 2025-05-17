@@ -291,7 +291,7 @@ class BasePlatform extends PlatformInterface {
     const defaultOptions = {
       lineElementTag: 'p',
       clearExisting: true,
-      dispatchEvents: ['input', 'change', 'blur', 'focus', 'compositionend'], // Added common events
+      dispatchEvents: ['input', 'change', 'blur', 'focus', 'compositionend'],
     };
     const effectiveOptions = { ...defaultOptions, ...options };
 
@@ -307,7 +307,7 @@ class BasePlatform extends PlatformInterface {
       }
 
       const lines = text.split('\n');
-      lines.forEach((line) => { // Removed unused 'index' parameter
+      lines.forEach((line) => {
         const p = document.createElement(effectiveOptions.lineElementTag);
         p.textContent = line;
         // For empty lines, Quill often uses <p><br></p>. Let's try to mimic that for better compatibility.

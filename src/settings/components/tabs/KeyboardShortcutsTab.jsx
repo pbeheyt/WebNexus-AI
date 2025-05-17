@@ -34,7 +34,7 @@ const parseChromeCommandShortcut = (shortcutString) => {
 import { Button, useNotification, Modal, SpinnerIcon } from '../../../components';
 import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
-import { STORAGE_KEYS, DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG } from '../../../shared/constants'; // Updated import
+import { STORAGE_KEYS, DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
 import { formatShortcutToStringDisplay } from '../../../shared/utils/shortcut-utils';
 

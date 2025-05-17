@@ -2,7 +2,7 @@
 import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 
-import { SpinnerIcon } from '../icons/SpinnerIcon'; // Import SpinnerIcon
+import { SpinnerIcon } from '../icons/SpinnerIcon';
 
 export const IconButton = forwardRef(
   (
@@ -12,7 +12,7 @@ export const IconButton = forwardRef(
       className = '',
       onClick,
       disabled,
-      isLoading = false, // Add isLoading prop
+      isLoading = false,
       ariaLabel,
       title,
       ...props
@@ -50,7 +50,7 @@ IconButton.propTypes = {
   className: PropTypes.string,
   onClick: PropTypes.func,
   disabled: PropTypes.bool,
-  isLoading: PropTypes.bool, // Add propType for isLoading
+  isLoading: PropTypes.bool,
   ariaLabel: PropTypes.string,
   title: PropTypes.string,
 };

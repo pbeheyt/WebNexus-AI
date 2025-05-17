@@ -180,7 +180,7 @@ function registerServiceHandlers() {
     handleToggleSidePanelAction
   );
 
-  // Add this line within registerServiceHandlers
+  // Handle requests to close the current side panel
   messageHandlers.set('closeCurrentSidePanel', handleCloseCurrentSidePanelRequest);
 
   // Handle PDF fetch requests for file:// URLs

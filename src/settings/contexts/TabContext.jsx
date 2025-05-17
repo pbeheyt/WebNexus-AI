@@ -5,8 +5,8 @@ import PropTypes from 'prop-types';
 const TABS = {
   PROMPT_MANAGEMENT: 'prompt-management',
   API_SETTINGS: 'api-settings',
-  DATA_MANAGEMENT: 'data-management', // Added new tab
-  KEYBOARD_SHORTCUTS: 'keyboard-shortcuts', // <<< ADD THIS LINE
+  DATA_MANAGEMENT: 'data-management',
+  KEYBOARD_SHORTCUTS: 'keyboard-shortcuts',
 };
 
 const TabContext = createContext(null);

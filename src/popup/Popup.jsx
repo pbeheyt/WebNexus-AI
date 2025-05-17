@@ -14,10 +14,10 @@ import {
 import { useContent } from '../contexts/ContentContext';
 import { UnifiedInput } from '../components/input/UnifiedInput';
 import {
-  STORAGE_KEYS, // Updated import
+  STORAGE_KEYS,
   INTERFACE_SOURCES,
   CONTENT_TYPE_LABELS,
-  DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG, // This remains for the default value
+  DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
 } from '../shared/constants';
 import { formatShortcutToStringDisplay } from '../shared/utils/shortcut-utils';
 import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';

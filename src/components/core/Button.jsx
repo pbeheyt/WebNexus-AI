@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { SpinnerIcon } from '../icons/SpinnerIcon'; // Import SpinnerIcon
+import { SpinnerIcon } from '../icons/SpinnerIcon';
 
 /**
  * Button component with support for multiple variants, sizes, and a loading state.
