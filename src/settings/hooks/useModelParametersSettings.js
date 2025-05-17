@@ -74,6 +74,7 @@ export function useModelParametersSettings({
     logger.settings.debug(`useMPS: Initial load/model change for ${selectedModelId}. isTransitioningMode: ${isTransitioningMode}`);
 
     const newDerivedSettings = getDerivedModelSettings({
+      platformIdForLogging: platform?.id, // Pass platform ID for logging
       platformApiConfig: platform.apiConfig,
       modelId: selectedModelId,
       editingMode: currentEditingMode,
@@ -129,7 +130,8 @@ export function useModelParametersSettings({
     if (isTransitioningMode && pendingMode) {
       logger.settings.debug(`useMPS: Recalculating for pendingMode: ${pendingMode}`);
       const newPendingDerivedSettings = getDerivedModelSettings({
-        platformApiConfig: platform.apiConfig,
+        platformIdForLogging: platform?.id, // Pass platform ID for logging
+      platformApiConfig: platform.apiConfig,
         modelId: selectedModelId,
         editingMode: pendingMode,
         modelsFromPlatform,
@@ -166,7 +168,7 @@ export function useModelParametersSettings({
       });
       setPendingFormValues(newPendingFormVals);
     }
-  }, [isTransitioningMode, pendingMode, platform.apiConfig, selectedModelId, modelParametersForPlatform, modelsFromPlatform]);
+  }, [isTransitioningMode, pendingMode, platform.apiConfig, platform?.id, selectedModelId, modelParametersForPlatform, modelsFromPlatform]);
 
   // Effect to finalize mode transition
   useEffect(() => {
@@ -340,7 +342,8 @@ export function useModelParametersSettings({
         // This ensures that if derivedSettings itself has changed (e.g. due to config update),
         // we reset to the *new* defaults.
         const { defaultSettings: newConfigDefaults } = getDerivedModelSettings({
-            platformApiConfig: platform.apiConfig,
+            platformIdForLogging: platform?.id, // Pass platform ID for logging
+      platformApiConfig: platform.apiConfig,
             modelId: selectedModelId,
             editingMode: currentEditingMode,
             modelsFromPlatform,

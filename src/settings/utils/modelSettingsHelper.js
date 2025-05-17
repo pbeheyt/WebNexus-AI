@@ -13,27 +13,30 @@ import { MAX_SYSTEM_PROMPT_LENGTH } from '../../shared/constants';
  * @param {Array<object>} params.modelsFromPlatform - The array of model configurations from platformApiConfig.models.
  * @returns {object|null} A comprehensive object with derived settings, or null if modelId is invalid.
  */
-export function getDerivedModelSettings({
+export function getDerivedModelSettings({ platformIdForLogging,
   platformApiConfig,
   modelId,
   editingMode,
   modelsFromPlatform,
 }) {
-  if (!platformApiConfig || !modelsFromPlatform || !modelId) {
-    logger.settings.error(
-      'getDerivedModelSettings: Missing critical parameters.',
-      { platformApiConfig, modelId, editingMode, modelsFromPlatform }
+  if (!platformApiConfig || !modelsFromPlatform) {
+    logger.settings.debug(
+      `getDerivedModelSettings: Called with invalid platformApiConfig or modelsFromPlatform.`,
+      { platformIdForLogging, modelId, editingMode }
     );
-    return null;
+    return null; // Early exit if essential configs are missing
   }
 
   const baseModelConfig = modelsFromPlatform.find((m) => m.id === modelId);
 
   if (!baseModelConfig) {
-    logger.settings.warn(
-      `getDerivedModelSettings: No base configuration found for modelId: ${modelId} on platform ${platformApiConfig?.id || 'Unknown'}`
+    // This log replaces the original warning for when a model isn't found in the platform's config.
+    // It's changed to DEBUG because this can be a transient state during UI updates.
+    logger.settings.debug(
+      `getDerivedModelSettings: Model config for modelId '${modelId}' not found in platform '${platformIdForLogging || 'Unknown'}'. This might be a transient state during UI update or a misconfiguration.`,
+      { platformIdForLogging, modelId, editingMode, availableModels: modelsFromPlatform.map(m => m.id) }
     );
-    return null;
+    return null; // Return null if model config not found for this platform
   }
 
   let resolvedModelConfig = { ...baseModelConfig }; // Start with a shallow copy
