@@ -96,7 +96,7 @@ const ModelParametersSettings = ({
           <h3 className='text-base font-semibold text-theme-primary'>
             Model Selection
           </h3>
-          <div className="ml-5">
+          <div className="mx-5">
             <div className='inline-block'>
               <CustomSelect
                 id={`${platform.id}-settings-model-selector`}
@@ -112,7 +112,7 @@ const ModelParametersSettings = ({
             </div>
           </div>
         </div>
-        <div className="ml-auto pl-2 flex items-center gap-5">
+        <div className="ml-auto px-2 flex items-center gap-5">
           <IconButton
             icon={RefreshIcon}
             iconClassName={`w-7 h-7 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
