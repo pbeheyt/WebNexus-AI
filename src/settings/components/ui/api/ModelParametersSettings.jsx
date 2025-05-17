@@ -12,6 +12,7 @@ import {
   RefreshIcon,
   CustomSelect,
   SpinnerIcon,
+  TextArea,
 } from '../../../../components';
 import { useModelParametersSettings } from '../../../hooks/useModelParametersSettings';
 
@@ -347,16 +348,20 @@ const ModelParametersSettings = ({
             <p className='help-text text-sm text-theme-secondary mb-4'>
               Optional system prompt to provide context for API requests.
             </p>
-            <textarea
-              id={`${platform.id}-${selectedModelId}-system-prompt`}
-              name='systemPrompt'
-              className='system-prompt-input w-full min-h-[120px] p-3 bg-gray-50 dark:bg-gray-700 text-sm text-theme-primary border border-theme rounded-md'
-              placeholder='Enter a system prompt for API requests'
-              value={formValues.systemPrompt ?? ''}
-              onChange={(e) => handleChange('systemPrompt', e.target.value)}
-              maxLength={parameterSpecs.systemPrompt.maxLength}
-              disabled={isSaving || isResetting || isTransitioningMode}
-            />
+            <div className='select-none'>
+              <TextArea
+                id={`${platform.id}-${selectedModelId}-system-prompt`}
+                name='systemPrompt'
+                placeholder='Enter a system prompt for API requests'
+                value={formValues.systemPrompt ?? ''}
+                onChange={(e) => handleChange('systemPrompt', e.target.value)}
+                maxLength={parameterSpecs.systemPrompt.maxLength}
+                disabled={isSaving || isResetting || isTransitioningMode}
+                className="system-prompt-input bg-theme-hover text-sm border border-theme rounded-md"
+                style={{ minHeight: '120px' }}
+                autoResize={true}
+              />
+            </div>
         </SettingsCard>
         )}
       </form>
