@@ -405,7 +405,8 @@ export function Popup() {
                 placeholder={getPopupPlaceholder({
                   platformName,
                   contentTypeLabel,
-                  isContentLoading: contentLoading
+                  isContentLoading: contentLoading,
+                  includeContext // Pass the state here
                 })}
               />
             </div>

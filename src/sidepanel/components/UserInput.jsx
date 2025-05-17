@@ -25,10 +25,11 @@ export function UserInput({ className = '' }) {
     isProcessing,
     isCanceling,
     isRefreshing,
-    tokenStats,
-    contextStatus,
-    messages,
-  } = useSidePanelChat();
+  tokenStats,
+  contextStatus,
+  messages,
+  isContentExtractionEnabled // <-- Ensure this is present
+} = useSidePanelChat();
 
   const handleInputChange = (value) => {
     setInputValue(value);
@@ -57,7 +58,8 @@ export function UserInput({ className = '' }) {
         platformName,
         contentTypeLabel: contentType ? CONTENT_TYPE_LABELS[contentType] : null,
         isPageInjectable,
-        isContentLoading: contentLoading
+        isContentLoading: contentLoading,
+        includeContext: isContentExtractionEnabled // Pass the toggle state
       });
     } else {
       return getSidepanelFollowUpPlaceholder({
@@ -65,7 +67,7 @@ export function UserInput({ className = '' }) {
         isContentLoading: contentLoading
       });
     }
-  }, [messages.length, platformName, contentType, isPageInjectable, contentLoading, platformLoading]);
+  }, [messages.length, platformName, contentType, isPageInjectable, contentLoading, platformLoading, isContentExtractionEnabled]); // Added isContentExtractionEnabled
 
   return (
     <UnifiedInput

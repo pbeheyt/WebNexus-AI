@@ -4,22 +4,25 @@
  * @param {string|null} params.platformName - Name of the selected platform
  * @param {string|null} params.contentTypeLabel - Label for the content type
  * @param {boolean} params.isContentLoading - Whether content is still loading
+ * @param {boolean} params.includeContext - Whether context should be included
  * @returns {string} The generated placeholder text
  */
-export function getPopupPlaceholder({ platformName, contentTypeLabel, isContentLoading }) {
+export function getPopupPlaceholder({ platformName, contentTypeLabel, isContentLoading, includeContext }) {
   if (isContentLoading) {
     return 'Loading content...';
   }
 
-  if (platformName && contentTypeLabel) {
-    return `Ask ${platformName} about this ${contentTypeLabel}...`;
-  }
-
   if (platformName) {
-    return `Ask ${platformName} about this content...`;
+    if (includeContext) {
+      if (contentTypeLabel) {
+        return `Ask ${platformName} about this ${contentTypeLabel}...`;
+      }
+      return `Ask ${platformName} about this content...`;
+    }
+    return `Ask ${platformName} anything...`;
   }
 
-  return 'Enter your prompt...';
+  return 'Ask anything...'; // Fallback if no platformName
 }
 
 /**
@@ -29,31 +32,31 @@ export function getPopupPlaceholder({ platformName, contentTypeLabel, isContentL
  * @param {string|null} params.contentTypeLabel - Label for the content type
  * @param {boolean} params.isPageInjectable - Whether the page supports injection
  * @param {boolean} params.isContentLoading - Whether content is still loading
+ * @param {boolean} params.includeContext - Whether context should be included
  * @returns {string} The generated placeholder text
  */
 export function getSidepanelInitialPlaceholder({
   platformName,
   contentTypeLabel,
   isPageInjectable,
-  isContentLoading
+  isContentLoading,
+  includeContext
 }) {
   if (isContentLoading) {
     return 'Loading content...';
   }
 
-  if (platformName && contentTypeLabel && isPageInjectable) {
-    return `Ask ${platformName} about this ${contentTypeLabel}...`;
-  }
-
-  if (platformName && isPageInjectable) {
-    return `Ask ${platformName} about this page...`;
-  }
-
   if (platformName) {
-    return `Chat with ${platformName}...`;
+    if (includeContext && isPageInjectable) { 
+      if (contentTypeLabel) {
+        return `Ask ${platformName} about this ${contentTypeLabel}...`;
+      }
+      return `Ask ${platformName} about this page...`;
+    }
+    return `Ask ${platformName} anything...`;
   }
 
-  return 'Enter your prompt...';
+  return 'Ask anything...'; // Fallback if no platformName
 }
 
 /**
