@@ -72,15 +72,34 @@ const PromptList = ({
     }
   }, [filterValue, prompts]);
 
-  // Check for scrollbar on prompt list when filteredPrompts changes
-  useEffect(() => {
-    if (promptListRef.current) {
-      const hasScrollbar = promptListRef.current.scrollHeight > promptListRef.current.clientHeight;
-      setPromptListHasScrollbar(hasScrollbar);
-    } else {
-      setPromptListHasScrollbar(false);
-    }
-  }, [filteredPrompts]);
+    // Check for scrollbar on prompt list when filteredPrompts changes or container resizes
+    useEffect(() => {
+      const handleResizeOrContentChange = () => {
+        if (promptListRef.current) {
+          const hasScrollbar = promptListRef.current.scrollHeight > promptListRef.current.clientHeight;
+          setPromptListHasScrollbar(hasScrollbar);
+        } else {
+          setPromptListHasScrollbar(false);
+        }
+      };
+
+      // Initial check when content changes or ref becomes available
+      handleResizeOrContentChange();
+
+      const observer = new ResizeObserver(handleResizeOrContentChange);
+      const currentObservedRef = promptListRef.current; // Capture current ref value for cleanup
+
+      if (currentObservedRef) {
+        observer.observe(currentObservedRef);
+      }
+
+      return () => {
+        if (currentObservedRef) {
+          observer.unobserve(currentObservedRef);
+        }
+        observer.disconnect();
+      };
+    }, [filteredPrompts, promptListRef]); // Dependencies updated to include promptListRef
 
   // Listen for storage changes
   useEffect(() => {
