@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
-import { Button, useNotification, PlatformIcon } from '../../../../components';
+import { Button, useNotification, PlatformIcon, Input } from '../../../../components';
 import SettingsCard from '../common/SettingsCard';
 import SubTabLayout from '../common/SubTabLayout';
 import { logger } from '../../../../shared/logger';
@@ -183,14 +183,14 @@ const PlatformDetails = ({
                   <div className='form-group mb-4'>
                     <label htmlFor={`${platform.id}-api-key`} className='block mb-2 text-sm text-theme-secondary'>API Key</label>
                     <div className='relative flex items-center'>
-                      <input
+                      <Input
                         type={showApiKey ? 'text' : 'password'}
                         id={`${platform.id}-api-key`}
-                        className='api-key-input w-full p-2 pr-16 bg-theme-hover text-theme-primary border border-theme rounded-md font-mono focus:ring-primary focus:border-primary'
-                        placeholder={credentials?.apiKey ? '••••••••••••••••••••••••••' : 'Enter your API key'}
                         value={apiKey}
                         onChange={handleApiKeyChange}
+                        placeholder={credentials?.apiKey ? '••••••••••••••••••••••••••' : 'Enter your API key'}
                         disabled={shouldShowApiKeySaving}
+                        className='api-key-input p-2 pr-16 bg-theme-hover border border-theme rounded-md font-mono focus:ring-primary focus:border-primary'
                       />
                       <button
                         type='button'
