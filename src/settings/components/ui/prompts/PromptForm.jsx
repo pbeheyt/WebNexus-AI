@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
-import { Button, useNotification, CustomSelect, TextArea } from '../../../../components';
+import { Button, useNotification, CustomSelect, TextArea, Input } from '../../../../components';
 import {
   STORAGE_KEYS,
   CONTENT_TYPES,
@@ -291,17 +291,19 @@ const PromptForm = ({
         >
           Prompt Name
         </label>
-        <input
-          type='text'
-          id='name'
-          name='name'
-          className='w-full p-2.5 bg-theme-hover text-sm text-theme-primary border border-theme rounded-md focus-primary'
-          placeholder='Give your prompt a descriptive name'
-          value={formData.name}
-          onChange={handleChange}
-          maxLength={MAX_PROMPT_NAME_LENGTH}
-          disabled={shouldShowSaving} // Disable if UI loading state is active
-        />
+        <div className='select-none'>
+          <Input
+            type='text'
+            id='name'
+            name='name'
+            placeholder='Give your prompt a descriptive name'
+            value={formData.name}
+            onChange={handleChange}
+            maxLength={MAX_PROMPT_NAME_LENGTH}
+            disabled={shouldShowSaving} // Disable if UI loading state is active
+            className='bg-theme-hover text-sm border border-theme rounded-md'
+          />
+        </div>
       </div>
 
       <div className='form-group mb-6'>
