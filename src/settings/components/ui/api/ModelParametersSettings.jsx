@@ -358,7 +358,7 @@ const ModelParametersSettings = ({
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}
                 maxLength={MAX_SYSTEM_PROMPT_LENGTH}
                 disabled={isSaving || isResetting || isTransitioningMode}
-                className="system-prompt-input bg-theme-hover text-sm border border-theme rounded-md"
+                className="bg-theme-hover text-sm border border-theme rounded-md"
                 style={{ minHeight: '120px' }}
                 autoResize={true}
               />
