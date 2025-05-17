@@ -1,19 +1,22 @@
 // src/sidepanel/components/UserInput.jsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { useSidePanelPlatform } from '../../contexts/platform';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import { UnifiedInput } from '../../components/input/UnifiedInput';
 import { useContent } from '../../contexts/ContentContext';
+import { getSidepanelInitialPlaceholder, getSidepanelFollowUpPlaceholder } from '../../shared/utils/placeholder-utils';
+import { isInjectablePage } from '../../shared/utils/content-utils';
+import { CONTENT_TYPE_LABELS } from '../../shared/constants';
 
 UserInput.propTypes = {
   className: PropTypes.string,
 };
 
 export function UserInput({ className = '' }) {
-  const { contentType } = useContent();
-  const { hasAnyPlatformCredentials } = useSidePanelPlatform();
+  const { contentType, currentTab, isLoading: contentLoading } = useContent();
+  const { selectedPlatformId, platforms, isLoading: platformLoading, hasAnyPlatformCredentials } = useSidePanelPlatform();
   const {
     inputValue,
     setInputValue,
@@ -24,6 +27,7 @@ export function UserInput({ className = '' }) {
     isRefreshing,
     tokenStats,
     contextStatus,
+    messages,
   } = useSidePanelChat();
 
   const handleInputChange = (value) => {
@@ -38,6 +42,31 @@ export function UserInput({ className = '' }) {
     cancelStream();
   };
 
+  const platformName = useMemo(() => {
+    return platforms.find(p => p.id === selectedPlatformId)?.name || null;
+  }, [platforms, selectedPlatformId]);
+
+  const isPageInjectable = useMemo(() => currentTab?.url ? isInjectablePage(currentTab.url) : false, [currentTab?.url]);
+
+  const dynamicPlaceholder = useMemo(() => {
+    if (platformLoading || contentLoading) {
+      return 'Loading...';
+    }
+    if (messages.length === 0) {
+      return getSidepanelInitialPlaceholder({
+        platformName,
+        contentTypeLabel: contentType ? CONTENT_TYPE_LABELS[contentType] : null,
+        isPageInjectable,
+        isContentLoading: contentLoading
+      });
+    } else {
+      return getSidepanelFollowUpPlaceholder({
+        platformName,
+        isContentLoading: contentLoading
+      });
+    }
+  }, [messages.length, platformName, contentType, isPageInjectable, contentLoading, platformLoading]);
+
   return (
     <UnifiedInput
       value={inputValue}
@@ -47,7 +76,7 @@ export function UserInput({ className = '' }) {
       disabled={!hasAnyPlatformCredentials || (isProcessing && isCanceling) || isRefreshing}
       isProcessing={isProcessing}
       isCanceling={isCanceling}
-      placeholder='Type a message or select a prompt...'
+      placeholder={dynamicPlaceholder}
       contentType={contentType}
       showTokenInfo={true}
       tokenStats={tokenStats}

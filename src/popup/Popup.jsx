@@ -1,5 +1,5 @@
 // src/popup/Popup.jsx
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 
 import { logger } from '../shared/logger';
 import { usePopupPlatform } from '../contexts/platform';
@@ -23,6 +23,7 @@ import { formatShortcutToStringDisplay } from '../shared/utils/shortcut-utils';
 import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
 import { useContentProcessing } from '../hooks/useContentProcessing';
 import { robustSendMessage } from '../shared/utils/message-utils';
+import { getPopupPlaceholder } from '../shared/utils/placeholder-utils';
 
 import { PlatformSelector } from './components/PlatformSelector';
 import { useStatus } from './contexts/StatusContext';
@@ -37,6 +38,9 @@ export function Popup() {
     isInjectable,
   } = useContent();
   const { selectedPlatformId, platforms } = usePopupPlatform();
+  const platformName = useMemo(() => {
+    return platforms.find(p => p.id === selectedPlatformId)?.name || null;
+  }, [platforms, selectedPlatformId]);
   const { statusMessage, updateStatus } = useStatus();
 
   const { processContent, isProcessing: isProcessingContent } =
@@ -377,6 +381,11 @@ export function Popup() {
             </div>
 
             <div className='select-none'>
+              {!contentLoading && (
+                <div className='hidden'>
+                  {contentTypeLabel} {/* Force content type label to be included in bundle */}
+                </div>
+              )}
               <UnifiedInput
                 value={inputText}
                 onChange={setInputText}
@@ -393,6 +402,11 @@ export function Popup() {
                 showTokenInfo={false}
                 layoutVariant='popup'
                 onCancel={null}
+                placeholder={getPopupPlaceholder({
+                  platformName,
+                  contentTypeLabel,
+                  isContentLoading: contentLoading
+                })}
               />
             </div>
           </div>

@@ -28,6 +28,7 @@ export function UnifiedInput({
   contextStatus,
   layoutVariant,
   className = '',
+  placeholder,
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const textareaRef = useRef(null);
@@ -140,7 +141,7 @@ export function UnifiedInput({
                 value={value}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder='Type a prompt or select one...'
+                placeholder={placeholder}
                 disabled={disabled || isProcessing}
                 autoResize={true}
                 style={sidepanelStyle}
@@ -214,7 +215,7 @@ export function UnifiedInput({
                 value={value}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder='Type a prompt or select one...'
+                placeholder={placeholder}
                 disabled={disabled || isProcessing}
                 autoResize={true}
                 style={popupStyle}
@@ -281,5 +282,6 @@ UnifiedInput.propTypes = {
   tokenStats: PropTypes.object,
   contextStatus: PropTypes.object,
   layoutVariant: PropTypes.oneOf(['popup', 'sidepanel']).isRequired,
+  placeholder: PropTypes.string,
   className: PropTypes.string,
 };
