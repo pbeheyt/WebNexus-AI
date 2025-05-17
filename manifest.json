@@ -55,8 +55,10 @@
         "dist/cmaps/*"
       ],
       "matches": [
-        "<all_urls>"
-        ]
+        "file://*/*",
+        "http://*/*",
+        "https://*/*"
+      ]
     }
   ],
   "commands": {
