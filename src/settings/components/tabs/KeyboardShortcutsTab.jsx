@@ -269,7 +269,7 @@ export function KeyboardShortcutsTab() {
             </div>
           </div>
           {shortcutModalError && (
-            <p className="text-sm text-error text-center my-3">{shortcutModalError}</p> 
+            <p className="text-sm text-error text-center mt-5">{shortcutModalError}</p> 
           )}
         </div>
       </Modal>
