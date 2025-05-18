@@ -106,7 +106,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative select-none ${className}`}>
       <button
         ref={modelTriggerRef}
         onClick={toggleDropdown}
@@ -115,7 +115,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
         aria-expanded={isOpen}
       >
         <span className='truncate mr-1'>{displayedModelName}</span>
-        <span className='text-theme-secondary flex-shrink-0 select-none'>
+        <span className='text-theme-secondary flex-shrink-0'>
           <ChevronIcon />
         </span>
       </button>
