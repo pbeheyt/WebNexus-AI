@@ -797,7 +797,7 @@ const checkScrollPosition = useCallback(() => {
       <button
         onClick={() => scrollToBottom('smooth')}
         className={`
-          absolute bottom-0.5 left-1/2 transform -translate-x-1/2 z-10
+          absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10
           p-1 rounded-full
           text-theme-primary dark:text-theme-primary-dark
           transition-opacity duration-300 ease-in-out
