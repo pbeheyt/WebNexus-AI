@@ -143,50 +143,6 @@ export function handleToggleSidePanelAction(
   return true; // Keep channel open for async response
 }
 
-/**
- * Get sidepanel state for specific tab
- * @param {Object} message - Message object
- * @param {Object} sender - Message sender
- * @param {Function} sendResponse - Response function
- */
-export async function getSidePanelState(message, sender, sendResponse) {
-  try {
-    // Get target tab ID (same logic as toggle)
-    const tabId = message.tabId || (sender.tab && sender.tab.id);
-    let targetTabId;
-
-    if (!tabId) {
-      // Get active tab if no tab ID specified
-      const tabs = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-      const activeTab = tabs[0];
-
-      if (!activeTab || !activeTab.id) {
-        throw new Error('No active tab found');
-      }
-
-      targetTabId = activeTab.id;
-    } else {
-      targetTabId = tabId;
-    }
-
-    const state = await SidePanelStateManager.getSidePanelState(targetTabId);
-
-    sendResponse({
-      success: true,
-      state,
-      tabId: targetTabId,
-    });
-  } catch (error) {
-    logger.background.error(
-      'Error handling tab-specific sidepanel state query:',
-      error
-    );
-    sendResponse({ success: false, error: error.message });
-  }
-}
 
 // Add this new function
 export async function handleCloseCurrentSidePanelRequest(message, sender, sendResponse) {

@@ -123,26 +123,6 @@ class ApiServiceManager {
     }
   }
 
-  /**
-   * Check if API mode is available for a platform
-   * @param {string} platformId - Platform identifier
-   * @returns {Promise<boolean>} True if API mode is available
-   */
-  async isApiModeAvailable(platformId) {
-    try {
-      const settings = await this.getApiSettings(platformId);
-      const hasCredentials =
-        await this.credentialManager.hasCredentials(platformId);
-
-      return !!(settings && hasCredentials);
-    } catch (error) {
-      logger.service.error(
-        `Error checking API mode availability for ${platformId}:`,
-        error
-      );
-      return false;
-    }
-  }
 
   /**
    * Get available models for a platform
