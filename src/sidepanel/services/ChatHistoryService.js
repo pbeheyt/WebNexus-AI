@@ -2,6 +2,7 @@
 
 import { logger } from '../../shared/logger';
 import { STORAGE_KEYS, MAX_MESSAGES_PER_TAB_HISTORY } from '../../shared/constants';
+import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 
 import TokenManagementService from './TokenManagementService';
 
@@ -40,32 +41,20 @@ class ChatHistoryService {
   }
 
   /**
-   * Get system prompts for a specific tab
-   * @param {number} tabId - The tab ID
-   * @returns {Promise<Object>} System prompt for the tab
+   * Get the system prompt for a specific tab.
+   * @param {number} tabId - Tab ID.
+   * @returns {Promise<string|null>} The system prompt string or null if not found.
    */
   static async getSystemPrompt(tabId) {
     try {
       if (!tabId) {
-        logger.sidepanel.error(
-          'TabChatHistory: No tabId provided for getSystemPrompt'
-        );
+        logger.sidepanel.error('ChatHistoryService: No tabId provided for getSystemPrompt');
         return null;
       }
-
-      // Get all tab system prompts
-      const result = await chrome.storage.local.get([
-        STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
-      ]);
-      const allTabSystemPrompts = result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] || {};
-
-      // Return system prompts for this tab or null
-      return allTabSystemPrompts[tabId] || null;
+      // Delegate to SidePanelStateManager
+      return await SidePanelStateManager.getSystemPromptForTab(tabId);
     } catch (error) {
-      logger.sidepanel.error(
-        'TabChatHistory: Error getting system prompt:',
-        error
-      );
+      logger.sidepanel.error('ChatHistoryService: Error getting system prompt via SidePanelStateManager:', error);
       return null;
     }
   }

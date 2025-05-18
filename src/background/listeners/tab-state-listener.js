@@ -19,14 +19,11 @@ const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR = [
 // List of all storage keys that are tab-specific and need automatic cleanup (used for onRemoved/periodic cleanup)
 // This includes TAB_SIDEPANEL_STATES which is handled by SidePanelStateManager.cleanupTabStates
 const ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP = [
-  STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-  STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG,
   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
   STORAGE_KEYS.TAB_SIDEPANEL_STATES, // Included for the loop, but handled separately
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
-  STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
 ];
 
 /**
@@ -49,20 +46,36 @@ export async function clearSingleTabData(tabId) {
   try {
     for (const storageKey of TAB_SPECIFIC_DATA_KEYS_TO_CLEAR) {
       // Use the manual refresh list
-      const result = await chrome.storage.local.get(storageKey);
-      const data = result[storageKey];
+      let result;
+      let data;
+      switch (storageKey) {
+        case STORAGE_KEYS.TAB_FORMATTED_CONTENT:
+          await SidePanelStateManager.clearFormattedContentForTab(tabId);
+          break;
+        case STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG:
+          await SidePanelStateManager.setTabContextSentFlag(tabId, false);
+          break;
+        case STORAGE_KEYS.TAB_SYSTEM_PROMPTS:
+          await SidePanelStateManager.storeSystemPromptForTab(tabId, null);
+          break;
+        default:
+          // Handle other keys not managed by SidePanelStateManager
+          result = await chrome.storage.local.get(storageKey);
+          data = result[storageKey];
 
-      if (data && typeof data === 'object' && data[tabIdStr] !== undefined) {
-        logger.background.info(
-          `Found data for key ${storageKey} for tab ${tabIdStr}. Deleting...`
-        );
-        delete data[tabIdStr];
-        await chrome.storage.local.set({ [storageKey]: data });
-        logger.background.info(`Cleared ${storageKey} for tab ${tabIdStr}.`);
-      } else {
-        logger.background.info(
-          `No data found for key ${storageKey} for tab ${tabIdStr}. Skipping.`
-        );
+          if (data && typeof data === 'object' && data[tabIdStr] !== undefined) {
+            logger.background.info(
+              `Found data for key ${storageKey} for tab ${tabIdStr}. Deleting...`
+            );
+            delete data[tabIdStr];
+            await chrome.storage.local.set({ [storageKey]: data });
+            logger.background.info(`Cleared ${storageKey} for tab ${tabIdStr}.`);
+          } else {
+            logger.background.info(
+              `No data found for key ${storageKey} for tab ${tabIdStr}. Skipping.`
+            );
+          }
+          break;
       }
     }
     logger.background.info(
@@ -236,6 +249,22 @@ export function setupTabStateListener() {
           error
         );
       }
+
+      // Clear other data managed by SidePanelStateManager for the removed tab
+      try {
+        await SidePanelStateManager.clearFormattedContentForTab(tabId);
+        await SidePanelStateManager.setTabContextSentFlag(tabId, false); // Assuming false clears it
+        await SidePanelStateManager.storeSystemPromptForTab(tabId, null); // Assuming null clears it
+        logger.background.info(
+          `SidePanelStateManager managed data cleared for closed tab ${tabId}.`
+        );
+      } catch (error) {
+        logger.background.error(
+          `Error clearing SidePanelStateManager managed data for tab ${tabId}:`,
+          error
+        );
+      }
+
 
       // Also attempt to disable the side panel for the closed tab, if it was enabled.
       // This might fail if the tab is truly gone, so catch errors gracefully.

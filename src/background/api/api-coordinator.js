@@ -14,13 +14,8 @@ import {
   getExtractedContent,
   setApiProcessingError,
   completeStreamResponse,
-  hasFormattedContentForTab,
-  storeFormattedContentForTab,
-  getFormattedContentForTab,
-  storeSystemPromptForTab,
-  getTabContextSentFlag,
-  setTabContextSentFlag,
 } from '../core/state-manager.js';
+import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 
 const activeAbortControllers = new Map();
@@ -164,12 +159,12 @@ export async function processContentViaApi(params) {
     let extractedContent = null;
     let newlyFormattedContent = null; // To hold content formatted in this run
     const contentType = determineContentType(url);
-        // logger.background.info(
+    // logger.background.info(
     //   `Is this the first user message (history empty)? ${isFirstUserMessage}`
     // );
 
     // 1. Decide whether to extract content based on existence, user request, and injectability
-    const initialFormattedContentExists = await hasFormattedContentForTab(tabId);
+    const initialFormattedContentExists = await SidePanelStateManager.hasFormattedContentForTab(tabId);
     const canInject = isInjectablePage(url);
     const shouldExtract =
       isContentExtractionEnabled && !initialFormattedContentExists && canInject;
@@ -210,7 +205,7 @@ export async function processContentViaApi(params) {
           extractedContent,
           contentType
         );
-        await storeFormattedContentForTab(tabId, newlyFormattedContent);
+        await SidePanelStateManager.storeFormattedContentForTab(tabId, newlyFormattedContent);
         logger.background.info(
           `Formatted and stored content for tab ${tabId}.`
         );
@@ -255,7 +250,7 @@ export async function processContentViaApi(params) {
     await initializeStreamResponse(streamId, platformId, resolvedParams.model);
 
     let formattedContentForRequest = null;
-    const contextAlreadySent = await getTabContextSentFlag(tabId);
+    const contextAlreadySent = await SidePanelStateManager.getTabContextSentFlag(tabId);
 
     if (!isContentExtractionEnabled) {
       logger.background.info(`Content inclusion skipped: Toggle is OFF.`);
@@ -270,7 +265,7 @@ export async function processContentViaApi(params) {
           `Including newly extracted/formatted content for tab ${tabId}.`
         );
       } else if (initialFormattedContentExists) {
-        formattedContentForRequest = await getFormattedContentForTab(tabId);
+        formattedContentForRequest = await SidePanelStateManager.getFormattedContentForTab(tabId);
         logger.background.info(
           `Including pre-existing formatted content for tab ${tabId}.`
         );
@@ -280,14 +275,14 @@ export async function processContentViaApi(params) {
         );
       }
     }
-    
+
     if (tabId) {
       try {
         const promptToStoreOrClear = resolvedParams.systemPrompt;
         logger.background.info(
           `Updating system prompt state for tab ${tabId}. Prompt is ${promptToStoreOrClear ? 'present' : 'absent/empty'}.`
         );
-        await storeSystemPromptForTab(tabId, promptToStoreOrClear);
+        await SidePanelStateManager.storeSystemPromptForTab(tabId, promptToStoreOrClear);
       } catch (storeError) {
         logger.background.error(
           `Failed to update system prompt state for tab ${tabId}:`,
@@ -297,7 +292,7 @@ export async function processContentViaApi(params) {
     }
 
     if (formattedContentForRequest !== null) {
-      await setTabContextSentFlag(tabId, true);
+      await SidePanelStateManager.setTabContextSentFlag(tabId, true);
       logger.background.info(`Context included in this request. Set context sent flag for tab ${tabId}.`);
     }
 

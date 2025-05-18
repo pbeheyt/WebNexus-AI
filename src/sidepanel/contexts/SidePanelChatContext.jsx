@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 
+import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger';
 import { useSidePanelPlatform } from '../../contexts/platform';
 import { useContent } from '../../contexts/ContentContext';
@@ -490,45 +491,16 @@ export function SidePanelChatProvider({ children }) {
 
   const clearFormattedContentForTab = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
-      logger.sidepanel.warn(
-        'clearFormattedContentForTab called without a valid tabId.'
-      );
+      logger.sidepanel.warn('clearFormattedContentForTab called without a valid tabId.');
       return;
     }
-    const tabIdKey = tabId.toString();
-    logger.sidepanel.info(
-      `Attempting to clear formatted content for tab: ${tabIdKey}`
-    );
+    logger.sidepanel.info(`Requesting SidePanelStateManager to clear formatted content for tab: ${tabId}`);
     try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.TAB_FORMATTED_CONTENT
-      );
-      const allFormattedContent =
-        result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
-      if (Object.hasOwn(allFormattedContent, tabIdKey)) {
-        const updatedFormattedContent = { ...allFormattedContent };
-        delete updatedFormattedContent[tabIdKey];
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: updatedFormattedContent,
-        });
-        logger.sidepanel.info(
-          `Successfully cleared formatted content for tab: ${tabIdKey}`
-        );
-      } else {
-        logger.sidepanel.info(
-          `No formatted content found in storage for tab: ${tabIdKey}. No action needed.`
-        );
-      }
-      // Only reset the flag, don't clear messages here
-      setExtractedContentAdded(false);
-      logger.sidepanel.info(
-        `Reset extractedContentAdded flag for tab: ${tabIdKey}`
-      );
+      await SidePanelStateManager.clearFormattedContentForTab(tabId);
+      setExtractedContentAdded(false); // Keep this local state update
+      logger.sidepanel.info(`SidePanelStateManager successfully cleared formatted content for tab: ${tabId}`);
     } catch (error) {
-      logger.sidepanel.error(
-        `Error clearing formatted content for tab ${tabIdKey}:`,
-        error
-      );
+      logger.sidepanel.error(`Error calling SidePanelStateManager.clearFormattedContentForTab for tab ${tabId}:`, error);
     }
   }, [tabId, setExtractedContentAdded]);
 
