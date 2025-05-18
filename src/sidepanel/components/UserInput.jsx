@@ -1,5 +1,5 @@
 // src/sidepanel/components/UserInput.jsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 
 import { useSidePanelPlatform } from '../../contexts/platform';
@@ -16,6 +16,7 @@ UserInput.propTypes = {
 
 export function UserInput({ className = '' }) {
   const { contentType, currentTab, isLoading: contentLoading } = useContent();
+  const [displayedPlaceholder, setDisplayedPlaceholder] = useState('Loading...');
   const { selectedPlatformId, platforms, isLoading: platformLoading, hasAnyPlatformCredentials } = useSidePanelPlatform();
   const {
     inputValue,
@@ -28,7 +29,7 @@ export function UserInput({ className = '' }) {
   tokenStats,
   contextStatus,
   messages,
-  isContentExtractionEnabled // <-- Ensure this is present
+  isContentExtractionEnabled
 } = useSidePanelChat();
 
   const handleInputChange = (value) => {
@@ -50,24 +51,56 @@ export function UserInput({ className = '' }) {
   const isPageInjectable = useMemo(() => currentTab?.url ? isInjectablePage(currentTab.url) : false, [currentTab?.url]);
 
   const dynamicPlaceholder = useMemo(() => {
-    if (platformLoading || contentLoading) {
-      return 'Loading...';
+    const genericLoadingPlaceholder = 'Loading...';
+    
+    // Condition for loading state or platform name not ready
+    if (platformLoading || contentLoading || (selectedPlatformId && !platformName)) {
+      // If an old specific placeholder exists (i.e., not the generic "Loading..."), show it.
+      if (displayedPlaceholder !== genericLoadingPlaceholder) {
+        return displayedPlaceholder;
+      }
+      // Otherwise (initial load or if displayedPlaceholder was already "Loading..."), show "Loading..."
+      // And ensure displayedPlaceholder state is explicitly "Loading..." for the next render if it wasn't.
+      if (displayedPlaceholder !== genericLoadingPlaceholder) {
+         setDisplayedPlaceholder(genericLoadingPlaceholder);
+      }
+      return genericLoadingPlaceholder;
     }
+    
+    // If not loading, calculate the new placeholder
+    let newPlaceholder;
     if (messages.length === 0) {
-      return getSidepanelInitialPlaceholder({
+      newPlaceholder = getSidepanelInitialPlaceholder({
         platformName,
         contentTypeLabel: contentType ? CONTENT_TYPE_LABELS[contentType] : null,
         isPageInjectable,
-        isContentLoading: contentLoading,
-        includeContext: isContentExtractionEnabled // Pass the toggle state
+        isContentLoading: contentLoading, // Should be false here, but pass for consistency
+        includeContext: isContentExtractionEnabled,
       });
     } else {
-      return getSidepanelFollowUpPlaceholder({
+      newPlaceholder = getSidepanelFollowUpPlaceholder({
         platformName,
-        isContentLoading: contentLoading
+        isContentLoading: contentLoading, // Should be false here
       });
     }
-  }, [messages.length, platformName, contentType, isPageInjectable, contentLoading, platformLoading, isContentExtractionEnabled]);
+    
+    // Update the remembered placeholder only if the new one is different
+    if (newPlaceholder !== displayedPlaceholder) {
+      setDisplayedPlaceholder(newPlaceholder);
+    }
+    return newPlaceholder;
+    
+  }, [
+    platformLoading,
+    contentLoading,
+    selectedPlatformId,
+    platformName,
+    messages.length,
+    contentType,
+    isPageInjectable,
+    isContentExtractionEnabled,
+    displayedPlaceholder, 
+  ]);
 
   return (
     <UnifiedInput
