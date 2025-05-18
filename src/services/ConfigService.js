@@ -156,12 +156,6 @@ async function getAllPlatformConfigs() {
   }
 }
 
-// Optional: Add a function to clear the cache if needed for hot-reloading during development
-function clearConfigCache() {
-  cachedApiConfig = null;
-  cachedDisplayConfig = null;
-  logger.service.info('ConfigService: Cache cleared.');
-}
 
 // Define the ConfigService object with all exported functions
 const ConfigService = {
@@ -169,8 +163,7 @@ const ConfigService = {
   getDisplayConfig,
   getPlatformApiConfig,
   getPlatformDisplayConfig,
-  getAllPlatformConfigs,
-  clearConfigCache,
+  getAllPlatformConfigs
 };
 
 export default ConfigService;

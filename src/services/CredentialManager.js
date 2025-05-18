@@ -79,15 +79,6 @@ class CredentialManager {
     }
   }
 
-  /**
-   * Check if credentials exist for a platform
-   * @param {string} platformId - Platform identifier
-   * @returns {Promise<boolean>} True if credentials exist
-   */
-  async hasCredentials(platformId) {
-    const credentials = await this.getCredentials(platformId);
-    return !!credentials; // No change needed here, relies on getCredentials
-  }
 
   /**
    * Check if credentials exist for multiple platforms in a single batch operation
