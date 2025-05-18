@@ -43,4 +43,4 @@ WebNexus AI provides a centralized way to utilize multiple AI platforms (Gemini,
 1.  Install & pin the extension.
 2.  **(Optional - For Side Panel):** Add API keys in `Settings > API Settings`.
 3.  **(Optional - For Quick Actions):** Set your default prompts in `Settings > Prompts`.
-4.  Interact via Side Panel (`Alt+W` > `Alt+S`), Popup (`Alt+W`), Context Menu, or Quick Shortcut (`Alt+Q`).
+!4.  Interact via Side Panel (`Alt+W` > `Alt+S`), Popup (`Alt+W`), Context Menu, or Quick Shortcut (`Alt+Q`).
