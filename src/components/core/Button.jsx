@@ -88,14 +88,22 @@ export function Button({
       onClick={effectiveDisabled ? undefined : onClick}
       {...props}
     >
-      {isLoading ? (
-        <>
-          <SpinnerIcon className={`${spinnerSizeClasses[size] || spinnerSizeClasses.md} mr-2`} />
-          {loadingText || children}
-        </>
-      ) : (
-        children
-      )}
+        {isLoading ? (
+          <>
+            <SpinnerIcon className={`${spinnerSizeClasses[size] || spinnerSizeClasses.md} mr-2`} />
+            {loadingText ? (
+              <span>{loadingText}</span>
+            ) : typeof children === 'string' ? (
+              <span>{children}</span>
+            ) : (
+              children
+            )}
+          </>
+        ) : typeof children === 'string' ? (
+          <span>{children}</span>
+        ) : (
+          children
+        )}
     </button>
   );
 }
