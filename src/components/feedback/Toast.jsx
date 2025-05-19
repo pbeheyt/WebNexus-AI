@@ -1,8 +1,10 @@
 // src/components/feedback/Toast.jsx
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { createPortal } from 'react-dom';
+
 import { XIcon } from '../icons/XIcon';
+
 import { useNotification } from './NotificationContext';
 
 const TOAST_PORTAL_ROOT_ID = 'toast-portal-root';
@@ -21,7 +23,15 @@ export function Toast({
   standalone = false,
 }) {
   const [isVisible, setIsVisible] = useState(visible);
+const isMountedRef = useRef(false);
   const notificationContext = useNotification();
+
+useEffect(() => {
+  isMountedRef.current = true;
+  return () => {
+    isMountedRef.current = false;
+  };
+}, []);
 
   // If not in standalone mode, connect to the notification context
   const notification = useMemo(() => {
@@ -38,12 +48,16 @@ export function Toast({
   useEffect(() => {
     // For standalone usage, respond to the visible prop
     if (standalone) {
-      setIsVisible(visible);
+            if (isMountedRef.current) {
+              setIsVisible(visible);
+            }
 
       if (visible && duration) {
         const timer = setTimeout(() => {
-          setIsVisible(false);
-          if (onClose) onClose();
+            if (isMountedRef.current) {
+              setIsVisible(false);
+              if (onClose) onClose();
+            }
         }, duration);
 
         return () => clearTimeout(timer);
@@ -51,7 +65,9 @@ export function Toast({
     }
     // For context usage, respond to notification changes
     else if (notificationContext) {
-      setIsVisible(!!notification);
+            if (isMountedRef.current) {
+              setIsVisible(!!notification);
+            }
     }
   }, [
     standalone,
