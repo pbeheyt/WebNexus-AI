@@ -182,7 +182,7 @@ const PlatformDetails = ({
                   </h4>
                   <div className='form-group mb-4'>
                     <label htmlFor={`${platform.id}-api-key`} className='block mb-2 text-sm text-theme-secondary'>API Key</label>
-                    <div className='relative flex items-center'>
+                    <div className='relative flex items-center select-none'>
                       <Input
                         type={showApiKey ? 'text' : 'password'}
                         id={`${platform.id}-api-key`}
