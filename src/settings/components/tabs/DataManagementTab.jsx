@@ -114,6 +114,7 @@ const DataManagementTab = () => {
         }
 
         if (result.success) {
+            setIsImportingActual(false);
             showSuccessNotification(
             `${currentOptionObject.name} imported successfully! Page will now reload.`
             );
@@ -154,6 +155,7 @@ const DataManagementTab = () => {
       const result = await userDataService.resetSelectedSettings(dataTypeId);
 
       if (result.success) {
+        setIsResettingActual(false);
         showSuccessNotification(
           `${dataTypeName} settings reset and repopulated successfully! Page will now reload.`
         );

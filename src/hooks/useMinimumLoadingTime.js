@@ -10,8 +10,10 @@ import { useState, useEffect, useRef } from 'react';
 export function useMinimumLoadingTime(isActuallyLoading, minimumDuration = 500) {
   const [shouldShowLoading, setShouldShowLoading] = useState(false);
   const loadingStartTimeRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     if (isActuallyLoading) {
       setShouldShowLoading(true);
       loadingStartTimeRef.current = Date.now();
@@ -23,14 +25,21 @@ export function useMinimumLoadingTime(isActuallyLoading, minimumDuration = 500) 
           // Not enough time has passed, wait for the remainder
           const timeLeft = minimumDuration - timeElapsed;
           const timerId = setTimeout(() => {
-            setShouldShowLoading(false);
+            if (isMountedRef.current) {
+              setShouldShowLoading(false);
+            }
             loadingStartTimeRef.current = null;
           }, timeLeft);
-          return () => clearTimeout(timerId); // Cleanup timer
+          return () => {
+            clearTimeout(timerId);
+            isMountedRef.current = false;
+          };
         }
       }
       // If enough time has passed or it was never loading
-      setShouldShowLoading(false);
+      if (isMountedRef.current) {
+        setShouldShowLoading(false);
+      }
       loadingStartTimeRef.current = null;
     }
   }, [isActuallyLoading, minimumDuration]);
