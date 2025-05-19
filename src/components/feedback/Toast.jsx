@@ -1,11 +1,11 @@
 // src/components/feedback/Toast.jsx
 import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-
+import { createPortal } from 'react-dom';
 import { XIcon } from '../icons/XIcon';
-
 import { useNotification } from './NotificationContext';
 
+const TOAST_PORTAL_ROOT_ID = 'toast-portal-root';
 /**
  * Toast component for displaying notifications.
  * Automatically connects to NotificationContext when used without props.
@@ -29,6 +29,7 @@ export function Toast({
       ? { message, type }
       : notificationContext?.notification;
   }, [standalone, message, type, notificationContext]);
+
   const closeHandler = standalone
     ? onClose
     : notificationContext?.clearNotification;
@@ -61,7 +62,20 @@ export function Toast({
     notificationContext,
   ]);
 
-  if (!standalone && !notification) return null;
+  // Manage portal root element
+  let portalRoot = document.getElementById(TOAST_PORTAL_ROOT_ID);
+  if (!portalRoot && typeof document !== 'undefined') { // Check for document for SSR safety
+    portalRoot = document.createElement('div');
+    portalRoot.id = TOAST_PORTAL_ROOT_ID;
+    portalRoot.style.position = 'relative'; 
+    portalRoot.style.zIndex = '9999'; 
+    document.body.appendChild(portalRoot);
+  }
+
+  // If the toast's internal logic determines it shouldn't be visible, render null.
+  if (!isVisible || !portalRoot) { // Also check if portalRoot exists before attempting to portal
+    return null;
+  }
 
   const typeClasses = {
     info: 'border-l-primary',
@@ -79,15 +93,15 @@ export function Toast({
     'bottom-center': 'bottom-4 left-1/2 transform -translate-x-1/2',
   };
 
-  return (
+  const toastMarkup = (
     <div
-      className={`fixed p-3 bg-theme-surface  shadow-md border-l-4 ${typeClasses[notification?.type || type]} ${positionClasses[position]} rounded shadow-medium transform transition-all duration-300 z-50 inline-block max-w-md ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}
+      className={`fixed p-3 bg-theme-surface shadow-md border-l-4 ${typeClasses[notification?.type || type]} ${positionClasses[position]} rounded shadow-medium transform transition-all duration-300 z-50 inline-block max-w-md ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}
     >
       <div className='flex justify-between items-center'>
         <div>{notification?.message || message}</div>
         <button
           onClick={() => {
-            setIsVisible(false);
+            // setIsVisible(false); // This will be handled by the context or prop change
             if (closeHandler) closeHandler();
           }}
           className='ml-2 text-theme-secondary hover:text-theme-primary'
@@ -98,6 +112,8 @@ export function Toast({
       </div>
     </div>
   );
+
+  return createPortal(toastMarkup, portalRoot);
 }
 
 Toast.propTypes = {
