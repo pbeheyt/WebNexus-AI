@@ -203,7 +203,7 @@ const PlatformDetails = ({
                       </button>
                     </div>
                   </div>
-                  <div className='my-3 flex items-start text-xs text-amber-700 dark:text-amber-500'>
+                  <div className='my-3 flex items-start text-xs text-amber-600 dark:text-amber-500'>
                     <InfoIcon className='w-4 h-4 mr-2 flex-shrink-0' />
                     <span>Note: Newly created API keys can take a few minutes to become active. If validation fails, please try again shortly.</span>
                   </div>
