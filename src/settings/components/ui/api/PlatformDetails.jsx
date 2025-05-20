@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
-import { Button, useNotification, PlatformIcon, Input } from '../../../../components';
+import { Button, useNotification, PlatformIcon, Input, InfoIcon } from '../../../../components';
 import SettingsCard from '../common/SettingsCard';
 import SubTabLayout from '../common/SubTabLayout';
 import { logger } from '../../../../shared/logger';
@@ -202,6 +202,10 @@ const PlatformDetails = ({
                         {showApiKey ? 'Hide' : 'Show'}
                       </button>
                     </div>
+                  </div>
+                  <div className='mt-3 flex items-start text-xs text-amber-700 dark:text-amber-500'>
+                    <InfoIcon className='w-4 h-4 mr-2 flex-shrink-0' />
+                    <span>Note: Newly created API keys can take a few minutes to become active. If validation fails, please try again shortly.</span>
                   </div>
                   <div className='form-actions flex justify-end gap-3'>
                     {credentials && (

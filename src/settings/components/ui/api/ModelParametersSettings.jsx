@@ -13,6 +13,7 @@ import {
   CustomSelect,
   SpinnerIcon,
   TextArea,
+  InfoIcon,
 } from '../../../../components';
 import { useModelParametersSettings } from '../../../hooks/useModelParametersSettings';
 import { MAX_SYSTEM_PROMPT_LENGTH } from '../../../../shared/constants';
@@ -289,9 +290,10 @@ const ModelParametersSettings = ({
               />
             )}
             {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
-                <p className='text-amber-600 text-xs mt-3'>
-                  It is generally recommended to alter Temperature or Top P, but not both.
-                </p>
+              <div className='mt-3 flex items-start text-xs text-amber-700 dark:text-amber-500'>
+                <InfoIcon className='w-4 h-4 mr-2 flex-shrink-0' />
+                <span>It is generally recommended to alter Temperature or Top P, but not both.</span>
+              </div>
             )}
         </SettingsCard>
         )}
