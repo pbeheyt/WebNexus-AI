@@ -103,20 +103,24 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
         const isAllowed = isSidePanelAllowedPage(tab.url);
         const isVisible = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
 
-        if (isAllowed) {
-          await chrome.sidePanel.setOptions({
-            tabId: tabId,
-            path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
-            enabled: isVisible, // Enable based on stored visibility
-          });
-          logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
-        } else {
-          await chrome.sidePanel.setOptions({
-            tabId: tabId,
-            enabled: false, // Force disable if not allowed
-          });
-          logger.background.info(`Side Panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
-        }
+                if (chrome.sidePanel && typeof chrome.sidePanel.setOptions === 'function') {
+                  if (isAllowed) {
+                    await chrome.sidePanel.setOptions({
+                      tabId: tabId,
+                      path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
+                      enabled: isVisible, // Enable based on stored visibility
+                    });
+                    logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
+                  } else {
+                    await chrome.sidePanel.setOptions({
+                      tabId: tabId,
+                      enabled: false, // Force disable if not allowed
+                    });
+                    logger.background.info(`Side Panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
+                  }
+                } else {
+                  logger.background.warn(`Side Panel API not available. Skipping setOptions for tab ${tabId} in handleTabUpdate.`);
+                }
         sidePanelOptionsSetForLoad.add(tabId);
         logger.background.info(`Marked sidePanelOptionsSetForLoad for tab ${tabId}.`);
       }
@@ -266,34 +270,38 @@ async function handleTabActivation(activeInfo) {
 
     // Check if side panel is allowed on this page
     const isAllowed = isSidePanelAllowedPage(activatedTab.url);
-    if (!isAllowed) {
-      logger.background.info(
-        `Tab ${tabId} activated on restricted page (${activatedTab.url}). Forcing side panel disable.`
-      );
-      await chrome.sidePanel.setOptions({ tabId: tabId, enabled: false });
-      return;
-    }
+    if (chrome.sidePanel && typeof chrome.sidePanel.setOptions === 'function') {
+      if (!isAllowed) {
+        logger.background.info(
+          `Tab ${tabId} activated on restricted page (${activatedTab.url}). Forcing side panel disable.`
+        );
+        await chrome.sidePanel.setOptions({ tabId: tabId, enabled: false });
+        return;
+      }
 
-    // Retrieve the intended visibility state for the activated tab
-    const isVisible =
-      await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+      // Retrieve the intended visibility state for the activated tab
+      const isVisible =
+        await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
 
-    // Conditionally set side panel options based on stored visibility
-    if (isVisible) {
-      // Enable and set the path ONLY if it should be visible
-      await chrome.sidePanel.setOptions({
-        tabId: tabId,
-        path: `sidepanel.html?tabId=${tabId}`,
-        enabled: true,
-      });
-      logger.background.info(`Side Panel enabled for activated tab ${tabId}`);
+      // Conditionally set side panel options based on stored visibility
+      if (isVisible) {
+        // Enable and set the path ONLY if it should be visible
+        await chrome.sidePanel.setOptions({
+          tabId: tabId,
+          path: `sidepanel.html?tabId=${tabId}`,
+          enabled: true,
+        });
+        logger.background.info(`Side Panel enabled for activated tab ${tabId}`);
+      } else {
+        // Disable the panel if it shouldn't be visible
+        await chrome.sidePanel.setOptions({
+          tabId: tabId,
+          enabled: false,
+        });
+        logger.background.info(`Side Panel disabled for activated tab ${tabId}`);
+      }
     } else {
-      // Disable the panel if it shouldn't be visible
-      await chrome.sidePanel.setOptions({
-        tabId: tabId,
-        enabled: false,
-      });
-      logger.background.info(`Side Panel disabled for activated tab ${tabId}`);
+      logger.background.warn(`Side Panel API not available. Skipping setOptions for tab ${tabId} in handleTabActivation.`);
     }
   } catch (error) {
     logger.background.error(

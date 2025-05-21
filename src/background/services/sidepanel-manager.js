@@ -10,13 +10,24 @@ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
  * @param {Object} sender - Message sender, potentially containing `sender.tab.id`.
  * @param {Function} sendResponse - Function to send the response back.
  */
-export async function toggleSidePanel(message, sender, sendResponse) {
-  let targetTabId;
-  let newState; // To store the final state (true for open, false for closed)
-  try {
-    logger.background.info(
-      'Handling sidepanel toggle request'
-    );
+        export async function toggleSidePanel(message, sender, sendResponse) {
+          let targetTabId;
+          let newState; // To store the final state (true for open, false for closed)
+          try {
+            logger.background.info(
+              'Handling sidepanel toggle request'
+            );
+            if (!chrome.sidePanel || typeof chrome.sidePanel.setOptions !== 'function' || typeof chrome.sidePanel.open !== 'function') {
+              logger.background.error('Side Panel API is not available. Cannot toggle side panel.');
+              sendResponse({
+                success: false,
+                error: 'SIDE_PANEL_UNSUPPORTED',
+                message: 'Side Panel feature requires a newer Chrome version (114+).',
+                tabId: message?.tabId || sender?.tab?.id || null,
+                visible: false, // Assume not visible if API is missing
+              });
+              return; // Exit early
+            }
 
     // Determine the target tab ID
     const explicitTabId = message?.tabId || sender?.tab?.id;
@@ -158,8 +169,14 @@ export async function handleCloseCurrentSidePanelRequest(message, sender, sendRe
 
   try {
     await SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false);
-    await chrome.sidePanel.setOptions({ tabId, enabled: false });
-    logger.background.info(`Sidepanel for tab ${tabId} successfully closed and state updated.`);
+    if (chrome.sidePanel && typeof chrome.sidePanel.setOptions === 'function') {
+      await chrome.sidePanel.setOptions({ tabId, enabled: false });
+      logger.background.info(`Sidepanel for tab ${tabId} successfully closed and state updated.`);
+    } else {
+      logger.background.warn(`Side Panel API not available. Cannot setOptions to close for tab ${tabId}. State was updated.`);
+      // The state is updated, but the panel might not visually close if API is missing.
+      // This is an edge case, as the sidepanel itself calls this, implying API was available to open it.
+    }
     sendResponse({
       success: true,
       tabId,

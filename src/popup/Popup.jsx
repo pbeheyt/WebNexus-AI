@@ -58,6 +58,7 @@ export function Popup() {
     useState(false);
   const infoButtonRef = useRef(null);
   const includeContextRef = useRef(null);
+  const [isSidePanelApiAvailable, setIsSidePanelApiAvailable] = useState(true);
 
   // Fade in effect for popup
   useEffect(() => {
@@ -68,6 +69,14 @@ export function Popup() {
       }
     }, 0);
   }, []);
+
+  useEffect(() => {
+    if (typeof chrome.sidePanel === 'undefined') {
+      setIsSidePanelApiAvailable(false);
+      updateStatus('Side Panel requires Chrome 114+. Please update your browser.', 'warning');
+      logger.popup.warn('Side Panel API is not available.');
+    }
+  }, [updateStatus]);
 
   // Automatically disable includeContext for non-injectable pages
   useEffect(() => {
@@ -194,19 +203,31 @@ export function Popup() {
         tabId: currentTab.id,
       });
 
-      if (response?.success) {
+      if (response?.error === 'SIDE_PANEL_UNSUPPORTED') {
+        updateStatus('Side Panel requires Chrome 114+. Please update your browser.', 'warning');
+        setIsSidePanelApiAvailable(false); // Also update state here
+        // Do not try to close window or open side panel
+      } else if (response?.success) {
         updateStatus(
           `Side Panel state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
         );
 
         if (response.visible) {
-          try {
-            await chrome.sidePanel.open({ tabId: currentTab.id });
-            updateStatus('Side Panel opened successfully.');
-            window.close();
-          } catch (openError) {
-            logger.popup.error('Error opening side panel:', openError);
-            updateStatus(`Error opening Side Panel: ${openError.message}`);
+          // Check API availability again before trying to open
+          if (chrome.sidePanel && typeof chrome.sidePanel.open === 'function') {
+            try {
+              await chrome.sidePanel.open({ tabId: currentTab.id });
+              updateStatus('Side Panel opened successfully.');
+              window.close();
+            } catch (openError) {
+              logger.popup.error('Error opening side panel:', openError);
+              updateStatus(`Error opening Side Panel: ${openError.message}`);
+            }
+          } else {
+            // This case should ideally be caught by the initial check or background response,
+            // but as a fallback:
+            updateStatus('Side Panel API not available to open.', 'warning');
+            setIsSidePanelApiAvailable(false);
           }
         } else {
           updateStatus('Side Panel disabled.');
@@ -311,8 +332,14 @@ export function Popup() {
         <button
           onClick={toggleSidepanel}
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-          title={popupSidepanelShortcut && popupSidepanelShortcut.key ? `Toggle Side Panel (${formatShortcutToStringDisplay(popupSidepanelShortcut)})` : 'Toggle Side Panel'}
-          disabled={!currentTab?.id}
+          title={
+            !isSidePanelApiAvailable
+              ? 'Side Panel requires Chrome 114+'
+              : popupSidepanelShortcut && popupSidepanelShortcut.key
+                ? `Toggle Side Panel (${formatShortcutToStringDisplay(popupSidepanelShortcut)})`
+                : 'Toggle Side Panel'
+          }
+          disabled={!currentTab?.id || !isSidePanelApiAvailable}
         >
           <SidepanelIcon className='w-4 h-4 select-none' />
         </button>
