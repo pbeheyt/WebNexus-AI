@@ -83,6 +83,10 @@ function ChatArea({
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
   const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
 
+  // --- Ref for initial view layout ---
+  const initialViewContainerRef = useRef(null);
+
+
   // Calculate dynamic specs based on current mode
   const dynamicSpecs = useMemo(() => {
     // Use displayModelConfig which is derived from modelConfigData
@@ -454,6 +458,7 @@ const checkScrollPosition = useCallback(() => {
     ? isInjectablePage(currentTab.url)
     : false;
 
+
   // --- Render Initial View Content ---
   const renderInitialView = () => {
     if (!hasAnyPlatformCredentials) {
@@ -493,10 +498,11 @@ const checkScrollPosition = useCallback(() => {
 
       return (
         <div
-          className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3`}
+          ref={initialViewContainerRef}
+          className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3 overflow-y-auto`}
         >
           {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
-          <div className='flex flex-col items-center py-3 w-full min-h-[120px]'>
+          <div className='flex flex-col items-center py-3 w-full'>
             {displayPlatformConfig ? (
               <div className='select-none'>
                 <PlatformIcon
@@ -629,9 +635,9 @@ const checkScrollPosition = useCallback(() => {
 
           {/* SECTION 2: Start a conversation message Section */}
           <div className='flex flex-col items-center py-3 w-full'>
-          <h3 className='text-base font-semibold mb-2'>
-            Start a conversation
-          </h3>
+            <h3 className='text-base font-semibold mb-2'>
+              Start a conversation
+            </h3>
             <p className='text-xs max-w-xs mx-auto'>
               {getWelcomeMessage(contentType, isPageInjectable)}
             </p>
