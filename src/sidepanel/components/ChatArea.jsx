@@ -517,12 +517,12 @@ const checkScrollPosition = useCallback(() => {
             )}
             {modelReady ? (
               <>
-                <div
-                  className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium'
-                  title={displayModelConfig.id}
-                >
-                  {displayModelConfig.name || displayModelConfig.id}
-                </div>
+    <div
+      className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium'
+      title={displayModelConfig.id} // Keep title as ID for dev/debugging
+    >
+      {displayModelConfig.displayName || displayModelConfig.name || displayModelConfig.id} {/* Prefer displayName */}
+    </div>
                 {displayModelConfig.description && (
                   <p className='text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto'>
                     {displayModelConfig.description}
@@ -781,11 +781,12 @@ const checkScrollPosition = useCallback(() => {
                   thinkingContent={message.thinkingContent} // Pass thinkingContent prop
                   role={message.role}
                   isStreaming={message.isStreaming}
-                  model={message.model}
-                  platformIconUrl={message.platformIconUrl}
-                  platformId={message.platformId}
-                  style={dynamicStyle}
-                />
+          model={message.model} // This is the ID
+          modelDisplayName={message.modelDisplayName} // <-- ADD THIS to be passed through
+          platformIconUrl={message.platformIconUrl}
+          platformId={message.platformId}
+          style={dynamicStyle}
+        />
               );
             })}
 

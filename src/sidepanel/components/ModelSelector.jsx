@@ -44,7 +44,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       if (typeof model === 'object' && model !== null) {
         return {
           id: model.id,
-          name: model.name || model.id,
+          name: model.displayName || model.name || model.id, // Prefer displayName, then name (if it existed), then id
         };
       } else {
         return {
@@ -90,10 +90,11 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     if (!isLoading) {
       setDisplayModelId(selectedModel);
       
-      const currentModelName = 
-        formattedModels.find((m) => m.id === selectedModel)?.name ||
-        selectedModel ||
-        'Loading...';
+  const currentModel = formattedModels.find((m) => m.id === selectedModel);
+  const currentModelName =
+    currentModel?.name || // This 'name' is now effectively 'displayName' from the previous step
+    selectedModel ||
+    'Loading...';
       if (currentModelName) {
         setDisplayedModelName(currentModelName);
       }

@@ -24,6 +24,7 @@
       "models": [
         {
           "id": "gemini-2.5-pro-preview-05-06",
+          "displayName": "Gemini 2.5 Pro",
           "description": "Most powerful reasoning model.",
           "tokens": {
             "maxOutput": 65536,
@@ -51,6 +52,7 @@
         },
         {
           "id": "gemini-2.5-flash-preview-04-17",
+          "displayName": "Gemini 2.5 Flash",
           "description": "Best price-performance model, well-rounded capabilities.",
           "tokens": {
             "maxOutput": 65536,
@@ -82,6 +84,7 @@
         },
         {
           "id": "gemini-2.0-flash",
+          "displayName": "Gemini 2.0 Flash",
           "description": "Balanced model delivering excellent performance across all tasks.",
           "tokens": {
             "maxOutput": 8192,
@@ -104,6 +107,7 @@
         },
         {
           "id": "gemini-2.0-flash-lite",
+          "displayName": "Gemini 2.0 Flash Lite",
           "description": "Cost-effective and low-latency model.",
           "tokens": {
             "maxOutput": 8192,
@@ -150,6 +154,7 @@
       "models": [
         {
           "id": "gpt-4.1",
+          "displayName": "GPT-4.1",
           "description": "Flagship model for complex tasks.",
           "tokens": {
             "maxOutput": 32768,
@@ -172,6 +177,7 @@
         },
         {
           "id": "gpt-4.1-mini",
+          "displayName": "GPT-4.1 mini",
           "description": "Balanced for intelligence, speed, and cost.",
           "tokens": {
             "maxOutput": 32768,
@@ -194,6 +200,7 @@
         },
         {
           "id": "gpt-4.1-nano",
+          "displayName": "GPT-4.1 nano",
           "description": "Fastest, most cost-effective model.",
           "tokens": {
             "maxOutput": 32768,
@@ -216,6 +223,7 @@
         },
         {
           "id": "o3",
+          "displayName": "o3",
           "description": "Most powerful reasoning model.",
           "tokens": {
             "maxOutput": 100000,
@@ -242,6 +250,7 @@
         },
         {
           "id": "o4-mini",
+          "displayName": "o4-mini",
           "description": "Fast, flexible, and intelligent reasoning model.",
           "tokens": {
             "maxOutput": 100000,
@@ -292,6 +301,7 @@
       "models": [
         {
           "id": "claude-3-7-sonnet-latest",
+          "displayName": "Claude 3.7 Sonnet",
           "description": "Most intelligent model, first hybrid reasoning model.",
           "tokens": {
             "maxOutput": 8192,
@@ -322,6 +332,7 @@
         },
         {
           "id": "claude-3-5-haiku-latest",
+          "displayName": "Claude 3.5 Haiku",
           "description": "Fastest model, balancing speed and intelligence.",
           "tokens": {
             "maxOutput": 8192,
@@ -344,6 +355,7 @@
         },
         {
           "id": "claude-3-5-sonnet-latest",
+          "displayName": "Claude 3.5 Sonnet",
           "description": "High-intelligence model balancing capability and speed.",
           "tokens": {
             "maxOutput": 8192,
@@ -366,6 +378,7 @@
         },
         {
           "id": "claude-3-opus-latest",
+          "displayName": "Claude 3 Opus",
           "description": "Powerful model for complex tasks. Top-level intelligence and understanding.",
           "tokens": {
             "maxOutput": 4096,
@@ -412,6 +425,7 @@
       "models": [
         {
           "id": "deepseek-chat",
+          "displayName": "DeepSeek Chat",
           "description": "General chat model.",
           "tokens": {
             "maxOutput": 8000,
@@ -434,6 +448,7 @@
         },
         {
           "id": "deepseek-reasoner",
+          "displayName": "DeepSeek Reasoner",
           "description": "Reasoning model featuring Chain of Thought capabilities.",
           "tokens": {
             "maxOutput": 8000,
@@ -480,6 +495,7 @@
       "models": [
         {
           "id": "grok-3-latest",
+          "displayName": "Grok 3",
           "description": "Flagship model excelling at enterprise tasks with deep domain knowledge.",
           "tokens": {
             "maxOutput": 4096,
@@ -502,6 +518,7 @@
         },
         {
           "id": "grok-3-fast-latest",
+          "displayName": "Grok 3 Fast",
           "description": "Faster version of Grok 3, lower latency at a higher cost.",
           "tokens": {
             "maxOutput": 4096,
@@ -524,6 +541,7 @@
         },
         {
           "id": "grok-3-mini-latest",
+          "displayName": "Grok 3 Mini",
           "description": "Fast, smart, good for logic tasks without deep domain needs.",
           "tokens": {
             "maxOutput": 4096,
@@ -550,6 +568,7 @@
         },
         {
           "id": "grok-3-mini-fast-latest",
+          "displayName": "Grok 3 Mini Fast",
           "description": "Faster version of Grok 3 Mini, lower latency at a higher cost.",
           "tokens": {
             "maxOutput": 4096,
@@ -600,6 +619,7 @@
       "models": [
         {
           "id": "mistral-large-latest",
+          "displayName": "Mistral Large",
           "description": "Top-tier reasoning model for complex tasks.",
           "tokens": {
             "maxOutput": 4096,
@@ -622,6 +642,7 @@
         },
         {
           "id": "mistral-small-latest",
+          "displayName": "Mistral Small",
           "description": "Leading small model.",
           "tokens": {
             "maxOutput": 4096,
@@ -644,6 +665,7 @@
         },
         {
           "id": "codestral-latest",
+          "displayName": "Codestral",
           "description": "Cutting-edge model specialized for coding tasks.",
           "tokens": {
             "maxOutput": 4096,
@@ -666,6 +688,7 @@
         },
         {
           "id": "mistral-saba-latest",
+          "displayName": "Mistral Saba",
           "description": "Efficient model focused on Middle East & South Asia languages.",
           "tokens": {
             "maxOutput": 4096,
