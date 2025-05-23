@@ -196,7 +196,14 @@ class SidePanelStateManager {
     try {
       const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG);
       const flags = result[STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG] || {};
-      flags[tabIdStr] = sent;
+      if (sent === true) {
+        flags[tabIdStr] = true;
+      } else {
+        // If sent is false (or anything other than true), delete the key
+        if (Object.hasOwn(flags, tabIdStr)) {
+          delete flags[tabIdStr];
+        }
+      }
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG]: flags });
       logger.service.info(`Set context sent flag for tab ${tabIdStr} to ${sent}.`);
     } catch (error) {
