@@ -411,6 +411,7 @@ export function SidePanelChatProvider({ children }) {
       content: '',
       thinkingContent: '',
       model: selectedModel,
+      modelDisplayName: modelConfigData?.displayName || selectedModel, // <-- ADD THIS LINE, prefer displayName from modelConfigData
       platformIconUrl: selectedPlatform.iconUrl,
       platformId: selectedPlatformId,
       timestamp: new Date().toISOString(),

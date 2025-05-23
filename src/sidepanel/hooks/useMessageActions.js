@@ -58,6 +58,7 @@ const _initiateRerunSequence = async ({
         content: '',
         thinkingContent: '', // <-- Add this line
         model: selectedModel,
+        modelDisplayName: modelConfigData?.displayName || selectedModel, // <-- ADD THIS LINE
         platformIconUrl: selectedPlatform.iconUrl,
         platformId: selectedPlatformId,
         timestamp: new Date().toISOString(),

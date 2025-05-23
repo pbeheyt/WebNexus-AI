@@ -83,6 +83,10 @@ function ChatArea({
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
   const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
 
+  // --- Ref for initial view layout ---
+  const initialViewContainerRef = useRef(null);
+
+
   // Calculate dynamic specs based on current mode
   const dynamicSpecs = useMemo(() => {
     // Use displayModelConfig which is derived from modelConfigData
@@ -454,6 +458,7 @@ const checkScrollPosition = useCallback(() => {
     ? isInjectablePage(currentTab.url)
     : false;
 
+
   // --- Render Initial View Content ---
   const renderInitialView = () => {
     if (!hasAnyPlatformCredentials) {
@@ -493,10 +498,11 @@ const checkScrollPosition = useCallback(() => {
 
       return (
         <div
-          className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3`}
+          ref={initialViewContainerRef}
+          className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3 overflow-y-auto`}
         >
           {/* SECTION 1: Platform Logo, Model Name, and Details Section */}
-          <div className='flex flex-col items-center py-3 w-full min-h-[120px]'>
+          <div className='flex flex-col items-center py-3 w-full'>
             {displayPlatformConfig ? (
               <div className='select-none'>
                 <PlatformIcon
@@ -511,12 +517,12 @@ const checkScrollPosition = useCallback(() => {
             )}
             {modelReady ? (
               <>
-                <div
-                  className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium'
-                  title={displayModelConfig.id}
-                >
-                  {displayModelConfig.name || displayModelConfig.id}
-                </div>
+    <div
+      className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium'
+      title={displayModelConfig.id} // Keep title as ID for dev/debugging
+    >
+      {displayModelConfig.displayName || displayModelConfig.name || displayModelConfig.id} {/* Prefer displayName */}
+    </div>
                 {displayModelConfig.description && (
                   <p className='text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto'>
                     {displayModelConfig.description}
@@ -629,9 +635,9 @@ const checkScrollPosition = useCallback(() => {
 
           {/* SECTION 2: Start a conversation message Section */}
           <div className='flex flex-col items-center py-3 w-full'>
-          <h3 className='text-base font-semibold mb-2'>
-            Start a conversation
-          </h3>
+            <h3 className='text-base font-semibold mb-2'>
+              Start a conversation
+            </h3>
             <p className='text-xs max-w-xs mx-auto'>
               {getWelcomeMessage(contentType, isPageInjectable)}
             </p>
@@ -775,11 +781,12 @@ const checkScrollPosition = useCallback(() => {
                   thinkingContent={message.thinkingContent} // Pass thinkingContent prop
                   role={message.role}
                   isStreaming={message.isStreaming}
-                  model={message.model}
-                  platformIconUrl={message.platformIconUrl}
-                  platformId={message.platformId}
-                  style={dynamicStyle}
-                />
+          model={message.model} // This is the ID
+          modelDisplayName={message.modelDisplayName} // <-- ADD THIS to be passed through
+          platformIconUrl={message.platformIconUrl}
+          platformId={message.platformId}
+          style={dynamicStyle}
+        />
               );
             })}
 

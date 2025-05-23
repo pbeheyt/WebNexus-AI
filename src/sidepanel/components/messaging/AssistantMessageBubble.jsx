@@ -32,6 +32,7 @@ export const AssistantMessageBubble = memo(
         thinkingContent = null,
         isStreaming = false,
         model = null,
+        modelDisplayName = null, // <-- ADD THIS PROP
         platformIconUrl = null,
         platformId = null,
         className = '',
@@ -345,8 +346,8 @@ export const AssistantMessageBubble = memo(
                 </div>
               )}
               {model && (
-                <span title={model}>
-                  {model}
+                <span title={modelDisplayName || model}> {/* Show ID in title if displayName is different */}
+                  {modelDisplayName || model} {/* Display displayName, fallback to ID */}
                 </span>
               )}
               <div className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
@@ -405,6 +406,7 @@ AssistantMessageBubble.propTypes = {
   thinkingContent: PropTypes.string,
   isStreaming: PropTypes.bool,
   model: PropTypes.string,
+  modelDisplayName: PropTypes.string, // <-- ADD THIS PROP TYPE
   platformIconUrl: PropTypes.string,
   platformId: PropTypes.string,
   className: PropTypes.string,

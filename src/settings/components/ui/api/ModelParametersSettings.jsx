@@ -101,10 +101,10 @@ const ModelParametersSettings = ({
             <div className='inline-block'>
               <CustomSelect
                 id={`${platform.id}-settings-model-selector`}
-                options={modelsFromPlatform.map((model) => ({
-                  id: model.id,
-                  name: model.id,
-                }))}
+    options={modelsFromPlatform.map((model) => ({
+      id: model.id,
+      name: model.displayName || model.id, // Use displayName, fallback to id
+    }))}
                 selectedValue={selectedModelId}
                 onChange={handleModelChange}
                 placeholder='Select Model'

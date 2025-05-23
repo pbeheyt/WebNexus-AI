@@ -196,7 +196,14 @@ class SidePanelStateManager {
     try {
       const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG);
       const flags = result[STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG] || {};
-      flags[tabIdStr] = sent;
+      if (sent === true) {
+        flags[tabIdStr] = true;
+      } else {
+        // If sent is false (or anything other than true), delete the key
+        if (Object.hasOwn(flags, tabIdStr)) {
+          delete flags[tabIdStr];
+        }
+      }
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG]: flags });
       logger.service.info(`Set context sent flag for tab ${tabIdStr} to ${sent}.`);
     } catch (error) {
@@ -340,6 +347,23 @@ class SidePanelStateManager {
       logger.service.info('SidePanelStateManager: All managed tab states cleanup process completed.');
     } catch (error) {
       logger.service.error('SidePanelStateManager: Error cleaning up tab states:', error);
+    }
+  }
+
+  /**
+   * Resets all side panel visibility states to default (closed).
+   * Sets the TAB_SIDEPANEL_STATES storage item to an empty object.
+   * This is typically called on extension install/update or browser startup.
+   * @returns {Promise<void>}
+   */
+  async resetAllSidePanelVisibilityStates() {
+    try {
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: {} });
+      logger.service.info('All side panel visibility states have been reset to default (closed).');
+    } catch (error) {
+      logger.service.error('Error resetting all side panel visibility states:', error);
+      // Depending on desired error handling, you might re-throw or just log.
+      // For now, just logging.
     }
   }
 }
