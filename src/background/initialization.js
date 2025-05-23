@@ -4,6 +4,7 @@ import { logger } from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { ensureDefaultPrompts, performFullPromptRepopulation } from '../shared/utils/prompt-utils.js';
 import ConfigService from '../services/ConfigService.js';
+import SidePanelStateManager from '../services/SidePanelStateManager.js';
 
 import { resetState } from './core/state-manager.js';
 
@@ -67,6 +68,15 @@ async function handleInstallation(details) {
   logger.background.info(`Extension event: ${details.reason}`, details);
 
   // --- Default Prompt Initialization Logic ---
+  // Reset all side panel visibility states as Chrome closes them on install/update.
+  try {
+    logger.background.info('Resetting all side panel visibility states due to installation event...');
+    await SidePanelStateManager.resetAllSidePanelVisibilityStates();
+    logger.background.info('Side panel visibility states reset successfully.');
+  } catch (resetError) {
+    logger.background.error('Error resetting side panel visibility states during installation:', resetError);
+  }
+
   // Call the main initialization function on install.
   // It handles the flag check internally and ensures pointers are set.
   if (details.reason === 'install') {

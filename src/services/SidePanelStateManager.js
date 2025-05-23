@@ -342,6 +342,23 @@ class SidePanelStateManager {
       logger.service.error('SidePanelStateManager: Error cleaning up tab states:', error);
     }
   }
+
+  /**
+   * Resets all side panel visibility states to default (closed).
+   * Sets the TAB_SIDEPANEL_STATES storage item to an empty object.
+   * This is typically called on extension install/update or browser startup.
+   * @returns {Promise<void>}
+   */
+  async resetAllSidePanelVisibilityStates() {
+    try {
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: {} });
+      logger.service.info('All side panel visibility states have been reset to default (closed).');
+    } catch (error) {
+      logger.service.error('Error resetting all side panel visibility states:', error);
+      // Depending on desired error handling, you might re-throw or just log.
+      // For now, just logging.
+    }
+  }
 }
 
 export default new SidePanelStateManager();
