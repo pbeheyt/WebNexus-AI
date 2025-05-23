@@ -318,8 +318,16 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": false,
-            "toggleable": false
+            "available": true,
+            "toggleable": true,
+            "maxOutput": 32000,
+            "supportsTemperature": false,
+            "supportsTopP": false,
+              "budget": {
+              "min": 1024,
+              "max": 32000,
+              "default": 16000
+            }
           }
         },
         {
@@ -327,7 +335,7 @@
           "displayName": "Claude Sonnet 4",
           "description": "High intelligence and balanced performance.",
           "tokens": {
-            "maxOutput": 8192,
+            "maxOutput": 64000,
             "parameterName": "max_tokens",
             "contextWindow": 200000
           },
@@ -358,7 +366,7 @@
           "displayName": "Claude Sonnet 3.7",
           "description": "High intelligence with toggleable extended thinking.",
           "tokens": {
-            "maxOutput": 8192,
+            "maxOutput": 64000,
             "parameterName": "max_tokens",
             "contextWindow": 200000
           },
