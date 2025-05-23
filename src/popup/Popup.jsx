@@ -252,6 +252,12 @@ export function Popup() {
     [toggleSidepanel]
   );
 
+  const handleDefaultPromptUpdateForPopup = useCallback((promptName, contentTypeLabel) => {
+    if (updateStatus) { // Ensure updateStatus is available from useStatus()
+      updateStatus(`"${promptName}" set as default for ${contentTypeLabel || 'this content type'}.`);
+    }
+  }, [updateStatus]);
+
   const handleProcessWithText = async (text) => {
     const combinedDisabled =
       !isSupported ||
@@ -435,6 +441,7 @@ export function Popup() {
                   isContentLoading: contentLoading,
                   includeContext // Pass the state here
                 })}
+                onDefaultPromptSetCallback={handleDefaultPromptUpdateForPopup}
               />
             </div>
           </div>

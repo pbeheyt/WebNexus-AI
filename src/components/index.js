@@ -48,6 +48,8 @@ export { OutputTokenIcon } from './icons/OutputTokenIcon';
 export { ContextWindowIcon } from './icons/ContextWindowIcon';
 export { FreeTierIcon } from './icons/FreeTierIcon';
 export { ScrollDownIcon } from './icons/ScrollDownIcon';
+export { StarFilledIcon } from './icons/StarFilledIcon';
+export { StarOutlineIcon } from './icons/StarOutlineIcon';
 export { SpinnerIcon } from './icons/SpinnerIcon';
 export { NoCredentialsIcon } from './icons/NoCredentialsIcon';
 export { ErrorIcon } from './icons/ErrorIcon';

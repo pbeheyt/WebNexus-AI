@@ -29,6 +29,7 @@ export function UnifiedInput({
   layoutVariant,
   className = '',
   placeholder,
+  onDefaultPromptSetCallback, // Destructure the new prop
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const textareaRef = useRef(null);
@@ -259,6 +260,7 @@ export function UnifiedInput({
                   contentType={contentType}
                   anchorRef={promptButtonRef}
                   className={'text-xs'}
+                  onDefaultSet={onDefaultPromptSetCallback}
                 />
               </div>
             </div>
@@ -284,4 +286,5 @@ UnifiedInput.propTypes = {
   layoutVariant: PropTypes.oneOf(['popup', 'sidepanel']).isRequired,
   placeholder: PropTypes.string,
   className: PropTypes.string,
+  onDefaultPromptSetCallback: PropTypes.func,
 };

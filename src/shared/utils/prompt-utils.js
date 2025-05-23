@@ -173,3 +173,49 @@ export async function loadRelevantPrompts(contentType) {
     return []; // Return empty array on error
   }
 }
+
+/**
+ * Sets the default prompt for a specific content type.
+ *
+ * @param {string} contentType - The content type for which to set the default.
+ * @param {string} promptId - The ID of the prompt to set as default.
+ * @returns {Promise<boolean>} True if the default was successfully set, false otherwise.
+ */
+export async function setDefaultPromptForContentType(contentType, promptId) {
+  if (!contentType || !promptId) {
+    logger.service.error('setDefaultPromptForContentType: contentType and promptId are required.');
+    return false;
+  }
+
+  logger.service.info(`Setting default prompt for ${contentType} to ${promptId}`);
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
+    const customPromptsByType = result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+
+    // Ensure the content type object exists
+    if (!customPromptsByType[contentType]) {
+      customPromptsByType[contentType] = {};
+    }
+
+    // Ensure the prompt ID actually exists for that content type before setting it as default
+    if (!customPromptsByType[contentType][promptId]) {
+      logger.service.error(`setDefaultPromptForContentType: Prompt ID ${promptId} does not exist for content type ${contentType}. Cannot set as default.`);
+      return false;
+    }
+    
+    customPromptsByType[contentType]['_defaultPromptId_'] = promptId;
+
+    await chrome.storage.local.set({ [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: customPromptsByType });
+    
+    // Optionally, call ensureDefaultPrompts if there's a chance this change could
+    // invalidate defaults for other types, though less likely with this specific action.
+    // For now, direct update is sufficient. Consider if ensureDefaultPrompts is needed if complex interactions arise.
+    // await ensureDefaultPrompts(); 
+
+    logger.service.info(`Successfully set default prompt for ${contentType} to ${promptId}.`);
+    return true;
+  } catch (error) {
+    logger.service.error(`Error setting default prompt for ${contentType}:`, error);
+    return false;
+  }
+}
