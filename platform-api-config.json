@@ -327,7 +327,7 @@
           "displayName": "Claude Sonnet 4",
           "description": "High intelligence and balanced performance.",
           "tokens": {
-            "maxOutput": 64000,
+            "maxOutput": 8192,
             "parameterName": "max_tokens",
             "contextWindow": 200000
           },
@@ -341,8 +341,16 @@
             "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": false,
-            "toggleable": false
+            "available": true,
+            "toggleable": true,
+            "maxOutput": 64000,
+            "supportsTemperature": false,
+            "supportsTopP": false,
+              "budget": {
+              "min": 1024,
+              "max": 64000,
+              "default": 16000
+            }
           }
         },
         {
