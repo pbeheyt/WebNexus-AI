@@ -6,8 +6,8 @@ import { StarFilledIcon } from '../icons/StarFilledIcon';
 import { StarOutlineIcon } from '../icons/StarOutlineIcon';
 import { setDefaultPromptForContentType } from '../../shared/utils/prompt-utils.js';
 import { IconButton } from '../core/IconButton';
-import { STORAGE_KEYS, CONTENT_TYPE_LABELS } from '../../shared/constants'; // For onDefaultSet callback
-import { useNotification } from '../feedback/NotificationContext'; // For potential error feedback
+import { STORAGE_KEYS, CONTENT_TYPE_LABELS } from '../../shared/constants';
+import { useNotification } from '../feedback/NotificationContext';
 import { logger } from '../../shared/logger';
 
 /**
@@ -29,8 +29,7 @@ export function PromptDropdown({
   const [settingDefaultInProgress, setSettingDefaultInProgress] = useState(null); // Tracks ID of prompt being set as default
   const notificationContext = useNotification();
   const showNotificationError = notificationContext ? notificationContext.error : (message) => {
-    logger.popup.error(`NotificationContext not available. Error: ${message}`); // Or logger.sidepanel.error
-    console.error(`NotificationContext not available. Error: ${message}`);
+    logger.popup.error(`NotificationContext not available. Error: ${message}`);
   };
   const [isVisible, setIsVisible] = useState(false);
   const dropdownRef = useRef(null);
@@ -138,7 +137,7 @@ export function PromptDropdown({
   return (
     <div
       ref={dropdownRef}
-      className={`absolute bottom-full mb-2 right-0 z-50 bg-theme-surface border border-theme rounded-md shadow-lg p-1 w-fit min-w-0 max-w-48 ${className} transition-all duration-300 ease-in-out ${isVisible ? 'opacity-100 max-h-[150px] overflow-y-auto' : 'opacity-0 max-h-0 overflow-hidden'}`}
+      className={`absolute bottom-full mb-2 right-0 z-50 bg-theme-surface border border-theme rounded-md shadow-md p-1 w-fit min-w-0 max-w-48 ${className} transition-all duration-300 ease-in-out ${isVisible ? 'opacity-100 max-h-[150px] overflow-y-auto' : 'opacity-0 max-h-0 overflow-hidden'}`}
       role='listbox'
       aria-label='Select a prompt'
     >
@@ -159,7 +158,7 @@ export function PromptDropdown({
               key={promptItem.id}
               className={`flex items-center justify-between px-3 py-1.5 text-theme-base rounded cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
               role='option'
-              aria-selected='false' // This might need adjustment if the item itself is selectable vs. just the action button
+              aria-selected='false'
             >
               <button
                 onClick={() => {
@@ -171,7 +170,8 @@ export function PromptDropdown({
                 {promptItem.name}
               </button>
               
-              <div className="flex-shrink-0">
+              {/* Icon Container with fixed width */}
+              <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                 {isCurrentDefault ? (
                   <StarFilledIcon
                     className={`w-4 h-4 text-amber-500 ${isBeingSetAsDefault ? 'opacity-50' : ''}`}
@@ -181,9 +181,10 @@ export function PromptDropdown({
                   <IconButton
                     icon={StarOutlineIcon}
                     onClick={() => handleSetAsDefault(promptItem)}
-                    disabled={isBeingSetAsDefault || !!settingDefaultInProgress} // Disable if any set operation is in progress
-                    className={`p-0.5 rounded text-theme-secondary group-hover:text-amber-500 group-hover:opacity-100 ${isBeingSetAsDefault ? 'animate-pulse' : 'opacity-0 focus:opacity-100'}`}
-                    iconClassName="w-4 h-4"
+                    disabled={isBeingSetAsDefault || !!settingDefaultInProgress}
+                    // Ensure IconButton itself doesn't add extra space that causes shift
+                    className={`p-0.5 rounded text-theme-secondary group-hover:text-amber-500 group-hover:opacity-100 flex items-center justify-center ${isBeingSetAsDefault ? 'animate-pulse' : 'opacity-0 focus-within:opacity-100'}`}
+                    iconClassName="w-4 h-4" // Icon size
                     aria-label={`Set "${promptItem.name}" as default prompt`}
                     title={`Set as default`}
                   />
