@@ -300,9 +300,55 @@
       "requiresModel": true,
       "models": [
         {
+          "id": "claude-opus-4-0",
+          "displayName": "Claude Opus 4",
+          "description": "Highest level of intelligence and capability.",
+          "tokens": {
+            "maxOutput": 32000,
+            "parameterName": "max_tokens",
+            "contextWindow": 200000
+          },
+          "pricing": {
+            "inputTokenPrice": 15.0,
+            "outputTokenPrice": 75.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true
+          },
+          "thinking": {
+            "available": false,
+            "toggleable": false
+          }
+        },
+        {
+          "id": "claude-sonnet-4-0",
+          "displayName": "Claude Sonnet 4",
+          "description": "High intelligence and balanced performance.",
+          "tokens": {
+            "maxOutput": 64000,
+            "parameterName": "max_tokens",
+            "contextWindow": 200000
+          },
+          "pricing": {
+            "inputTokenPrice": 3.0,
+            "outputTokenPrice": 15.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true
+          },
+          "thinking": {
+            "available": false,
+            "toggleable": false
+          }
+        },
+        {
           "id": "claude-3-7-sonnet-latest",
-          "displayName": "Claude 3.7 Sonnet",
-          "description": "Most intelligent model, first hybrid reasoning model.",
+          "displayName": "Claude Sonnet 3.7",
+          "description": "High intelligence with toggleable extended thinking.",
           "tokens": {
             "maxOutput": 8192,
             "parameterName": "max_tokens",
@@ -332,8 +378,8 @@
         },
         {
           "id": "claude-3-5-haiku-latest",
-          "displayName": "Claude 3.5 Haiku",
-          "description": "Fastest model, balancing speed and intelligence.",
+          "displayName": "Claude Haiku 3.5",
+          "description": "Intelligence at blazing speeds.",
           "tokens": {
             "maxOutput": 8192,
             "parameterName": "max_tokens",
@@ -342,52 +388,6 @@
           "pricing": {
             "inputTokenPrice": 0.8,
             "outputTokenPrice": 4.0
-          },
-          "capabilities": {
-            "supportsTemperature": true,
-            "supportsTopP": true,
-            "supportsSystemPrompt": true
-          },
-          "thinking": {
-            "available": false,
-            "toggleable": false
-          }
-        },
-        {
-          "id": "claude-3-5-sonnet-latest",
-          "displayName": "Claude 3.5 Sonnet",
-          "description": "High-intelligence model balancing capability and speed.",
-          "tokens": {
-            "maxOutput": 8192,
-            "parameterName": "max_tokens",
-            "contextWindow": 200000
-          },
-          "pricing": {
-            "inputTokenPrice": 3.0,
-            "outputTokenPrice": 15.0
-          },
-          "capabilities": {
-            "supportsTemperature": true,
-            "supportsTopP": true,
-            "supportsSystemPrompt": true
-          },
-          "thinking": {
-            "available": false,
-            "toggleable": false
-          }
-        },
-        {
-          "id": "claude-3-opus-latest",
-          "displayName": "Claude 3 Opus",
-          "description": "Powerful model for complex tasks. Top-level intelligence and understanding.",
-          "tokens": {
-            "maxOutput": 4096,
-            "parameterName": "max_tokens",
-            "contextWindow": 200000
-          },
-          "pricing": {
-            "inputTokenPrice": 15.0,
-            "outputTokenPrice": 75.0
           },
           "capabilities": {
             "supportsTemperature": true,
