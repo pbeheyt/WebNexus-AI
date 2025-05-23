@@ -69,9 +69,26 @@ async function handleInstallation(details) {
   // --- Default Prompt Initialization Logic ---
   // Call the main initialization function on install.
   // It handles the flag check internally and ensures pointers are set.
-  if (details.reason === 'install') {
-     logger.background.info('Reason is "install", running populateInitialPromptsAndSetDefaults...');
+  if (details.reason === 'install' || details.reason === 'update') {
+     logger.background.info(`Reason is "${details.reason}", running populateInitialPromptsAndSetDefaults...`);
      await populateInitialPromptsAndSetDefaults();
+
+    // --- Reset Side Panel Visibility State on Install/Update ---
+    logger.background.info(
+      `Reason is "${details.reason}", resetting TAB_SIDEPANEL_STATES.`
+    );
+    try {
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: {} });
+      logger.background.info(
+        'Successfully reset TAB_SIDEPANEL_STATES to empty object.'
+      );
+    } catch (error) {
+      logger.background.error(
+        'Error resetting TAB_SIDEPANEL_STATES:',
+        error
+      );
+    }
+    // --- End Reset Side Panel Visibility State ---
   }
   // No specific call for 'update' needed here for this logic, 
   // as ensureDefaultPrompts in startBackgroundService will handle consistency.

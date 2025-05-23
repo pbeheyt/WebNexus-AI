@@ -8,6 +8,7 @@ import {
   isPlatformTab,
   getPlatformContentScript,
 } from '../services/platform-integration.js';
+import { activeSidePanelPorts } from '../index.js';
 import { injectContentScript } from '../services/content-extraction.js';
 import {
   getPlatformTabInfo,
@@ -101,22 +102,50 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
       } else {
         logger.background.info(`Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`);
         const isAllowed = isSidePanelAllowedPage(tab.url);
-        const isVisible = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+        // Existing: const isAllowed = isSidePanelAllowedPage(tab.url);
+        // Existing: const isVisible = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
 
-        if (isAllowed) {
-          await chrome.sidePanel.setOptions({
-            tabId: tabId,
-            path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
-            enabled: isVisible, // Enable based on stored visibility
-          });
-          logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`);
-        } else {
-          await chrome.sidePanel.setOptions({
-            tabId: tabId,
-            enabled: false, // Force disable if not allowed
-          });
-          logger.background.info(`Side Panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
+        // New logic starts here:
+        const storedVisibility = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+        const isActuallyConnected = activeSidePanelPorts.has(tabId);
+        let effectiveEnabledState = false;
+
+        if (isAllowed) { // isAllowed should be defined from existing logic
+            if (storedVisibility && isActuallyConnected) {
+                effectiveEnabledState = true;
+            } else if (storedVisibility && !isActuallyConnected) {
+                // Stored as visible, but not connected. This happens on SW restart.
+                // Disable it; if the panel UI is still there, it will reconnect.
+                effectiveEnabledState = false;
+                logger.background.info(`Tab ${tabId} onUpdated: Stored as visible but not connected. Disabling. Reconnect expected if UI active.`);
+                // It's important that the stored state remains true if it was, so onConnect can correctly identify it as a "reconnect"
+                // SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false); // DO NOT DO THIS HERE. Let onConnect handle it.
+            } else {
+                // Not stored as visible, or page not allowed.
+                effectiveEnabledState = false;
+            }
         }
+        // else: if !isAllowed, effectiveEnabledState remains false, which is correct.
+
+        if (effectiveEnabledState) {
+            await chrome.sidePanel.setOptions({
+                tabId: tabId,
+                path: `sidepanel.html?tabId=${tabId}`,
+                enabled: true,
+            });
+            logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=true (Stored: ${storedVisibility}, Connected: ${isActuallyConnected})`);
+        } else {
+            await chrome.sidePanel.setOptions({
+                tabId: tabId,
+                enabled: false,
+            });
+            if (isAllowed) {
+                logger.background.info(`Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=false (Stored: ${storedVisibility}, Connected: ${isActuallyConnected})`);
+            } else {
+                logger.background.info(`Side Panel explicitly disabled for completed tab ${tabId} (URL not allowed).`);
+            }
+        }
+        // The line `sidePanelOptionsSetForLoad.add(tabId);` should remain after this new logic.
         sidePanelOptionsSetForLoad.add(tabId);
         logger.background.info(`Marked sidePanelOptionsSetForLoad for tab ${tabId}.`);
       }
@@ -274,26 +303,40 @@ async function handleTabActivation(activeInfo) {
       return;
     }
 
-    // Retrieve the intended visibility state for the activated tab
-    const isVisible =
-      await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+    // Existing: const isVisible = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+    // Replace with new logic:
+    const storedVisibility = await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+    const isActuallyConnected = activeSidePanelPorts.has(tabId);
+    let effectiveEnabledState = false;
 
-    // Conditionally set side panel options based on stored visibility
-    if (isVisible) {
-      // Enable and set the path ONLY if it should be visible
-      await chrome.sidePanel.setOptions({
-        tabId: tabId,
-        path: `sidepanel.html?tabId=${tabId}`,
-        enabled: true,
-      });
-      logger.background.info(`Side Panel enabled for activated tab ${tabId}`);
+    if (isAllowed) { // isAllowed is defined from existing logic
+        if (storedVisibility && isActuallyConnected) {
+            effectiveEnabledState = true;
+        } else if (storedVisibility && !isActuallyConnected) {
+            effectiveEnabledState = false;
+            logger.background.info(`Tab ${tabId} onActivated: Stored as visible but not connected. Disabling. Reconnect expected if UI active.`);
+        } else {
+            effectiveEnabledState = false;
+        }
+    }
+    // else: if !isAllowed, effectiveEnabledState remains false.
+
+    if (effectiveEnabledState) {
+        await chrome.sidePanel.setOptions({
+            tabId: tabId,
+            path: `sidepanel.html?tabId=${tabId}`,
+            enabled: true,
+        });
+        logger.background.info(`Side Panel enabled for activated tab ${tabId} (Stored: ${storedVisibility}, Connected: ${isActuallyConnected})`);
     } else {
-      // Disable the panel if it shouldn't be visible
-      await chrome.sidePanel.setOptions({
-        tabId: tabId,
-        enabled: false,
-      });
-      logger.background.info(`Side Panel disabled for activated tab ${tabId}`);
+        await chrome.sidePanel.setOptions({
+            tabId: tabId,
+            enabled: false,
+        });
+        if (isAllowed) {
+            logger.background.info(`Side Panel disabled for activated tab ${tabId} (Stored: ${storedVisibility}, Connected: ${isActuallyConnected})`);
+        }
+        // The case where !isAllowed is already handled by the preceding `if (!isAllowed)` block.
     }
   } catch (error) {
     logger.background.error(

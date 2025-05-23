@@ -3,6 +3,8 @@
 import SidePanelStateManager from '../services/SidePanelStateManager.js';
 import { logger } from '../shared/logger.js';
 
+export const activeSidePanelPorts = new Set();
+
 import { initializeExtension, populateInitialPromptsAndSetDefaults } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
@@ -138,6 +140,7 @@ function setupConnectionListener() {
 
       if (!isNaN(tabId)) {
         logger.background.info(`Side panel connected for tab ${tabId}`);
+        activeSidePanelPorts.add(tabId);
 
         // Mark sidepanel as visible upon connection
         SidePanelStateManager.setSidePanelVisibilityForTab(tabId, true)
@@ -153,9 +156,22 @@ function setupConnectionListener() {
             );
           });
 
+        // Directly enable the panel via setOptions as it just connected
+        chrome.sidePanel.setOptions({
+          tabId,
+          enabled: true,
+          path: `sidepanel.html?tabId=${tabId}`,
+        }).then(() => {
+          logger.background.info(`SidePanel explicitly enabled via setOptions for connected tab ${tabId}`);
+        }).catch(err => {
+          logger.background.error(`Error explicitly enabling sidePanel for connected tab ${tabId}:`, err);
+        });
+
         // Handle disconnection
         port.onDisconnect.addListener(() => {
           logger.background.info(`Side panel disconnected for tab ${tabId}`);
+          activeSidePanelPorts.delete(tabId); // Delete before state manager call
+
           if (chrome.runtime.lastError) {
             // Log error but don't crash the extension
             logger.background.error(
@@ -175,6 +191,17 @@ function setupConnectionListener() {
                 error
               );
             });
+
+          // Directly disable the panel via setOptions on disconnect
+          chrome.sidePanel.setOptions({
+            tabId,
+            enabled: false,
+          }).then(() => {
+            logger.background.info(`SidePanel explicitly disabled via setOptions for disconnected tab ${tabId}`);
+          }).catch(err => {
+            // Log error, but it's less critical on disconnect as panel is closing anyway
+            logger.background.warn(`Error explicitly disabling sidePanel for disconnected tab ${tabId}:`, err.message);
+          });
         });
       } else {
         logger.background.error(
