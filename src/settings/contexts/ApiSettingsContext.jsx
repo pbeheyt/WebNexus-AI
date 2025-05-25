@@ -150,7 +150,7 @@ export const ApiSettingsProvider = ({ children }) => {
   );
 
   const saveModelParametersSettings = useCallback(
-    async (platformId, modelId, mode, settings, changedParamsList = []) => { // Add changedParamsList
+    async (platformId, modelId, mode, settings, changedParamsList = []) => {
       try {
         const updatedAllModelParameterSettings = JSON.parse(JSON.stringify(allModelParameterSettings)); // Deep copy
 
@@ -191,7 +191,7 @@ export const ApiSettingsProvider = ({ children }) => {
         logger.settings.error('Error saving model parameters in context:', err);
         const lastError = chrome.runtime.lastError;
         if (lastError?.message?.includes('QUOTA_BYTES')) {
-          showErrorNotification('Sync storage limit reached for model parameters.');
+          showErrorNotification('Local storage limit reached for model parameters.');
         } else {
           showErrorNotification(`Failed to save model parameters: ${err.message}`);
         }
