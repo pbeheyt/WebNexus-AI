@@ -191,21 +191,64 @@ class RedditExtractorStrategy extends BaseExtractor {
 
   waitForComments() {
     return new Promise((resolve) => {
-      const selectors = ['shreddit-comment', 'div[data-testid="comment"]', '.Comment'];
-      for (const selector of selectors) {
+      // Define comment selectors locally, consistent with how extractComments might use them.
+      const commentSelectors = ['shreddit-comment', 'div[data-testid="comment"]', '.Comment'];
+
+      // 1. Check for explicit "no comments" state or "comments disabled" state
+      const noCommentsElement = document.querySelector('comment-forest-empty-state');
+      const commentStatsZero = document.querySelector('shreddit-comment-tree-stats[total-comments="0"]');
+
+      if (noCommentsElement || commentStatsZero) {
+        this.logger.info('waitForComments: Detected no comments (empty state or stats zero). Resolving immediately.');
+        resolve();
+        return;
+      }
+
+      // 2. Check if comments are already loaded
+      for (const selector of commentSelectors) {
         if (document.querySelectorAll(selector).length > 0) {
-          resolve(); return;
+          this.logger.info(`waitForComments: Comments found with selector "${selector}". Resolving immediately.`);
+          resolve();
+          return;
         }
       }
-      const observer = new MutationObserver(() => {
-        for (const selector of selectors) {
+
+      // 3. If comments are not present and no explicit "no comments" state, observe for changes or timeout
+      this.logger.info('waitForComments: No comments found yet, and no explicit "no comments" state. Starting observer.');
+      
+      let observer; // Declare observer here to be accessible by timeout and its clear function
+      
+      const timeoutId = setTimeout(() => {
+        this.logger.warn('waitForComments: Timed out waiting for comments or "no comments" state. Resolving anyway.');
+        if (observer) {
+          observer.disconnect();
+        }
+        resolve();
+      }, 5000); // 5-second timeout
+
+      observer = new MutationObserver(() => {
+        // Check for "no comments" state again in case it appears dynamically
+        if (document.querySelector('comment-forest-empty-state') || document.querySelector('shreddit-comment-tree-stats[total-comments="0"]')) {
+          this.logger.info('waitForComments: "No comments" state appeared dynamically. Resolving.');
+          clearTimeout(timeoutId);
+          observer.disconnect();
+          resolve();
+          return;
+        }
+
+        // Check for comments
+        for (const selector of commentSelectors) {
           if (document.querySelectorAll(selector).length > 0) {
-            observer.disconnect(); resolve(); return;
+            this.logger.info(`waitForComments: Comments appeared dynamically with selector "${selector}". Resolving.`);
+            clearTimeout(timeoutId);
+            observer.disconnect();
+            resolve();
+            return;
           }
         }
       });
+
       observer.observe(document.body, { childList: true, subtree: true });
-      setTimeout(() => { observer.disconnect(); resolve(); }, 5000);
     });
   }
 

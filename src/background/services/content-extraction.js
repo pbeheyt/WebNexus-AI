@@ -28,7 +28,7 @@ export async function extractContent(tabId, url) {
 
   const contentType = determineContentType(url);
   // Use a single content script for all types
-  const scriptFile = 'dist/content-script.bundle.js';
+  const scriptFile = 'dist/extractor-content.bundle.js';
 
   logger.background.info(
     `Extracting content from tab ${tabId}, type: ${contentType}`
