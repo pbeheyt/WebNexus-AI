@@ -39,7 +39,7 @@ module.exports = {
     popup: './src/popup/index.jsx',
     settings: './src/settings/index.jsx',
     sidepanel: './src/sidepanel/index.jsx',
-    'content-script': './src/content/index.js',
+    'extractor-content': './src/content/extractor-content.js',
     'platform-content': './src/content/platform-content.js',
   },
   output: {

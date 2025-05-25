@@ -1,8 +1,8 @@
-import React, { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo } from 'react';
 
 import { Button, useNotification, CustomSelect } from '../../../components';
 import SettingsCard from '../ui/common/SettingsCard';
-import userDataService from '../../../services/UserDataService';
+import userDataService from '../../services/UserDataService';
 import { STORAGE_KEYS } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
 import useMinimumLoadingTime from '../../../hooks/useMinimumLoadingTime';
