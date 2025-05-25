@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+import { logger } from '../../shared/logger';
 
 /**
  * Extracts a user-friendly error message from an API response object.

@@ -12,12 +12,12 @@ import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 import ThinkingBlock from './ThinkingBlock';
 import CodeBlock from './CodeBlock.jsx';
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
-import { parseTextAndMath } from './utils/parseTextAndMath';
+import { parseTextAndMath } from './utils/parse-text-and-math-utils';
 import {
   renderWithPlaceholdersRecursive,
   containsBlockElementCheck,
   HAS_MATH_PLACEHOLDER_REGEX,
-} from './utils/markdownUtils.js';
+} from './utils/markdown-utils.js';
 
 // Common button styling classes
 const actionButtonClasses =

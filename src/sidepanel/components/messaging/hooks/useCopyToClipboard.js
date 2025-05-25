@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
 import { logger } from '../../../../shared/logger';
-import { copyToClipboard } from '../utils/clipboard.js';
+import { copyToClipboard } from '../utils/clipboard-utils.js';
 import { CopyIcon, CheckIcon, XIcon } from '../../../../components/index.js';
 
 export const useCopyToClipboard = (textToCopy) => {

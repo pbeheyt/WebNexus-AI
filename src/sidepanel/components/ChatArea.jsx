@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 
-import { debounce } from '../../shared/utils/debounce';
+import { debounce } from '../../shared/utils/debounce-utils';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import { useSidePanelPlatform } from '../../contexts/platform';
 import { useUI } from '../../contexts/UIContext';

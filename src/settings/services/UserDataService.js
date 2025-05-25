@@ -7,7 +7,7 @@ import {
   validateModelParametersSettingsData,
   validatePromptsData,
   validateAllSettingsData,
-} from '../../shared/utils/import-validation-utils.js';
+} from '../utils/import-validation-utils.js';
 
 class UserDataService {
   _generateFilename(baseName) {

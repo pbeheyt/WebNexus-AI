@@ -1,8 +1,8 @@
 // src/api/api-base.js
-import { extractApiErrorMessage } from '../shared/utils/error-utils.js';
 import ConfigService from '../services/ConfigService.js';
 import { logger } from '../shared/logger.js';
 
+import { extractApiErrorMessage } from './utils/error-utils.js';
 import ApiInterface from './api-interface.js';
 
 /**

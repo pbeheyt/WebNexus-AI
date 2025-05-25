@@ -15,7 +15,7 @@ import { useSidePanelPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
 import { AppHeader, ErrorIcon, SpinnerIcon } from '../components';
-import { debounce } from '../shared/utils/debounce';
+import { debounce } from '../shared/utils/debounce-utils';
 
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';

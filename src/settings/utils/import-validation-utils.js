@@ -1,5 +1,5 @@
 // src/shared/utils/import-validation-utils.js
-import { CONTENT_TYPES, AI_PLATFORMS, MAX_PROMPT_NAME_LENGTH, MAX_PROMPT_CONTENT_LENGTH, MAX_SYSTEM_PROMPT_LENGTH } from '../constants';
+import { CONTENT_TYPES, AI_PLATFORMS, MAX_PROMPT_NAME_LENGTH, MAX_PROMPT_CONTENT_LENGTH, MAX_SYSTEM_PROMPT_LENGTH } from '../../shared/constants';
 import ConfigService from '../../services/ConfigService';
 
 export function validateCredentialsData(data) {
