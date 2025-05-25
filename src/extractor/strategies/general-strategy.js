@@ -100,8 +100,8 @@ class GeneralExtractorStrategy extends BaseExtractor {
             description = this._moderateCleanText(article.excerpt); // Apply moderate clean then normalize
           }
         } else {
-          content = 'Readability.js did not identify sufficient main content.'; // This is a status, not content to normalize
-          this.logger.warn('Readability.js parsing returned no significant content.');
+          content = 'Could not identify sufficient main content.'; // This is a status, not content to normalize
+          this.logger.warn('Content parsing returned no significant content.');
         }
       }
 
