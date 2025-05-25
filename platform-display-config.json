@@ -22,8 +22,8 @@
       "name": "Claude",
       "icon": "images/claude_logo.png",
       "url": "https://claude.ai/new",
-      "docApiLink": "https://docs.anthropic.com/claude/reference/getting-started-with-the-api",
-      "modelApiLink": "https://docs.anthropic.com/fr/docs/about-claude/models/overview",
+      "docApiLink": "https://docs.anthropic.com/en/api/overview",
+      "modelApiLink": "https://docs.anthropic.com/en/docs/about-claude/models/overview",
       "consoleApiLink": "https://console.anthropic.com/",
       "keyApiLink": "https://console.anthropic.com/settings/keys"
     },
