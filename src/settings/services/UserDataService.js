@@ -1,13 +1,13 @@
 // src/services/UserDataService.js
-import { STORAGE_KEYS } from '../shared/constants.js';
-import { logger } from '../shared/logger.js';
-import { ensureDefaultPrompts, performFullPromptRepopulation } from '../shared/utils/prompt-utils.js';
+import { STORAGE_KEYS } from '../../shared/constants.js';
+import { logger } from '../../shared/logger.js';
+import { ensureDefaultPrompts, performFullPromptRepopulation } from '../../shared/utils/prompt-utils.js';
 import {
   validateCredentialsData,
   validateModelParametersSettingsData,
   validatePromptsData,
   validateAllSettingsData,
-} from '../shared/utils/import-validation-utils.js';
+} from '../../shared/utils/import-validation-utils.js';
 
 class UserDataService {
   _generateFilename(baseName) {
