@@ -1,7 +1,7 @@
 {
   "name": "webnexus-ai",
   "version": "1.0.1",
-  "description": "Summarize & Interact with Web Content, PDFs & YouTube Videos using AI (ChatGPT, Gemini+) | Web UI or Side Panel",
+  "description": "Summarize & Interact with Web Content, PDFs & YouTube Videos using AI (ChatGPT, Gemini+)",
   "main": "webpack.config.js",
   "scripts": {
     "build": "NODE_ENV=production webpack",
