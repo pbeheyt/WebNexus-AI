@@ -63,7 +63,7 @@ SystemMessageBubble.propTypes = {
   content: PropTypes.string,
   className: PropTypes.string,
   style: PropTypes.object,
-  role: PropTypes.string, // Add role propType even if unused internally
+  role: PropTypes.string,
 };
 
 SystemMessageBubble.displayName = 'SystemMessageBubble';
