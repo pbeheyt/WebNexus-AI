@@ -1,0 +1,58 @@
+{
+  "aiPlatforms": {
+    "gemini": {
+      "name": "Gemini",
+      "icon": "images/gemini_logo.png",
+      "url": "https://gemini.google.com/",
+      "docApiLink": "https://ai.google.dev/docs",
+      "modelApiLink": "https://ai.google.dev/gemini-api/docs/models/",
+      "consoleApiLink": "https://aistudio.google.com/",
+      "keyApiLink": "https://aistudio.google.com/app/apikey"
+    },
+    "chatgpt": {
+      "name": "ChatGPT",
+      "icon": "images/chatgpt_logo.png",
+      "url": "https://chatgpt.com/",
+      "docApiLink": "https://platform.openai.com/docs/api-reference",
+      "modelApiLink": "https://platform.openai.com/docs/models",
+      "consoleApiLink": "https://platform.openai.com/",
+      "keyApiLink": "https://platform.openai.com/api-keys"
+    },
+    "claude": {
+      "name": "Claude",
+      "icon": "images/claude_logo.png",
+      "url": "https://claude.ai/new",
+      "docApiLink": "https://docs.anthropic.com/en/api/overview",
+      "modelApiLink": "https://docs.anthropic.com/en/docs/about-claude/models/overview",
+      "consoleApiLink": "https://console.anthropic.com/",
+      "keyApiLink": "https://console.anthropic.com/settings/keys"
+    },
+    "deepseek": {
+      "name": "DeepSeek",
+      "icon": "images/deepseek_logo.png",
+      "url": "https://chat.deepseek.com/",
+      "docApiLink": "https://api-docs.deepseek.com/",
+      "modelApiLink": "https://api-docs.deepseek.com/quick_start/pricing",
+      "consoleApiLink": "https://platform.deepseek.com/",
+      "keyApiLink": "https://platform.deepseek.com/api_keys"
+    },
+    "grok": {
+      "name": "Grok",
+      "icon": "images/grok_logo.png",
+      "url": "https://grok.com/",
+      "docApiLink": "https://docs.x.ai/docs/overview",
+      "modelApiLink": "https://docs.x.ai/docs/models",
+      "consoleApiLink": "https://console.x.ai/",
+      "keyApiLink": "https://console.x.ai/"
+    },
+    "mistral": {
+      "name": "Mistral",
+      "icon": "images/mistral_logo.png",
+      "url": "https://chat.mistral.ai/chat",
+      "docApiLink": "https://docs.mistral.ai/api/",
+      "modelApiLink": "https://docs.mistral.ai/getting-started/models/models_overview/",
+      "consoleApiLink": "https://console.mistral.ai/",
+      "keyApiLink": "https://console.mistral.ai/api-keys"
+    }
+  }
+}

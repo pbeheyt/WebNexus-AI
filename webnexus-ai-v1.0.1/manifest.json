@@ -1,0 +1,80 @@
+{
+  "manifest_version": 3,
+  "name": "WebNexus AI",
+  "description": "Summarize & Interact with Web Content, PDFs & YouTube Videos using AI (ChatGPT, Gemini+)",
+  "version": "1.0.1",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs",
+    "contextMenus",
+    "sidePanel"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self'; script-src-elem 'self'"
+  },
+  "host_permissions": [
+  "https://*.youtube.com/",
+  "https://*.reddit.com/",
+  "https://claude.ai/",
+  "https://chatgpt.com/",
+  "https://chat.deepseek.com/",
+  "https://chat.mistral.ai/",
+  "https://gemini.google.com/",
+  "file://*.pdf",
+  "<all_urls>",
+  "https://api.anthropic.com/",
+  "https://api.openai.com/",
+  "https://api.mistral.ai/",
+  "https://api.deepseek.com/",
+  "https://generativelanguage.googleapis.com/",
+  "https://api.grok.ai/"
+  ],
+  "background": {
+    "service_worker": "dist/background.bundle.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/logo_16.png",
+      "48": "images/logo_48.png",
+      "128": "images/logo_128.png"
+    }
+  },
+  "options_page": "settings.html",
+  "icons": {
+    "16": "images/logo_16.png",
+    "48": "images/logo_48.png",
+    "128": "images/logo_128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "dist/pdf.worker.mjs",
+        "dist/cmaps/*"
+      ],
+      "matches": [
+        "file://*/*",
+        "http://*/*",
+        "https://*/*"
+      ]
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+W",
+        "mac": "Alt+W"
+      },
+      "description": "Open the Extension Popup"
+    },
+    "process-default-prompt": {
+      "suggested_key": {
+        "default": "Alt+Q",
+        "mac": "Alt+Q"
+      },
+      "description": "Quick Process with Default Prompt via Web UI"
+    }
+  }
+}
