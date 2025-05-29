@@ -138,7 +138,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
       // Only proceed if we haven't started injection for this tab in this sequence.
       try {
         const {
-          tabId: aiPlatformTabIdFromStorage, // Renamed to avoid conflict with outer tabId
+          tabId: aiPlatformTabIdFromStorage,
           platformId,
           scriptInjected, // Persistent flag from storage
         } = await getPlatformTabInfo();
@@ -192,7 +192,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
             }
           }
         } else if (tabId === aiPlatformTabIdFromStorage && scriptInjected) {
-          logger.background.info(`Platform script already persistently injected in tab ${tabId} (claude). Skipping platform injection block.`);
+          logger.background.info(`Platform script already persistently injected in tab ${tabId} (${platformId || 'unknown platform'}). Skipping platform injection block.`);
           // Ensure it's marked in the in-memory set as well if it wasn't already,
           // to prevent re-entry even if the onUpdated fires again for this load.
           if (!platformScriptInjectedTabs.has(tabId)) {
@@ -205,11 +205,8 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
           `Error during platform tab injection logic for tab ${tabId}:`,
           error
         );
-        // Optional: If an error occurs, consider if tabId should be removed from platformScriptInjectedTabs
-        // This depends on whether the error implies the sequence should be re-attemptable for this load.
-        // For now, we'll leave it, as errors here are usually post-marking or during async ops.
       }
-    } // Closes the 'else' for the main platformScriptInjectedTabs.has(tabId) check
+    }
   }
 
   // --- Side Panel Navigation Detection Logic ---
