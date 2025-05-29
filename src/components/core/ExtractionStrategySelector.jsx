@@ -8,8 +8,7 @@ import {
   DEFAULT_EXTRACTION_STRATEGY,
 } from '../../shared/constants';
 import { logger } from '../../shared/logger';
-import { ContextWindowIcon as FocusedIcon } from '../icons/ContextWindowIcon'; // Example
-import { TextSizeIcon as BroadIcon } from '../icons/TextSizeIcon'; // Example
+import { FocusedStrategyIcon, BroadStrategyIcon } from '../';
 
 import { IconButton } from './IconButton';
 
@@ -93,8 +92,8 @@ export function ExtractionStrategySelector({ disabled = false, onChange, classNa
 
   const StrategyIcon =
     currentStrategy === EXTRACTION_STRATEGIES.FOCUSED
-      ? FocusedIcon
-      : BroadIcon;
+      ? FocusedStrategyIcon
+      : BroadStrategyIcon;
   const strategyLabel =
     currentStrategy === EXTRACTION_STRATEGIES.FOCUSED
       ? 'Focused'
@@ -114,7 +113,7 @@ export function ExtractionStrategySelector({ disabled = false, onChange, classNa
               ? 'text-theme-disabled cursor-not-allowed'
               : 'text-theme-secondary hover:text-primary hover:bg-theme-active'
           }`}
-          iconClassName="w-4 h-4"
+          iconClassName="w-5 h-5"
         />
         <div
           className={`absolute top-full right-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-md p-1 w-fit min-w-0 max-w-48 z-50 transition-all duration-300 ease-in-out ${
@@ -128,26 +127,26 @@ export function ExtractionStrategySelector({ disabled = false, onChange, classNa
             onClick={() => handleStrategyChange(EXTRACTION_STRATEGIES.FOCUSED)}
             className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-theme-hover rounded cursor-pointer ${
               currentStrategy === EXTRACTION_STRATEGIES.FOCUSED
-                ? 'text-primary' // No font-semibold
+                ? 'text-primary'
                 : 'text-theme-primary'
             }`}
             role="menuitem"
             disabled={disabled}
           >
-            <FocusedIcon className="w-4 h-4 mr-1" />
+            <FocusedStrategyIcon className="w-5 h-5 mr-1" />
             Focused
           </button>
           <button
             onClick={() => handleStrategyChange(EXTRACTION_STRATEGIES.BROAD)}
             className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-theme-hover rounded cursor-pointer ${
               currentStrategy === EXTRACTION_STRATEGIES.BROAD
-                ? 'text-primary' // No font-semibold
+                ? 'text-primary'
                 : 'text-theme-primary'
             }`}
             role="menuitem"
             disabled={disabled}
           >
-            <BroadIcon className="w-4 h-4 mr-1" />
+            <BroadStrategyIcon className="w-5 h-5 mr-1" />
             Broad
           </button>
         </div>

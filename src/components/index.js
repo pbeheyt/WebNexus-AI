@@ -54,6 +54,8 @@ export { StarOutlineIcon } from './icons/StarOutlineIcon';
 export { SpinnerIcon } from './icons/SpinnerIcon';
 export { NoCredentialsIcon } from './icons/NoCredentialsIcon';
 export { ErrorIcon } from './icons/ErrorIcon';
+export { FocusedStrategyIcon } from './icons/FocusedStrategyIcon';
+export { BroadStrategyIcon } from './icons/BroadStrategyIcon';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';
