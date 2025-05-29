@@ -31,7 +31,7 @@ Gemini • ChatGPT • Claude • DeepSeek • Grok • Mistral
 
 ⚠️  USAGE NOTES:
 ----------------
-• Content Extraction: Prioritizes main textual content on web pages. For YouTube/Reddit, scroll to load desired comments before processing
+• Content Extraction: Two strategies available for web content - Focus (identifies main textual content) and Broad (captures all text from the page). For YouTube/Reddit, scroll to load desired comments before processing.
 • Token Estimates: Provided for guidance, based on OpenAI's tokenization standard. Actual billing may vary 10-30% higher - verify with your AI provider's dashboard
 • Web UI Automation: Dependent on AI website layouts; updates maintain compatibility
 

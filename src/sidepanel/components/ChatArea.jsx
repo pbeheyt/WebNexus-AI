@@ -28,7 +28,7 @@ import {
   FreeTierIcon,
   ScrollDownIcon,
   NoCredentialsIcon,
-  ExtractionStrategySelector, // Add this
+  ExtractionStrategySelector,
 } from '../../components';
 
 import { MessageBubble } from './messaging/MessageBubble';
