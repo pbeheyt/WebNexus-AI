@@ -648,15 +648,9 @@ const checkScrollPosition = useCallback(() => {
           <div className='flex flex-col items-center py-3 w-full'>
             {isPageInjectable ? (
               <>
-                <div
-                  className='flex items-center gap-1 text-xs text-theme-secondary cursor-default'
-                  ref={includeToggleRef}
-                  onMouseEnter={() => setIsIncludeTooltipVisible(true)}
-                  onMouseLeave={() => setIsIncludeTooltipVisible(false)}
-                  onFocus={() => setIsIncludeTooltipVisible(true)}
-                  onBlur={() => setIsIncludeTooltipVisible(false)}
-                  aria-describedby='include-context-tooltip-sidepanel'
-                >
+     <div
+       className='flex items-center gap-1 text-xs text-theme-secondary cursor-default'
+     >
                   <ContentTypeIcon
                     contentType={contentType}
                     className='w-6 h-6 text-current'
@@ -664,22 +658,32 @@ const checkScrollPosition = useCallback(() => {
                   <span className='text-base font-medium ml-2'>
                     {CONTENT_TYPE_LABELS[contentType] || 'Content'}
                   </span>
-                  <Toggle
-                    id='content-extract-toggle'
-                    checked={isContentExtractionEnabled}
-                    onChange={(newCheckedState) => {
-                      if (hasAnyPlatformCredentials)
-                        setIsContentExtractionEnabled(newCheckedState);
-                    }}
-                    disabled={!hasAnyPlatformCredentials}
-                    className='w-10 h-5 ml-3'
-                  />
-                  {contentType === 'general' && isContentExtractionEnabled && (
-                    <ExtractionStrategySelector
-                      disabled={!hasAnyPlatformCredentials}
-                      className="ml-2"
-                    />
-                  )}
+       <span
+         ref={includeToggleRef}
+         onMouseEnter={() => setIsIncludeTooltipVisible(true)}
+         onMouseLeave={() => setIsIncludeTooltipVisible(false)}
+         onFocus={() => setIsIncludeTooltipVisible(true)}
+         onBlur={() => setIsIncludeTooltipVisible(false)}
+         aria-describedby='include-context-tooltip-sidepanel'
+         className="inline-flex items-center"
+       >
+         <Toggle
+           id='content-extract-toggle'
+           checked={isContentExtractionEnabled}
+           onChange={(newCheckedState) => {
+             if (hasAnyPlatformCredentials)
+               setIsContentExtractionEnabled(newCheckedState);
+           }}
+           disabled={!hasAnyPlatformCredentials}
+           className='w-10 h-5 ml-3'
+         />
+       </span>
+       {contentType === 'general' && (
+         <ExtractionStrategySelector
+           disabled={!hasAnyPlatformCredentials}
+           className="ml-2"
+         />
+       )}
                 </div>
                 {/* Render Tooltip */}
                 <Tooltip
@@ -789,7 +793,7 @@ const checkScrollPosition = useCallback(() => {
                   role={message.role}
                   isStreaming={message.isStreaming}
           model={message.model} // This is the ID
-          modelDisplayName={message.modelDisplayName} // <-- ADD THIS to be passed through
+          modelDisplayName={message.modelDisplayName}
           platformIconUrl={message.platformIconUrl}
           platformId={message.platformId}
           style={dynamicStyle}

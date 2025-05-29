@@ -29,7 +29,6 @@ import { getPopupPlaceholder } from '../shared/utils/placeholder-utils';
 import { PlatformSelector } from './components/PlatformSelector';
 import { useStatus } from './contexts/StatusContext';
 
-
 export function Popup() {
   const {
     contentType,
@@ -206,15 +205,13 @@ export function Popup() {
 
       if (response?.error === 'SIDE_PANEL_UNSUPPORTED') {
         updateStatus('Side Panel requires Chrome 114+. Please update your browser.', 'warning');
-        setIsSidePanelApiAvailable(false); // Also update state here
-        // Do not try to close window or open side panel
+        setIsSidePanelApiAvailable(false);
       } else if (response?.success) {
         updateStatus(
           `Side Panel state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
         );
 
         if (response.visible) {
-          // Check API availability again before trying to open
           if (chrome.sidePanel && typeof chrome.sidePanel.open === 'function') {
             try {
               await chrome.sidePanel.open({ tabId: currentTab.id });
@@ -225,8 +222,6 @@ export function Popup() {
               updateStatus(`Error opening Side Panel: ${openError.message}`);
             }
           } else {
-            // This case should ideally be caught by the initial check or background response,
-            // but as a fallback:
             updateStatus('Side Panel API not available to open.', 'warning');
             setIsSidePanelApiAvailable(false);
           }
@@ -254,7 +249,7 @@ export function Popup() {
   );
 
   const handleDefaultPromptUpdateForPopup = useCallback((promptName, contentTypeLabel) => {
-    if (updateStatus) { // Ensure updateStatus is available from useStatus()
+    if (updateStatus) {
       updateStatus(`"${promptName}" set as default for ${contentTypeLabel || 'this content type'}.`);
     }
   }, [updateStatus]);
@@ -371,12 +366,6 @@ export function Popup() {
                 <>
                   <div
                     className={`flex items-center gap-1 w-full mt-3 cursor-default`}
-                    ref={includeContextRef}
-                    onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
-                    onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
-                    onFocus={() => setIsIncludeContextTooltipVisible(true)}
-                    onBlur={() => setIsIncludeContextTooltipVisible(false)}
-                    aria-describedby='include-context-tooltip'
                   >
                     {contentTypeLabel ? (
                       <>
@@ -387,21 +376,31 @@ export function Popup() {
                         <span className='text-sm font-medium truncate ml-1 cursor-default'>
                           {contentTypeLabel}
                         </span>
-                        <Toggle
-                          id='include-context-toggle'
-                          checked={includeContext}
-                          onChange={(newCheckedState) => {
-                            if (!isToggleDisabled) {
-                              setIncludeContext(newCheckedState);
-                              updateStatus(
-                                `Content inclusion ${newCheckedState ? 'enabled' : 'disabled'}`
-                              );
-                            }
-                          }}
-                          disabled={isToggleDisabled}
-                          className='w-8 h-4 ml-3'
-                        />
-                        {contentType === 'general' && includeContext && (
+                        <span
+                          ref={includeContextRef}
+                          onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
+                          onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
+                          onFocus={() => setIsIncludeContextTooltipVisible(true)}
+                          onBlur={() => setIsIncludeContextTooltipVisible(false)}
+                          aria-describedby='include-context-tooltip'
+                          className="inline-flex items-center"
+                        >
+                          <Toggle
+                            id='include-context-toggle'
+                            checked={includeContext}
+                            onChange={(newCheckedState) => {
+                              if (!isToggleDisabled) {
+                                setIncludeContext(newCheckedState);
+                                updateStatus(
+                                  `Content inclusion ${newCheckedState ? 'enabled' : 'disabled'}`
+                                );
+                              }
+                            }}
+                            disabled={isToggleDisabled}
+                            className='w-8 h-4 ml-3'
+                          />
+                        </span>
+                        {contentType === 'general' && (
                           <ExtractionStrategySelector
                             disabled={isToggleDisabled}
                             className="ml-2"
@@ -426,7 +425,7 @@ export function Popup() {
             <div className='select-none'>
               {!contentLoading && (
                 <div className='hidden'>
-                  {contentTypeLabel} {/* Force content type label to be included in bundle */}
+                  {contentTypeLabel}
                 </div>
               )}
               <UnifiedInput
@@ -449,7 +448,7 @@ export function Popup() {
                   platformName,
                   contentTypeLabel,
                   isContentLoading: contentLoading,
-                  includeContext // Pass the state here
+                  includeContext
                 })}
                 onDefaultPromptSetCallback={handleDefaultPromptUpdateForPopup}
               />
