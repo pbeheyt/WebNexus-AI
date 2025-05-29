@@ -1,15 +1,22 @@
 // src/content/index.js - Modify existing or create new
 import ExtractorFactory from '../extractor/extractor-factory.js';
 import { logger } from '../shared/logger.js';
-import { STORAGE_KEYS, DEFAULT_EXTRACTION_STRATEGY, CONTENT_TYPES } from '../shared/constants.js'; // ADD THIS LINE
+import { STORAGE_KEYS, DEFAULT_EXTRACTION_STRATEGY, CONTENT_TYPES } from '../shared/constants.js';
 
 // Track active extraction process
 let currentExtractionId = null;
 
 // Initialize content script state
 
-// Centralized message handler
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+// Guard to ensure one-time initialization
+if (window.webNexusAIContentScriptInitialized) {
+  logger.content.info('Content script already initialized. Skipping listener setup.');
+} else {
+  window.webNexusAIContentScriptInitialized = true;
+  logger.content.info('Initializing content script message listener and one-time setup.');
+
+  // Centralized message handler
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Handle reset extractor command
   if (message.action === 'resetExtractor') {
     currentExtractionId = Date.now().toString();
@@ -97,7 +104,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   return false; // Indicate message was not handled here
-});
+}); // This is the closing of addListener
+
+}
 
 // Export for webpack
 export default {};

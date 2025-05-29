@@ -49,7 +49,7 @@ class BaseExtractor {
    * Set up message listeners for communication
    */
   setupMessageListeners() {
-    this.messageListener = (message, sender, sendResponse) => {
+    this.messageListener = (message, _sender, _sendResponse) => {
       // Only log if the action is not 'streamChunk'
       if (message.action !== 'streamChunk') {
         this.logger.info(
@@ -58,12 +58,7 @@ class BaseExtractor {
         );
       }
 
-      if (message.action === 'extractContent') {
-        this.logger.info('Extract content request received');
-        this.extractAndSaveContent();
-        sendResponse({ status: `Extracting ${this.contentType} content...` });
-        return true;
-      }
+
     };
 
     chrome.runtime.onMessage.addListener(this.messageListener);
