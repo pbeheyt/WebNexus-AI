@@ -28,6 +28,7 @@ import {
   FreeTierIcon,
   ScrollDownIcon,
   NoCredentialsIcon,
+  ExtractionStrategySelector, // Add this
 } from '../../components';
 
 import { MessageBubble } from './messaging/MessageBubble';
@@ -673,6 +674,12 @@ const checkScrollPosition = useCallback(() => {
                     disabled={!hasAnyPlatformCredentials}
                     className='w-10 h-5 ml-3'
                   />
+                  {contentType === 'general' && isContentExtractionEnabled && (
+                    <ExtractionStrategySelector
+                      disabled={!hasAnyPlatformCredentials}
+                      className="ml-2"
+                    />
+                  )}
                 </div>
                 {/* Render Tooltip */}
                 <Tooltip

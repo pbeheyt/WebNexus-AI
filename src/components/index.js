@@ -5,6 +5,7 @@ export { Toggle } from './core/Toggle';
 export { CustomSelect } from './core/CustomSelect';
 export { IconButton } from './core/IconButton';
 export { Modal } from './core/Modal';
+export { ExtractionStrategySelector } from './core/ExtractionStrategySelector';
 
 // Feedback components
 export { StatusMessage } from './feedback/StatusMessage';

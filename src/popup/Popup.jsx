@@ -10,6 +10,7 @@ import {
   SidepanelIcon,
   Toggle,
   ContentTypeIcon,
+  ExtractionStrategySelector, // Add this
 } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { UnifiedInput } from '../components/input/UnifiedInput';
@@ -400,6 +401,15 @@ export function Popup() {
                           disabled={isToggleDisabled}
                           className='w-8 h-4 ml-3'
                         />
+                        {contentType === 'general' && includeContext && (
+                          <ExtractionStrategySelector
+                            disabled={isToggleDisabled}
+                            className="ml-2"
+                            onChange={(newStrategy) => {
+                              updateStatus(`Extraction strategy set to ${newStrategy}.`);
+                            }}
+                          />
+                        )}
                       </>
                     ) : (
                       <span className='text-sm text-theme-secondary cursor-default'>

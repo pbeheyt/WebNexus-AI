@@ -66,11 +66,13 @@ export const STORAGE_KEYS = {
   /** @description Flag indicating if initial default prompts have been populated from config. Local. */
   INITIAL_PROMPTS_POPULATED_FLAG: 'initial_prompts_populated_flag',
 
-  // --- Content Extraction State (General) ---
+  // --- Content Extraction State ---
   /** @description Flag indicating if content has been successfully extracted from the current page. Local. */
   CONTENT_READY_FLAG: 'content_ready_flag',
   /** @description Object containing the extracted content from the current page. Local. */
   EXTRACTED_CONTENT: 'extracted_content',
+  /** @description User's preferred strategy for general web content extraction ('focused' or 'broad'). Synced. */
+  GENERAL_CONTENT_EXTRACTION_STRATEGY: 'general_content_extraction_strategy',
 
   // --- WebUI Injection Specific State (Content sent to AI platform websites) ---
   /** @description Flag indicating if the content script for Web UI injection has been successfully injected. Local. */
@@ -147,3 +149,13 @@ export const DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG = {
   shiftKey: false,
   metaKey: false,
 };
+
+/**
+ * General content extraction strategies
+ */
+export const EXTRACTION_STRATEGIES = {
+  FOCUSED: 'focused',
+  BROAD: 'broad',
+};
+
+export const DEFAULT_EXTRACTION_STRATEGY = EXTRACTION_STRATEGIES.FOCUSED;

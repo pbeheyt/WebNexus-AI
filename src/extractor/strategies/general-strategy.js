@@ -2,6 +2,7 @@ import { Readability } from '@mozilla/readability';
 
 import BaseExtractor from '../base-extractor.js';
 import { normalizeText } from '../utils/text-utils.js';
+// import { DEFAULT_EXTRACTION_STRATEGY } from '../../shared/constants.js'; // Ensure this import // Removed as unused
 
 // Default mode if not specified in config. Can be 'focused' or 'broad'.
 const DEFAULT_EXTRACTION_MODE = 'broad';
