@@ -27,8 +27,8 @@ const ApiSettings = () => {
   if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-[200px] text-theme-secondary select-none'>
-        <SpinnerIcon className="w-8 h-8" />
-        <span className="ml-2">Loading API settings...</span>
+        <SpinnerIcon className='w-8 h-8' />
+        <span className='ml-2'>Loading API settings...</span>
       </div>
     );
   }
@@ -47,9 +47,9 @@ const ApiSettings = () => {
         API Settings
       </h2>
       <p className='section-description text-sm text-theme-secondary mb-6'>
-        Configure API credentials for different AI platforms and customize
-        model parameters for each model. These settings will be used when
-        making API requests directly from the browser extension.
+        Configure API credentials for different AI platforms and customize model
+        parameters for each model. These settings will be used when making API
+        requests directly from the browser extension.
       </p>
 
       <div className='api-settings-layout flex gap-6'>

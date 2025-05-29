@@ -1,7 +1,8 @@
 const path = require('path');
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin =
+  require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const isProduction = process.env.NODE_ENV === 'production';
 const TerserPlugin = require('terser-webpack-plugin');
 
@@ -9,30 +10,32 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       // Ensure process.env.NODE_ENV is available, default to 'development' if not set
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+      'process.env.NODE_ENV': JSON.stringify(
+        process.env.NODE_ENV || 'development'
+      ),
     }),
     new CopyWebpackPlugin({
       patterns: [
         {
           from: 'node_modules/pdfjs-dist/build/pdf.worker.mjs',
-          to: 'pdf.worker.mjs'
+          to: 'pdf.worker.mjs',
         },
         {
           from: 'node_modules/pdfjs-dist/cmaps/',
-          to: 'cmaps/'
+          to: 'cmaps/',
         },
         {
           from: 'LICENSE.md',
-          to: 'LICENSE.md'
+          to: 'LICENSE.md',
         },
         {
           from: 'NOTICES.txt',
-          to: 'NOTICES.txt'
-        }
-      ]
+          to: 'NOTICES.txt',
+        },
+      ],
     }),
     // Conditionally add BundleAnalyzerPlugin
-    ...(process.env.ANALYZE === 'true' ? [new BundleAnalyzerPlugin()] : [])
+    ...(process.env.ANALYZE === 'true' ? [new BundleAnalyzerPlugin()] : []),
   ],
   entry: {
     background: './src/background/index.js',

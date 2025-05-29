@@ -4,7 +4,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
-
 import { logger } from '../../../shared/logger';
 import { IconButton, RerunIcon, PlatformIcon } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
@@ -202,15 +201,12 @@ export const AssistantMessageBubble = memo(
               );
 
             if (isFencedCodeBlock) {
-              const languageClass = node.children[0].properties.className.find((cls) =>
-                cls.startsWith('language-')
+              const languageClass = node.children[0].properties.className.find(
+                (cls) => cls.startsWith('language-')
               );
               const codeContent = node.children[0].children?.[0]?.value || '';
               return (
-                <CodeBlock
-                  className={languageClass}
-                  isStreaming={isStreaming}
-                >
+                <CodeBlock className={languageClass} isStreaming={isStreaming}>
                   {codeContent}
                 </CodeBlock>
               );
@@ -220,7 +216,13 @@ export const AssistantMessageBubble = memo(
               : children;
             return <pre {...props}>{processedChildren}</pre>;
           },
-          code: ({ node: _node, inline, className: _className, children, ...props }) => {
+          code: ({
+            node: _node,
+            inline,
+            className: _className,
+            children,
+            ...props
+          }) => {
             if (inline) {
               const processedChildren = hasMathPlaceholders
                 ? renderWithPlaceholdersRecursive(children, mathMap)
@@ -317,7 +319,7 @@ export const AssistantMessageBubble = memo(
               isStreaming={isStreaming}
             />
           )}
-          
+
           {/* Prose container for Markdown styling */}
           <div
             className={`prose prose-sm dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 break-words overflow-visible`}
@@ -346,11 +348,16 @@ export const AssistantMessageBubble = memo(
                 </div>
               )}
               {model && (
-                <span title={modelDisplayName || model}> {/* Show ID in title if displayName is different */}
-                  {modelDisplayName || model} {/* Display displayName, fallback to ID */}
+                <span title={modelDisplayName || model}>
+                  {' '}
+                  {/* Show ID in title if displayName is different */}
+                  {modelDisplayName || model}{' '}
+                  {/* Display displayName, fallback to ID */}
                 </span>
               )}
-              <div className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <div
+                className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              >
                 <div className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'></div>
                 <div
                   className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
@@ -393,7 +400,6 @@ export const AssistantMessageBubble = memo(
               )}
             </div>
           </div>
-
         </div>
       );
     }

@@ -19,7 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (isNaN(tabId)) {
     console.error('[Sidepanel Index] Invalid or missing tabId in URL.');
     // Optionally render an error message in the sidepanel
-    root.render(<div>Error: Missing Tab ID. Cannot initialize Side Panel.</div>);
+    root.render(
+      <div>Error: Missing Tab ID. Cannot initialize Side Panel.</div>
+    );
   } else {
     root.render(
       <UIProvider>

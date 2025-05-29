@@ -87,7 +87,10 @@ class GeminiApiService extends BaseApiService {
     // If isThinkingEnabledForRequest is true but thinkingBudget is not a number, thinkingConfig is not added,
     // and the model will use its default behavior (Thinking ON).
     // If isThinkingEnabledForRequest is false, thinkingConfig is not added, and the model defaults to Thinking ON.
-    if (params.isThinkingEnabledForRequest && typeof params.thinkingBudget === 'number') {
+    if (
+      params.isThinkingEnabledForRequest &&
+      typeof params.thinkingBudget === 'number'
+    ) {
       formattedRequest.generationConfig.thinkingConfig = {
         thinkingBudget: params.thinkingBudget,
       };
@@ -100,11 +103,12 @@ class GeminiApiService extends BaseApiService {
           `[${this.platformId}] Enabling Thinking Mode with budget: ${params.thinkingBudget} for model: ${params.model}`
         );
       }
-    } else if (params.isThinkingEnabledForRequest) { // isThinkingEnabledForRequest is true, but thinkingBudget is not a number
-        this.logger.warn(
-          `[${this.platformId}] Thinking mode was requested (isThinkingEnabledForRequest: true), but params.thinkingBudget was not a valid number (value: ${params.thinkingBudget}). ` +
+    } else if (params.isThinkingEnabledForRequest) {
+      // isThinkingEnabledForRequest is true, but thinkingBudget is not a number
+      this.logger.warn(
+        `[${this.platformId}] Thinking mode was requested (isThinkingEnabledForRequest: true), but params.thinkingBudget was not a valid number (value: ${params.thinkingBudget}). ` +
           `'thinkingConfig' will not be added to the request. The model will use its default behavior (Thinking ON).`
-        );
+      );
     }
     // If params.isThinkingEnabledForRequest is false, no thinkingConfig is added, and the model uses its default (Thinking ON).
     // No explicit logging for this default case to avoid verbosity.

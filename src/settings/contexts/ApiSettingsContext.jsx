@@ -25,7 +25,9 @@ export const ApiSettingsProvider = ({ children }) => {
 
   const [platformConfigs, setPlatformConfigs] = useState([]);
   const [allCredentials, setAllCredentials] = useState({});
-  const [allModelParameterSettings, setAllModelParameterSettings] = useState({});
+  const [allModelParameterSettings, setAllModelParameterSettings] = useState(
+    {}
+  );
   const [selectedPlatformId, setSelectedPlatformId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,7 +69,7 @@ export const ApiSettingsProvider = ({ children }) => {
     };
 
     loadInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // showErrorNotification is stable
 
   // Derived State
@@ -113,7 +115,10 @@ export const ApiSettingsProvider = ({ children }) => {
           return false;
         }
 
-        const updatedCredentials = { ...allCredentials, [platformId]: { apiKey } };
+        const updatedCredentials = {
+          ...allCredentials,
+          [platformId]: { apiKey },
+        };
         await chrome.storage.local.set({
           [STORAGE_KEYS.API_CREDENTIALS]: updatedCredentials,
         });
@@ -152,7 +157,9 @@ export const ApiSettingsProvider = ({ children }) => {
   const saveModelParametersSettings = useCallback(
     async (platformId, modelId, mode, settings, changedParamsList = []) => {
       try {
-        const updatedAllModelParameterSettings = JSON.parse(JSON.stringify(allModelParameterSettings)); // Deep copy
+        const updatedAllModelParameterSettings = JSON.parse(
+          JSON.stringify(allModelParameterSettings)
+        ); // Deep copy
 
         if (!updatedAllModelParameterSettings[platformId]) {
           updatedAllModelParameterSettings[platformId] = { models: {} };
@@ -161,17 +168,20 @@ export const ApiSettingsProvider = ({ children }) => {
           updatedAllModelParameterSettings[platformId].models = {};
         }
         if (!updatedAllModelParameterSettings[platformId].models[modelId]) {
-            updatedAllModelParameterSettings[platformId].models[modelId] = {};
+          updatedAllModelParameterSettings[platformId].models[modelId] = {};
         }
-        
+
         // Merge settings into the correct mode key
         updatedAllModelParameterSettings[platformId].models[modelId][mode] = {
-            ...(updatedAllModelParameterSettings[platformId].models[modelId][mode] || {}),
-            ...settings,
+          ...(updatedAllModelParameterSettings[platformId].models[modelId][
+            mode
+          ] || {}),
+          ...settings,
         };
 
         await chrome.storage.local.set({
-          [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: updatedAllModelParameterSettings,
+          [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]:
+            updatedAllModelParameterSettings,
         });
         setAllModelParameterSettings(() => updatedAllModelParameterSettings);
 
@@ -179,10 +189,12 @@ export const ApiSettingsProvider = ({ children }) => {
         let successMessage = `Model parameters for '${modelId}' saved.`;
         if (changedParamsList.length > 0) {
           const paramsString = changedParamsList.join(', ');
-          if (changedParamsList.length <= 3) { // Show all if 3 or less
-              successMessage = `Updated ${paramsString} for '${modelId}'.`;
-          } else { // Show count if more than 3
-              successMessage = `Updated ${changedParamsList.length} parameters for '${modelId}'.`;
+          if (changedParamsList.length <= 3) {
+            // Show all if 3 or less
+            successMessage = `Updated ${paramsString} for '${modelId}'.`;
+          } else {
+            // Show count if more than 3
+            successMessage = `Updated ${changedParamsList.length} parameters for '${modelId}'.`;
           }
         }
         showSuccessNotification(successMessage);
@@ -191,9 +203,13 @@ export const ApiSettingsProvider = ({ children }) => {
         logger.settings.error('Error saving model parameters in context:', err);
         const lastError = chrome.runtime.lastError;
         if (lastError?.message?.includes('QUOTA_BYTES')) {
-          showErrorNotification('Local storage limit reached for model parameters.');
+          showErrorNotification(
+            'Local storage limit reached for model parameters.'
+          );
         } else {
-          showErrorNotification(`Failed to save model parameters: ${err.message}`);
+          showErrorNotification(
+            `Failed to save model parameters: ${err.message}`
+          );
         }
         return false;
       }
@@ -204,48 +220,88 @@ export const ApiSettingsProvider = ({ children }) => {
   const resetModelParametersSettingsToDefaults = useCallback(
     async (platformId, modelId, mode) => {
       try {
-        const updatedAllModelParameterSettings = JSON.parse(JSON.stringify(allModelParameterSettings)); // Deep copy
+        const updatedAllModelParameterSettings = JSON.parse(
+          JSON.stringify(allModelParameterSettings)
+        ); // Deep copy
         let settingsChanged = false;
 
-        if (updatedAllModelParameterSettings[platformId]?.models?.[modelId]?.[mode]) {
-          delete updatedAllModelParameterSettings[platformId].models[modelId][mode];
+        if (
+          updatedAllModelParameterSettings[platformId]?.models?.[modelId]?.[
+            mode
+          ]
+        ) {
+          delete updatedAllModelParameterSettings[platformId].models[modelId][
+            mode
+          ];
           settingsChanged = true;
-          logger.settings.info(`Reset model parameters for ${platformId}/${modelId}/${mode}.`);
+          logger.settings.info(
+            `Reset model parameters for ${platformId}/${modelId}/${mode}.`
+          );
 
           // Clean up model entry if both base and thinking modes are now empty or non-existent
-          const modelEntry = updatedAllModelParameterSettings[platformId].models[modelId];
-          if (modelEntry && Object.keys(modelEntry).every(key => !modelEntry[key] || Object.keys(modelEntry[key]).length === 0)) {
+          const modelEntry =
+            updatedAllModelParameterSettings[platformId].models[modelId];
+          if (
+            modelEntry &&
+            Object.keys(modelEntry).every(
+              (key) =>
+                !modelEntry[key] || Object.keys(modelEntry[key]).length === 0
+            )
+          ) {
             delete updatedAllModelParameterSettings[platformId].models[modelId];
-            logger.settings.info(`Removed empty model entry for ${platformId}/${modelId}.`);
+            logger.settings.info(
+              `Removed empty model entry for ${platformId}/${modelId}.`
+            );
           }
 
           // Clean up 'models' object for the platform if it becomes empty
-          if (updatedAllModelParameterSettings[platformId].models && Object.keys(updatedAllModelParameterSettings[platformId].models).length === 0) {
+          if (
+            updatedAllModelParameterSettings[platformId].models &&
+            Object.keys(updatedAllModelParameterSettings[platformId].models)
+              .length === 0
+          ) {
             delete updatedAllModelParameterSettings[platformId].models;
-            logger.settings.info(`Removed empty 'models' object for platform ${platformId}.`);
+            logger.settings.info(
+              `Removed empty 'models' object for platform ${platformId}.`
+            );
           }
 
           // Clean up platform entry itself if it becomes entirely empty (e.g., only had models and now models is gone)
-          if (Object.keys(updatedAllModelParameterSettings[platformId]).length === 0) {
+          if (
+            Object.keys(updatedAllModelParameterSettings[platformId]).length ===
+            0
+          ) {
             delete updatedAllModelParameterSettings[platformId];
-            logger.settings.info(`Removed empty platform entry for ${platformId}.`);
+            logger.settings.info(
+              `Removed empty platform entry for ${platformId}.`
+            );
           }
         } else {
-          logger.settings.info(`No settings found to reset for ${platformId}/${modelId}/${mode}.`);
+          logger.settings.info(
+            `No settings found to reset for ${platformId}/${modelId}/${mode}.`
+          );
         }
 
         if (settingsChanged) {
           await chrome.storage.local.set({
-            [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: updatedAllModelParameterSettings,
+            [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]:
+              updatedAllModelParameterSettings,
           });
           setAllModelParameterSettings(() => updatedAllModelParameterSettings);
         }
         // Updated success notification
-        showSuccessNotification(`Model parameters for '${modelId}' reset to configuration defaults.`);
+        showSuccessNotification(
+          `Model parameters for '${modelId}' reset to configuration defaults.`
+        );
         return true;
       } catch (err) {
-        logger.settings.error('Error resetting model parameters in context:', err);
-        showErrorNotification(`Failed to reset model parameters: ${err.message}`);
+        logger.settings.error(
+          'Error resetting model parameters in context:',
+          err
+        );
+        showErrorNotification(
+          `Failed to reset model parameters: ${err.message}`
+        );
         return false;
       }
     },

@@ -136,7 +136,9 @@ export function AppHeader({
         {showRefreshButton && (
           <button
             onClick={
-              typeof onRefreshClick === 'function' && !isRefreshing ? onRefreshClick : undefined
+              typeof onRefreshClick === 'function' && !isRefreshing
+                ? onRefreshClick
+                : undefined
             }
             className={`p-1 rounded transition-colors ${
               isRefreshing
@@ -146,9 +148,11 @@ export function AppHeader({
             title={isRefreshing ? 'Refreshing...' : 'Clear chat'}
             disabled={isRefreshing}
           >
-            <RefreshIcon className={`w-4 h-4 select-none ${
-              isRefreshing ? 'animate-spin' : ''
-            }`} />
+            <RefreshIcon
+              className={`w-4 h-4 select-none ${
+                isRefreshing ? 'animate-spin' : ''
+              }`}
+            />
           </button>
         )}
 

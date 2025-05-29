@@ -87,7 +87,7 @@ export function useTokenTracking(tabId) {
           percentage: 0,
           tokensRemaining: 0,
           exceeds: false,
-          totalTokens: 0
+          totalTokens: 0,
         };
       }
 
@@ -99,21 +99,26 @@ export function useTokenTracking(tabId) {
         );
 
         // Ensure we always return a valid status object
-        return status || {
-          warningLevel: 'none',
-          percentage: 0,
-          tokensRemaining: 0,
-          exceeds: false,
-          totalTokens: 0
-        };
+        return (
+          status || {
+            warningLevel: 'none',
+            percentage: 0,
+            tokensRemaining: 0,
+            exceeds: false,
+            totalTokens: 0,
+          }
+        );
       } catch (error) {
-        logger.sidepanel.error(`[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error before/during static call for tabId: ${tabId}`, error);
+        logger.sidepanel.error(
+          `[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error before/during static call for tabId: ${tabId}`,
+          error
+        );
         return {
           warningLevel: 'none',
           percentage: 0,
           tokensRemaining: 0,
           exceeds: false,
-          totalTokens: 0
+          totalTokens: 0,
         };
       }
     },

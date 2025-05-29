@@ -24,11 +24,15 @@ async function fetchPdfAsBase64(url) {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch PDF: ${response.status} ${response.statusText}`
+      );
     }
     const arrayBuffer = await response.arrayBuffer();
     const base64Data = _arrayBufferToBase64(arrayBuffer);
-    logger.background.info(`Successfully fetched and encoded PDF from ${url}. Size: ${base64Data.length} chars.`);
+    logger.background.info(
+      `Successfully fetched and encoded PDF from ${url}. Size: ${base64Data.length} chars.`
+    );
     return { success: true, base64Data };
   } catch (error) {
     logger.background.error(`Error fetching file URL ${url}:`, error);
@@ -45,7 +49,10 @@ export async function handleFetchPdfRequest(message, sendResponse) {
   if (!message.url) {
     logger.background.error('handleFetchPdfRequest: Missing URL in message.');
     // Ensure synchronous response for this specific error
-    sendResponse({ success: false, error: 'Missing URL in fetchPdfAsBase64 request' });
+    sendResponse({
+      success: false,
+      error: 'Missing URL in fetchPdfAsBase64 request',
+    });
     return; // Exit early
   }
 
@@ -55,8 +62,14 @@ export async function handleFetchPdfRequest(message, sendResponse) {
     sendResponse(response);
   } catch (error) {
     // Catch potential errors within fetchPdfAsBase64 itself if it rejects unexpectedly
-    logger.background.error('Unexpected error during fetchPdfAsBase64 execution:', error);
-    sendResponse({ success: false, error: error.message || 'Internal background error fetching PDF' });
+    logger.background.error(
+      'Unexpected error during fetchPdfAsBase64 execution:',
+      error
+    );
+    sendResponse({
+      success: false,
+      error: error.message || 'Internal background error fetching PDF',
+    });
   }
   // No return true here, the listener handles that
 }

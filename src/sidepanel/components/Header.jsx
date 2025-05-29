@@ -2,7 +2,13 @@ import React, { useEffect, useState, useRef, createContext } from 'react';
 
 import { useSidePanelPlatform } from '../../contexts/platform';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
-import { PlatformIcon, ChevronDownIcon, Toggle, InfoIcon, Tooltip } from '../../components';
+import {
+  PlatformIcon,
+  ChevronDownIcon,
+  Toggle,
+  InfoIcon,
+  Tooltip,
+} from '../../components';
 
 import ModelSelector from './ModelSelector';
 
@@ -12,7 +18,6 @@ export const DropdownContext = createContext({
   setOpenDropdown: () => {},
 });
 
-
 function Header() {
   const {
     platforms,
@@ -21,11 +26,13 @@ function Header() {
     hasAnyPlatformCredentials,
     isLoading,
   } = useSidePanelPlatform();
-  const { modelConfigData, isThinkingModeEnabled, toggleThinkingMode } = useSidePanelChat();
+  const { modelConfigData, isThinkingModeEnabled, toggleThinkingMode } =
+    useSidePanelChat();
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const infoIconRef = useRef(null);
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [displayPlatformId, setDisplayPlatformId] = useState(selectedPlatformId);
+  const [displayPlatformId, setDisplayPlatformId] =
+    useState(selectedPlatformId);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
 
@@ -157,9 +164,7 @@ function Header() {
                                 altText=''
                                 className='w-4 h-4'
                               />
-                              <span className='text-sm'>
-                                {platform.name}
-                              </span>
+                              <span className='text-sm'>{platform.name}</span>
                             </div>
                           </div>
                         </button>
@@ -173,41 +178,41 @@ function Header() {
               <div className='min-w-0'>
                 <ModelSelector selectedPlatformId={selectedPlatformId} />
               </div>
-              
+
               {/* Thinking Mode Toggle */}
               {modelConfigData?.thinking?.toggleable === true && (
-                <div className="flex items-center ml-2 flex-shrink-0 select-none">
+                <div className='flex items-center ml-2 flex-shrink-0 select-none'>
                   <Toggle
                     checked={isThinkingModeEnabled}
                     onChange={toggleThinkingMode}
-                    aria-label="Toggle Thinking Mode"
-                    id="thinking-mode-toggle-sidepanel"
+                    aria-label='Toggle Thinking Mode'
+                    id='thinking-mode-toggle-sidepanel'
                     disabled={!hasAnyPlatformCredentials || isLoading}
                   />
                   {/* Info Icon and Tooltip */}
                   <div
                     ref={infoIconRef}
-                    className="ml-3 cursor-help"
+                    className='ml-3 cursor-help'
                     onMouseEnter={() => setTooltipVisible(true)}
                     onMouseLeave={() => setTooltipVisible(false)}
                     onFocus={() => setTooltipVisible(true)}
                     onBlur={() => setTooltipVisible(false)}
                     tabIndex={0}
-                    role="button"
-                    aria-describedby="thinking-mode-tooltip"
+                    role='button'
+                    aria-describedby='thinking-mode-tooltip'
                   >
-                    <InfoIcon className="w-5 h-5 text-theme-secondary" />
+                    <InfoIcon className='w-5 h-5 text-theme-secondary' />
                   </div>
                   <Tooltip
                     show={tooltipVisible}
                     targetRef={infoIconRef}
-                    message="Enable Thinking."
-                    position="bottom"
-                    id="thinking-mode-tooltip"
+                    message='Enable Thinking.'
+                    position='bottom'
+                    id='thinking-mode-tooltip'
                   />
                 </div>
               )}
-              
+
               {/* 3. Spacer Element */}
               <div
                 className='flex-grow'
@@ -217,12 +222,11 @@ function Header() {
           ) : (
             // When no credentials, show message
             <div className='flex-grow py-1.5 h-9 flex items-center'>
-          <span className='text-theme-secondary text-sm'>
-            No API credentials configured.
-          </span>
+              <span className='text-theme-secondary text-sm'>
+                No API credentials configured.
+              </span>
             </div>
           )}
-
         </div>
       </div>
     </DropdownContext.Provider>

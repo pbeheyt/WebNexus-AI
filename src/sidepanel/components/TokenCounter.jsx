@@ -2,7 +2,11 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 import { Tooltip } from '../../components/layout/Tooltip';
-import { InputTokenIcon, OutputTokenIcon, ChevronUpIcon } from '../../components';
+import {
+  InputTokenIcon,
+  OutputTokenIcon,
+  ChevronUpIcon,
+} from '../../components';
 
 function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   const {
@@ -91,9 +95,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             onBlur={() => setHoveredElement(null)}
           >
             <InputTokenIcon className='w-3 h-3 mr-1 select-none' />
-            <span>
-              {inputTokensInLastApiCall.toLocaleString()}
-            </span>
+            <span>{inputTokensInLastApiCall.toLocaleString()}</span>
             <Tooltip
               show={hoveredElement === 'inputTokens'}
               message={tooltipContent.inputTokens}
@@ -160,7 +162,9 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             className='ml-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none'
             title='Toggle token details'
           >
-            <ChevronUpIcon className={`w-3 h-3 transition-transform select-none ${showDetails ? 'rotate-180' : ''}`} />
+            <ChevronUpIcon
+              className={`w-3 h-3 transition-transform select-none ${showDetails ? 'rotate-180' : ''}`}
+            />
           </button>
         </div>
       </div>
@@ -176,66 +180,60 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
       >
         {/* Grid for detailed token breakdown */}
         <div className='grid grid-cols-3 gap-2'>
-            {/* Prompt tokens */}
-            <div
-              ref={promptRef}
-              className='flex flex-col items-center relative cursor-help'
-              onMouseEnter={() => setHoveredElement('prompt')}
-              onMouseLeave={() => setHoveredElement(null)}
-              onFocus={() => setHoveredElement('prompt')}
-              onBlur={() => setHoveredElement(null)}
-            >
-              <span className='text-xs font-medium'>Prompt</span>
-              <span>
-                {promptTokensInLastApiCall.toLocaleString()}
-              </span>
-              <Tooltip
-                show={hoveredElement === 'prompt'}
-                message={tooltipContent.prompt}
-                targetRef={promptRef}
-              />
-            </div>
-
-            {/* History Sent tokens */}
-            <div
-              ref={historySentRef}
-              className='flex flex-col items-center relative cursor-help'
-              onMouseEnter={() => setHoveredElement('historySent')}
-              onMouseLeave={() => setHoveredElement(null)}
-              onFocus={() => setHoveredElement('historySent')}
-              onBlur={() => setHoveredElement(null)}
-            >
-              <span className='text-xs font-medium'>History</span>
-              <span>
-                {historyTokensSentInLastApiCall.toLocaleString()}
-              </span>
-              <Tooltip
-                show={hoveredElement === 'historySent'}
-                message={tooltipContent.historySent}
-                targetRef={historySentRef}
-              />
-            </div>
-
-            {/* System Sent tokens */}
-            <div
-              ref={systemRef}
-              className='flex flex-col items-center relative cursor-help'
-              onMouseEnter={() => setHoveredElement('system')}
-              onMouseLeave={() => setHoveredElement(null)}
-              onFocus={() => setHoveredElement('system')}
-              onBlur={() => setHoveredElement(null)}
-            >
-              <span className='text-xs font-medium'>System</span>
-              <span>
-                {systemTokensInLastApiCall.toLocaleString()}
-              </span>
-              <Tooltip
-                show={hoveredElement === 'system'}
-                message={tooltipContent.system}
-                targetRef={systemRef}
-              />
-            </div>
+          {/* Prompt tokens */}
+          <div
+            ref={promptRef}
+            className='flex flex-col items-center relative cursor-help'
+            onMouseEnter={() => setHoveredElement('prompt')}
+            onMouseLeave={() => setHoveredElement(null)}
+            onFocus={() => setHoveredElement('prompt')}
+            onBlur={() => setHoveredElement(null)}
+          >
+            <span className='text-xs font-medium'>Prompt</span>
+            <span>{promptTokensInLastApiCall.toLocaleString()}</span>
+            <Tooltip
+              show={hoveredElement === 'prompt'}
+              message={tooltipContent.prompt}
+              targetRef={promptRef}
+            />
           </div>
+
+          {/* History Sent tokens */}
+          <div
+            ref={historySentRef}
+            className='flex flex-col items-center relative cursor-help'
+            onMouseEnter={() => setHoveredElement('historySent')}
+            onMouseLeave={() => setHoveredElement(null)}
+            onFocus={() => setHoveredElement('historySent')}
+            onBlur={() => setHoveredElement(null)}
+          >
+            <span className='text-xs font-medium'>History</span>
+            <span>{historyTokensSentInLastApiCall.toLocaleString()}</span>
+            <Tooltip
+              show={hoveredElement === 'historySent'}
+              message={tooltipContent.historySent}
+              targetRef={historySentRef}
+            />
+          </div>
+
+          {/* System Sent tokens */}
+          <div
+            ref={systemRef}
+            className='flex flex-col items-center relative cursor-help'
+            onMouseEnter={() => setHoveredElement('system')}
+            onMouseLeave={() => setHoveredElement(null)}
+            onFocus={() => setHoveredElement('system')}
+            onBlur={() => setHoveredElement(null)}
+          >
+            <span className='text-xs font-medium'>System</span>
+            <span>{systemTokensInLastApiCall.toLocaleString()}</span>
+            <Tooltip
+              show={hoveredElement === 'system'}
+              message={tooltipContent.system}
+              targetRef={systemRef}
+            />
+          </div>
+        </div>
 
         {/* Context window progress bar */}
         <div className='mt-2'>

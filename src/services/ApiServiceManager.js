@@ -118,11 +118,13 @@ class ApiServiceManager {
       // Use lightweight validation method
       return await apiService.validateCredentials();
     } catch (error) {
-      logger.service.error(`Error validating credentials for ${platformId}:`, error);
+      logger.service.error(
+        `Error validating credentials for ${platformId}:`,
+        error
+      );
       return false;
     }
   }
-
 
   /**
    * Get available models for a platform
@@ -134,7 +136,10 @@ class ApiServiceManager {
       const settings = await ConfigService.getPlatformApiConfig(platformId);
       return settings?.models || null;
     } catch (error) {
-      logger.service.error(`Error getting available models for ${platformId}:`, error);
+      logger.service.error(
+        `Error getting available models for ${platformId}:`,
+        error
+      );
       return null;
     }
   }

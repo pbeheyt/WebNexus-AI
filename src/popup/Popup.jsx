@@ -39,7 +39,7 @@ export function Popup() {
   } = useContent();
   const { selectedPlatformId, platforms } = usePopupPlatform();
   const platformName = useMemo(() => {
-    return platforms.find(p => p.id === selectedPlatformId)?.name || null;
+    return platforms.find((p) => p.id === selectedPlatformId)?.name || null;
   }, [platforms, selectedPlatformId]);
   const { statusMessage, updateStatus } = useStatus();
 
@@ -73,7 +73,10 @@ export function Popup() {
   useEffect(() => {
     if (typeof chrome.sidePanel === 'undefined') {
       setIsSidePanelApiAvailable(false);
-      updateStatus('Side Panel requires Chrome 114+. Please update your browser.', 'warning');
+      updateStatus(
+        'Side Panel requires Chrome 114+. Please update your browser.',
+        'warning'
+      );
       logger.popup.warn('Side Panel API is not available.');
     }
   }, [updateStatus]);
@@ -112,8 +115,8 @@ export function Popup() {
           <p>
             Open the <span className='font-medium'>Side Panel</span>
             <SidepanelIcon
-              className="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary"
-              strokeWidth="2.5"
+              className='w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary'
+              strokeWidth='2.5'
             />{' '}
             to have your AI conversation directly alongside the page.
           </p>
@@ -130,8 +133,8 @@ export function Popup() {
           <p>
             Open the <span className='font-medium'>Side Panel</span>
             <SidepanelIcon
-              className="w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary"
-              strokeWidth="2.5"
+              className='w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary'
+              strokeWidth='2.5'
             />{' '}
             to have your AI conversation directly alongside the page.
           </p>
@@ -192,7 +195,10 @@ export function Popup() {
     });
 
     if (!isAllowed) {
-      updateStatus('Side Panel cannot be opened on this type of page.', 'warning');
+      updateStatus(
+        'Side Panel cannot be opened on this type of page.',
+        'warning'
+      );
       return;
     }
 
@@ -204,7 +210,10 @@ export function Popup() {
       });
 
       if (response?.error === 'SIDE_PANEL_UNSUPPORTED') {
-        updateStatus('Side Panel requires Chrome 114+. Please update your browser.', 'warning');
+        updateStatus(
+          'Side Panel requires Chrome 114+. Please update your browser.',
+          'warning'
+        );
         setIsSidePanelApiAvailable(false);
       } else if (response?.success) {
         updateStatus(
@@ -240,19 +249,25 @@ export function Popup() {
     }
   }, [currentTab, updateStatus]);
 
-  const { currentShortcutConfig: popupSidepanelShortcut } = useConfigurableShortcut(
-    STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
-    DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
-    toggleSidepanel,
-    logger.popup,
-    [toggleSidepanel]
-  );
+  const { currentShortcutConfig: popupSidepanelShortcut } =
+    useConfigurableShortcut(
+      STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
+      DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
+      toggleSidepanel,
+      logger.popup,
+      [toggleSidepanel]
+    );
 
-  const handleDefaultPromptUpdateForPopup = useCallback((promptName, contentTypeLabel) => {
-    if (updateStatus) {
-      updateStatus(`"${promptName}" set as default for ${contentTypeLabel || 'this content type'}.`);
-    }
-  }, [updateStatus]);
+  const handleDefaultPromptUpdateForPopup = useCallback(
+    (promptName, contentTypeLabel) => {
+      if (updateStatus) {
+        updateStatus(
+          `"${promptName}" set as default for ${contentTypeLabel || 'this content type'}.`
+        );
+      }
+    },
+    [updateStatus]
+  );
 
   const handleProcessWithText = async (text) => {
     const combinedDisabled =
@@ -378,12 +393,20 @@ export function Popup() {
                         </span>
                         <span
                           ref={includeContextRef}
-                          onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
-                          onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
-                          onFocus={() => setIsIncludeContextTooltipVisible(true)}
-                          onBlur={() => setIsIncludeContextTooltipVisible(false)}
+                          onMouseEnter={() =>
+                            setIsIncludeContextTooltipVisible(true)
+                          }
+                          onMouseLeave={() =>
+                            setIsIncludeContextTooltipVisible(false)
+                          }
+                          onFocus={() =>
+                            setIsIncludeContextTooltipVisible(true)
+                          }
+                          onBlur={() =>
+                            setIsIncludeContextTooltipVisible(false)
+                          }
                           aria-describedby='include-context-tooltip'
-                          className="inline-flex items-center"
+                          className='inline-flex items-center'
                         >
                           <Toggle
                             id='include-context-toggle'
@@ -403,9 +426,11 @@ export function Popup() {
                         {contentType === 'general' && (
                           <ExtractionStrategySelector
                             disabled={isToggleDisabled}
-                            className="ml-2"
+                            className='ml-2'
                             onChange={(newStrategy) => {
-                              updateStatus(`Extraction strategy set to ${newStrategy}.`);
+                              updateStatus(
+                                `Extraction strategy set to ${newStrategy}.`
+                              );
                             }}
                           />
                         )}
@@ -424,9 +449,7 @@ export function Popup() {
 
             <div className='select-none'>
               {!contentLoading && (
-                <div className='hidden'>
-                  {contentTypeLabel}
-                </div>
+                <div className='hidden'>{contentTypeLabel}</div>
               )}
               <UnifiedInput
                 value={inputText}
@@ -448,7 +471,7 @@ export function Popup() {
                   platformName,
                   contentTypeLabel,
                   isContentLoading: contentLoading,
-                  includeContext
+                  includeContext,
                 })}
                 onDefaultPromptSetCallback={handleDefaultPromptUpdateForPopup}
               />

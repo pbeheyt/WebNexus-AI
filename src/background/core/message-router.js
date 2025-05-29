@@ -12,7 +12,10 @@ import {
   handleProcessContentRequest,
   handleProcessContentViaApiRequest,
 } from '../services/content-processing.js';
-import { handleToggleSidePanelAction, handleCloseCurrentSidePanelRequest } from '../services/sidepanel-manager.js';
+import {
+  handleToggleSidePanelAction,
+  handleCloseCurrentSidePanelRequest,
+} from '../services/sidepanel-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
 
@@ -175,18 +178,17 @@ function registerServiceHandlers() {
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
 
   // Handle requests to toggle the side panel
-  messageHandlers.set(
-    'toggleSidePanelAction',
-    handleToggleSidePanelAction
-  );
+  messageHandlers.set('toggleSidePanelAction', handleToggleSidePanelAction);
 
   // Handle requests to close the current side panel
-  messageHandlers.set('closeCurrentSidePanel', handleCloseCurrentSidePanelRequest);
+  messageHandlers.set(
+    'closeCurrentSidePanel',
+    handleCloseCurrentSidePanelRequest
+  );
 
   // Handle PDF fetch requests for file:// URLs
   messageHandlers.set('fetchPdfAsBase64', (message, _sender, sendResponse) => {
-    handleFetchPdfRequest(message, sendResponse); 
+    handleFetchPdfRequest(message, sendResponse);
     return true; // Keep channel open for async response
   });
-
 }

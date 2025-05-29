@@ -29,21 +29,26 @@ export function SliderInput({
     return Math.max(currentMin, Math.min(currentMax, numericVal));
   }, []);
 
-  const calculatePercentage = useCallback((val, currentMin, currentMax) => {
-    const range = currentMax - currentMin;
-    if (range === 0) return 0; // Avoid division by zero
-    const clampedVal = clampValue(val, currentMin, currentMax);
-    return (clampedVal - currentMin) / range;
-  }, [clampValue]);
+  const calculatePercentage = useCallback(
+    (val, currentMin, currentMax) => {
+      const range = currentMax - currentMin;
+      if (range === 0) return 0; // Avoid division by zero
+      const clampedVal = clampValue(val, currentMin, currentMax);
+      return (clampedVal - currentMin) / range;
+    },
+    [clampValue]
+  );
 
-  const calculateValueFromPercentage = useCallback((percentage, currentMin, currentMax) => {
-    const range = currentMax - currentMin;
-    // Apply step precision to the calculated value
-    const rawValue = currentMin + percentage * range;
-    const numSteps = Math.round((rawValue - currentMin) / step);
-    return clampValue(currentMin + numSteps * step, currentMin, currentMax);
-  }, [clampValue, step]);
-
+  const calculateValueFromPercentage = useCallback(
+    (percentage, currentMin, currentMax) => {
+      const range = currentMax - currentMin;
+      // Apply step precision to the calculated value
+      const rawValue = currentMin + percentage * range;
+      const numSteps = Math.round((rawValue - currentMin) / step);
+      return clampValue(currentMin + numSteps * step, currentMin, currentMax);
+    },
+    [clampValue, step]
+  );
 
   const [animatedPercentage, setAnimatedPercentage] = useState(() =>
     calculatePercentage(value ?? min ?? 0, min, max)
@@ -64,10 +69,11 @@ export function SliderInput({
     if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
     }
-    
+
     // Use functional update for setAnimatedPercentage to get its latest value
-    setAnimatedPercentage(currentAnimatedPct => {
-      if (Math.abs(targetPercentage - currentAnimatedPct) < 0.001) { // No significant percentage change
+    setAnimatedPercentage((currentAnimatedPct) => {
+      if (Math.abs(targetPercentage - currentAnimatedPct) < 0.001) {
+        // No significant percentage change
         setAnimatedPercentage(targetPercentage); // Ensure it's exact
         setDisplayedNumericValue(targetValue); // Snap numeric input
         return targetPercentage; // Return the already correct percentage
@@ -80,23 +86,28 @@ export function SliderInput({
 
       const animate = (timestamp) => {
         if (!startTime) startTime = timestamp;
-        const progress = Math.min((timestamp - startTime) / ANIMATION_DURATION_MS, 1);
-        const currentAnimatedPercentageForFrame = startPercentage + percentageChange * progress;
-        
-        setAnimatedPercentage(clampValue(currentAnimatedPercentageForFrame, 0, 1));
+        const progress = Math.min(
+          (timestamp - startTime) / ANIMATION_DURATION_MS,
+          1
+        );
+        const currentAnimatedPercentageForFrame =
+          startPercentage + percentageChange * progress;
+
+        setAnimatedPercentage(
+          clampValue(currentAnimatedPercentageForFrame, 0, 1)
+        );
 
         if (progress < 1) {
           animationFrameId.current = requestAnimationFrame(animate);
         } else {
           setAnimatedPercentage(targetPercentage); // Ensure it ends exactly at target percentage
-          setDisplayedNumericValue(targetValue);   // Snap numeric input to final target value
+          setDisplayedNumericValue(targetValue); // Snap numeric input to final target value
           animationFrameId.current = null;
         }
       };
       animationFrameId.current = requestAnimationFrame(animate);
       return currentAnimatedPct; // Return current value; animation will update it
     });
-
 
     return () => {
       if (animationFrameId.current) {
@@ -105,16 +116,17 @@ export function SliderInput({
     };
   }, [value, min, max, clampValue, calculatePercentage]);
 
-
   // Effect to update the CSS variable for track fill based on animatedPercentage
   useEffect(() => {
     if (sliderRef.current) {
       // Use animatedPercentage directly as it's already 0-1
       const fillPercentage = animatedPercentage * 100;
-      sliderRef.current.style.setProperty('--slider-fill-percentage', `${fillPercentage}%`);
+      sliderRef.current.style.setProperty(
+        '--slider-fill-percentage',
+        `${fillPercentage}%`
+      );
     }
   }, [animatedPercentage]);
-
 
   const handleUserInteractionStart = () => {
     isUserInteracting.current = true;
@@ -123,7 +135,7 @@ export function SliderInput({
       animationFrameId.current = null;
     }
   };
-  
+
   const handleUserInteractionEnd = () => {
     setTimeout(() => {
       isUserInteracting.current = false;
@@ -160,16 +172,20 @@ export function SliderInput({
         clampedNewValue = displayedNumericValue; // Or min
       }
     }
-    
+
     const newPercentage = calculatePercentage(clampedNewValue, min, max);
     setAnimatedPercentage(newPercentage);
     setDisplayedNumericValue(clampedNewValue);
     onChange(clampedNewValue); // Notify parent
     handleUserInteractionEnd();
   };
-  
+
   // The value for the range slider input is derived from the animatedPercentage
-  const sliderInputValue = calculateValueFromPercentage(animatedPercentage, min, max);
+  const sliderInputValue = calculateValueFromPercentage(
+    animatedPercentage,
+    min,
+    max
+  );
 
   return (
     <div className={`${className}`}>

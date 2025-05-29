@@ -7,7 +7,12 @@
  * @param {boolean} params.includeContext - Whether context should be included
  * @returns {string} The generated placeholder text
  */
-export function getPopupPlaceholder({ platformName, contentTypeLabel, isContentLoading, includeContext }) {
+export function getPopupPlaceholder({
+  platformName,
+  contentTypeLabel,
+  isContentLoading,
+  includeContext,
+}) {
   if (isContentLoading) {
     return 'Loading content...';
   }
@@ -40,14 +45,14 @@ export function getSidepanelInitialPlaceholder({
   contentTypeLabel,
   isPageInjectable,
   isContentLoading,
-  includeContext
+  includeContext,
 }) {
   if (isContentLoading) {
     return 'Loading content...';
   }
 
   if (platformName) {
-    if (includeContext && isPageInjectable) { 
+    if (includeContext && isPageInjectable) {
       if (contentTypeLabel) {
         return `Ask ${platformName} about this ${contentTypeLabel}...`;
       }
@@ -66,7 +71,10 @@ export function getSidepanelInitialPlaceholder({
  * @param {boolean} params.isContentLoading - Whether content is still loading
  * @returns {string} The generated placeholder text
  */
-export function getSidepanelFollowUpPlaceholder({ platformName, isContentLoading }) {
+export function getSidepanelFollowUpPlaceholder({
+  platformName,
+  isContentLoading,
+}) {
   if (isContentLoading) {
     return 'Loading content...';
   }

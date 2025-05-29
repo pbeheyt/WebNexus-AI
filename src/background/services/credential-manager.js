@@ -57,7 +57,8 @@ export async function handleCredentialOperation(message, sendResponse) {
         if (!Array.isArray(platformIds)) {
           throw new Error('platformIds must be an array');
         }
-        const results = await CredentialManagerService.checkCredentialsExist(platformIds);
+        const results =
+          await CredentialManagerService.checkCredentialsExist(platformIds);
         sendResponse({
           success: true,
           results,

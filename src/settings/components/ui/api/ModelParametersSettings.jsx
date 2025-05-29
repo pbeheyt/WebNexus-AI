@@ -76,131 +76,144 @@ const ModelParametersSettings = ({
     return (
       <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-4'>
         <div className='flex items-center justify-center text-theme-secondary text-center py-10'>
-          <SpinnerIcon className="w-8 h-8" />
-          <span className="ml-2">Loading model settings...</span>
+          <SpinnerIcon className='w-8 h-8' />
+          <span className='ml-2'>Loading model settings...</span>
         </div>
       </div>
     );
   }
 
-  const {
-    displaySpecs,
-    parameterSpecs,
-  } = derivedSettings;
-
+  const { displaySpecs, parameterSpecs } = derivedSettings;
 
   return (
     <>
-    <SettingsCard className="selector-section-container mb-6">
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center">
-          <h3 className='text-base font-semibold text-theme-primary'>
-            Model Selection
-          </h3>
-          <div className="mx-5">
-            <div className='inline-block'>
-              <CustomSelect
-                id={`${platform.id}-settings-model-selector`}
-    options={modelsFromPlatform.map((model) => ({
-      id: model.id,
-      name: model.displayName || model.id, // Use displayName, fallback to id
-    }))}
-                selectedValue={selectedModelId}
-                onChange={handleModelChange}
-                placeholder='Select Model'
-                disabled={modelsFromPlatform.length === 0 || isSaving || isResetting || isTransitioningMode}
+      <SettingsCard className='selector-section-container mb-6'>
+        <div className='flex justify-between items-center mb-3'>
+          <div className='flex items-center'>
+            <h3 className='text-base font-semibold text-theme-primary'>
+              Model Selection
+            </h3>
+            <div className='mx-5'>
+              <div className='inline-block'>
+                <CustomSelect
+                  id={`${platform.id}-settings-model-selector`}
+                  options={modelsFromPlatform.map((model) => ({
+                    id: model.id,
+                    name: model.displayName || model.id, // Use displayName, fallback to id
+                  }))}
+                  selectedValue={selectedModelId}
+                  onChange={handleModelChange}
+                  placeholder='Select Model'
+                  disabled={
+                    modelsFromPlatform.length === 0 ||
+                    isSaving ||
+                    isResetting ||
+                    isTransitioningMode
+                  }
+                />
+              </div>
+            </div>
+          </div>
+          <div className='ml-auto px-2 flex items-center gap-5'>
+            <IconButton
+              icon={RefreshIcon}
+              iconClassName={`w-7 h-7 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
+              className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+              onClick={handleResetClick}
+              isLoading={isResetting}
+              disabled={
+                isAtDefaults || isResetting || isSaving || isTransitioningMode
+              }
+              ariaLabel='Reset model parameters to defaults'
+              title='Reset model parameters to configuration defaults'
+            />
+            <Button
+              type='button'
+              onClick={handleSubmit}
+              isLoading={isSaving}
+              disabled={
+                isSaving || isResetting || !hasChanges || isTransitioningMode
+              }
+              variant={
+                !hasChanges || isResetting || isTransitioningMode
+                  ? 'inactive'
+                  : 'primary'
+              }
+              className='px-5 py-2 select-none'
+            >
+              {isSaving ? 'Saving...' : 'Save Settings'}
+            </Button>
+          </div>
+        </div>
+
+        {showThinkingModeToggle && (
+          <div className='mt-4'>
+            <div className='flex items-center gap-3'>
+              <span className='text-sm font-semibold text-theme-secondary'>
+                Thinking Mode
+              </span>
+              <Toggle
+                id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
+                checked={currentEditingMode === 'thinking'}
+                onChange={toggleEditingMode}
+                disabled={isSaving || isResetting || isTransitioningMode}
               />
             </div>
           </div>
-        </div>
-        <div className="ml-auto px-2 flex items-center gap-5">
-          <IconButton
-            icon={RefreshIcon}
-            iconClassName={`w-7 h-7 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
-            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-            onClick={handleResetClick}
-            isLoading={isResetting}
-            disabled={isAtDefaults || isResetting || isSaving || isTransitioningMode}
-            ariaLabel='Reset model parameters to defaults'
-            title='Reset model parameters to configuration defaults'
-          />
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            isLoading={isSaving}
-            disabled={isSaving || isResetting || !hasChanges || isTransitioningMode}
-            variant={!hasChanges || isResetting || isTransitioningMode ? 'inactive' : 'primary'}
-            className='px-5 py-2 select-none'
-          >
-            {isSaving ? 'Saving...' : 'Save Settings'}
-          </Button>
-        </div>
-      </div>
+        )}
 
-      {showThinkingModeToggle && (
-        <div className="mt-4">
-          <div className='flex items-center gap-3'>
-            <span className='text-sm font-semibold text-theme-secondary'>
-              Thinking Mode
-            </span>
-            <Toggle
-              id={`${platform.id}-${selectedModelId}-thinking-mode-toggle`}
-              checked={currentEditingMode === 'thinking'}
-              onChange={toggleEditingMode}
-              disabled={isSaving || isResetting || isTransitioningMode}
-            />
-          </div>
-        </div>
-      )}
+        <div className='border-b border-theme my-4 select-none'></div>
 
-      <div className='border-b border-theme my-4 select-none'></div>
-
-      <div className='model-specs-section bg-theme-hover rounded-lg border border-theme p-4'>
-        <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary'>
-          Model Specifications {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
-        </h4>
-        <div className='specs-info space-y-2.5'>
-          <div className='spec-item flex justify-between text-sm'>
-            <span className='spec-label font-semibold text-theme-secondary'>
-              Context window
-            </span>
-            <span className='spec-value font-mono text-theme-primary'>
-              {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
-            </span>
-          </div>
-          {displaySpecs.inputPrice !== undefined && (
+        <div className='model-specs-section bg-theme-hover rounded-lg border border-theme p-4'>
+          <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary'>
+            Model Specifications{' '}
+            {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
+          </h4>
+          <div className='specs-info space-y-2.5'>
             <div className='spec-item flex justify-between text-sm'>
               <span className='spec-label font-semibold text-theme-secondary'>
-                Input tokens
+                Context window
               </span>
               <span className='spec-value font-mono text-theme-primary'>
-                {Math.abs(displaySpecs.inputPrice) < 0.0001
-                  ? 'Free'
-                  : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
+                {displaySpecs.contextWindow?.toLocaleString() ?? 'N/A'} tokens
               </span>
             </div>
-          )}
-          {displaySpecs.outputPrice !== undefined && (
-            <div className='spec-item flex justify-between text-sm'>
-              <span className='spec-label font-semibold text-theme-secondary'>
-                Output tokens
-              </span>
-              <span className='spec-value font-mono text-theme-primary'>
-                {Math.abs(displaySpecs.outputPrice) < 0.0001
-                  ? 'Free'
-                  : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
-              </span>
-            </div>
-          )}
+            {displaySpecs.inputPrice !== undefined && (
+              <div className='spec-item flex justify-between text-sm'>
+                <span className='spec-label font-semibold text-theme-secondary'>
+                  Input tokens
+                </span>
+                <span className='spec-value font-mono text-theme-primary'>
+                  {Math.abs(displaySpecs.inputPrice) < 0.0001
+                    ? 'Free'
+                    : `$${formatPrice(displaySpecs.inputPrice)} per 1M tokens`}
+                </span>
+              </div>
+            )}
+            {displaySpecs.outputPrice !== undefined && (
+              <div className='spec-item flex justify-between text-sm'>
+                <span className='spec-label font-semibold text-theme-secondary'>
+                  Output tokens
+                </span>
+                <span className='spec-value font-mono text-theme-primary'>
+                  {Math.abs(displaySpecs.outputPrice) < 0.0001
+                    ? 'Free'
+                    : `$${formatPrice(displaySpecs.outputPrice)} per 1M tokens`}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </SettingsCard>
+      </SettingsCard>
 
-    <div className='border-b border-theme mb-6 select-none'></div>
+      <div className='border-b border-theme mb-6 select-none'></div>
 
       {/* The form still wraps all the actual input fields */}
-      <form onSubmit={handleSubmit} className='model-advanced-settings' noValidate>
-
+      <form
+        onSubmit={handleSubmit}
+        className='model-advanced-settings'
+        noValidate
+      >
         {parameterSpecs.maxTokens && (
           <SettingsCard className='mb-4'>
             <div className='mb-2'>
@@ -221,7 +234,7 @@ const ModelParametersSettings = ({
               disabled={isSaving || isResetting || isTransitioningMode}
               className='form-group'
             />
-        </SettingsCard>
+          </SettingsCard>
         )}
 
         {showTempSection && parameterSpecs.temperature && (
@@ -255,7 +268,7 @@ const ModelParametersSettings = ({
                 className='form-group mt-2'
               />
             )}
-        </SettingsCard>
+          </SettingsCard>
         )}
 
         {showTopPSection && parameterSpecs.topP && (
@@ -289,13 +302,19 @@ const ModelParametersSettings = ({
                 className='form-group mt-2'
               />
             )}
-            {showTempSection && showTopPSection && formValues.includeTemperature && formValues.includeTopP && (
-              <div className='my-3 flex items-start text-xs text-amber-600 dark:text-amber-500'>
-                <InfoIcon className='w-4 h-4 mr-2 flex-shrink-0' />
-                <span>It is generally recommended to alter Temperature or Top P, but not both.</span>
-              </div>
-            )}
-        </SettingsCard>
+            {showTempSection &&
+              showTopPSection &&
+              formValues.includeTemperature &&
+              formValues.includeTopP && (
+                <div className='my-3 flex items-start text-xs text-amber-600 dark:text-amber-500'>
+                  <InfoIcon className='w-4 h-4 mr-2 flex-shrink-0' />
+                  <span>
+                    It is generally recommended to alter Temperature or Top P,
+                    but not both.
+                  </span>
+                </div>
+              )}
+          </SettingsCard>
         )}
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
@@ -308,7 +327,10 @@ const ModelParametersSettings = ({
             </p>
             <SliderInput
               label=''
-              value={formValues.thinkingBudget ?? parameterSpecs.thinkingBudget.default}
+              value={
+                formValues.thinkingBudget ??
+                parameterSpecs.thinkingBudget.default
+              }
               onChange={(newValue) => handleChange('thinkingBudget', newValue)}
               min={parameterSpecs.thinkingBudget.min}
               max={parameterSpecs.thinkingBudget.max}
@@ -316,7 +338,7 @@ const ModelParametersSettings = ({
               disabled={isSaving || isResetting || isTransitioningMode}
               className='form-group mt-2'
             />
-        </SettingsCard>
+          </SettingsCard>
         )}
 
         {showReasoningEffort && parameterSpecs.reasoningEffort && (
@@ -330,14 +352,21 @@ const ModelParametersSettings = ({
             <div className='inline-block'>
               <CustomSelect
                 id={`${platform.id}-${selectedModelId}-reasoning-effort`}
-                options={parameterSpecs.reasoningEffort.allowedValues.map(value => ({ id: value, name: value }))}
-                selectedValue={formValues.reasoningEffort ?? parameterSpecs.reasoningEffort.default}
-                onChange={(selectedValue) => handleChange('reasoningEffort', selectedValue)}
+                options={parameterSpecs.reasoningEffort.allowedValues.map(
+                  (value) => ({ id: value, name: value })
+                )}
+                selectedValue={
+                  formValues.reasoningEffort ??
+                  parameterSpecs.reasoningEffort.default
+                }
+                onChange={(selectedValue) =>
+                  handleChange('reasoningEffort', selectedValue)
+                }
                 placeholder='Select Effort Level'
                 disabled={isSaving || isResetting || isTransitioningMode}
               />
             </div>
-        </SettingsCard>
+          </SettingsCard>
         )}
 
         {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && (
@@ -360,12 +389,12 @@ const ModelParametersSettings = ({
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}
                 maxLength={MAX_SYSTEM_PROMPT_LENGTH}
                 disabled={isSaving || isResetting || isTransitioningMode}
-                className="bg-theme-hover text-sm border border-theme rounded-md"
+                className='bg-theme-hover text-sm border border-theme rounded-md'
                 style={{ minHeight: '120px' }}
                 autoResize={true}
               />
             </div>
-        </SettingsCard>
+          </SettingsCard>
         )}
       </form>
     </>

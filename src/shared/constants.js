@@ -46,7 +46,8 @@ export const STORAGE_KEYS = {
   /** @description ID of the default/last-selected AI platform for the Sidepanel (global). Synced across devices. */
   SIDEPANEL_DEFAULT_PLATFORM_ID: 'sidepanel_default_platform_id',
   /** @description Map of { platformId: modelId } for default/last-selected models in the Sidepanel. Synced. */
-  SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM: 'sidepanel_default_model_id_by_platform',
+  SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM:
+    'sidepanel_default_model_id_by_platform',
   /** @description User's preference for enabling "thinking mode" in the Sidepanel, stored as { platformId: { modelId: boolean } }. Synced. */
   SIDEPANEL_THINKING_MODE_PREFERENCE: 'sidepanel_thinking_mode_preference',
   /** @description User's custom keyboard shortcut configuration for toggling the sidepanel. Synced. */

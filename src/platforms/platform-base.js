@@ -86,7 +86,9 @@ class BasePlatform extends PlatformInterface {
    * @abstract
    */
   _getEditorSelectors() {
-    this.logger.error(`[${this.platformId}] _getEditorSelectors method not implemented.`);
+    this.logger.error(
+      `[${this.platformId}] _getEditorSelectors method not implemented.`
+    );
     throw new Error('_getEditorSelectors must be implemented by subclasses');
   }
 
@@ -97,8 +99,12 @@ class BasePlatform extends PlatformInterface {
    * @abstract
    */
   _getSubmitButtonSelectors() {
-    this.logger.error(`[${this.platformId}] _getSubmitButtonSelectors method not implemented.`);
-    throw new Error('_getSubmitButtonSelectors must be implemented by subclasses');
+    this.logger.error(
+      `[${this.platformId}] _getSubmitButtonSelectors method not implemented.`
+    );
+    throw new Error(
+      '_getSubmitButtonSelectors must be implemented by subclasses'
+    );
   }
 
   /**
@@ -106,29 +112,37 @@ class BasePlatform extends PlatformInterface {
    * @returns {Promise<HTMLElement|null>} The editor element or null if not found/ready.
    */
   async findEditorElement() {
-    this.logger.info(`[${this.platformId}] Attempting to find editor element using configured selectors...`);
+    this.logger.info(
+      `[${this.platformId}] Attempting to find editor element using configured selectors...`
+    );
     const selectors = this._getEditorSelectors();
     if (!selectors || !Array.isArray(selectors) || selectors.length === 0) {
-      this.logger.error(`[${this.platformId}] No editor selectors provided by the platform implementation or selectors is not an array.`);
+      this.logger.error(
+        `[${this.platformId}] No editor selectors provided by the platform implementation or selectors is not an array.`
+      );
       return null;
     }
-    if (selectors.some(s => typeof s !== 'string')) {
-        this.logger.error(`[${this.platformId}] All editor selectors must be strings.`);
-        return null;
+    if (selectors.some((s) => typeof s !== 'string')) {
+      this.logger.error(
+        `[${this.platformId}] All editor selectors must be strings.`
+      );
+      return null;
     }
 
     const editorElement = await this._waitForElementState(
       selectors,
       (el) => this._isVisibleElement(el), // Basic visibility check for editor
       5000, // timeoutMs
-      300,  // pollIntervalMs
+      300, // pollIntervalMs
       `${this.platformId} editor element`
     );
 
     if (editorElement) {
       this.logger.info(`[${this.platformId}] Editor element found and ready.`);
     } else {
-      this.logger.warn(`[${this.platformId}] Editor element did not become ready within the timeout.`);
+      this.logger.warn(
+        `[${this.platformId}] Editor element did not become ready within the timeout.`
+      );
     }
     return editorElement;
   }
@@ -139,15 +153,21 @@ class BasePlatform extends PlatformInterface {
    * @returns {Promise<HTMLElement|null|"EDITOR_EMPTIED_EARLY">} The submit button, null on timeout, or "EDITOR_EMPTIED_EARLY".
    */
   async findSubmitButton() {
-    this.logger.info(`[${this.platformId}] Attempting to find submit button using configured selectors...`);
+    this.logger.info(
+      `[${this.platformId}] Attempting to find submit button using configured selectors...`
+    );
     const selectors = this._getSubmitButtonSelectors();
     if (!selectors || !Array.isArray(selectors) || selectors.length === 0) {
-      this.logger.error(`[${this.platformId}] No submit button selectors provided by the platform implementation or selectors is not an array.`);
+      this.logger.error(
+        `[${this.platformId}] No submit button selectors provided by the platform implementation or selectors is not an array.`
+      );
       return null;
     }
-    if (selectors.some(s => typeof s !== 'string')) {
-        this.logger.error(`[${this.platformId}] All submit button selectors must be strings.`);
-        return null;
+    if (selectors.some((s) => typeof s !== 'string')) {
+      this.logger.error(
+        `[${this.platformId}] All submit button selectors must be strings.`
+      );
+      return null;
     }
 
     const earlyExitCheck = async () => {
@@ -156,17 +176,21 @@ class BasePlatform extends PlatformInterface {
       const editorSelectors = this._getEditorSelectors();
       let editorElement = null;
       for (const editorSelector of editorSelectors) {
-          try {
-              const foundElement = document.querySelector(editorSelector);
-              if (foundElement) {
-                  editorElement = foundElement;
-                  break;
-              }
-          } catch (e) { /* ignore selector error during this quick check */ }
+        try {
+          const foundElement = document.querySelector(editorSelector);
+          if (foundElement) {
+            editorElement = foundElement;
+            break;
+          }
+        } catch (e) {
+          /* ignore selector error during this quick check */
+        }
       }
 
       if (editorElement && this._isEditorEmpty(editorElement)) {
-        this.logger.info(`[${this.platformId}] findSubmitButton: Editor emptied while polling for submit button.`);
+        this.logger.info(
+          `[${this.platformId}] findSubmitButton: Editor emptied while polling for submit button.`
+        );
         return true; // Signal early exit
       }
       return false;
@@ -174,7 +198,8 @@ class BasePlatform extends PlatformInterface {
 
     const buttonOrEarlyExit = await this._waitForElementState(
       selectors,
-      async (el) => { // Condition for submit button readiness
+      async (el) => {
+        // Condition for submit button readiness
         if (!el) return false;
         const isEnabled = this._isButtonEnabled(el);
         const isVisible = this._isVisibleElement(el);
@@ -183,23 +208,26 @@ class BasePlatform extends PlatformInterface {
         return isEnabled && isVisible && hasPointerEvents;
       },
       5000, // timeoutMs
-      300,  // pollIntervalMs
+      300, // pollIntervalMs
       `${this.platformId} submit button`,
       earlyExitCheck // Pass the early exit condition checker
     );
 
-    if (buttonOrEarlyExit === "EARLY_EXIT_CONDITION_MET") {
-      this.logger.info(`[${this.platformId}] Submit button search exited early: Editor emptied.`);
-      return "EDITOR_EMPTIED_EARLY"; // Return specific string
+    if (buttonOrEarlyExit === 'EARLY_EXIT_CONDITION_MET') {
+      this.logger.info(
+        `[${this.platformId}] Submit button search exited early: Editor emptied.`
+      );
+      return 'EDITOR_EMPTIED_EARLY'; // Return specific string
     } else if (buttonOrEarlyExit instanceof HTMLElement) {
       this.logger.info(`[${this.platformId}] Submit button found and ready.`);
       return buttonOrEarlyExit; // Return the button element
     } else {
-      this.logger.warn(`[${this.platformId}] Submit button did not become ready within the timeout, and editor did not empty early.`);
+      this.logger.warn(
+        `[${this.platformId}] Submit button did not become ready within the timeout, and editor did not empty early.`
+      );
       return null; // Return null if timeout without early exit or finding button
     }
   }
-
 
   /**
    * Utility method to pause execution.
@@ -322,14 +350,13 @@ class BasePlatform extends PlatformInterface {
       const range = document.createRange();
       const sel = window.getSelection();
       if (editorElement.lastChild) {
-          range.setStartAfter(editorElement.lastChild);
+        range.setStartAfter(editorElement.lastChild);
       } else {
-          range.setStart(editorElement, 0);
+        range.setStart(editorElement, 0);
       }
       range.collapse(true);
       sel.removeAllRanges();
       sel.addRange(range);
-
 
       this._dispatchEvents(editorElement, effectiveOptions.dispatchEvents);
 
@@ -346,7 +373,6 @@ class BasePlatform extends PlatformInterface {
     }
   }
 
-
   /**
    * Simulates a realistic click sequence (mousedown -> mouseup -> click)
    * @param {HTMLElement} buttonElement - The button element to click
@@ -355,8 +381,10 @@ class BasePlatform extends PlatformInterface {
    */
   async _simulateRealClick(buttonElement) {
     try {
-      this.logger.info(`[${this.platformId}] Attempting to click submit button with event sequence`);
-      
+      this.logger.info(
+        `[${this.platformId}] Attempting to click submit button with event sequence`
+      );
+
       buttonElement.focus(); // Ensure button has focus
 
       // Dispatch mousedown with button pressed
@@ -365,33 +393,38 @@ class BasePlatform extends PlatformInterface {
           bubbles: true,
           cancelable: true,
           view: window,
-          buttons: 1
+          buttons: 1,
         })
       );
-      
+
       // Dispatch mouseup with button released
       buttonElement.dispatchEvent(
         new MouseEvent('mouseup', {
           bubbles: true,
           cancelable: true,
           view: window,
-          buttons: 0 // Important: buttons should be 0 for mouseup
+          buttons: 0, // Important: buttons should be 0 for mouseup
         })
       );
-      
+
       // Dispatch final click event
       buttonElement.dispatchEvent(
         new MouseEvent('click', {
           bubbles: true,
           cancelable: true,
-          view: window
+          view: window,
         })
       );
-      
-      this.logger.info(`[${this.platformId}] Successfully dispatched click events.`);
+
+      this.logger.info(
+        `[${this.platformId}] Successfully dispatched click events.`
+      );
       return true;
     } catch (error) {
-      this.logger.error(`[${this.platformId}] Failed to dispatch click events:`, error);
+      this.logger.error(
+        `[${this.platformId}] Failed to dispatch click events:`,
+        error
+      );
       return false;
     }
   }
@@ -416,7 +449,9 @@ class BasePlatform extends PlatformInterface {
    * @abstract
    */
   _isEditorEmpty(_editorElement) {
-    this.logger.error(`[${this.platformId}] _isEditorEmpty method not implemented.`);
+    this.logger.error(
+      `[${this.platformId}] _isEditorEmpty method not implemented.`
+    );
     throw new Error('_isEditorEmpty must be implemented by subclasses');
   }
 
@@ -443,15 +478,17 @@ class BasePlatform extends PlatformInterface {
           const editorSelectors = this._getEditorSelectors();
           let editorElement = null;
           for (const selector of editorSelectors) {
-              try {
-                  const foundElement = document.querySelector(selector);
-                  if (foundElement) {
-                      editorElement = foundElement;
-                      break;
-                  }
-              } catch (e) { /* ignore */ }
+            try {
+              const foundElement = document.querySelector(selector);
+              if (foundElement) {
+                editorElement = foundElement;
+                break;
+              }
+            } catch (e) {
+              /* ignore */
+            }
           }
-          
+
           if (editorElement === null || this._isEditorEmpty(editorElement)) {
             this.logger.info(
               `[${this.platformId}] Verification polling PASSED: Editor element no longer found or is empty.`
@@ -471,7 +508,7 @@ class BasePlatform extends PlatformInterface {
           this.logger.warn(
             `[${this.platformId}] Verification polling FAILED: Timeout (${maxWaitTime}ms) reached and editor is still present and not empty.`
           );
-          resolve(false); 
+          resolve(false);
         } else {
           setTimeout(checkEditor, pollInterval);
         }
@@ -496,7 +533,9 @@ class BasePlatform extends PlatformInterface {
     ) {
       this.logger.debug(
         `[${this.platformId}] Element hidden by attribute/style:`,
-        element.tagName, element.id, element.className
+        element.tagName,
+        element.id,
+        element.className
       );
       return false;
     }
@@ -510,20 +549,25 @@ class BasePlatform extends PlatformInterface {
     ) {
       this.logger.debug(
         `[${this.platformId}] Element hidden by computed style: display=${style.display}, visibility=${style.visibility}, opacity=${style.opacity}`,
-        element.tagName, element.id, element.className
+        element.tagName,
+        element.id,
+        element.className
       );
       return false;
     }
 
     const rect = element.getBoundingClientRect();
-    if (rect.width === 0 && rect.height === 0) { // Only fail if both are zero
+    if (rect.width === 0 && rect.height === 0) {
+      // Only fail if both are zero
       this.logger.debug(
         `[${this.platformId}] Element has zero dimensions: width=${rect.width}, height=${rect.height}`,
-        element.tagName, element.id, element.className
+        element.tagName,
+        element.id,
+        element.className
       );
       return false;
     }
-    
+
     // Check if element is practically off-screen
     const threshold = 1; // Small pixel threshold
     if (
@@ -533,14 +577,19 @@ class BasePlatform extends PlatformInterface {
       rect.top >= window.innerHeight - threshold
     ) {
       // Check if it's a textarea that might be scrolled into view
-      if(element.tagName === 'TEXTAREA' && (rect.width > 0 || rect.height > 0)) {
-         // If it's a textarea and has some dimension, it might be scrollable into view.
-         // This check is tricky; for now, let's assume if it has dimensions, it's potentially visible.
+      if (
+        element.tagName === 'TEXTAREA' &&
+        (rect.width > 0 || rect.height > 0)
+      ) {
+        // If it's a textarea and has some dimension, it might be scrollable into view.
+        // This check is tricky; for now, let's assume if it has dimensions, it's potentially visible.
       } else {
         this.logger.debug(
           `[${this.platformId}] Element is positioned off-screen:`,
           rect,
-          element.tagName, element.id, element.className
+          element.tagName,
+          element.id,
+          element.className
         );
         return false;
       }
@@ -549,9 +598,17 @@ class BasePlatform extends PlatformInterface {
     let currentParent = element.parentElement;
     const elemRectForOverflowCheck = element.getBoundingClientRect();
 
-    while (currentParent && currentParent !== document.body && currentParent !== document.documentElement) {
+    while (
+      currentParent &&
+      currentParent !== document.body &&
+      currentParent !== document.documentElement
+    ) {
       const parentStyle = window.getComputedStyle(currentParent);
-      if (parentStyle.overflow === 'hidden' || parentStyle.overflowX === 'hidden' || parentStyle.overflowY === 'hidden') {
+      if (
+        parentStyle.overflow === 'hidden' ||
+        parentStyle.overflowX === 'hidden' ||
+        parentStyle.overflowY === 'hidden'
+      ) {
         const parentRect = currentParent.getBoundingClientRect();
 
         const isOutsideParent =
@@ -563,7 +620,9 @@ class BasePlatform extends PlatformInterface {
         if (isOutsideParent) {
           this.logger.debug(
             `[${this.platformId}] Element hidden by parent '${currentParent.tagName}' with overflow: hidden. Element is outside parent's bounds.`,
-            element.tagName, element.id, element.className
+            element.tagName,
+            element.id,
+            element.className
           );
           return false;
         }
@@ -585,8 +644,17 @@ class BasePlatform extends PlatformInterface {
    * @returns {Promise<HTMLElement|null|"EARLY_EXIT_CONDITION_MET">} The element if condition met, null on timeout, or "EARLY_EXIT_CONDITION_MET".
    * @protected
    */
-  async _waitForElementState(selectorStringsArray, conditionFn, timeoutMs = 3000, pollIntervalMs = 200, description = 'element state', checkEarlyExitConditionFn = null) {
-    this.logger.info(`[${this.platformId}] Waiting for ${description} (Timeout: ${timeoutMs}ms, Interval: ${pollIntervalMs}ms)...`);
+  async _waitForElementState(
+    selectorStringsArray,
+    conditionFn,
+    timeoutMs = 3000,
+    pollIntervalMs = 200,
+    description = 'element state',
+    checkEarlyExitConditionFn = null
+  ) {
+    this.logger.info(
+      `[${this.platformId}] Waiting for ${description} (Timeout: ${timeoutMs}ms, Interval: ${pollIntervalMs}ms)...`
+    );
     const startTime = Date.now();
 
     return new Promise((resolve) => {
@@ -595,12 +663,17 @@ class BasePlatform extends PlatformInterface {
           try {
             const earlyExitMet = await checkEarlyExitConditionFn();
             if (earlyExitMet) {
-              this.logger.info(`[${this.platformId}] Early exit condition met for ${description}.`);
-              resolve("EARLY_EXIT_CONDITION_MET"); // Special string to indicate early exit
+              this.logger.info(
+                `[${this.platformId}] Early exit condition met for ${description}.`
+              );
+              resolve('EARLY_EXIT_CONDITION_MET'); // Special string to indicate early exit
               return;
             }
           } catch (earlyExitError) {
-            this.logger.warn(`[${this.platformId}] Error checking early exit condition for ${description}:`, earlyExitError);
+            this.logger.warn(
+              `[${this.platformId}] Error checking early exit condition for ${description}:`,
+              earlyExitError
+            );
             // Continue polling as if early exit wasn't met or error occurred
           }
         }
@@ -614,11 +687,16 @@ class BasePlatform extends PlatformInterface {
             if (foundElement) {
               element = foundElement;
               successfulSelector = selector;
-              this.logger.debug(`[${this.platformId}] Element for ${description} candidate found using selector: "${selector}"`);
-              break; 
+              this.logger.debug(
+                `[${this.platformId}] Element for ${description} candidate found using selector: "${selector}"`
+              );
+              break;
             }
           } catch (selectorError) {
-            this.logger.error(`[${this.platformId}] Error querying selector "${selector}" for ${description}:`, selectorError);
+            this.logger.error(
+              `[${this.platformId}] Error querying selector "${selector}" for ${description}:`,
+              selectorError
+            );
           }
         }
 
@@ -626,22 +704,30 @@ class BasePlatform extends PlatformInterface {
           try {
             const conditionMet = await conditionFn(element);
             if (conditionMet) {
-              this.logger.info(`[${this.platformId}] Condition for ${description} met successfully (selector: "${successfulSelector}").`);
+              this.logger.info(
+                `[${this.platformId}] Condition for ${description} met successfully (selector: "${successfulSelector}").`
+              );
               resolve(element);
               return;
             }
             // Condition not met, log and continue polling
-            this.logger.debug(`[${this.platformId}] Condition for ${description} NOT met for element found by "${successfulSelector}". Polling...`);
-
+            this.logger.debug(
+              `[${this.platformId}] Condition for ${description} NOT met for element found by "${successfulSelector}". Polling...`
+            );
           } catch (error) {
-            this.logger.error(`[${this.platformId}] Error in conditionFn for ${description} (selector: "${successfulSelector}"):`, error);
+            this.logger.error(
+              `[${this.platformId}] Error in conditionFn for ${description} (selector: "${successfulSelector}"):`,
+              error
+            );
           }
         } else {
-           // this.logger.debug(`[${this.platformId}] Element for ${description} not found by any selector on this poll.`);
+          // this.logger.debug(`[${this.platformId}] Element for ${description} not found by any selector on this poll.`);
         }
 
         if (Date.now() - startTime > timeoutMs) {
-          this.logger.warn(`[${this.platformId}] Timeout reached waiting for ${description}. Attempted selectors: ${selectorStringsArray.join('; ')}`);
+          this.logger.warn(
+            `[${this.platformId}] Timeout reached waiting for ${description}. Attempted selectors: ${selectorStringsArray.join('; ')}`
+          );
           resolve(null);
         } else {
           setTimeout(checkCondition, pollIntervalMs);
@@ -659,7 +745,10 @@ class BasePlatform extends PlatformInterface {
       `[${this.platformId}] Starting template method processContent`
     );
     chrome.storage.local.get(
-      [STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT, STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT],
+      [
+        STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
+        STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
+      ],
       async (result) => {
         try {
           this.logger.info(`[${this.platformId}] Retrieved data from storage`, {
@@ -673,13 +762,15 @@ class BasePlatform extends PlatformInterface {
             result[STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT];
 
           if (!prePrompt) {
-            this.logger.error(`[${this.platformId}] Missing prompt data in storage. Aborting processContent.`);
+            this.logger.error(
+              `[${this.platformId}] Missing prompt data in storage. Aborting processContent.`
+            );
             // Clear storage even on error to prevent reprocessing stale data
             chrome.storage.local.remove([
-                STORAGE_KEYS.EXTRACTED_CONTENT,
-                STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
-                STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
-                STORAGE_KEYS.CONTENT_READY_FLAG,
+              STORAGE_KEYS.EXTRACTED_CONTENT,
+              STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
+              STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
+              STORAGE_KEYS.CONTENT_READY_FLAG,
             ]);
             return; // Exit if no prompt
           }
@@ -694,7 +785,9 @@ class BasePlatform extends PlatformInterface {
 
           const editorElement = await this.findEditorElement();
           if (!editorElement) {
-            this.logger.error(`[${this.platformId}] Critical: Editor element not found during processContent.`);
+            this.logger.error(
+              `[${this.platformId}] Critical: Editor element not found during processContent.`
+            );
             throw new Error( // Throw to be caught by the outer try-catch
               `Could not find the editor element on ${this.platformId}. Automation cannot proceed.`
             );
@@ -722,7 +815,7 @@ class BasePlatform extends PlatformInterface {
 
           const submitButtonOrEarlyExit = await this.findSubmitButton();
 
-          if (submitButtonOrEarlyExit === "EDITOR_EMPTIED_EARLY") {
+          if (submitButtonOrEarlyExit === 'EDITOR_EMPTIED_EARLY') {
             this.logger.info(
               `[${this.platformId}] Submission successful: Editor emptied before explicit submit button interaction.`
             );
@@ -732,56 +825,73 @@ class BasePlatform extends PlatformInterface {
             this.logger.info(
               `[${this.platformId}] Found submit button element. Proceeding to click attempt.`
             );
-            
+
             try {
               await this._clickSubmitButton(submitButton);
-              this.logger.info(`[${this.platformId}] Submit button click attempt finished.`);
+              this.logger.info(
+                `[${this.platformId}] Submit button click attempt finished.`
+              );
             } catch (clickError) {
-              this.logger.error(`[${this.platformId}] Error occurred during _clickSubmitButton attempt:`, clickError);
+              this.logger.error(
+                `[${this.platformId}] Error occurred during _clickSubmitButton attempt:`,
+                clickError
+              );
               // Even if click fails, proceed to verification as platform might have reacted
             }
 
             const verificationSuccess = await this._verifySubmissionAttempted(); // No argument passed
 
             if (verificationSuccess) {
-              this.logger.info(`[${this.platformId}] Post-interaction verification successful.`);
+              this.logger.info(
+                `[${this.platformId}] Post-interaction verification successful.`
+              );
               this.logger.info(
                 `[${this.platformId}] Content successfully processed and submitted.`
               );
             } else {
-              this.logger.warn(`[${this.platformId}] Post-interaction verification failed. The interaction may not have been fully processed by the platform.`);
+              this.logger.warn(
+                `[${this.platformId}] Post-interaction verification failed. The interaction may not have been fully processed by the platform.`
+              );
             }
-          } else { // submitButtonOrEarlyExit is null (timeout)
+          } else {
+            // submitButtonOrEarlyExit is null (timeout)
             this.logger.warn(
               `[${this.platformId}] Submit button not found or not ready within timeout, and editor did not empty early. Attempting verification as a fallback.`
             );
             // Attempt verification even if button wasn't found, as platform might auto-process
             const verificationSuccess = await this._verifySubmissionAttempted(); // No argument passed
             if (verificationSuccess) {
-              this.logger.info(`[${this.platformId}] Fallback verification successful (editor emptied).`);
+              this.logger.info(
+                `[${this.platformId}] Fallback verification successful (editor emptied).`
+              );
             } else {
-              this.logger.warn(`[${this.platformId}] Fallback verification failed (editor did not empty). Automation may not have succeeded.`);
+              this.logger.warn(
+                `[${this.platformId}] Fallback verification failed (editor did not empty). Automation may not have succeeded.`
+              );
             }
           }
-        } catch (error) { // Catches errors from findEditor, insertText, findSubmitButton, or verification
+        } catch (error) {
+          // Catches errors from findEditor, insertText, findSubmitButton, or verification
           this.logger.error(
             `[${this.platformId}] Error during processContent execution:`,
             error
           );
         } finally {
-            // Always clear storage after attempting processing, regardless of success or failure
-            // to prevent reprocessing stale data on page reload or re-injection.
-            this.logger.info(`[${this.platformId}] Clearing WebUI injection storage keys after processContent attempt.`);
-            chrome.storage.local.remove([
-                STORAGE_KEYS.EXTRACTED_CONTENT,
-                STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
-                STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
-                STORAGE_KEYS.CONTENT_READY_FLAG,
-                // Also clear the target tab ID and script injected flag, as this specific injection sequence is done.
-                STORAGE_KEYS.WEBUI_INJECTION_TARGET_TAB_ID,
-                STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID,
-                STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG
-            ]);
+          // Always clear storage after attempting processing, regardless of success or failure
+          // to prevent reprocessing stale data on page reload or re-injection.
+          this.logger.info(
+            `[${this.platformId}] Clearing WebUI injection storage keys after processContent attempt.`
+          );
+          chrome.storage.local.remove([
+            STORAGE_KEYS.EXTRACTED_CONTENT,
+            STORAGE_KEYS.WEBUI_INJECTION_FORMATTED_CONTENT,
+            STORAGE_KEYS.WEBUI_INJECTION_PROMPT_CONTENT,
+            STORAGE_KEYS.CONTENT_READY_FLAG,
+            // Also clear the target tab ID and script injected flag, as this specific injection sequence is done.
+            STORAGE_KEYS.WEBUI_INJECTION_TARGET_TAB_ID,
+            STORAGE_KEYS.WEBUI_INJECTION_PLATFORM_ID,
+            STORAGE_KEYS.WEBUI_INJECTION_SCRIPT_INJECTED_FLAG,
+          ]);
         }
       }
     );
@@ -794,7 +904,8 @@ class BasePlatform extends PlatformInterface {
    * @returns {string} The full structured prompt
    */
   createStructuredPrompt(prePrompt, formattedContent) {
-    if (!formattedContent || formattedContent.trim() === '') { // Check for null, undefined, or empty string
+    if (!formattedContent || formattedContent.trim() === '') {
+      // Check for null, undefined, or empty string
       this.logger.info(
         `[${this.platformId}] No formatted content provided, returning only the prompt.`
       );

@@ -156,14 +156,13 @@ async function getAllPlatformConfigs() {
   }
 }
 
-
 // Define the ConfigService object with all exported functions
 const ConfigService = {
   getApiConfig,
   getDisplayConfig,
   getPlatformApiConfig,
   getPlatformDisplayConfig,
-  getAllPlatformConfigs
+  getAllPlatformConfigs,
 };
 
 export default ConfigService;

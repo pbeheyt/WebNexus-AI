@@ -7,7 +7,10 @@ import { useState, useEffect, useRef } from 'react';
  * @param {number} minimumDuration - The minimum time (in ms) the loading state should be visible.
  * @returns {boolean} - Whether the loading UI should be shown.
  */
-export function useMinimumLoadingTime(isActuallyLoading, minimumDuration = 500) {
+export function useMinimumLoadingTime(
+  isActuallyLoading,
+  minimumDuration = 500
+) {
   const [shouldShowLoading, setShouldShowLoading] = useState(false);
   const loadingStartTimeRef = useRef(null);
 

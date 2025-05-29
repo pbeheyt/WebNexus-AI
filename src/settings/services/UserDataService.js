@@ -1,7 +1,10 @@
 // src/services/UserDataService.js
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import { logger } from '../../shared/logger.js';
-import { ensureDefaultPrompts, performFullPromptRepopulation } from '../../shared/utils/prompt-utils.js';
+import {
+  ensureDefaultPrompts,
+  performFullPromptRepopulation,
+} from '../../shared/utils/prompt-utils.js';
 import {
   validateCredentialsData,
   validateModelParametersSettingsData,
@@ -41,7 +44,10 @@ class UserDataService {
       return { success: true };
     } catch (error) {
       logger.service.error(`Error exporting ${dataType}:`, error);
-      return { success: false, error: error.message || `Unknown ${dataType} export error` };
+      return {
+        success: false,
+        error: error.message || `Unknown ${dataType} export error`,
+      };
     }
   }
 
@@ -58,10 +64,7 @@ class UserDataService {
           const fileContent = event.target.result;
           const parsedJson = JSON.parse(fileContent);
 
-          if (
-            !parsedJson ||
-            typeof parsedJson.data === 'undefined'
-          ) {
+          if (!parsedJson || typeof parsedJson.data === 'undefined') {
             throw new Error(
               `Invalid file format: Missing essential data structure.`
             );
@@ -85,29 +88,43 @@ class UserDataService {
           } else if (expectedDataType === 'WebNexusAI-Credentials_v1') {
             validationResult = await validateCredentialsData(parsedJson.data);
           } else if (expectedDataType === 'WebNexusAI-ModelParameters_v1') {
-            validationResult = await validateModelParametersSettingsData(parsedJson.data);
+            validationResult = await validateModelParametersSettingsData(
+              parsedJson.data
+            );
           } else {
-            throw new Error(`Unknown expectedDataType for validation: ${expectedDataType}`);
+            throw new Error(
+              `Unknown expectedDataType for validation: ${expectedDataType}`
+            );
           }
 
           if (!validationResult.isValid) {
-            throw new Error(`Import validation failed: ${validationResult.error}`);
+            throw new Error(
+              `Import validation failed: ${validationResult.error}`
+            );
           }
 
-          if (storageKey) { // Single setting import
+          if (storageKey) {
+            // Single setting import
             if (typeof parsedJson.data !== 'object') {
-              throw new Error('Data for single setting import must be an object.');
+              throw new Error(
+                'Data for single setting import must be an object.'
+              );
             }
-            await chrome.storage.local.set({ [storageKey]: parsedJson.data || {} });
+            await chrome.storage.local.set({
+              [storageKey]: parsedJson.data || {},
+            });
             if (storageKey === STORAGE_KEYS.USER_CUSTOM_PROMPTS) {
               await ensureDefaultPrompts();
             }
-          } else { // All settings import
-            const { prompts, credentials, modelParametersSettings } = parsedJson.data;
+          } else {
+            // All settings import
+            const { prompts, credentials, modelParametersSettings } =
+              parsedJson.data;
             await chrome.storage.local.set({
               [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: prompts || {},
               [STORAGE_KEYS.API_CREDENTIALS]: credentials || {},
-              [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: modelParametersSettings || {},
+              [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]:
+                modelParametersSettings || {},
             });
             await ensureDefaultPrompts();
           }
@@ -123,7 +140,10 @@ class UserDataService {
         }
       };
       reader.onerror = (error) => {
-        logger.service.error(`Error reading file for ${expectedDataType} import:`, error);
+        logger.service.error(
+          `Error reading file for ${expectedDataType} import:`,
+          error
+        );
         resolve({ success: false, error: 'Failed to read the import file.' });
       };
       reader.readAsText(fileObject);
@@ -140,7 +160,8 @@ class UserDataService {
     const dataBundle = {
       prompts: storedData[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {},
       credentials: storedData[STORAGE_KEYS.API_CREDENTIALS] || {},
-      modelParametersSettings: storedData[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {},
+      modelParametersSettings:
+        storedData[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {},
     };
     return this._handleExport(dataBundle, 'WebNexusAI-AllSettings', 'all');
   }
@@ -154,23 +175,32 @@ class UserDataService {
     const dataToExport = result[storageKey] || {};
     // Construct dataType like "WebNexusAI-Prompts"
     const dataType = `WebNexusAI-${settingNameForFileAndType.charAt(0).toUpperCase() + settingNameForFileAndType.slice(1)}`;
-    return this._handleExport(dataToExport, dataType, settingNameForFileAndType.toLowerCase());
+    return this._handleExport(
+      dataToExport,
+      dataType,
+      settingNameForFileAndType.toLowerCase()
+    );
   }
 
   async importSingleSetting(storageKey, fileObject) {
     // Determine settingNameFromFileAndType based on storageKey for dataType validation
     let settingNameForType;
-    if (storageKey === STORAGE_KEYS.USER_CUSTOM_PROMPTS) settingNameForType = 'Prompts';
-    else if (storageKey === STORAGE_KEYS.API_CREDENTIALS) settingNameForType = 'Credentials';
-    else if (storageKey === STORAGE_KEYS.MODEL_PARAMETER_SETTINGS) settingNameForType = 'ModelParameters';
+    if (storageKey === STORAGE_KEYS.USER_CUSTOM_PROMPTS)
+      settingNameForType = 'Prompts';
+    else if (storageKey === STORAGE_KEYS.API_CREDENTIALS)
+      settingNameForType = 'Credentials';
+    else if (storageKey === STORAGE_KEYS.MODEL_PARAMETER_SETTINGS)
+      settingNameForType = 'ModelParameters';
     else throw new Error('Invalid storage key for single import.');
-    
+
     const expectedDataType = `WebNexusAI-${settingNameForType}_v1`;
     return this._handleImport(fileObject, expectedDataType, storageKey);
   }
 
   async _resetPrompts() {
-    logger.service.info('Resetting all prompts and triggering direct repopulation...');
+    logger.service.info(
+      'Resetting all prompts and triggering direct repopulation...'
+    );
     try {
       // Remove prompts and the population flag
       await chrome.storage.local.remove([
@@ -186,7 +216,9 @@ class UserDataService {
 
       if (repopulationSuccess) {
         // Set the flag again after successful direct repopulation
-        await chrome.storage.local.set({ [STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_FLAG]: true });
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_FLAG]: true,
+        });
         logger.service.info(
           'Prompts directly repopulated and flag set successfully.'
         );
@@ -194,7 +226,10 @@ class UserDataService {
         throw new Error('Direct prompt repopulation failed.');
       }
     } catch (error) {
-      logger.service.error('Error during prompt reset and direct repopulation:', error);
+      logger.service.error(
+        'Error during prompt reset and direct repopulation:',
+        error
+      );
       throw error; // Re-throw to be caught by the calling function
     }
   }
@@ -212,7 +247,9 @@ class UserDataService {
   }
 
   async resetSelectedSettings(dataType) {
-    logger.service.info(`Attempting to reset settings for data type: ${dataType}`);
+    logger.service.info(
+      `Attempting to reset settings for data type: ${dataType}`
+    );
     try {
       if (dataType === 'all') {
         logger.service.info('Resetting all settings...');
@@ -232,7 +269,10 @@ class UserDataService {
       return { success: true };
     } catch (error) {
       logger.service.error(`Error resetting settings for ${dataType}:`, error);
-      return { success: false, error: error.message || `Unknown reset error for ${dataType}` };
+      return {
+        success: false,
+        error: error.message || `Unknown reset error for ${dataType}`,
+      };
     }
   }
 }

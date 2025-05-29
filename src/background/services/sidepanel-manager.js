@@ -10,24 +10,28 @@ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
  * @param {Object} sender - Message sender, potentially containing `sender.tab.id`.
  * @param {Function} sendResponse - Function to send the response back.
  */
-        export async function toggleSidePanel(message, sender, sendResponse) {
-          let targetTabId;
-          let newState; // To store the final state (true for open, false for closed)
-          try {
-            logger.background.info(
-              'Handling sidepanel toggle request'
-            );
-            if (!chrome.sidePanel || typeof chrome.sidePanel.setOptions !== 'function' || typeof chrome.sidePanel.open !== 'function') {
-              logger.background.error('Side Panel API is not available. Cannot toggle side panel.');
-              sendResponse({
-                success: false,
-                error: 'SIDE_PANEL_UNSUPPORTED',
-                message: 'Side Panel feature requires a newer Chrome version (114+).',
-                tabId: message?.tabId || sender?.tab?.id || null,
-                visible: false, // Assume not visible if API is missing
-              });
-              return; // Exit early
-            }
+export async function toggleSidePanel(message, sender, sendResponse) {
+  let targetTabId;
+  let newState; // To store the final state (true for open, false for closed)
+  try {
+    logger.background.info('Handling sidepanel toggle request');
+    if (
+      !chrome.sidePanel ||
+      typeof chrome.sidePanel.setOptions !== 'function' ||
+      typeof chrome.sidePanel.open !== 'function'
+    ) {
+      logger.background.error(
+        'Side Panel API is not available. Cannot toggle side panel.'
+      );
+      sendResponse({
+        success: false,
+        error: 'SIDE_PANEL_UNSUPPORTED',
+        message: 'Side Panel feature requires a newer Chrome version (114+).',
+        tabId: message?.tabId || sender?.tab?.id || null,
+        visible: false, // Assume not visible if API is missing
+      });
+      return; // Exit early
+    }
 
     // Determine the target tab ID
     const explicitTabId = message?.tabId || sender?.tab?.id;
@@ -61,7 +65,10 @@ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
       );
       // Force state to closed and disable panel
       newState = false;
-      await SidePanelStateManager.setSidePanelVisibilityForTab(targetTabId, false);
+      await SidePanelStateManager.setSidePanelVisibilityForTab(
+        targetTabId,
+        false
+      );
       await chrome.sidePanel.setOptions({ tabId: targetTabId, enabled: false });
 
       sendResponse({
@@ -85,10 +92,11 @@ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
     if (currentState === false) {
       // Current state is closed, so we intend to open (enable) it
       newState = true;
-      logger.background.info(
-        `Action: Enable sidepanel for tab ${targetTabId}`
+      logger.background.info(`Action: Enable sidepanel for tab ${targetTabId}`);
+      await SidePanelStateManager.setSidePanelVisibilityForTab(
+        targetTabId,
+        true
       );
-      await SidePanelStateManager.setSidePanelVisibilityForTab(targetTabId, true);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         path: `sidepanel.html?tabId=${targetTabId}`, // Pass tabId via URL
@@ -103,7 +111,10 @@ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
       logger.background.info(
         `Action: Disable sidepanel for tab ${targetTabId}`
       );
-      await SidePanelStateManager.setSidePanelVisibilityForTab(targetTabId, false);
+      await SidePanelStateManager.setSidePanelVisibilityForTab(
+        targetTabId,
+        false
+      );
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         enabled: false,
@@ -140,11 +151,7 @@ import { isSidePanelAllowedPage } from '../../shared/utils/content-utils.js';
  * @param {function} sendResponse - Function to call to send the response.
  * @returns {boolean} - True to indicate an asynchronous response.
  */
-export function handleToggleSidePanelAction(
-  message,
-  sender,
-  sendResponse
-) {
+export function handleToggleSidePanelAction(message, sender, sendResponse) {
   logger.background.info(
     'Received toggleSidePanelAction request via message router'
   );
@@ -154,24 +161,37 @@ export function handleToggleSidePanelAction(
   return true; // Keep channel open for async response
 }
 
-export async function handleCloseCurrentSidePanelRequest(message, sender, sendResponse) {
+export async function handleCloseCurrentSidePanelRequest(
+  message,
+  sender,
+  sendResponse
+) {
   const { tabId } = message;
 
   if (typeof tabId !== 'number') {
-    logger.background.error('handleCloseCurrentSidePanelRequest: Invalid or missing tabId.', message);
+    logger.background.error(
+      'handleCloseCurrentSidePanelRequest: Invalid or missing tabId.',
+      message
+    );
     sendResponse({ success: false, error: 'Invalid tabId provided.' });
     return false; // Indicate synchronous response for this error path
   }
 
-  logger.background.info(`Closing sidepanel for tab ${tabId} by direct request from sidepanel.`);
+  logger.background.info(
+    `Closing sidepanel for tab ${tabId} by direct request from sidepanel.`
+  );
 
   try {
     await SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false);
     if (chrome.sidePanel && typeof chrome.sidePanel.setOptions === 'function') {
       await chrome.sidePanel.setOptions({ tabId, enabled: false });
-      logger.background.info(`Sidepanel for tab ${tabId} successfully closed and state updated.`);
+      logger.background.info(
+        `Sidepanel for tab ${tabId} successfully closed and state updated.`
+      );
     } else {
-      logger.background.warn(`Side Panel API not available. Cannot setOptions to close for tab ${tabId}. State was updated.`);
+      logger.background.warn(
+        `Side Panel API not available. Cannot setOptions to close for tab ${tabId}. State was updated.`
+      );
       // The state is updated, but the panel might not visually close if API is missing.
       // This is an edge case, as the sidepanel itself calls this, implying API was available to open it.
     }
@@ -179,10 +199,13 @@ export async function handleCloseCurrentSidePanelRequest(message, sender, sendRe
       success: true,
       tabId,
       visible: false,
-      message: 'Side Panel closed successfully.'
+      message: 'Side Panel closed successfully.',
     });
   } catch (error) {
-    logger.background.error(`Error closing sidepanel for tab ${tabId} via direct request:`, error);
+    logger.background.error(
+      `Error closing sidepanel for tab ${tabId} via direct request:`,
+      error
+    );
     sendResponse({
       success: false,
       error: error.message || 'Failed to close side panel.',

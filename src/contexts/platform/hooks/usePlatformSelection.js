@@ -26,15 +26,15 @@ export function usePlatformSelection(
   const [isLoading, setIsLoading] = useState(true);
 
   // Effect to determine initial platform selection
-    useEffect(() => {
-      if (!tabId || !platformConfigs.length) {
-        // Don't try to select if tabId or configs aren't ready
-        // Keep loading true until tabId and configs are available
-        setIsLoading(true);
-        return;
-      }
-
+  useEffect(() => {
+    if (!tabId || !platformConfigs.length) {
+      // Don't try to select if tabId or configs aren't ready
+      // Keep loading true until tabId and configs are available
       setIsLoading(true);
+      return;
+    }
+
+    setIsLoading(true);
     const determineInitialPlatform = async () => {
       try {
         // Construct available platforms based on credentials (for sidepanel)
@@ -47,10 +47,13 @@ export function usePlatformSelection(
           availablePlatforms.map((p) => p.id)
         );
 
-        if (availablePlatforms.length === 0 && interfaceType === INTERFACE_SOURCES.SIDEPANEL) {
-           setSelectedPlatformId(null); // No platforms available
-           setIsLoading(false);
-           return;
+        if (
+          availablePlatforms.length === 0 &&
+          interfaceType === INTERFACE_SOURCES.SIDEPANEL
+        ) {
+          setSelectedPlatformId(null); // No platforms available
+          setIsLoading(false);
+          return;
         }
 
         // Get preferences
@@ -71,7 +74,7 @@ export function usePlatformSelection(
           interfaceType === INTERFACE_SOURCES.SIDEPANEL &&
           lastUsedTabPlatform &&
           platformConfigs.some((p) => p.id === lastUsedTabPlatform) && // Check if it's a known platform
-          availablePlatformIds.has(lastUsedTabPlatform)                // Check if available based on creds
+          availablePlatformIds.has(lastUsedTabPlatform) // Check if available based on creds
         ) {
           platformToUse = lastUsedTabPlatform;
         }
@@ -81,7 +84,7 @@ export function usePlatformSelection(
           !platformToUse &&
           globalPlatformPref &&
           platformConfigs.some((p) => p.id === globalPlatformPref) && // Check if it's a known platform
-          availablePlatformIds.has(globalPlatformPref)                // Check if available based on creds
+          availablePlatformIds.has(globalPlatformPref) // Check if available based on creds
         ) {
           platformToUse = globalPlatformPref;
         }
@@ -93,9 +96,8 @@ export function usePlatformSelection(
 
         // Update state only if it changes
         if (platformToUse !== selectedPlatformId) {
-             setSelectedPlatformId(platformToUse);
+          setSelectedPlatformId(platformToUse);
         }
-
       } catch (error) {
         logger.context.error('Error determining initial platform:', error);
         setSelectedPlatformId(null); // Fallback on error
@@ -105,13 +107,13 @@ export function usePlatformSelection(
     };
 
     determineInitialPlatform();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tabId,
     platformConfigs,
     credentialStatus,
     globalStorageKey,
-    interfaceType
+    interfaceType,
   ]);
 
   // Callback to handle platform selection
@@ -162,7 +164,7 @@ export function usePlatformSelection(
       platformConfigs,
       globalStorageKey,
       onPlatformSelected,
-      interfaceType
+      interfaceType,
     ]
   );
 

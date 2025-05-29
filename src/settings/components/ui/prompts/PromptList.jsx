@@ -20,7 +20,7 @@ const PromptList = ({
   const [prompts, setPrompts] = useState([]);
   const [filteredPrompts, setFilteredPrompts] = useState([]);
   const [defaultPromptIds, setDefaultPromptIds] = useState({});
-  
+
   const promptListRef = useRef(null);
   const [promptListHasScrollbar, setPromptListHasScrollbar] = useState(false);
 
@@ -28,31 +28,46 @@ const PromptList = ({
   useEffect(() => {
     const loadData = async () => {
       try {
-        const result = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
-        const customPromptsByType = result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+        const result = await chrome.storage.local.get(
+          STORAGE_KEYS.USER_CUSTOM_PROMPTS
+        );
+        const customPromptsByType =
+          result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
         const uniquePromptsMap = new Map();
         const newDefaultPromptIds = {};
-        
-        Object.entries(customPromptsByType).forEach(([type, promptsInTypeObject]) => {
-          if (promptsInTypeObject && typeof promptsInTypeObject === 'object') {
-            if (promptsInTypeObject['_defaultPromptId_']) {
-              newDefaultPromptIds[type] = promptsInTypeObject['_defaultPromptId_'];
-            }
-            Object.entries(promptsInTypeObject).forEach(([id, promptObjectValue]) => {
-              if (id !== '_defaultPromptId_') {
-                uniquePromptsMap.set(id, {
-                  id,
-                  prompt: promptObjectValue,
-                  contentType: type,
-                  contentTypeLabel: contentTypeLabels[type] || type,
-                });
+
+        Object.entries(customPromptsByType).forEach(
+          ([type, promptsInTypeObject]) => {
+            if (
+              promptsInTypeObject &&
+              typeof promptsInTypeObject === 'object'
+            ) {
+              if (promptsInTypeObject['_defaultPromptId_']) {
+                newDefaultPromptIds[type] =
+                  promptsInTypeObject['_defaultPromptId_'];
               }
-            });
+              Object.entries(promptsInTypeObject).forEach(
+                ([id, promptObjectValue]) => {
+                  if (id !== '_defaultPromptId_') {
+                    uniquePromptsMap.set(id, {
+                      id,
+                      prompt: promptObjectValue,
+                      contentType: type,
+                      contentTypeLabel: contentTypeLabels[type] || type,
+                    });
+                  }
+                }
+              );
+            }
           }
-        });
-        
+        );
+
         const allPrompts = Array.from(uniquePromptsMap.values());
-        allPrompts.sort((a, b) => new Date(b.prompt.updatedAt || 0) - new Date(a.prompt.updatedAt || 0));
+        allPrompts.sort(
+          (a, b) =>
+            new Date(b.prompt.updatedAt || 0) -
+            new Date(a.prompt.updatedAt || 0)
+        );
         setPrompts(allPrompts);
         setDefaultPromptIds(newDefaultPromptIds);
       } catch (err) {
@@ -68,45 +83,52 @@ const PromptList = ({
     if (filterValue === 'all') {
       setFilteredPrompts(prompts);
     } else {
-      setFilteredPrompts(prompts.filter((item) => item.contentType === filterValue));
+      setFilteredPrompts(
+        prompts.filter((item) => item.contentType === filterValue)
+      );
     }
   }, [filterValue, prompts]);
 
-    // Check for scrollbar on prompt list when filteredPrompts changes or container resizes
-    useEffect(() => {
-      const handleResizeOrContentChange = () => {
-        if (promptListRef.current) {
-          const hasScrollbar = promptListRef.current.scrollHeight > promptListRef.current.clientHeight;
-          setPromptListHasScrollbar(hasScrollbar);
-        } else {
-          setPromptListHasScrollbar(false);
-        }
-      };
-
-      // Initial check when content changes or ref becomes available
-      handleResizeOrContentChange();
-
-      const observer = new ResizeObserver(handleResizeOrContentChange);
-      const currentObservedRef = promptListRef.current; // Capture current ref value for cleanup
-
-      if (currentObservedRef) {
-        observer.observe(currentObservedRef);
+  // Check for scrollbar on prompt list when filteredPrompts changes or container resizes
+  useEffect(() => {
+    const handleResizeOrContentChange = () => {
+      if (promptListRef.current) {
+        const hasScrollbar =
+          promptListRef.current.scrollHeight >
+          promptListRef.current.clientHeight;
+        setPromptListHasScrollbar(hasScrollbar);
+      } else {
+        setPromptListHasScrollbar(false);
       }
+    };
 
-      return () => {
-        if (currentObservedRef) {
-          observer.unobserve(currentObservedRef);
-        }
-        observer.disconnect();
-      };
-    }, [filteredPrompts, promptListRef]); // Dependencies updated to include promptListRef
+    // Initial check when content changes or ref becomes available
+    handleResizeOrContentChange();
+
+    const observer = new ResizeObserver(handleResizeOrContentChange);
+    const currentObservedRef = promptListRef.current; // Capture current ref value for cleanup
+
+    if (currentObservedRef) {
+      observer.observe(currentObservedRef);
+    }
+
+    return () => {
+      if (currentObservedRef) {
+        observer.unobserve(currentObservedRef);
+      }
+      observer.disconnect();
+    };
+  }, [filteredPrompts, promptListRef]); // Dependencies updated to include promptListRef
 
   // Listen for storage changes
   useEffect(() => {
     const handleStorageChange = (changes, area) => {
       if (area === 'local' && changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS]) {
-        logger.settings.info('Custom prompts changed, extracting new defaults...');
-        const newCustomPrompts = changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS].newValue || {};
+        logger.settings.info(
+          'Custom prompts changed, extracting new defaults...'
+        );
+        const newCustomPrompts =
+          changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS].newValue || {};
         const newDefaultIds = {};
         Object.entries(newCustomPrompts).forEach(([type, typeData]) => {
           if (typeData && typeData['_defaultPromptId_']) {
@@ -142,22 +164,22 @@ const PromptList = ({
 
   return (
     <>
-      <SettingsCard className="mb-6 flex flex-col justify-center items-center"> 
-          <h3 className='text-base font-semibold text-theme-primary mb-4'>
-            Content Type Selection
-          </h3>
-          <CustomSelect
-            options={filterOptions}
-            selectedValue={filterValue}
-            onChange={onFilterChange}
-            placeholder='Filter by Content Type'
-          />
+      <SettingsCard className='mb-6 flex flex-col justify-center items-center'>
+        <h3 className='text-base font-semibold text-theme-primary mb-4'>
+          Content Type Selection
+        </h3>
+        <CustomSelect
+          options={filterOptions}
+          selectedValue={filterValue}
+          onChange={onFilterChange}
+          placeholder='Filter by Content Type'
+        />
       </SettingsCard>
 
       <div className='border-b border-theme mb-6 select-none'></div>
 
       {filteredPrompts.length === 0 ? (
-        <div 
+        <div
           ref={promptListRef} // Ref for scrollbar check even when empty
           className={`empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme ${promptListHasScrollbar ? 'pr-4' : ''}`}
         >
@@ -170,10 +192,7 @@ const PromptList = ({
           </p>
         </div>
       ) : (
-        <div 
-          ref={promptListRef}
-          className={promptListClasses}
-        >
+        <div ref={promptListRef} className={promptListClasses}>
           {filteredPrompts.map((item) => (
             <button
               type='button'
@@ -197,7 +216,7 @@ const PromptList = ({
                   <ContentTypeIcon
                     contentType={item.contentType}
                     className='w-4 h-4 flex items-center justify-center select-none'
-                    />
+                  />
                   <span>{item.contentTypeLabel}</span>
                 </div>
                 {item.id === defaultPromptIds[item.contentType] && (

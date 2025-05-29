@@ -1,14 +1,7 @@
 // src/components/content/ContentContext.jsx
-import {
-  createContext,
-  useContext,
-} from 'react';
+import { createContext, useContext } from 'react';
 import PropTypes from 'prop-types';
-import {
-  useEffect,
-  useState,
-  useCallback,
-} from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import {
   determineContentType,

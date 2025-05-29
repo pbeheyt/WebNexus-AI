@@ -53,9 +53,13 @@ export const renderWithPlaceholdersRecursive = (children, mathMap) => {
         const mathData = mathMap.get(placeholder);
         if (mathData) {
           parts.push(
-            <Suspense 
-              key={`${placeholder}-${index}-${lastIndex}-suspense`} 
-              fallback={<span className="text-xs italic text-theme-secondary">Loading math...</span>}
+            <Suspense
+              key={`${placeholder}-${index}-${lastIndex}-suspense`}
+              fallback={
+                <span className='text-xs italic text-theme-secondary'>
+                  Loading math...
+                </span>
+              }
             >
               <LazyMathFormulaBlock
                 content={mathData.content}

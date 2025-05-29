@@ -36,7 +36,9 @@ export async function processWithDefaultPromptWebUI(tab) {
     );
 
     // 1. Get the default prompt ID and content from PROMPTS
-    const promptsResult = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
+    const promptsResult = await chrome.storage.local.get(
+      STORAGE_KEYS.USER_CUSTOM_PROMPTS
+    );
     const customPrompts = promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
     const typeData = customPrompts[contentType] || {};
     const defaultPromptId = typeData['_defaultPromptId_'];
@@ -51,7 +53,7 @@ export async function processWithDefaultPromptWebUI(tab) {
 
     // 2. Get the actual prompt content from the same result
     const promptsByType = promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-        const promptObject = promptsByType[contentType]?.[defaultPromptId];
+    const promptObject = promptsByType[contentType]?.[defaultPromptId];
 
     if (!promptObject || !promptObject.content) {
       logger.background.error(
@@ -68,7 +70,8 @@ export async function processWithDefaultPromptWebUI(tab) {
     const platformResult = await chrome.storage.sync.get(
       STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID
     );
-    const platformId = platformResult[STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID] || 'chatgpt';
+    const platformId =
+      platformResult[STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID] || 'chatgpt';
     logger.background.info(`Using platform: ${platformId} for popup flow.`);
 
     // 4. Call processContent
@@ -152,22 +155,22 @@ export async function processContent(params) {
         logger.background.warn('Content extraction completed with issues');
       }
 
-    // 3. Get extracted content (Only if extracting)
-    const storageResult = await chrome.storage.local.get(
-      STORAGE_KEYS.EXTRACTED_CONTENT // This key's value is 'extracted_content'
-    );
-    const extractedContent = storageResult[STORAGE_KEYS.EXTRACTED_CONTENT]; // Access using the actual key string
-
-    if (!extractedContent) {
-      logger.background.error(
-        'processContent: Failed to retrieve extracted content from storage after extraction attempt.'
+      // 3. Get extracted content (Only if extracting)
+      const storageResult = await chrome.storage.local.get(
+        STORAGE_KEYS.EXTRACTED_CONTENT // This key's value is 'extracted_content'
       );
-      // Consider returning error or proceeding with null content
-      return {
-        success: false,
-        error: 'Failed to extract content from the page.',
-      };
-    }
+      const extractedContent = storageResult[STORAGE_KEYS.EXTRACTED_CONTENT]; // Access using the actual key string
+
+      if (!extractedContent) {
+        logger.background.error(
+          'processContent: Failed to retrieve extracted content from storage after extraction attempt.'
+        );
+        // Consider returning error or proceeding with null content
+        return {
+          success: false,
+          error: 'Failed to extract content from the page.',
+        };
+      }
 
       // 4. Format content (Only if extracting and content exists)
       // Assign to the outer scope variable
@@ -219,7 +222,9 @@ export async function processContent(params) {
     );
 
     // Determine contentType only if context was included, otherwise it's irrelevant
-    const finalContentType = includeContext ? determineContentType(params.url) : null;
+    const finalContentType = includeContext
+      ? determineContentType(params.url)
+      : null;
 
     return {
       success: true,

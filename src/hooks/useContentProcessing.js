@@ -129,17 +129,17 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
    */
   const processContentViaApi = useCallback(
     async (options = {}) => {
-        const {
-            platformId,
-            promptId,
-            promptContent,
-            modelId = null,
-            streaming = false,
-            onStreamChunk = null,
-            conversationHistory = [],
-            isContentExtractionEnabled,
-            isThinkingModeEnabled,
-        } = options;
+      const {
+        platformId,
+        promptId,
+        promptContent,
+        modelId = null,
+        streaming = false,
+        onStreamChunk = null,
+        conversationHistory = [],
+        isContentExtractionEnabled,
+        isThinkingModeEnabled,
+      } = options;
 
       if (!currentTab?.id) {
         const error = new Error('No active tab available');

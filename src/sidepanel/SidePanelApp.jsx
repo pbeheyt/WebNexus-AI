@@ -7,7 +7,10 @@ import React, {
   useMemo,
 } from 'react';
 
-import { STORAGE_KEYS, DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG } from '../shared/constants';
+import {
+  STORAGE_KEYS,
+  DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
+} from '../shared/constants';
 import { logger } from '../shared/logger';
 import { robustSendMessage } from '../shared/utils/message-utils';
 import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
@@ -34,22 +37,34 @@ export default function SidePanelApp() {
   // Use the custom hook for shortcut handling
   const handleCloseShortcut = useCallback(async () => {
     if (!tabId) {
-      logger.sidepanel.warn('SidepanelApp: tabId prop is missing, cannot handle close shortcut.');
+      logger.sidepanel.warn(
+        'SidepanelApp: tabId prop is missing, cannot handle close shortcut.'
+      );
       return;
     }
-    logger.sidepanel.info(`Shortcut pressed in sidepanel (tabId: ${tabId}), attempting to close.`);
+    logger.sidepanel.info(
+      `Shortcut pressed in sidepanel (tabId: ${tabId}), attempting to close.`
+    );
     try {
       const response = await robustSendMessage({
         action: 'closeCurrentSidePanel',
         tabId: tabId,
       });
       if (response && response.success) {
-        logger.sidepanel.info(`Side panel close command acknowledged for tab ${tabId}.`);
+        logger.sidepanel.info(
+          `Side panel close command acknowledged for tab ${tabId}.`
+        );
       } else {
-        logger.sidepanel.error(`Failed to close side panel for tab ${tabId}:`, response?.error);
+        logger.sidepanel.error(
+          `Failed to close side panel for tab ${tabId}:`,
+          response?.error
+        );
       }
     } catch (err) {
-      logger.sidepanel.error(`Error sending closeCurrentSidePanel message for tab ${tabId}:`, err);
+      logger.sidepanel.error(
+        `Error sending closeCurrentSidePanel message for tab ${tabId}:`,
+        err
+      );
     }
   }, [tabId]);
 
@@ -171,9 +186,7 @@ export default function SidePanelApp() {
     }
 
     if (!(chrome && chrome.runtime && chrome.runtime.connect)) {
-      logger.sidepanel.warn(
-        'Chrome runtime connect API not available.'
-      );
+      logger.sidepanel.warn('Chrome runtime connect API not available.');
       return;
     }
 
@@ -212,14 +225,14 @@ export default function SidePanelApp() {
     if (rafIdHeightCalc.current) {
       cancelAnimationFrame(rafIdHeightCalc.current);
     }
-    
+
     rafIdHeightCalc.current = requestAnimationFrame(() => {
       const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
       const collapsibleHeight = headerExpanded
-      ? collapsibleHeaderRef.current?.offsetHeight || 0
-      : 0;
+        ? collapsibleHeaderRef.current?.offsetHeight || 0
+        : 0;
       const inputHeight = userInputRef.current?.offsetHeight || 0;
-      
+
       if (
         typeof appHeaderHeight === 'number' &&
         typeof collapsibleHeight === 'number' &&
@@ -231,9 +244,9 @@ export default function SidePanelApp() {
       }
       rafIdHeightCalc.current = null;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerExpanded, textSize]);
-  
+
   const debouncedCalculateHeight = useMemo(
     () => debounce(calculateAndSetHeight, 150),
     [calculateAndSetHeight]
@@ -262,8 +275,8 @@ export default function SidePanelApp() {
           aria-live='polite'
           aria-busy='true'
         >
-          <SpinnerIcon className="w-8 h-8 text-theme-secondary" />
-          <span className="sr-only">Loading...</span>
+          <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
+          <span className='sr-only'>Loading...</span>
         </div>
       ) : tabId ? (
         <>
@@ -297,9 +310,9 @@ export default function SidePanelApp() {
           </div>
 
           {isReady && tabId && isRefreshing && (
-            <div className="absolute inset-0 bg-theme-primary/75 dark:bg-theme-primary/75 z-20 flex items-center justify-center pointer-events-auto">
-              <SpinnerIcon className="w-8 h-8 text-theme-secondary" />
-              <span className="sr-only">Refreshing...</span>
+            <div className='absolute inset-0 bg-theme-primary/75 dark:bg-theme-primary/75 z-20 flex items-center justify-center pointer-events-auto'>
+              <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
+              <span className='sr-only'>Refreshing...</span>
             </div>
           )}
 
@@ -321,7 +334,9 @@ export default function SidePanelApp() {
           <div className='text-center text-error'>
             <ErrorIcon className='h-10 w-10 mx-auto mb-2 text-error' />
             <p className='font-semibold'>Initialization Error</p>
-            <p className='text-sm'>Side Panel context could not be determined.</p>
+            <p className='text-sm'>
+              Side Panel context could not be determined.
+            </p>
             <p className='text-xs mt-2'>(Missing or invalid tabId)</p>
           </div>
         </div>

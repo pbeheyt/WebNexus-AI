@@ -33,7 +33,10 @@ class ContentFormatter {
           break;
       }
     } catch (error) {
-      logger.service.error(`Error formatting content type ${contentType}:`, error);
+      logger.service.error(
+        `Error formatting content type ${contentType}:`,
+        error
+      );
       formatted = `[Error: Failed to format content of type ${contentType}]`;
     }
 
@@ -187,7 +190,9 @@ class ContentFormatter {
         .replace(/\n{3,}/g, '\n') // Consolidate excessive newlines
         .trim();
     } else {
-      logger.service.warn('PDF content is not a string after processing, converting.');
+      logger.service.warn(
+        'PDF content is not a string after processing, converting.'
+      );
       contentText = String(contentText); // Ensure it's a string
     }
 

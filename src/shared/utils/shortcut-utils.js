@@ -9,9 +9,10 @@ export function formatShortcutToStringDisplay(shortcutObj) {
 
   let displayKey = shortcutObj.key.toLowerCase();
   if (displayKey === ' ') displayKey = 'Space';
-  else if (displayKey.startsWith('arrow')) displayKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
+  else if (displayKey.startsWith('arrow'))
+    displayKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
   else displayKey = displayKey.toUpperCase();
 
-          parts.push(displayKey);
-          return parts.join(' + ');
-        }
+  parts.push(displayKey);
+  return parts.join(' + ');
+}

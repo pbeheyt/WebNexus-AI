@@ -44,25 +44,34 @@ class ClaudeApiService extends BaseApiService {
 
     // Enable Thinking Mode using the 'thinking' parameter if requested and budget is valid
     if (params.isThinkingEnabledForRequest && params.thinkingBudget) {
-        const minBudget = 1024; // Minimum required budget by Claude API
-        // Validate the provided budget against API constraints
-        if (params.thinkingBudget >= minBudget && params.thinkingBudget < params.maxTokens) {
-            // Add the 'thinking' object to the request payload
-            requestPayload.thinking = {
-                type: 'enabled',
-                budget_tokens: params.thinkingBudget,
-            };
-            this.logger.info(`[${this.platformId}] Enabling Extended Thinking for model: ${params.model} with budget: ${params.thinkingBudget}`);
-        } else {
-            // Log a warning and disable thinking if the budget is invalid
-            this.logger.warn(`[${this.platformId}] Invalid thinking budget (${params.thinkingBudget}) provided for max_tokens (${params.maxTokens}). Min required: ${minBudget}, must be less than max_tokens. Disabling thinking for this request.`);
-            // Ensure the flag reflects that thinking won't actually be enabled
-            params.isThinkingEnabledForRequest = false;
-        }
+      const minBudget = 1024; // Minimum required budget by Claude API
+      // Validate the provided budget against API constraints
+      if (
+        params.thinkingBudget >= minBudget &&
+        params.thinkingBudget < params.maxTokens
+      ) {
+        // Add the 'thinking' object to the request payload
+        requestPayload.thinking = {
+          type: 'enabled',
+          budget_tokens: params.thinkingBudget,
+        };
+        this.logger.info(
+          `[${this.platformId}] Enabling Extended Thinking for model: ${params.model} with budget: ${params.thinkingBudget}`
+        );
+      } else {
+        // Log a warning and disable thinking if the budget is invalid
+        this.logger.warn(
+          `[${this.platformId}] Invalid thinking budget (${params.thinkingBudget}) provided for max_tokens (${params.maxTokens}). Min required: ${minBudget}, must be less than max_tokens. Disabling thinking for this request.`
+        );
+        // Ensure the flag reflects that thinking won't actually be enabled
+        params.isThinkingEnabledForRequest = false;
+      }
     } else if (params.isThinkingEnabledForRequest && !params.thinkingBudget) {
-         // Log a warning if thinking was requested but no budget was resolved
-         this.logger.warn(`[${this.platformId}] Thinking mode requested but no budget was provided in resolved params. Thinking will not be enabled.`);
-         params.isThinkingEnabledForRequest = false; // Ensure flag is accurate
+      // Log a warning if thinking was requested but no budget was resolved
+      this.logger.warn(
+        `[${this.platformId}] Thinking mode requested but no budget was provided in resolved params. Thinking will not be enabled.`
+      );
+      params.isThinkingEnabledForRequest = false; // Ensure flag is accurate
     }
 
     // Prepend conversation history if available
@@ -120,41 +129,56 @@ class ClaudeApiService extends BaseApiService {
 
         // Check for content block deltas (where text or thinking content arrives)
         if (data.type === 'content_block_delta' && data.delta) {
-            // Case 1: Standard text delta
-            if (data.delta.type === 'text_delta' && data.delta.text) {
-                return { type: 'content', chunk: data.delta.text };
-            }
-            // Case 2: Thinking content delta
-            else if (data.delta.type === 'thinking_delta' && data.delta.thinking) {
-                // Return a distinct type for thinking content
-                return { type: 'thinking', chunk: data.delta.thinking };
-            }
-            // Case 3: Signature delta (appears at the end of a thinking block)
-            else if (data.delta.type === 'signature_delta') {
-                // We don't need the signature for simple streaming, so ignore it
-                this.logger.info(`[${this.platformId}] Received signature delta (ignored).`);
-                return { type: 'ignore' };
-            }
+          // Case 1: Standard text delta
+          if (data.delta.type === 'text_delta' && data.delta.text) {
+            return { type: 'content', chunk: data.delta.text };
+          }
+          // Case 2: Thinking content delta
+          else if (
+            data.delta.type === 'thinking_delta' &&
+            data.delta.thinking
+          ) {
+            // Return a distinct type for thinking content
+            return { type: 'thinking', chunk: data.delta.thinking };
+          }
+          // Case 3: Signature delta (appears at the end of a thinking block)
+          else if (data.delta.type === 'signature_delta') {
+            // We don't need the signature for simple streaming, so ignore it
+            this.logger.info(
+              `[${this.platformId}] Received signature delta (ignored).`
+            );
+            return { type: 'ignore' };
+          }
         }
 
         // Check for explicit error messages within the stream data
         if (data.type === 'error') {
-            const streamErrorMessage = `Stream error: ${data.error?.type} - ${data.error?.message || 'Unknown stream error'}`;
-            this.logger.error(`[${this.platformId}] ${streamErrorMessage}`, data.error);
-            // Return an error object to be handled by the base class
-            return { type: 'error', error: streamErrorMessage };
+          const streamErrorMessage = `Stream error: ${data.error?.type} - ${data.error?.message || 'Unknown stream error'}`;
+          this.logger.error(
+            `[${this.platformId}] ${streamErrorMessage}`,
+            data.error
+          );
+          // Return an error object to be handled by the base class
+          return { type: 'error', error: streamErrorMessage };
         }
 
         // Check for explicit redacted thinking blocks (these usually appear whole, not via delta)
-         if (data.type === 'redacted_thinking') {
-             this.logger.info(`[${this.platformId}] Received full redacted thinking block (ignored).`);
-             return { type: 'ignore' };
-         }
-         // Also check if a content block *starts* as redacted thinking
-         if (data.type === 'content_block_start' && data.content_block?.type === 'redacted_thinking') {
-             this.logger.info(`[${this.platformId}] Started redacted thinking block (ignored).`);
-             return { type: 'ignore' };
-         }
+        if (data.type === 'redacted_thinking') {
+          this.logger.info(
+            `[${this.platformId}] Received full redacted thinking block (ignored).`
+          );
+          return { type: 'ignore' };
+        }
+        // Also check if a content block *starts* as redacted thinking
+        if (
+          data.type === 'content_block_start' &&
+          data.content_block?.type === 'redacted_thinking'
+        ) {
+          this.logger.info(
+            `[${this.platformId}] Started redacted thinking block (ignored).`
+          );
+          return { type: 'ignore' };
+        }
 
         // Ignore all other event types (e.g., 'message_start', 'message_delta', 'content_block_start', 'content_block_stop' for non-redacted blocks)
         // These are metadata and don't contain streamable content chunks themselves.

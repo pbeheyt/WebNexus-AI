@@ -103,7 +103,7 @@ export function UnifiedInput({
   const popupSendButtonDisabled = !value.trim() || disabled || isProcessing;
   const popupSendButtonStyle = popupSendButtonDisabled
     ? 'bg-gray-400 dark:bg-gray-600 text-white dark:text-gray-400' // Disabled state handled by IconButton
-    : 'bg-primary hover:bg-primary-dark text-white';  // Active state
+    : 'bg-primary hover:bg-primary-dark text-white'; // Active state
   const popupIconSize = 'w-3.5 h-3.5';
   const popupButtonSize = 'w-5 h-5 rounded';
 
@@ -131,7 +131,7 @@ export function UnifiedInput({
             ref={containerRef}
             onClick={handleContainerClick}
             onKeyDown={handleContainerClick}
-            role="presentation"
+            role='presentation'
             tabIndex={-1}
             className='input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all cursor-text'
           >
@@ -192,8 +192,8 @@ export function UnifiedInput({
           </div>
         </div>
       </div>
-  );
-}
+    );
+  }
 
   // --- Popup Variant ---
   else if (layoutVariant === 'popup') {
@@ -205,7 +205,7 @@ export function UnifiedInput({
             ref={containerRef}
             onClick={handleContainerClick}
             onKeyDown={handleContainerClick}
-            role="presentation"
+            role='presentation'
             tabIndex={-1}
             className='input-container relative cursor-text'
           >

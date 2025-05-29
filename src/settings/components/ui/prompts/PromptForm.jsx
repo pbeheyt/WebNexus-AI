@@ -3,7 +3,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import { logger } from '../../../../shared/logger';
-import { Button, useNotification, CustomSelect, TextArea, Input } from '../../../../components';
+import {
+  Button,
+  useNotification,
+  CustomSelect,
+  TextArea,
+  Input,
+} from '../../../../components';
 import {
   STORAGE_KEYS,
   CONTENT_TYPES,
@@ -58,25 +64,26 @@ const PromptForm = ({
       setOriginalFormData(initialData);
       setHasChanges(false);
     } else if (!isEditing) {
-       setFormData({
-          name: '',
-          content: '',
-          contentType: initialContentType,
+      setFormData({
+        name: '',
+        content: '',
+        contentType: initialContentType,
       });
       setOriginalFormData(null);
       setHasChanges(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt, isEditing, initialContentType]);
 
   useEffect(() => {
     if (isEditing && originalFormData) {
       const nameChanged = formData.name.trim() !== originalFormData.name.trim();
-      const contentChanged = formData.content.trim() !== originalFormData.content.trim();
+      const contentChanged =
+        formData.content.trim() !== originalFormData.content.trim();
       const typeChanged = formData.contentType !== originalFormData.contentType;
       setHasChanges(nameChanged || contentChanged || typeChanged);
     } else {
-       setHasChanges(false);
+      setHasChanges(false);
     }
   }, [formData, originalFormData, isEditing]);
 
@@ -87,7 +94,9 @@ const PromptForm = ({
         return;
       }
       try {
-        const result = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
+        const result = await chrome.storage.local.get(
+          STORAGE_KEYS.USER_CUSTOM_PROMPTS
+        );
         const customPrompts = result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
         const typeData = customPrompts[formData.contentType] || {};
         setIsDefaultForType(typeData['_defaultPromptId_'] === prompt.id);
@@ -102,147 +111,175 @@ const PromptForm = ({
     checkDefaultStatus();
   }, [prompt, isEditing, formData.contentType]);
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }, [setFormData]);
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    },
+    [setFormData]
+  );
 
-  const handleContentTypeChange = useCallback((selectedContentType) => {
-    setFormData((prev) => ({
-      ...prev,
-      contentType: selectedContentType,
-    }));
-  }, [setFormData]);
+  const handleContentTypeChange = useCallback(
+    (selectedContentType) => {
+      setFormData((prev) => ({
+        ...prev,
+        contentType: selectedContentType,
+      }));
+    },
+    [setFormData]
+  );
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setIsSavingActual(true);
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setIsSavingActual(true);
 
-    try {
-      const { name, content, contentType } = formData;
+      try {
+        const { name, content, contentType } = formData;
 
-      if (!name.trim()) {
-        error('Prompt Name is required.');
-        setIsSavingActual(false);
-        return;
-      }
-      if (name.length > MAX_PROMPT_NAME_LENGTH) {
-        error(`Prompt Name cannot exceed ${MAX_PROMPT_NAME_LENGTH} characters.`);
-        setIsSavingActual(false);
-        return;
-      }
-      if (!content.trim()) {
-        error('Prompt Content is required.');
-        setIsSavingActual(false);
-        return;
-      }
-      if (content.length > MAX_PROMPT_CONTENT_LENGTH) {
-        error(`Prompt Content cannot exceed ${MAX_PROMPT_CONTENT_LENGTH} characters.`);
-        setIsSavingActual(false);
-        return;
-      }
-      if (!contentType) {
-        error('Content Type is required.');
-        setIsSavingActual(false);
-        return;
-      }
-
-      const result = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
-      const customPromptsByType = result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-
-      if (!isEditing) {
-        const typeData = customPromptsByType[contentType] || {};
-        const actualPromptsInType = Object.keys(typeData).filter(key => key !== '_defaultPromptId_');
-        const currentPromptCount = actualPromptsInType.length;
-        if (currentPromptCount >= MAX_PROMPTS_PER_TYPE) {
-          error(`Cannot add more than ${MAX_PROMPTS_PER_TYPE} prompts for ${CONTENT_TYPE_LABELS[contentType] || contentType}.`);
+        if (!name.trim()) {
+          error('Prompt Name is required.');
           setIsSavingActual(false);
           return;
         }
-      }
+        if (name.length > MAX_PROMPT_NAME_LENGTH) {
+          error(
+            `Prompt Name cannot exceed ${MAX_PROMPT_NAME_LENGTH} characters.`
+          );
+          setIsSavingActual(false);
+          return;
+        }
+        if (!content.trim()) {
+          error('Prompt Content is required.');
+          setIsSavingActual(false);
+          return;
+        }
+        if (content.length > MAX_PROMPT_CONTENT_LENGTH) {
+          error(
+            `Prompt Content cannot exceed ${MAX_PROMPT_CONTENT_LENGTH} characters.`
+          );
+          setIsSavingActual(false);
+          return;
+        }
+        if (!contentType) {
+          error('Content Type is required.');
+          setIsSavingActual(false);
+          return;
+        }
 
-      if (!customPromptsByType[contentType]) {
-        customPromptsByType[contentType] = {};
-      }
+        const result = await chrome.storage.local.get(
+          STORAGE_KEYS.USER_CUSTOM_PROMPTS
+        );
+        const customPromptsByType =
+          result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
 
-      const promptObjectToSave = {
-        name: name.trim(),
-        content: content.trim(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      let currentPromptId;
-
-      if (isEditing) {
-        currentPromptId = prompt.id;
-        promptObjectToSave.createdAt = prompt.prompt.createdAt || promptObjectToSave.updatedAt;
-
-        if (prompt.contentType !== formData.contentType) {
-          const originalTypeData = customPromptsByType[prompt.contentType] || {};
-          const isCurrentDefaultForOriginalType = 
-            originalTypeData['_defaultPromptId_'] === prompt.id;
-          
-          const promptsForOriginalType = {};
-          if (customPromptsByType[prompt.contentType]) {
-              for (const key in customPromptsByType[prompt.contentType]) {
-                  if (key !== '_defaultPromptId_') {
-                      promptsForOriginalType[key] = customPromptsByType[prompt.contentType][key];
-                  }
-              }
-          }
-          const isLastPromptForOriginalType = 
-            Object.keys(promptsForOriginalType).length === 1 && 
-            promptsForOriginalType[prompt.id];
-
-          if (isCurrentDefaultForOriginalType && isLastPromptForOriginalType) {
-            const originalContentTypeLabel =
-              CONTENT_TYPE_LABELS[prompt.contentType] || prompt.contentType;
-            throw new Error(
-              `Cannot change content type. This is the last default prompt for "${originalContentTypeLabel}". Create another prompt for this type first, or change the default.`
+        if (!isEditing) {
+          const typeData = customPromptsByType[contentType] || {};
+          const actualPromptsInType = Object.keys(typeData).filter(
+            (key) => key !== '_defaultPromptId_'
+          );
+          const currentPromptCount = actualPromptsInType.length;
+          if (currentPromptCount >= MAX_PROMPTS_PER_TYPE) {
+            error(
+              `Cannot add more than ${MAX_PROMPTS_PER_TYPE} prompts for ${CONTENT_TYPE_LABELS[contentType] || contentType}.`
             );
-          }
-
-          if (customPromptsByType[prompt.contentType]?.[prompt.id]) {
-            delete customPromptsByType[prompt.contentType][prompt.id];
-            logger.settings.info(
-              `Moved prompt ${prompt.id} from old content type ${prompt.contentType} to ${formData.contentType}`
-            );
+            setIsSavingActual(false);
+            return;
           }
         }
-        customPromptsByType[formData.contentType][currentPromptId] = promptObjectToSave;
-        success('Prompt updated successfully.');
-      } else {
-        currentPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        promptObjectToSave.createdAt = promptObjectToSave.updatedAt;
-        customPromptsByType[contentType][currentPromptId] = promptObjectToSave;
-        success('Prompt created successfully.');
-      }
 
-      try {
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: customPromptsByType,
-        });
-        await ensureDefaultPrompts();
-        onSuccess();
+        if (!customPromptsByType[contentType]) {
+          customPromptsByType[contentType] = {};
+        }
+
+        const promptObjectToSave = {
+          name: name.trim(),
+          content: content.trim(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        let currentPromptId;
+
+        if (isEditing) {
+          currentPromptId = prompt.id;
+          promptObjectToSave.createdAt =
+            prompt.prompt.createdAt || promptObjectToSave.updatedAt;
+
+          if (prompt.contentType !== formData.contentType) {
+            const originalTypeData =
+              customPromptsByType[prompt.contentType] || {};
+            const isCurrentDefaultForOriginalType =
+              originalTypeData['_defaultPromptId_'] === prompt.id;
+
+            const promptsForOriginalType = {};
+            if (customPromptsByType[prompt.contentType]) {
+              for (const key in customPromptsByType[prompt.contentType]) {
+                if (key !== '_defaultPromptId_') {
+                  promptsForOriginalType[key] =
+                    customPromptsByType[prompt.contentType][key];
+                }
+              }
+            }
+            const isLastPromptForOriginalType =
+              Object.keys(promptsForOriginalType).length === 1 &&
+              promptsForOriginalType[prompt.id];
+
+            if (
+              isCurrentDefaultForOriginalType &&
+              isLastPromptForOriginalType
+            ) {
+              const originalContentTypeLabel =
+                CONTENT_TYPE_LABELS[prompt.contentType] || prompt.contentType;
+              throw new Error(
+                `Cannot change content type. This is the last default prompt for "${originalContentTypeLabel}". Create another prompt for this type first, or change the default.`
+              );
+            }
+
+            if (customPromptsByType[prompt.contentType]?.[prompt.id]) {
+              delete customPromptsByType[prompt.contentType][prompt.id];
+              logger.settings.info(
+                `Moved prompt ${prompt.id} from old content type ${prompt.contentType} to ${formData.contentType}`
+              );
+            }
+          }
+          customPromptsByType[formData.contentType][currentPromptId] =
+            promptObjectToSave;
+          success('Prompt updated successfully.');
+        } else {
+          currentPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+          promptObjectToSave.createdAt = promptObjectToSave.updatedAt;
+          customPromptsByType[contentType][currentPromptId] =
+            promptObjectToSave;
+          success('Prompt created successfully.');
+        }
+
+        try {
+          await chrome.storage.local.set({
+            [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: customPromptsByType,
+          });
+          await ensureDefaultPrompts();
+          onSuccess();
+        } catch (err) {
+          logger.settings.error('Error saving prompt:', err);
+          const lastError = chrome.runtime.lastError;
+          if (lastError?.message?.includes('QUOTA_BYTES')) {
+            error('Local storage limit reached. Please remove some prompts.');
+          } else {
+            error(`Error saving prompt: ${err.message}`);
+          }
+        }
       } catch (err) {
         logger.settings.error('Error saving prompt:', err);
-        const lastError = chrome.runtime.lastError;
-        if (lastError?.message?.includes('QUOTA_BYTES')) {
-          error('Local storage limit reached. Please remove some prompts.');
-        } else {
-          error(`Error saving prompt: ${err.message}`);
-        }
+        error(`Error saving prompt: ${err.message}`);
+      } finally {
+        setIsSavingActual(false);
       }
-    } catch (err) {
-      logger.settings.error('Error saving prompt:', err);
-      error(`Error saving prompt: ${err.message}`);
-    } finally {
-      setIsSavingActual(false);
-    }
-  }, [formData, isEditing, prompt, success, error, onSuccess]);
+    },
+    [formData, isEditing, prompt, success, error, onSuccess]
+  );
 
   const contentTypeOptions = Object.entries(CONTENT_TYPE_LABELS).map(
     ([type, label]) => ({
@@ -257,24 +294,27 @@ const PromptForm = ({
       className='add-prompt-form bg-theme-surface shadow-sm rounded-lg p-6 border border-theme'
       noValidate
     >
-        <div className='flex items-center justify-between mb-5 pb-3 border-b border-theme'>
-          <h3 className='type-heading text-base font-semibold text-theme-primary'>
-            {isEditing ? 'Edit Prompt' : 'Create New Prompt'}
-          </h3>
-          {isEditing && isDefaultForType && (
-            <span className='default-badge text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full font-semibold'>
-              Default
-            </span>
-          )}
-        </div>
+      <div className='flex items-center justify-between mb-5 pb-3 border-b border-theme'>
+        <h3 className='type-heading text-base font-semibold text-theme-primary'>
+          {isEditing ? 'Edit Prompt' : 'Create New Prompt'}
+        </h3>
+        {isEditing && isDefaultForType && (
+          <span className='default-badge text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full font-semibold'>
+            Default
+          </span>
+        )}
+      </div>
 
       <div className='form-group mb-6'>
-        <label htmlFor="contentTypeSelect" className='block mb-3 text-base font-semibold text-theme-secondary'>
+        <label
+          htmlFor='contentTypeSelect'
+          className='block mb-3 text-base font-semibold text-theme-secondary'
+        >
           Content Type
         </label>
         <div className='inline-block'>
           <CustomSelect
-            id="contentTypeSelect"
+            id='contentTypeSelect'
             options={contentTypeOptions}
             selectedValue={formData.contentType}
             onChange={handleContentTypeChange}
@@ -322,10 +362,10 @@ const PromptForm = ({
             onChange={handleChange}
             maxLength={MAX_PROMPT_CONTENT_LENGTH}
             disabled={shouldShowSaving} // Disable if UI loading state is active
-            className="bg-theme-hover text-sm border border-theme rounded-md"
+            className='bg-theme-hover text-sm border border-theme rounded-md'
             style={{ minHeight: '120px' }}
             autoResize={true}
-            />
+          />
         </div>
       </div>
 
@@ -345,7 +385,11 @@ const PromptForm = ({
           className='px-5 py-2 select-none'
           isLoading={shouldShowSaving} // Use derived UI loading state
           disabled={shouldShowSaving || (isEditing && !hasChanges)}
-          variant={shouldShowSaving || (isEditing && !hasChanges) ? 'inactive' : 'primary'}
+          variant={
+            shouldShowSaving || (isEditing && !hasChanges)
+              ? 'inactive'
+              : 'primary'
+          }
         >
           {isSavingActual // Text based on actual saving state
             ? 'Saving...'

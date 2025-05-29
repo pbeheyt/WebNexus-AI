@@ -23,21 +23,19 @@ export function Toast({
   standalone = false,
 }) {
   const [isVisible, setIsVisible] = useState(visible);
-const isMountedRef = useRef(false);
+  const isMountedRef = useRef(false);
   const notificationContext = useNotification();
 
-useEffect(() => {
-  isMountedRef.current = true;
-  return () => {
-    isMountedRef.current = false;
-  };
-}, []);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // If not in standalone mode, connect to the notification context
   const notification = useMemo(() => {
-    return standalone
-      ? { message, type }
-      : notificationContext?.notification;
+    return standalone ? { message, type } : notificationContext?.notification;
   }, [standalone, message, type, notificationContext]);
 
   const closeHandler = standalone
@@ -48,16 +46,16 @@ useEffect(() => {
   useEffect(() => {
     // For standalone usage, respond to the visible prop
     if (standalone) {
-            if (isMountedRef.current) {
-              setIsVisible(visible);
-            }
+      if (isMountedRef.current) {
+        setIsVisible(visible);
+      }
 
       if (visible && duration) {
         const timer = setTimeout(() => {
-            if (isMountedRef.current) {
-              setIsVisible(false);
-              if (onClose) onClose();
-            }
+          if (isMountedRef.current) {
+            setIsVisible(false);
+            if (onClose) onClose();
+          }
         }, duration);
 
         return () => clearTimeout(timer);
@@ -65,9 +63,9 @@ useEffect(() => {
     }
     // For context usage, respond to notification changes
     else if (notificationContext) {
-            if (isMountedRef.current) {
-              setIsVisible(!!notification);
-            }
+      if (isMountedRef.current) {
+        setIsVisible(!!notification);
+      }
     }
   }, [
     standalone,
@@ -80,16 +78,18 @@ useEffect(() => {
 
   // Manage portal root element
   let portalRoot = document.getElementById(TOAST_PORTAL_ROOT_ID);
-  if (!portalRoot && typeof document !== 'undefined') { // Check for document for SSR safety
+  if (!portalRoot && typeof document !== 'undefined') {
+    // Check for document for SSR safety
     portalRoot = document.createElement('div');
     portalRoot.id = TOAST_PORTAL_ROOT_ID;
-    portalRoot.style.position = 'relative'; 
-    portalRoot.style.zIndex = '9999'; 
+    portalRoot.style.position = 'relative';
+    portalRoot.style.zIndex = '9999';
     document.body.appendChild(portalRoot);
   }
 
   // If the toast's internal logic determines it shouldn't be visible, render null.
-  if (!isVisible || !portalRoot) { // Also check if portalRoot exists before attempting to portal
+  if (!isVisible || !portalRoot) {
+    // Also check if portalRoot exists before attempting to portal
     return null;
   }
 
@@ -138,7 +138,14 @@ Toast.propTypes = {
   duration: PropTypes.number,
   onClose: PropTypes.func,
   visible: PropTypes.bool,
-  position: PropTypes.oneOf(['bottom-left', 'bottom-right', 'top-left', 'top-right', 'top-center', 'bottom-center']),
+  position: PropTypes.oneOf([
+    'bottom-left',
+    'bottom-right',
+    'top-left',
+    'top-right',
+    'top-center',
+    'bottom-center',
+  ]),
   standalone: PropTypes.bool,
 };
 

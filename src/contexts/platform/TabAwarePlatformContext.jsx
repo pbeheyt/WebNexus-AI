@@ -94,18 +94,28 @@ export function createTabAwarePlatformContext(options = {}) {
 
     // Determine overall loading state
     const isLoading = useMemo(() => {
-        // Need tabId before anything else can load properly
-        if (!tabId) return true;
-        // Then wait for configs, selection logic, and potentially credentials/models
-        // Loading is finished once all dependent hooks are no longer loading
-        return isLoadingConfigs || isLoadingSelection || isLoadingCredentials || isLoadingModels;
-    }, [tabId, isLoadingConfigs, isLoadingSelection, isLoadingCredentials, isLoadingModels]);
+      // Need tabId before anything else can load properly
+      if (!tabId) return true;
+      // Then wait for configs, selection logic, and potentially credentials/models
+      // Loading is finished once all dependent hooks are no longer loading
+      return (
+        isLoadingConfigs ||
+        isLoadingSelection ||
+        isLoadingCredentials ||
+        isLoadingModels
+      );
+    }, [
+      tabId,
+      isLoadingConfigs,
+      isLoadingSelection,
+      isLoadingCredentials,
+      isLoadingModels,
+    ]);
 
     // Determine overall error state (prioritize first error in sequence)
     const error = useMemo(() => {
-        return configError || credentialError || modelError || null;
+      return configError || credentialError || modelError || null;
     }, [configError, credentialError, modelError]);
-
 
     // Get current tab ID on mount
     useEffect(() => {
@@ -118,7 +128,7 @@ export function createTabAwarePlatformContext(options = {}) {
           if (tabs && tabs[0]) {
             setTabId(tabs[0].id);
           } else {
-             logger.context.warn('Could not get active tab ID.');
+            logger.context.warn('Could not get active tab ID.');
           }
         } catch (err) {
           logger.context.error('Error getting current tab:', err);
@@ -126,7 +136,6 @@ export function createTabAwarePlatformContext(options = {}) {
       };
       getCurrentTab();
     }, []);
-
 
     // Function to get API config
     const getPlatformApiConfig = useCallback((platformId) => {
@@ -149,7 +158,6 @@ export function createTabAwarePlatformContext(options = {}) {
       }));
     }, [platformConfigs, credentialStatus, configError]);
 
-
     // Build the context value
     const contextValue = useMemo(() => {
       const baseValue = {
@@ -169,27 +177,28 @@ export function createTabAwarePlatformContext(options = {}) {
           models: modelError ? [] : models, // Return empty models if model loading failed
           selectedModel: selectedModelId,
           selectModel,
-          hasAnyPlatformCredentials: credentialError ? false : hasAnyPlatformCredentials, // Assume no creds if fetch failed
+          hasAnyPlatformCredentials: credentialError
+            ? false
+            : hasAnyPlatformCredentials, // Assume no creds if fetch failed
         };
       }
 
       return baseValue;
     }, [
-        platforms,
-        selectedPlatformId,
-        selectPlatformInternal,
-        isLoading,
-        error,
-        getPlatformApiConfig,
-        tabId,
-        models,
-        selectedModelId,
-        selectModel,
-        hasAnyPlatformCredentials,
-        modelError,
-        credentialError
+      platforms,
+      selectedPlatformId,
+      selectPlatformInternal,
+      isLoading,
+      error,
+      getPlatformApiConfig,
+      tabId,
+      models,
+      selectedModelId,
+      selectModel,
+      hasAnyPlatformCredentials,
+      modelError,
+      credentialError,
     ]);
-
 
     return (
       <TabAwarePlatformContext.Provider value={contextValue}>

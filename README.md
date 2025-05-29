@@ -43,12 +43,12 @@ Both API access (Side Panel) and Web UI interaction (Popup/Context Menu) are sup
   - Does _not_ require API keys for interaction (relies on website login).
   - Attempts to auto-fill the platform's website input.
 - **Prompt Management:** Create, save, edit, delete, and set default prompts for different content types via **Settings > Prompts**. Prompts are accessible in both Side Panel and Popup. **Note:** Custom prompts are managed as part of your local data (see 'Local Data & Settings Management' above).
-- **Secure API Key Handling (Side Panel):** Keys are stored as local data (see 'Local Data & Settings Management' above) and sent directly to AI platforms. *Note: Local storage is vulnerable if your computer is compromised.*
+- **Secure API Key Handling (Side Panel):** Keys are stored as local data (see 'Local Data & Settings Management' above) and sent directly to AI platforms. _Note: Local storage is vulnerable if your computer is compromised._
 - **Configuration:** Customize API parameters (temperature, max tokens, system prompts) for models used in the Side Panel, UI themes (Light/Dark), and interface text size. These configurations, including model parameters, are managed locally (see 'Local Data & Settings Management').
 - **UI Customization:** Light/Dark themes and adjustable text sizes (Small, Base, Large) available in headers.
 - **Keyboard Shortcuts:**
-    *   **Global Commands:** Shortcuts for opening the Popup (default: `Alt+W`) or quick processing (default: `Alt+Q`) are managed in Chrome's settings (`chrome://extensions/shortcuts`).
-    *   **Side Panel Toggle:** A dedicated shortcut (default: `Alt+S`) opens/closes the Side Panel. It's active from the Popup or when the Side Panel itself is focused (to close). Customize this in `Settings > Keyboard Shortcuts`. To use: `Alt+W` then `Alt+S` (or your custom key).
+  - **Global Commands:** Shortcuts for opening the Popup (default: `Alt+W`) or quick processing (default: `Alt+Q`) are managed in Chrome's settings (`chrome://extensions/shortcuts`).
+  - **Side Panel Toggle:** A dedicated shortcut (default: `Alt+S`) opens/closes the Side Panel. It's active from the Popup or when the Side Panel itself is focused (to close). Customize this in `Settings > Keyboard Shortcuts`. To use: `Alt+W` then `Alt+S` (or your custom key).
 
 ---
 

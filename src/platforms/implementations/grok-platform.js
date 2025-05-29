@@ -67,7 +67,6 @@ class GrokPlatform extends BasePlatform {
     return super._insertTextIntoEditor(editorElement, text);
   }
 
-
   /**
    * Checks if the Grok editor element is empty.
    * @param {HTMLElement} editorElement - The editor element to check.

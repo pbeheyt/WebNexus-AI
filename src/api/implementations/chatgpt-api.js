@@ -49,7 +49,7 @@ class ChatGptApiService extends BaseApiService {
 
     // Apply model parameters
     requestPayload[params.tokenParameter || 'max_tokens'] = params.maxTokens;
-    
+
     // Apply temperature if the model supports it and the value exists
     if (params.supportsTemperature !== false && 'temperature' in params) {
       requestPayload.temperature = params.temperature;

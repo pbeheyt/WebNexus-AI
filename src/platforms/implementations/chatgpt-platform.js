@@ -36,10 +36,10 @@ class ChatGptPlatform extends BasePlatform {
    */
   _getSubmitButtonSelectors() {
     return [
-      '#composer-submit-button',                // Preferred ID selector
-      'button[data-testid="send-button"]',      // Data-testid attribute selector
-      'button[aria-label*="Send" i]',           // Aria-label for "Send" (case-insensitive)
-      'button[aria-label*="Envoyer" i]',        // French Aria-label for "Send" (case-insensitive)
+      '#composer-submit-button', // Preferred ID selector
+      'button[data-testid="send-button"]', // Data-testid attribute selector
+      'button[aria-label*="Send" i]', // Aria-label for "Send" (case-insensitive)
+      'button[aria-label*="Envoyer" i]', // French Aria-label for "Send" (case-insensitive)
       // Fallback: A button with an SVG child that looks like a send icon
       'button:has(svg path[d^="M.5 1.163A1 1 0 0"])',
       'button:has(svg path[d*="M2 12s-1-1-1-3"])', // Another common send icon path start
@@ -66,14 +66,25 @@ class ChatGptPlatform extends BasePlatform {
    */
   _isEditorEmpty(editorElement) {
     // Check textContent, then innerText. Also check if it only contains a <br> tag or placeholder structure.
-    const text = (editorElement.textContent || editorElement.innerText || '').trim();
+    const text = (
+      editorElement.textContent ||
+      editorElement.innerText ||
+      ''
+    ).trim();
     if (text === '') {
-        // Check if the only child is a <p> with a <br> or empty
-        if (editorElement.children.length === 1 && editorElement.firstElementChild.tagName === 'P') {
-            const pElement = editorElement.firstElementChild;
-            return (pElement.innerHTML.trim() === '<br>' || pElement.innerHTML.trim() === '' || pElement.textContent.trim() === '');
-        }
-        return true;
+      // Check if the only child is a <p> with a <br> or empty
+      if (
+        editorElement.children.length === 1 &&
+        editorElement.firstElementChild.tagName === 'P'
+      ) {
+        const pElement = editorElement.firstElementChild;
+        return (
+          pElement.innerHTML.trim() === '<br>' ||
+          pElement.innerHTML.trim() === '' ||
+          pElement.textContent.trim() === ''
+        );
+      }
+      return true;
     }
     return false;
   }

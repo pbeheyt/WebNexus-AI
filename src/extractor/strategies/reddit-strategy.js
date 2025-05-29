@@ -137,7 +137,9 @@ class RedditExtractorStrategy extends BaseExtractor {
       if (scoreElement && scoreElement.textContent) {
         const scoreText = scoreElement.textContent.trim();
         if (scoreText.toLowerCase().includes('k')) {
-          return String(Math.round(parseFloat(scoreText.replace(/k/i, '')) * 1000));
+          return String(
+            Math.round(parseFloat(scoreText.replace(/k/i, '')) * 1000)
+          );
         }
         const score = scoreText.replace(/[^\d]/g, '');
         if (score) return score;
@@ -192,14 +194,24 @@ class RedditExtractorStrategy extends BaseExtractor {
   waitForComments() {
     return new Promise((resolve) => {
       // Define comment selectors locally, consistent with how extractComments might use them.
-      const commentSelectors = ['shreddit-comment', 'div[data-testid="comment"]', '.Comment'];
+      const commentSelectors = [
+        'shreddit-comment',
+        'div[data-testid="comment"]',
+        '.Comment',
+      ];
 
       // 1. Check for explicit "no comments" state or "comments disabled" state
-      const noCommentsElement = document.querySelector('comment-forest-empty-state');
-      const commentStatsZero = document.querySelector('shreddit-comment-tree-stats[total-comments="0"]');
+      const noCommentsElement = document.querySelector(
+        'comment-forest-empty-state'
+      );
+      const commentStatsZero = document.querySelector(
+        'shreddit-comment-tree-stats[total-comments="0"]'
+      );
 
       if (noCommentsElement || commentStatsZero) {
-        this.logger.info('waitForComments: Detected no comments (empty state or stats zero). Resolving immediately.');
+        this.logger.info(
+          'waitForComments: Detected no comments (empty state or stats zero). Resolving immediately.'
+        );
         resolve();
         return;
       }
@@ -207,19 +219,25 @@ class RedditExtractorStrategy extends BaseExtractor {
       // 2. Check if comments are already loaded
       for (const selector of commentSelectors) {
         if (document.querySelectorAll(selector).length > 0) {
-          this.logger.info(`waitForComments: Comments found with selector "${selector}". Resolving immediately.`);
+          this.logger.info(
+            `waitForComments: Comments found with selector "${selector}". Resolving immediately.`
+          );
           resolve();
           return;
         }
       }
 
       // 3. If comments are not present and no explicit "no comments" state, observe for changes or timeout
-      this.logger.info('waitForComments: No comments found yet, and no explicit "no comments" state. Starting observer.');
-      
+      this.logger.info(
+        'waitForComments: No comments found yet, and no explicit "no comments" state. Starting observer.'
+      );
+
       let observer; // Declare observer here to be accessible by timeout and its clear function
-      
+
       const timeoutId = setTimeout(() => {
-        this.logger.warn('waitForComments: Timed out waiting for comments or "no comments" state. Resolving anyway.');
+        this.logger.warn(
+          'waitForComments: Timed out waiting for comments or "no comments" state. Resolving anyway.'
+        );
         if (observer) {
           observer.disconnect();
         }
@@ -228,8 +246,15 @@ class RedditExtractorStrategy extends BaseExtractor {
 
       observer = new MutationObserver(() => {
         // Check for "no comments" state again in case it appears dynamically
-        if (document.querySelector('comment-forest-empty-state') || document.querySelector('shreddit-comment-tree-stats[total-comments="0"]')) {
-          this.logger.info('waitForComments: "No comments" state appeared dynamically. Resolving.');
+        if (
+          document.querySelector('comment-forest-empty-state') ||
+          document.querySelector(
+            'shreddit-comment-tree-stats[total-comments="0"]'
+          )
+        ) {
+          this.logger.info(
+            'waitForComments: "No comments" state appeared dynamically. Resolving.'
+          );
           clearTimeout(timeoutId);
           observer.disconnect();
           resolve();
@@ -239,7 +264,9 @@ class RedditExtractorStrategy extends BaseExtractor {
         // Check for comments
         for (const selector of commentSelectors) {
           if (document.querySelectorAll(selector).length > 0) {
-            this.logger.info(`waitForComments: Comments appeared dynamically with selector "${selector}". Resolving.`);
+            this.logger.info(
+              `waitForComments: Comments appeared dynamically with selector "${selector}". Resolving.`
+            );
             clearTimeout(timeoutId);
             observer.disconnect();
             resolve();
@@ -256,13 +283,19 @@ class RedditExtractorStrategy extends BaseExtractor {
     try {
       this.logger.info(`Extracting all visible Reddit comments...`);
       await this.waitForComments();
-      const commentSelectors = ['shreddit-comment', 'div[data-testid="comment"]', '.Comment'];
+      const commentSelectors = [
+        'shreddit-comment',
+        'div[data-testid="comment"]',
+        '.Comment',
+      ];
       let commentElements = [];
       for (const selector of commentSelectors) {
         const elements = document.querySelectorAll(selector);
         if (elements && elements.length > 0) {
           commentElements = elements;
-          this.logger.info(`Found ${elements.length} comments using selector: ${selector}`);
+          this.logger.info(
+            `Found ${elements.length} comments using selector: ${selector}`
+          );
           break;
         }
       }
@@ -275,8 +308,10 @@ class RedditExtractorStrategy extends BaseExtractor {
       for (const commentElement of commentElements) {
         let author = 'Unknown user';
         const authorSelectors = [
-          'a[data-testid="comment_author_link"]', 'a[data-click-id="user"]',
-          '[data-testid="comment_author_icon"]+a', 'a.author',
+          'a[data-testid="comment_author_link"]',
+          'a[data-click-id="user"]',
+          '[data-testid="comment_author_icon"]+a',
+          'a.author',
         ];
         for (const selector of authorSelectors) {
           const authorElement = commentElement.querySelector(selector);
@@ -290,7 +325,11 @@ class RedditExtractorStrategy extends BaseExtractor {
         }
 
         let rawCommentContent = '';
-        const contentSelectors = ['.md.text-14', '[data-testid="comment-content"]', 'div[data-click-id="text"]'];
+        const contentSelectors = [
+          '.md.text-14',
+          '[data-testid="comment-content"]',
+          'div[data-click-id="text"]',
+        ];
         for (const selector of contentSelectors) {
           const contentElement = commentElement.querySelector(selector);
           if (contentElement) {
@@ -310,30 +349,43 @@ class RedditExtractorStrategy extends BaseExtractor {
         }
 
         let score = '0';
-        if (commentElement.tagName?.toLowerCase() === 'shreddit-comment' && commentElement.hasAttribute('score')) {
+        if (
+          commentElement.tagName?.toLowerCase() === 'shreddit-comment' &&
+          commentElement.hasAttribute('score')
+        ) {
           score = commentElement.getAttribute('score');
         } else {
-          const commentActionRow = commentElement.querySelector('shreddit-comment-action-row');
+          const commentActionRow = commentElement.querySelector(
+            'shreddit-comment-action-row'
+          );
           if (commentActionRow?.hasAttribute('score')) {
             score = commentActionRow.getAttribute('score');
           } else {
             const scoreSelectors = [
-              '[data-testid="vote-score"]', 'div[data-click-id="upvote"]', 'div[class*="score"]',
-              '.vote-count', '.score[title]', '.text-neutral-content.text-12',
-              'span[aria-label*="votes"]', 'button[aria-label*="upvoted"]',
+              '[data-testid="vote-score"]',
+              'div[data-click-id="upvote"]',
+              'div[class*="score"]',
+              '.vote-count',
+              '.score[title]',
+              '.text-neutral-content.text-12',
+              'span[aria-label*="votes"]',
+              'button[aria-label*="upvoted"]',
               'faceplate-tracker[noun="upvote"] .text-neutral-content-weak',
             ];
             for (const selector of scoreSelectors) {
               const scoreElement = commentElement.querySelector(selector);
               if (scoreElement?.textContent?.trim()) {
-                score = scoreElement.textContent.trim(); break;
+                score = scoreElement.textContent.trim();
+                break;
               }
             }
           }
         }
         if (score) {
           if (typeof score === 'string' && score.includes('k')) {
-            score = String(Math.round(parseFloat(score.replace('k', '')) * 1000));
+            score = String(
+              Math.round(parseFloat(score.replace('k', '')) * 1000)
+            );
           } else if (typeof score === 'string') {
             score = score.replace(/[^\d.-]/g, '') || '0';
           }

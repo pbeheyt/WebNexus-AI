@@ -68,7 +68,9 @@ class MistralPlatform extends BasePlatform {
    * @protected
    */
   async _getPreSubmitWaitMs() {
-    this.logger.info(`[${this.platformId}] Using specific pre-submit wait of 50ms.`);
+    this.logger.info(
+      `[${this.platformId}] Using specific pre-submit wait of 50ms.`
+    );
     return 50;
   }
 

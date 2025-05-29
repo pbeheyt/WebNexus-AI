@@ -48,28 +48,46 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       let transcriptText = 'Transcript not available or error occurred.'; // Default
       let transcriptLang = 'unknown';
       try {
-        const transcriptData = await YoutubeTranscript.fetchTranscript(fullVideoUrl);
-        transcriptText = this.formatTranscript(transcriptData, { timestampInterval: 15 });
-        transcriptLang = transcriptData.length > 0 ? transcriptData[0].lang : 'unknown';
-        this.logger.info('Transcript data extracted:', transcriptData.length, 'segments');
+        const transcriptData =
+          await YoutubeTranscript.fetchTranscript(fullVideoUrl);
+        transcriptText = this.formatTranscript(transcriptData, {
+          timestampInterval: 15,
+        });
+        transcriptLang =
+          transcriptData.length > 0 ? transcriptData[0].lang : 'unknown';
+        this.logger.info(
+          'Transcript data extracted:',
+          transcriptData.length,
+          'segments'
+        );
       } catch (transcriptError) {
-        this.logger.warn('Failed to fetch or format transcript:', transcriptError.message);
+        this.logger.warn(
+          'Failed to fetch or format transcript:',
+          transcriptError.message
+        );
         if (transcriptError.message?.includes('disabled')) {
-          transcriptText = 'Transcript is not available for this video. The creator may have disabled it.';
-        } else if (transcriptError.message?.includes('No transcript available')) {
+          transcriptText =
+            'Transcript is not available for this video. The creator may have disabled it.';
+        } else if (
+          transcriptError.message?.includes('No transcript available')
+        ) {
           transcriptText = 'No transcript is available for this video.';
         } else if (transcriptError.message?.includes('too many requests')) {
-          transcriptText = 'YouTube is limiting transcript access due to too many requests. Please try again later.';
+          transcriptText =
+            'YouTube is limiting transcript access due to too many requests. Please try again later.';
         } else if (transcriptError.message?.includes('unavailable')) {
           transcriptText = 'The video appears to be unavailable or private.';
         } else {
-           transcriptText = `Error getting transcript: ${transcriptError.message}`;
+          transcriptText = `Error getting transcript: ${transcriptError.message}`;
         }
       }
-      
+
       this.logger.info('Starting comment extraction...');
       const commentsResult = await this.extractComments(); // Comments normalized within extractComments
-      this.logger.info('Comment extraction complete, status:', commentsResult.status);
+      this.logger.info(
+        'Comment extraction complete, status:',
+        commentsResult.status
+      );
 
       return {
         videoId,
@@ -86,11 +104,17 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     } catch (error) {
       // This catch is for errors in the main extractData logic, not transcript-specific ones
       this.logger.error('Critical error in extractData (YouTube):', error);
-      let commentsResultOnError = { items: [], status: { state: 'unknown', message: '', count: 0 }};
+      let commentsResultOnError = {
+        items: [],
+        status: { state: 'unknown', message: '', count: 0 },
+      };
       try {
         commentsResultOnError = await this.extractComments();
       } catch (commentError) {
-        this.logger.error('Error extracting comments during main error handling:', commentError);
+        this.logger.error(
+          'Error extracting comments during main error handling:',
+          commentError
+        );
       }
       return {
         videoId: new URLSearchParams(window.location.search).get('v'),
@@ -111,14 +135,32 @@ class YoutubeExtractorStrategy extends BaseExtractor {
   async extractComments() {
     try {
       this.logger.info(`Extracting all visible YouTube comments...`);
-      const commentElements = document.querySelectorAll('ytd-comment-thread-renderer');
-      const commentsDisabledMessage = document.querySelector('#comments ytd-message-renderer');
-      let commentStatus = { state: 'unknown', message: '', count: 0, commentsExist: false };
+      const commentElements = document.querySelectorAll(
+        'ytd-comment-thread-renderer'
+      );
+      const commentsDisabledMessage = document.querySelector(
+        '#comments ytd-message-renderer'
+      );
+      let commentStatus = {
+        state: 'unknown',
+        message: '',
+        count: 0,
+        commentsExist: false,
+      };
 
       if (commentsDisabledMessage) {
-        const disabledText = commentsDisabledMessage.textContent?.toLowerCase() || '';
-        if (disabledText.includes('disabled') || disabledText.includes('turned off')) {
-          commentStatus = { state: 'disabled', message: 'Comments are disabled for this video', count: 0, commentsExist: false };
+        const disabledText =
+          commentsDisabledMessage.textContent?.toLowerCase() || '';
+        if (
+          disabledText.includes('disabled') ||
+          disabledText.includes('turned off')
+        ) {
+          commentStatus = {
+            state: 'disabled',
+            message: 'Comments are disabled for this video',
+            count: 0,
+            commentsExist: false,
+          };
           this.logger.info('Comments are disabled for this video');
           return { items: [], status: commentStatus };
         }
@@ -126,7 +168,12 @@ class YoutubeExtractorStrategy extends BaseExtractor {
 
       if (!commentElements || commentElements.length === 0) {
         this.logger.info('No comments found or comments not loaded yet');
-        commentStatus = { state: 'empty', message: 'No comments available.', count: 0, commentsExist: false };
+        commentStatus = {
+          state: 'empty',
+          message: 'No comments available.',
+          count: 0,
+          commentsExist: false,
+        };
         return { items: [], status: commentStatus };
       }
 
@@ -134,21 +181,32 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       const comments = [];
       for (const commentElement of commentElements) {
         const authorElement = commentElement.querySelector('#author-text');
-        const rawAuthor = authorElement ? authorElement.textContent : 'Unknown user';
+        const rawAuthor = authorElement
+          ? authorElement.textContent
+          : 'Unknown user';
 
-        const contentTextElement = commentElement.querySelector('#content-text, yt-formatted-string#content-text');
+        const contentTextElement = commentElement.querySelector(
+          '#content-text, yt-formatted-string#content-text'
+        );
         let rawCommentText = 'Comment text not found';
         if (contentTextElement) {
-          const textSpans = contentTextElement.querySelectorAll('span.yt-core-attributed-string');
+          const textSpans = contentTextElement.querySelectorAll(
+            'span.yt-core-attributed-string'
+          );
           if (textSpans?.length > 0) {
-            rawCommentText = Array.from(textSpans).map(span => span.textContent).join(' ');
+            rawCommentText = Array.from(textSpans)
+              .map((span) => span.textContent)
+              .join(' ');
           } else {
             rawCommentText = contentTextElement.textContent;
           }
         }
 
-        const likeCountElement = commentElement.querySelector('#vote-count-middle');
-        const likes = likeCountElement ? (likeCountElement.textContent?.trim() || '0') : '0';
+        const likeCountElement =
+          commentElement.querySelector('#vote-count-middle');
+        const likes = likeCountElement
+          ? likeCountElement.textContent?.trim() || '0'
+          : '0';
 
         comments.push({
           author: normalizeText(rawAuthor),
@@ -156,11 +214,24 @@ class YoutubeExtractorStrategy extends BaseExtractor {
           likes,
         });
       }
-      commentStatus = { state: 'loaded', message: '', count: comments.length, commentsExist: true };
+      commentStatus = {
+        state: 'loaded',
+        message: '',
+        count: comments.length,
+        commentsExist: true,
+      };
       return { items: comments, status: commentStatus };
     } catch (error) {
       this.logger.error('Error extracting comments:', error);
-      return { items: [], status: { state: 'error', message: `Error extracting comments: ${error.message}`, count: 0, commentsExist: false }};
+      return {
+        items: [],
+        status: {
+          state: 'error',
+          message: `Error extracting comments: ${error.message}`,
+          count: 0,
+          commentsExist: false,
+        },
+      };
     }
   }
 
@@ -184,7 +255,9 @@ class YoutubeExtractorStrategy extends BaseExtractor {
 
   extractVideoDescription() {
     try {
-      const microformatElement = document.querySelector('#microformat script[type="application/ld+json"]');
+      const microformatElement = document.querySelector(
+        '#microformat script[type="application/ld+json"]'
+      );
       if (microformatElement) {
         const jsonData = JSON.parse(microformatElement.textContent);
         if (jsonData?.description) {
@@ -197,7 +270,9 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     }
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) return metaDescription.getAttribute('content'); // Raw
-    const descriptionElement = document.querySelector('#description-inline-expander');
+    const descriptionElement = document.querySelector(
+      '#description-inline-expander'
+    );
     if (descriptionElement) return descriptionElement.textContent; // Raw
     return 'Description not available';
   }
@@ -207,8 +282,10 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       return 'No transcript data available';
     }
     const defaults = {
-      timestampInterval: 60, timestampFormat: 'MM:SS',
-      timestampPrefix: '[', timestampSuffix: '] ',
+      timestampInterval: 60,
+      timestampFormat: 'MM:SS',
+      timestampPrefix: '[',
+      timestampSuffix: '] ',
     };
     const config = { ...defaults, ...options };
     let formattedText = '';
@@ -221,10 +298,17 @@ class YoutubeExtractorStrategy extends BaseExtractor {
 
       if (currentTime >= lastTimestampTime + config.timestampInterval) {
         if (formattedText.length > 0) formattedText += ' ';
-        const timestamp = this.formatTimestamp(currentTime, config.timestampFormat);
+        const timestamp = this.formatTimestamp(
+          currentTime,
+          config.timestampFormat
+        );
         formattedText += `${config.timestampPrefix}${timestamp}${config.timestampSuffix}`;
         lastTimestampTime = currentTime;
-      } else if (index > 0 && formattedText.length > 0 && !formattedText.endsWith(' ')) {
+      } else if (
+        index > 0 &&
+        formattedText.length > 0 &&
+        !formattedText.endsWith(' ')
+      ) {
         formattedText += ' ';
       }
       formattedText += currentText;
@@ -257,16 +341,17 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       // Using a div and textContent is often more robust for full decoding
       const decoderElement = document.createElement('div');
       decoderElement.innerHTML = text;
-      let decodedText = decoderElement.textContent || decoderElement.innerText || "";
+      let decodedText =
+        decoderElement.textContent || decoderElement.innerText || '';
 
       // If after one pass, we still have `&`, it implies deeper encoding.
       // This is a simple way to handle one extra layer of `&` encoding.
       if (decodedText.includes('&')) {
-          decoderElement.innerHTML = decodedText; // Put the partially decoded text back
-          decodedText = decoderElement.textContent || decoderElement.innerText || "";
+        decoderElement.innerHTML = decodedText; // Put the partially decoded text back
+        decodedText =
+          decoderElement.textContent || decoderElement.innerText || '';
       }
       return decodedText;
-
     } catch (e) {
       this.logger.error('Error decoding HTML entities:', e);
       return text; // Fallback to original text if decoding fails

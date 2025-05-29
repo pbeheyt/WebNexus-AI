@@ -9,7 +9,7 @@ const TabNavigation = () => {
     { id: TABS.PROMPT_MANAGEMENT, label: 'Prompts' },
     { id: TABS.API_SETTINGS, label: 'API Settings' },
     { id: TABS.DATA_MANAGEMENT, label: 'Data Management' },
-    { id: TABS.KEYBOARD_SHORTCUTS, label: 'Keyboard Shortcuts' }
+    { id: TABS.KEYBOARD_SHORTCUTS, label: 'Keyboard Shortcuts' },
   ];
 
   return (

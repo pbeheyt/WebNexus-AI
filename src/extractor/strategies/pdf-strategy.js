@@ -65,11 +65,16 @@ class PdfExtractorStrategy extends BaseExtractor {
         });
 
         if (response && response.success) {
-          this.logger.info('Received Base64 PDF data from background. Decoding...');
+          this.logger.info(
+            'Received Base64 PDF data from background. Decoding...'
+          );
           pdfDataArrayBuffer = _base64ToArrayBuffer(response.base64Data);
           this.logger.info('Successfully decoded Base64 PDF data.');
         } else {
-          throw new Error(response?.error || 'Failed to fetch PDF data from background script.');
+          throw new Error(
+            response?.error ||
+              'Failed to fetch PDF data from background script.'
+          );
         }
       } else {
         this.logger.info(`Fetching PDF directly (non-file URL): ${pdfUrl}`);
@@ -79,7 +84,9 @@ class PdfExtractorStrategy extends BaseExtractor {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch PDF: ${response.status} ${response.statusText}`
+          );
         }
         pdfDataArrayBuffer = await response.arrayBuffer();
         this.logger.info('Successfully fetched PDF data directly.');
@@ -89,7 +96,7 @@ class PdfExtractorStrategy extends BaseExtractor {
       const loadingTask = getDocument({
         data: pdfDataArrayBuffer,
         cMapUrl: options.cMapUrl,
-        cMapPacked: options.cMapPacked
+        cMapPacked: options.cMapPacked,
       });
 
       const pdf = await loadingTask.promise;
@@ -108,7 +115,10 @@ class PdfExtractorStrategy extends BaseExtractor {
           let lastY;
           let pageText = '';
           for (const item of textContent.items) {
-            if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
+            if (
+              lastY !== undefined &&
+              Math.abs(lastY - item.transform[5]) > 5
+            ) {
               pageText += '\n'; // Intentional single newline for layout
             }
             pageText += item.str + (item.str.endsWith(' ') ? '' : ' '); // Add space if not already there
@@ -119,8 +129,10 @@ class PdfExtractorStrategy extends BaseExtractor {
           fullText += `\n--- Page ${i} ---\n\n[No text content found on this page]\n\n`;
         }
       }
-      
-      const finalTitle = normalizeText(metadata.title || rawTitle || 'Unknown PDF');
+
+      const finalTitle = normalizeText(
+        metadata.title || rawTitle || 'Unknown PDF'
+      );
       const finalContent = normalizeText(fullText); // Normalize the assembled text
 
       return {
@@ -138,18 +150,18 @@ class PdfExtractorStrategy extends BaseExtractor {
         ocrRequired: !isSearchable,
         contentType: this.contentType,
       };
-
     } catch (error) {
       this.logger.error('PDF content extraction error:', error);
       return {
-         pdfTitle: normalizeText(rawTitle || 'Error Processing PDF'),
-         pdfUrl: pdfUrl,
-         content: `Error extracting PDF content: ${error.message}`, // Error message, not typical content
-         error: true,
-         message: error.message || 'Unknown error occurred during PDF processing',
-         extractedAt: new Date().toISOString(),
-         contentType: this.contentType,
-       };
+        pdfTitle: normalizeText(rawTitle || 'Error Processing PDF'),
+        pdfUrl: pdfUrl,
+        content: `Error extracting PDF content: ${error.message}`, // Error message, not typical content
+        error: true,
+        message:
+          error.message || 'Unknown error occurred during PDF processing',
+        extractedAt: new Date().toISOString(),
+        contentType: this.contentType,
+      };
     }
   }
 

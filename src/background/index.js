@@ -3,7 +3,10 @@
 import SidePanelStateManager from '../services/SidePanelStateManager.js';
 import { logger } from '../shared/logger.js';
 
-import { initializeExtension, populateInitialPromptsAndSetDefaults } from './initialization.js';
+import {
+  initializeExtension,
+  populateInitialPromptsAndSetDefaults,
+} from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
 import {
@@ -37,14 +40,19 @@ async function startBackgroundService() {
     await setupCommandListener();
 
     // Ensure default prompts are populated locally if needed and pointers are set on startup
-    logger.background.info('Running prompt initialization check on service worker start...');
+    logger.background.info(
+      'Running prompt initialization check on service worker start...'
+    );
     try {
       // This function now handles checking the local flag and populating defaults
       // if necessary, then ensures default pointers are set based on local prompts.
       await populateInitialPromptsAndSetDefaults();
       logger.background.info('Prompt initialization check completed.');
     } catch (initError) {
-      logger.background.error('Error during startup prompt initialization:', initError);
+      logger.background.error(
+        'Error during startup prompt initialization:',
+        initError
+      );
     }
 
     // This runs every time the service worker starts (initial load, wake-up, after browser start)
@@ -69,11 +77,18 @@ async function startBackgroundService() {
     chrome.runtime.onStartup.addListener(async () => {
       // Reset all side panel visibility states as Chrome starts fresh.
       try {
-        logger.background.info('Resetting all side panel visibility states due to browser startup...');
+        logger.background.info(
+          'Resetting all side panel visibility states due to browser startup...'
+        );
         await SidePanelStateManager.resetAllSidePanelVisibilityStates();
-        logger.background.info('Side panel visibility states reset successfully on startup.');
+        logger.background.info(
+          'Side panel visibility states reset successfully on startup.'
+        );
       } catch (resetError) {
-        logger.background.error('Error resetting side panel visibility states during browser startup:', resetError);
+        logger.background.error(
+          'Error resetting side panel visibility states during browser startup:',
+          resetError
+        );
       }
 
       logger.background.info(

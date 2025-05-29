@@ -5,18 +5,22 @@ import { useTabs } from '../../contexts/TabContext';
 const LazyPromptManagement = lazy(() => import('../tabs/PromptManagement'));
 const LazyApiSettings = lazy(() => import('../tabs/ApiSettings'));
 const LazyDataManagementTab = lazy(() => import('../tabs/DataManagementTab'));
-const LazyKeyboardShortcutsTab = lazy(() => import('../tabs/KeyboardShortcutsTab'));
+const LazyKeyboardShortcutsTab = lazy(
+  () => import('../tabs/KeyboardShortcutsTab')
+);
 import { ApiSettingsProvider } from '../../contexts/ApiSettingsContext';
 
 const TabContent = () => {
   const { TABS, activeTab } = useTabs();
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <SpinnerIcon className="w-8 h-8 text-theme-secondary" />
-        <span className="sr-only">Loading tab content...</span>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center min-h-[400px]'>
+          <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
+          <span className='sr-only'>Loading tab content...</span>
+        </div>
+      }
+    >
       {/* Render both tabs but hide the inactive one */}
       <div
         className={`relative min-h-[400px] ${activeTab !== TABS.API_SETTINGS ? 'hidden' : ''}`}

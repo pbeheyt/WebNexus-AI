@@ -10,11 +10,7 @@ import PropTypes from 'prop-types';
  * @param {string} [props.type='info'] - Message type (info, success, warning, error)
  * @param {string} [props.className=''] - Additional CSS classes
  */
-export function StatusMessage({
-  message,
-  type = 'info',
-  className = '',
-}) {
+export function StatusMessage({ message, type = 'info', className = '' }) {
   const typeClasses = {
     info: 'text-theme-secondary',
     success: 'text-success',
@@ -35,7 +31,7 @@ export function StatusMessage({
       className={`text-xs px-3 ${typeClasses[type]} ${className} break-words`}
       role={roleValue}
       aria-live={ariaLiveValue}
-      aria-atomic="true" // Ensures the entire message is announced when it changes
+      aria-atomic='true' // Ensures the entire message is announced when it changes
     >
       {message || '\u00A0'}{' '}
       {/* Use non-breaking space to maintain height when empty */}

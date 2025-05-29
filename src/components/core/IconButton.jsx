@@ -33,9 +33,9 @@ export const IconButton = forwardRef(
         {...props}
       >
         {isLoading ? (
-          <SpinnerIcon className={iconClassName} aria-hidden="true" />
+          <SpinnerIcon className={iconClassName} aria-hidden='true' />
         ) : (
-          <IconComponent className={iconClassName} aria-hidden="true" />
+          <IconComponent className={iconClassName} aria-hidden='true' />
         )}
       </button>
     );

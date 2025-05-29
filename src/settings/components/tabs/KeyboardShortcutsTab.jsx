@@ -3,7 +3,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 // Helper function to parse chrome.commands shortcut strings
 const parseChromeCommandShortcut = (shortcutString) => {
-  if (!shortcutString || typeof shortcutString !== 'string' || shortcutString.trim() === '') {
+  if (
+    !shortcutString ||
+    typeof shortcutString !== 'string' ||
+    shortcutString.trim() === ''
+  ) {
     return null; // No shortcut defined
   }
 
@@ -17,7 +21,10 @@ const parseChromeCommandShortcut = (shortcutString) => {
     altKey: parts.includes('alt'),
     ctrlKey: parts.includes('ctrl') || parts.includes('control'),
     shiftKey: parts.includes('shift'),
-    metaKey: parts.includes('macctrl') || parts.includes('command') || parts.includes('cmd'), // Meta on Mac often 'MacCtrl' or 'Command'
+    metaKey:
+      parts.includes('macctrl') ||
+      parts.includes('command') ||
+      parts.includes('cmd'), // Meta on Mac often 'MacCtrl' or 'Command'
   };
 
   // For Mac, chrome.commands often uses "MacCtrl" for Command key, which we map to metaKey.
@@ -31,23 +38,40 @@ const parseChromeCommandShortcut = (shortcutString) => {
   return modifiers;
 };
 
-import { Button, useNotification, Modal, SpinnerIcon } from '../../../components';
+import {
+  Button,
+  useNotification,
+  Modal,
+  SpinnerIcon,
+} from '../../../components';
 import { SettingsCard } from '../ui/common/SettingsCard';
 import { ShortcutCaptureInput } from '../ui/ShortcutCaptureInput';
-import { STORAGE_KEYS, DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG } from '../../../shared/constants';
+import {
+  STORAGE_KEYS,
+  DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
+} from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
 import { formatShortcutToStringDisplay } from '../../../shared/utils/shortcut-utils';
 
 export function KeyboardShortcutsTab() {
   const [globalCommands, setGlobalCommands] = useState([]);
-  const [customPopupShortcut, setCustomPopupShortcut] = useState(DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG);
-  const [editableCustomShortcut, setEditableCustomShortcut] = useState(DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG);
+  const [customPopupShortcut, setCustomPopupShortcut] = useState(
+    DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG
+  );
+  const [editableCustomShortcut, setEditableCustomShortcut] = useState(
+    DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG
+  );
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
   const [isLoadingCommands, setIsLoadingCommands] = useState(true);
   const [isSavingShortcut, setIsSavingShortcut] = useState(false);
   const [shortcutModalError, setShortcutModalError] = useState('');
-  
-  const { success: showSuccessNotification, error: showErrorNotification, info: showInfoNotification, clearNotification } = useNotification();
+
+  const {
+    success: showSuccessNotification,
+    error: showErrorNotification,
+    info: showInfoNotification,
+    clearNotification,
+  } = useNotification();
 
   useEffect(() => {
     const fetchCommands = async () => {
@@ -55,7 +79,13 @@ export function KeyboardShortcutsTab() {
       try {
         if (chrome.commands && chrome.commands.getAll) {
           const commands = await chrome.commands.getAll();
-          setGlobalCommands(commands.filter(cmd => cmd.name !== '_execute_browser_action' && cmd.name !== '_execute_page_action'));
+          setGlobalCommands(
+            commands.filter(
+              (cmd) =>
+                cmd.name !== '_execute_browser_action' &&
+                cmd.name !== '_execute_page_action'
+            )
+          );
         } else {
           logger.settings.warn('chrome.commands API not available.');
           setGlobalCommands([]);
@@ -70,8 +100,12 @@ export function KeyboardShortcutsTab() {
 
     const loadCustomShortcut = async () => {
       try {
-        const result = await chrome.storage.sync.get([STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT]);
-        const loadedShortcut = result[STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT] || DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG;
+        const result = await chrome.storage.sync.get([
+          STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
+        ]);
+        const loadedShortcut =
+          result[STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT] ||
+          DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG;
         setCustomPopupShortcut(loadedShortcut);
         setEditableCustomShortcut(loadedShortcut);
       } catch (error) {
@@ -82,8 +116,8 @@ export function KeyboardShortcutsTab() {
 
     fetchCommands();
     loadCustomShortcut();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleOpenShortcutsPage = () => {
     chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
@@ -91,35 +125,46 @@ export function KeyboardShortcutsTab() {
 
   const handleEditableShortcutChange = useCallback((newShortcut) => {
     setEditableCustomShortcut(newShortcut);
-    setShortcutModalError(''); 
+    setShortcutModalError('');
   }, []);
 
   const handleOpenShortcutModal = () => {
-    setEditableCustomShortcut(customPopupShortcut); 
-    setShortcutModalError(''); 
+    setEditableCustomShortcut(customPopupShortcut);
+    setShortcutModalError('');
     setIsShortcutModalOpen(true);
   };
 
   const handleCloseShortcutModal = () => {
     setIsShortcutModalOpen(false);
-    setEditableCustomShortcut(customPopupShortcut); 
-    setShortcutModalError(''); 
-    clearNotification(); 
+    setEditableCustomShortcut(customPopupShortcut);
+    setShortcutModalError('');
+    clearNotification();
   };
 
   const handleSaveCustomShortcut = async () => {
     if (globalCommands && globalCommands.length > 0) {
       for (const command of globalCommands) {
-
         const globalShortcutObj = parseChromeCommandShortcut(command.shortcut);
         if (globalShortcutObj) {
-          const mainKeyMatch = editableCustomShortcut.key.toLowerCase() === globalShortcutObj.key.toLowerCase();
-          const altMatch = !!editableCustomShortcut.altKey === !!globalShortcutObj.altKey;
-          const ctrlMatch = !!editableCustomShortcut.ctrlKey === !!globalShortcutObj.ctrlKey;
-          const shiftMatch = !!editableCustomShortcut.shiftKey === !!globalShortcutObj.shiftKey;
-          const metaMatch = !!editableCustomShortcut.metaKey === !!globalShortcutObj.metaKey;
+          const mainKeyMatch =
+            editableCustomShortcut.key.toLowerCase() ===
+            globalShortcutObj.key.toLowerCase();
+          const altMatch =
+            !!editableCustomShortcut.altKey === !!globalShortcutObj.altKey;
+          const ctrlMatch =
+            !!editableCustomShortcut.ctrlKey === !!globalShortcutObj.ctrlKey;
+          const shiftMatch =
+            !!editableCustomShortcut.shiftKey === !!globalShortcutObj.shiftKey;
+          const metaMatch =
+            !!editableCustomShortcut.metaKey === !!globalShortcutObj.metaKey;
 
-          if (mainKeyMatch && altMatch && ctrlMatch && shiftMatch && metaMatch) {
+          if (
+            mainKeyMatch &&
+            altMatch &&
+            ctrlMatch &&
+            shiftMatch &&
+            metaMatch
+          ) {
             setShortcutModalError(
               `Conflicts with: '${command.description || command.name}'. Choose a different shortcut.`
             );
@@ -131,30 +176,62 @@ export function KeyboardShortcutsTab() {
     }
 
     setIsSavingShortcut(true);
-    setShortcutModalError(''); 
-    
+    setShortcutModalError('');
+
     try {
-      if (!editableCustomShortcut || !editableCustomShortcut.key || editableCustomShortcut.key.trim() === '') {
+      if (
+        !editableCustomShortcut ||
+        !editableCustomShortcut.key ||
+        editableCustomShortcut.key.trim() === ''
+      ) {
         setShortcutModalError('Invalid shortcut: Key cannot be empty.');
         setIsSavingShortcut(false);
-        return; 
+        return;
       }
-      
-      const isFunctionKey = editableCustomShortcut.key.toLowerCase().startsWith('f') && !isNaN(parseInt(editableCustomShortcut.key.substring(1), 10));
-      const isSpecialKey = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'escape', 'enter', 'tab', 'backspace', 'delete', 'home', 'end', 'pageup', 'pagedown', ' '].includes(editableCustomShortcut.key.toLowerCase());
 
-      if (!isFunctionKey && !isSpecialKey && !editableCustomShortcut.altKey && !editableCustomShortcut.ctrlKey && !editableCustomShortcut.metaKey && !editableCustomShortcut.shiftKey) {
-        setShortcutModalError('Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.');
+      const isFunctionKey =
+        editableCustomShortcut.key.toLowerCase().startsWith('f') &&
+        !isNaN(parseInt(editableCustomShortcut.key.substring(1), 10));
+      const isSpecialKey = [
+        'arrowup',
+        'arrowdown',
+        'arrowleft',
+        'arrowright',
+        'escape',
+        'enter',
+        'tab',
+        'backspace',
+        'delete',
+        'home',
+        'end',
+        'pageup',
+        'pagedown',
+        ' ',
+      ].includes(editableCustomShortcut.key.toLowerCase());
+
+      if (
+        !isFunctionKey &&
+        !isSpecialKey &&
+        !editableCustomShortcut.altKey &&
+        !editableCustomShortcut.ctrlKey &&
+        !editableCustomShortcut.metaKey &&
+        !editableCustomShortcut.shiftKey
+      ) {
+        setShortcutModalError(
+          'Invalid shortcut: Please include at least one modifier (Alt, Ctrl, Shift, Cmd) for letter/number keys.'
+        );
         setIsSavingShortcut(false);
-        return; 
+        return;
       }
 
-      showInfoNotification('Saving shortcut...'); 
+      showInfoNotification('Saving shortcut...');
 
-      await chrome.storage.sync.set({ [STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT]: editableCustomShortcut });
+      await chrome.storage.sync.set({
+        [STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT]: editableCustomShortcut,
+      });
       setCustomPopupShortcut(editableCustomShortcut);
       showSuccessNotification('Side Panel toggle shortcut saved successfully!');
-      setIsShortcutModalOpen(false); 
+      setIsShortcutModalOpen(false);
     } catch (error) {
       logger.settings.error('Error saving custom popup shortcut:', error);
       showErrorNotification(`Error saving shortcut: ${error.message}`);
@@ -169,107 +246,129 @@ export function KeyboardShortcutsTab() {
         Keyboard Shortcuts
       </h2>
       <p className='section-description text-sm text-theme-secondary mb-6'>
-        Manage your extension&apos;s keyboard shortcuts. Global shortcuts are configured in Chrome&apos;s settings, while the sidepanel toggle shortcut can be customized here.
+        Manage your extension&apos;s keyboard shortcuts. Global shortcuts are
+        configured in Chrome&apos;s settings, while the sidepanel toggle
+        shortcut can be customized here.
       </p>
-      <div className="flex flex-col md:flex-row md:gap-6">
+      <div className='flex flex-col md:flex-row md:gap-6'>
         {/* Left Column: Registered Extension Shortcuts */}
-        <div className="w-full md:w-1/2 mb-6">
+        <div className='w-full md:w-1/2 mb-6'>
           <SettingsCard>
-            <h3 className="text-base font-semibold text-theme-primary mb-2">Registered Chrome Shortcuts</h3>
-            <p className="text-sm text-theme-secondary mb-6">
-              These shortcuts are defined by the extension and can be managed on Chrome&apos;s extensions page.
+            <h3 className='text-base font-semibold text-theme-primary mb-2'>
+              Registered Chrome Shortcuts
+            </h3>
+            <p className='text-sm text-theme-secondary mb-6'>
+              These shortcuts are defined by the extension and can be managed on
+              Chrome&apos;s extensions page.
             </p>
             {isLoadingCommands ? (
-              <div className="flex items-center justify-center py-2 text-theme-secondary">
-                <SpinnerIcon className="w-6 h-6" />
-                <span className="ml-2">Loading global shortcuts...</span>
+              <div className='flex items-center justify-center py-2 text-theme-secondary'>
+                <SpinnerIcon className='w-6 h-6' />
+                <span className='ml-2'>Loading global shortcuts...</span>
               </div>
             ) : globalCommands.length > 0 ? (
-              <ul className="space-y-3 mb-6">
+              <ul className='space-y-3 mb-6'>
                 {globalCommands.map((command) => (
-                  <li 
-                    key={command.name} 
-                    className="flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover border border-theme"
+                  <li
+                    key={command.name}
+                    className='flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover border border-theme'
                   >
-                    <span className="text-sm text-theme-primary">
-                      {command.name === '_execute_action' 
-                        ? 'Open the Extension Popup' 
-                        : (command.description || command.name)}
+                    <span className='text-sm text-theme-primary'>
+                      {command.name === '_execute_action'
+                        ? 'Open the Extension Popup'
+                        : command.description || command.name}
                     </span>
-                    <span className="font-mono text-sm bg-theme-surface ml-10 px-2 py-1 rounded text-theme-secondary">
-                      {(command.shortcut || '').replace(/\+/g, ' + ') || 'Not set'}
+                    <span className='font-mono text-sm bg-theme-surface ml-10 px-2 py-1 rounded text-theme-secondary'>
+                      {(command.shortcut || '').replace(/\+/g, ' + ') ||
+                        'Not set'}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-theme-secondary py-2 mb-6">No global commands found or API not available.</p>
+              <p className='text-theme-secondary py-2 mb-6'>
+                No global commands found or API not available.
+              </p>
             )}
-            <Button onClick={handleOpenShortcutsPage} variant="secondary" size="md">
+            <Button
+              onClick={handleOpenShortcutsPage}
+              variant='secondary'
+              size='md'
+            >
               Manage in Chrome Settings
             </Button>
           </SettingsCard>
         </div>
 
         {/* Right Column: Sidepanel Toggle Shortcut */}
-        <div className="w-full md:w-1/2">
+        <div className='w-full md:w-1/2'>
           <SettingsCard>
-            <h3 className="text-base font-semibold text-theme-primary mb-2">Side Panel Toggle Shortcut</h3>
-            <p className="text-sm text-theme-secondary mb-6">
-              This shortcut is used within the extension&apos;s popup to open/close the Side Panel, and from within the Side Panel itself to close it when focused.
+            <h3 className='text-base font-semibold text-theme-primary mb-2'>
+              Side Panel Toggle Shortcut
+            </h3>
+            <p className='text-sm text-theme-secondary mb-6'>
+              This shortcut is used within the extension&apos;s popup to
+              open/close the Side Panel, and from within the Side Panel itself
+              to close it when focused.
             </p>
-            
-            <div 
-              className="flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover mb-6 border border-theme"
-            >
-              <span className="text-sm text-theme-primary">Toggle the Side Panel</span>
-              <span className="font-mono text-sm bg-theme-surface ml-10 px-2 py-1 rounded text-theme-secondary">
+
+            <div className='flex justify-between items-center py-2 px-5 rounded-md bg-theme-hover mb-6 border border-theme'>
+              <span className='text-sm text-theme-primary'>
+                Toggle the Side Panel
+              </span>
+              <span className='font-mono text-sm bg-theme-surface ml-10 px-2 py-1 rounded text-theme-secondary'>
                 {formatShortcutToStringDisplay(customPopupShortcut)}
               </span>
             </div>
-            <Button onClick={handleOpenShortcutModal} variant="secondary" size="md">
+            <Button
+              onClick={handleOpenShortcutModal}
+              variant='secondary'
+              size='md'
+            >
               Update Shortcut
             </Button>
           </SettingsCard>
         </div>
       </div>
 
-      <Modal 
-        isOpen={isShortcutModalOpen} 
+      <Modal
+        isOpen={isShortcutModalOpen}
         onClose={handleCloseShortcutModal}
-        title="Update Side Panel Toggle Shortcut"
-        widthClass="max-w-sm"
+        title='Update Side Panel Toggle Shortcut'
+        widthClass='max-w-sm'
       >
         <div>
-          <div className="flex items-center gap-10">
+          <div className='flex items-center gap-10'>
             <ShortcutCaptureInput
               value={editableCustomShortcut}
               onChange={handleEditableShortcutChange}
               defaultShortcut={DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG}
             />
-            <div className="flex-shrink-0 flex gap-2"> 
-              <Button 
-                onClick={handleSaveCustomShortcut} 
-                isLoading={isSavingShortcut} 
-                loadingText="Saving..." 
-                size="md"
-                className="px-5" 
+            <div className='flex-shrink-0 flex gap-2'>
+              <Button
+                onClick={handleSaveCustomShortcut}
+                isLoading={isSavingShortcut}
+                loadingText='Saving...'
+                size='md'
+                className='px-5'
               >
                 Save
               </Button>
-              <Button 
-                onClick={handleCloseShortcutModal} 
-                variant="secondary" 
-                size="md" 
+              <Button
+                onClick={handleCloseShortcutModal}
+                variant='secondary'
+                size='md'
                 disabled={isSavingShortcut}
-                className="px-5" 
+                className='px-5'
               >
                 Cancel
               </Button>
             </div>
           </div>
           {shortcutModalError && (
-            <p className="text-sm text-error text-center mt-5">{shortcutModalError}</p> 
+            <p className='text-sm text-error text-center mt-5'>
+              {shortcutModalError}
+            </p>
           )}
         </div>
       </Modal>

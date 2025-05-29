@@ -1,5 +1,8 @@
 // src/extractor/extractor-factory.js
-import { CONTENT_TYPES, DEFAULT_EXTRACTION_STRATEGY } from '../shared/constants.js';
+import {
+  CONTENT_TYPES,
+  DEFAULT_EXTRACTION_STRATEGY,
+} from '../shared/constants.js';
 import { determineContentType } from '../shared/utils/content-utils.js';
 
 import GeneralExtractorStrategy from './strategies/general-strategy.js';
@@ -35,9 +38,14 @@ class ExtractorFactory {
     const StrategyClass =
       this.STRATEGY_MAP[contentType] || GeneralExtractorStrategy;
 
-    if (contentType === CONTENT_TYPES.GENERAL && StrategyClass === GeneralExtractorStrategy) {
+    if (
+      contentType === CONTENT_TYPES.GENERAL &&
+      StrategyClass === GeneralExtractorStrategy
+    ) {
       // Pass the preferredStrategy in the config object for GeneralExtractorStrategy
-      return new StrategyClass({ extractionMode: preferredStrategy || DEFAULT_EXTRACTION_STRATEGY });
+      return new StrategyClass({
+        extractionMode: preferredStrategy || DEFAULT_EXTRACTION_STRATEGY,
+      });
     }
     return new StrategyClass();
   }
@@ -53,7 +61,10 @@ class ExtractorFactory {
 
     const url = window.location.href;
     // Pass the preferredStrategy to createExtractor
-    this.activeExtractor = ExtractorFactory.createExtractor(url, preferredStrategy);
+    this.activeExtractor = ExtractorFactory.createExtractor(
+      url,
+      preferredStrategy
+    );
     this.activeExtractor.initialize();
     return this.activeExtractor;
   }

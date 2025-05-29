@@ -26,11 +26,16 @@ export function PromptDropdown({
   const [prompts, setPrompts] = useState([]);
   const [error, setError] = useState(null);
   const [currentDefaultPromptId, setCurrentDefaultPromptId] = useState(null);
-  const [settingDefaultInProgress, setSettingDefaultInProgress] = useState(null); // Tracks ID of prompt being set as default
+  const [settingDefaultInProgress, setSettingDefaultInProgress] =
+    useState(null); // Tracks ID of prompt being set as default
   const notificationContext = useNotification();
-  const showNotificationError = notificationContext ? notificationContext.error : (message) => {
-    logger.popup.error(`NotificationContext not available. Error: ${message}`);
-  };
+  const showNotificationError = notificationContext
+    ? notificationContext.error
+    : (message) => {
+        logger.popup.error(
+          `NotificationContext not available. Error: ${message}`
+        );
+      };
   const [isVisible, setIsVisible] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -62,13 +67,19 @@ export function PromptDropdown({
           const loadedPrompts = await loadRelevantPrompts(contentType);
           setPrompts(loadedPrompts);
 
-          const storageResult = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
-          const customPromptsByType = storageResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-          const defaultId = customPromptsByType[contentType]?.['_defaultPromptId_'];
+          const storageResult = await chrome.storage.local.get(
+            STORAGE_KEYS.USER_CUSTOM_PROMPTS
+          );
+          const customPromptsByType =
+            storageResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+          const defaultId =
+            customPromptsByType[contentType]?.['_defaultPromptId_'];
           setCurrentDefaultPromptId(defaultId || null);
-
         } catch (err) {
-          logger.popup.error('Error loading prompts or default in dropdown:', err);
+          logger.popup.error(
+            'Error loading prompts or default in dropdown:',
+            err
+          );
           setError('Failed to load prompts or default setting.');
           showNotificationError('Failed to load prompts or default setting.');
         }
@@ -81,7 +92,7 @@ export function PromptDropdown({
       setCurrentDefaultPromptId(null);
       setSettingDefaultInProgress(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, contentType, notificationContext]); // Depend on the context itself
 
   // Handle clicks outside the dropdown
@@ -110,21 +121,30 @@ export function PromptDropdown({
 
     setSettingDefaultInProgress(promptToSet.id);
     try {
-      const success = await setDefaultPromptForContentType(promptToSet.contentType, promptToSet.id);
+      const success = await setDefaultPromptForContentType(
+        promptToSet.contentType,
+        promptToSet.id
+      );
       if (success) {
         setCurrentDefaultPromptId(promptToSet.id);
         if (onDefaultSet) {
-          const contentTypeLabel = CONTENT_TYPE_LABELS[promptToSet.contentType] || promptToSet.contentType;
+          const contentTypeLabel =
+            CONTENT_TYPE_LABELS[promptToSet.contentType] ||
+            promptToSet.contentType;
           onDefaultSet(promptToSet.name, contentTypeLabel);
         }
         // Do not call onClose() here, let the user see the change.
         // Dropdown will close if they click outside or select a prompt to use.
       } else {
-        showNotificationError(`Failed to set "${promptToSet.name}" as default.`);
+        showNotificationError(
+          `Failed to set "${promptToSet.name}" as default.`
+        );
       }
     } catch (err) {
       logger.popup.error('Error setting default prompt:', err);
-      showNotificationError('An error occurred while setting the default prompt.');
+      showNotificationError(
+        'An error occurred while setting the default prompt.'
+      );
     } finally {
       setSettingDefaultInProgress(null);
     }
@@ -143,15 +163,16 @@ export function PromptDropdown({
     >
       {error && <div className='px-3 py-1.5 text-sm text-red-500'>{error}</div>}
       {!error && prompts.length === 0 && (
-          <div className={`px-3 py-1.5 ${className} text-theme-muted`}>
-            No prompts available.
-          </div>
+        <div className={`px-3 py-1.5 ${className} text-theme-muted`}>
+          No prompts available.
+        </div>
       )}
       {!error &&
         prompts.length > 0 &&
         prompts.map((promptItem) => {
           const isCurrentDefault = promptItem.id === currentDefaultPromptId;
-          const isBeingSetAsDefault = settingDefaultInProgress === promptItem.id;
+          const isBeingSetAsDefault =
+            settingDefaultInProgress === promptItem.id;
 
           return (
             <div
@@ -162,20 +183,20 @@ export function PromptDropdown({
             >
               <button
                 onClick={() => {
-                    if (!isBeingSetAsDefault) onSelectPrompt(promptItem);
+                  if (!isBeingSetAsDefault) onSelectPrompt(promptItem);
                 }}
-                className="flex-grow text-left whitespace-nowrap overflow-hidden text-ellipsis mr-2 disabled:cursor-not-allowed"
+                className='flex-grow text-left whitespace-nowrap overflow-hidden text-ellipsis mr-2 disabled:cursor-not-allowed'
                 disabled={isBeingSetAsDefault}
               >
                 {promptItem.name}
               </button>
-              
+
               {/* Icon Container with fixed width */}
-              <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+              <div className='flex-shrink-0 w-6 h-6 flex items-center justify-center'>
                 {isCurrentDefault ? (
                   <StarFilledIcon
                     className={`w-4 h-4 text-amber-500 ${isBeingSetAsDefault ? 'opacity-50' : ''}`}
-                    title="Current default prompt"
+                    title='Current default prompt'
                   />
                 ) : (
                   <IconButton
@@ -184,7 +205,7 @@ export function PromptDropdown({
                     disabled={isBeingSetAsDefault || !!settingDefaultInProgress}
                     // Ensure IconButton itself doesn't add extra space that causes shift
                     className={`p-0.5 rounded text-theme-secondary group-hover:text-amber-500 group-hover:opacity-100 flex items-center justify-center ${isBeingSetAsDefault ? 'animate-pulse' : 'opacity-0 focus-within:opacity-100'}`}
-                    iconClassName="w-4 h-4" // Icon size
+                    iconClassName='w-4 h-4' // Icon size
                     aria-label={`Set "${promptItem.name}" as default prompt`}
                     title={`Set as default`}
                   />

@@ -22,7 +22,8 @@ const ChevronIcon = () => (
 );
 
 function ModelSelector({ className = '', selectedPlatformId = null }) {
-  const { models, selectedModel, selectModel, isLoading } = useSidePanelPlatform();
+  const { models, selectedModel, selectModel, isLoading } =
+    useSidePanelPlatform();
 
   const [formattedModels, setFormattedModels] = useState([]);
   const [displayModelId, setDisplayModelId] = useState(selectedModel);
@@ -89,12 +90,12 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
   useEffect(() => {
     if (!isLoading) {
       setDisplayModelId(selectedModel);
-      
-  const currentModel = formattedModels.find((m) => m.id === selectedModel);
-  const currentModelName =
-    currentModel?.name || // This 'name' is now effectively 'displayName' from the previous step
-    selectedModel ||
-    'Loading...';
+
+      const currentModel = formattedModels.find((m) => m.id === selectedModel);
+      const currentModelName =
+        currentModel?.name || // This 'name' is now effectively 'displayName' from the previous step
+        selectedModel ||
+        'Loading...';
       if (currentModelName) {
         setDisplayedModelName(currentModelName);
       }
@@ -143,7 +144,9 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
                 role='option' // ARIA role for item
                 aria-selected={displayModelId === model.id}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap ${
-                  displayModelId === model.id ? 'font-medium bg-theme-hover' : ''
+                  displayModelId === model.id
+                    ? 'font-medium bg-theme-hover'
+                    : ''
                 }`}
                 onClick={() => handleModelChange(model.id)}
               >

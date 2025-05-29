@@ -64,10 +64,9 @@ export function Button({
     effectiveDisabled && variant !== 'inactive'
       ? 'bg-gray-400 text-gray-100 cursor-not-allowed opacity-50'
       : '';
-      
+
   // Loading specific style to ensure content is centered with spinner
   const loadingSpecificClass = isLoading ? 'opacity-80' : '';
-
 
   // Combined classes
   const combinedClasses = [
@@ -88,29 +87,37 @@ export function Button({
       onClick={effectiveDisabled ? undefined : onClick}
       {...props}
     >
-        {isLoading ? (
-          <>
-            <SpinnerIcon className={`${spinnerSizeClasses[size] || spinnerSizeClasses.md} mr-2`} />
-            {loadingText ? (
-              <span>{loadingText}</span>
-            ) : typeof children === 'string' ? (
-              <span>{children}</span>
-            ) : (
-              children
-            )}
-          </>
-        ) : typeof children === 'string' ? (
-          <span>{children}</span>
-        ) : (
-          children
-        )}
+      {isLoading ? (
+        <>
+          <SpinnerIcon
+            className={`${spinnerSizeClasses[size] || spinnerSizeClasses.md} mr-2`}
+          />
+          {loadingText ? (
+            <span>{loadingText}</span>
+          ) : typeof children === 'string' ? (
+            <span>{children}</span>
+          ) : (
+            children
+          )}
+        </>
+      ) : typeof children === 'string' ? (
+        <span>{children}</span>
+      ) : (
+        children
+      )}
     </button>
   );
 }
 
 Button.propTypes = {
   children: PropTypes.node.isRequired,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'danger', 'success', 'inactive']),
+  variant: PropTypes.oneOf([
+    'primary',
+    'secondary',
+    'danger',
+    'success',
+    'inactive',
+  ]),
   size: PropTypes.oneOf(['sm', 'md', 'lg']),
   disabled: PropTypes.bool,
   isLoading: PropTypes.bool,

@@ -23,7 +23,9 @@ class CredentialManager {
       const result = await chrome.storage.local.get(this.STORAGE_KEY);
       const credentials = result[this.STORAGE_KEY] || {};
 
-      return Object.prototype.hasOwnProperty.call(credentials, platformId) ? credentials[platformId] : null;
+      return Object.prototype.hasOwnProperty.call(credentials, platformId)
+        ? credentials[platformId]
+        : null;
     } catch (error) {
       this.logger.error('Error retrieving credentials:', error);
       return null;
@@ -68,9 +70,10 @@ class CredentialManager {
         delete allCredentials[platformId];
         await chrome.storage.local.set({ [this.STORAGE_KEY]: allCredentials });
       } else {
-         this.logger.warn(`Attempted to remove non-existent credentials for ${platformId}`);
+        this.logger.warn(
+          `Attempted to remove non-existent credentials for ${platformId}`
+        );
       }
-
 
       return true;
     } catch (error) {
@@ -79,7 +82,6 @@ class CredentialManager {
     }
   }
 
-
   /**
    * Check if credentials exist for multiple platforms in a single batch operation
    * @param {string[]} platformIds - Array of platform identifiers
@@ -87,13 +89,18 @@ class CredentialManager {
    */
   async checkCredentialsExist(platformIds) {
     try {
-      this.logger.info(`Checking credential existence for ${platformIds.length} platforms`);
+      this.logger.info(
+        `Checking credential existence for ${platformIds.length} platforms`
+      );
       const result = await chrome.storage.local.get(this.STORAGE_KEY);
       const allCredentials = result[this.STORAGE_KEY] || {};
       const results = {};
 
-      platformIds.forEach(platformId => {
-        results[platformId] = Object.prototype.hasOwnProperty.call(allCredentials, platformId);
+      platformIds.forEach((platformId) => {
+        results[platformId] = Object.prototype.hasOwnProperty.call(
+          allCredentials,
+          platformId
+        );
       });
 
       return results;
@@ -101,10 +108,10 @@ class CredentialManager {
       this.logger.error('Error checking credential existence:', error);
       // Return an empty object matching the structure expected on success
       const errorResults = {};
-       platformIds.forEach(platformId => {
-           errorResults[platformId] = false; // Indicate non-existence on error
-       });
-       return errorResults;
+      platformIds.forEach((platformId) => {
+        errorResults[platformId] = false; // Indicate non-existence on error
+      });
+      return errorResults;
     }
   }
 
@@ -122,9 +129,9 @@ class CredentialManager {
 
       if (!apiService) {
         return {
-            isValid: false,
-            message: `No API service available for ${platformId}`
-        }
+          isValid: false,
+          message: `No API service available for ${platformId}`,
+        };
       }
 
       await apiService.initialize(credentials);

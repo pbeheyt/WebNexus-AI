@@ -22,7 +22,10 @@ export function useCredentialStatus(platformConfigs, interfaceType) {
   const [error, setError] = useState(null);
 
   const fetchCredentials = useCallback(async () => {
-    if (interfaceType !== INTERFACE_SOURCES.SIDEPANEL || !platformConfigs.length) {
+    if (
+      interfaceType !== INTERFACE_SOURCES.SIDEPANEL ||
+      !platformConfigs.length
+    ) {
       setIsLoading(false);
       setCredentialStatus({});
       setHasAnyPlatformCredentials(false); // No creds needed/checked for popup

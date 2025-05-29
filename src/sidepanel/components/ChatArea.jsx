@@ -17,7 +17,11 @@ import { Toggle } from '../../components/core/Toggle';
 import { Tooltip } from '../../components';
 import { PlatformIcon } from '../../components/layout/PlatformIcon';
 import { useContent } from '../../contexts/ContentContext';
-import { CONTENT_TYPES, CONTENT_TYPE_LABELS, MESSAGE_ROLES } from '../../shared/constants';
+import {
+  CONTENT_TYPES,
+  CONTENT_TYPE_LABELS,
+  MESSAGE_ROLES,
+} from '../../shared/constants';
 import { ContentTypeIcon } from '../../components/layout/ContentTypeIcon';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { logger } from '../../shared/logger';
@@ -87,7 +91,6 @@ function ChatArea({
   // --- Ref for initial view layout ---
   const initialViewContainerRef = useRef(null);
 
-
   // Calculate dynamic specs based on current mode
   const dynamicSpecs = useMemo(() => {
     // Use displayModelConfig which is derived from modelConfigData
@@ -111,9 +114,12 @@ function ChatArea({
 
     // Check for thinking mode overrides ONLY if enabled AND toggleable
     if (isThinkingModeEnabled && displayModelConfig.thinking?.toggleable) {
-      contextWindow = displayModelConfig.thinking.contextWindow ?? contextWindow;
-      inputPrice = displayModelConfig.thinking.pricing?.inputTokenPrice ?? inputPrice;
-      outputPrice = displayModelConfig.thinking.pricing?.outputTokenPrice ?? outputPrice;
+      contextWindow =
+        displayModelConfig.thinking.contextWindow ?? contextWindow;
+      inputPrice =
+        displayModelConfig.thinking.pricing?.inputTokenPrice ?? inputPrice;
+      outputPrice =
+        displayModelConfig.thinking.pricing?.outputTokenPrice ?? outputPrice;
     }
 
     return {
@@ -160,7 +166,6 @@ function ChatArea({
     hasAnyPlatformCredentials,
   ]);
 
-
   // --- getWelcomeMessage ---
   function getWelcomeMessage(contentType, isPageInjectable) {
     if (!isPageInjectable) {
@@ -183,33 +188,33 @@ function ChatArea({
   const SCROLL_THRESHOLD = 10;
   const DEBOUNCE_DELAY = 100;
 
-// --- Function to Check Scroll Position (for Scroll Down Button) ---
-const checkScrollPosition = useCallback(() => {
-  const scrollContainer = scrollContainerRef.current;
-  if (!scrollContainer || messages.length === 0) {
-    if (showScrollDownButton) setShowScrollDownButton(false);
-    return;
-  }
-  const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-  const scrollFromBottom = scrollHeight - scrollTop - clientHeight;
-  const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 10;
+  // --- Function to Check Scroll Position (for Scroll Down Button) ---
+  const checkScrollPosition = useCallback(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer || messages.length === 0) {
+      if (showScrollDownButton) setShowScrollDownButton(false);
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const scrollFromBottom = scrollHeight - scrollTop - clientHeight;
+    const isNearBottom = scrollFromBottom <= SCROLL_THRESHOLD + 10;
 
-  const lastMsg = messages[messages.length - 1];
-  const forceHideButton =
-  lastMsg &&
-  (lastMsg.role === MESSAGE_ROLES.ASSISTANT ||
-    lastMsg.role === MESSAGE_ROLES.SYSTEM) &&
-    lastMsg.isStreaming === true &&
-    (!lastMsg.content || lastMsg.content.trim() === '');
+    const lastMsg = messages[messages.length - 1];
+    const forceHideButton =
+      lastMsg &&
+      (lastMsg.role === MESSAGE_ROLES.ASSISTANT ||
+        lastMsg.role === MESSAGE_ROLES.SYSTEM) &&
+      lastMsg.isStreaming === true &&
+      (!lastMsg.content || lastMsg.content.trim() === '');
 
     const shouldShow = !isNearBottom && !forceHideButton;
     if (shouldShow) {
       // Only schedule show if it's not already showing and no timer is pending
       if (!showScrollDownButton && !showButtonTimerRef.current) {
-         showButtonTimerRef.current = setTimeout(() => {
-           setShowScrollDownButton(true);
-           showButtonTimerRef.current = null; // Clear ref after execution
-         }, 500); // 500ms delay before showing
+        showButtonTimerRef.current = setTimeout(() => {
+          setShowScrollDownButton(true);
+          showButtonTimerRef.current = null; // Clear ref after execution
+        }, 500); // 500ms delay before showing
       }
     } else {
       // If it should be hidden, clear any pending show timer and hide immediately
@@ -218,10 +223,10 @@ const checkScrollPosition = useCallback(() => {
         showButtonTimerRef.current = null;
       }
       if (showScrollDownButton) {
-         setShowScrollDownButton(false);
+        setShowScrollDownButton(false);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, showScrollDownButton, SCROLL_THRESHOLD, textSize]);
 
   // --- Define last/secondLast message OUTSIDE the effect ---
@@ -371,7 +376,12 @@ const checkScrollPosition = useCallback(() => {
         rafIdHeightCalc.current = null;
       }
     };
-  }, [messages, precedingUserMessageHeight, textSize, requestHeightRecalculation]);
+  }, [
+    messages,
+    precedingUserMessageHeight,
+    textSize,
+    requestHeightRecalculation,
+  ]);
 
   // --- Manual Scroll To Bottom Function ---
   // Utility function to programmatically scroll the chat container to the bottom.
@@ -459,7 +469,6 @@ const checkScrollPosition = useCallback(() => {
     ? isInjectablePage(currentTab.url)
     : false;
 
-
   // --- Render Initial View Content ---
   const renderInitialView = () => {
     if (!hasAnyPlatformCredentials) {
@@ -518,12 +527,15 @@ const checkScrollPosition = useCallback(() => {
             )}
             {modelReady ? (
               <>
-    <div
-      className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium'
-      title={displayModelConfig.id} // Keep title as ID for dev/debugging
-    >
-      {displayModelConfig.displayName || displayModelConfig.name || displayModelConfig.id} {/* Prefer displayName */}
-    </div>
+                <div
+                  className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium'
+                  title={displayModelConfig.id} // Keep title as ID for dev/debugging
+                >
+                  {displayModelConfig.displayName ||
+                    displayModelConfig.name ||
+                    displayModelConfig.id}{' '}
+                  {/* Prefer displayName */}
+                </div>
                 {displayModelConfig.description && (
                   <p className='text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto'>
                     {displayModelConfig.description}
@@ -570,8 +582,7 @@ const checkScrollPosition = useCallback(() => {
                             />
                           </div>
                         )}
-                      {typeof dynamicSpecs.outputPrice ===
-                        'number' &&
+                      {typeof dynamicSpecs.outputPrice === 'number' &&
                         dynamicSpecs.outputPrice > 0 && (
                           <div
                             ref={outputPriceRef}
@@ -607,9 +618,7 @@ const checkScrollPosition = useCallback(() => {
                       >
                         <ContextWindowIcon />{' '}
                         <span className='ml-1'>
-                          {formatContextWindow(
-                            dynamicSpecs.contextWindow
-                          )}
+                          {formatContextWindow(dynamicSpecs.contextWindow)}
                         </span>
                         <Tooltip
                           show={hoveredElement === 'contextWindow'}
@@ -648,9 +657,7 @@ const checkScrollPosition = useCallback(() => {
           <div className='flex flex-col items-center py-3 w-full'>
             {isPageInjectable ? (
               <>
-     <div
-       className='flex items-center gap-1 text-xs text-theme-secondary cursor-default'
-     >
+                <div className='flex items-center gap-1 text-xs text-theme-secondary cursor-default'>
                   <ContentTypeIcon
                     contentType={contentType}
                     className='w-6 h-6 text-current'
@@ -658,32 +665,32 @@ const checkScrollPosition = useCallback(() => {
                   <span className='text-base font-medium ml-2'>
                     {CONTENT_TYPE_LABELS[contentType] || 'Content'}
                   </span>
-       <span
-         ref={includeToggleRef}
-         onMouseEnter={() => setIsIncludeTooltipVisible(true)}
-         onMouseLeave={() => setIsIncludeTooltipVisible(false)}
-         onFocus={() => setIsIncludeTooltipVisible(true)}
-         onBlur={() => setIsIncludeTooltipVisible(false)}
-         aria-describedby='include-context-tooltip-sidepanel'
-         className="inline-flex items-center"
-       >
-         <Toggle
-           id='content-extract-toggle'
-           checked={isContentExtractionEnabled}
-           onChange={(newCheckedState) => {
-             if (hasAnyPlatformCredentials)
-               setIsContentExtractionEnabled(newCheckedState);
-           }}
-           disabled={!hasAnyPlatformCredentials}
-           className='w-10 h-5 ml-3'
-         />
-       </span>
-       {contentType === 'general' && (
-         <ExtractionStrategySelector
-           disabled={!hasAnyPlatformCredentials}
-           className="ml-2"
-         />
-       )}
+                  <span
+                    ref={includeToggleRef}
+                    onMouseEnter={() => setIsIncludeTooltipVisible(true)}
+                    onMouseLeave={() => setIsIncludeTooltipVisible(false)}
+                    onFocus={() => setIsIncludeTooltipVisible(true)}
+                    onBlur={() => setIsIncludeTooltipVisible(false)}
+                    aria-describedby='include-context-tooltip-sidepanel'
+                    className='inline-flex items-center'
+                  >
+                    <Toggle
+                      id='content-extract-toggle'
+                      checked={isContentExtractionEnabled}
+                      onChange={(newCheckedState) => {
+                        if (hasAnyPlatformCredentials)
+                          setIsContentExtractionEnabled(newCheckedState);
+                      }}
+                      disabled={!hasAnyPlatformCredentials}
+                      className='w-10 h-5 ml-3'
+                    />
+                  </span>
+                  {contentType === 'general' && (
+                    <ExtractionStrategySelector
+                      disabled={!hasAnyPlatformCredentials}
+                      className='ml-2'
+                    />
+                  )}
                 </div>
                 {/* Render Tooltip */}
                 <Tooltip
@@ -792,12 +799,12 @@ const checkScrollPosition = useCallback(() => {
                   thinkingContent={message.thinkingContent} // Pass thinkingContent prop
                   role={message.role}
                   isStreaming={message.isStreaming}
-          model={message.model} // This is the ID
-          modelDisplayName={message.modelDisplayName}
-          platformIconUrl={message.platformIconUrl}
-          platformId={message.platformId}
-          style={dynamicStyle}
-        />
+                  model={message.model} // This is the ID
+                  modelDisplayName={message.modelDisplayName}
+                  platformIconUrl={message.platformIconUrl}
+                  platformId={message.platformId}
+                  style={dynamicStyle}
+                />
               );
             })}
 
@@ -819,9 +826,10 @@ const checkScrollPosition = useCallback(() => {
           p-1 rounded-full
           text-theme-primary dark:text-theme-primary-dark
           transition-opacity duration-300 ease-in-out
-          ${showScrollDownButton
-            ? 'opacity-100 bg-theme-primary/50'
-            : 'opacity-0 pointer-events-none'
+          ${
+            showScrollDownButton
+              ? 'opacity-100 bg-theme-primary/50'
+              : 'opacity-0 pointer-events-none'
           }
         `}
         aria-label='Scroll to bottom'
@@ -829,9 +837,7 @@ const checkScrollPosition = useCallback(() => {
         aria-hidden={!showScrollDownButton}
         tabIndex={showScrollDownButton ? 0 : -1}
       >
-        <ScrollDownIcon
-          className='w-6 h-6 select-none'
-        />
+        <ScrollDownIcon className='w-6 h-6 select-none' />
       </button>
     </div>
   );

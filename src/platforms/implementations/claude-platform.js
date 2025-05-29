@@ -69,7 +69,9 @@ class ClaudePlatform extends BasePlatform {
    * @protected
    */
   async _getPreSubmitWaitMs() {
-    this.logger.info(`[${this.platformId}] Using specific pre-submit wait of 500ms.`);
+    this.logger.info(
+      `[${this.platformId}] Using specific pre-submit wait of 500ms.`
+    );
     return 500;
   }
 
@@ -82,17 +84,21 @@ class ClaudePlatform extends BasePlatform {
   _isEditorEmpty(editorElement) {
     // Claude's ProseMirror editor often has a <p><br></p> structure when empty.
     const html = editorElement.innerHTML.trim().toLowerCase();
-    const text = (editorElement.textContent || editorElement.innerText || '').trim();
+    const text = (
+      editorElement.textContent ||
+      editorElement.innerText ||
+      ''
+    ).trim();
 
     if (text === '') {
-        // If textContent is empty, check for common empty structures
-        if (html === '<p><br></p>' || html === '<p></p>' || html === '') {
-            return true;
-        }
-        // Also consider if it only contains a placeholder attribute
-        if (editorElement.querySelector('p[data-placeholder]')) {
-            return true;
-        }
+      // If textContent is empty, check for common empty structures
+      if (html === '<p><br></p>' || html === '<p></p>' || html === '') {
+        return true;
+      }
+      // Also consider if it only contains a placeholder attribute
+      if (editorElement.querySelector('p[data-placeholder]')) {
+        return true;
+      }
     }
     return false;
   }

@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 
 import { ChevronDownIcon } from '../icons/ChevronDownIcon';
 
-
 /**
  * A reusable custom select component that adjusts width to fit the selected content.
  *
@@ -66,7 +65,10 @@ export function CustomSelect({
 
   return (
     // Use inline-block to allow the container to size based on its content (the button)
-    <div ref={dropdownRef} className={`relative inline-block select-none ${className}`}>
+    <div
+      ref={dropdownRef}
+      className={`relative inline-block select-none ${className}`}
+    >
       {/* Trigger Button */}
       <button
         ref={triggerRef}

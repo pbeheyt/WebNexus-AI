@@ -15,7 +15,9 @@ import { logger } from '../shared/logger.js';
       // Initialize the platform
       await platform.initialize();
     } else {
-      logger.platform.warn('No matching AI platform found for the current page');
+      logger.platform.warn(
+        'No matching AI platform found for the current page'
+      );
     }
   } catch (error) {
     logger.platform.error('Error initializing AI platform integration:', error);

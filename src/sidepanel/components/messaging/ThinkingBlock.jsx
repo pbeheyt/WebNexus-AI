@@ -26,18 +26,36 @@ const ThinkingBlock = ({ thinkingContent }) => {
   // Simplified Markdown components for thinking block
   const thinkingMarkdownComponents = {
     p: ({ node: _node, children }) => <p className='mb-2'>{children}</p>,
-    ul: ({ node: _node, ordered: _ordered, ...props }) => <ul className='list-disc pl-4 mb-2' {...props} />,
-    ol: ({ node: _node, ordered: _ordered, ...props }) => <ol className='list-decimal pl-4 mb-2' {...props} />,
-    li: ({ node: _node, children, ordered: _ordered, ...props }) => <li className='mb-1' {...props}>{children}</li>,
+    ul: ({ node: _node, ordered: _ordered, ...props }) => (
+      <ul className='list-disc pl-4 mb-2' {...props} />
+    ),
+    ol: ({ node: _node, ordered: _ordered, ...props }) => (
+      <ol className='list-decimal pl-4 mb-2' {...props} />
+    ),
+    li: ({ node: _node, children, ordered: _ordered, ...props }) => (
+      <li className='mb-1' {...props}>
+        {children}
+      </li>
+    ),
     code: ({ node: _node, inline, children, ...props }) => {
-        if (inline) {
-            return <code className='bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs' {...props}>{children}</code>;
-        }
-        // Basic block code rendering (no syntax highlighting needed here)
-        return <pre className='bg-gray-200 dark:bg-gray-700 p-2 rounded text-xs my-2 overflow-x-auto'><code {...props}>{children}</code></pre>;
+      if (inline) {
+        return (
+          <code
+            className='bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs'
+            {...props}
+          >
+            {children}
+          </code>
+        );
+      }
+      // Basic block code rendering (no syntax highlighting needed here)
+      return (
+        <pre className='bg-gray-200 dark:bg-gray-700 p-2 rounded text-xs my-2 overflow-x-auto'>
+          <code {...props}>{children}</code>
+        </pre>
+      );
     },
   };
-
 
   return (
     <div className='mb-4 border border-dashed border-gray-400 dark:border-gray-600 rounded-md bg-gray-100/50 dark:bg-gray-800/50'>
@@ -48,9 +66,9 @@ const ThinkingBlock = ({ thinkingContent }) => {
         aria-controls={`thinking-content-${React.useId()}`} // Generate unique ID
       >
         <div className='flex items-center'>
-        <span className='text-xs italic text-gray-600 dark:text-gray-400'>
-          Thinking Process
-        </span>
+          <span className='text-xs italic text-gray-600 dark:text-gray-400'>
+            Thinking Process
+          </span>
         </div>
         <ChevronUpIcon
           className={`w-4 h-4 text-gray-500 dark:text-gray-400 transform transition-transform duration-200 ${
@@ -65,12 +83,12 @@ const ThinkingBlock = ({ thinkingContent }) => {
         style={{ maxHeight: contentMaxHeight }}
       >
         <div className='p-3 text-xs text-gray-700 dark:text-gray-300 prose prose-xs dark:prose-invert max-w-none'>
-           <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={thinkingMarkdownComponents}
-            >
-              {thinkingContent}
-            </ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={thinkingMarkdownComponents}
+          >
+            {thinkingContent}
+          </ReactMarkdown>
         </div>
       </div>
     </div>

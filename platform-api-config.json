@@ -73,7 +73,7 @@
             "toggleable": true,
             "pricing": {
               "inputTokenPrice": 0.15,
-              "outputTokenPrice": 3.50
+              "outputTokenPrice": 3.5
             },
             "budget": {
               "min": 0,
@@ -323,7 +323,7 @@
             "maxOutput": 32000,
             "supportsTemperature": false,
             "supportsTopP": false,
-              "budget": {
+            "budget": {
               "min": 1024,
               "max": 32000,
               "default": 16000
@@ -354,7 +354,7 @@
             "maxOutput": 64000,
             "supportsTemperature": false,
             "supportsTopP": false,
-              "budget": {
+            "budget": {
               "min": 1024,
               "max": 64000,
               "default": 16000
@@ -385,7 +385,7 @@
             "maxOutput": 64000,
             "supportsTemperature": false,
             "supportsTopP": false,
-              "budget": {
+            "budget": {
               "min": 1024,
               "max": 64000,
               "default": 16000

@@ -58,13 +58,13 @@ class BaseApiService extends ApiInterface {
       );
 
       if (streamSuccess) {
-       this.logger.info(
+        this.logger.info(
           `[${this.platformId}] Streaming request for model ${model} completed successfully.`
         );
         return { success: true, model: model };
       } else {
         // Error was already handled by onChunk within _executeStreamingRequest
-       this.logger.warn(
+        this.logger.warn(
           `[${this.platformId}] Streaming request for model ${model} failed (error handled via onChunk).`
         );
         // Return a failure object, but the specific error is already in the chat via onChunk.
@@ -268,10 +268,10 @@ class BaseApiService extends ApiInterface {
 
       reader = response.body.getReader();
 
-        // Disable rule because this is a standard pattern for reading streams
-        // until done or an error occurs, with explicit break conditions inside.
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
+      // Disable rule because this is a standard pattern for reading streams
+      // until done or an error occurs, with explicit break conditions inside.
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
         const { done, value } = await reader.read();
 
         if (done) {

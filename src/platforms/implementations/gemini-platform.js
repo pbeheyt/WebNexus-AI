@@ -63,14 +63,21 @@ class GeminiPlatform extends BasePlatform {
   _isEditorEmpty(editorElement) {
     // Quill editors often have a <p><br></p> structure when "empty"
     // or might have a class like 'ql-blank'.
-    const text = (editorElement.textContent || editorElement.innerText || '').trim();
+    const text = (
+      editorElement.textContent ||
+      editorElement.innerText ||
+      ''
+    ).trim();
     if (text === '') {
-        // Check for common Quill empty structures
-        if (editorElement.classList.contains('ql-blank')) return true;
-        if (editorElement.innerHTML.trim().toLowerCase() === '<p><br></p>' || editorElement.innerHTML.trim() === '<p></p>') {
-            return true;
-        }
-        return true; // If textContent is empty, consider it empty
+      // Check for common Quill empty structures
+      if (editorElement.classList.contains('ql-blank')) return true;
+      if (
+        editorElement.innerHTML.trim().toLowerCase() === '<p><br></p>' ||
+        editorElement.innerHTML.trim() === '<p></p>'
+      ) {
+        return true;
+      }
+      return true; // If textContent is empty, consider it empty
     }
     return false;
   }

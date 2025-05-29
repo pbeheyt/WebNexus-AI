@@ -164,7 +164,8 @@ export async function processContentViaApi(params) {
     // );
 
     // 1. Decide whether to extract content based on existence, user request, and injectability
-    const initialFormattedContentExists = await SidePanelStateManager.hasFormattedContentForTab(tabId);
+    const initialFormattedContentExists =
+      await SidePanelStateManager.hasFormattedContentForTab(tabId);
     const canInject = isInjectablePage(url);
     const shouldExtract =
       isContentExtractionEnabled && !initialFormattedContentExists && canInject;
@@ -205,7 +206,10 @@ export async function processContentViaApi(params) {
           extractedContent,
           contentType
         );
-        await SidePanelStateManager.storeFormattedContentForTab(tabId, newlyFormattedContent);
+        await SidePanelStateManager.storeFormattedContentForTab(
+          tabId,
+          newlyFormattedContent
+        );
         logger.background.info(
           `Formatted and stored content for tab ${tabId}.`
         );
@@ -241,7 +245,12 @@ export async function processContentViaApi(params) {
     let resolvedParams = await ModelParameterService.resolveParameters(
       platformId,
       modelId,
-      { tabId, source, conversationHistory, useThinkingMode: isThinkingModeEnabled }
+      {
+        tabId,
+        source,
+        conversationHistory,
+        useThinkingMode: isThinkingModeEnabled,
+      }
     );
     resolvedParams.conversationHistory = conversationHistory;
     logger.background.info(`Resolved parameters:`, resolvedParams);
@@ -250,7 +259,8 @@ export async function processContentViaApi(params) {
     await initializeStreamResponse(streamId, platformId, resolvedParams.model);
 
     let formattedContentForRequest = null;
-    const contextAlreadySent = await SidePanelStateManager.getTabContextSentFlag(tabId);
+    const contextAlreadySent =
+      await SidePanelStateManager.getTabContextSentFlag(tabId);
 
     if (!isContentExtractionEnabled) {
       logger.background.info(`Content inclusion skipped: Toggle is OFF.`);
@@ -265,7 +275,8 @@ export async function processContentViaApi(params) {
           `Including newly extracted/formatted content for tab ${tabId}.`
         );
       } else if (initialFormattedContentExists) {
-        formattedContentForRequest = await SidePanelStateManager.getFormattedContentForTab(tabId);
+        formattedContentForRequest =
+          await SidePanelStateManager.getFormattedContentForTab(tabId);
         logger.background.info(
           `Including pre-existing formatted content for tab ${tabId}.`
         );
@@ -282,7 +293,10 @@ export async function processContentViaApi(params) {
         logger.background.info(
           `Updating system prompt state for tab ${tabId}. Prompt is ${promptToStoreOrClear ? 'present' : 'absent/empty'}.`
         );
-        await SidePanelStateManager.storeSystemPromptForTab(tabId, promptToStoreOrClear);
+        await SidePanelStateManager.storeSystemPromptForTab(
+          tabId,
+          promptToStoreOrClear
+        );
       } catch (storeError) {
         logger.background.error(
           `Failed to update system prompt state for tab ${tabId}:`,
@@ -293,7 +307,9 @@ export async function processContentViaApi(params) {
 
     if (formattedContentForRequest !== null) {
       await SidePanelStateManager.setTabContextSentFlag(tabId, true);
-      logger.background.info(`Context included in this request. Set context sent flag for tab ${tabId}.`);
+      logger.background.info(
+        `Context included in this request. Set context sent flag for tab ${tabId}.`
+      );
     }
 
     const requestConfig = {
@@ -370,7 +386,10 @@ function createStreamHandler(
     if (!chunkData) return;
 
     const chunk = typeof chunkData.chunk === 'string' ? chunkData.chunk : '';
-    const thinkingChunk = typeof chunkData.thinkingChunk === 'string' ? chunkData.thinkingChunk : '';
+    const thinkingChunk =
+      typeof chunkData.thinkingChunk === 'string'
+        ? chunkData.thinkingChunk
+        : '';
     const done = !!chunkData.done;
 
     if (chunkData.model && chunkData.model !== modelToUse) {

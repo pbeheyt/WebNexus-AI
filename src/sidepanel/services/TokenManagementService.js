@@ -70,7 +70,8 @@ class TokenManagementService {
       });
       return true;
     } catch (error) {
-      logger.sidepanel.error( // Corrected logger
+      logger.sidepanel.error(
+        // Corrected logger
         'TokenManagementService: Error updating token statistics:',
         error
       );
@@ -145,12 +146,12 @@ class TokenManagementService {
         let msgTotalOutputTokens = 0;
         // Check if pre-calculated tokens exist and are valid
         if (typeof msg.outputTokens === 'number' && msg.outputTokens >= 0) {
-            msgTotalOutputTokens = msg.outputTokens;
+          msgTotalOutputTokens = msg.outputTokens;
         } else {
-            // Estimate if pre-calculated tokens are missing or invalid
-            const contentTokens = this.estimateTokens(msg.content || '');
-            const thinkingTokens = this.estimateTokens(msg.thinkingContent || ''); // Estimate thinking tokens
-            msgTotalOutputTokens = contentTokens + thinkingTokens; // Sum both
+          // Estimate if pre-calculated tokens are missing or invalid
+          const contentTokens = this.estimateTokens(msg.content || '');
+          const thinkingTokens = this.estimateTokens(msg.thinkingContent || ''); // Estimate thinking tokens
+          msgTotalOutputTokens = contentTokens + thinkingTokens; // Sum both
         }
 
         // Calculate cumulative output tokens by summing output from all assistant messages.
@@ -181,8 +182,12 @@ class TokenManagementService {
         outputTokensInLastApiCall = lastAssistantMsg.outputTokens;
       } else {
         // Fallback to estimating both content and thinking content
-        const contentTokens = this.estimateTokens(lastAssistantMsg.content || '');
-        const thinkingTokens = this.estimateTokens(lastAssistantMsg.thinkingContent || '');
+        const contentTokens = this.estimateTokens(
+          lastAssistantMsg.content || ''
+        );
+        const thinkingTokens = this.estimateTokens(
+          lastAssistantMsg.thinkingContent || ''
+        );
         outputTokensInLastApiCall = contentTokens + thinkingTokens;
       }
     }
@@ -326,7 +331,8 @@ class TokenManagementService {
       // 8. Return the final statistics object
       return finalStatsObject;
     } catch (error) {
-      logger.sidepanel.error( // Corrected logger
+      logger.sidepanel.error(
+        // Corrected logger
         'TokenManagementService: Error calculating token statistics:',
         error
       );
@@ -350,12 +356,14 @@ class TokenManagementService {
       const tokens = encode(text);
       return tokens.length;
     } catch (error) {
-      logger.sidepanel.error( // Corrected logger
+      logger.sidepanel.error(
+        // Corrected logger
         'TokenManagementService: Error encoding text with gpt-tokenizer:',
         error
       );
       // Fallback on encoding error
-      logger.sidepanel.warn( // Corrected logger
+      logger.sidepanel.warn(
+        // Corrected logger
         'TokenManagementService: gpt-tokenizer encoding failed, falling back to char count.'
       );
       return Math.ceil(text.length / 4); // Fallback method: 1 token per 4 chars
@@ -370,7 +378,12 @@ class TokenManagementService {
    * @param {boolean} [isThinkingModeEnabled=false] - Whether thinking mode is active
    * @returns {Object} - Pricing information
    */
-  static calculateCost(inputTokens, outputTokens, modelConfig, isThinkingModeEnabled = false) {
+  static calculateCost(
+    inputTokens,
+    outputTokens,
+    modelConfig,
+    isThinkingModeEnabled = false
+  ) {
     if (!modelConfig) return { totalCost: 0 };
 
     // Initialize with base prices
@@ -378,7 +391,10 @@ class TokenManagementService {
     let effectiveOutputPrice = modelConfig?.pricing?.outputTokenPrice ?? 0;
 
     // Check for thinking mode overrides if applicable
-    if (modelConfig?.thinking?.toggleable === true && isThinkingModeEnabled === true) {
+    if (
+      modelConfig?.thinking?.toggleable === true &&
+      isThinkingModeEnabled === true
+    ) {
       // Apply input price override if valid
       const overrideInputPrice = modelConfig.thinking.pricing?.inputTokenPrice;
       if (typeof overrideInputPrice === 'number' && overrideInputPrice >= 0) {
@@ -386,7 +402,8 @@ class TokenManagementService {
       }
 
       // Apply output price override if valid
-      const overrideOutputPrice = modelConfig.thinking.pricing?.outputTokenPrice;
+      const overrideOutputPrice =
+        modelConfig.thinking.pricing?.outputTokenPrice;
       if (typeof overrideOutputPrice === 'number' && overrideOutputPrice >= 0) {
         effectiveOutputPrice = overrideOutputPrice;
       }

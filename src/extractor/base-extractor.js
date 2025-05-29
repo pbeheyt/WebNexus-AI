@@ -57,8 +57,6 @@ class BaseExtractor {
           message
         );
       }
-
-
     };
 
     chrome.runtime.onMessage.addListener(this.messageListener);

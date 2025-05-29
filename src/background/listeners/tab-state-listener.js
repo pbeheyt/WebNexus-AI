@@ -63,13 +63,19 @@ export async function clearSingleTabData(tabId) {
           result = await chrome.storage.local.get(storageKey);
           data = result[storageKey];
 
-          if (data && typeof data === 'object' && data[tabIdStr] !== undefined) {
+          if (
+            data &&
+            typeof data === 'object' &&
+            data[tabIdStr] !== undefined
+          ) {
             logger.background.info(
               `Found data for key ${storageKey} for tab ${tabIdStr}. Deleting...`
             );
             delete data[tabIdStr];
             await chrome.storage.local.set({ [storageKey]: data });
-            logger.background.info(`Cleared ${storageKey} for tab ${tabIdStr}.`);
+            logger.background.info(
+              `Cleared ${storageKey} for tab ${tabIdStr}.`
+            );
           } else {
             logger.background.info(
               `No data found for key ${storageKey} for tab ${tabIdStr}. Skipping.`
@@ -175,7 +181,7 @@ async function cleanupTabStorage(storageKey, tabId, validTabIds = null) {
       // Single Tab Cleanup Mode (onRemoved) ---
       // Remove the entry specifically for the closed tab ID.
       const tabIdStr = tabId.toString();
-        if (Object.hasOwn(updatedData, tabIdStr)) {
+      if (Object.hasOwn(updatedData, tabIdStr)) {
         delete updatedData[tabIdStr];
         hasChanges = true;
         logger.background.info(
@@ -265,7 +271,6 @@ export function setupTabStateListener() {
         );
       }
 
-
       // Also attempt to disable the side panel for the closed tab, if it was enabled.
       // This might fail if the tab is truly gone, so catch errors gracefully.
       logger.background.info(
@@ -314,8 +319,10 @@ export async function performStaleTabCleanup() {
     );
 
     // Use SidePanelStateManager to clean its state based on valid IDs
-        await SidePanelStateManager.cleanupTabStates(); // Call without arguments
-        logger.background.info(`SidePanelStateManager stale state cleanup completed.`);
+    await SidePanelStateManager.cleanupTabStates(); // Call without arguments
+    logger.background.info(
+      `SidePanelStateManager stale state cleanup completed.`
+    );
 
     logger.background.info('Stale tab data cleanup finished successfully.');
   } catch (error) {

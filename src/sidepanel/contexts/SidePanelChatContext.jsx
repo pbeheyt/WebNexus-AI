@@ -46,14 +46,18 @@ export function SidePanelChatProvider({ children }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState(null);
-  const [stableContextStatus, setStableContextStatus] = useState({ warningLevel: 'none' });
+  const [stableContextStatus, setStableContextStatus] = useState({
+    warningLevel: 'none',
+  });
   const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isContentExtractionEnabled, setIsContentExtractionEnabled] =
     useState(true);
   const [modelConfigData, setModelConfigData] = useState(null);
   const [stableModelConfigData, setStableModelConfigData] = useState(null);
-  const [stableTokenStats, setStableTokenStats] = useState(TokenManagementService._getEmptyStats());
+  const [stableTokenStats, setStableTokenStats] = useState(
+    TokenManagementService._getEmptyStats()
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isThinkingModeEnabled, setIsThinkingModeEnabled] = useState(false);
 
@@ -348,13 +352,19 @@ export function SidePanelChatProvider({ children }) {
       // Check if the loaded model config allows toggling
       if (modelConfigData?.thinking?.toggleable === true) {
         try {
-          const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE);
-          const prefs = result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
+          const result = await chrome.storage.sync.get(
+            STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE
+          );
+          const prefs =
+            result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
           const modePref = prefs[selectedPlatformId]?.[selectedModel];
           // Set state based on preference, default to false if undefined
           setIsThinkingModeEnabled(modePref === undefined ? false : modePref);
         } catch (err) {
-          logger.sidepanel.error("Error loading thinking mode preference:", err);
+          logger.sidepanel.error(
+            'Error loading thinking mode preference:',
+            err
+          );
           setIsThinkingModeEnabled(false); // Default to false on error
         }
       } else {
@@ -423,7 +433,10 @@ export function SidePanelChatProvider({ children }) {
     };
 
     const messagesBeforeApiCall = [...messages, userMessage]; // State before placeholder
-    const messagesWithPlaceholder = [...messagesBeforeApiCall, assistantMessage];
+    const messagesWithPlaceholder = [
+      ...messagesBeforeApiCall,
+      assistantMessage,
+    ];
 
     setMessages(messagesWithPlaceholder); // Update UI with user message and placeholder
     setInputValue('');
@@ -492,28 +505,39 @@ export function SidePanelChatProvider({ children }) {
 
   const clearFormattedContentForTab = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
-      logger.sidepanel.warn('clearFormattedContentForTab called without a valid tabId.');
+      logger.sidepanel.warn(
+        'clearFormattedContentForTab called without a valid tabId.'
+      );
       return;
     }
-    logger.sidepanel.info(`Requesting SidePanelStateManager to clear formatted content for tab: ${tabId}`);
+    logger.sidepanel.info(
+      `Requesting SidePanelStateManager to clear formatted content for tab: ${tabId}`
+    );
     try {
       await SidePanelStateManager.clearFormattedContentForTab(tabId);
       setExtractedContentAdded(false); // Keep this local state update
-      logger.sidepanel.info(`SidePanelStateManager successfully cleared formatted content for tab: ${tabId}`);
+      logger.sidepanel.info(
+        `SidePanelStateManager successfully cleared formatted content for tab: ${tabId}`
+      );
     } catch (error) {
-      logger.sidepanel.error(`Error calling SidePanelStateManager.clearFormattedContentForTab for tab ${tabId}:`, error);
+      logger.sidepanel.error(
+        `Error calling SidePanelStateManager.clearFormattedContentForTab for tab ${tabId}:`,
+        error
+      );
     }
   }, [tabId, setExtractedContentAdded]);
 
   const resetCurrentTabData = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
-      logger.sidepanel.warn('resetCurrentTabData called without a valid tabId.');
+      logger.sidepanel.warn(
+        'resetCurrentTabData called without a valid tabId.'
+      );
       return;
     }
     // Prevent concurrent refreshes
     if (isRefreshing) {
-        logger.sidepanel.warn('Refresh already in progress. Ignoring request.');
-        return;
+      logger.sidepanel.warn('Refresh already in progress. Ignoring request.');
+      return;
     }
 
     if (
@@ -535,18 +559,31 @@ export function SidePanelChatProvider({ children }) {
         }
 
         // 2. Notify background to clear its data (attempt and log, but don't block local reset on failure)
-        logger.sidepanel.info(`Requesting background to clear data for tab ${tabId}`);
+        logger.sidepanel.info(
+          `Requesting background to clear data for tab ${tabId}`
+        );
         try {
-            const clearResponse = await robustSendMessage({ action: 'clearTabData', tabId: tabId });
-            if (clearResponse && clearResponse.success) {
-                logger.sidepanel.info(`Background confirmed clearing data for tab ${tabId}`);
-            } else {
-                logger.sidepanel.error('Background failed to confirm tab data clear:', clearResponse?.error);
-                // Proceed with local reset even if background fails
-            }
+          const clearResponse = await robustSendMessage({
+            action: 'clearTabData',
+            tabId: tabId,
+          });
+          if (clearResponse && clearResponse.success) {
+            logger.sidepanel.info(
+              `Background confirmed clearing data for tab ${tabId}`
+            );
+          } else {
+            logger.sidepanel.error(
+              'Background failed to confirm tab data clear:',
+              clearResponse?.error
+            );
+            // Proceed with local reset even if background fails
+          }
         } catch (sendError) {
-             logger.sidepanel.error('Error sending clearTabData message to background:', sendError);
-             // Proceed with local reset despite background communication failure
+          logger.sidepanel.error(
+            'Error sending clearTabData message to background:',
+            sendError
+          );
+          // Proceed with local reset despite background communication failure
         }
 
         // 3. Reset local state *after* attempting background clear
@@ -558,24 +595,31 @@ export function SidePanelChatProvider({ children }) {
         setIsCanceling(false); // Ensure canceling state is reset if cancellation happened
         await clearTokenData(); // Clear associated tokens and reset local token state
         logger.sidepanel.info('Local sidepanel state reset complete.');
-
       } catch (error) {
         // Catch errors primarily from stream cancellation or clearTokenData
-        logger.sidepanel.error('Error during the refresh process (excluding background communication):', error);
+        logger.sidepanel.error(
+          'Error during the refresh process (excluding background communication):',
+          error
+        );
         // Attempt to reset local state even on these errors
         try {
-            setMessages([]);
-            setInputValue('');
-            setStreamingMessageId(null);
-            setExtractedContentAdded(false);
-            setIsCanceling(false);
-            await clearTokenData();
+          setMessages([]);
+          setInputValue('');
+          setStreamingMessageId(null);
+          setExtractedContentAdded(false);
+          setIsCanceling(false);
+          await clearTokenData();
         } catch (resetError) {
-            logger.sidepanel.error('Error during fallback state reset:', resetError);
+          logger.sidepanel.error(
+            'Error during fallback state reset:',
+            resetError
+          );
         }
       } finally {
         // 4. ALWAYS turn off refreshing state
-        logger.sidepanel.info('Setting isRefreshing to false in finally block.');
+        logger.sidepanel.info(
+          'Setting isRefreshing to false in finally block.'
+        );
         setIsRefreshing(false);
       }
     }
@@ -597,31 +641,41 @@ export function SidePanelChatProvider({ children }) {
   ]);
 
   // Toggle Thinking Mode handler
-  const toggleThinkingMode = useCallback(async (newState) => {
-    // Only proceed if platform/model are selected
-    if (!selectedPlatformId || !selectedModel) return;
+  const toggleThinkingMode = useCallback(
+    async (newState) => {
+      // Only proceed if platform/model are selected
+      if (!selectedPlatformId || !selectedModel) return;
 
-    setIsThinkingModeEnabled(newState);
+      setIsThinkingModeEnabled(newState);
 
-    try {
-      const result = await chrome.storage.sync.get(STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE);
-      const prefs = result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
+      try {
+        const result = await chrome.storage.sync.get(
+          STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE
+        );
+        const prefs =
+          result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
 
-      // Ensure platform object exists
-      if (!prefs[selectedPlatformId]) {
-        prefs[selectedPlatformId] = {};
+        // Ensure platform object exists
+        if (!prefs[selectedPlatformId]) {
+          prefs[selectedPlatformId] = {};
+        }
+
+        // Update the specific model preference
+        prefs[selectedPlatformId][selectedModel] = newState;
+
+        // Save back to storage
+        await chrome.storage.sync.set({
+          [STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE]: prefs,
+        });
+        logger.sidepanel.info(
+          `Thinking mode preference saved for ${selectedPlatformId}/${selectedModel}: ${newState}`
+        );
+      } catch (err) {
+        logger.sidepanel.error('Error saving thinking mode preference:', err);
       }
-
-      // Update the specific model preference
-      prefs[selectedPlatformId][selectedModel] = newState;
-
-      // Save back to storage
-      await chrome.storage.sync.set({ [STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE]: prefs });
-      logger.sidepanel.info(`Thinking mode preference saved for ${selectedPlatformId}/${selectedModel}: ${newState}`);
-    } catch (err) {
-      logger.sidepanel.error("Error saving thinking mode preference:", err);
-    }
-  }, [selectedPlatformId, selectedModel]); // Dependencies for the handler
+    },
+    [selectedPlatformId, selectedModel]
+  ); // Dependencies for the handler
 
   // --- End Utility Functions ---
 

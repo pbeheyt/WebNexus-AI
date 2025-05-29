@@ -2,7 +2,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
-import { Button, useNotification, PlatformIcon, Input, InfoIcon } from '../../../../components';
+import {
+  Button,
+  useNotification,
+  PlatformIcon,
+  Input,
+  InfoIcon,
+} from '../../../../components';
 import SettingsCard from '../common/SettingsCard';
 import SubTabLayout from '../common/SubTabLayout';
 import { logger } from '../../../../shared/logger';
@@ -29,8 +35,11 @@ const PlatformDetails = ({
 
   const [isSavingApiKeyActual, setIsSavingApiKeyActual] = useState(false);
   const [isRemovingApiKeyActual, setIsRemovingApiKeyActual] = useState(false);
-  const shouldShowApiKeySaving = useMinimumLoadingTime(isSavingApiKeyActual, 1000);
-  
+  const shouldShowApiKeySaving = useMinimumLoadingTime(
+    isSavingApiKeyActual,
+    1000
+  );
+
   const subTabs = [
     { id: 'apiKey', label: 'API Key' },
     { id: 'modelParams', label: 'Model Parameters' },
@@ -38,9 +47,11 @@ const PlatformDetails = ({
 
   // internalIntendedActiveSubTab: Tracks the tab the user intends to see (button style).
   // displayedSubTabContentId: Tracks which tab's content is actually rendered.
-  const [internalIntendedActiveSubTab, setInternalIntendedActiveSubTab] = useState(activeSubTab);
-  const [displayedSubTabContentId, setDisplayedSubTabContentId] = useState(activeSubTab);
-  
+  const [internalIntendedActiveSubTab, setInternalIntendedActiveSubTab] =
+    useState(activeSubTab);
+  const [displayedSubTabContentId, setDisplayedSubTabContentId] =
+    useState(activeSubTab);
+
   const [selectedModelId, setSelectedModelId] = useState(
     platform.apiConfig?.models?.length > 0
       ? platform.apiConfig.models[0].id
@@ -74,10 +85,12 @@ const PlatformDetails = ({
       setSelectedModelId(firstModelId);
     } else {
       const fallbackModelId = platform.apiConfig?.defaultModel || 'default';
-      logger.settings.warn(`PlatformDetails: Platform ${platform.id} has no models or defaultModel defined in apiConfig. Falling back selectedModelId to: ${fallbackModelId}`);
+      logger.settings.warn(
+        `PlatformDetails: Platform ${platform.id} has no models or defaultModel defined in apiConfig. Falling back selectedModelId to: ${fallbackModelId}`
+      );
       setSelectedModelId(fallbackModelId);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform.id, platform.apiConfig, credentials]);
 
   const handleApiKeyChange = (e) => {
@@ -101,7 +114,11 @@ const PlatformDetails = ({
   };
 
   const handleRemoveCredentials = async () => {
-    if (!window.confirm(`Are you sure you want to remove the API key for ${platform.name}?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to remove the API key for ${platform.name}?`
+      )
+    ) {
       return;
     }
     setIsRemovingApiKeyActual(true);
@@ -147,10 +164,38 @@ const PlatformDetails = ({
             {platform.name}
           </h3>
           <div className='platform-actions flex flex-wrap gap-x-3 gap-y-1'>
-            <a href={platform.consoleApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer'>API Console</a>
-            <a href={platform.docApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer'>API Documentation</a>
-            <a href={platform.modelApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer'>Model Documentation</a>
-            <a href={platform.keyApiLink} target='_blank' rel='noopener noreferrer' className='platform-link text-primary hover:underline text-sm cursor-pointer'>API Keys</a>
+            <a
+              href={platform.consoleApiLink}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='platform-link text-primary hover:underline text-sm cursor-pointer'
+            >
+              API Console
+            </a>
+            <a
+              href={platform.docApiLink}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='platform-link text-primary hover:underline text-sm cursor-pointer'
+            >
+              API Documentation
+            </a>
+            <a
+              href={platform.modelApiLink}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='platform-link text-primary hover:underline text-sm cursor-pointer'
+            >
+              Model Documentation
+            </a>
+            <a
+              href={platform.keyApiLink}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='platform-link text-primary hover:underline text-sm cursor-pointer'
+            >
+              API Keys
+            </a>
           </div>
         </div>
       </div>
@@ -170,8 +215,10 @@ const PlatformDetails = ({
       >
         {(_currentActiveIntendedSubTabParam) => {
           const showApiKeyContent = displayedSubTabContentId === 'apiKey';
-          const showModelParamsContent = displayedSubTabContentId === 'modelParams';
-          const shouldMountModelParamsComponent = internalIntendedActiveSubTab === 'modelParams';
+          const showModelParamsContent =
+            displayedSubTabContentId === 'modelParams';
+          const shouldMountModelParamsComponent =
+            internalIntendedActiveSubTab === 'modelParams';
 
           return (
             <>
@@ -181,14 +228,23 @@ const PlatformDetails = ({
                     API Credentials
                   </h4>
                   <div className='form-group mb-4'>
-                    <label htmlFor={`${platform.id}-api-key`} className='block mb-2 text-sm text-theme-secondary'>API Key</label>
+                    <label
+                      htmlFor={`${platform.id}-api-key`}
+                      className='block mb-2 text-sm text-theme-secondary'
+                    >
+                      API Key
+                    </label>
                     <div className='relative flex items-center select-none'>
                       <Input
                         type={showApiKey ? 'text' : 'password'}
                         id={`${platform.id}-api-key`}
                         value={apiKey}
                         onChange={handleApiKeyChange}
-                        placeholder={credentials?.apiKey ? '••••••••••••••••••••••••••' : 'Enter your API key'}
+                        placeholder={
+                          credentials?.apiKey
+                            ? '••••••••••••••••••••••••••'
+                            : 'Enter your API key'
+                        }
                         disabled={shouldShowApiKeySaving}
                         className='api-key-input p-2 pr-16 bg-theme-hover border border-theme rounded-md font-mono focus:ring-primary focus:border-primary'
                       />
@@ -196,7 +252,9 @@ const PlatformDetails = ({
                         type='button'
                         className='show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded select-none'
                         onClick={() => setShowApiKey(!showApiKey)}
-                        aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
+                        aria-label={
+                          showApiKey ? 'Hide API key' : 'Show API key'
+                        }
                         disabled={shouldShowApiKeySaving}
                       >
                         {showApiKey ? 'Hide' : 'Show'}
@@ -205,7 +263,11 @@ const PlatformDetails = ({
                   </div>
                   <div className='my-3 flex items-start text-xs text-amber-600 dark:text-amber-500'>
                     <InfoIcon className='w-4 h-4 mr-2 flex-shrink-0' />
-                    <span>Note: Newly created API keys can take a few minutes to become active. If validation fails, please try again shortly.</span>
+                    <span>
+                      Note: Newly created API keys can take a few minutes to
+                      become active. If validation fails, please try again
+                      shortly.
+                    </span>
                   </div>
                   <div className='form-actions flex justify-end gap-3'>
                     {credentials && (
@@ -214,7 +276,7 @@ const PlatformDetails = ({
                         onClick={handleRemoveCredentials}
                         className='select-none'
                         isLoading={isRemovingApiKeyActual}
-                        loadingText="Removing..."
+                        loadingText='Removing...'
                         disabled={
                           isRemovingApiKeyActual ||
                           shouldShowApiKeySaving ||
@@ -227,40 +289,44 @@ const PlatformDetails = ({
                     <Button
                       onClick={handleSaveCredentials}
                       isLoading={shouldShowApiKeySaving}
-                      loadingText="Saving..."
+                      loadingText='Saving...'
                       disabled={
                         shouldShowApiKeySaving ||
                         isRemovingApiKeyActual ||
                         (!isSavingApiKeyActual &&
                           ((credentials && !hasApiKeyChanges) ||
-                          (!credentials && !apiKey.trim())))
+                            (!credentials && !apiKey.trim())))
                       }
                       variant={
-                        (isRemovingApiKeyActual ||
+                        isRemovingApiKeyActual ||
                         (!shouldShowApiKeySaving &&
                           !isSavingApiKeyActual &&
                           ((credentials && !hasApiKeyChanges) ||
-                          (!credentials && !apiKey.trim()))))
-                        ? 'inactive'
-                        : 'primary'
+                            (!credentials && !apiKey.trim())))
+                          ? 'inactive'
+                          : 'primary'
                       }
                       className='select-none'
                     >
-                      {(credentials ? 'Update Key' : 'Save Key')}
+                      {credentials ? 'Update Key' : 'Save Key'}
                     </Button>
                   </div>
                 </SettingsCard>
               </div>
 
               {shouldMountModelParamsComponent && (
-                <div style={{ display: showModelParamsContent ? 'block' : 'none' }}>
+                <div
+                  style={{ display: showModelParamsContent ? 'block' : 'none' }}
+                >
                   <ModelParametersSettings
                     platform={platform}
                     selectedModelId={selectedModelId}
                     modelParametersSettings={modelParametersForPlatform}
                     onModelSelect={handleModelSelect}
                     onSettingsUpdate={saveModelParametersSettingsAction}
-                    onResetToDefaults={resetModelParametersSettingsToDefaultsAction}
+                    onResetToDefaults={
+                      resetModelParametersSettingsToDefaultsAction
+                    }
                     onReady={handleModelParametersReady}
                   />
                 </div>

@@ -52,22 +52,22 @@ const _initiateRerunSequence = async ({
   modelConfigData,
   ChatHistoryService,
 }) => {
-      const assistantPlaceholder = {
-        id: assistantPlaceholderId,
-        role: MESSAGE_ROLES.ASSISTANT,
-        content: '',
-        thinkingContent: '',
-        model: selectedModel,
-        modelDisplayName: modelConfigData?.displayName || selectedModel,
-        platformIconUrl: selectedPlatform.iconUrl,
-        platformId: selectedPlatformId,
-        timestamp: new Date().toISOString(),
-        isStreaming: true,
-        inputTokens: 0,
-        outputTokens: 0,
-        requestModelId: selectedModel,
-        requestModelConfigSnapshot: modelConfigData,
-      };
+  const assistantPlaceholder = {
+    id: assistantPlaceholderId,
+    role: MESSAGE_ROLES.ASSISTANT,
+    content: '',
+    thinkingContent: '',
+    model: selectedModel,
+    modelDisplayName: modelConfigData?.displayName || selectedModel,
+    platformIconUrl: selectedPlatform.iconUrl,
+    platformId: selectedPlatformId,
+    timestamp: new Date().toISOString(),
+    isStreaming: true,
+    inputTokens: 0,
+    outputTokens: 0,
+    requestModelId: selectedModel,
+    requestModelConfigSnapshot: modelConfigData,
+  };
 
   // Add placeholder *after* potential edit in editAndRerunMessage
   setMessages([...truncatedMessages, assistantPlaceholder]);
@@ -75,9 +75,13 @@ const _initiateRerunSequence = async ({
   batchedStreamingContentRef.current = '';
 
   // --- Determine effective content extraction state ---
-  const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
+  const isPageInjectable = currentTab?.url
+    ? isInjectablePage(currentTab.url)
+    : false;
   // 'isContentExtractionEnabled' below refers to the parameter passed to _initiateRerunSequence (the toggle state)
-  const effectiveContentExtractionEnabled = isPageInjectable ? isContentExtractionEnabled : false;
+  const effectiveContentExtractionEnabled = isPageInjectable
+    ? isContentExtractionEnabled
+    : false;
   logger.sidepanel.info(
     `[_initiateRerunSequence] Page injectable: ${isPageInjectable}, Toggle state: ${isContentExtractionEnabled}, Effective: ${effectiveContentExtractionEnabled}`
   );

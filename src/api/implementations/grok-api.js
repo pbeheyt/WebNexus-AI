@@ -34,12 +34,14 @@ class GrokApiService extends BaseApiService {
       // Ensure the value is one of the allowed ones, though ModelParameterService should handle this.
       const allowedEfforts = ['low', 'high'];
       if (allowedEfforts.includes(params.reasoningEffort)) {
-          requestPayload.reasoning_effort = params.reasoningEffort;
-          this.logger.info(
-            `[${this.platformId}] Adding reasoning_effort: ${params.reasoningEffort} for model: ${params.model}`
-          );
+        requestPayload.reasoning_effort = params.reasoningEffort;
+        this.logger.info(
+          `[${this.platformId}] Adding reasoning_effort: ${params.reasoningEffort} for model: ${params.model}`
+        );
       } else {
-           this.logger.warn(`[${this.platformId}] Invalid reasoning_effort value '${params.reasoningEffort}' provided for model ${params.model}. Allowed: ${allowedEfforts.join(', ')}. Parameter will not be sent.`);
+        this.logger.warn(
+          `[${this.platformId}] Invalid reasoning_effort value '${params.reasoningEffort}' provided for model ${params.model}. Allowed: ${allowedEfforts.join(', ')}. Parameter will not be sent.`
+        );
       }
     }
 

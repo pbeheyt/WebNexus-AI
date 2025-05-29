@@ -113,8 +113,8 @@ class DeepSeekApiService extends BaseApiService {
         // Check for regular content if reasoning content wasn't found
         if (content) {
           return { type: 'content', chunk: content };
-        } 
-        
+        }
+
         // If neither reasoning nor regular content, then ignore (or handle finish_reason)
         if (data.choices?.[0]?.finish_reason) {
           this.logger.info(

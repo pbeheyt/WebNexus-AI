@@ -117,24 +117,28 @@ export function useChatStreaming({
         let finalThinkingContent = finalThinkingContentInput || ''; // Use mutable variable
 
         if (isCancelled) {
-            // Calculate tokens based on content *before* adding notice
-            const regularTokens = TokenManagementService.estimateTokens(finalContent);
-            const thinkingTokens = TokenManagementService.estimateTokens(finalThinkingContent);
-            finalOutputTokensForMessage = regularTokens + thinkingTokens;
-            // Append notice for display (only to regular content)
-            finalContent += '\n\n_Stream cancelled by user._';
-            // Keep finalThinkingContent as is
+          // Calculate tokens based on content *before* adding notice
+          const regularTokens =
+            TokenManagementService.estimateTokens(finalContent);
+          const thinkingTokens =
+            TokenManagementService.estimateTokens(finalThinkingContent);
+          finalOutputTokensForMessage = regularTokens + thinkingTokens;
+          // Append notice for display (only to regular content)
+          finalContent += '\n\n_Stream cancelled by user._';
+          // Keep finalThinkingContent as is
         } else if (isError) {
-            // Errors don't count towards output tokens
-            finalOutputTokensForMessage = 0;
-            finalThinkingContent = ''; // Clear thinking content on error
-            // finalContent is already the error message passed in finalContentInput
+          // Errors don't count towards output tokens
+          finalOutputTokensForMessage = 0;
+          finalThinkingContent = ''; // Clear thinking content on error
+          // finalContent is already the error message passed in finalContentInput
         } else {
-            // Normal completion: Calculate combined tokens
-            const regularTokens = TokenManagementService.estimateTokens(finalContent);
-            const thinkingTokens = TokenManagementService.estimateTokens(finalThinkingContent);
-            finalOutputTokensForMessage = regularTokens + thinkingTokens;
-            // finalContent and finalThinkingContent are already the complete content passed in
+          // Normal completion: Calculate combined tokens
+          const regularTokens =
+            TokenManagementService.estimateTokens(finalContent);
+          const thinkingTokens =
+            TokenManagementService.estimateTokens(finalThinkingContent);
+          finalOutputTokensForMessage = regularTokens + thinkingTokens;
+          // finalContent and finalThinkingContent are already the complete content passed in
         }
 
         // Update message with final content (using the potentially modified finalContent)
@@ -207,8 +211,11 @@ export function useChatStreaming({
 
         // Save history, passing the retrieved initial stats
         if (tabId) {
-          const messageBeingUpdated = updatedMessages.find(msg => msg.id === messageId);
-          const correctModelConfigForHistory = messageBeingUpdated?.requestModelConfigSnapshot || modelConfigData;
+          const messageBeingUpdated = updatedMessages.find(
+            (msg) => msg.id === messageId
+          );
+          const correctModelConfigForHistory =
+            messageBeingUpdated?.requestModelConfigSnapshot || modelConfigData;
           await ChatHistoryService.saveHistory(
             tabId,
             updatedMessages,
@@ -284,7 +291,8 @@ export function useChatStreaming({
             rafIdRef.current = null;
           }
 
-          let finalContent = chunkData.fullContent || batchedStreamingContentRef.current;
+          let finalContent =
+            chunkData.fullContent || batchedStreamingContentRef.current;
           // Ensure we capture the final thinking content from the buffer before clearing
           let finalThinkingContent = batchedThinkingContentRef.current;
 
@@ -330,7 +338,6 @@ export function useChatStreaming({
           // Clear both buffers on completion/error/cancel
           batchedStreamingContentRef.current = '';
           batchedThinkingContentRef.current = '';
-
         } else if (chunkData.thinkingChunk) {
           // --- Handle Thinking Chunk ---
           batchedThinkingContentRef.current += chunkData.thinkingChunk;
@@ -342,11 +349,12 @@ export function useChatStreaming({
           }
         } else if (chunkData.chunk) {
           // --- Handle Regular Content Chunk ---
-          const chunkContent = typeof chunkData.chunk === 'string'
-            ? chunkData.chunk
-            : chunkData.chunk
-              ? JSON.stringify(chunkData.chunk)
-              : '';
+          const chunkContent =
+            typeof chunkData.chunk === 'string'
+              ? chunkData.chunk
+              : chunkData.chunk
+                ? JSON.stringify(chunkData.chunk)
+                : '';
           batchedStreamingContentRef.current += chunkContent;
           if (rafIdRef.current === null) {
             rafIdRef.current = requestAnimationFrame(

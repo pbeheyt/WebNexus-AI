@@ -26,19 +26,31 @@ const PromptManagement = () => {
     setSelectedPrompt(null);
     setIsEditing(false);
     setIsCreating(true);
-  }, [filterValue, setInitialContentTypeForNew, setSelectedPrompt, setIsEditing, setIsCreating]);
+  }, [
+    filterValue,
+    setInitialContentTypeForNew,
+    setSelectedPrompt,
+    setIsEditing,
+    setIsCreating,
+  ]);
 
-  const handleEditPrompt = useCallback((prompt) => {
-    setSelectedPrompt(prompt);
-    setIsCreating(false);
-    setIsEditing(true);
-  }, [setSelectedPrompt, setIsCreating, setIsEditing]);
+  const handleEditPrompt = useCallback(
+    (prompt) => {
+      setSelectedPrompt(prompt);
+      setIsCreating(false);
+      setIsEditing(true);
+    },
+    [setSelectedPrompt, setIsCreating, setIsEditing]
+  );
 
-  const handleViewPrompt = useCallback((prompt) => {
-    setSelectedPrompt(prompt);
-    setIsEditing(false);
-    setIsCreating(false);
-  }, [setSelectedPrompt, setIsEditing, setIsCreating]);
+  const handleViewPrompt = useCallback(
+    (prompt) => {
+      setSelectedPrompt(prompt);
+      setIsEditing(false);
+      setIsCreating(false);
+    },
+    [setSelectedPrompt, setIsEditing, setIsCreating]
+  );
 
   const handleCancelForm = useCallback(() => {
     setIsEditing(false);
@@ -53,14 +65,16 @@ const PromptManagement = () => {
     // Keep the current filter value, don't reset it
   }, [setSelectedPrompt, setIsEditing, setIsCreating]);
 
-  const handleFilterChange = useCallback((selectedId) => {
-    setFilterValue(selectedId);
-    // When filter changes, clear the detail view unless creating/editing
-    if (!isCreating && !isEditing) {
-      setSelectedPrompt(null);
-    }
-  }, [setFilterValue, isCreating, isEditing, setSelectedPrompt]);
-
+  const handleFilterChange = useCallback(
+    (selectedId) => {
+      setFilterValue(selectedId);
+      // When filter changes, clear the detail view unless creating/editing
+      if (!isCreating && !isEditing) {
+        setSelectedPrompt(null);
+      }
+    },
+    [setFilterValue, isCreating, isEditing, setSelectedPrompt]
+  );
 
   // Determine what to show in the detail panel
   let detailContent;
@@ -93,9 +107,7 @@ const PromptManagement = () => {
   } else {
     detailContent = (
       <div className='empty-state bg-theme-surface shadow-sm p-8 text-center text-sm text-theme-secondary rounded-lg border border-theme'>
-        <p className=''>
-          Select a prompt from the list or create a new one.
-        </p>
+        <p className=''>Select a prompt from the list or create a new one.</p>
       </div>
     );
   }

@@ -6,7 +6,10 @@ import { useSidePanelPlatform } from '../../contexts/platform';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import { UnifiedInput } from '../../components/input/UnifiedInput';
 import { useContent } from '../../contexts/ContentContext';
-import { getSidepanelInitialPlaceholder, getSidepanelFollowUpPlaceholder } from '../../shared/utils/placeholder-utils';
+import {
+  getSidepanelInitialPlaceholder,
+  getSidepanelFollowUpPlaceholder,
+} from '../../shared/utils/placeholder-utils';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { CONTENT_TYPE_LABELS } from '../../shared/constants';
 
@@ -16,8 +19,14 @@ UserInput.propTypes = {
 
 export function UserInput({ className = '' }) {
   const { contentType, currentTab, isLoading: contentLoading } = useContent();
-  const [displayedPlaceholder, setDisplayedPlaceholder] = useState('Loading...');
-  const { selectedPlatformId, platforms, isLoading: platformLoading, hasAnyPlatformCredentials } = useSidePanelPlatform();
+  const [displayedPlaceholder, setDisplayedPlaceholder] =
+    useState('Loading...');
+  const {
+    selectedPlatformId,
+    platforms,
+    isLoading: platformLoading,
+    hasAnyPlatformCredentials,
+  } = useSidePanelPlatform();
   const {
     inputValue,
     setInputValue,
@@ -26,11 +35,11 @@ export function UserInput({ className = '' }) {
     isProcessing,
     isCanceling,
     isRefreshing,
-  tokenStats,
-  contextStatus,
-  messages,
-  isContentExtractionEnabled
-} = useSidePanelChat();
+    tokenStats,
+    contextStatus,
+    messages,
+    isContentExtractionEnabled,
+  } = useSidePanelChat();
 
   const handleInputChange = (value) => {
     setInputValue(value);
@@ -45,16 +54,23 @@ export function UserInput({ className = '' }) {
   };
 
   const platformName = useMemo(() => {
-    return platforms.find(p => p.id === selectedPlatformId)?.name || null;
+    return platforms.find((p) => p.id === selectedPlatformId)?.name || null;
   }, [platforms, selectedPlatformId]);
 
-  const isPageInjectable = useMemo(() => currentTab?.url ? isInjectablePage(currentTab.url) : false, [currentTab?.url]);
+  const isPageInjectable = useMemo(
+    () => (currentTab?.url ? isInjectablePage(currentTab.url) : false),
+    [currentTab?.url]
+  );
 
   const dynamicPlaceholder = useMemo(() => {
     const genericLoadingPlaceholder = 'Loading...';
-    
+
     // Condition for loading state or platform name not ready
-    if (platformLoading || contentLoading || (selectedPlatformId && !platformName)) {
+    if (
+      platformLoading ||
+      contentLoading ||
+      (selectedPlatformId && !platformName)
+    ) {
       // If an old specific placeholder exists (i.e., not the generic "Loading..."), show it.
       if (displayedPlaceholder !== genericLoadingPlaceholder) {
         return displayedPlaceholder;
@@ -62,11 +78,11 @@ export function UserInput({ className = '' }) {
       // Otherwise (initial load or if displayedPlaceholder was already "Loading..."), show "Loading..."
       // And ensure displayedPlaceholder state is explicitly "Loading..." for the next render if it wasn't.
       if (displayedPlaceholder !== genericLoadingPlaceholder) {
-         setDisplayedPlaceholder(genericLoadingPlaceholder);
+        setDisplayedPlaceholder(genericLoadingPlaceholder);
       }
       return genericLoadingPlaceholder;
     }
-    
+
     // If not loading, calculate the new placeholder
     let newPlaceholder;
     if (messages.length === 0) {
@@ -83,13 +99,12 @@ export function UserInput({ className = '' }) {
         isContentLoading: contentLoading, // Should be false here
       });
     }
-    
+
     // Update the remembered placeholder only if the new one is different
     if (newPlaceholder !== displayedPlaceholder) {
       setDisplayedPlaceholder(newPlaceholder);
     }
     return newPlaceholder;
-    
   }, [
     platformLoading,
     contentLoading,
@@ -99,7 +114,7 @@ export function UserInput({ className = '' }) {
     contentType,
     isPageInjectable,
     isContentExtractionEnabled,
-    displayedPlaceholder, 
+    displayedPlaceholder,
   ]);
 
   return (
@@ -108,7 +123,11 @@ export function UserInput({ className = '' }) {
       onChange={handleInputChange}
       onSubmit={handleSend}
       onCancel={handleCancel}
-      disabled={!hasAnyPlatformCredentials || (isProcessing && isCanceling) || isRefreshing}
+      disabled={
+        !hasAnyPlatformCredentials ||
+        (isProcessing && isCanceling) ||
+        isRefreshing
+      }
       isProcessing={isProcessing}
       isCanceling={isCanceling}
       placeholder={dynamicPlaceholder}

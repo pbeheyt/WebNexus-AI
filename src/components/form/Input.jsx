@@ -19,7 +19,8 @@ export const Input = forwardRef(
     },
     ref
   ) => {
-    const baseClasses = 'w-full p-3 border-none outline-none text-theme-primary';
+    const baseClasses =
+      'w-full p-3 border-none outline-none text-theme-primary';
     const combinedClasses = `${baseClasses} ${className}`.trim();
 
     return (

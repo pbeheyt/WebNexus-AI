@@ -11,8 +11,14 @@ import PropTypes from 'prop-types';
  * @param {string} [props.as='div'] - The HTML element type to render the card as (e.g., 'div', 'form').
  * @param {Object} [props.otherProps] - Any other props to spread onto the root element.
  */
-export function SettingsCard({ children, className = '', as: Component = 'div', ...otherProps }) {
-  const baseClasses = 'bg-theme-surface p-4 rounded-lg border border-theme shadow-sm';
+export function SettingsCard({
+  children,
+  className = '',
+  as: Component = 'div',
+  ...otherProps
+}) {
+  const baseClasses =
+    'bg-theme-surface p-4 rounded-lg border border-theme shadow-sm';
 
   const combinedClasses = [baseClasses, className].join(' ').trim();
 

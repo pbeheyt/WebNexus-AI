@@ -73,9 +73,8 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
               `Using preferred model for ${selectedPlatformId}: ${finalModelIdToUse}`
             );
           } else {
-            const platformApiConfig = await ConfigService.getPlatformApiConfig(
-              selectedPlatformId
-            );
+            const platformApiConfig =
+              await ConfigService.getPlatformApiConfig(selectedPlatformId);
             const defaultModelId = platformApiConfig?.defaultModel;
 
             if (
@@ -99,9 +98,8 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
             resolveError
           );
           // Attempt fallback on resolve error
-          const platformApiConfig = await ConfigService.getPlatformApiConfig(
-            selectedPlatformId
-          );
+          const platformApiConfig =
+            await ConfigService.getPlatformApiConfig(selectedPlatformId);
           const defaultModelId = platformApiConfig?.defaultModel;
           if (
             defaultModelId &&
