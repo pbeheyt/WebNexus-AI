@@ -27,22 +27,27 @@ export function ExtractionStrategySelector({ disabled = false, onChange, classNa
         );
         const storedStrategy =
           result[STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY];
+
+        // After installation, a default is set by the background script.
+        // We primarily check if the stored value is one of the known valid strategies.
         if (
           storedStrategy === EXTRACTION_STRATEGIES.FOCUSED ||
           storedStrategy === EXTRACTION_STRATEGIES.BROAD
         ) {
           setCurrentStrategy(storedStrategy);
         } else {
-          // No valid strategy stored, save and use default
+          // This case implies either storage corruption, a new strategy value not yet handled,
+          // or accessed before install (though background should set it on install).
+          // For UI stability, use the component's defined default and log a warning.
+          // Do NOT write back to storage here; background handles initial default.
           setCurrentStrategy(DEFAULT_EXTRACTION_STRATEGY);
-          await chrome.storage.sync.set({
-            [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]:
-              DEFAULT_EXTRACTION_STRATEGY,
-          });
+          logger.service.warn(
+            `ExtractionStrategySelector: Unexpected or no strategy value ('${storedStrategy}') found in sync storage. Using UI default '${DEFAULT_EXTRACTION_STRATEGY}'. This should be rare after initial install.`
+          );
         }
       } catch (error) {
         logger.service.error('Error loading extraction strategy:', error);
-        // Fallback to default if loading fails
+        // Fallback to UI default if loading fails catastrophically
         setCurrentStrategy(DEFAULT_EXTRACTION_STRATEGY);
       }
     };

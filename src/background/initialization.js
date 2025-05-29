@@ -1,7 +1,7 @@
 // src/background/initialization.js - Handles extension initialization
 
 import { logger } from '../shared/logger.js';
-import { STORAGE_KEYS } from '../shared/constants.js';
+import { STORAGE_KEYS, DEFAULT_EXTRACTION_STRATEGY } from '../shared/constants.js';
 import { ensureDefaultPrompts, performFullPromptRepopulation } from '../shared/utils/prompt-utils.js';
 import ConfigService from '../services/ConfigService.js';
 import SidePanelStateManager from '../services/SidePanelStateManager.js';
@@ -115,6 +115,23 @@ async function handleInstallation(details) {
     }
   }
   // --- End Set Default Popup Platform Preference ---
+
+  // --- Set Default General Content Extraction Strategy ---
+  logger.background.info('Setting default general content extraction strategy on install...');
+  try {
+    await chrome.storage.sync.set({
+      [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]: DEFAULT_EXTRACTION_STRATEGY,
+    });
+    logger.background.info(
+      `Default general content extraction strategy set to: ${DEFAULT_EXTRACTION_STRATEGY}`
+    );
+  } catch (error) {
+    logger.background.error(
+      'Error setting default general content extraction strategy:',
+      error
+    );
+  }
+  // --- End Set Default General Content Extraction Strategy ---
 
   // --- Core Initialization ---
   // Run general initialization on both install and update.

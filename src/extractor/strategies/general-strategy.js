@@ -2,16 +2,13 @@ import { Readability } from '@mozilla/readability';
 
 import BaseExtractor from '../base-extractor.js';
 import { normalizeText } from '../utils/text-utils.js';
-// import { DEFAULT_EXTRACTION_STRATEGY } from '../../shared/constants.js'; // Ensure this import // Removed as unused
 
-// Default mode if not specified in config. Can be 'focused' or 'broad'.
-const DEFAULT_EXTRACTION_MODE = 'broad';
 const MIN_BROAD_TEXT_LENGTH = 15; // Minimum characters for the entire extracted broad text to be considered useful.
 
 class GeneralExtractorStrategy extends BaseExtractor {
-  constructor(config = {}) { // Accept a config object
+  constructor(config = {}) {
     super('general');
-    this.config = { ...{ extractionMode: DEFAULT_EXTRACTION_MODE }, ...config };
+    this.config = { extractionMode: config.extractionMode };
     this.logger.info(`GeneralExtractorStrategy initialized with mode: ${this.config.extractionMode}`);
   }
 

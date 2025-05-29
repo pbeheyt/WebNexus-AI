@@ -38,10 +38,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const result = await chrome.storage.sync.get(
             STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY
           );
-          preferredStrategy =
-            result[STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY] ||
-            DEFAULT_EXTRACTION_STRATEGY;
-          logger.content.info(`Using general extraction strategy: ${preferredStrategy}`);
+          // The value from storage should exist post-install.
+          // If it's somehow undefined (e.g. storage error, manual clear),
+          // preferredStrategy will be undefined here, and the factory will use its default.
+          preferredStrategy = result[STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY];
+          logger.content.info(`Using general extraction strategy from storage: ${preferredStrategy} (Factory will apply global default if this is undefined)`);
         }
 
         if (!ExtractorFactory.activeExtractor) {
