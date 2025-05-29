@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "WebNexus AI",
   "description": "Summarize & Interact with Web Content, PDFs & YouTube Videos using AI (ChatGPT, Gemini+)",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "permissions": [
     "activeTab",
     "scripting",
