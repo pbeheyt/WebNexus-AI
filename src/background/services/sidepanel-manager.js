@@ -154,8 +154,6 @@ export function handleToggleSidePanelAction(
   return true; // Keep channel open for async response
 }
 
-
-// Add this new function
 export async function handleCloseCurrentSidePanelRequest(message, sender, sendResponse) {
   const { tabId } = message;
 

@@ -101,7 +101,7 @@ export function useChatStreaming({
     async (
       messageId,
       finalContentInput,
-      finalThinkingContentInput, // <-- Add this parameter
+      finalThinkingContentInput,
       model,
       isError = false,
       isCancelled = false

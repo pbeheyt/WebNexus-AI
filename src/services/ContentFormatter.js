@@ -62,7 +62,7 @@ class ContentFormatter {
     let formatted = `## METADATA\n`;
     formatted += `- Title: ${this._getData(data.videoTitle)}\n`;
     formatted += `- Channel: ${this._getData(data.channelName)}\n`;
-    formatted += `- URL: ${url}\n`; // Add URL here for context
+    formatted += `- URL: ${url}\n`;
 
     formatted += `## DESCRIPTION\n`;
     formatted += `${this._getData(data.videoDescription, 'No description provided.')}\n`;

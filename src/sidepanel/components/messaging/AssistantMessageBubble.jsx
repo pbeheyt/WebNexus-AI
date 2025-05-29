@@ -32,7 +32,7 @@ export const AssistantMessageBubble = memo(
         thinkingContent = null,
         isStreaming = false,
         model = null,
-        modelDisplayName = null, // <-- ADD THIS PROP
+        modelDisplayName = null,
         platformIconUrl = null,
         platformId = null,
         className = '',
@@ -406,7 +406,7 @@ AssistantMessageBubble.propTypes = {
   thinkingContent: PropTypes.string,
   isStreaming: PropTypes.bool,
   model: PropTypes.string,
-  modelDisplayName: PropTypes.string, // <-- ADD THIS PROP TYPE
+  modelDisplayName: PropTypes.string,
   platformIconUrl: PropTypes.string,
   platformId: PropTypes.string,
   className: PropTypes.string,

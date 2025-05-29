@@ -56,9 +56,9 @@ const _initiateRerunSequence = async ({
         id: assistantPlaceholderId,
         role: MESSAGE_ROLES.ASSISTANT,
         content: '',
-        thinkingContent: '', // <-- Add this line
+        thinkingContent: '',
         model: selectedModel,
-        modelDisplayName: modelConfigData?.displayName || selectedModel, // <-- ADD THIS LINE
+        modelDisplayName: modelConfigData?.displayName || selectedModel,
         platformIconUrl: selectedPlatform.iconUrl,
         platformId: selectedPlatformId,
         timestamp: new Date().toISOString(),

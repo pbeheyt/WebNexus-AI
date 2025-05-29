@@ -34,14 +34,12 @@ const MessageBubbleComponent = forwardRef(
   }
 );
 
-// Add propTypes to the core component
 MessageBubbleComponent.propTypes = {
   role: PropTypes.oneOf(Object.values(MESSAGE_ROLES)).isRequired,
   id: PropTypes.string,
   modelDisplayName: PropTypes.string,
 };
 
-// Add displayName
 MessageBubbleComponent.displayName = 'MessageBubble';
 
 // Export the memoized version

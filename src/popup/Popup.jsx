@@ -10,7 +10,7 @@ import {
   SidepanelIcon,
   Toggle,
   ContentTypeIcon,
-  ExtractionStrategySelector, // Add this
+  ExtractionStrategySelector,
 } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { UnifiedInput } from '../components/input/UnifiedInput';
