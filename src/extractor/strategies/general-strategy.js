@@ -110,7 +110,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
         pageUrl: url,
         pageDescription: normalizeText(description),
         pageAuthor: normalizeText(author),
-        content: content,
+        content: content, // Content is already normalized by its respective extraction method
         isSelection: isSelection,
         extractedAt: new Date().toISOString(),
         contentType: this.contentType,
@@ -153,7 +153,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
     const role = element.getAttribute('role');
 
     if (tagName === 'nav' || role === 'navigation' || role === 'menu' || role === 'menubar' || role === 'directory' || role === 'banner' || role === 'contentinfo') {
-      //this.logger.debug(`Element <${tagName}> identified as nav/boilerplate by explicit tag/role.`);
       return true;
     }
     
@@ -169,7 +168,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
 
     const id = element.id ? element.id.toLowerCase() : '';
     if (id && navIdsAndClasses.some(cls => id.includes(cls))) {
-      //this.logger.debug(`Element <${tagName} id="${id}"> identified as nav/boilerplate by ID.`);
       return true;
     }
 
@@ -178,7 +176,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
       for (let i = 0; i < classList.length; i++) {
         const className = classList[i].toLowerCase();
         if (navIdsAndClasses.some(navCls => className.includes(navCls) || className === navCls)) {
-          //this.logger.debug(`Element <${tagName} class="${element.className}"> identified as nav/boilerplate by class.`);
           return true;
         }
       }
@@ -186,18 +183,16 @@ class GeneralExtractorStrategy extends BaseExtractor {
 
     if (tagName === 'div' || tagName === 'ul' || tagName === 'section' || tagName === 'header' || tagName === 'footer') {
         const links = element.querySelectorAll('a');
-        if (links.length > 2) { // Adjusted threshold
+        if (links.length > 2) { 
             let textContentLength = 0;
             Array.from(element.childNodes).forEach(childNode => {
                 if (childNode.nodeType === Node.TEXT_NODE) {
                     textContentLength += (childNode.textContent || '').trim().length;
                 } else if (childNode.nodeType === Node.ELEMENT_NODE && childNode.tagName.toLowerCase() !== 'a') {
-                    textContentLength += (childNode.textContent || '').trim().length; // Include text from non-link children
+                    textContentLength += (childNode.textContent || '').trim().length;
                 }
             });
-            // If it's mostly links or links with very little surrounding non-link text
-            if (textContentLength < links.length * 20 + 10) { // Adjusted heuristic
-                //this.logger.debug(`Element <${tagName}> identified as nav-like by link density.`);
+            if (textContentLength < links.length * 20 + 10) { 
                 return true;
             }
         }
@@ -207,8 +202,8 @@ class GeneralExtractorStrategy extends BaseExtractor {
   
   _isElementOrAncestorNavOrBoilerplate(element) {
     let current = element;
-    let depth = 0; // Limit ancestor check to avoid excessive checks on deep trees
-    const maxDepth = 5; // Check up to 5 levels of ancestors
+    let depth = 0; 
+    const maxDepth = 5; 
 
     while (current && current !== document.body && depth < maxDepth) {
         if (this._isNavigationOrBoilerplate(current)) {
@@ -220,17 +215,86 @@ class GeneralExtractorStrategy extends BaseExtractor {
     return false;
   }
 
+  _determineSeparator(prevTextNode, currTextNode) {
+    const blockTagNames = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'ARTICLE', 'SECTION', 'ASIDE', 'HEADER', 'FOOTER', 'BLOCKQUOTE', 'PRE', 'HR', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'UL', 'OL', 'DL', 'DD', 'DT', 'FIELDSET', 'FORM', 'ADDRESS']);
+
+    const prevParent = prevTextNode.parentElement;
+    const currParent = currTextNode.parentElement;
+
+    if (!prevParent || !currParent) {
+        return '\n'; // Safety net, should ideally not be hit
+    }
+
+    // Case 1: Same parent element
+    if (prevParent === currParent) {
+        let sibling = prevTextNode.nextSibling;
+        while (sibling && sibling !== currTextNode) {
+            if (sibling.nodeName === 'BR') {
+                return '\n'; // Explicit line break
+            }
+            // If a significant block element is found between text nodes *within the same parent*
+            if (sibling.nodeType === Node.ELEMENT_NODE && blockTagNames.has(sibling.nodeName.toUpperCase())) {
+                 return '\n';
+            }
+            sibling = sibling.nextSibling;
+        }
+        // Default for same parent, no BR or intervening block: a space
+        return ' '; 
+    }
+
+    // Case 2: Different parent elements
+
+    // If current text node is inside a list item, it's likely a new line.
+    if (currParent.nodeName === 'LI') {
+         return '\n';
+    }
+    // If previous text node was inside a list item and current is not, or vice-versa, likely newline.
+    if (prevParent.nodeName === 'LI' && currParent.nodeName !== 'LI') {
+        return '\n';
+    }
+
+
+    // Heuristic: If either parent is a known block-level tag, assume a new paragraph.
+    if (blockTagNames.has(prevParent.nodeName.toUpperCase()) || blockTagNames.has(currParent.nodeName.toUpperCase())) {
+        return '\n';
+    }
+    
+    // More advanced: check computed display style if not a known block tag
+    // This can be expensive if called too often, but might be necessary for complex layouts.
+    const prevDisplay = window.getComputedStyle(prevParent).display;
+    const currDisplay = window.getComputedStyle(currParent).display;
+
+    if (prevDisplay === 'block' || currDisplay === 'block' || prevDisplay === 'list-item' || currDisplay === 'list-item') {
+        return '\n';
+    }
+    
+    // Check if the current node's parent is a direct sibling of the previous node's parent,
+    // and if there was a BR between those parents.
+    // This handles cases like <p>text1</p><br><p>text2</p>
+    if (prevParent.nextElementSibling === currParent && prevParent.nextSibling && prevParent.nextSibling.nodeName === 'BR') {
+        return '\n';
+    }
+    if (prevParent.nextSibling && prevParent.nextSibling.nodeName === 'BR' && prevParent.nextSibling.nextSibling === currParent) {
+        return '\n';
+    }
+
+
+    // Default for different parents that are not clearly block-level or list items:
+    // Prefer a space to avoid over-splitting if they are conceptually part of the same flow
+    // (e.g., text split across multiple inline spans in different divs that are themselves inline-block).
+    // `normalizeText` will later handle sequences of spaces.
+    return ' ';
+  }
+
+
   async _extractBroadContentTreeWalker() {
     this.logger.info('Starting _extractBroadContent (TreeWalker approach).');
-    const texts = [];
-    const self = this; // To access 'this' inside acceptNode
+    const textNodes = [];
+    const self = this; 
 
-    // Tags whose direct text content is often UI noise rather than main content
     const EXCLUDED_PARENT_TAGS = new Set([
         'BUTTON', 'SELECT', 'OPTION', 'LABEL', 'LEGEND', 'TEXTAREA', 'INPUT',
-        'A', // Text of links themselves can be very noisy if not part of a paragraph.
-             // Navigational links should be caught by _isElementOrAncestorNavOrBoilerplate.
-             // Content links might be okay, but often the surrounding text is more valuable.
+        'A', 
         'SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME', 'AUDIO', 'VIDEO', 'SVG', 'CANVAS', 'OBJECT', 'EMBED'
     ]);
 
@@ -238,29 +302,24 @@ class GeneralExtractorStrategy extends BaseExtractor {
       document.body,
       NodeFilter.SHOW_TEXT,
       {
-        acceptNode: function(node) { // Use a regular function to maintain 'this' context if needed, or pass 'self'
+        acceptNode: function(node) { 
           const parentElement = node.parentElement;
           if (!parentElement) return NodeFilter.FILTER_REJECT;
 
-          // Rule 1: Check if parent is an excluded tag type
           if (EXCLUDED_PARENT_TAGS.has(parentElement.tagName.toUpperCase())) {
             return NodeFilter.FILTER_REJECT;
           }
           
-          // Rule 2: Check for general visibility of the parent element using _isVisible
-          // This is more robust than just offsetParent.
           if (!self._isVisible(parentElement)) {
             return NodeFilter.FILTER_REJECT;
           }
 
-          // Rule 3: Check if parent or its relevant ancestors are navigation/boilerplate
           if (self._isElementOrAncestorNavOrBoilerplate(parentElement)) {
             return NodeFilter.FILTER_REJECT;
           }
           
-          // Rule 4: Ensure the text node itself has meaningful content
           const textContent = node.textContent || "";
-          if (textContent.trim().length < 3) { // Ignore very short text nodes (e.g., just symbols or single chars)
+          if (textContent.trim().length < 3) { 
             return NodeFilter.FILTER_REJECT;
           }
           
@@ -270,23 +329,49 @@ class GeneralExtractorStrategy extends BaseExtractor {
     );
 
     let currentNode = walker.nextNode();
-        while (currentNode) {
-          texts.push((currentNode.textContent || "").trim());
-          currentNode = walker.nextNode();
-        }
-
-    if (texts.length === 0) {
-      this.logger.warn('_extractBroadContent (TreeWalker) found no text snippets.');
-      // Fallback to Readability if TreeWalker fails
-      return this._fallbackToReadability("TreeWalker found no text.");
+    while (currentNode) {
+      textNodes.push(currentNode);
+      currentNode = walker.nextNode();
     }
 
-    // Join distinct text blocks. Using Set to remove exact duplicates before joining.
-    const uniqueTexts = Array.from(new Set(texts));
-    let broadText = uniqueTexts.join('\n\n'); // Join with double newlines for better structure
+    if (textNodes.length === 0) {
+      this.logger.warn('_extractBroadContent (TreeWalker) found no text nodes.');
+      return this._fallbackToReadability("TreeWalker found no text nodes.");
+    }
+
+    let broadText = '';
+    let previousTextNode = null;
+
+    for (const currentTextNode of textNodes) {
+        const currentText = (currentTextNode.textContent || ""); // Keep internal spaces for now
+        
+        // Trim only for the check, use untrimmed for concatenation if it's to be joined by space
+        if (!currentText.trim()) { 
+            continue; 
+        }
+
+        if (previousTextNode === null) {
+            broadText = currentText.trimStart(); // Trim start of the very first piece
+        } else {
+            const separator = this._determineSeparator(previousTextNode, currentTextNode);
+            if (separator === '\n') {
+                broadText = broadText.trimEnd(); // Trim trailing space before a newline
+                broadText += separator + currentText.trimStart(); // Trim leading space after a newline
+            } else { // separator is ' '
+                 // Only add a space if broadText doesn't already end with one
+                 // and currentText doesn't start with one (after its own internal trim for this piece)
+                if (broadText.length > 0 && !broadText.endsWith(' ') && currentText.length > 0 && !currentText.startsWith(' ')) {
+                    broadText += separator;
+                }
+                broadText += currentText;
+            }
+        }
+        previousTextNode = currentTextNode;
+    }
     
-    broadText = this._moderateCleanText(broadText);
-    const normalizedBroadText = normalizeText(broadText);
+    // Final cleanup and normalization
+    broadText = this._moderateCleanText(broadText); // Applies further space normalization and overall trim
+    const normalizedBroadText = normalizeText(broadText); // Collapses multiple newlines
 
     if (normalizedBroadText.length < MIN_BROAD_TEXT_LENGTH) {
         this.logger.warn(`_extractBroadContent (TreeWalker) resulted in very little text: ${normalizedBroadText.length} chars.`);
@@ -299,7 +384,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
 
   async _fallbackToReadability(reason) {
       this.logger.info(`Fallback triggered: ${reason}. Attempting Readability.`);
-      const readabilityOptions = { charThreshold: 50, nbTopCandidates: 5 }; // More lenient for fallback
+      const readabilityOptions = { charThreshold: 50, nbTopCandidates: 5 }; 
       const originalDocClone = document.cloneNode(true);
       const reader = new Readability(originalDocClone, readabilityOptions);
       const article = reader.parse();
