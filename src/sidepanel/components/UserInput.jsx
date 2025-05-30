@@ -126,7 +126,7 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
   return (
     <div ref={selfRef} className={`flex flex-col ${className}`}>
       {/* Token Counter Section */}
-        <TokenCounter tokenStats={tokenStats} contextStatus={contextStatus} />
+      <TokenCounter tokenStats={tokenStats} contextStatus={contextStatus} />
 
       {/* Platform and Model Controls Section */}
       <PlatformModelControls onToggleExpand={handlePlatformControlsToggle} />
