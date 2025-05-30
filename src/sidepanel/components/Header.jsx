@@ -9,6 +9,7 @@ import {
   InfoIcon,
   Tooltip,
   SettingsIcon,
+  IconButton,
 } from '../../components';
 import { logger } from '../../shared/logger';
 
@@ -253,16 +254,16 @@ function Header() {
                 </div>
               )}
 
-              {/* Parameter Editor Toggle Button */}
-              <button
-                  onClick={() => setIsParamsEditorOpen(prev => !prev)}
-                  className={`ml-2 p-1 rounded-full text-theme-secondary hover:text-primary hover:bg-theme-active ${isParamsEditorOpen ? 'bg-theme-active text-primary' : ''}`}
-                  title='Model Parameters'
-                  aria-expanded={isParamsEditorOpen}
-                  disabled={!selectedPlatformId || !modelConfigData || isLoading}
-              >
-                  <SettingsIcon className='w-5 h-5' />
-              </button>
+        {/* Parameter Editor Toggle Button */}
+        <IconButton
+            icon={SettingsIcon}
+            onClick={() => setIsParamsEditorOpen(prev => !prev)}
+            className={`ml-2 p-1 rounded-full text-theme-secondary hover:text-primary hover:bg-theme-active ${isParamsEditorOpen ? 'bg-theme-active text-primary' : ''}`}
+            iconClassName='w-5 h-5'
+            title='Model Parameters'
+            aria-expanded={isParamsEditorOpen}
+            disabled={!selectedPlatformId || !modelConfigData || isLoading}
+        />
               <div className='flex-grow' style={{ pointerEvents: 'none' }}></div>
             </>
           ) : (
