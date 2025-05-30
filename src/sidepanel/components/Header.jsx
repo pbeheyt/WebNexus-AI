@@ -279,7 +279,7 @@ function Header() {
           className={`transition-all duration-300 ease-in-out overflow-hidden ${isParamsEditorOpen && isParamsEditorReady ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
           aria-hidden={!isParamsEditorOpen || !isParamsEditorReady}
         >
-          {fullSelectedPlatformConfig && modelConfigData && (
+          {isParamsEditorOpen && (
             <SidePanelModelParametersEditor
               platform={fullSelectedPlatformConfig}
               selectedModelId={selectedModel}
