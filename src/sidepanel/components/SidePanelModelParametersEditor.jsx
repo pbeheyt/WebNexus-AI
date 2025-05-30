@@ -71,8 +71,9 @@ const SidePanelModelParametersEditor = ({
       <div className='space-y-3 text-xs'>
         {parameterSpecs.maxTokens && (
           <div>
-            <label className='block mb-1 font-medium text-theme-secondary'>Max Tokens</label>
+            <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-maxTokens`} className='block mb-1 font-medium text-theme-secondary'>Max Tokens</label>
             <SliderInput
+              id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-maxTokens`}
               label=''
               value={formValues?.maxTokens ?? parameterSpecs.maxTokens.min}
               onChange={(newValue) => handleChange('maxTokens', newValue)}
@@ -87,16 +88,17 @@ const SidePanelModelParametersEditor = ({
         {effectiveShowTempSection && parameterSpecs.temperature && (
           <div>
             <div className='flex items-center mb-1'>
-              <label className='font-medium text-theme-secondary mr-2'>Temperature</label>
+              <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTemperature`} className='font-medium text-theme-secondary mr-2'>Temperature</label>
               <Toggle
                 checked={formValues.includeTemperature ?? true}
                 onChange={(newCheckedState) => handleChange('includeTemperature', newCheckedState)}
                 disabled={isSaving || isResetting}
-                id={`sp-${platform?.id}-${selectedModelId}-include-temp`}
+                id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTemperature`}
               />
             </div>
             {formValues.includeTemperature && (
               <SliderInput
+                id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-temperatureValue`}
                 label=''
                 value={formValues.temperature ?? parameterSpecs.temperature.min}
                 onChange={(newValue) => handleChange('temperature', newValue)}
@@ -112,16 +114,17 @@ const SidePanelModelParametersEditor = ({
         {effectiveShowTopPSection && parameterSpecs.topP && (
            <div>
             <div className='flex items-center mb-1'>
-              <label className='font-medium text-theme-secondary mr-2'>Top P</label>
+              <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTopP`} className='font-medium text-theme-secondary mr-2'>Top P</label>
               <Toggle
                 checked={formValues.includeTopP ?? false}
                 onChange={(newCheckedState) => handleChange('includeTopP', newCheckedState)}
                 disabled={isSaving || isResetting}
-                id={`sp-${platform?.id}-${selectedModelId}-include-topp`}
+                id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTopP`}
               />
             </div>
             {formValues.includeTopP && (
               <SliderInput
+                id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-topPValue`}
                 label=''
                 value={formValues.topP ?? parameterSpecs.topP.min}
                 onChange={(newValue) => handleChange('topP', newValue)}
@@ -143,8 +146,9 @@ const SidePanelModelParametersEditor = ({
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
           <div>
-            <label className='block mb-1 font-medium text-theme-secondary'>Thinking Budget</label>
+            <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-thinkingBudget`} className='block mb-1 font-medium text-theme-secondary'>Thinking Budget</label>
             <SliderInput
+              id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-thinkingBudget`}
               label=''
               value={formValues.thinkingBudget ?? parameterSpecs.thinkingBudget.default}
               onChange={(newValue) => handleChange('thinkingBudget', newValue)}
@@ -158,9 +162,9 @@ const SidePanelModelParametersEditor = ({
         
         {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && (
           <div>
-            <label htmlFor={`sp-${platform?.id}-${selectedModelId}-sysprompt`} className='block mb-1 font-medium text-theme-secondary'>System Prompt</label>
+            <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-systemPrompt`} className='block mb-1 font-medium text-theme-secondary'>System Prompt</label>
             <TextArea
-              id={`sp-${platform?.id}-${selectedModelId}-sysprompt`}
+              id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-systemPrompt`}
               name='systemPrompt'
               placeholder='Optional system prompt...'
               value={formValues.systemPrompt ?? ''}
