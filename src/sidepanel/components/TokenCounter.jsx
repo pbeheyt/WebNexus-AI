@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 
-import { formatTokenCount } from '../../shared/utils/number-format-utils';
+import { formatTokenCount, formatCost } from '../../shared/utils/number-format-utils';
 import { Tooltip } from '../../components/layout/Tooltip';
 import {
   InputTokenIcon,
@@ -26,23 +26,6 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   const costRef = useRef(null);
   const contextWindowRef = useRef(null);
 
-  const formatCost = (cost) => {
-    if (cost === 0) return '$0.00';
-    if (cost < 0.01) {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      }).format(cost);
-    }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 3,
-    }).format(cost);
-  };
 
   const formattedCost = formatCost(accumulatedCost);
 
