@@ -12,6 +12,7 @@ import { useSidePanelPlatform } from '../../contexts/platform';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import {
   PlatformIcon,
+  ChevronUpIcon,
   ChevronDownIcon,
   Toggle,
   InfoIcon,
@@ -165,10 +166,10 @@ function PlatformModelControls({ onToggleExpand }) {
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div
         ref={selfRef}
-        className='flex flex-col py-2 border-b border-theme'
+        className='flex flex-col py-2 px-3 border-b border-t border-theme'
       >
         {/* Top row: Platform, Model, Thinking Toggle, Expander Chevron */}
-        <div className='flex items-center w-full min-w-0 px-3'>
+        <div className='flex items-center w-full min-w-0'>
           <div className='flex items-center flex-grow min-w-0'>
             {hasAnyPlatformCredentials ? (
               <>
@@ -277,12 +278,12 @@ function PlatformModelControls({ onToggleExpand }) {
           {/* Expander Chevron for Model Parameters */}
           {hasAnyPlatformCredentials && (
             <IconButton
-              icon={ChevronDownIcon}
+              icon={ChevronUpIcon}
               onClick={toggleParametersExpansion}
               className={`ml-2 p-1 rounded-md text-theme-secondary hover:text-primary hover:bg-theme-active ${
-                isParametersExpanded ? 'bg-theme-active text-primary' : ''
+                isParametersExpanded ? 'text-primary' : ''
               }`}
-              iconClassName={`w-5 h-5 flex-shrink-0 transform transition-transform duration-200 ${
+              iconClassName={`w-4 h-4 flex-shrink-0 transform transition-transform duration-200 ${
                 isParametersExpanded ? 'rotate-180' : ''
               }`}
               title={
@@ -307,7 +308,6 @@ function PlatformModelControls({ onToggleExpand }) {
         >
           {isParametersExpanded && (
             <>
-              <hr className='border-theme-hover mx-3 mb-2' />
               <SidePanelModelParametersEditor
                 platform={fullSelectedPlatformConfig}
                 selectedModelId={selectedModel}

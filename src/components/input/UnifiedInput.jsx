@@ -111,66 +111,62 @@ export function UnifiedInput({
   if (layoutVariant === 'sidepanel') {
     return (
       <div className={`flex flex-col ${className}`}>
-        {/* Input Area - TokenCounter is removed from here */}
-        <div className='border-t border-theme-hover'>
-          {' '}
-          {/* Adjusted border to theme-hover for subtlety */}
-          <div
-            ref={containerRef}
-            onClick={handleContainerClick}
-            onKeyDown={handleContainerClick}
-            role='presentation'
-            tabIndex={-1}
-            className='input-container relative bg-theme-surface transition-all cursor-text' // Adjusted background
-          >
-            <div className='flex w-full'>
-              <TextArea
-                ref={textareaRef}
-                value={value}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder={placeholder}
+        {/* Input Area */}
+        <div
+          ref={containerRef}
+          onClick={handleContainerClick}
+          onKeyDown={handleContainerClick}
+          role='presentation'
+          tabIndex={-1}
+          className='input-container relative bg-theme-surface transition-all cursor-text'
+        >
+          <div className='flex w-full'>
+            <TextArea
+              ref={textareaRef}
+              value={value}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={disabled || isProcessing}
+              autoResize={true}
+              style={sidepanelStyle} // Use sidepanelStyle for the TextArea
+              className='flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable text-sm text-theme-primary placeholder-theme-secondary'
+            />
+          </div>
+          <div className='absolute right-3.5 top-3 flex flex-col items-center gap-2'>
+            <IconButton
+              icon={isStreamingActive ? XIcon : ArrowUpIcon}
+              iconClassName={`${sidepanelIconSize} select-none`}
+              className={`${sidepanelButtonStyle} ${sidepanelButtonSize} ${isCanceling ? 'opacity-70' : ''}`}
+              onClick={handleSubmit}
+              disabled={sidepanelButtonDisabled}
+              ariaLabel={sidepanelButtonLabel}
+              title={sidepanelButtonLabel}
+            />
+            <div className='relative'>
+              <button
+                ref={promptButtonRef}
+                type='button'
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
                 disabled={disabled || isProcessing}
-                autoResize={true}
-                style={sidepanelStyle} // Use sidepanelStyle for the TextArea
-                className='flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable text-sm text-theme-primary placeholder-theme-secondary'
+                className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 ${sidepanelButtonSize} ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                aria-label='Select prompt'
+                title='Select a custom prompt'
+              >
+                <span className='font-semibold text-sm leading-none select-none'>
+                  P
+                </span>
+              </button>
+              <PromptDropdown
+                isOpen={isDropdownOpen}
+                onClose={() => setIsDropdownOpen(false)}
+                onSelectPrompt={handlePromptSelected}
+                contentType={contentType}
+                anchorRef={promptButtonRef}
+                className={'text-sm'}
+                // onDefaultPromptSetCallback is passed through
+                onDefaultSet={onDefaultPromptSetCallback}
               />
-            </div>
-            <div className='absolute right-3.5 top-3 flex flex-col items-center gap-2'>
-              <IconButton
-                icon={isStreamingActive ? XIcon : ArrowUpIcon}
-                iconClassName={`${sidepanelIconSize} select-none`}
-                className={`${sidepanelButtonStyle} ${sidepanelButtonSize} ${isCanceling ? 'opacity-70' : ''}`}
-                onClick={handleSubmit}
-                disabled={sidepanelButtonDisabled}
-                ariaLabel={sidepanelButtonLabel}
-                title={sidepanelButtonLabel}
-              />
-              <div className='relative'>
-                <button
-                  ref={promptButtonRef}
-                  type='button'
-                  onClick={() => setIsDropdownOpen((prev) => !prev)}
-                  disabled={disabled || isProcessing}
-                  className={`flex items-center justify-center text-theme-secondary hover:text-primary p-1 ${sidepanelButtonSize} ${disabled || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  aria-label='Select prompt'
-                  title='Select a custom prompt'
-                >
-                  <span className='font-semibold text-sm leading-none select-none'>
-                    P
-                  </span>
-                </button>
-                <PromptDropdown
-                  isOpen={isDropdownOpen}
-                  onClose={() => setIsDropdownOpen(false)}
-                  onSelectPrompt={handlePromptSelected}
-                  contentType={contentType}
-                  anchorRef={promptButtonRef}
-                  className={'text-sm'}
-                  // onDefaultPromptSetCallback is passed through
-                  onDefaultSet={onDefaultPromptSetCallback}
-                />
-              </div>
             </div>
           </div>
         </div>

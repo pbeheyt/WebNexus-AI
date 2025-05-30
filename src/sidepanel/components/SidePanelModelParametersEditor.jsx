@@ -45,9 +45,8 @@ const SidePanelModelParametersEditor = ({
     return null;
   }
 
-  // No more loading spinner! The hook now provides stable data
   if (!isFormReady || !derivedSettings) {
-    return null; // Or return a minimal placeholder if you prefer
+    return null;
   }
 
   const {
@@ -63,7 +62,7 @@ const SidePanelModelParametersEditor = ({
     platform?.apiConfig?.apiStructure?.supportsSystemPrompt !== false;
 
   return (
-    <div className='p-3 bg-theme-surface border-t border-theme'>
+    <div className='p-3 border-t border-theme'>
       <div className='space-y-3 text-xs'>
         {parameterSpecs.maxTokens && (
           <div>
@@ -176,7 +175,7 @@ const SidePanelModelParametersEditor = ({
       </div>
 
       {/* New container for buttons at the bottom */}
-      <div className='flex justify-end items-center mt-4 pt-3 border-t border-theme'>
+      <div className='flex justify-end items-center mt-4 pt-3'>
         <div className='flex items-center gap-2'>
           <IconButton
             icon={RefreshIcon}
@@ -194,7 +193,7 @@ const SidePanelModelParametersEditor = ({
             isLoading={isSaving}
             disabled={isSaving || isResetting || !hasChanges}
             variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
-            size="sm"
+            size="md"
             className='px-3 py-1 text-xs select-none'
           >
             {isSaving ? 'Saving...' : 'Save'}

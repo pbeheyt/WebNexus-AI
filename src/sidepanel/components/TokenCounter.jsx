@@ -6,6 +6,7 @@ import {
   InputTokenIcon,
   OutputTokenIcon,
   ChevronUpIcon,
+  IconButton,
 } from '../../components';
 
 function TokenCounter({ tokenStats, contextStatus, className = '' }) {
@@ -82,7 +83,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   };
 
   return (
-    <div className='text-xs text-gray-500 dark:text-gray-400'>
+    <div className='text-xs text-theme-secondary px-3 py-2'>
       <div className={`flex items-center justify-between ${className}`}>
         <div className='flex items-center gap-2'>
           {/* Input tokens with tooltip */}
@@ -157,15 +158,23 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             />
           </div>
 
-          <button
+          {/* Expander Chevron */}
+          <IconButton
+            icon={ChevronUpIcon}
             onClick={() => setShowDetails(!showDetails)}
-            className='ml-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none'
-            title='Toggle token details'
-          >
-            <ChevronUpIcon
-              className={`w-3 h-3 transition-transform select-none ${showDetails ? 'rotate-180' : ''}`}
-            />
-          </button>
+            className={`ml-2 p-1 rounded-md text-theme-secondary hover:text-primary hover:bg-theme-active ${
+              showDetails ? 'text-primary' : ''
+            }`}
+            iconClassName={`w-4 h-4 flex-shrink-0 transform transition-transform duration-200 ${
+              showDetails ? 'rotate-180' : ''
+            }`}
+            title={
+              showDetails
+                ? 'Hide Token Information'
+                : 'Show Model Information'
+            }
+            aria-expanded={showDetails}
+          />
         </div>
       </div>
 
@@ -173,7 +182,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
           showDetails
-            ? 'max-h-40 opacity-100 mt-2 pt-3 pb-1 border-t border-gray-200 dark:border-gray-700'
+            ? 'max-h-40 opacity-100 mt-2 pt-3 pb-1 border-t border-theme'
             : 'max-h-0 opacity-0'
         }`}
         aria-hidden={!showDetails}
