@@ -23,13 +23,15 @@ export const DropdownContext = createContext({
 });
 
 function Header() {
-  const {
-    platforms,
-    selectedPlatformId,
-    selectPlatform,
-    hasAnyPlatformCredentials,
-    isLoading,
-  } = useSidePanelPlatform();
+    const {
+        platforms,
+        selectedPlatformId,
+        selectPlatform,
+        hasAnyPlatformCredentials,
+        isLoading,
+        getPlatformApiConfig, // Added
+        selectedModel,        // Added
+      } = useSidePanelPlatform();
   const { modelConfigData, isThinkingModeEnabled, toggleThinkingMode } =
     useSidePanelChat();
   const [tooltipVisible, setTooltipVisible] = useState(false);
@@ -44,16 +46,18 @@ function Header() {
   const [fullSelectedPlatformConfig, setFullSelectedPlatformConfig] = useState(null);
   const [isParamsEditorReady, setIsParamsEditorReady] = useState(false); 
 
+  const currentEditingMode = isThinkingModeEnabled ? 'thinking' : 'base';
+
   const handleParamsEditorReady = useCallback(() => { 
     setIsParamsEditorReady(true);
   }, []);
 
   // Fetch full platform config when selectedPlatformId changes
-  useEffect(() => {
-    const fetchFullConfig = async () => {
-      if (selectedPlatformId && useSidePanelPlatform.getPlatformApiConfig) {
-        try {
-          const config = await useSidePanelPlatform.getPlatformApiConfig(selectedPlatformId);
+    useEffect(() => {
+        const fetchFullConfig = async () => {
+          if (selectedPlatformId && getPlatformApiConfig) { // Use destructured getPlatformApiConfig
+            try {
+              const config = await getPlatformApiConfig(selectedPlatformId); // Use destructured getPlatformApiConfig
           const platformDisplayConfig = platforms.find(p => p.id === selectedPlatformId);
           if (config && platformDisplayConfig) {
             setFullSelectedPlatformConfig({
@@ -74,7 +78,7 @@ function Header() {
       }
     };
     fetchFullConfig();
-  }, [selectedPlatformId, platforms]);
+    }, [selectedPlatformId, platforms, getPlatformApiConfig]); // Add getPlatformApiConfig
 
   // Update display platform ID only when loading is finished
   useEffect(() => {
@@ -282,14 +286,14 @@ function Header() {
             aria-hidden={!isParamsEditorOpen || !isParamsEditorReady}
         >
              {fullSelectedPlatformConfig && modelConfigData && (
-                 <SidePanelModelParametersEditor
-                    platform={fullSelectedPlatformConfig} 
-                    selectedModelId={useSidePanelPlatform.selectedModel}
-                    currentEditingMode={useSidePanelChat.currentEditingMode}
-                    modelConfigData={modelConfigData} 
-                    isVisible={isParamsEditorOpen} 
-                    onReady={handleParamsEditorReady} 
-                />
+    <SidePanelModelParametersEditor
+        platform={fullSelectedPlatformConfig}
+        selectedModelId={selectedModel}
+        currentEditingMode={currentEditingMode}
+        modelConfigData={modelConfigData}
+        isVisible={isParamsEditorOpen}
+        onReady={handleParamsEditorReady}
+    />
             )}
         </div>
       </div>
