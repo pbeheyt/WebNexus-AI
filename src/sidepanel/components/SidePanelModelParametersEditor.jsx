@@ -1,3 +1,4 @@
+
 // src/sidepanel/components/SidePanelModelParametersEditor.jsx
 import PropTypes from 'prop-types';
 
@@ -7,7 +8,6 @@ import {
   Toggle,
   TextArea,
   InfoIcon,
-  SpinnerIcon,
   IconButton,
   RefreshIcon,
 } from '../../components';
@@ -45,13 +45,9 @@ const SidePanelModelParametersEditor = ({
     return null;
   }
 
+  // No more loading spinner! The hook now provides stable data
   if (!isFormReady || !derivedSettings) {
-    return (
-      <div className='p-4 bg-theme-surface border-t border-theme text-center'>
-        <SpinnerIcon className='w-6 h-6 text-theme-secondary mx-auto' />
-        <p className='text-xs text-theme-secondary mt-1'>Loading parameters...</p>
-      </div>
-    );
+    return null; // Or return a minimal placeholder if you prefer
   }
 
   const {

@@ -22,13 +22,20 @@ export function useSidePanelModelParameters({
   const { success: showSuccessNotification, error: showNotificationError } =
     useNotification();
 
+  // Current loading state (internal)
   const [formValues, setFormValues] = useState({});
   const [originalValues, setOriginalValues] = useState({});
   const [derivedSettings, setDerivedSettings] = useState(null);
+  const [isFormReady, setIsFormReady] = useState(false);
+
+  // Stable state for smooth transitions (what the component sees)
+  const [stableFormValues, setStableFormValues] = useState({});
+  const [stableOriginalValues, setStableOriginalValues] = useState({});
+  const [stableDerivedSettings, setStableDerivedSettings] = useState(null);
+  const [isStableReady, setIsStableReady] = useState(false);
 
   const [hasChanges, setHasChanges] = useState(false);
   const [isAtDefaults, setIsAtDefaults] = useState(true);
-  const [isFormReady, setIsFormReady] = useState(false);
 
   const [isSavingActual, setIsSavingActual] = useState(false);
   const [isResettingActual, setIsResettingActual] = useState(false);
@@ -43,7 +50,9 @@ export function useSidePanelModelParameters({
 
   // Effect for initial load and when key dependencies change
   useEffect(() => {
-    setIsFormReady(false); // Mark as not ready while recalculating
+    // Don't reset isStableReady to false here - keep showing old data
+    setIsFormReady(false); // Internal state still tracks loading
+    
     if (!platform || !selectedModelId || !currentEditingMode || !modelConfigData) {
       logger.sidepanel.debug(
         'useSidePanelModelParameters: Skipping derived settings calculation due to missing dependencies.', { platformExists: !!platform, selectedModelId, currentEditingMode, modelConfigDataExists: !!modelConfigData }
@@ -51,7 +60,15 @@ export function useSidePanelModelParameters({
       setDerivedSettings(null);
       setFormValues({});
       setOriginalValues({});
-      // Do not call onReady here as critical data is missing
+      
+      // Only update stable state if we have no stable data yet (first load)
+      if (!isStableReady) {
+        setStableDerivedSettings(null);
+        setStableFormValues({});
+        setStableOriginalValues({});
+        setIsStableReady(true);
+        if (typeof onReady === 'function') onReady();
+      }
       return;
     }
 
@@ -71,7 +88,13 @@ export function useSidePanelModelParameters({
     if (!newDerivedSettings) {
       setFormValues({});
       setOriginalValues({});
-      setIsFormReady(true); // Still mark as ready even if no settings derived (e.g. model not found)
+      setIsFormReady(true);
+      
+      // Update stable state with empty data
+      setStableFormValues({});
+      setStableOriginalValues({});
+      setStableDerivedSettings(null);
+      setIsStableReady(true);
       if (typeof onReady === 'function') onReady();
       return;
     }
@@ -110,9 +133,17 @@ export function useSidePanelModelParameters({
         }
       });
 
+      // Update internal state
       setFormValues(initialFormValues);
       setOriginalValues({ ...initialFormValues });
       setIsFormReady(true);
+      
+      // Update stable state (this is what the component will see)
+      setStableFormValues(initialFormValues);
+      setStableOriginalValues({ ...initialFormValues });
+      setStableDerivedSettings(newDerivedSettings);
+      setIsStableReady(true);
+      
       if (typeof onReady === 'function') onReady();
     };
 
@@ -121,31 +152,40 @@ export function useSidePanelModelParameters({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform?.id, platform?.apiConfig, selectedModelId, currentEditingMode, modelConfigData, modelsFromPlatform]);
 
-
-  // Effect to update hasChanges and isAtDefaults
+  // Sync internal state changes to stable state when ready
   useEffect(() => {
-    if (!derivedSettings || !isFormReady) {
+    if (isFormReady && derivedSettings) {
+      setStableFormValues(formValues);
+      setStableOriginalValues(originalValues);
+      setStableDerivedSettings(derivedSettings);
+      setIsStableReady(true);
+    }
+  }, [isFormReady, formValues, originalValues, derivedSettings]);
+
+  // Effect to update hasChanges and isAtDefaults (use stable state)
+  useEffect(() => {
+    if (!stableDerivedSettings || !isStableReady) {
       setHasChanges(false);
       setIsAtDefaults(true);
       return;
     }
-    const { defaultSettings: configDefaults, capabilities } = derivedSettings;
-    setHasChanges(checkForFormChanges(formValues, originalValues));
+    const { defaultSettings: configDefaults, capabilities } = stableDerivedSettings;
+    setHasChanges(checkForFormChanges(stableFormValues, stableOriginalValues));
     setIsAtDefaults(
       checkAreFormValuesAtDefaults(
-        formValues,
+        stableFormValues,
         configDefaults,
         capabilities,
-        platform?.apiConfig // Use optional chaining for platform
+        platform?.apiConfig
       )
     );
-  }, [formValues, originalValues, derivedSettings, platform?.apiConfig, isFormReady]);
+  }, [stableFormValues, stableOriginalValues, stableDerivedSettings, platform?.apiConfig, isStableReady]);
 
   const handleChange = useCallback(
     (name, newValue) => {
-      setFormValues((prevValues) => {
+      const updateFunction = (prevValues) => {
         const updatedValues = { ...prevValues };
-        const paramSpec = derivedSettings?.parameterSpecs?.[name];
+        const paramSpec = stableDerivedSettings?.parameterSpecs?.[name];
 
         if (name === 'maxTokens' || name === 'thinkingBudget') {
           const parsedValue = parseInt(newValue, 10);
@@ -166,54 +206,58 @@ export function useSidePanelModelParameters({
           updatedValues[name] = newValue;
         }
         return updatedValues;
-      });
+      };
+
+      // Update both internal and stable state immediately for user interactions
+      setFormValues(updateFunction);
+      setStableFormValues(updateFunction);
     },
-    [derivedSettings]
+    [stableDerivedSettings]
   );
 
   const handleSubmit = useCallback(async (event) => {
     if (event) event.preventDefault();
-    if (!derivedSettings || !selectedModelId || !platform) { // Added !platform check
+    if (!stableDerivedSettings || !selectedModelId || !platform) {
       showNotificationError('Cannot save: Critical configuration missing.');
       return;
     }
     setIsSavingActual(true);
 
-    const { parameterSpecs, capabilities } = derivedSettings;
+    const { parameterSpecs, capabilities } = stableDerivedSettings;
 
     try {
       // Basic Validations
-      if (formValues.maxTokens === null || formValues.maxTokens === undefined || isNaN(formValues.maxTokens)) throw new Error('Max Tokens is required and must be a number.');
-      if (formValues.maxTokens < parameterSpecs.maxTokens.min || formValues.maxTokens > parameterSpecs.maxTokens.max) throw new Error(`Max tokens must be between ${parameterSpecs.maxTokens.min} and ${parameterSpecs.maxTokens.max}.`);
-      if (capabilities.supportsTemperature !== false && formValues.includeTemperature) {
-        if (formValues.temperature === null || formValues.temperature === undefined || isNaN(formValues.temperature)) throw new Error('Temperature is required when enabled and must be a number.');
-        if (formValues.temperature < parameterSpecs.temperature.min || formValues.temperature > parameterSpecs.temperature.max) throw new Error(`Temperature must be between ${parameterSpecs.temperature.min} and ${parameterSpecs.temperature.max}.`);
+      if (stableFormValues.maxTokens === null || stableFormValues.maxTokens === undefined || isNaN(stableFormValues.maxTokens)) throw new Error('Max Tokens is required and must be a number.');
+      if (stableFormValues.maxTokens < parameterSpecs.maxTokens.min || stableFormValues.maxTokens > parameterSpecs.maxTokens.max) throw new Error(`Max tokens must be between ${parameterSpecs.maxTokens.min} and ${parameterSpecs.maxTokens.max}.`);
+      if (capabilities.supportsTemperature !== false && stableFormValues.includeTemperature) {
+        if (stableFormValues.temperature === null || stableFormValues.temperature === undefined || isNaN(stableFormValues.temperature)) throw new Error('Temperature is required when enabled and must be a number.');
+        if (stableFormValues.temperature < parameterSpecs.temperature.min || stableFormValues.temperature > parameterSpecs.temperature.max) throw new Error(`Temperature must be between ${parameterSpecs.temperature.min} and ${parameterSpecs.temperature.max}.`);
       }
-      if (capabilities.supportsTopP === true && formValues.includeTopP) {
-        if (formValues.topP === null || formValues.topP === undefined || isNaN(formValues.topP)) throw new Error('Top P is required when enabled and must be a number.');
-        if (formValues.topP < parameterSpecs.topP.min || formValues.topP > parameterSpecs.topP.max) throw new Error(`Top P must be between ${parameterSpecs.topP.min} and ${parameterSpecs.topP.max}.`);
+      if (capabilities.supportsTopP === true && stableFormValues.includeTopP) {
+        if (stableFormValues.topP === null || stableFormValues.topP === undefined || isNaN(stableFormValues.topP)) throw new Error('Top P is required when enabled and must be a number.');
+        if (stableFormValues.topP < parameterSpecs.topP.min || stableFormValues.topP > parameterSpecs.topP.max) throw new Error(`Top P must be between ${parameterSpecs.topP.min} and ${parameterSpecs.topP.max}.`);
       }
-      if (platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false && capabilities.supportsSystemPrompt !== false && formValues.systemPrompt && formValues.systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
+      if (platform.apiConfig?.apiStructure?.supportsSystemPrompt !== false && capabilities.supportsSystemPrompt !== false && stableFormValues.systemPrompt && stableFormValues.systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
         throw new Error(`System Prompt cannot exceed ${MAX_SYSTEM_PROMPT_LENGTH} characters.`);
       }
       if (parameterSpecs.thinkingBudget) {
-        if (formValues.thinkingBudget === null || formValues.thinkingBudget === undefined || isNaN(formValues.thinkingBudget)) throw new Error('Thinking Budget is required and must be a number.');
-        if (formValues.thinkingBudget < parameterSpecs.thinkingBudget.min || formValues.thinkingBudget > parameterSpecs.thinkingBudget.max) throw new Error(`Thinking Budget must be between ${parameterSpecs.thinkingBudget.min} and ${parameterSpecs.thinkingBudget.max}.`);
+        if (stableFormValues.thinkingBudget === null || stableFormValues.thinkingBudget === undefined || isNaN(stableFormValues.thinkingBudget)) throw new Error('Thinking Budget is required and must be a number.');
+        if (stableFormValues.thinkingBudget < parameterSpecs.thinkingBudget.min || stableFormValues.thinkingBudget > parameterSpecs.thinkingBudget.max) throw new Error(`Thinking Budget must be between ${parameterSpecs.thinkingBudget.min} and ${parameterSpecs.thinkingBudget.max}.`);
       }
       if (parameterSpecs.reasoningEffort) {
-        if (formValues.reasoningEffort === null || formValues.reasoningEffort === undefined) throw new Error('Reasoning Effort is required.');
-        if (!parameterSpecs.reasoningEffort.allowedValues.includes(formValues.reasoningEffort)) throw new Error(`Reasoning Effort must be one of: ${parameterSpecs.reasoningEffort.allowedValues.join(', ')}.`);
+        if (stableFormValues.reasoningEffort === null || stableFormValues.reasoningEffort === undefined) throw new Error('Reasoning Effort is required.');
+        if (!parameterSpecs.reasoningEffort.allowedValues.includes(stableFormValues.reasoningEffort)) throw new Error(`Reasoning Effort must be one of: ${parameterSpecs.reasoningEffort.allowedValues.join(', ')}.`);
       }
 
-      const settingsToSave = { ...formValues };
+      const settingsToSave = { ...stableFormValues };
       delete settingsToSave.contextWindow;
 
       const changedParamsList = [];
-      if (originalValues) {
-        for (const key in formValues) {
-          if (Object.prototype.hasOwnProperty.call(formValues, key) && key !== 'contextWindow') {
-            const currentValue = formValues[key];
-            const originalValue = originalValues[key];
+      if (stableOriginalValues) {
+        for (const key in stableFormValues) {
+          if (Object.prototype.hasOwnProperty.call(stableFormValues, key) && key !== 'contextWindow') {
+            const currentValue = stableFormValues[key];
+            const originalValue = stableOriginalValues[key];
             let paramChanged = false;
             if (typeof currentValue === 'boolean') {
               if (currentValue !== originalValue) paramChanged = true;
@@ -239,7 +283,9 @@ export function useSidePanelModelParameters({
 
       await chrome.storage.local.set({ [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: allSettings });
       
-      setOriginalValues({ ...formValues });
+      // Update both internal and stable original values
+      setOriginalValues({ ...stableFormValues });
+      setStableOriginalValues({ ...stableFormValues });
 
       let successMessage = `Parameters for '${modelConfigData?.displayName || selectedModelId}' saved.`;
       if (changedParamsList.length > 0) {
@@ -254,15 +300,15 @@ export function useSidePanelModelParameters({
     } finally {
       setIsSavingActual(false);
     }
-  }, [formValues, originalValues, platform, selectedModelId, currentEditingMode, derivedSettings, modelConfigData, showNotificationError, showSuccessNotification]);
+  }, [stableFormValues, stableOriginalValues, platform, selectedModelId, currentEditingMode, stableDerivedSettings, modelConfigData, showNotificationError, showSuccessNotification]);
 
   const handleResetClick = useCallback(async () => {
-    if (isAtDefaults || !derivedSettings || !selectedModelId || !platform) return; // Added !platform check
+    if (isAtDefaults || !stableDerivedSettings || !selectedModelId || !platform) return;
     setIsResettingActual(true);
     setIsAnimatingReset(true);
 
     try {
-      const { defaultSettings: configDefaults } = derivedSettings;
+      const { defaultSettings: configDefaults } = stableDerivedSettings;
       
       const storageResult = await chrome.storage.local.get(STORAGE_KEYS.MODEL_PARAMETER_SETTINGS);
       const allSettings = storageResult[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {};
@@ -289,8 +335,12 @@ export function useSidePanelModelParameters({
         await chrome.storage.local.set({ [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]: allSettings });
       }
       
+      // Update both internal and stable state
       setFormValues({ ...configDefaults });
       setOriginalValues({ ...configDefaults });
+      setStableFormValues({ ...configDefaults });
+      setStableOriginalValues({ ...configDefaults });
+      
       showSuccessNotification(`Parameters for '${modelConfigData?.displayName || selectedModelId}' reset.`);
       
     } catch (err) {
@@ -300,11 +350,11 @@ export function useSidePanelModelParameters({
       setIsResettingActual(false);
       setTimeout(() => setIsAnimatingReset(false), 500);
     }
-  }, [isAtDefaults, platform, selectedModelId, currentEditingMode, derivedSettings, modelConfigData, showNotificationError, showSuccessNotification]);
+  }, [isAtDefaults, platform, selectedModelId, currentEditingMode, stableDerivedSettings, modelConfigData, showNotificationError, showSuccessNotification]);
 
   return {
-    formValues,
-    derivedSettings,
+    formValues: stableFormValues, // Return stable state to component
+    derivedSettings: stableDerivedSettings, // Return stable state to component
     handleChange,
     handleSubmit,
     handleResetClick,
@@ -313,6 +363,6 @@ export function useSidePanelModelParameters({
     isAnimatingReset,
     hasChanges,
     isAtDefaults,
-    isFormReady,
+    isFormReady: isStableReady, // Component sees stable ready state
   };
 }
