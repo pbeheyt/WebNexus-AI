@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 
+import { formatTokenCount } from '../../shared/utils/number-format-utils';
 import { debounce } from '../../shared/utils/debounce-utils';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import { useSidePanelPlatform } from '../../contexts/platform';
@@ -36,19 +37,6 @@ import {
 } from '../../components';
 
 import { MessageBubble } from './messaging/MessageBubble';
-
-// --- Helper Function ---
-const formatContextWindow = (value) => {
-  if (typeof value !== 'number') return '';
-  if (value >= 1000000) {
-    return (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-  }
-  if (value >= 1000) {
-    return (value / 1000).toFixed(0) + 'K';
-  }
-  return value.toString();
-};
-// --- End Helper Function ---
 
 // --- Constants ---
 const MIN_ASSISTANT_BUBBLE_HEIGHT_REM = 2; // Equivalent to 2rem minimum height
@@ -554,11 +542,11 @@ function ChatArea({
                       >
                         <ContextWindowIcon />
                         <span className='ml-1'>
-                          {formatContextWindow(dynamicSpecs.contextWindow)}
+                          {formatTokenCount(dynamicSpecs.contextWindow)}
                         </span>
                         <Tooltip
                           show={hoveredElement === 'contextWindow'}
-                          message={`Max context window: ${dynamicSpecs.contextWindow?.toLocaleString()} tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
+                          message={`Max context window: ${formatTokenCount(dynamicSpecs.contextWindow)} tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                           targetRef={contextWindowRef}
                           position='bottom'
                         />

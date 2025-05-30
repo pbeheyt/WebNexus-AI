@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 
+import { formatTokenCount } from '../../shared/utils/number-format-utils';
 import { Tooltip } from '../../components/layout/Tooltip';
 import {
   InputTokenIcon,
@@ -53,10 +54,10 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   };
 
   const tooltipContent = {
-    inputTokens: `Est. Input: ${promptTokensInLastApiCall.toLocaleString()} (Prompt) + ${historyTokensSentInLastApiCall.toLocaleString()} (History) + ${systemTokensInLastApiCall.toLocaleString()} (System) = ${inputTokensInLastApiCall.toLocaleString()} total.`,
-    outputTokens: `Est. total output tokens generated in this chat session.`,
-    cost: `Est. total accumulated cost for this chat session.`,
-    contextWindow: `Est. ${contextData.tokensRemaining.toLocaleString()} tokens remaining (${contextData.totalTokens.toLocaleString()} / ${contextData.maxContextWindow.toLocaleString()} used).`,
+    inputTokens: `Est. Input: ${formatTokenCount(promptTokensInLastApiCall)} (Prompt) + ${formatTokenCount(historyTokensSentInLastApiCall)} (History) + ${formatTokenCount(systemTokensInLastApiCall)} (System) = ${formatTokenCount(inputTokensInLastApiCall)} total.`,
+    outputTokens: `Est. total output tokens generated in this chat session.`, // No direct token number here, but if it had one, format it.
+    cost: `Est. total accumulated cost for this chat session.`, // No token number here.
+    contextWindow: `Est. ${formatTokenCount(contextData.tokensRemaining)} tokens remaining (${formatTokenCount(contextData.totalTokens)} / ${formatTokenCount(contextData.maxContextWindow)} used).`,
   };
 
   return (
@@ -72,7 +73,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           onBlur={() => setHoveredElement(null)}
         >
           <InputTokenIcon className='w-3 h-3 mr-1 select-none' />
-          <span>{inputTokensInLastApiCall.toLocaleString()}</span>
+          <span>{formatTokenCount(inputTokensInLastApiCall)}</span>
           <Tooltip
             show={hoveredElement === 'inputTokens'}
             message={tooltipContent.inputTokens}
@@ -91,7 +92,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           onBlur={() => setHoveredElement(null)}
         >
           <OutputTokenIcon className='w-3 h-3 mr-1 select-none' />
-          <span>{outputTokens.toLocaleString()}</span>
+          <span>{formatTokenCount(outputTokens)}</span>
           <Tooltip
             show={hoveredElement === 'outputTokens'}
             message={tooltipContent.outputTokens}
