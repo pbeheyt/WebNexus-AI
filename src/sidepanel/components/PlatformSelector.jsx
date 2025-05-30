@@ -127,7 +127,7 @@ function PlatformSelector({ className = '' }) {
             platformId={displayPlatformDetails.id}
             iconUrl={displayPlatformDetails.iconUrl}
             altText={`${displayPlatformDetails.name} logo`}
-            className='w-4 h-4 mr-1'
+            className='w-5 h-5 mr-1'
           />
         )}
         <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
@@ -139,7 +139,7 @@ function PlatformSelector({ className = '' }) {
           className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
           role='listbox'
           aria-labelledby={platformTriggerRef.current?.id || undefined}
-          tabIndex={-1} // Keep focus on the trigger or manage focus within items
+          tabIndex={0} // Make listbox focusable
         >
           {availablePlatforms.length === 0 ? (
             <div className='px-3 py-2 text-sm text-theme-secondary'>

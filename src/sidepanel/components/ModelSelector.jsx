@@ -97,7 +97,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       <button
         ref={modelTriggerRef}
         onClick={toggleDropdown}
-        className='flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full min-w-[120px]'
+        className='flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full min-w-30'
         aria-haspopup='listbox'
         aria-expanded={isOpen}
       >
