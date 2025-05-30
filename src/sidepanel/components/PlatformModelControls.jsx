@@ -11,9 +11,7 @@ import PropTypes from 'prop-types';
 import { useSidePanelPlatform } from '../../contexts/platform';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import {
-  PlatformIcon,
   ChevronUpIcon,
-  ChevronDownIcon,
   Toggle,
   InfoIcon,
   Tooltip,
@@ -23,6 +21,7 @@ import { logger } from '../../shared/logger';
 
 import SidePanelModelParametersEditor from './SidePanelModelParametersEditor';
 import ModelSelector from './ModelSelector';
+import PlatformSelector from './PlatformSelector'; // Import the new component
 
 // Create a context for dropdown state coordination
 export const DropdownContext = createContext({
@@ -32,9 +31,8 @@ export const DropdownContext = createContext({
 
 function PlatformModelControls({ onToggleExpand }) {
   const {
-    platforms,
     selectedPlatformId,
-    selectPlatform,
+    platforms, // Keep for fullSelectedPlatformConfig logic
     hasAnyPlatformCredentials,
     isLoading,
     getPlatformApiConfig,
@@ -46,10 +44,7 @@ function PlatformModelControls({ onToggleExpand }) {
   const [isParametersExpanded, setIsParametersExpanded] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const infoIconRef = useRef(null);
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [displayPlatformId, setDisplayPlatformId] = useState(selectedPlatformId);
-  const platformDropdownRef = useRef(null);
-  const platformTriggerRef = useRef(null);
+  const [openDropdown, setOpenDropdown] = useState(null); // Manages which dropdown is open: 'platform', 'model', or null
 
   const [fullSelectedPlatformConfig, setFullSelectedPlatformConfig] =
     useState(null);
@@ -99,65 +94,6 @@ function PlatformModelControls({ onToggleExpand }) {
     fetchFullConfig();
   }, [selectedPlatformId, platforms, getPlatformApiConfig]);
 
-  useEffect(() => {
-    if (!isLoading) {
-      setDisplayPlatformId(selectedPlatformId);
-    }
-  }, [selectedPlatformId, isLoading]);
-
-  const availablePlatforms = platforms.filter((p) => p.hasCredentials);
-  const displayPlatformDetails = platforms.find(
-    (p) => p.id === displayPlatformId
-  );
-  const isPlatformDropdownOpen = openDropdown === 'platform';
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        platformDropdownRef.current &&
-        !platformDropdownRef.current.contains(event.target) &&
-        platformTriggerRef.current &&
-        !platformTriggerRef.current.contains(event.target)
-      ) {
-        setOpenDropdown(null);
-      }
-    };
-
-    if (openDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [openDropdown]);
-
-  useEffect(() => {
-    if (isLoading || !hasAnyPlatformCredentials) return;
-    const isSelectedPlatformAvailable = availablePlatforms.some(
-      (p) => p.id === selectedPlatformId
-    );
-    if (!isSelectedPlatformAvailable && availablePlatforms.length > 0) {
-      selectPlatform(availablePlatforms[0].id);
-    }
-  }, [
-    platforms,
-    selectedPlatformId,
-    hasAnyPlatformCredentials,
-    isLoading,
-    selectPlatform,
-    availablePlatforms,
-  ]);
-
-  const handleSelectPlatform = (platformId) => {
-    selectPlatform(platformId);
-    setOpenDropdown(null);
-  };
-
-  const selectedPlatformForDisplay = displayPlatformDetails;
-
   const toggleParametersExpansion = () => {
     setIsParametersExpanded((prev) => !prev);
   };
@@ -173,59 +109,9 @@ function PlatformModelControls({ onToggleExpand }) {
           <div className='flex items-center flex-grow min-w-0'>
             {hasAnyPlatformCredentials ? (
               <>
-                {/* Platform Selector */}
-                <div className='relative flex items-center flex-shrink-0 mr-2'>
-                  {selectedPlatformForDisplay && (
-                    <div ref={platformTriggerRef}>
-                      <button
-                        onClick={() =>
-                          setOpenDropdown(
-                            openDropdown === 'platform' ? null : 'platform'
-                          )
-                        }
-                        className='flex items-center px-2 rounded focus:outline-none transition-colors select-none'
-                        aria-label='Change Platform'
-                        aria-haspopup='true'
-                        aria-expanded={isPlatformDropdownOpen}
-                      >
-                        <PlatformIcon
-                          platformId={selectedPlatformForDisplay?.id}
-                          iconUrl={selectedPlatformForDisplay?.iconUrl}
-                          altText={selectedPlatformForDisplay?.name || ''}
-                          className='w-4 h-4 mr-1'
-                        />
-                        <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
-                      </button>
-                    </div>
-                  )}
-                  {isPlatformDropdownOpen && (
-                    <div
-                      ref={platformDropdownRef}
-                      className='absolute top-full left-0 bg-theme-surface border border-theme rounded-md shadow-lg z-40 w-max max-w-sm'
-                      role='menu'
-                    >
-                      {availablePlatforms.map((platform) => (
-                        <button
-                          key={platform.id}
-                          role='menuitem'
-                          className={`w-full text-left px-3 flex items-center gap-2 hover:bg-theme-hover ${
-                            platform.id === selectedPlatformId
-                              ? 'font-medium'
-                              : ''
-                          }`}
-                          onClick={() => handleSelectPlatform(platform.id)}
-                        >
-                          <PlatformIcon
-                            platformId={platform.id}
-                            iconUrl={platform.iconUrl}
-                            altText=''
-                            className='w-5 h-5'
-                          />
-                          <span className='text-sm'>{platform.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                {/* Platform Selector Component */}
+                <div className='flex items-center flex-shrink-0 mr-2'>
+                  <PlatformSelector />
                 </div>
 
                 {/* Model Selector */}
@@ -267,8 +153,8 @@ function PlatformModelControls({ onToggleExpand }) {
                 )}
               </>
             ) : (
-              <div className='flex-grow flex items-center'>
-                <span className='text-theme-secondary text-sm'>
+              <div className='flex-grow flex items-center h-9'> {/* Ensure consistent height */}
+                <span className='text-theme-secondary text-sm px-2'>
                   No API credentials configured.
                 </span>
               </div>
