@@ -1,5 +1,5 @@
 // src/sidepanel/components/UserInput.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import { useSidePanelPlatform } from '../../contexts/platform';
@@ -13,11 +13,10 @@ import {
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { CONTENT_TYPE_LABELS } from '../../shared/constants';
 
-UserInput.propTypes = {
-  className: PropTypes.string,
-};
+import TokenCounter from './TokenCounter';
+import PlatformModelControls from './PlatformModelControls';
 
-export function UserInput({ className = '' }) {
+export function UserInput({ className = '', requestHeightRecalculation }) {
   const { contentType, currentTab, isLoading: contentLoading } = useContent();
   const [displayedPlaceholder, setDisplayedPlaceholder] =
     useState('Loading...');
@@ -35,11 +34,25 @@ export function UserInput({ className = '' }) {
     isProcessing,
     isCanceling,
     isRefreshing,
-    tokenStats,
-    contextStatus,
+    tokenStats, // From SidePanelChatContext
+    contextStatus, // From SidePanelChatContext
     messages,
     isContentExtractionEnabled,
   } = useSidePanelChat();
+
+  const selfRef = useRef(null);
+
+  const handlePlatformControlsToggle = useCallback(
+    (_newHeight) => {
+      // The actual height of PlatformModelControls is less important here
+      // than the fact that its expansion state changed.
+      // We rely on requestHeightRecalculation to measure the UserInput container.
+      if (typeof requestHeightRecalculation === 'function') {
+        requestHeightRecalculation();
+      }
+    },
+    [requestHeightRecalculation]
+  );
 
   const handleInputChange = (value) => {
     setInputValue(value);
@@ -64,43 +77,36 @@ export function UserInput({ className = '' }) {
 
   const dynamicPlaceholder = useMemo(() => {
     const genericLoadingPlaceholder = 'Loading...';
-
-    // Condition for loading state or platform name not ready
     if (
       platformLoading ||
       contentLoading ||
       (selectedPlatformId && !platformName)
     ) {
-      // If an old specific placeholder exists (i.e., not the generic "Loading..."), show it.
       if (displayedPlaceholder !== genericLoadingPlaceholder) {
         return displayedPlaceholder;
       }
-      // Otherwise (initial load or if displayedPlaceholder was already "Loading..."), show "Loading..."
-      // And ensure displayedPlaceholder state is explicitly "Loading..." for the next render if it wasn't.
       if (displayedPlaceholder !== genericLoadingPlaceholder) {
         setDisplayedPlaceholder(genericLoadingPlaceholder);
       }
       return genericLoadingPlaceholder;
     }
 
-    // If not loading, calculate the new placeholder
     let newPlaceholder;
     if (messages.length === 0) {
       newPlaceholder = getSidepanelInitialPlaceholder({
         platformName,
         contentTypeLabel: contentType ? CONTENT_TYPE_LABELS[contentType] : null,
         isPageInjectable,
-        isContentLoading: contentLoading, // Should be false here, but pass for consistency
+        isContentLoading: contentLoading,
         includeContext: isContentExtractionEnabled,
       });
     } else {
       newPlaceholder = getSidepanelFollowUpPlaceholder({
         platformName,
-        isContentLoading: contentLoading, // Should be false here
+        isContentLoading: contentLoading,
       });
     }
 
-    // Update the remembered placeholder only if the new one is different
     if (newPlaceholder !== displayedPlaceholder) {
       setDisplayedPlaceholder(newPlaceholder);
     }
@@ -118,25 +124,38 @@ export function UserInput({ className = '' }) {
   ]);
 
   return (
-    <UnifiedInput
-      value={inputValue}
-      onChange={handleInputChange}
-      onSubmit={handleSend}
-      onCancel={handleCancel}
-      disabled={
-        !hasAnyPlatformCredentials ||
-        (isProcessing && isCanceling) ||
-        isRefreshing
-      }
-      isProcessing={isProcessing}
-      isCanceling={isCanceling}
-      placeholder={dynamicPlaceholder}
-      contentType={contentType}
-      showTokenInfo={true}
-      tokenStats={tokenStats}
-      contextStatus={contextStatus}
-      layoutVariant='sidepanel'
-      className={className}
-    />
+    <div ref={selfRef} className={`flex flex-col ${className}`}>
+      {/* Token Counter Section */}
+      <div className='px-4 py-2 border-t border-theme-hover'>
+        <TokenCounter tokenStats={tokenStats} contextStatus={contextStatus} />
+      </div>
+
+      {/* Platform and Model Controls Section */}
+      <PlatformModelControls onToggleExpand={handlePlatformControlsToggle} />
+
+      {/* Unified Input (TextArea and buttons) Section */}
+      <UnifiedInput
+        value={inputValue}
+        onChange={handleInputChange}
+        onSubmit={handleSend}
+        onCancel={handleCancel}
+        disabled={
+          !hasAnyPlatformCredentials ||
+          (isProcessing && isCanceling) ||
+          isRefreshing
+        }
+        isProcessing={isProcessing}
+        isCanceling={isCanceling}
+        placeholder={dynamicPlaceholder}
+        contentType={contentType}
+        layoutVariant='sidepanel'
+        className=''
+      />
+    </div>
   );
 }
+
+UserInput.propTypes = {
+  className: PropTypes.string,
+  requestHeightRecalculation: PropTypes.func.isRequired,
+};

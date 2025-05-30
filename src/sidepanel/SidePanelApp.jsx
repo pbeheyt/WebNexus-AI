@@ -34,7 +34,6 @@ export default function SidePanelApp() {
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
 
-  // Use the custom hook for shortcut handling
   const handleCloseShortcut = useCallback(async () => {
     if (!tabId) {
       logger.sidepanel.warn(
@@ -68,7 +67,6 @@ export default function SidePanelApp() {
     }
   }, [tabId]);
 
-  // currentShortcutConfig is returned but not directly used for display in SidePanelApp
   useConfigurableShortcut(
     STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
     DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
@@ -77,25 +75,21 @@ export default function SidePanelApp() {
     [handleCloseShortcut]
   );
 
-  // Refs for height calculation
   const appHeaderRef = useRef(null);
   const collapsibleHeaderRef = useRef(null);
   const userInputRef = useRef(null);
   const [otherUIHeight, setOtherUIHeight] = useState(160);
   const rafIdHeightCalc = useRef(null);
 
-  // --- Effect to determine Tab ID ---
   useEffect(() => {
     logger.sidepanel.info(
       'SidepanelApp mounted, attempting to determine tab context...'
     );
     let foundTabId = NaN;
-
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const tabIdFromUrl = urlParams.get('tabId');
       const parsedTabId = tabIdFromUrl ? parseInt(tabIdFromUrl, 10) : NaN;
-
       if (tabIdFromUrl && !isNaN(parsedTabId)) {
         logger.sidepanel.info(`Found valid tabId ${parsedTabId} in URL.`);
         foundTabId = parsedTabId;
@@ -107,22 +101,18 @@ export default function SidePanelApp() {
     } catch (error) {
       logger.sidepanel.error('Error parsing tabId from URL:', error);
     }
-
     if (!isNaN(foundTabId)) {
       setTabId(foundTabId);
     }
-
     const timer = setTimeout(() => {
       setIsReady(!isNaN(foundTabId));
       logger.sidepanel.info(
         `Sidepanel initialization complete. isReady: ${!isNaN(foundTabId)}, tabId set to: ${foundTabId}`
       );
     }, 50);
-
     return () => clearTimeout(timer);
   }, [setTabId]);
 
-  // --- Effect for Page Navigation Listener ---
   useEffect(() => {
     if (!isReady || !tabId) {
       logger.sidepanel.info(
@@ -130,7 +120,6 @@ export default function SidePanelApp() {
       );
       return;
     }
-
     const messageListener = (message, _sender, _sendResponse) => {
       if (message.action === 'pageNavigated' && message.tabId === tabId) {
         logger.sidepanel.info(
@@ -150,7 +139,6 @@ export default function SidePanelApp() {
         }
       }
     };
-
     if (chrome && chrome.runtime && chrome.runtime.onMessage) {
       chrome.runtime.onMessage.addListener(messageListener);
       logger.sidepanel.info(
@@ -161,7 +149,6 @@ export default function SidePanelApp() {
         'Chrome runtime API not available for message listener.'
       );
     }
-
     return () => {
       if (chrome && chrome.runtime && chrome.runtime.onMessage) {
         chrome.runtime.onMessage.removeListener(messageListener);
@@ -172,7 +159,6 @@ export default function SidePanelApp() {
     };
   }, [isReady, tabId, updateContentContext]);
 
-  // --- Effect for Background Connection Port ---
   useEffect(() => {
     if (!isReady || !tabId) {
       logger.sidepanel.info(
@@ -180,20 +166,14 @@ export default function SidePanelApp() {
       );
       return;
     }
-
-    if (portRef.current) {
-      return;
-    }
-
+    if (portRef.current) return;
     if (!(chrome && chrome.runtime && chrome.runtime.connect)) {
       logger.sidepanel.warn('Chrome runtime connect API not available.');
       return;
     }
-
     const portName = `sidepanel-connect-${tabId}`;
     try {
       portRef.current = chrome.runtime.connect({ name: portName });
-
       portRef.current.onDisconnect.addListener(() => {
         logger.sidepanel.info(`Port disconnected for tab ${tabId}.`);
         if (chrome.runtime.lastError) {
@@ -211,7 +191,6 @@ export default function SidePanelApp() {
       );
       portRef.current = null;
     }
-
     return () => {
       if (portRef.current) {
         portRef.current.disconnect();
@@ -220,31 +199,31 @@ export default function SidePanelApp() {
     };
   }, [isReady, tabId]);
 
-  // --- Height Calculation Logic ---
   const calculateAndSetHeight = useCallback(() => {
     if (rafIdHeightCalc.current) {
       cancelAnimationFrame(rafIdHeightCalc.current);
     }
-
     rafIdHeightCalc.current = requestAnimationFrame(() => {
       const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
-      const collapsibleHeight = headerExpanded
+
+      const collapsibleDummyHeaderHeight = headerExpanded
         ? collapsibleHeaderRef.current?.offsetHeight || 0
         : 0;
-      const inputHeight = userInputRef.current?.offsetHeight || 0;
+      const userInputTotalHeight = userInputRef.current?.offsetHeight || 0;
 
       if (
         typeof appHeaderHeight === 'number' &&
-        typeof collapsibleHeight === 'number' &&
-        typeof inputHeight === 'number'
+        typeof collapsibleDummyHeaderHeight === 'number' &&
+        typeof userInputTotalHeight === 'number'
       ) {
-        const totalHeight = appHeaderHeight + collapsibleHeight + inputHeight;
+        const totalHeight =
+          appHeaderHeight + collapsibleDummyHeaderHeight + userInputTotalHeight;
         const buffer = 2;
         setOtherUIHeight(totalHeight + buffer);
       }
       rafIdHeightCalc.current = null;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerExpanded, textSize]);
 
   const debouncedCalculateHeight = useMemo(
@@ -254,7 +233,7 @@ export default function SidePanelApp() {
 
   useEffect(() => {
     if (isReady) {
-      calculateAndSetHeight();
+      debouncedCalculateHeight();
     }
     return () => {
       if (rafIdHeightCalc.current) {
@@ -262,9 +241,8 @@ export default function SidePanelApp() {
         rafIdHeightCalc.current = null;
       }
     };
-  }, [isReady, headerExpanded, textSize, calculateAndSetHeight]);
+  }, [isReady, headerExpanded, textSize, debouncedCalculateHeight]);
 
-  // --- Render Logic ---
   return (
     <div
       className={`flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary ${textSize ? `text-${textSize}` : 'text-sm'}`}
@@ -285,28 +263,21 @@ export default function SidePanelApp() {
               showRefreshButton={true}
               onRefreshClick={resetCurrentTabData}
               isRefreshing={isRefreshing}
-              isExpanded={headerExpanded}
-              onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
-              showExpandToggle={true}
-              showBorder={true}
+              isExpanded={headerExpanded} // Prop for AppHeader's internal chevron state
+              onToggleExpand={() => setHeaderExpanded(!headerExpanded)} // Toggle our state
+              showExpandToggle={true} // Show the AppHeader's chevron
+              showBorder={!headerExpanded} // Show border only when dummy header is collapsed
               className='px-5 py-2'
             />
           </div>
 
+          {/* Dummy Collapsible Header Section */}
           <div
-            ref={collapsibleHeaderRef}
-            className='relative flex-shrink-0 z-10'
+            ref={collapsibleHeaderRef} // Ref for height calculation
+            className='relative flex-shrink-0 z-10' // Ensure it's above ChatArea if overlapping
           >
-            <div
-              className={`transition-all duration-300 ease-in-out border-b border-theme ${
-                headerExpanded
-                  ? 'max-h-40 opacity-100'
-                  : 'max-h-0 opacity-0 invisible'
-              }`}
-              aria-hidden={!headerExpanded}
-            >
-              <Header />
-            </div>
+            {/* The actual Header component which now contains dummy text */}
+            <Header isExpanded={headerExpanded} />
           </div>
 
           {isReady && tabId && isRefreshing && (
@@ -326,7 +297,10 @@ export default function SidePanelApp() {
             ref={userInputRef}
             className='flex-shrink-0 relative z-10 border-t border-theme select-none'
           >
-            <UserInput className='' />
+            <UserInput
+              className=''
+              requestHeightRecalculation={debouncedCalculateHeight}
+            />
           </div>
         </>
       ) : (

@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 import { TextArea } from '../form/TextArea';
-import TokenCounter from '../../sidepanel/components/TokenCounter';
 import { ArrowUpIcon } from '../icons/ArrowUpIcon';
 import { XIcon } from '../icons/XIcon';
 import { IconButton } from '../core/IconButton';
@@ -12,7 +11,7 @@ import { PromptDropdown } from './PromptDropdown';
 
 /**
  * Unified input component for both popup and sidepanel, supporting direct input
- * and custom prompt selection via dropdown. Uses rem units for height to adapt to font size.
+ * and custom prompt selection via dropdown. Uses rem units for height to adapt to font size..
  */
 export function UnifiedInput({
   value,
@@ -23,13 +22,10 @@ export function UnifiedInput({
   isProcessing = false,
   isCanceling = false,
   contentType,
-  showTokenInfo = false,
-  tokenStats,
-  contextStatus,
   layoutVariant,
   className = '',
   placeholder,
-  onDefaultPromptSetCallback, // Destructure the new prop
+  onDefaultPromptSetCallback,
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const textareaRef = useRef(null);
@@ -85,10 +81,10 @@ export function UnifiedInput({
   // --- Sidepanel Specific Button Logic ---
   const isStreamingActive = layoutVariant === 'sidepanel' && isProcessing;
   const sidepanelButtonStyle = isStreamingActive
-    ? 'bg-red-500 hover:bg-red-600 text-white' // Base styles
+    ? 'bg-red-500 hover:bg-red-600 text-white'
     : !value.trim() || disabled
-      ? 'bg-gray-400 text-white' // Disabled state handled by IconButton, only need bg here
-      : 'bg-orange-600 hover:bg-orange-700 text-white'; // Active state
+      ? 'bg-gray-400 text-white'
+      : 'bg-orange-600 hover:bg-orange-700 text-white';
   const sidepanelButtonLabel = isStreamingActive
     ? 'Cancel generation'
     : 'Send message';
@@ -102,40 +98,31 @@ export function UnifiedInput({
   // --- Popup Specific Button Logic ---
   const popupSendButtonDisabled = !value.trim() || disabled || isProcessing;
   const popupSendButtonStyle = popupSendButtonDisabled
-    ? 'bg-gray-400 dark:bg-gray-600 text-white dark:text-gray-400' // Disabled state handled by IconButton
-    : 'bg-primary hover:bg-primary-dark text-white'; // Active state
+    ? 'bg-gray-400 dark:bg-gray-600 text-white dark:text-gray-400'
+    : 'bg-primary hover:bg-primary-dark text-white';
   const popupIconSize = 'w-3.5 h-3.5';
   const popupButtonSize = 'w-5 h-5 rounded';
 
   // --- Define styles with rem units ---
-  const sidepanelStyle = { minHeight: '5rem', maxHeight: '12rem' };
-  const popupStyle = { minHeight: '4.5rem', maxHeight: '12rem' };
+  const sidepanelStyle = { minHeight: '5rem', maxHeight: '12rem' }; // Style for sidepanel TextArea
+  const popupStyle = { minHeight: '4.5rem', maxHeight: '12rem' }; // Style for popup TextArea
 
   // --- Render Logic ---
   if (layoutVariant === 'sidepanel') {
     return (
       <div className={`flex flex-col ${className}`}>
-        {/* Token Counter */}
-        {showTokenInfo && (
-          <div className='px-4 py-2 border-t border-gray-200 dark:border-gray-700'>
-            <TokenCounter
-              tokenStats={tokenStats}
-              contextStatus={contextStatus}
-            />
-          </div>
-        )}
-
-        {/* Input Area */}
-        <div className='border-t border-gray-200 dark:border-gray-700'>
+        {/* Input Area - TokenCounter is removed from here */}
+        <div className='border-t border-theme-hover'>
+          {' '}
+          {/* Adjusted border to theme-hover for subtlety */}
           <div
             ref={containerRef}
             onClick={handleContainerClick}
             onKeyDown={handleContainerClick}
             role='presentation'
             tabIndex={-1}
-            className='input-container relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all cursor-text'
+            className='input-container relative bg-theme-surface transition-all cursor-text' // Adjusted background
           >
-            {/* Flex container for layout */}
             <div className='flex w-full'>
               <TextArea
                 ref={textareaRef}
@@ -145,14 +132,11 @@ export function UnifiedInput({
                 placeholder={placeholder}
                 disabled={disabled || isProcessing}
                 autoResize={true}
-                style={sidepanelStyle}
-                className='flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable text-sm'
+                style={sidepanelStyle} // Use sidepanelStyle for the TextArea
+                className='flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable text-sm text-theme-primary placeholder-theme-secondary'
               />
             </div>
-
-            {/* Button container */}
             <div className='absolute right-3.5 top-3 flex flex-col items-center gap-2'>
-              {/* Send/Cancel Button */}
               <IconButton
                 icon={isStreamingActive ? XIcon : ArrowUpIcon}
                 iconClassName={`${sidepanelIconSize} select-none`}
@@ -162,8 +146,6 @@ export function UnifiedInput({
                 ariaLabel={sidepanelButtonLabel}
                 title={sidepanelButtonLabel}
               />
-
-              {/* Prompt Selection Button */}
               <div className='relative'>
                 <button
                   ref={promptButtonRef}
@@ -178,7 +160,6 @@ export function UnifiedInput({
                     P
                   </span>
                 </button>
-
                 <PromptDropdown
                   isOpen={isDropdownOpen}
                   onClose={() => setIsDropdownOpen(false)}
@@ -186,6 +167,8 @@ export function UnifiedInput({
                   contentType={contentType}
                   anchorRef={promptButtonRef}
                   className={'text-sm'}
+                  // onDefaultPromptSetCallback is passed through
+                  onDefaultSet={onDefaultPromptSetCallback}
                 />
               </div>
             </div>
@@ -195,11 +178,10 @@ export function UnifiedInput({
     );
   }
 
-  // --- Popup Variant ---
+  // --- Popup Variant (remains unchanged) ---
   else if (layoutVariant === 'popup') {
     return (
       <div className={`flex flex-col ${className}`}>
-        {/* Input Area */}
         <div className='rounded-lg bg-theme-surface shadow-theme-light'>
           <div
             ref={containerRef}
@@ -209,7 +191,6 @@ export function UnifiedInput({
             tabIndex={-1}
             className='input-container relative cursor-text'
           >
-            {/* Flex container for layout */}
             <div className='flex w-full'>
               <TextArea
                 ref={textareaRef}
@@ -219,14 +200,11 @@ export function UnifiedInput({
                 placeholder={placeholder}
                 disabled={disabled || isProcessing}
                 autoResize={true}
-                style={popupStyle}
+                style={popupStyle} // Use popupStyle for the TextArea
                 className='flex-grow w-full py-3 pl-3 pr-10 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary scrollbar-gutter-stable text-xs'
               />
             </div>
-
-            {/* Button container */}
             <div className='absolute right-3.5 top-3 flex flex-col items-center gap-2'>
-              {/* Send Button */}
               <IconButton
                 icon={ArrowUpIcon}
                 iconClassName={`${popupIconSize} select-none`}
@@ -236,8 +214,6 @@ export function UnifiedInput({
                 ariaLabel='Send'
                 title='Send'
               />
-
-              {/* Prompt Selection Button */}
               <div className='relative'>
                 <button
                   ref={promptButtonRef}
@@ -252,7 +228,6 @@ export function UnifiedInput({
                     P
                   </span>
                 </button>
-
                 <PromptDropdown
                   isOpen={isDropdownOpen}
                   onClose={() => setIsDropdownOpen(false)}
@@ -269,6 +244,7 @@ export function UnifiedInput({
       </div>
     );
   }
+  return null; // Should not happen if layoutVariant is always popup or sidepanel
 }
 
 UnifiedInput.propTypes = {
@@ -280,9 +256,6 @@ UnifiedInput.propTypes = {
   isProcessing: PropTypes.bool,
   isCanceling: PropTypes.bool,
   contentType: PropTypes.string,
-  showTokenInfo: PropTypes.bool,
-  tokenStats: PropTypes.object,
-  contextStatus: PropTypes.object,
   layoutVariant: PropTypes.oneOf(['popup', 'sidepanel']).isRequired,
   placeholder: PropTypes.string,
   className: PropTypes.string,

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { useSidePanelPlatform } from '../../contexts/platform';
 
-import { DropdownContext } from './Header';
+import { DropdownContext } from './PlatformModelControls';
 
 // SVG Icons
 const ChevronIcon = () => (
@@ -45,7 +45,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       if (typeof model === 'object' && model !== null) {
         return {
           id: model.id,
-          name: model.displayName || model.name || model.id, // Prefer displayName, then name (if it existed), then id
+          name: model.displayName || model.name || model.id,
         };
       } else {
         return {
@@ -93,7 +93,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
 
       const currentModel = formattedModels.find((m) => m.id === selectedModel);
       const currentModelName =
-        currentModel?.name || // This 'name' is now effectively 'displayName' from the previous step
+        currentModel?.name || // This 'name' is effectively 'displayName' from the previous step
         selectedModel ||
         'Loading...';
       if (currentModelName) {
