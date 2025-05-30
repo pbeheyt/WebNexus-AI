@@ -38,6 +38,7 @@ MessageBubbleComponent.propTypes = {
   role: PropTypes.oneOf(Object.values(MESSAGE_ROLES)).isRequired,
   id: PropTypes.string,
   modelDisplayName: PropTypes.string,
+  apiCost: PropTypes.number, // Add this line
 };
 
 MessageBubbleComponent.displayName = 'MessageBubble';

@@ -1,12 +1,13 @@
-import React, { memo, forwardRef, useMemo } from 'react';
+import React, { memo, forwardRef, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
 import { logger } from '../../../shared/logger';
-import { IconButton, RerunIcon, PlatformIcon } from '../../../components';
+import { IconButton, RerunIcon, PlatformIcon, Tooltip } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
+import { formatCost } from '../../../shared/utils/number-format-utils.js';
 
 import ThinkingBlock from './ThinkingBlock';
 import CodeBlock from './CodeBlock.jsx';
@@ -36,6 +37,7 @@ export const AssistantMessageBubble = memo(
         platformId = null,
         className = '',
         style = {},
+        apiCost, // Destructure apiCost
       },
       ref
     ) => {
@@ -49,6 +51,9 @@ export const AssistantMessageBubble = memo(
         iconClassName: assistantIconClassName,
         disabled: assistantCopyDisabled,
       } = useCopyToClipboard(content);
+
+      const [costTooltipVisible, setCostTooltipVisible] = useState(false);
+      const costDisplayRef = useRef(null);
 
       // For assistant rerun
       const handleRerunAssistant = () => {
@@ -355,6 +360,28 @@ export const AssistantMessageBubble = memo(
                   {/* Display displayName, fallback to ID */}
                 </span>
               )}
+              {/* API Cost Badge */}
+              {!isStreaming && typeof apiCost === 'number' && apiCost >= 0 && ( // Show if apiCost is a number and >= 0
+                <>
+                  <span
+                    ref={costDisplayRef}
+                    className="ml-2 text-xxs text-theme-secondary opacity-80 cursor-help"
+                      onMouseEnter={() => setCostTooltipVisible(true)}
+                      onMouseLeave={() => setCostTooltipVisible(false)}
+                      role="status"
+                      aria-label={`Estimated cost: ${formatCost(apiCost)}`}
+                    >
+                      ({formatCost(apiCost)})
+                    </span>
+                    <Tooltip
+                      show={costTooltipVisible}
+                      message={`Est. cost for this response: ${formatCost(apiCost)}`}
+                      targetRef={costDisplayRef}
+                      position="top"
+                    />
+                  </>
+                )}
+                {/* End API Cost Badge */}
               <div
                 className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
               >
@@ -417,6 +444,167 @@ AssistantMessageBubble.propTypes = {
   platformId: PropTypes.string,
   className: PropTypes.string,
   style: PropTypes.object,
+  apiCost: PropTypes.number, // Add this line
 };
 
 AssistantMessageBubble.displayName = 'AssistantMessageBubble';
+<environment_details>
+# VSCode Visible Files
+src/sidepanel/components/messaging/AssistantMessageBubble.jsx
+
+# VSCode Open Tabs
+.aidigestignore
+src/sidepanel/components/Header.jsx
+src/sidepanel/components/ModelSelector.jsx
+src/sidepanel/components/PlatformSelector.jsx
+src/sidepanel/components/PlatformModelControls.jsx
+src/sidepanel/components/UserInput.jsx
+src/sidepanel/services/TokenManagementService.js
+src/sidepanel/SidePanelApp.jsx
+src/components/icons/ModelParametersIcon.jsx
+src/components/index.js
+src/sidepanel/index.jsx
+src/styles/index.css
+src/components/input/UnifiedInput.jsx
+src/components/input/PromptDropdown.jsx
+src/shared/constants.js
+src/background/initialization.js
+src/content/extractor-content.js
+src/extractor/base-extractor.js
+src/extractor/strategies/general-strategy.js
+src/components/icons/FocusedStrategyIcon.jsx
+src/components/icons/BroadStrategyIcon.jsx
+src/components/core/ExtractionStrategySelector.jsx
+src/popup/Popup.jsx
+src/services/ContentFormatter.js
+src/extractor/extractor-factory.js
+src/background/services/content-extraction.js
+src/extractor/strategies/reddit-strategy.js
+src/shared/utils/prompt-utils.js
+src/components/icons/StarFilledIcon.jsx
+src/components/icons/StarOutlineIcon.jsx
+src/components/core/Button.jsx
+src/settings/components/ui/api/PlatformDetails.jsx
+src/hooks/useMinimumLoadingTime.js
+src/shared/utils/placeholder-utils.js
+src/platforms/implementations/chatgpt-platform.js
+src/platforms/implementations/deepseek-platform.js
+src/platforms/implementations/gemini-platform.js
+src/platforms/implementations/grok-platform.js
+src/sidepanel/components/messaging/utils/markdown-utils.js
+src/sidepanel/components/messaging/CodeBlock.jsx
+package.json
+src/components/feedback/StatusMessage.jsx
+prompt-full-code
+src/background/services/content-processing.js
+src/components/layout/AppHeader.jsx
+src/settings/SettingsApp.jsx
+src/settings/components/ui/api/PlatformSidebar.jsx
+src/settings/components/tabs/PromptManagement.jsx
+src/shared/utils/shortcut-utils.js
+src/components/core/Modal.jsx
+src/background/services/sidebar-manager.js
+src/components/icons/KeyIcon.jsx
+prompt-auto-edit
+src/shared/utils/number-format-utils.js
+src/sidepanel/services/ChatHistoryService.js
+src/sidepanel/hooks/useChatStreaming.js
+src/sidepanel/components/messaging/AssistantMessageBubble.jsx
+src/sidepanel/components/TokenCounter.jsx
+src/sidepanel/components/ChatArea.jsx
+src/sidepanel/hooks/useSidePanelModelParameters.js
+src/sidepanel/components/SidePanelModelParametersEditor.jsx
+src/sidepanel/components/messaging/hooks/useCopyToClipboard.js
+src/settings/hooks/useModelParametersSettings.js
+src/api/api-base.js
+src/settings/services/UserDataService.js
+src/api/utils/error-utils.js
+src/settings/utils/import-validation-utils.js
+src/settings/contexts/ApiSettingsContext.jsx
+webpack.config.js
+src/settings/components/tabs/DataManagementTab.jsx
+src/background/listeners/tab-listener.js
+platform-api-config.json
+package-lock.json
+platform-display-config.json
+src/settings/components/ui/api/ModelParametersSettings.jsx
+src/sidepanel/contexts/SidePanelChatContext.jsx
+src/sidepanel/hooks/useMessageActions.js
+src/sidepanel/components/messaging/MessageBubble.jsx
+src/sidepanel/components/messaging/SystemMessageBubble.jsx
+src/background/services/sidepanel-manager.js
+src/components/feedback/Toast.jsx
+src/settings/components/ui/prompts/PromptList.jsx
+src/contexts/platform/hooks/useModelManagement.js
+src/contexts/platform/TabAwarePlatformContext.jsx
+src/services/CredentialManager.js
+src/services/ConfigService.js
+src/settings/contexts/TabContext.jsx
+src/settings/components/tabs/index.js
+src/settings/components/layout/TabNavigation.jsx
+src/settings/components/layout/TabContent.jsx
+src/settings/components/tabs/KeyboardShortcutsTab.jsx
+tailwind.config.js
+src/platforms/platform-base.js
+src/components/core/IconButton.jsx
+src/platforms/implementations/mistral-platform.js
+src/platforms/implementations/claude-platform.js
+NOTICES.txt
+src/extractor/utils/text-utils.js
+src/extractor/strategies/youtube-strategy.js
+prompt-config.json
+permissions.md
+presentation/description.md
+src/components/core/Toggle.jsx
+README.md
+src/extractor/strategies/pdf-strategy.js
+src/shared/logger.js
+src/platforms/platform-interface.js
+src/services/ApiServiceManager.js
+src/background/core/state-manager.js
+src/background/api/api-coordinator.js
+src/background/listeners/tab-state-listener.js
+src/background/index.js
+src/services/SidePanelStateManager.js
+src/background/core/message-router.js
+src/contexts/platform/hooks/useCredentialStatus.js
+src/contexts/platform/hooks/usePlatformSelection.js
+src/sidepanel/components/messaging/UserMessageBubble.jsx
+src/background/services/theme-service.js
+src/components/icons/SidepanelIcon.jsx
+src/contexts/platform/SidePanelPlatformContext.jsx
+src/contexts/platform/index.js
+src/hooks/useConfigurableShortcut.js
+src/hooks/useContentProcessing.js
+src/services/ModelParameterService.js
+.gitignore
+src/sidepanel/components/messaging/MathFormulaBlock.jsx
+src/sidepanel/components/messaging/ThinkingBlock.jsx
+src/sidepanel/components/messaging/utils/clipboard.js
+src/sidepanel/components/messaging/utils/parseTextAndMath.js
+src/sidepanel/hooks/useTokenTracking.js
+src/settings/components/ui/ShortcutCaptureInput.jsx
+manifest.json
+src/settings/components/ui/common/SubTabLayout.jsx
+src/settings/components/ui/common/SettingsCard.jsx
+sidepanel.html
+src/components/core/CustomSelect.jsx
+src/components/feedback/NotificationContext.jsx
+src/settings/utils/modelSettingsHelper.js
+src/settings/components/tabs/ApiSettings.jsx
+src/components/form/TextArea.jsx
+src/settings/components/ui/prompts/PromptDetail.jsx
+src/components/form/Input.jsx
+src/settings/components/ui/prompts/PromptForm.jsx
+src/shared/utils/import-validation-utils.js
+src/services/UserDataService.js
+
+# Current Time
+5/30/2025, 11:30:42 PM (Europe/Paris, UTC+2:00)
+
+# Context Window Usage
+116,723 / 1,048.576K tokens used (11%)
+
+# Current Mode
+ACT MODE
+</environment_details>

@@ -709,6 +709,7 @@ function ChatArea({
                   platformIconUrl={message.platformIconUrl}
                   platformId={message.platformId}
                   style={dynamicStyle}
+                  apiCost={message.apiCost}
                 />
               );
             })}

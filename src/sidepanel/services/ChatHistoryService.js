@@ -112,7 +112,7 @@ class ChatHistoryService {
       });
 
       // Calculate and save token statistics using TokenManagementService, passing options
-      await TokenManagementService.calculateAndUpdateStatistics(
+      const stats = await TokenManagementService.calculateAndUpdateStatistics(
         tabId,
         limitedMessages,
         modelConfig,
@@ -120,7 +120,7 @@ class ChatHistoryService {
         isThinkingModeEnabled
       );
 
-      return true;
+      return stats;
     } catch (error) {
       logger.sidepanel.error(
         'TabChatHistory: Error saving chat history:',

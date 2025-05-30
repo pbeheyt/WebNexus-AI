@@ -204,21 +204,18 @@ export function useChatStreaming({
           }
         }
 
-        // Set messages with all updates at once
-        setMessages(updatedMessages);
-        batchedStreamingContentRef.current = ''; // Clear buffer on completion
-        batchedThinkingContentRef.current = ''; // Clear thinking buffer on completion
-
         // Save history, passing the retrieved initial stats
+        let savedStatsResult = false;
         if (tabId) {
           const messageBeingUpdated = updatedMessages.find(
             (msg) => msg.id === messageId
           );
           const correctModelConfigForHistory =
             messageBeingUpdated?.requestModelConfigSnapshot || modelConfigData;
-          await ChatHistoryService.saveHistory(
+          
+          savedStatsResult = await ChatHistoryService.saveHistory( // Capture result
             tabId,
-            updatedMessages,
+            updatedMessages, // Pass messages array as it is before adding apiCost to specific item
             correctModelConfigForHistory,
             {
               initialAccumulatedCost: retrievedPreTruncationCost,
@@ -227,6 +224,25 @@ export function useChatStreaming({
             isThinkingModeEnabled
           );
         }
+
+        const lastApiCallCostValue = (savedStatsResult && typeof savedStatsResult === 'object' && typeof savedStatsResult.lastApiCallCost === 'number') ? savedStatsResult.lastApiCallCost : null;
+
+        // Now, map *again* over the `updatedMessages` to add apiCost to the specific message
+        // This ensures that `updatedMessages` used for `setMessages` has the apiCost.
+        updatedMessages = updatedMessages.map(msg => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              apiCost: lastApiCallCostValue, // Assign the extracted (and potentially null) cost
+            };
+          }
+          return msg;
+        });
+        
+        // Set messages with all updates including apiCost
+        setMessages(updatedMessages);
+        batchedStreamingContentRef.current = '';
+        batchedThinkingContentRef.current = '';
       } catch (error) {
         logger.sidepanel.error('Error handling stream completion:', error);
       } finally {
