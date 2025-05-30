@@ -118,6 +118,10 @@
 
 /* Utility classes */
 @layer utilities {
+  .text-xxs {
+    font-size: 0.65rem; /* approx 10.4px if base is 16px */
+    line-height: 0.85rem; /* approx 13.6px */
+  }
   .prompt-content-scrollable {
     max-height: 300px;
     overflow-y: auto;

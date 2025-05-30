@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { UIProvider } from '../contexts/UIContext';
 import { SidePanelPlatformProvider } from '../contexts/platform';
 import { ContentProvider } from '../contexts/ContentContext';
+import { NotificationProvider } from '../components'; // Added import
 
 import { SidePanelChatProvider } from './contexts/SidePanelChatContext';
 import SidePanelApp from './SidePanelApp';
@@ -25,13 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     root.render(
       <UIProvider>
-        <ContentProvider>
-          <SidePanelPlatformProvider tabId={tabId}>
-            <SidePanelChatProvider tabId={tabId}>
-              <SidePanelApp tabId={tabId} />
-            </SidePanelChatProvider>
-          </SidePanelPlatformProvider>
-        </ContentProvider>
+        <NotificationProvider> {/* Added NotificationProvider wrapper */}
+          <ContentProvider>
+            <SidePanelPlatformProvider tabId={tabId}>
+              <SidePanelChatProvider tabId={tabId}>
+                <SidePanelApp tabId={tabId} />
+              </SidePanelChatProvider>
+            </SidePanelPlatformProvider>
+          </ContentProvider>
+        </NotificationProvider> {/* Closing NotificationProvider wrapper */}
       </UIProvider>
     );
   }
