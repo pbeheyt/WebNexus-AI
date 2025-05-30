@@ -54,6 +54,12 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
     [requestHeightRecalculation]
   );
 
+  const handleTokenCounterToggle = useCallback(() => {
+    if (typeof requestHeightRecalculation === 'function') {
+      requestHeightRecalculation();
+    }
+  }, [requestHeightRecalculation]);
+
   const handleInputChange = (value) => {
     setInputValue(value);
   };
@@ -126,7 +132,11 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
   return (
     <div ref={selfRef} className={`flex flex-col ${className}`}>
       {/* Token Counter Section */}
-      <TokenCounter tokenStats={tokenStats} contextStatus={contextStatus} />
+      <TokenCounter 
+        tokenStats={tokenStats} 
+        contextStatus={contextStatus} 
+        onToggleExpand={handleTokenCounterToggle} 
+      />
 
       {/* Platform and Model Controls Section */}
       <PlatformModelControls onToggleExpand={handlePlatformControlsToggle} />

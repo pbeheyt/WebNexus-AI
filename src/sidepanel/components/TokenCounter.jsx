@@ -9,7 +9,7 @@ import {
   IconButton,
 } from '../../components';
 
-function TokenCounter({ tokenStats, contextStatus, className = '' }) {
+function TokenCounter({ tokenStats, contextStatus, className = '', onToggleExpand }) {
   const {
     outputTokens = 0,
     accumulatedCost = 0,
@@ -161,7 +161,12 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           {/* Expander Chevron */}
           <IconButton
             icon={ChevronUpIcon}
-            onClick={() => setShowDetails(!showDetails)}
+            onClick={() => {
+              setShowDetails(!showDetails);
+              if (typeof onToggleExpand === 'function') {
+                onToggleExpand();
+              }
+            }}
             className={`ml-2 p-1 rounded-md text-theme-secondary hover:text-primary hover:bg-theme-active ${
               showDetails ? 'text-primary' : ''
             }`}
@@ -290,6 +295,7 @@ TokenCounter.propTypes = {
   tokenStats: PropTypes.object,
   contextStatus: PropTypes.object,
   className: PropTypes.string,
+  onToggleExpand: PropTypes.func,
 };
 
 export default TokenCounter;
