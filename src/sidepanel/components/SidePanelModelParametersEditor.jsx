@@ -68,39 +68,10 @@ const SidePanelModelParametersEditor = ({
 
   return (
     <div className='p-3 bg-theme-surface border-t border-theme'>
-      <div className='flex justify-between items-center mb-3'>
-        <h4 className='text-sm font-semibold text-theme-primary'>
-          Model Parameters ({currentEditingMode === 'thinking' ? 'Thinking Mode' : 'Base Mode'})
-        </h4>
-        <div className='flex items-center gap-2'>
-          <IconButton
-            icon={RefreshIcon}
-            iconClassName={`w-5 h-5 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
-            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-            onClick={handleResetClick}
-            isLoading={isResetting}
-            disabled={isAtDefaults || isResetting || isSaving}
-            ariaLabel='Reset parameters to defaults'
-            title='Reset to defaults'
-          />
-          <Button
-            type='button'
-            onClick={handleSubmit}
-            isLoading={isSaving}
-            disabled={isSaving || isResetting || !hasChanges}
-            variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
-            size="sm"
-            className='px-3 py-1 text-xs select-none'
-          >
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
-        </div>
-      </div>
-
       <div className='space-y-3 text-xs'>
         {parameterSpecs.maxTokens && (
           <div>
-            <label className='block mb-1 font-medium text-theme-secondary'>Max Tokens: {formValues?.maxTokens ?? parameterSpecs.maxTokens.min}</label>
+            <label className='block mb-1 font-medium text-theme-secondary'>Max Tokens</label>
             <SliderInput
               label=''
               value={formValues?.maxTokens ?? parameterSpecs.maxTokens.min}
@@ -116,7 +87,7 @@ const SidePanelModelParametersEditor = ({
         {effectiveShowTempSection && parameterSpecs.temperature && (
           <div>
             <div className='flex items-center mb-1'>
-              <label className='font-medium text-theme-secondary mr-2'>Temperature: {formValues.includeTemperature ? (formValues.temperature ?? parameterSpecs.temperature.min) : 'Off'}</label>
+              <label className='font-medium text-theme-secondary mr-2'>Temperature</label>
               <Toggle
                 checked={formValues.includeTemperature ?? true}
                 onChange={(newCheckedState) => handleChange('includeTemperature', newCheckedState)}
@@ -141,7 +112,7 @@ const SidePanelModelParametersEditor = ({
         {effectiveShowTopPSection && parameterSpecs.topP && (
            <div>
             <div className='flex items-center mb-1'>
-              <label className='font-medium text-theme-secondary mr-2'>Top P: {formValues.includeTopP ? (formValues.topP ?? parameterSpecs.topP.min) : 'Off'}</label>
+              <label className='font-medium text-theme-secondary mr-2'>Top P</label>
               <Toggle
                 checked={formValues.includeTopP ?? false}
                 onChange={(newCheckedState) => handleChange('includeTopP', newCheckedState)}
@@ -172,7 +143,7 @@ const SidePanelModelParametersEditor = ({
 
         {showBudgetSlider && parameterSpecs.thinkingBudget && (
           <div>
-            <label className='block mb-1 font-medium text-theme-secondary'>Thinking Budget: {formValues.thinkingBudget ?? parameterSpecs.thinkingBudget.default}</label>
+            <label className='block mb-1 font-medium text-theme-secondary'>Thinking Budget</label>
             <SliderInput
               label=''
               value={formValues.thinkingBudget ?? parameterSpecs.thinkingBudget.default}
@@ -202,6 +173,33 @@ const SidePanelModelParametersEditor = ({
             />
           </div>
         )}
+      </div>
+
+      {/* New container for buttons at the bottom */}
+      <div className='flex justify-end items-center mt-4 pt-3 border-t border-theme'>
+        <div className='flex items-center gap-2'>
+          <IconButton
+            icon={RefreshIcon}
+            iconClassName={`w-5 h-5 select-none ${isAnimatingReset ? 'animate-rotate-180-once' : ''} ${isResetting ? 'opacity-0' : ''}`}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            onClick={handleResetClick}
+            isLoading={isResetting}
+            disabled={isAtDefaults || isResetting || isSaving}
+            ariaLabel='Reset parameters to defaults'
+            title='Reset to defaults'
+          />
+          <Button
+            type='button'
+            onClick={handleSubmit}
+            isLoading={isSaving}
+            disabled={isSaving || isResetting || !hasChanges}
+            variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
+            size="sm"
+            className='px-3 py-1 text-xs select-none'
+          >
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
       </div>
     </div>
   );

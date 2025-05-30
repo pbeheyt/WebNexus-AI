@@ -29,8 +29,8 @@ function Header() {
         selectPlatform,
         hasAnyPlatformCredentials,
         isLoading,
-        getPlatformApiConfig, // Added
-        selectedModel,        // Added
+        getPlatformApiConfig,
+        selectedModel,
       } = useSidePanelPlatform();
   const { modelConfigData, isThinkingModeEnabled, toggleThinkingMode } =
     useSidePanelChat();
@@ -55,9 +55,9 @@ function Header() {
   // Fetch full platform config when selectedPlatformId changes
     useEffect(() => {
         const fetchFullConfig = async () => {
-          if (selectedPlatformId && getPlatformApiConfig) { // Use destructured getPlatformApiConfig
+          if (selectedPlatformId && getPlatformApiConfig) {
             try {
-              const config = await getPlatformApiConfig(selectedPlatformId); // Use destructured getPlatformApiConfig
+              const config = await getPlatformApiConfig(selectedPlatformId);
           const platformDisplayConfig = platforms.find(p => p.id === selectedPlatformId);
           if (config && platformDisplayConfig) {
             setFullSelectedPlatformConfig({
@@ -78,7 +78,7 @@ function Header() {
       }
     };
     fetchFullConfig();
-    }, [selectedPlatformId, platforms, getPlatformApiConfig]); // Add getPlatformApiConfig
+    }, [selectedPlatformId, platforms, getPlatformApiConfig]);
 
   // Update display platform ID only when loading is finished
   useEffect(() => {
@@ -151,150 +151,144 @@ function Header() {
   return (
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div className='flex flex-col'>
-        <div className='flex items-center px-5'></div>
-        <div className='flex items-center w-full min-w-0'>
-          {hasAnyPlatformCredentials ? (
-            <>
-              {/* 1. Platform Selector */}
-              <div className='relative flex items-center h-9 flex-shrink-0 mr-2'>
-                {selectedPlatformForDisplay && (
-                  <div ref={triggerRef}>
-                    <button
-                      onClick={() =>
-                        setOpenDropdown(
-                          openDropdown === 'platform' ? null : 'platform'
-                        )
-                      }
-                      className='flex items-center h-9 px-2 py-2 rounded focus:outline-none transition-colors select-none'
-                      aria-label='Change Platform'
-                      aria-haspopup='true'
-                      aria-expanded={isPlatformDropdownOpen}
+        <div className='flex items-center w-full min-w-0 px-3'>
+          <div className='flex items-center flex-grow min-w-0'>
+            {hasAnyPlatformCredentials ? (
+              <>
+                <div className='relative flex items-center h-9 flex-shrink-0 mr-2'>
+                  {selectedPlatformForDisplay && (
+                    <div ref={triggerRef}>
+                      <button
+                        onClick={() =>
+                          setOpenDropdown(
+                            openDropdown === 'platform' ? null : 'platform'
+                          )
+                        }
+                        className='flex items-center h-9 px-2 py-2 rounded focus:outline-none transition-colors select-none'
+                        aria-label='Change Platform'
+                        aria-haspopup='true'
+                        aria-expanded={isPlatformDropdownOpen}
+                      >
+                        <PlatformIcon
+                          platformId={selectedPlatformForDisplay?.id}
+                          iconUrl={selectedPlatformForDisplay?.iconUrl}
+                          altText={selectedPlatformForDisplay?.name || ''}
+                          className='w-5 h-5 mr-1'
+                        />
+                        <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
+                      </button>
+                    </div>
+                  )}
+
+                  {isPlatformDropdownOpen && (
+                    <div
+                      ref={dropdownRef}
+                      className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 py-1 w-max max-w-sm'
+                      role='menu'
+                      aria-orientation='vertical'
+                      aria-labelledby='platform-menu-button'
                     >
-                      <PlatformIcon
-                        platformId={selectedPlatformForDisplay?.id}
-                        iconUrl={selectedPlatformForDisplay?.iconUrl}
-                        altText={selectedPlatformForDisplay?.name || ''}
-                        className='w-5 h-5 mr-1'
-                      />
-                      <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
-                    </button>
-                  </div>
-                )}
-
-                {/* Platform Dropdown */}
-                {isPlatformDropdownOpen && (
-                  <div
-                    ref={dropdownRef}
-                    className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 py-1 w-max max-w-sm'
-                    role='menu'
-                    aria-orientation='vertical'
-                    aria-labelledby='platform-menu-button'
-                  >
-                    {availablePlatforms.map((platform) => {
-                      const isSelected = platform.id === selectedPlatformId;
-                      return (
-                        <button
-                          key={platform.id}
-                          role='menuitem'
-                          className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-theme-hover ${
-                            isSelected ? 'font-medium' : ''
-                          }`}
-                          onClick={() => handleSelectPlatform(platform.id)}
-                        >
-                          <div className='flex items-center justify-between w-full'>
-                            <div className='flex items-center gap-2'>
-                              <PlatformIcon
-                                platformId={platform.id}
-                                iconUrl={platform.iconUrl}
-                                altText=''
-                                className='w-4 h-4'
-                              />
-                              <span className='text-sm'>{platform.name}</span>
+                      {availablePlatforms.map((platform) => {
+                        const isSelected = platform.id === selectedPlatformId;
+                        return (
+                          <button
+                            key={platform.id}
+                            role='menuitem'
+                            className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-theme-hover ${
+                              isSelected ? 'font-medium' : ''
+                            }`}
+                            onClick={() => handleSelectPlatform(platform.id)}
+                          >
+                            <div className='flex items-center justify-between w-full'>
+                              <div className='flex items-center gap-2'>
+                                <PlatformIcon
+                                  platformId={platform.id}
+                                  iconUrl={platform.iconUrl}
+                                  altText=''
+                                  className='w-4 h-4'
+                                />
+                                <span className='text-sm'>{platform.name}</span>
+                              </div>
                             </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className='min-w-0'>
+                  <ModelSelector selectedPlatformId={selectedPlatformId} />
+                </div>
+
+                {modelConfigData?.thinking?.toggleable === true && (
+                  <div className='flex items-center ml-2 flex-shrink-0 select-none'>
+                    <Toggle
+                      checked={isThinkingModeEnabled}
+                      onChange={toggleThinkingMode}
+                      aria-label='Toggle Thinking Mode'
+                      id='thinking-mode-toggle-sidepanel'
+                      disabled={!hasAnyPlatformCredentials || isLoading}
+                    />
+                    <div
+                      ref={infoIconRef}
+                      className='ml-3 cursor-help'
+                      onMouseEnter={() => setTooltipVisible(true)}
+                      onMouseLeave={() => setTooltipVisible(false)}
+                      onFocus={() => setTooltipVisible(true)}
+                      onBlur={() => setTooltipVisible(false)}
+                      tabIndex={0}
+                      role='button'
+                      aria-describedby='thinking-mode-tooltip'
+                    >
+                      <InfoIcon className='w-5 h-5 text-theme-secondary' />
+                    </div>
+                    <Tooltip
+                      show={tooltipVisible}
+                      targetRef={infoIconRef}
+                      message='Enable Thinking.'
+                      position='bottom'
+                      id='thinking-mode-tooltip'
+                    />
                   </div>
                 )}
+              </>
+            ) : (
+              <div className='flex-grow py-1.5 h-9 flex items-center'>
+                <span className='text-theme-secondary text-sm'>
+                  No API credentials configured.
+                </span>
               </div>
-
-              {/* 2. Model Selector */}
-              <div className='min-w-0'>
-                <ModelSelector selectedPlatformId={selectedPlatformId} />
-              </div>
-
-              {/* Thinking Mode Toggle */}
-              {modelConfigData?.thinking?.toggleable === true && (
-                <div className='flex items-center ml-2 flex-shrink-0 select-none'>
-                  <Toggle
-                    checked={isThinkingModeEnabled}
-                    onChange={toggleThinkingMode}
-                    aria-label='Toggle Thinking Mode'
-                    id='thinking-mode-toggle-sidepanel'
-                    disabled={!hasAnyPlatformCredentials || isLoading}
-                  />
-                  {/* Info Icon and Tooltip */}
-                  <div
-                    ref={infoIconRef}
-                    className='ml-3 cursor-help'
-                    onMouseEnter={() => setTooltipVisible(true)}
-                    onMouseLeave={() => setTooltipVisible(false)}
-                    onFocus={() => setTooltipVisible(true)}
-                    onBlur={() => setTooltipVisible(false)}
-                    tabIndex={0}
-                    role='button'
-                    aria-describedby='thinking-mode-tooltip'
-                  >
-                    <InfoIcon className='w-5 h-5 text-theme-secondary' />
-                  </div>
-                  <Tooltip
-                    show={tooltipVisible}
-                    targetRef={infoIconRef}
-                    message='Enable Thinking.'
-                    position='bottom'
-                    id='thinking-mode-tooltip'
-                  />
-                </div>
-              )}
-
-                {/* Parameter Editor Toggle Button */}
-                <IconButton
-                    icon={ModelParametersIcon}
-                    onClick={() => setIsParamsEditorOpen(prev => !prev)}
-                    className={`ml-2 p-1 rounded-md text-theme-secondary hover:text-primary hover:bg-theme-active ${isParamsEditorOpen ? 'bg-theme-active text-primary' : ''}`}
-                    iconClassName='w-5 h-5'
-                    title='Model Parameters'
-                    aria-expanded={isParamsEditorOpen}
-                    disabled={!selectedPlatformId || !modelConfigData || isLoading}
-                />
-              <div className='flex-grow' style={{ pointerEvents: 'none' }}></div>
-            </>
-          ) : (
-            // When no credentials, show message
-            <div className='flex-grow py-1.5 h-9 flex items-center'>
-              <span className='text-theme-secondary text-sm'>
-                No API credentials configured.
-              </span>
-            </div>
+            )}
+          </div>
+          
+          {hasAnyPlatformCredentials && (
+            <IconButton
+              icon={ModelParametersIcon}
+              onClick={() => setIsParamsEditorOpen(prev => !prev)}
+              className={`ml-2 p-1 rounded-md text-theme-secondary hover:text-primary hover:bg-theme-active ${isParamsEditorOpen ? 'bg-theme-active text-primary' : ''}`}
+              iconClassName='w-5 h-5 flex-shrink-0'
+              title='Model Parameters'
+              aria-expanded={isParamsEditorOpen}
+              disabled={!selectedPlatformId || !modelConfigData || isLoading}
+            />
           )}
         </div>
         
-        {/* Parameter Editor Container */}
         <div 
-            className={`transition-all duration-300 ease-in-out overflow-hidden ${isParamsEditorOpen && isParamsEditorReady ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
-            aria-hidden={!isParamsEditorOpen || !isParamsEditorReady}
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${isParamsEditorOpen && isParamsEditorReady ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+          aria-hidden={!isParamsEditorOpen || !isParamsEditorReady}
         >
-             {fullSelectedPlatformConfig && modelConfigData && (
-    <SidePanelModelParametersEditor
-        platform={fullSelectedPlatformConfig}
-        selectedModelId={selectedModel}
-        currentEditingMode={currentEditingMode}
-        modelConfigData={modelConfigData}
-        isVisible={isParamsEditorOpen}
-        onReady={handleParamsEditorReady}
-    />
-            )}
+          {fullSelectedPlatformConfig && modelConfigData && (
+            <SidePanelModelParametersEditor
+              platform={fullSelectedPlatformConfig}
+              selectedModelId={selectedModel}
+              currentEditingMode={currentEditingMode}
+              modelConfigData={modelConfigData}
+              isVisible={isParamsEditorOpen}
+              onReady={handleParamsEditorReady}
+            />
+          )}
         </div>
       </div>
     </DropdownContext.Provider>
