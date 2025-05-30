@@ -83,7 +83,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '', onToggleExpan
   };
 
   return (
-    <div className='text-xs text-theme-secondary px-3 py-0'>
+    <div className='text-xs text-theme-secondary px-3 py-2'>
       <div className={`flex items-center justify-between ${className}`}>
         <div className='flex items-center gap-2'>
           {/* Input tokens with tooltip */}

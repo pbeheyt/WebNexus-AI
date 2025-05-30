@@ -175,7 +175,7 @@ const SidePanelModelParametersEditor = ({
       </div>
 
       {/* New container for buttons at the bottom */}
-      <div className='flex justify-end items-center mt-4 pt-3'>
+      <div className='flex justify-end items-center py-3'>
         <div className='flex items-center gap-2'>
           <IconButton
             icon={RefreshIcon}

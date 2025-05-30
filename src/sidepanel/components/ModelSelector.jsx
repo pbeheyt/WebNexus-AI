@@ -97,7 +97,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       <button
         ref={modelTriggerRef}
         onClick={toggleDropdown}
-        className='flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full min-w-30'
+        className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer w-full min-w-30'
         aria-haspopup='listbox'
         aria-expanded={isOpen}
       >
@@ -111,7 +111,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
+          className='absolute bottom-full left-0 mb-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           role='listbox' // ARIA role

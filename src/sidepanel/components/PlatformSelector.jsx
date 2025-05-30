@@ -95,7 +95,7 @@ function PlatformSelector({ className = '' }) {
 
   if (!hasAnyPlatformCredentials && !isLoading) {
     return (
-      <div className={`flex items-center px-2 h-9 text-theme-secondary text-xs ${className}`}>
+      <div className={`flex items-center px-2 text-theme-secondary text-xs ${className}`}>
         No API keys set
       </div>
     );
@@ -103,7 +103,7 @@ function PlatformSelector({ className = '' }) {
   
   if (isLoading || !displayPlatformDetails) {
     return (
-       <div className={`flex items-center px-2 h-9 ${className}`}>
+       <div className={`flex items-center px-2 ${className}`}>
         <div className='w-4 h-4 mr-1 bg-theme-hover rounded-full animate-pulse'></div>
         <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
       </div>
@@ -116,7 +116,7 @@ function PlatformSelector({ className = '' }) {
       <button
         ref={platformTriggerRef}
         onClick={toggleDropdown}
-        className='flex items-center px-2 py-1.5 h-9 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer'
+        className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer'
         aria-haspopup='listbox'
         aria-expanded={isOpen}
         aria-label={`Selected platform: ${displayPlatformDetails?.name}. Click to change.`}
@@ -136,13 +136,13 @@ function PlatformSelector({ className = '' }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
+          className='absolute bottom-full left-0 mb-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
           role='listbox'
           aria-labelledby={platformTriggerRef.current?.id || undefined}
           tabIndex={0} // Make listbox focusable
         >
           {availablePlatforms.length === 0 ? (
-            <div className='px-3 py-2 text-sm text-theme-secondary'>
+            <div className='px-3 text-sm text-theme-secondary'>
               No platforms available
             </div>
           ) : (

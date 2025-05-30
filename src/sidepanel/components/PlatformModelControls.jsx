@@ -102,7 +102,7 @@ function PlatformModelControls({ onToggleExpand }) {
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div
         ref={selfRef}
-        className='flex flex-col px-3 py-0 border-b border-t border-theme'
+        className='flex flex-col px-3 py-2 border-b border-t border-theme'
       >
         {/* Top row: Platform, Model, Thinking Toggle, Expander Chevron */}
         <div className='flex items-center w-full min-w-0'>
@@ -153,7 +153,7 @@ function PlatformModelControls({ onToggleExpand }) {
                 )}
               </>
             ) : (
-              <div className='flex-grow flex items-center h-9'> {/* Ensure consistent height */}
+              <div className='flex-grow flex items-center'>
                 <span className='text-theme-secondary text-sm px-2'>
                   No API credentials configured.
                 </span>
@@ -187,7 +187,7 @@ function PlatformModelControls({ onToggleExpand }) {
         <div
           className={`transition-all duration-300 ease-in-out overflow-hidden ${
             isParametersExpanded && isParamsEditorReady
-              ? 'max-h-[500px] opacity-100 pt-2'
+              ? 'max-h-[500px] opacity-100 mt-2 pt-3 pb-1'
               : 'max-h-0 opacity-0'
           }`}
           aria-hidden={!isParametersExpanded || !isParamsEditorReady}
