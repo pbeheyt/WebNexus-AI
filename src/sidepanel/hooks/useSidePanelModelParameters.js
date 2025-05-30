@@ -7,7 +7,7 @@ import {
   checkAreFormValuesAtDefaults,
   checkForFormChanges,
   getParameterDisplayName,
-} from '../../settings/utils/model-settings-helper-utils';
+} from '../../shared/utils/model-settings-helper-utils';
 import { STORAGE_KEYS, MAX_SYSTEM_PROMPT_LENGTH } from '../../shared/constants';
 import { useNotification } from '../../components';
 import useMinimumLoadingTime from '../../hooks/useMinimumLoadingTime';
