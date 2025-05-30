@@ -450,12 +450,11 @@ class TokenManagementService {
         percentage: 0,
         tokensRemaining: 0,
         exceeds: false,
+        totalTokens: 0,
+        maxContextWindow: 0,
       };
     }
 
-    // Context window usage should be based on the total input tokens sent in the *last* API call,
-    // as this represents the context the *next* call will potentially build upon.
-    // Use inputTokensInLastApiCall which already includes system, history sent, and the last prompt.
     const totalTokensInContext = tokenStats.inputTokensInLastApiCall || 0;
     const contextWindow = modelConfig.tokens.contextWindow;
     const tokensRemaining = Math.max(0, contextWindow - totalTokensInContext);
@@ -463,7 +462,6 @@ class TokenManagementService {
       contextWindow > 0 ? (totalTokensInContext / contextWindow) * 100 : 0;
     const exceeds = totalTokensInContext > contextWindow;
 
-    // Determine warning level
     let warningLevel = 'none';
     if (percentage > 90) {
       warningLevel = 'critical';
@@ -478,7 +476,8 @@ class TokenManagementService {
       percentage,
       tokensRemaining,
       exceeds,
-      totalTokens: totalTokensInContext, // Return the context usage total
+      totalTokens: totalTokensInContext,
+      maxContextWindow: contextWindow, // Added maxContextWindow
     };
   }
 

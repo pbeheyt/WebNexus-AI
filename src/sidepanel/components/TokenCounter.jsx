@@ -5,41 +5,28 @@ import { Tooltip } from '../../components/layout/Tooltip';
 import {
   InputTokenIcon,
   OutputTokenIcon,
-  ChevronUpIcon,
-  IconButton,
+  ContextWindowIcon,
 } from '../../components';
 
-function TokenCounter({ tokenStats, contextStatus, className = '', onToggleExpand }) {
+function TokenCounter({ tokenStats, contextStatus, className = '' }) {
   const {
     outputTokens = 0,
     accumulatedCost = 0,
-    historyTokensSentInLastApiCall = 0,
     inputTokensInLastApiCall = 0,
-    lastApiCallCost = 0,
     promptTokensInLastApiCall = 0,
+    historyTokensSentInLastApiCall = 0,
     systemTokensInLastApiCall = 0,
   } = tokenStats || {};
 
-  // Toggle for expanded details view
-  const [showDetails, setShowDetails] = useState(false);
-
-  // Tooltip hover states
   const [hoveredElement, setHoveredElement] = useState(null);
 
-  // Refs for tooltip targets
   const inputTokensRef = useRef(null);
   const outputTokensRef = useRef(null);
   const costRef = useRef(null);
-  const lastCostRef = useRef(null);
-  const promptRef = useRef(null);
-  const historySentRef = useRef(null);
-  const systemRef = useRef(null);
   const contextWindowRef = useRef(null);
 
-  // Format cost with appropriate decimal places
   const formatCost = (cost) => {
     if (cost === 0) return '$0.00';
-
     if (cost < 0.01) {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -48,7 +35,6 @@ function TokenCounter({ tokenStats, contextStatus, className = '', onToggleExpan
         maximumFractionDigits: 4,
       }).format(cost);
     }
-
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -59,232 +45,96 @@ function TokenCounter({ tokenStats, contextStatus, className = '', onToggleExpan
 
   const formattedCost = formatCost(accumulatedCost);
 
-  // Ensure we have context status data with safe defaults
   const contextData = contextStatus || {
-    warningLevel: 'none',
     percentage: 0,
     tokensRemaining: 0,
-    totalTokens: 0, // Ensure totalTokens exists for the tooltip
+    totalTokens: 0,
+    maxContextWindow: 0,
   };
 
-  // Ensure tokensRemaining is always defined with a safe default
-  const tokensRemaining = contextData.tokensRemaining || 0;
-
-  // Tooltip content definitions (Incorporating the base disclaimer)
   const tooltipContent = {
-    inputTokens: `Est. total input tokens ( prompt + history + system) sent in the last API request.`,
+    inputTokens: `Est. Input: ${promptTokensInLastApiCall.toLocaleString()} (Prompt) + ${historyTokensSentInLastApiCall.toLocaleString()} (History) + ${systemTokensInLastApiCall.toLocaleString()} (System) = ${inputTokensInLastApiCall.toLocaleString()} total.`,
     outputTokens: `Est. total output tokens generated in this chat session.`,
     cost: `Est. total accumulated cost for this chat session.`,
-    lastCost: `Est. cost of the last API call.`,
-    prompt: `Est. tokens in the user prompt sent in the last API request.`,
-    historySent: `Est. tokens from conversation history sent in the last API request.`,
-    system: `Est. tokens from system instructions sent in the last API request.`,
-    contextWindow: `Est. ${tokensRemaining.toLocaleString()} tokens remaining in context window (${contextData.totalTokens?.toLocaleString()} used).`,
+    contextWindow: `Est. ${contextData.tokensRemaining.toLocaleString()} tokens remaining (${contextData.totalTokens.toLocaleString()} / ${contextData.maxContextWindow.toLocaleString()} used).`,
   };
 
   return (
-    <div className='text-xs text-theme-secondary px-3 py-2'>
-      <div className={`flex items-center justify-between ${className}`}>
-        <div className='flex items-center gap-2'>
-          {/* Input tokens with tooltip */}
-          <div
-            ref={inputTokensRef}
-            className='flex items-center relative cursor-help'
-            onMouseEnter={() => setHoveredElement('inputTokens')}
-            onMouseLeave={() => setHoveredElement(null)}
-            onFocus={() => setHoveredElement('inputTokens')}
-            onBlur={() => setHoveredElement(null)}
-          >
-            <InputTokenIcon className='w-3 h-3 mr-1 select-none' />
-            <span>{inputTokensInLastApiCall.toLocaleString()}</span>
-            <Tooltip
-              show={hoveredElement === 'inputTokens'}
-              message={tooltipContent.inputTokens}
-              targetRef={inputTokensRef}
-            />
-          </div>
-
-          {/* Output tokens (Cumulative) with tooltip */}
-          <div
-            ref={outputTokensRef}
-            className='flex items-center relative cursor-help'
-            onMouseEnter={() => setHoveredElement('outputTokens')}
-            onMouseLeave={() => setHoveredElement(null)}
-            onFocus={() => setHoveredElement('outputTokens')}
-            onBlur={() => setHoveredElement(null)}
-          >
-            <OutputTokenIcon className='w-3 h-3 mr-1 select-none' />
-            <span>{outputTokens.toLocaleString()}</span>
-            <Tooltip
-              show={hoveredElement === 'outputTokens'}
-              message={tooltipContent.outputTokens}
-              targetRef={outputTokensRef}
-            />
-          </div>
-        </div>
-
-        <div className='flex items-center'>
-          {/* Last Call Cost with tooltip */}
-          <div
-            ref={lastCostRef}
-            className='relative cursor-help text-gray-400 dark:text-gray-500 mr-2'
-            onMouseEnter={() => setHoveredElement('lastCost')}
-            onMouseLeave={() => setHoveredElement(null)}
-            onFocus={() => setHoveredElement('lastCost')}
-            onBlur={() => setHoveredElement(null)}
-          >
-            <span>({formatCost(lastApiCallCost)})</span>
-            <Tooltip
-              show={hoveredElement === 'lastCost'}
-              message={tooltipContent.lastCost}
-              targetRef={lastCostRef}
-            />
-          </div>
-
-          {/* Accumulated Cost with tooltip */}
-          <div
-            ref={costRef}
-            className='relative cursor-help'
-            onMouseEnter={() => setHoveredElement('cost')}
-            onMouseLeave={() => setHoveredElement(null)}
-            onFocus={() => setHoveredElement('cost')}
-            onBlur={() => setHoveredElement(null)}
-          >
-            <span>{formattedCost}</span>
-            <Tooltip
-              show={hoveredElement === 'cost'}
-              message={tooltipContent.cost}
-              targetRef={costRef}
-            />
-          </div>
-
-          {/* Expander Chevron */}
-          <IconButton
-            icon={ChevronUpIcon}
-            onClick={() => {
-              setShowDetails(!showDetails);
-              if (typeof onToggleExpand === 'function') {
-                onToggleExpand();
-              }
-            }}
-            className={`ml-2 p-1 rounded-md text-theme-secondary hover:text-primary hover:bg-theme-active ${
-              showDetails ? 'text-primary' : ''
-            }`}
-            iconClassName={`w-4 h-4 flex-shrink-0 transform transition-transform duration-200 ${
-              showDetails ? 'rotate-180' : ''
-            }`}
-            title={
-              showDetails
-                ? 'Hide Token Information'
-                : 'Show Model Information'
-            }
-            aria-expanded={showDetails}
+    <div className={`text-xs text-theme-secondary px-3 py-2 ${className}`}>
+      <div className='flex items-center justify-around'>
+        {/* Metric 1: Input Tokens */}
+        <div
+          ref={inputTokensRef}
+          className='flex items-center relative cursor-help'
+          onMouseEnter={() => setHoveredElement('inputTokens')}
+          onMouseLeave={() => setHoveredElement(null)}
+          onFocus={() => setHoveredElement('inputTokens')}
+          onBlur={() => setHoveredElement(null)}
+        >
+          <InputTokenIcon className='w-3 h-3 mr-1 select-none' />
+          <span>{inputTokensInLastApiCall.toLocaleString()}</span>
+          <Tooltip
+            show={hoveredElement === 'inputTokens'}
+            message={tooltipContent.inputTokens}
+            targetRef={inputTokensRef}
+            position='bottom'
           />
         </div>
-      </div>
 
-      {/* --- Expanded Details Section --- */}
-      <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          showDetails
-            ? 'max-h-40 opacity-100 mt-2 pt-3 pb-1 border-t border-theme'
-            : 'max-h-0 opacity-0'
-        }`}
-        aria-hidden={!showDetails}
-      >
-        {/* Grid for detailed token breakdown */}
-        <div className='grid grid-cols-3 gap-2'>
-          {/* Prompt tokens */}
-          <div
-            ref={promptRef}
-            className='flex flex-col items-center relative cursor-help'
-            onMouseEnter={() => setHoveredElement('prompt')}
-            onMouseLeave={() => setHoveredElement(null)}
-            onFocus={() => setHoveredElement('prompt')}
-            onBlur={() => setHoveredElement(null)}
-          >
-            <span className='text-xs font-medium'>Prompt</span>
-            <span>{promptTokensInLastApiCall.toLocaleString()}</span>
-            <Tooltip
-              show={hoveredElement === 'prompt'}
-              message={tooltipContent.prompt}
-              targetRef={promptRef}
-            />
-          </div>
-
-          {/* History Sent tokens */}
-          <div
-            ref={historySentRef}
-            className='flex flex-col items-center relative cursor-help'
-            onMouseEnter={() => setHoveredElement('historySent')}
-            onMouseLeave={() => setHoveredElement(null)}
-            onFocus={() => setHoveredElement('historySent')}
-            onBlur={() => setHoveredElement(null)}
-          >
-            <span className='text-xs font-medium'>History</span>
-            <span>{historyTokensSentInLastApiCall.toLocaleString()}</span>
-            <Tooltip
-              show={hoveredElement === 'historySent'}
-              message={tooltipContent.historySent}
-              targetRef={historySentRef}
-            />
-          </div>
-
-          {/* System Sent tokens */}
-          <div
-            ref={systemRef}
-            className='flex flex-col items-center relative cursor-help'
-            onMouseEnter={() => setHoveredElement('system')}
-            onMouseLeave={() => setHoveredElement(null)}
-            onFocus={() => setHoveredElement('system')}
-            onBlur={() => setHoveredElement(null)}
-          >
-            <span className='text-xs font-medium'>System</span>
-            <span>{systemTokensInLastApiCall.toLocaleString()}</span>
-            <Tooltip
-              show={hoveredElement === 'system'}
-              message={tooltipContent.system}
-              targetRef={systemRef}
-            />
-          </div>
+        {/* Metric 2: Output Tokens */}
+        <div
+          ref={outputTokensRef}
+          className='flex items-center relative cursor-help'
+          onMouseEnter={() => setHoveredElement('outputTokens')}
+          onMouseLeave={() => setHoveredElement(null)}
+          onFocus={() => setHoveredElement('outputTokens')}
+          onBlur={() => setHoveredElement(null)}
+        >
+          <OutputTokenIcon className='w-3 h-3 mr-1 select-none' />
+          <span>{outputTokens.toLocaleString()}</span>
+          <Tooltip
+            show={hoveredElement === 'outputTokens'}
+            message={tooltipContent.outputTokens}
+            targetRef={outputTokensRef}
+            position='bottom'
+          />
         </div>
 
-        {/* Context window progress bar */}
-        <div className='mt-2'>
-          <div
-            ref={contextWindowRef}
-            className='flex items-center relative cursor-help'
-            onMouseEnter={() => setHoveredElement('contextWindow')}
-            onMouseLeave={() => setHoveredElement(null)}
-            onFocus={() => setHoveredElement('contextWindow')}
-            onBlur={() => setHoveredElement(null)}
-          >
-            <div className='h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full mr-2'>
-              <div
-                className={`h-1.5 rounded-full ${
-                  contextData.warningLevel === 'critical'
-                    ? 'bg-red-500'
-                    : contextData.warningLevel === 'warning'
-                      ? 'bg-yellow-500'
-                      : contextData.warningLevel === 'notice'
-                        ? 'bg-blue-500'
-                        : 'bg-gray-500'
-                }`}
-                style={{
-                  width: `${Math.min(100, contextData.percentage || 0)}%`,
-                }}
-              ></div>
-            </div>
-            <span className='text-xs whitespace-nowrap'>
-              {Math.min(100, contextData.percentage || 0).toFixed(1)}%
-            </span>
-            <Tooltip
-              show={hoveredElement === 'contextWindow'}
-              message={tooltipContent.contextWindow}
-              position='bottom'
-              targetRef={contextWindowRef}
-            />
-          </div>
+        {/* Metric 3: Context Window Percentage */}
+        <div
+          ref={contextWindowRef}
+          className='flex items-center relative cursor-help'
+          onMouseEnter={() => setHoveredElement('contextWindow')}
+          onMouseLeave={() => setHoveredElement(null)}
+          onFocus={() => setHoveredElement('contextWindow')}
+          onBlur={() => setHoveredElement(null)}
+        >
+          <ContextWindowIcon className='w-3 h-3 mr-1 select-none' />
+          <span>{`${(contextData.percentage || 0).toFixed(1)}%`}</span>
+          <Tooltip
+            show={hoveredElement === 'contextWindow'}
+            message={tooltipContent.contextWindow}
+            targetRef={contextWindowRef}
+            position='bottom'
+          />
+        </div>
+
+        {/* Metric 4: Accumulated Cost */}
+        <div
+          ref={costRef}
+          className='relative cursor-help'
+          onMouseEnter={() => setHoveredElement('cost')}
+          onMouseLeave={() => setHoveredElement(null)}
+          onFocus={() => setHoveredElement('cost')}
+          onBlur={() => setHoveredElement(null)}
+        >
+          <span>{formattedCost}</span>
+          <Tooltip
+            show={hoveredElement === 'cost'}
+            message={tooltipContent.cost}
+            targetRef={costRef}
+            position='bottom'
+          />
         </div>
       </div>
     </div>
@@ -295,7 +145,6 @@ TokenCounter.propTypes = {
   tokenStats: PropTypes.object,
   contextStatus: PropTypes.object,
   className: PropTypes.string,
-  onToggleExpand: PropTypes.func,
 };
 
 export default TokenCounter;

@@ -44,21 +44,12 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
 
   const handlePlatformControlsToggle = useCallback(
     (_newHeight) => {
-      // The actual height of PlatformModelControls is less important here
-      // than the fact that its expansion state changed.
-      // We rely on requestHeightRecalculation to measure the UserInput container.
       if (typeof requestHeightRecalculation === 'function') {
         requestHeightRecalculation();
       }
     },
     [requestHeightRecalculation]
   );
-
-  const handleTokenCounterToggle = useCallback(() => {
-    if (typeof requestHeightRecalculation === 'function') {
-      requestHeightRecalculation();
-    }
-  }, [requestHeightRecalculation]);
 
   const handleInputChange = (value) => {
     setInputValue(value);
@@ -134,8 +125,8 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
       {/* Token Counter Section */}
       <TokenCounter 
         tokenStats={tokenStats} 
-        contextStatus={contextStatus} 
-        onToggleExpand={handleTokenCounterToggle} 
+        contextStatus={contextStatus}
+        // onToggleExpand prop removed
       />
 
       {/* Platform and Model Controls Section */}
