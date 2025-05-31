@@ -150,7 +150,7 @@ export function useChatStreaming({
               content: finalContent, // Use the potentially modified regular content
               thinkingContent: finalThinkingContent, // Set the final thinking content
               isStreaming: false,
-              model: model || selectedModel, // This 'model' (modelId) comes from chunkData.model
+              modelId: model || selectedModel, // This 'model' (modelId) comes from chunkData.model
               // platformIconUrl: msg.platformIconUrl, // This line is removed
               platformId: msg.platformId, // This is correct, from placeholder
               timestamp: new Date().toISOString(),

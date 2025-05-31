@@ -420,8 +420,8 @@ export function SidePanelChatProvider({ children }) {
       role: MESSAGE_ROLES.ASSISTANT,
       content: '',
       thinkingContent: '',
-      platformId: currentPlatformId, // Use currentPlatformId from sendMessage scope
-      model: currentModelId, // Use currentModelId from sendMessage scope (this is the modelId)
+      platformId: currentPlatformId,
+      modelId: currentModelId,
       timestamp: new Date().toISOString(),
       isStreaming: true,
       inputTokens: 0,

@@ -57,7 +57,7 @@ const _initiateRerunSequence = async ({
     content: '',
     thinkingContent: '',
     platformId: selectedPlatformId, // This is correct, from function args
-    model: selectedModel, // This is the modelId, from function args
+    modelId: selectedModel, // This is the modelId, from function args
     timestamp: new Date().toISOString(),
     isStreaming: true,
     inputTokens: 0,

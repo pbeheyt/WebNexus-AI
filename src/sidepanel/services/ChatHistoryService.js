@@ -103,8 +103,31 @@ class ChatHistoryService {
       // Limit number of messages to prevent storage problems
       const limitedMessages = messages.slice(-MAX_MESSAGES_PER_TAB_HISTORY);
 
+      // Transform messages for storage to reduce footprint
+      const storableMessages = limitedMessages.map(msg => {
+        const { 
+          // eslint-disable-next-line no-unused-vars
+          isStreaming,
+          // eslint-disable-next-line no-unused-vars
+          inputTokens,
+          // eslint-disable-next-line no-unused-vars
+          outputTokens, 
+          thinkingContent,
+          ...restOfMsg 
+        } = msg;
+
+        const storableMsg = { ...restOfMsg };
+
+        // Omit thinkingContent if it's an empty string
+        if (thinkingContent && thinkingContent.trim() !== "") {
+          storableMsg.thinkingContent = thinkingContent;
+        }
+
+        return storableMsg;
+      });
+
       // Update history for this tab
-      allTabHistories[tabId] = limitedMessages;
+      allTabHistories[tabId] = storableMessages;
 
       // Save updated histories
       await chrome.storage.local.set({
