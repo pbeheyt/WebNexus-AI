@@ -150,9 +150,9 @@ export function useChatStreaming({
               content: finalContent, // Use the potentially modified regular content
               thinkingContent: finalThinkingContent, // Set the final thinking content
               isStreaming: false,
-              model: model || selectedModel,
-              platformIconUrl: msg.platformIconUrl,
-              platformId: msg.platformId,
+              model: model || selectedModel, // This 'model' (modelId) comes from chunkData.model
+              // platformIconUrl: msg.platformIconUrl, // This line is removed
+              platformId: msg.platformId, // This is correct, from placeholder
               timestamp: new Date().toISOString(),
               outputTokens: finalOutputTokensForMessage, // Use the correctly calculated token count
               role: isError ? MESSAGE_ROLES.SYSTEM : msg.role, // Keep error role handling

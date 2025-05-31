@@ -420,17 +420,13 @@ export function SidePanelChatProvider({ children }) {
       role: MESSAGE_ROLES.ASSISTANT,
       content: '',
       thinkingContent: '',
-      platformId: selectedPlatformId, // Ensure this uses the correct platform ID
-      modelId: selectedModel, // Ensure this uses the correct model ID
-      modelDisplayName: modelConfigData?.displayName || selectedModel,
-      platformIconUrl: selectedPlatform.iconUrl,
+      platformId: currentPlatformId, // Use currentPlatformId from sendMessage scope
+      model: currentModelId, // Use currentModelId from sendMessage scope (this is the modelId)
       timestamp: new Date().toISOString(),
       isStreaming: true,
       inputTokens: 0,
       outputTokens: 0,
       apiCost: null, // Initialize apiCost to null
-      // No requestModelConfigSnapshot
-      // No separate requestModelId, modelId is the source of truth
     };
 
     const messagesBeforeApiCall = [...messages, userMessage]; // State before placeholder

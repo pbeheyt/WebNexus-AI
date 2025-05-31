@@ -57,17 +57,13 @@ const _initiateRerunSequence = async ({
     role: MESSAGE_ROLES.ASSISTANT,
     content: '',
     thinkingContent: '',
-    platformId: selectedPlatformId, // Ensure this uses the correct platform ID from function args
-    modelId: selectedModel, // Ensure this uses the correct model ID from function args
-    modelDisplayName: modelConfigData?.displayName || selectedModel,
-    platformIconUrl: selectedPlatform.iconUrl,
+    platformId: selectedPlatformId, // This is correct, from function args
+    model: selectedModel, // This is the modelId, from function args
     timestamp: new Date().toISOString(),
     isStreaming: true,
     inputTokens: 0,
     outputTokens: 0,
     apiCost: null, // Initialize apiCost to null
-    // No requestModelConfigSnapshot
-    // No separate requestModelId, modelId is the source of truth
   };
 
   // Add placeholder *after* potential edit in editAndRerunMessage

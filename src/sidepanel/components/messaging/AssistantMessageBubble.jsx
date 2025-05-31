@@ -1,10 +1,11 @@
-import React, { memo, forwardRef, useMemo, useRef, useState } from 'react';
+import React, { memo, forwardRef, useMemo, useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
 import { logger } from '../../../shared/logger';
+import ConfigService from '../../../services/ConfigService'; // Add this import
 import { IconButton, RerunIcon, PlatformIcon, Tooltip } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 import { formatCost } from '../../../shared/utils/number-format-utils.js';
@@ -31,9 +32,7 @@ export const AssistantMessageBubble = memo(
         content,
         thinkingContent = null,
         isStreaming = false,
-        model = null,
-        modelDisplayName = null,
-        platformIconUrl = null,
+        model = null, // This is now the modelId
         platformId = null,
         className = '',
         style = {},
@@ -54,6 +53,47 @@ export const AssistantMessageBubble = memo(
 
       const [costTooltipVisible, setCostTooltipVisible] = useState(false);
       const costDisplayRef = useRef(null);
+
+      const [resolvedPlatformIconUrl, setResolvedPlatformIconUrl] = useState(null);
+      const [resolvedModelDisplayName, setResolvedModelDisplayName] = useState(model); // Default to modelId
+
+      useEffect(() => {
+        let isMounted = true;
+        const fetchDetails = async () => {
+          if (platformId && model) { // model is modelId here
+            try {
+              // Fetch platform display config for icon
+              const platformDisplayConfig = await ConfigService.getPlatformDisplayConfig(platformId);
+              if (isMounted && platformDisplayConfig && platformDisplayConfig.icon) {
+                setResolvedPlatformIconUrl(chrome.runtime.getURL(platformDisplayConfig.icon));
+              } else if (isMounted) {
+                setResolvedPlatformIconUrl(null); // Explicitly set to null if not found
+              }
+
+              // Fetch platform API config for model display name
+              const platformApiConfig = await ConfigService.getPlatformApiConfig(platformId);
+              const modelConfig = platformApiConfig?.models?.find(m => m.id === model);
+              if (isMounted) {
+                setResolvedModelDisplayName(modelConfig?.displayName || model); // Fallback to modelId
+              }
+            } catch (error) {
+              logger.sidepanel.error(`Error fetching details for assistant message (Platform: ${platformId}, Model: ${model}):`, error);
+              if (isMounted) {
+                setResolvedModelDisplayName(model); // Fallback to modelId on error
+                setResolvedPlatformIconUrl(null);
+              }
+            }
+          } else {
+             if (isMounted) {
+                 setResolvedModelDisplayName(model || 'N/A');
+                 setResolvedPlatformIconUrl(null);
+             }
+          }
+        };
+
+        fetchDetails();
+        return () => { isMounted = false; };
+      }, [platformId, model]); // model is modelId here
 
       // For assistant rerun
       const handleRerunAssistant = () => {
@@ -342,22 +382,18 @@ export const AssistantMessageBubble = memo(
           {/* Footer section */}
           <div className='flex justify-between items-center pb-4'>
             <div className='text-sm flex items-center space-x-2'>
-              {platformIconUrl && (
-                <div className='select-none'>
-                  <PlatformIcon
-                    platformId={platformId}
-                    iconUrl={platformIconUrl}
-                    altText='AI Platform'
-                    className='w-5 h-5'
-                  />
-                </div>
-              )}
+              <div className='select-none'>
+                <PlatformIcon
+                  platformId={platformId}
+                  iconUrl={resolvedPlatformIconUrl}
+                  altText='AI Platform'
+                  className='w-5 h-5'
+                />
+              </div>
               {model && (
-                <span title={modelDisplayName || model}>
+                <span title={resolvedModelDisplayName !== model ? model : undefined}> {/* Show modelId in title if different from display name */}
                   {' '}
-                  {/* Show ID in title if displayName is different */}
-                  {modelDisplayName || model}{' '}
-                  {/* Display displayName, fallback to ID */}
+                  {resolvedModelDisplayName || model}{' '} {/* Display resolved name, fallback to modelId */}
                 </span>
               )}
               {/* API Cost Badge */}
@@ -438,9 +474,7 @@ AssistantMessageBubble.propTypes = {
   content: PropTypes.string,
   thinkingContent: PropTypes.string,
   isStreaming: PropTypes.bool,
-  model: PropTypes.string,
-  modelDisplayName: PropTypes.string,
-  platformIconUrl: PropTypes.string,
+  model: PropTypes.string, // This is the modelId
   platformId: PropTypes.string,
   className: PropTypes.string,
   style: PropTypes.object,
