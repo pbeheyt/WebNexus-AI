@@ -117,7 +117,7 @@ class ChatHistoryService {
         limitedMessages,
         modelConfig,
         options,
-        isThinkingModeEnabled
+        isThinkingModeEnabled // Pass thinking mode state
       );
 
       return stats;

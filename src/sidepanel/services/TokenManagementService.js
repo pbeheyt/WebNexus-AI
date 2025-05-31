@@ -248,9 +248,7 @@ class TokenManagementService {
   static async calculateAndUpdateStatistics(
     tabId,
     messages,
-    modelConfig = null,
     options = {},
-    isThinkingModeEnabled = false
   ) {
     if (!tabId) return this._getEmptyStats();
 
@@ -283,45 +281,69 @@ class TokenManagementService {
         systemPrompt
       );
 
-      // 4. Calculate Cost of the Last Call
-      let currentCallCost = 0;
-      // Check if the last message indicates an error
-      const lastMessage = messages[messages.length - 1];
-      const isLastError =
-        lastMessage && lastMessage.role === MESSAGE_ROLES.SYSTEM;
+      // 4. Determine Last API Call Cost and New Accumulated Cost from message apiCost properties
+      let newAccumulatedCost = initialAccumulatedCost; // Start with initial value for reruns/edits
+      let lastApiCallCostValue = 0;
 
-      if (modelConfig && !isLastError) {
-        // Only calculate cost if modelConfig exists AND the last message wasn't an error
-        // Use the specific input/output tokens for the *last call*
-        const costInfo = this.calculateCost(
-          baseStats.inputTokensInLastApiCall,
-          baseStats.outputTokensInLastApiCall,
-          modelConfig,
-          isThinkingModeEnabled
-        );
-        currentCallCost = costInfo.totalCost || 0;
+      // If not a rerun/edit (options are empty), reset initialAccumulatedCost to 0 before summing.
+      // This ensures we sum costs from the *current* message list only for a fresh calculation.
+      // For reruns, initialAccumulatedCost already reflects the state *before* the rerun.
+      if (Object.keys(options).length === 0) {
+          newAccumulatedCost = 0;
       }
-      // If isLastError is true, currentCallCost remains 0 (its initial value)
+      
+      let cumulativeOutputTokens = initialOutputTokens;
+      if (Object.keys(options).length === 0) {
+          cumulativeOutputTokens = 0;
+      }
 
-      // 5. Calculate New Accumulated Cost using the initial value + cost of this specific call
-      const newAccumulatedCost = initialAccumulatedCost + currentCallCost;
+      messages.forEach(msg => {
+        if (msg.role === MESSAGE_ROLES.ASSISTANT && typeof msg.apiCost === 'number' && msg.apiCost >= 0) {
+          // Only add if it's not part of the initialAccumulatedCost already accounted for by a rerun
+          // This logic assumes 'messages' contains the full history for a fresh calculation,
+          // or a truncated history for a rerun where initialAccumulatedCost covers prior messages.
+          // For simplicity, if options are present (rerun), we assume initialAccumulatedCost is correct.
+          // If no options, we sum all.
+          if (Object.keys(options).length === 0) {
+            newAccumulatedCost += msg.apiCost;
+          }
+          // Update lastApiCallCostValue if this is the most recent assistant message with a cost
+          lastApiCallCostValue = msg.apiCost; 
+        }
+        if (msg.role === MESSAGE_ROLES.ASSISTANT && typeof msg.outputTokens === 'number' && msg.outputTokens >= 0) {
+          if (Object.keys(options).length === 0) {
+              cumulativeOutputTokens += msg.outputTokens;
+          }
+        }
+      });
 
-      // 6. Prepare Final Stats Object to Save (Explicitly matching _getEmptyStats structure)
+      // If it was a rerun, the newAccumulatedCost should be the initial cost + the cost of the *newly generated* message.
+      // The newly generated message's cost is in lastApiCallCostValue if it's the last one.
+      if (Object.keys(options).length > 0 && messages.length > 0) {
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage.role === MESSAGE_ROLES.ASSISTANT && typeof lastMessage.apiCost === 'number') {
+              newAccumulatedCost = initialAccumulatedCost + lastMessage.apiCost;
+              // For output tokens in reruns, it's initial + new message's output
+              cumulativeOutputTokens = initialOutputTokens + (lastMessage.outputTokens || 0);
+          } else {
+              // If the last message wasn't an assistant message with a cost (e.g. error placeholder),
+              // then accumulated cost doesn't change from initial for this "turn".
+              // lastApiCallCostValue would be from the previous valid assistant message or 0.
+          }
+      }
+
+
+      // 5. Prepare Final Stats Object to Save
       const finalStatsObject = {
-        // Cumulative stats
-        outputTokens: isLastError
-          ? initialOutputTokens // On error, cumulative output doesn't increase
-          : initialOutputTokens + (baseStats.outputTokensInLastApiCall || 0), // On success, add last assistant output
+        outputTokens: cumulativeOutputTokens, // This is the total output tokens for the session
         accumulatedCost: newAccumulatedCost,
 
-        // Last API call stats
         promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
-        historyTokensSentInLastApiCall:
-          baseStats.historyTokensSentInLastApiCall || 0,
+        historyTokensSentInLastApiCall: baseStats.historyTokensSentInLastApiCall || 0,
         systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,
         inputTokensInLastApiCall: baseStats.inputTokensInLastApiCall || 0,
-        outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0,
-        lastApiCallCost: currentCallCost,
+        outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0, // Output for the very last assistant response
+        lastApiCallCost: lastApiCallCostValue, // Cost of the very last assistant response
         isCalculated: true,
       };
 
@@ -477,7 +499,7 @@ class TokenManagementService {
       tokensRemaining,
       exceeds,
       totalTokens: totalTokensInContext,
-      maxContextWindow: contextWindow, // Added maxContextWindow
+      maxContextWindow: contextWindow,
     };
   }
 
