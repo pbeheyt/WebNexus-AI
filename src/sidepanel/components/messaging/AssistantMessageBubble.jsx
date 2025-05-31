@@ -32,7 +32,7 @@ export const AssistantMessageBubble = memo(
         content,
         thinkingContent = null,
         isStreaming = false,
-        model = null, // This is now the modelId
+        modelId = null,
         platformId = null,
         className = '',
         style = {},
@@ -55,12 +55,12 @@ export const AssistantMessageBubble = memo(
       const costDisplayRef = useRef(null);
 
       const [resolvedPlatformIconUrl, setResolvedPlatformIconUrl] = useState(null);
-      const [resolvedModelDisplayName, setResolvedModelDisplayName] = useState(model); // Default to modelId
+      const [resolvedModelDisplayName, setResolvedModelDisplayName] = useState(modelId);
 
       useEffect(() => {
         let isMounted = true;
         const fetchDetails = async () => {
-          if (platformId && model) { // model is modelId here
+          if (platformId && modelId) {
             try {
               // Fetch platform display config for icon
               const platformDisplayConfig = await ConfigService.getPlatformDisplayConfig(platformId);
@@ -72,20 +72,20 @@ export const AssistantMessageBubble = memo(
 
               // Fetch platform API config for model display name
               const platformApiConfig = await ConfigService.getPlatformApiConfig(platformId);
-              const modelConfig = platformApiConfig?.models?.find(m => m.id === model);
+              const modelConfig = platformApiConfig?.models?.find(m => m.id === modelId);
               if (isMounted) {
-                setResolvedModelDisplayName(modelConfig?.displayName || model); // Fallback to modelId
+                setResolvedModelDisplayName(modelConfig?.displayName || modelId); // Fallback to modelId
               }
             } catch (error) {
-              logger.sidepanel.error(`Error fetching details for assistant message (Platform: ${platformId}, Model: ${model}):`, error);
+              logger.sidepanel.error(`Error fetching details for assistant message (Platform: ${platformId}, Model: ${modelId}):`, error);
               if (isMounted) {
-                setResolvedModelDisplayName(model); // Fallback to modelId on error
+                setResolvedModelDisplayName(modelId); // Fallback to modelId on error
                 setResolvedPlatformIconUrl(null);
               }
             }
           } else {
              if (isMounted) {
-                 setResolvedModelDisplayName(model || 'N/A');
+                 setResolvedModelDisplayName(modelId || 'N/A');
                  setResolvedPlatformIconUrl(null);
              }
           }
@@ -93,7 +93,7 @@ export const AssistantMessageBubble = memo(
 
         fetchDetails();
         return () => { isMounted = false; };
-      }, [platformId, model]); // model is modelId here
+      }, [platformId, modelId]);
 
       // For assistant rerun
       const handleRerunAssistant = () => {
@@ -392,10 +392,10 @@ export const AssistantMessageBubble = memo(
                   />
                 </div>
               )}
-              {model && (
-                <span title={resolvedModelDisplayName !== model ? model : undefined}> {/* Show modelId in title if different from display name */}
+              {modelId && (
+                <span title={resolvedModelDisplayName !== modelId ? modelId : undefined}> {/* Show modelId in title if different from display name */}
                   {' '}
-                  {resolvedModelDisplayName || model}{' '} {/* Display resolved name, fallback to modelId */}
+                  {resolvedModelDisplayName || modelId}{' '} {/* Display resolved name, fallback to modelId */}
                 </span>
               )}
               {/* API Cost Badge */}
@@ -476,7 +476,7 @@ AssistantMessageBubble.propTypes = {
   content: PropTypes.string,
   thinkingContent: PropTypes.string,
   isStreaming: PropTypes.bool,
-  model: PropTypes.string, // This is the modelId
+  modelId: PropTypes.string,
   platformId: PropTypes.string,
   className: PropTypes.string,
   style: PropTypes.object,

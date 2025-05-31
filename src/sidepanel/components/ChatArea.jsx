@@ -704,9 +704,7 @@ function ChatArea({
                   thinkingContent={message.thinkingContent}
                   role={message.role}
                   isStreaming={message.isStreaming}
-                  model={message.model}
-                  modelDisplayName={message.modelDisplayName}
-                  platformIconUrl={message.platformIconUrl}
+                  modelId={message.modelId}
                   platformId={message.platformId}
                   style={dynamicStyle}
                   apiCost={message.apiCost}
