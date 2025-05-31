@@ -14,16 +14,12 @@ import { debounce } from '../../shared/utils/debounce-utils';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import { useSidePanelPlatform } from '../../contexts/platform';
 import { useUI } from '../../contexts/UIContext';
-import { Toggle } from '../../components/core/Toggle';
 import { Tooltip } from '../../components';
 import { PlatformIcon } from '../../components/layout/PlatformIcon';
 import { useContent } from '../../contexts/ContentContext';
 import {
   CONTENT_TYPES,
-  CONTENT_TYPE_LABELS,
-  MESSAGE_ROLES,
 } from '../../shared/constants';
-import { ContentTypeIcon } from '../../components/layout/ContentTypeIcon';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { logger } from '../../shared/logger';
 import {
@@ -33,10 +29,12 @@ import {
   FreeTierIcon,
   ScrollDownIcon,
   NoCredentialsIcon,
-  ExtractionStrategySelector,
-} from '../../components';
+} from '../../components'; // Removed ExtractionStrategySelector, ContentTypeIcon, Toggle from here
+import { MESSAGE_ROLES } // Added MESSAGE_ROLES import
+from '../../shared/constants';
 
 import { MessageBubble } from './messaging/MessageBubble';
+
 
 // --- Constants ---
 const MIN_ASSISTANT_BUBBLE_HEIGHT_REM = 2; // Equivalent to 2rem minimum height
@@ -48,8 +46,8 @@ function ChatArea({
 }) {
   const {
     messages,
-    isContentExtractionEnabled,
-    setIsContentExtractionEnabled,
+    // isContentExtractionEnabled, // No longer used directly here
+    // setIsContentExtractionEnabled, // No longer used directly here
     modelConfigData,
     isThinkingModeEnabled,
   } = useSidePanelChat();
@@ -70,7 +68,7 @@ function ChatArea({
   } = useSidePanelPlatform();
 
   // --- State ---
-  const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false);
+  // const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false); // Removed
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
   const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
   const [displayModelConfig, setDisplayModelConfig] = useState(null);
@@ -112,7 +110,7 @@ function ChatArea({
   ] = useState(true);
   const rafIdHeightCalc = useRef(null); // Used for user message height calc
   const showButtonTimerRef = useRef(null);
-  const includeToggleRef = useRef(null);
+  // const includeToggleRef = useRef(null); // Removed
 
   useEffect(() => {
     const targetPlatform = platforms.find((p) => p.id === selectedPlatformId);
@@ -138,8 +136,8 @@ function ChatArea({
     hasCompletedInitialLoad,
   ]); // Removed hasAnyPlatformCredentials as it's for initial view
 
-  function getWelcomeMessage(contentType, isPageInjectable) {
-    if (!isPageInjectable) {
+  function getWelcomeMessage(contentType, isPageInjectableParam) {
+    if (!isPageInjectableParam) {
       return 'Ask me anything! Type your question or prompt below.';
     }
     switch (contentType) {
@@ -389,7 +387,7 @@ function ChatArea({
     }
   };
 
-  const isPageInjectable = currentTab?.url
+  const isPageInjectableValue = currentTab?.url
     ? isInjectablePage(currentTab.url)
     : false;
 
@@ -571,62 +569,8 @@ function ChatArea({
               Start a conversation
             </h3>
             <p className='text-xs max-w-xs mx-auto'>
-              {getWelcomeMessage(contentType, isPageInjectable)}
+              {getWelcomeMessage(contentType, isPageInjectableValue)}
             </p>
-          </div>
-          <div className='flex flex-col items-center py-3 w-full'>
-            {isPageInjectable ? (
-              <>
-                <div className='flex items-center gap-1 text-xs text-theme-secondary cursor-default'>
-                  <ContentTypeIcon
-                    contentType={contentType}
-                    className='w-6 h-6 text-current'
-                  />
-                  <span className='text-base font-medium ml-2'>
-                    {CONTENT_TYPE_LABELS[contentType] || 'Content'}
-                  </span>
-                  <span
-                    ref={includeToggleRef}
-                    onMouseEnter={() => setIsIncludeTooltipVisible(true)}
-                    onMouseLeave={() => setIsIncludeTooltipVisible(false)}
-                    onFocus={() => setIsIncludeTooltipVisible(true)}
-                    onBlur={() => setIsIncludeTooltipVisible(false)}
-                    aria-describedby='include-context-tooltip-sidepanel'
-                    className='inline-flex items-center'
-                  >
-                    <Toggle
-                      id='content-extract-toggle'
-                      checked={isContentExtractionEnabled}
-                      onChange={(newCheckedState) => {
-                        if (hasAnyPlatformCredentials)
-                          setIsContentExtractionEnabled(newCheckedState);
-                      }}
-                      disabled={!hasAnyPlatformCredentials}
-                      className='w-10 h-5 ml-3'
-                    />
-                  </span>
-                  {contentType === 'general' && (
-                    <ExtractionStrategySelector
-                      disabled={!hasAnyPlatformCredentials}
-                      className='ml-2'
-                    />
-                  )}
-                </div>
-                <Tooltip
-                  show={isIncludeTooltipVisible}
-                  targetRef={includeToggleRef}
-                  message='Send content along with your prompt.'
-                  position='top'
-                  id='include-context-tooltip-sidepanel'
-                />
-              </>
-            ) : (
-              <div className='mb-2'>
-                <span className='text-xs text-theme-secondary'>
-                  This page content cannot be extracted.
-                </span>
-              </div>
-            )}
           </div>
         </div>
       );

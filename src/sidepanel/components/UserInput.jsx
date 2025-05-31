@@ -13,7 +13,6 @@ import {
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { CONTENT_TYPE_LABELS } from '../../shared/constants';
 
-import TokenCounter from './TokenCounter';
 import PlatformModelControls from './PlatformModelControls';
 
 export function UserInput({ className = '', requestHeightRecalculation }) {
@@ -34,8 +33,6 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
     isProcessing,
     isCanceling,
     isRefreshing,
-    tokenStats, // From SidePanelChatContext
-    contextStatus, // From SidePanelChatContext
     messages,
     isContentExtractionEnabled,
   } = useSidePanelChat();
@@ -122,12 +119,7 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
 
   return (
     <div ref={selfRef} className={`flex flex-col ${className}`}>
-      {/* Token Counter Section */}
-      <TokenCounter 
-        tokenStats={tokenStats} 
-        contextStatus={contextStatus}
-        // onToggleExpand prop removed
-      />
+      {/* Token Counter Section Removed */}
 
       {/* Platform and Model Controls Section */}
       <PlatformModelControls onToggleExpand={handlePlatformControlsToggle} />

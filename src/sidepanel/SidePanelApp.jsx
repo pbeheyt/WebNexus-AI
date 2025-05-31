@@ -19,6 +19,7 @@ import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
 import { AppHeader, ErrorIcon, SpinnerIcon } from '../components';
 import { debounce } from '../shared/utils/debounce-utils';
+import { isInjectablePage } from '../shared/utils/content-utils';
 
 import Header from './components/Header';
 import ChatArea from './components/ChatArea';
@@ -26,9 +27,16 @@ import { UserInput } from './components/UserInput';
 import { useSidePanelChat } from './contexts/SidePanelChatContext';
 
 export default function SidePanelApp() {
-  const { tabId, setTabId } = useSidePanelPlatform();
-  const { resetCurrentTabData, isRefreshing } = useSidePanelChat();
-  const { updateContentContext } = useContent();
+  const { tabId, setTabId, hasAnyPlatformCredentials } = useSidePanelPlatform();
+  const {
+    resetCurrentTabData,
+    isRefreshing,
+    tokenStats,
+    contextStatus,
+    isContentExtractionEnabled,
+    setIsContentExtractionEnabled,
+  } = useSidePanelChat();
+  const { contentType, currentTab, updateContentContext } = useContent();
   const { textSize } = useUI();
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
@@ -205,19 +213,18 @@ export default function SidePanelApp() {
     }
     rafIdHeightCalc.current = requestAnimationFrame(() => {
       const appHeaderHeight = appHeaderRef.current?.offsetHeight || 0;
-
-      const collapsibleDummyHeaderHeight = headerExpanded
+      const interactiveHeaderHeight = headerExpanded
         ? collapsibleHeaderRef.current?.offsetHeight || 0
         : 0;
       const userInputTotalHeight = userInputRef.current?.offsetHeight || 0;
 
       if (
         typeof appHeaderHeight === 'number' &&
-        typeof collapsibleDummyHeaderHeight === 'number' &&
+        typeof interactiveHeaderHeight === 'number' &&
         typeof userInputTotalHeight === 'number'
       ) {
         const totalHeight =
-          appHeaderHeight + collapsibleDummyHeaderHeight + userInputTotalHeight;
+          appHeaderHeight + interactiveHeaderHeight + userInputTotalHeight;
         const buffer = 2;
         setOtherUIHeight(totalHeight + buffer);
       }
@@ -243,6 +250,8 @@ export default function SidePanelApp() {
     };
   }, [isReady, headerExpanded, textSize, debouncedCalculateHeight]);
 
+  const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
+
   return (
     <div
       className={`flex flex-col h-screen w-full overflow-hidden bg-theme-primary text-theme-primary ${textSize ? `text-${textSize}` : 'text-sm'}`}
@@ -263,21 +272,29 @@ export default function SidePanelApp() {
               showRefreshButton={true}
               onRefreshClick={resetCurrentTabData}
               isRefreshing={isRefreshing}
-              isExpanded={headerExpanded} // Prop for AppHeader's internal chevron state
-              onToggleExpand={() => setHeaderExpanded(!headerExpanded)} // Toggle our state
-              showExpandToggle={true} // Show the AppHeader's chevron
-              showBorder={!headerExpanded} // Show border only when dummy header is collapsed
+              isExpanded={headerExpanded}
+              onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
+              showExpandToggle={true}
+              showBorder={!headerExpanded}
               className='px-5 py-2'
             />
           </div>
 
-          {/* Dummy Collapsible Header Section */}
+          {/* Interactive Header Section */}
           <div
             ref={collapsibleHeaderRef} // Ref for height calculation
-            className='relative flex-shrink-0 z-10' // Ensure it's above ChatArea if overlapping
+            className='relative flex-shrink-0 z-10'
           >
-            {/* The actual Header component which now contains dummy text */}
-            <Header isExpanded={headerExpanded} />
+            <Header
+              isExpanded={headerExpanded}
+              tokenStats={tokenStats}
+              contextStatus={contextStatus}
+              contentType={contentType}
+              isPageInjectable={isPageInjectable}
+              isContentExtractionEnabled={isContentExtractionEnabled}
+              setIsContentExtractionEnabled={setIsContentExtractionEnabled}
+              hasAnyPlatformCredentials={hasAnyPlatformCredentials}
+            />
           </div>
 
           {isReady && tabId && isRefreshing && (
