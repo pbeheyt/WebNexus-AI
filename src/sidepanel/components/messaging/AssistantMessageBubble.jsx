@@ -382,14 +382,16 @@ export const AssistantMessageBubble = memo(
           {/* Footer section */}
           <div className='flex justify-between items-center pb-4'>
             <div className='text-sm flex items-center space-x-2'>
-              <div className='select-none'>
-                <PlatformIcon
-                  platformId={platformId}
-                  iconUrl={resolvedPlatformIconUrl}
-                  altText='AI Platform'
-                  className='w-5 h-5'
-                />
-              </div>
+              {resolvedPlatformIconUrl && (
+                <div className='select-none'>
+                  <PlatformIcon
+                    platformId={platformId}
+                    iconUrl={resolvedPlatformIconUrl}
+                    altText='AI Platform'
+                    className='w-5 h-5'
+                  />
+                </div>
+              )}
               {model && (
                 <span title={resolvedModelDisplayName !== model ? model : undefined}> {/* Show modelId in title if different from display name */}
                   {' '}
