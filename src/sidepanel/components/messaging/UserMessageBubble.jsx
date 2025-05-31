@@ -75,7 +75,7 @@ export const UserMessageBubble = memo(
           {/* Bubble container with conditional width */}
           <div
             className={`
-                    bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white
+                    bg-gray-200 dark:bg-gray-700
                     rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl
                     p-3 max-w-[85%]
                     transition-all duration-150 ease-in-out
