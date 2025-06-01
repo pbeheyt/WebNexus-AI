@@ -3,7 +3,7 @@ import { useEffect, useCallback, useRef } from 'react';
 
 import { logger } from '../../shared/logger';
 import { MESSAGE_ROLES, STORAGE_KEYS } from '../../shared/constants';
-import ConfigService from '../../services/ConfigService'; // Assuming path is correct
+import ConfigService from '../../services/ConfigService';
 
 /**
  * Custom hook to manage chat streaming logic, including receiving chunks,
@@ -18,7 +18,6 @@ import ConfigService from '../../services/ConfigService'; // Assuming path is co
  * @param {object} args.selectedPlatform - Details of the selected platform.
  * @param {object} args.tokenStats - Current token statistics (read-only).
  * @param {React.MutableRefObject} args.rerunStatsRef - Ref holding stats before a rerun/edit.
- * @param {function} args.setExtractedContentAdded - State setter for extracted content flag.
  * @param {boolean} args.isProcessing - Flag indicating if an API call is in progress.
  * @param {boolean} args.isCanceling - Flag indicating if cancellation is in progress.
  * @param {function} args.setIsCanceling - State setter for cancellation flag.
@@ -29,17 +28,16 @@ import ConfigService from '../../services/ConfigService'; // Assuming path is co
  * @param {object} args.ChatHistoryService - Service for chat history management.
  * @param {object} args.TokenManagementService - Service for token management.
  * @param {function} args.robustSendMessage - Utility for sending messages to background.
- * @param {boolean} args.extractedContentAdded - Flag indicating if extracted content has been added.
+ * @param {boolean} [args.isThinkingModeEnabled=false] - Whether thinking mode is active.
  * @returns {object} - Object containing the cancelStream function.
  */
 export function useChatStreaming({
   tabId,
   setMessages,
-  messages,
+  messages, // This is allMessages from context
   modelConfigData,
   selectedModel,
   rerunStatsRef,
-  setExtractedContentAdded,
   isProcessing,
   isCanceling,
   setIsCanceling,
@@ -50,54 +48,49 @@ export function useChatStreaming({
   ChatHistoryService,
   TokenManagementService,
   robustSendMessage,
-  extractedContentAdded,
   isThinkingModeEnabled = false,
 }) {
-  const batchedThinkingContentRef = useRef(''); // Buffer for thinking chunks
-  // --- State Update Logic (using requestAnimationFrame) ---
+  const batchedThinkingContentRef = useRef('');
   const performThinkingStreamingStateUpdate = useCallback(() => {
-    rafIdRef.current = null; // Reset the ref
-    const messageId = streamingMessageId; // Read current streaming ID
-    const accumulatedThinkingContent = batchedThinkingContentRef.current; // Read thinking buffer
+    rafIdRef.current = null;
+    const messageId = streamingMessageId;
+    const accumulatedThinkingContent = batchedThinkingContentRef.current;
 
-    if (!messageId) return; // Safety check
+    if (!messageId) return;
 
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
         msg.id === messageId
           ? {
               ...msg,
-              thinkingContent: accumulatedThinkingContent, // Update thinkingContent
+              thinkingContent: accumulatedThinkingContent,
               isStreaming: true,
             }
           : msg
       )
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streamingMessageId, batchedThinkingContentRef, rafIdRef, setMessages]);
 
   const performStreamingStateUpdate = useCallback(() => {
-    rafIdRef.current = null; // Reset the ref after the frame executes
-    const messageId = streamingMessageId; // Read current streaming ID from state
-    const accumulatedContent = batchedStreamingContentRef.current; // Read buffered content
+    rafIdRef.current = null;
+    const messageId = streamingMessageId;
+    const accumulatedContent = batchedStreamingContentRef.current;
 
-    if (!messageId) return; // Safety check
+    if (!messageId) return;
 
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
         msg.id === messageId
           ? {
               ...msg,
-              content: accumulatedContent, // Update with the full batched content
-              isStreaming: true, // Keep streaming flag true during debounced updates
+              content: accumulatedContent,
+              isStreaming: true,
             }
           : msg
       )
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streamingMessageId, batchedStreamingContentRef, rafIdRef, setMessages]); // Dependencies: relevant state/refs/setters
+  }, [streamingMessageId, batchedStreamingContentRef, rafIdRef, setMessages]);
 
-  // --- Stream Completion Handler ---
   const handleStreamComplete = useCallback(
     async (
       messageId,
@@ -107,170 +100,85 @@ export function useChatStreaming({
       isError = false,
       isCancelled = false
     ) => {
-      // Retrieve rerun stats *before* saving history
       const savedStats = rerunStatsRef.current;
       const retrievedPreTruncationCost = savedStats?.preTruncationCost || 0;
       const retrievedPreTruncationOutput = savedStats?.preTruncationOutput || 0;
 
       try {
-        let finalOutputTokensForMessage = 0; // Default to 0
-        let finalContent = finalContentInput || ''; // Use mutable variable for content
-        let finalThinkingContent = finalThinkingContentInput || ''; // Use mutable variable
+        let finalOutputTokensForMessage = 0;
+        let finalContent = finalContentInput || '';
+        let finalThinkingContent = finalThinkingContentInput || '';
 
         if (isCancelled) {
-          // Calculate tokens based on content *before* adding notice
           const regularTokens =
             TokenManagementService.estimateTokens(finalContent);
           const thinkingTokens =
             TokenManagementService.estimateTokens(finalThinkingContent);
           finalOutputTokensForMessage = regularTokens + thinkingTokens;
-          // Append notice for display (only to regular content)
           finalContent += '\n\n_Stream cancelled by user._';
-          // Keep finalThinkingContent as is
         } else if (isError) {
-          // Errors don't count towards output tokens
           finalOutputTokensForMessage = 0;
-          finalThinkingContent = ''; // Clear thinking content on error
-          // finalContent is already the error message passed in finalContentInput
+          finalThinkingContent = '';
         } else {
-          // Normal completion: Calculate combined tokens
           const regularTokens =
             TokenManagementService.estimateTokens(finalContent);
           const thinkingTokens =
             TokenManagementService.estimateTokens(finalThinkingContent);
           finalOutputTokensForMessage = regularTokens + thinkingTokens;
-          // finalContent and finalThinkingContent are already the complete content passed in
         }
 
-        // Update message with final content (using the potentially modified finalContent)
         let updatedMessages = messages.map((msg) => {
           if (msg.id === messageId) {
             return {
               ...msg,
-              content: finalContent, // Use the potentially modified regular content
-              thinkingContent: finalThinkingContent, // Set the final thinking content
+              content: finalContent,
+              thinkingContent: finalThinkingContent,
               isStreaming: false,
-              modelId: model || selectedModel, // This 'model' (modelId) comes from chunkData.model
-              // platformIconUrl: msg.platformIconUrl, // This line is removed
-              platformId: msg.platformId, // This is correct, from placeholder
+              modelId: model || selectedModel,
+              platformId: msg.platformId,
               timestamp: new Date().toISOString(),
-              outputTokens: finalOutputTokensForMessage, // Use the correctly calculated token count
-              role: isError ? MESSAGE_ROLES.SYSTEM : msg.role, // Keep error role handling
+              outputTokens: finalOutputTokensForMessage,
+              role: isError ? MESSAGE_ROLES.SYSTEM : msg.role,
             };
           }
           return msg;
         });
 
-        // If content not added yet, add extracted content message
-        if (!extractedContentAdded && !isError) {
-          try {
-            // Get formatted content from storage
-            const result = await chrome.storage.local.get([
-              STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-            ]);
-            const allTabContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT];
-
-            if (allTabContents) {
-              const tabIdKey = tabId.toString();
-              const extractedContent = allTabContents[tabIdKey];
-
-              if (
-                extractedContent &&
-                typeof extractedContent === 'string' &&
-                extractedContent.trim()
-              ) {
-                const contentMessage = {
-                  id: `extracted_${Date.now()}`,
-                  role: MESSAGE_ROLES.USER,
-                  content: extractedContent,
-                  timestamp: new Date().toISOString(),
-                  inputTokens:
-                    TokenManagementService.estimateTokens(extractedContent),
-                  outputTokens: 0,
-                  isExtractedContent: true,
-                };
-
-                // Add extracted content at beginning
-                updatedMessages = [contentMessage, ...updatedMessages];
-
-                // Mark as added to prevent duplicate additions
-                setExtractedContentAdded(true);
-              }
-            }
-          } catch (extractError) {
-            logger.sidepanel.error(
-              'Error adding extracted content:',
-              extractError
-            );
-          }
-        }
-
-        // --- Calculate and embed apiCost for the completed/cancelled/errored message ---
         const messageToUpdateWithCost = updatedMessages.find(msg => msg.id === messageId);
         let calculatedApiCost = null;
 
         if (messageToUpdateWithCost && messageToUpdateWithCost.platformId && messageToUpdateWithCost.modelId && !isError) {
-          // Only calculate cost if not an error and we have platform/model info
           try {
             const platformConfig = await ConfigService.getPlatformApiConfig(messageToUpdateWithCost.platformId);
             if (platformConfig && platformConfig.models) {
               const modelDetails = platformConfig.models.find(m => m.id === messageToUpdateWithCost.modelId);
               if (modelDetails && modelDetails.pricing) {
-                // For input, we need to consider the prompt, history, and system prompt that *led* to this response.
-                // The `TokenManagementService.calculateTokenStatisticsFromMessages` already calculates `inputTokensInLastApiCall`.
-                // We can call it here with the messages *up to and including* the current assistant message
-                // to get the input stats for this *specific* call.
-
                 const messagesUpToCurrent = updatedMessages.slice(0, updatedMessages.findIndex(msg => msg.id === messageId) + 1);
-                const systemPromptForCost = await ChatHistoryService.getSystemPrompt(tabId); // Fetch system prompt
+                const systemPromptForCost = await ChatHistoryService.getSystemPrompt(tabId);
                 const turnStats = TokenManagementService.calculateTokenStatisticsFromMessages(messagesUpToCurrent, systemPromptForCost);
-
                 const costInfo = TokenManagementService.calculateCost(
-                  turnStats.inputTokensInLastApiCall, // Use input from the specific turn stats
-                  finalOutputTokensForMessage, // This is output_tokens_in_last_api_call for this turn
+                  turnStats.inputTokensInLastApiCall,
+                  finalOutputTokensForMessage,
                   modelDetails,
-                  isThinkingModeEnabled // Pass thinking mode state
+                  isThinkingModeEnabled
                 );
                 calculatedApiCost = costInfo.totalCost;
-                logger.sidepanel.info(`Calculated apiCost for msg ${messageId}: ${calculatedApiCost}`);
-              } else {
-                logger.sidepanel.warn(`Pricing info not found for model ${messageToUpdateWithCost.modelId} on platform ${messageToUpdateWithCost.platformId}. apiCost will be null.`);
               }
-            } else {
-              logger.sidepanel.warn(`Platform config not found for ${messageToUpdateWithCost.platformId}. apiCost will be null.`);
             }
           } catch (costCalcError) {
             logger.sidepanel.error(`Error calculating apiCost for message ${messageId}:`, costCalcError);
           }
-        } else if (isError) {
-             logger.sidepanel.info(`Stream for message ${messageId} ended in error. apiCost set to null.`);
         }
 
-
-        // Update the message in updatedMessages array with the calculated cost
-        // This ensures the message object passed to ChatHistoryService.saveHistory contains the apiCost.
         updatedMessages = updatedMessages.map(msg => {
           if (msg.id === messageId) {
-            return {
-              ...msg,
-              apiCost: calculatedApiCost, // Assign the calculated (or null) cost
-            };
+            return { ...msg, apiCost: calculatedApiCost };
           }
           return msg;
         });
-        // --- End apiCost calculation and embedding ---
 
-        // Save history, passing the retrieved initial stats
         if (tabId) {
-          // modelConfigData is already available in the hook's scope and represents the config for the *current* model selection.
-          // For saving history, if a message was generated by a *different* model (e.g. user switched models),
-          // we should ideally use the config of the model that *generated* it.
-          // However, since we removed requestModelConfigSnapshot, we'll rely on the modelId on the message
-          // and assume TokenManagementService will handle fetching specific model configs if needed for historical cost aggregation.
-          // For *this call* to saveHistory, modelConfigData (current selection) is fine for general purposes,
-          // as TokenManagementService will now sum pre-calculated apiCosts.
           const correctModelConfigForHistory = modelConfigData;
-          
           await ChatHistoryService.saveHistory(
             tabId,
             updatedMessages,
@@ -279,47 +187,35 @@ export function useChatStreaming({
               initialAccumulatedCost: retrievedPreTruncationCost,
               initialOutputTokens: retrievedPreTruncationOutput,
             },
-            isThinkingModeEnabled // Pass thinking mode state
+            isThinkingModeEnabled
           );
         }
         
-        // Set messages with all updates including apiCost
         setMessages(updatedMessages);
         batchedStreamingContentRef.current = '';
         batchedThinkingContentRef.current = '';
       } catch (error) {
         logger.sidepanel.error('Error handling stream completion:', error);
       } finally {
-        // Clear the ref after saving history, regardless of success or error
         rerunStatsRef.current = null;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      messages,
+      messages, // This is allMessages from context
       selectedModel,
-      extractedContentAdded,
       tabId,
       modelConfigData,
       rerunStatsRef,
       batchedStreamingContentRef,
+      batchedThinkingContentRef,
       setMessages,
-      setExtractedContentAdded,
       ChatHistoryService,
       TokenManagementService,
-    ] // Ensure all dependencies used inside are listed
+      isThinkingModeEnabled,
+    ]
   );
 
-  // --- Effect for Handling Stream Chunks ---
   useEffect(() => {
-    /**
-     * Processes incoming message chunks from the background script during an active stream.
-     * Handles error chunks, completion chunks (including cancellation), and intermediate content chunks.
-     * Updates the UI live and calls `handleStreamComplete` to finalize the message state.
-     * Resets streaming-related state variables upon stream completion, error, or cancellation.
-     *
-     * @param {object} message - The message object received from `chrome.runtime.onMessage`.
-     */
     const handleStreamChunk = async (message) => {
       if (message.action === 'streamChunk' && streamingMessageId) {
         const { chunkData } = message;
@@ -335,9 +231,9 @@ export function useChatStreaming({
           await handleStreamComplete(
             streamingMessageId,
             errorMessage,
-            '', // No thinking content on error
+            '',
             chunkData.model || null,
-            true // isError
+            true
           );
           setStreamingMessageId(null);
           setIsCanceling(false);
@@ -345,7 +241,6 @@ export function useChatStreaming({
         }
 
         if (chunkData.done) {
-          // --- Stream Done Handling ---
           if (rafIdRef.current !== null) {
             cancelAnimationFrame(rafIdRef.current);
             rafIdRef.current = null;
@@ -353,7 +248,6 @@ export function useChatStreaming({
 
           let finalContent =
             chunkData.fullContent || batchedStreamingContentRef.current;
-          // Ensure we capture the final thinking content from the buffer before clearing
           let finalThinkingContent = batchedThinkingContentRef.current;
 
           if (chunkData.cancelled === true) {
@@ -362,11 +256,11 @@ export function useChatStreaming({
             );
             await handleStreamComplete(
               streamingMessageId,
-              finalContent, // Pass regular content
-              finalThinkingContent, // Pass thinking content
+              finalContent,
+              finalThinkingContent,
               chunkData.model,
-              false, // isError
-              true // isCancelled
+              false,
+              true
             );
           } else if (chunkData.error) {
             const errorMessage = chunkData.error;
@@ -376,39 +270,34 @@ export function useChatStreaming({
             );
             await handleStreamComplete(
               streamingMessageId,
-              errorMessage, // Pass error message as regular content
-              '', // No thinking content on error
+              errorMessage,
+              '',
               chunkData.model || null,
-              true, // isError
-              false // isCancelled
+              true,
+              false
             );
           } else {
-            // Normal completion
             await handleStreamComplete(
               streamingMessageId,
-              finalContent, // Pass regular content
-              finalThinkingContent, // Pass thinking content
+              finalContent,
+              finalThinkingContent,
               chunkData.model,
-              false, // isError
-              false // isCancelled
+              false,
+              false
             );
           }
           setStreamingMessageId(null);
           setIsCanceling(false);
-          // Clear both buffers on completion/error/cancel
           batchedStreamingContentRef.current = '';
           batchedThinkingContentRef.current = '';
         } else if (chunkData.thinkingChunk) {
-          // --- Handle Thinking Chunk ---
           batchedThinkingContentRef.current += chunkData.thinkingChunk;
-          // Use a separate state update function for thinking content
           if (rafIdRef.current === null) {
             rafIdRef.current = requestAnimationFrame(
-              performThinkingStreamingStateUpdate // Call the new function
+              performThinkingStreamingStateUpdate
             );
           }
         } else if (chunkData.chunk) {
-          // --- Handle Regular Content Chunk ---
           const chunkContent =
             typeof chunkData.chunk === 'string'
               ? chunkData.chunk
@@ -418,7 +307,7 @@ export function useChatStreaming({
           batchedStreamingContentRef.current += chunkContent;
           if (rafIdRef.current === null) {
             rafIdRef.current = requestAnimationFrame(
-              performStreamingStateUpdate // Call the existing function
+              performStreamingStateUpdate
             );
           }
         }
@@ -440,16 +329,16 @@ export function useChatStreaming({
     setStreamingMessageId,
     setIsCanceling,
     batchedStreamingContentRef,
+    batchedThinkingContentRef,
     rafIdRef,
     performStreamingStateUpdate,
     performThinkingStreamingStateUpdate,
-  ]); // Dependencies for the listener effect
+  ]);
 
-  // --- Stream Cancellation Logic ---
   const cancelStream = useCallback(async () => {
     if (!streamingMessageId || !isProcessing || isCanceling) return;
 
-    const { [STORAGE_KEYS.API_STREAM_ID]: streamId } =
+    const { [STORAGE_KEYS.API_STREAM_ID]: streamIdFromStorage } =
       await chrome.storage.local.get(STORAGE_KEYS.API_STREAM_ID);
     setIsCanceling(true);
     if (rafIdRef.current !== null) {
@@ -458,18 +347,17 @@ export function useChatStreaming({
     }
 
     try {
-      batchedThinkingContentRef.current = ''; // Clear thinking buffer on cancel
+      batchedThinkingContentRef.current = '';
       await robustSendMessage({
         action: 'cancelStream',
-        streamId: streamId,
+        streamId: streamIdFromStorage,
       });
     } catch (error) {
       logger.sidepanel.error('Error cancelling stream:', error);
-      setStreamingMessageId(null);
+      setStreamingMessageId(null); // Should be handled by stream completion, but good fallback
     } finally {
-      setIsCanceling(false);
+      setIsCanceling(false); // Should be handled by stream completion, but good fallback
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     streamingMessageId,
     isProcessing,
@@ -477,33 +365,21 @@ export function useChatStreaming({
     setIsCanceling,
     rafIdRef,
     batchedThinkingContentRef,
-    messages, // Need current messages for update
-    extractedContentAdded, // Need flag state
-    tabId,
-    modelConfigData,
-    setMessages,
-    setExtractedContentAdded,
-    setStreamingMessageId,
-    ChatHistoryService,
-    TokenManagementService,
     robustSendMessage,
-  ]); // Dependencies for cancelStream
+    setStreamingMessageId,
+  ]);
 
-  // --- Effect for Escape Key Cancellation ---
   useEffect(() => {
     const handleGlobalKeyDown = (event) => {
       if (event.key === 'Escape' && isProcessing && !isCanceling) {
         cancelStream();
       }
     };
-
     document.addEventListener('keydown', handleGlobalKeyDown);
-
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isProcessing, isCanceling, cancelStream]); // Dependencies for Escape listener
+  }, [isProcessing, isCanceling, cancelStream]);
 
-  // Return the functions managed by this hook
   return { cancelStream };
 }

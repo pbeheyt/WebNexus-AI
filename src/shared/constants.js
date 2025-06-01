@@ -112,8 +112,6 @@ export const STORAGE_KEYS = {
   TAB_MODEL_PREFERENCES: 'tab_model_preferences',
   /** @description Visibility state (true/false) of the Sidepanel for each tab. Local. */
   TAB_SIDEPANEL_STATES: 'tab_sidepanel_states',
-  /** @description Flag indicating if page context has already been sent for a tab's Sidepanel. Local. */
-  TAB_CONTEXT_SENT_FLAG: 'tab_context_sent_flag',
 };
 
 // Prompt limits

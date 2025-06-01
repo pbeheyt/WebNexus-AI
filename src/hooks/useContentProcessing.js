@@ -47,24 +47,24 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       } = options;
 
       if (!currentTab?.id) {
-        const error = new Error('No active tab available');
-        setError(error);
+        const err = new Error('No active tab available');
+        setError(err);
         setProcessingStatus('error');
-        throw error;
+        throw err;
       }
 
       if (!platformId) {
-        const error = new Error('No AI platform selected');
-        setError(error);
+        const err = new Error('No AI platform selected');
+        setError(err);
         setProcessingStatus('error');
-        throw error;
+        throw err;
       }
 
       if (!promptContent) {
-        const error = new Error('No prompt content provided');
-        setError(error);
+        const err = new Error('No prompt content provided');
+        setError(err);
         setProcessingStatus('error');
-        throw error;
+        throw err;
       }
 
       setProcessingStatus('loading');
@@ -83,40 +83,30 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
           includeContext: includeContext,
         });
 
-        // The background script now consistently returns { success: boolean, ... }
-        // We don't need to check for !response here as robustSendMessage handles basic comms errors.
-        // Let the caller handle the success/error based on the response content.
         if (response && response.success) {
           setProcessingStatus('success');
         } else {
-          // Set error state based on the response from background
           const errorMsg = response?.error || 'Processing failed in background';
-          setError(new Error(errorMsg)); // Store the error message
+          setError(new Error(errorMsg));
           setProcessingStatus('error');
         }
-
-        // Return the actual response object received from the background script
         return response;
-      } catch (error) {
-        // Catch errors from robustSendMessage itself (e.g., port closed)
-        if (error.isPortClosed) {
-          // Handle port closed specifically for the popup flow
+      } catch (commError) {
+        if (commError.isPortClosed) {
           logger.popup.warn(
             'processContent: Port closed during background processing (likely popup closed).'
           );
-          // Don't set global error state, return specific status
-          setProcessingStatus('idle'); // Reset status as the operation was interrupted, not failed
+          setProcessingStatus('idle');
           return {
             success: false,
             error: 'PORT_CLOSED',
             message: 'Popup closed before background task could respond.',
           };
         } else {
-          // Handle other communication or unexpected errors
-          logger.popup.error('Error sending message to background:', error);
-          setError(error); // Store the communication error
+          logger.popup.error('Error sending message to background:', commError);
+          setError(commError);
           setProcessingStatus('error');
-          throw error; // Re-throw for potential higher-level handling if needed
+          throw commError;
         }
       }
     },
@@ -142,24 +132,23 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
       } = options;
 
       if (!currentTab?.id) {
-        const error = new Error('No active tab available');
-        setError(error);
+        const err = new Error('No active tab available');
+        setError(err);
         setProcessingStatus('error');
-        throw error;
+        throw err;
       }
 
       if (!platformId) {
-        const error = new Error('No AI platform selected');
-        setError(error);
+        const err = new Error('No AI platform selected');
+        setError(err);
         setProcessingStatus('error');
-        throw error;
+        throw err;
       }
 
       setProcessingStatus('loading');
       setError(null);
 
       try {
-        // Prepare unified request configuration
         const request = {
           action: 'processContentViaApi',
           tabId: currentTab?.id,
@@ -169,24 +158,20 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
           contentType,
           source,
           streaming,
-          isContentExtractionEnabled,
+          isContentExtractionEnabled, // Pass this to background
           isThinkingModeEnabled: isThinkingModeEnabled ?? false,
         };
 
-        // Add optional parameters if provided
         if (modelId) request.modelId = modelId;
         if (promptContent) request.customPrompt = promptContent;
         if (conversationHistory?.length > 0)
           request.conversationHistory = conversationHistory;
         if (streaming && onStreamChunk) request.streaming = true;
 
-        // Add pre-truncation stats if provided (for reruns/edits)
         if (options.options?.preTruncationCost !== undefined) {
-          // Check within nested options object
           request.preTruncationCost = options.options.preTruncationCost;
         }
         if (options.options?.preTruncationOutput !== undefined) {
-          // Check within nested options object
           request.preTruncationOutput = options.options.preTruncationOutput;
         }
 
@@ -197,10 +182,8 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
           throw new Error(errorMsg);
         }
 
-        // Handle streaming response
         if (streaming && response.streamId && onStreamChunk) {
           setStreamId(response.streamId);
-
           const messageListener = (message) => {
             if (
               message.action === 'streamChunk' &&
@@ -214,27 +197,24 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
               }
             }
           };
-
           chrome.runtime.onMessage.addListener(messageListener);
+          // Return the full response, including the new contentSuccessfullyIncluded flag
           return response;
         }
 
-        // Handle non-streaming response
         setProcessingStatus('success');
+        // Return the full response for non-streaming too
         return response;
-      } catch (error) {
-        logger.popup.error('API processing error:', error);
-        setError(error);
+      } catch (apiError) {
+        logger.popup.error('API processing error:', apiError);
+        setError(apiError);
         setProcessingStatus('error');
-        throw error;
+        throw apiError;
       }
     },
     [currentTab, contentType, source]
   );
 
-  /**
-   * Reset all state
-   */
   const reset = useCallback(() => {
     setProcessingStatus('idle');
     setStreamId(null);
@@ -242,17 +222,12 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   }, []);
 
   return {
-    // Core processing methods
-    processContent, // For popup/web interface path
-    processContentViaApi, // For sidepanel/API path
-
-    // State management
+    processContent,
+    processContentViaApi,
     reset,
     processingStatus,
     error,
     streamId,
-
-    // Helper states
     isProcessing: processingStatus === 'loading',
     isStreaming: !!streamId,
     hasError: !!error,

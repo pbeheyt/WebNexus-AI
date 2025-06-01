@@ -5,11 +5,10 @@ import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 
 // List of tab-specific storage keys to clear on manual refresh (excluding sidepanel visibility)
-const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR = [
+const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR_ON_MANUAL_REFRESH = [
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
   STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
-  STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG,
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
   STORAGE_KEYS.TAB_FORMATTED_CONTENT,
@@ -18,12 +17,14 @@ const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR = [
 
 // List of all storage keys that are tab-specific and need automatic cleanup (used for onRemoved/periodic cleanup)
 // This includes TAB_SIDEPANEL_STATES which is handled by SidePanelStateManager.cleanupTabStates
-const ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP = [
+const ALL_TAB_SPECIFIC_KEYS_FOR_AUTOMATIC_CLEANUP = [
   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
-  STORAGE_KEYS.TAB_SIDEPANEL_STATES, // Included for the loop, but handled separately
+  STORAGE_KEYS.TAB_SIDEPANEL_STATES, // Included for the loop, but handled separately by SidePanelStateManager
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+  STORAGE_KEYS.TAB_FORMATTED_CONTENT,
+  STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
 ];
 
 /**
@@ -44,16 +45,12 @@ export async function clearSingleTabData(tabId) {
   logger.background.info(`Clearing specific data for tab ${tabIdStr}...`);
 
   try {
-    for (const storageKey of TAB_SPECIFIC_DATA_KEYS_TO_CLEAR) {
-      // Use the manual refresh list
+    for (const storageKey of TAB_SPECIFIC_DATA_KEYS_TO_CLEAR_ON_MANUAL_REFRESH) {
       let result;
       let data;
       switch (storageKey) {
         case STORAGE_KEYS.TAB_FORMATTED_CONTENT:
           await SidePanelStateManager.clearFormattedContentForTab(tabId);
-          break;
-        case STORAGE_KEYS.TAB_CONTEXT_SENT_FLAG:
-          await SidePanelStateManager.setTabContextSentFlag(tabId, false);
           break;
         case STORAGE_KEYS.TAB_SYSTEM_PROMPTS:
           await SidePanelStateManager.storeSystemPromptForTab(tabId, null);
@@ -198,12 +195,20 @@ async function cleanupTabStorage(storageKey, tabId, validTabIds = null) {
 
     // Save changes back to storage only if modifications were made
     if (hasChanges) {
-      await chrome.storage.local.set({
-        [storageKey]: updatedData,
-      });
-      logger.background.info(
-        `Successfully saved updated data for ${storageKey} after cleanup.`
-      );
+      if (Object.keys(updatedData).length === 0) {
+        // If the entire object for this key is now empty, remove the key itself
+        await chrome.storage.local.remove(storageKey);
+        logger.background.info(
+          `Removed empty storage key ${storageKey} after cleanup.`
+        );
+      } else {
+        await chrome.storage.local.set({
+          [storageKey]: updatedData,
+        });
+        logger.background.info(
+          `Successfully saved updated data for ${storageKey} after cleanup.`
+        );
+      }
     }
 
     return hasChanges;
@@ -234,7 +239,7 @@ export function setupTabStateListener() {
 
       try {
         // Clean up all general tab-specific storage keys
-        for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP) {
+        for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_AUTOMATIC_CLEANUP) {
           // Skip sidepanel state in this loop; handled separately below.
           if (storageKey !== STORAGE_KEYS.TAB_SIDEPANEL_STATES) {
             await cleanupTabStorage(storageKey, tabId, null); // Pass tabId for single removal, validTabIds=null
@@ -245,9 +250,10 @@ export function setupTabStateListener() {
         );
 
         // Use SidePanelStateManager to specifically clean its state for the removed tab
-        await SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false); // This will now delete the key if it exists
+        // This will now delete the key if it exists and is set to false (closed)
+        await SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false);
         logger.background.info(
-          `Sidepanel state (visibility set to false/key removed) for closed tab ${tabId}.`
+          `Sidepanel visibility state (set to false/key removed) for closed tab ${tabId}.`
         );
       } catch (error) {
         logger.background.error(
@@ -259,10 +265,10 @@ export function setupTabStateListener() {
       // Clear other data managed by SidePanelStateManager for the removed tab
       try {
         await SidePanelStateManager.clearFormattedContentForTab(tabId);
-        await SidePanelStateManager.setTabContextSentFlag(tabId, false); // Assuming false clears it
+        // Context sent flag is removed, so no need to clear it here.
         await SidePanelStateManager.storeSystemPromptForTab(tabId, null); // Assuming null clears it
         logger.background.info(
-          `SidePanelStateManager managed data cleared for closed tab ${tabId}.`
+          `SidePanelStateManager managed data (formatted content, system prompt) cleared for closed tab ${tabId}.`
         );
       } catch (error) {
         logger.background.error(
@@ -277,10 +283,12 @@ export function setupTabStateListener() {
         `Attempting to disable side panel for closed tab ${tabId}`
       );
       try {
-        await chrome.sidePanel.setOptions({ tabId: tabId, enabled: false });
-        logger.background.info(
-          `Successfully requested side panel disable for closed tab ${tabId}.`
-        );
+        if (chrome.sidePanel && typeof chrome.sidePanel.setOptions === 'function') {
+          await chrome.sidePanel.setOptions({ tabId: tabId, enabled: false });
+          logger.background.info(
+            `Successfully requested side panel disable for closed tab ${tabId}.`
+          );
+        }
       } catch (err) {
         // Log warning, but don't throw - tab might already be gone or panel wasn't open/relevant
         logger.background.warn(
@@ -308,7 +316,7 @@ export async function performStaleTabCleanup() {
     logger.background.info(`Found ${validTabIds.size} currently open tabs.`);
 
     // Clean up all general tab-specific storage keys based on the valid IDs
-    for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_CLEANUP) {
+    for (const storageKey of ALL_TAB_SPECIFIC_KEYS_FOR_AUTOMATIC_CLEANUP) {
       // Skip sidepanel state in this loop; handled separately below.
       if (storageKey !== STORAGE_KEYS.TAB_SIDEPANEL_STATES) {
         await cleanupTabStorage(storageKey, null, validTabIds); // Pass validTabIds for periodic removal, tabId=null
@@ -319,7 +327,8 @@ export async function performStaleTabCleanup() {
     );
 
     // Use SidePanelStateManager to clean its state based on valid IDs
-    await SidePanelStateManager.cleanupTabStates(); // Call without arguments
+    // This will iterate through stored side panel states and remove entries for closed tabs.
+    await SidePanelStateManager.cleanupTabStates();
     logger.background.info(
       `SidePanelStateManager stale state cleanup completed.`
     );

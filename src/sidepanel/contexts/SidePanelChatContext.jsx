@@ -49,10 +49,9 @@ export function SidePanelChatProvider({ children }) {
   const [stableContextStatus, setStableContextStatus] = useState({
     warningLevel: 'none',
   });
-  const [extractedContentAdded, setExtractedContentAdded] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isContentExtractionEnabled, setIsContentExtractionEnabled] =
-    useState(true);
+    useState(true); // Default to true (ON)
   const [modelConfigData, setModelConfigData] = useState(null);
   const [stableModelConfigData, setStableModelConfigData] = useState(null);
   const [stableTokenStats, setStableTokenStats] = useState(
@@ -85,7 +84,6 @@ export function SidePanelChatProvider({ children }) {
   );
 
   // --- Internal Helper: Initiate API Call ---
-  // This function is defined here and passed down via context value
   const _initiateApiCall = useCallback(
     async ({
       platformId,
@@ -93,13 +91,12 @@ export function SidePanelChatProvider({ children }) {
       promptContent,
       conversationHistory,
       streaming,
-      isContentExtractionEnabled,
-      isThinkingModeEnabled,
+      isContentExtractionEnabled: localIsContentExtractionEnabled,
+      isThinkingModeEnabled: localIsThinkingModeEnabled,
       options,
-      // Dependencies needed for error handling and state updates
       assistantMessageIdOnError,
-      messagesOnError, // State *before* placeholder was added
-      rerunStatsRef: localRerunStatsRef, // Use passed ref
+      messagesOnError,
+      rerunStatsRef: localRerunStatsRef,
     }) => {
       try {
         const result = await processContentViaApi({
@@ -108,10 +105,18 @@ export function SidePanelChatProvider({ children }) {
           promptContent,
           conversationHistory,
           streaming,
-          isContentExtractionEnabled,
-          isThinkingModeEnabled: isThinkingModeEnabled,
+          isContentExtractionEnabled: localIsContentExtractionEnabled,
+          isThinkingModeEnabled: localIsThinkingModeEnabled,
           options,
         });
+
+        // Auto-toggle content extraction OFF if it was successfully included
+        if (result && result.contentSuccessfullyIncluded) {
+          setIsContentExtractionEnabled(false);
+          logger.sidepanel.info(
+            'Content was successfully included in API call, toggling extraction OFF.'
+          );
+        }
 
         if (result && result.skippedContext === true) {
           logger.sidepanel.info(
@@ -124,7 +129,6 @@ export function SidePanelChatProvider({ children }) {
             content: `Note: ${result.reason || 'Page content could not be included.'}`,
             timestamp: new Date().toISOString(),
           };
-          // Update messages: Use messagesOnError which is the state before the placeholder
           const finalMessages = [...messagesOnError, systemMessage];
           setMessages(finalMessages);
           if (options.tabId) {
@@ -134,17 +138,17 @@ export function SidePanelChatProvider({ children }) {
               modelConfigData
             );
           }
-          setStreamingMessageId(null); // No stream started
-          resetContentProcessing(); // Reset API state
-          return false; // Indicate stream did not start
+          setStreamingMessageId(null);
+          resetContentProcessing();
+          return false;
         }
 
         if (!result || !result.success) {
           const errorMsg = result?.error || 'Failed to initialize streaming';
-          throw new Error(errorMsg); // Throw to be caught by catch block
+          throw new Error(errorMsg);
         }
 
-        return true; // Indicate stream started successfully
+        return true;
       } catch (error) {
         logger.sidepanel.error('Error initiating API call:', error);
         const isPortClosedError = error.isPortClosed;
@@ -152,9 +156,8 @@ export function SidePanelChatProvider({ children }) {
           ? '[System: The connection was interrupted. Please try sending your message again.]'
           : `Error: ${error.message || 'Failed to process request'}`;
 
-        // Use messagesOnError (state before placeholder) + new system error message
         const systemErrorMessage = {
-          id: assistantMessageIdOnError, // Use the placeholder ID for the error message
+          id: assistantMessageIdOnError,
           role: MESSAGE_ROLES.SYSTEM,
           content: systemErrorMessageContent,
           timestamp: new Date().toISOString(),
@@ -164,7 +167,6 @@ export function SidePanelChatProvider({ children }) {
         setMessages(finalErrorMessages);
 
         if (options.tabId) {
-          // Handle potential rerun stats cleanup on error
           const savedStats = localRerunStatsRef?.current;
           const historyOptions = savedStats
             ? {
@@ -179,10 +181,10 @@ export function SidePanelChatProvider({ children }) {
             historyOptions
           );
         }
-        if (localRerunStatsRef) localRerunStatsRef.current = null; // Clear ref on error
+        if (localRerunStatsRef) localRerunStatsRef.current = null;
         setStreamingMessageId(null);
         resetContentProcessing();
-        return false; // Indicate stream did not start
+        return false;
       }
     },
     [
@@ -191,9 +193,9 @@ export function SidePanelChatProvider({ children }) {
       setStreamingMessageId,
       resetContentProcessing,
       modelConfigData,
-    ] // Dependencies for _initiateApiCall
+      setIsContentExtractionEnabled,
+    ]
   );
-  // --- End Internal Helper ---
 
   // --- Instantiate Hooks (Pass _initiateApiCall) ---
   const { cancelStream } = useChatStreaming({
@@ -205,7 +207,6 @@ export function SidePanelChatProvider({ children }) {
     selectedPlatform,
     tokenStats,
     rerunStatsRef,
-    setExtractedContentAdded,
     isProcessing,
     isCanceling,
     setIsCanceling,
@@ -216,7 +217,6 @@ export function SidePanelChatProvider({ children }) {
     ChatHistoryService,
     TokenManagementService,
     robustSendMessage,
-    extractedContentAdded,
     isThinkingModeEnabled,
   });
 
@@ -242,7 +242,6 @@ export function SidePanelChatProvider({ children }) {
       isContentExtractionEnabled,
       isThinkingModeEnabled,
     });
-  // --- End Hook Instantiation ---
 
   // Load full platform configuration when platform or model changes
   useEffect(() => {
@@ -281,55 +280,59 @@ export function SidePanelChatProvider({ children }) {
   useEffect(() => {
     const updateContextStatus = async () => {
       if (!tabId || !modelConfigData) {
-        // Don't update stableContextStatus - keep previous valid state
         return;
       }
       try {
         const status = await calculateContextStatus(modelConfigData);
-        // Only update stable status if we got a valid status object
         if (status && typeof status === 'object') {
           setStableContextStatus(status);
         }
       } catch (error) {
         logger.sidepanel.error('Error calculating context status:', error);
-        // Don't update stableContextStatus on error - keep previous valid state
       }
     };
     updateContextStatus();
   }, [tabId, modelConfigData, tokenStats, calculateContextStatus]);
 
   // Stabilize tokenStats for UI consumers
-  const { isLoading: isPlatformLoading } = useSidePanelPlatform(); // Get loading state outside effect
+  const { isLoading: isPlatformLoading } = useSidePanelPlatform();
 
   useEffect(() => {
     if (!isPlatformLoading) {
-      setStableTokenStats(tokenStats); // Update stable stats when loading is done
+      setStableTokenStats(tokenStats);
     }
-  }, [tokenStats, isPlatformLoading]); // Depend on internal tokenStats and isPlatformLoading
+  }, [tokenStats, isPlatformLoading]);
 
-  // Load chat history for current tab
+  // Load chat history for current tab & set initial content extraction toggle state
   useEffect(() => {
-    const loadChatHistory = async () => {
+    const loadChatHistoryAndSetToggle = async () => {
       if (!tabId) return;
       try {
         const history = await ChatHistoryService.getHistory(tabId);
         setMessages(history);
+
+        // Set initial state of isContentExtractionEnabled based on history
+        if (history.length === 0) {
+          setIsContentExtractionEnabled(true); // ON for new chat
+        } else {
+          setIsContentExtractionEnabled(false); // OFF if history exists
+        }
+
         if (history.length > 0 && modelConfigData) {
           await calculateStats(history, modelConfigData);
         }
-        // Check if extracted content message exists
-        const hasExtracted = history.some((msg) => msg.isExtractedContent);
-        setExtractedContentAdded(hasExtracted);
       } catch (error) {
         logger.sidepanel.error('Error loading tab chat history:', error);
+        setIsContentExtractionEnabled(true); // Default to ON on error
       }
     };
-    loadChatHistory();
+    loadChatHistoryAndSetToggle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabId]); // ModelConfigData dependency out to avoid reload on model change
+  }, [tabId]); // modelConfigData removed to prevent toggle reset on model change
 
-  // Get visible messages (filtering out extracted content)
+  // Get visible messages (filtering out extracted content - this might be removed if extracted content is no longer a separate message type)
   const visibleMessages = useMemo(() => {
+    // If extracted content is no longer a separate message type, this can be simplified to: return messages;
     return messages.filter((msg) => !msg.isExtractedContent);
   }, [messages]);
 
@@ -343,13 +346,11 @@ export function SidePanelChatProvider({ children }) {
   // Load Thinking Mode preference when dependencies change
   useEffect(() => {
     const loadPreference = async () => {
-      // Only proceed if platform/model/tab are selected and config data is loaded
       if (!selectedPlatformId || !selectedModel || !tabId || !modelConfigData) {
-        setIsThinkingModeEnabled(false); // Default to false if dependencies aren't ready
+        setIsThinkingModeEnabled(false);
         return;
       }
 
-      // Check if the loaded model config allows toggling
       if (modelConfigData?.thinking?.toggleable === true) {
         try {
           const result = await chrome.storage.sync.get(
@@ -358,17 +359,15 @@ export function SidePanelChatProvider({ children }) {
           const prefs =
             result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
           const modePref = prefs[selectedPlatformId]?.[selectedModel];
-          // Set state based on preference, default to false if undefined
           setIsThinkingModeEnabled(modePref === undefined ? false : modePref);
         } catch (err) {
           logger.sidepanel.error(
             'Error loading thinking mode preference:',
             err
           );
-          setIsThinkingModeEnabled(false); // Default to false on error
+          setIsThinkingModeEnabled(false);
         }
       } else {
-        // If not toggleable, ensure state is false
         setIsThinkingModeEnabled(false);
       }
     };
@@ -382,7 +381,6 @@ export function SidePanelChatProvider({ children }) {
     const currentModelId = selectedModel;
     const currentHasCreds = hasAnyPlatformCredentials;
 
-    // --- Initial Validation ---
     if (!currentPlatformId || !currentModelId || !currentHasCreds) {
       let errorMessage = 'Error: ';
       if (!currentPlatformId) errorMessage += 'Please select a platform. ';
@@ -403,7 +401,6 @@ export function SidePanelChatProvider({ children }) {
     }
     if (!text.trim() || isProcessing || !tabId) return;
 
-    // --- Prepare Messages and State ---
     const inputTokens = TokenManagementService.estimateTokens(text.trim());
     const userMessageId = `msg_${Date.now()}`;
     const userMessage = {
@@ -426,34 +423,37 @@ export function SidePanelChatProvider({ children }) {
       isStreaming: true,
       inputTokens: 0,
       outputTokens: 0,
-      apiCost: null, // Initialize apiCost to null
+      apiCost: null,
     };
 
-    const messagesBeforeApiCall = [...messages, userMessage]; // State before placeholder
+    const messagesBeforeApiCall = [...messages, userMessage];
     const messagesWithPlaceholder = [
       ...messagesBeforeApiCall,
       assistantMessage,
     ];
 
-    setMessages(messagesWithPlaceholder); // Update UI with user message and placeholder
+    setMessages(messagesWithPlaceholder);
     setInputValue('');
-    setStreamingMessageId(assistantMessageId); // Set streaming ID here
+    setStreamingMessageId(assistantMessageId);
     batchedStreamingContentRef.current = '';
 
-    // Store pre-send stats (relevant if this becomes a rerun later)
     rerunStatsRef.current = {
       preTruncationCost: tokenStats.accumulatedCost || 0,
       preTruncationOutput: tokenStats.outputTokens || 0,
     };
 
+    // Use the current state of isContentExtractionEnabled for this call
+    const localIsContentExtractionEnabled = isContentExtractionEnabled;
+    const localIsThinkingModeEnabled = isThinkingModeEnabled;
+
     const isPageInjectable = currentTab?.url
       ? isInjectablePage(currentTab.url)
       : false;
     const effectiveContentExtractionEnabled = isPageInjectable
-      ? isContentExtractionEnabled
+      ? localIsContentExtractionEnabled // Use the current toggle state
       : false;
 
-    const conversationHistory = messages // Use messages state *before* adding new user/assistant msg
+    const conversationHistory = messages
       .filter(
         (msg) =>
           (msg.role === MESSAGE_ROLES.USER ||
@@ -466,7 +466,6 @@ export function SidePanelChatProvider({ children }) {
         timestamp: msg.timestamp,
       }));
 
-    // --- Delegate API Call Initiation ---
     await _initiateApiCall({
       platformId: currentPlatformId,
       modelId: currentModelId,
@@ -474,7 +473,7 @@ export function SidePanelChatProvider({ children }) {
       conversationHistory,
       streaming: true,
       isContentExtractionEnabled: effectiveContentExtractionEnabled,
-      isThinkingModeEnabled: isThinkingModeEnabled,
+      isThinkingModeEnabled: localIsThinkingModeEnabled,
       options: {
         tabId,
         source: INTERFACE_SOURCES.SIDEPANEL,
@@ -487,19 +486,18 @@ export function SidePanelChatProvider({ children }) {
       messagesOnError: messagesBeforeApiCall,
       rerunStatsRef: rerunStatsRef,
     });
-    // No further try/catch needed here, _initiateApiCall handles it
   };
-  // --- End Send Message Logic ---
 
   // --- Utility Functions (Remain in Context) ---
   const clearChat = async () => {
     if (!tabId) return;
     setMessages([]);
-    setExtractedContentAdded(false); // Reset flag
     await ChatHistoryService.clearHistory(tabId);
-    await clearTokenData(); // Clear associated tokens
+    await clearTokenData();
   };
 
+  // This function is now less relevant as content is always re-extracted if toggle is ON.
+  // Keeping it for now in case it's used elsewhere, but its direct utility for sidepanel context might be diminished.
   const clearFormattedContentForTab = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
       logger.sidepanel.warn(
@@ -512,7 +510,6 @@ export function SidePanelChatProvider({ children }) {
     );
     try {
       await SidePanelStateManager.clearFormattedContentForTab(tabId);
-      setExtractedContentAdded(false); // Keep this local state update
       logger.sidepanel.info(
         `SidePanelStateManager successfully cleared formatted content for tab: ${tabId}`
       );
@@ -522,7 +519,7 @@ export function SidePanelChatProvider({ children }) {
         error
       );
     }
-  }, [tabId, setExtractedContentAdded]);
+  }, [tabId]);
 
   const resetCurrentTabData = useCallback(async () => {
     if (tabId === null || tabId === undefined) {
@@ -531,7 +528,6 @@ export function SidePanelChatProvider({ children }) {
       );
       return;
     }
-    // Prevent concurrent refreshes
     if (isRefreshing) {
       logger.sidepanel.warn('Refresh already in progress. Ignoring request.');
       return;
@@ -542,20 +538,16 @@ export function SidePanelChatProvider({ children }) {
         'Are you sure you want to clear all chat history and data for this tab? This action cannot be undone.'
       )
     ) {
-      // Set refreshing state immediately
       setIsRefreshing(true);
-
       try {
-        // 1. Cancel any ongoing stream
         if (streamingMessageId && isProcessing && !isCanceling) {
           logger.sidepanel.info(
             'Refresh requested: Cancelling ongoing stream first...'
           );
-          await cancelStream(); // Wait for cancellation attempt
+          await cancelStream();
           logger.sidepanel.info('Stream cancellation attempted.');
         }
 
-        // 2. Notify background to clear its data (attempt and log, but don't block local reset on failure)
         logger.sidepanel.info(
           `Requesting background to clear data for tab ${tabId}`
         );
@@ -573,39 +565,34 @@ export function SidePanelChatProvider({ children }) {
               'Background failed to confirm tab data clear:',
               clearResponse?.error
             );
-            // Proceed with local reset even if background fails
           }
         } catch (sendError) {
           logger.sidepanel.error(
             'Error sending clearTabData message to background:',
             sendError
           );
-          // Proceed with local reset despite background communication failure
         }
 
-        // 3. Reset local state *after* attempting background clear
         logger.sidepanel.info('Resetting local sidepanel state...');
         setMessages([]);
         setInputValue('');
         setStreamingMessageId(null);
-        setExtractedContentAdded(false);
-        setIsCanceling(false); // Ensure canceling state is reset if cancellation happened
-        await clearTokenData(); // Clear associated tokens and reset local token state
+        setIsCanceling(false);
+        await clearTokenData();
+        setIsContentExtractionEnabled(true); // Reset toggle to ON after refresh
         logger.sidepanel.info('Local sidepanel state reset complete.');
       } catch (error) {
-        // Catch errors primarily from stream cancellation or clearTokenData
         logger.sidepanel.error(
           'Error during the refresh process (excluding background communication):',
           error
         );
-        // Attempt to reset local state even on these errors
         try {
           setMessages([]);
           setInputValue('');
           setStreamingMessageId(null);
-          setExtractedContentAdded(false);
           setIsCanceling(false);
           await clearTokenData();
+          setIsContentExtractionEnabled(true); // Reset toggle to ON even on error
         } catch (resetError) {
           logger.sidepanel.error(
             'Error during fallback state reset:',
@@ -613,54 +600,36 @@ export function SidePanelChatProvider({ children }) {
           );
         }
       } finally {
-        // 4. ALWAYS turn off refreshing state
         logger.sidepanel.info(
           'Setting isRefreshing to false in finally block.'
         );
         setIsRefreshing(false);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tabId,
     isRefreshing,
     clearTokenData,
-    setMessages,
-    setInputValue,
-    setStreamingMessageId,
-    setExtractedContentAdded,
-    setIsCanceling,
+    cancelStream,
     streamingMessageId,
     isProcessing,
     isCanceling,
-    cancelStream,
-    robustSendMessage,
   ]);
 
-  // Toggle Thinking Mode handler
   const toggleThinkingMode = useCallback(
     async (newState) => {
-      // Only proceed if platform/model are selected
       if (!selectedPlatformId || !selectedModel) return;
-
       setIsThinkingModeEnabled(newState);
-
       try {
         const result = await chrome.storage.sync.get(
           STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE
         );
         const prefs =
           result[STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE] || {};
-
-        // Ensure platform object exists
         if (!prefs[selectedPlatformId]) {
           prefs[selectedPlatformId] = {};
         }
-
-        // Update the specific model preference
         prefs[selectedPlatformId][selectedModel] = newState;
-
-        // Save back to storage
         await chrome.storage.sync.set({
           [STORAGE_KEYS.SIDEPANEL_THINKING_MODE_PREFERENCE]: prefs,
         });
@@ -672,19 +641,15 @@ export function SidePanelChatProvider({ children }) {
       }
     },
     [selectedPlatformId, selectedModel]
-  ); // Dependencies for the handler
-
-  // --- End Utility Functions ---
+  );
 
   return (
     <SidePanelChatContext.Provider
       value={{
-        // State
         messages: visibleMessages,
         allMessages: messages,
         inputValue,
         contextStatus: stableContextStatus,
-        extractedContentAdded,
         isContentExtractionEnabled,
         modelConfigData: stableModelConfigData,
         isProcessing,
@@ -694,8 +659,6 @@ export function SidePanelChatProvider({ children }) {
         contentType,
         tokenStats: stableTokenStats,
         isThinkingModeEnabled,
-
-        // Setters / Actions
         toggleThinkingMode,
         setInputValue,
         setIsContentExtractionEnabled,
