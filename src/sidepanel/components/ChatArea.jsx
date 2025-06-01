@@ -474,7 +474,7 @@ function ChatArea({
                       onFocus={() => setHoveredElement('freeTier')}
                       onBlur={() => setHoveredElement(null)}
                     >
-                      <FreeTierIcon /> <span className='ml-1'>Free</span>
+                      <FreeTierIcon className='w-3.5 h-3.5 mr-1 select-none'/> <span>Free</span>
                       <Tooltip
                         show={hoveredElement === 'freeTier'}
                         message='This model is currently free to use via API.'
@@ -494,8 +494,8 @@ function ChatArea({
                             onFocus={() => setHoveredElement('inputPrice')}
                             onBlur={() => setHoveredElement(null)}
                           >
-                            <InputTokenIcon />
-                            <span className='ml-1'>{`$${dynamicSpecs.inputPrice.toFixed(2)}`}</span>
+                            <InputTokenIcon className='w-3.5 h-3.5 mr-1 select-none'/>
+                            <span>{`$${dynamicSpecs.inputPrice.toFixed(2)}`}</span>
                             <Tooltip
                               show={hoveredElement === 'inputPrice'}
                               message={`$${dynamicSpecs.inputPrice.toFixed(2)} / 1M input tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
@@ -516,8 +516,8 @@ function ChatArea({
                             onFocus={() => setHoveredElement('outputPrice')}
                             onBlur={() => setHoveredElement(null)}
                           >
-                            <OutputTokenIcon />
-                            <span className='ml-1'>{`$${dynamicSpecs.outputPrice.toFixed(2)}`}</span>
+                            <OutputTokenIcon className='w-3.5 h-3.5 mr-1 select-none'/>
+                            <span>{`$${dynamicSpecs.outputPrice.toFixed(2)}`}</span>
                             <Tooltip
                               show={hoveredElement === 'outputPrice'}
                               message={`$${dynamicSpecs.outputPrice.toFixed(2)} / 1M output tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
@@ -538,8 +538,8 @@ function ChatArea({
                         onFocus={() => setHoveredElement('contextWindow')}
                         onBlur={() => setHoveredElement(null)}
                       >
-                        <ContextWindowIcon />
-                        <span className='ml-1'>
+                        <ContextWindowIcon className='w-3 h-3 mr-2 select-none'/>
+                        <span>
                           {formatTokenCount(dynamicSpecs.contextWindow)}
                         </span>
                         <Tooltip

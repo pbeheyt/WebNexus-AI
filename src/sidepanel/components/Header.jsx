@@ -59,10 +59,10 @@ function Header({
   const formattedAccumulatedCost = formatCost(accumulatedCost);
 
   const tokenTooltipContent = {
-    inputTokens: `Est. Input: ${formatTokenCount(promptTokensInLastApiCall)} (Prompt) + ${formatTokenCount(historyTokensSentInLastApiCall)} (History) + ${formatTokenCount(systemTokensInLastApiCall)} (System) = ${formatTokenCount(inputTokensInLastApiCall)} total.`,
+    inputTokens: `Est. Input: ${promptTokensInLastApiCall} (Prompt) + ${historyTokensSentInLastApiCall} (History) + ${(systemTokensInLastApiCall)} (System) = ${inputTokensInLastApiCall} total.`,
     outputTokens: `Est. total output tokens generated in this chat session.`,
-    contextWindow: `Est. ${formatTokenCount(contextData.tokensRemaining)} tokens remaining (${formatTokenCount(contextData.totalTokens)} / ${formatTokenCount(contextData.maxContextWindow)} used).`,
-    cost: `Est. total accumulated cost for this chat session.`, // Tooltip for cost
+    contextWindow: `Est. ${contextData.tokensRemaining} tokens remaining (${contextData.totalTokens} / ${contextData.maxContextWindow} used).`,
+    cost: `Est. total accumulated cost for this chat session.`,
   };
 
   return (
@@ -120,7 +120,7 @@ function Header({
       </div>
 
       {/* Right Section: Token Information */}
-      <div className='flex items-center space-x-3 text-xs text-theme-secondary'>
+      <div className='flex items-center space-x-4 text-xs text-theme-secondary'>
         {/* Input Tokens */}
         <div
           ref={inputTokensRef}
@@ -168,7 +168,7 @@ function Header({
           onFocus={() => setHoveredTokenElement('contextWindow')}
           onBlur={() => setHoveredTokenElement(null)}
         >
-          <ContextWindowIcon className='w-3.5 h-3.5 mr-1 select-none flex-shrink-0' />
+          <ContextWindowIcon className='w-3 h-3 mr-2 select-none flex-shrink-0' />
           <span className='whitespace-nowrap'>{`${(contextData.percentage || 0).toFixed(0)}%`}</span>
           <Tooltip
             show={hoveredTokenElement === 'contextWindow'}
@@ -188,7 +188,7 @@ function Header({
           onBlur={() => setHoveredTokenElement(null)}
         >
           {/* No icon for cost, just the value */}
-          <span className='whitespace-nowrap'>{formattedAccumulatedCost}</span>
+          <span className='whitespace-nowrap font-semibold'>{formattedAccumulatedCost}</span>
           <Tooltip
             show={hoveredTokenElement === 'cost'}
             message={tokenTooltipContent.cost}

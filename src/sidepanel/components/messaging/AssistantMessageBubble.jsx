@@ -36,7 +36,7 @@ export const AssistantMessageBubble = memo(
         platformId = null,
         className = '',
         style = {},
-        apiCost, // Destructure apiCost
+        apiCost,
       },
       ref
     ) => {
@@ -381,9 +381,9 @@ export const AssistantMessageBubble = memo(
 
           {/* Footer section */}
           <div className='flex justify-between items-center pb-4'>
-            <div className='text-sm flex items-center space-x-2'>
+            <div className='text-xs text-theme-secondary flex items-center'>
               {resolvedPlatformIconUrl && (
-                <div className='select-none'>
+                <div className='select-none mr-2'>
                   <PlatformIcon
                     platformId={platformId}
                     iconUrl={resolvedPlatformIconUrl}
@@ -393,9 +393,9 @@ export const AssistantMessageBubble = memo(
                 </div>
               )}
               {modelId && (
-                <span title={resolvedModelDisplayName !== modelId ? modelId : undefined}> {/* Show modelId in title if different from display name */}
+                <span className='mr-4' title={resolvedModelDisplayName !== modelId ? modelId : undefined}> 
                   {' '}
-                  {resolvedModelDisplayName || modelId}{' '} {/* Display resolved name, fallback to modelId */}
+                  {resolvedModelDisplayName || modelId}{' '}
                 </span>
               )}
               {/* API Cost Badge */}
@@ -403,7 +403,7 @@ export const AssistantMessageBubble = memo(
                 <>
                   <span
                     ref={costDisplayRef}
-                    className="ml-6 text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help"
+                    className="text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help"
                       onMouseEnter={() => setCostTooltipVisible(true)}
                       onMouseLeave={() => setCostTooltipVisible(false)}
                       role="status"
