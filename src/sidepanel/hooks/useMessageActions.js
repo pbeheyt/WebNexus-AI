@@ -6,6 +6,7 @@ import { logger } from '../../shared/logger';
 import { MESSAGE_ROLES, INTERFACE_SOURCES } from '../../shared/constants';
 import { useContent } from '../../contexts/ContentContext';
 import { isInjectablePage } from '../../shared/utils/content-utils';
+import { createStructuredPromptString } from '../../shared/utils/prompt-formatting-utils';
 
 /**
  * Internal helper function to initiate the API call sequence for reruns/edits.
@@ -77,7 +78,7 @@ const _initiateRerunSequence = async ({
   
   if (currentUserMessageForApi && currentUserMessageForApi.pageContextUsed) {
     // Context is already part of the message, reconstruct the full prompt
-    finalPromptContent = currentUserMessageForApi.pageContextUsed + "\n\n# USER PROMPT\n" + currentUserMessageForApi.content;
+    finalPromptContent = createStructuredPromptString(currentUserMessageForApi.content, currentUserMessageForApi.pageContextUsed)
     effectiveExtractionEnabledForRerun = false; // Don't re-extract since context is already included
   } else {
     // No existing context, use current toggle state
