@@ -50,6 +50,7 @@ const _initiateRerunSequence = async ({
   resetContentProcessing,
   modelConfigData,
   ChatHistoryService,
+  currentUserMessageForApi,
 }) => {
   const assistantPlaceholder = {
     id: assistantPlaceholderId,
@@ -70,26 +71,32 @@ const _initiateRerunSequence = async ({
   setStreamingMessageId(assistantPlaceholderId);
   batchedStreamingContentRef.current = '';
 
-  // --- Determine effective content extraction state ---
-  const isPageInjectable = currentTab?.url
-    ? isInjectablePage(currentTab.url)
-    : false;
-  // 'isContentExtractionEnabled' below refers to the parameter passed to _initiateRerunSequence (the toggle state)
-  const effectiveContentExtractionEnabled = isPageInjectable
-    ? isContentExtractionEnabled
-    : false;
+  // --- Prepare prompt content with page context if it exists ---
+  let finalPromptContent = promptContent;
+  let effectiveExtractionEnabledForRerun;
+  
+  if (currentUserMessageForApi && currentUserMessageForApi.pageContextUsed) {
+    // Context is already part of the message, reconstruct the full prompt
+    finalPromptContent = currentUserMessageForApi.pageContextUsed + "\n\n# USER PROMPT\n" + currentUserMessageForApi.content;
+    effectiveExtractionEnabledForRerun = false; // Don't re-extract since context is already included
+  } else {
+    // No existing context, use current toggle state
+    const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
+    effectiveExtractionEnabledForRerun = isPageInjectable ? isContentExtractionEnabled : false;
+  }
+
   logger.sidepanel.info(
-    `[_initiateRerunSequence] Page injectable: ${isPageInjectable}, Toggle state: ${isContentExtractionEnabled}, Effective: ${effectiveContentExtractionEnabled}`
+    `[_initiateRerunSequence] Has existing context: ${!!currentUserMessageForApi?.pageContextUsed}, Toggle state: ${isContentExtractionEnabled}, Effective: ${effectiveExtractionEnabledForRerun}`
   );
 
   // Use the passed-in _initiateApiCall helper
   await _initiateApiCall({
     platformId: selectedPlatformId,
     modelId: selectedModel,
-    promptContent,
+    promptContent: finalPromptContent,
     conversationHistory,
     streaming: true,
-    isContentExtractionEnabled: effectiveContentExtractionEnabled,
+    isContentExtractionEnabled: effectiveExtractionEnabledForRerun,
     isThinkingModeEnabled: isThinkingModeEnabled,
     options: {
       tabId,
@@ -213,6 +220,7 @@ export function useMessageActions({
         resetContentProcessing,
         modelConfigData,
         ChatHistoryService,
+        currentUserMessageForApi: truncatedMessages[index],
       });
     },
     [
@@ -311,6 +319,7 @@ export function useMessageActions({
         resetContentProcessing,
         modelConfigData,
         ChatHistoryService,
+        currentUserMessageForApi: updatedMessage,
       });
     },
     [
@@ -392,6 +401,7 @@ export function useMessageActions({
         selectedModel,
         selectedPlatformId,
         tabId,
+        currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
         isThinkingModeEnabled,
@@ -399,6 +409,7 @@ export function useMessageActions({
         resetContentProcessing,
         modelConfigData,
         ChatHistoryService,
+        currentUserMessageForApi: truncatedMessages[userIndex],
       });
     },
     [
@@ -419,6 +430,7 @@ export function useMessageActions({
       processContentViaApi,
       isContentExtractionEnabled,
       isThinkingModeEnabled,
+      currentTab,
     ]
   );
 

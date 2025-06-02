@@ -308,6 +308,7 @@ export async function processContentViaApi(params) {
         response: apiResponse,
         contentType: contentType,
         contentSuccessfullyIncluded, // Return the flag
+        extractedPageContent: contentSuccessfullyIncluded ? formattedContentForRequest : null, // Add this
       };
     } catch (processingError) {
       await setApiProcessingError(processingError.message);
@@ -323,6 +324,7 @@ export async function processContentViaApi(params) {
       success: false,
       error: error.message,
       contentSuccessfullyIncluded: false, // Ensure flag is false on error
+      extractedPageContent: null, // Add this
     };
   }
 }

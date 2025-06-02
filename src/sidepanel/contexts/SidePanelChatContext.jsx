@@ -140,7 +140,12 @@ export function SidePanelChatProvider({ children }) {
           }
           setStreamingMessageId(null);
           resetContentProcessing();
-          return false;
+          return {
+            success: false,
+            error: result.reason || 'Context extraction was skipped',
+            contentSuccessfullyIncluded: false,
+            extractedPageContent: null
+          };
         }
 
         if (!result || !result.success) {
@@ -148,7 +153,12 @@ export function SidePanelChatProvider({ children }) {
           throw new Error(errorMsg);
         }
 
-        return true;
+        return {
+          success: true,
+          streamId: result.streamId,
+          contentSuccessfullyIncluded: result.contentSuccessfullyIncluded,
+          extractedPageContent: result.extractedPageContent
+        };
       } catch (error) {
         logger.sidepanel.error('Error initiating API call:', error);
         const isPortClosedError = error.isPortClosed;
@@ -184,7 +194,12 @@ export function SidePanelChatProvider({ children }) {
         if (localRerunStatsRef) localRerunStatsRef.current = null;
         setStreamingMessageId(null);
         resetContentProcessing();
-        return false;
+        return {
+          success: false,
+          error: error.message || 'Failed to process request',
+          contentSuccessfullyIncluded: false,
+          extractedPageContent: null
+        };
       }
     },
     [
@@ -466,7 +481,7 @@ export function SidePanelChatProvider({ children }) {
         timestamp: msg.timestamp,
       }));
 
-    await _initiateApiCall({
+    const apiCallSetupResult = await _initiateApiCall({
       platformId: currentPlatformId,
       modelId: currentModelId,
       promptContent: text.trim(),
@@ -486,6 +501,19 @@ export function SidePanelChatProvider({ children }) {
       messagesOnError: messagesBeforeApiCall,
       rerunStatsRef: rerunStatsRef,
     });
+
+    // Update userMessage in the messages array if content was successfully included
+    if (apiCallSetupResult.success && apiCallSetupResult.contentSuccessfullyIncluded && apiCallSetupResult.extractedPageContent) {
+      setMessages(prevMessages => prevMessages.map(msg => {
+        if (msg.id === userMessageId) {
+          return {
+            ...msg,
+            pageContextUsed: apiCallSetupResult.extractedPageContent
+          };
+        }
+        return msg;
+      }));
+    }
   };
 
   // --- Utility Functions (Remain in Context) ---

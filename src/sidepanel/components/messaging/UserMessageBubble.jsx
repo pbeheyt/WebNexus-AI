@@ -22,6 +22,7 @@ export const UserMessageBubble = memo(
       {
         id,
         content,
+        pageContextUsed,
         className = '',
         style = {},
         // Other props are destructured but not used directly in this component
@@ -88,6 +89,11 @@ export const UserMessageBubble = memo(
                 <div className='whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm'>
                   {content}
                 </div>
+                {pageContextUsed && (
+                  <div className="mt-1 pt-1 border-t border-gray-300 dark:border-gray-600">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 italic">(Page context was included)</span>
+                  </div>
+                )}
               </>
             )}
 
@@ -172,6 +178,7 @@ export const UserMessageBubble = memo(
 UserMessageBubble.propTypes = {
   id: PropTypes.string.isRequired,
   content: PropTypes.string,
+  pageContextUsed: PropTypes.string,
   className: PropTypes.string,
   style: PropTypes.object,
   role: PropTypes.string,
