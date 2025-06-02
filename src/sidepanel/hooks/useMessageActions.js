@@ -91,7 +91,7 @@ const _initiateRerunSequence = async ({
   );
 
   // Use the passed-in _initiateApiCall helper
-  await _initiateApiCall({
+  const apiCallSetupResult = await _initiateApiCall({
     platformId: selectedPlatformId,
     modelId: selectedModel,
     promptContent: finalPromptContent,
@@ -119,6 +119,19 @@ const _initiateRerunSequence = async ({
     messagesOnError: truncatedMessages,
     rerunStatsRef,
   });
+
+  if (apiCallSetupResult.success) {
+    // Update the currentUserMessageForApi in truncatedMessages
+    if (currentUserMessageForApi) {
+      if (apiCallSetupResult.contentSuccessfullyIncluded && apiCallSetupResult.extractedPageContent) {
+        currentUserMessageForApi.pageContextUsed = apiCallSetupResult.extractedPageContent;
+      }
+      currentUserMessageForApi.systemPromptUsedForThisTurn = apiCallSetupResult.systemPromptUsed;
+    } else {
+      // This case should ideally not happen if logic is correct
+      logger.sidepanel.warn('currentUserMessageForApi was not defined in _initiateRerunSequence when trying to set systemPromptUsedForThisTurn');
+    }
+  }
 };
 
 /**

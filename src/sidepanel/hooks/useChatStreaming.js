@@ -33,7 +33,6 @@ import { MESSAGE_ROLES, STORAGE_KEYS } from '../../shared/constants';
 export function useChatStreaming({
   tabId,
   setMessages,
-  messages, // This is allMessages from context
   modelConfigData,
   selectedModel,
   rerunStatsRef,
@@ -99,13 +98,6 @@ export function useChatStreaming({
       isError = false,
       isCancelled = false
     ) => {
-      // Log the messages array as it exists in this callback's closure *before* the functional update
-      // This is for debugging to see what 'messages' (the prop) holds at this point.
-      logger.sidepanel.debug(
-        '[DEBUG useChatStreaming] handleStreamComplete INVOKED. `messages` prop in its closure:',
-        JSON.parse(JSON.stringify(messages))
-      );
-
       const savedStats = rerunStatsRef.current;
       const retrievedPreTruncationCost = savedStats?.preTruncationCost || 0;
       const retrievedPreTruncationOutput = savedStats?.preTruncationOutput || 0;
@@ -113,11 +105,15 @@ export function useChatStreaming({
       try {
         // Use functional update for setMessages
         setMessages((prevMessages) => {
-          // Log prevMessages to see what React provides
-          logger.sidepanel.debug(
-            '[DEBUG useChatStreaming] Inside setMessages functional update. `prevMessages`:',
-            JSON.parse(JSON.stringify(prevMessages))
-          );
+          // Find the assistant message and the preceding user message
+          const assistantMessageIndex = prevMessages.findIndex(msg => msg.id === messageId);
+          let systemPromptForThisTurn = null;
+          if (assistantMessageIndex > 0) {
+            const userMessageForThisTurn = prevMessages[assistantMessageIndex - 1];
+            if (userMessageForThisTurn && userMessageForThisTurn.role === MESSAGE_ROLES.USER) {
+              systemPromptForThisTurn = userMessageForThisTurn.systemPromptUsedForThisTurn || null;
+            }
+          }
 
           let finalOutputTokensForMessage = 0;
           let finalContent = finalContentInput || '';
@@ -159,32 +155,16 @@ export function useChatStreaming({
             return msg; // Return other messages unchanged (this preserves pageContextUsed on user messages)
           });
 
-          // --- API Cost Calculation and History Saving (moved inside functional update) ---
-          logger.sidepanel.debug(
-            '[DEBUG useChatStreaming] handleStreamComplete - `updatedMessagesArray` before cost calc and save:',
-            JSON.parse(JSON.stringify(updatedMessagesArray))
-          );
-
+          // --- API Cost Calculation and History Saving ---
           if (tabId) {
-             // This saveHistory call is now the critical one.
-             // We need to ensure updatedMessagesArray has the cost if possible.
-             // The previous calculateAndSave structure was problematic.
-
-             // Let's refine:
-             // 1. Map messages to update content, streaming status etc. (DONE)
-             // 2. Try to calculate cost for the *current* message.
-             // 3. Save to history.
-             // 4. Return the updated array.
-
             const finalUpdatedMessagesForStateAndHistory = updatedMessagesArray.map(msg => {
                 if (msg.id === messageId && !isError) { // Only try to add cost if not an error
-                    // Simplified synchronous attempt to get pricing if modelConfigData is available
                     let tempApiCost = null;
                     if (modelConfigData && modelConfigData.pricing) {
                         const tempTurnStats = TokenManagementService.calculateTokenStatisticsFromMessages(
                             // Use the array *as it is being built* for this turn's stats
                             updatedMessagesArray.slice(0, updatedMessagesArray.findIndex(m => m.id === messageId) + 1),
-                            null // System prompt for cost is complex to get sync here, might lead to slight inaccuracy if not already loaded
+                            null
                         );
                         const costInfo = TokenManagementService.calculateCost(
                             tempTurnStats.inputTokensInLastApiCall,
@@ -198,13 +178,8 @@ export function useChatStreaming({
                 }
                 return msg;
             });
-            
-            logger.sidepanel.debug(
-                '[DEBUG useChatStreaming] handleStreamComplete - `finalUpdatedMessagesForStateAndHistory` before save:',
-                JSON.parse(JSON.stringify(finalUpdatedMessagesForStateAndHistory))
-            );
 
-            ChatHistoryService.saveHistory( // This is async but doesn't block the return of setMessages
+            ChatHistoryService.saveHistory(
                 tabId,
                 finalUpdatedMessagesForStateAndHistory,
                 modelConfigData, // Use modelConfigData from the hook's closure
@@ -212,7 +187,8 @@ export function useChatStreaming({
                   initialAccumulatedCost: retrievedPreTruncationCost,
                   initialOutputTokens: retrievedPreTruncationOutput,
                 },
-                isThinkingModeEnabled
+                isThinkingModeEnabled,
+                systemPromptForThisTurn 
             ).catch(err => logger.sidepanel.error("Error saving history in functional update:", err));
 
             return finalUpdatedMessagesForStateAndHistory; // Return the array with cost (if calculated)
@@ -231,19 +207,16 @@ export function useChatStreaming({
       }
     },
     [
-      // Keep dependencies that `handleStreamComplete`'s logic actually uses from its outer scope.
-      messages, // Still needed for debug logging
       selectedModel,
       tabId,
-      modelConfigData, // Needed for cost calculation and saving history
+      modelConfigData,
       rerunStatsRef,
       batchedStreamingContentRef,
       batchedThinkingContentRef,
-      setMessages, // Still needed to call the state updater
-      ChatHistoryService, // Assuming this is stable
-      TokenManagementService, // Assuming this is stable
-      isThinkingModeEnabled, // Dependency for cost calculation
-      // logger, ConfigService are typically stable module imports
+      setMessages,
+      ChatHistoryService,
+      TokenManagementService,
+      isThinkingModeEnabled,
     ]
   );
 
@@ -386,9 +359,9 @@ export function useChatStreaming({
       });
     } catch (error) {
       logger.sidepanel.error('Error cancelling stream:', error);
-      setStreamingMessageId(null); // Should be handled by stream completion, but good fallback
+      setStreamingMessageId(null); // Should be handled by stream completion, fallback
     } finally {
-      setIsCanceling(false); // Should be handled by stream completion, but good fallback
+      setIsCanceling(false); // Should be handled by stream completion, fallback
     }
   }, [
     streamingMessageId,

@@ -102,8 +102,7 @@ export const STORAGE_KEYS = {
   TAB_FORMATTED_CONTENT: 'tab_formatted_content',
   /** @description Chat history for each tab's Sidepanel instance. Local. */
   TAB_CHAT_HISTORIES: 'tab_chat_histories',
-  /** @description System prompt configured for each tab's Sidepanel instance. Local. */
-  TAB_SYSTEM_PROMPTS: 'tab_system_prompts',
+
   /** @description Token usage statistics for each tab's Sidepanel instance. Local. */
   TAB_TOKEN_STATISTICS: 'tab_token_statistics',
   /** @description Last selected/preferred platform for each tab's Sidepanel instance. Local. */

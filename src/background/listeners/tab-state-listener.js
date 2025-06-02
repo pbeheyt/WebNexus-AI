@@ -8,7 +8,6 @@ import { logger } from '../../shared/logger.js';
 const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR_ON_MANUAL_REFRESH = [
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
-  STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
   STORAGE_KEYS.TAB_FORMATTED_CONTENT,
@@ -24,7 +23,6 @@ const ALL_TAB_SPECIFIC_KEYS_FOR_AUTOMATIC_CLEANUP = [
   STORAGE_KEYS.TAB_CHAT_HISTORIES,
   STORAGE_KEYS.TAB_TOKEN_STATISTICS,
   STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-  STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
 ];
 
 /**
@@ -52,9 +50,7 @@ export async function clearSingleTabData(tabId) {
         case STORAGE_KEYS.TAB_FORMATTED_CONTENT:
           await SidePanelStateManager.clearFormattedContentForTab(tabId);
           break;
-        case STORAGE_KEYS.TAB_SYSTEM_PROMPTS:
-          await SidePanelStateManager.storeSystemPromptForTab(tabId, null);
-          break;
+
         default:
           // Handle other keys not managed by SidePanelStateManager
           result = await chrome.storage.local.get(storageKey);
@@ -265,10 +261,8 @@ export function setupTabStateListener() {
       // Clear other data managed by SidePanelStateManager for the removed tab
       try {
         await SidePanelStateManager.clearFormattedContentForTab(tabId);
-        // Context sent flag is removed, so no need to clear it here.
-        await SidePanelStateManager.storeSystemPromptForTab(tabId, null); // Assuming null clears it
         logger.background.info(
-          `SidePanelStateManager managed data (formatted content, system prompt) cleared for closed tab ${tabId}.`
+          `SidePanelStateManager managed data (formatted content) cleared for closed tab ${tabId}.`
         );
       } catch (error) {
         logger.background.error(

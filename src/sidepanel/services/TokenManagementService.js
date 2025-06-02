@@ -4,9 +4,9 @@ import { encode } from 'gpt-tokenizer';
 
 import { logger } from '../../shared/logger';
 import { STORAGE_KEYS, MESSAGE_ROLES } from '../../shared/constants';
-import { createStructuredPromptString } from '../../shared/utils/prompt-formatting-utils.js'; // <-- ADD THIS LINE
+import { createStructuredPromptString } from '../../shared/utils/prompt-formatting-utils.js';
 
-import ChatHistoryService from './ChatHistoryService';
+
 
 /**
  * Service for token estimation, cost calculation, storage, and context window monitoring
@@ -72,7 +72,6 @@ class TokenManagementService {
       return true;
     } catch (error) {
       logger.sidepanel.error(
-        // Corrected logger
         'TokenManagementService: Error updating token statistics:',
         error
       );
@@ -86,7 +85,7 @@ class TokenManagementService {
    * @param {string} systemPrompt - System prompt text (optional)
    * @returns {Object} - Token statistics focused on the last API call. (Made synchronous again)
    */
-  static calculateTokenStatisticsFromMessages(messages, systemPrompt = '') {
+  static calculateTokenStatisticsFromMessages(messages, systemPromptText = '') {
     let outputTokens = 0;
     let promptTokensInLastApiCall = 0;
 
@@ -111,11 +110,11 @@ class TokenManagementService {
 
     // Process system prompt if present
     if (
-      systemPrompt &&
-      typeof systemPrompt === 'string' &&
-      systemPrompt.trim().length > 0
+      systemPromptText &&
+      typeof systemPromptText === 'string' &&
+      systemPromptText.trim().length > 0
     ) {
-      const systemPromptTokensCount = this.estimateTokens(systemPrompt);
+      const systemPromptTokensCount = this.estimateTokens(systemPromptText);
 
       // Assign tokens *only* from the initial system prompt provided.
       systemTokensInLastApiCall = systemPromptTokensCount;
@@ -258,7 +257,12 @@ class TokenManagementService {
   static async calculateAndUpdateStatistics(
     tabId,
     messages,
+    // eslint-disable-next-line no-unused-vars
+    modelConfig = null,
     options = {},
+    // eslint-disable-next-line no-unused-vars
+    isThinkingModeEnabled = false,
+    systemPromptForThisTurn = null
   ) {
     if (!tabId) return this._getEmptyStats();
 
@@ -282,13 +286,10 @@ class TokenManagementService {
     }
 
     try {
-      // 1. Get the actual system prompt string
-      const systemPrompt = await ChatHistoryService.getSystemPrompt(tabId);
-
       // 3. Calculate base token statistics from messages (includes input/output tokens for last call)
       const baseStats = this.calculateTokenStatisticsFromMessages(
         messages,
-        systemPrompt
+        systemPromptForThisTurn
       );
 
       // 4. Determine Last API Call Cost and New Accumulated Cost from message apiCost properties
@@ -364,7 +365,6 @@ class TokenManagementService {
       return finalStatsObject;
     } catch (error) {
       logger.sidepanel.error(
-        // Corrected logger
         'TokenManagementService: Error calculating token statistics:',
         error
       );

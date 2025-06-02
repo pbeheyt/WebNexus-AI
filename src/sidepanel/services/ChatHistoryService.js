@@ -5,7 +5,7 @@ import {
   STORAGE_KEYS,
   MAX_MESSAGES_PER_TAB_HISTORY,
 } from '../../shared/constants';
-import SidePanelStateManager from '../../services/SidePanelStateManager.js';
+
 
 import TokenManagementService from './TokenManagementService';
 
@@ -44,29 +44,7 @@ class ChatHistoryService {
     }
   }
 
-  /**
-   * Get the system prompt for a specific tab.
-   * @param {number} tabId - Tab ID.
-   * @returns {Promise<string|null>} The system prompt string or null if not found.
-   */
-  static async getSystemPrompt(tabId) {
-    try {
-      if (!tabId) {
-        logger.sidepanel.error(
-          'ChatHistoryService: No tabId provided for getSystemPrompt'
-        );
-        return null;
-      }
-      // Delegate to SidePanelStateManager
-      return await SidePanelStateManager.getSystemPromptForTab(tabId);
-    } catch (error) {
-      logger.sidepanel.error(
-        'ChatHistoryService: Error getting system prompt via SidePanelStateManager:',
-        error
-      );
-      return null;
-    }
-  }
+
 
   /**
    * Save chat history for a specific tab
@@ -84,7 +62,8 @@ class ChatHistoryService {
     messages,
     modelConfig = null,
     options = {},
-    isThinkingModeEnabled = false
+    isThinkingModeEnabled = false,
+    systemPromptForThisTurn = null
   ) {
     try {
       if (!tabId) {
@@ -113,6 +92,8 @@ class ChatHistoryService {
           // eslint-disable-next-line no-unused-vars
           outputTokens, 
           thinkingContent,
+          // eslint-disable-next-line no-unused-vars
+          systemPromptUsedForThisTurn,
           ...restOfMsg 
         } = msg;
 
@@ -140,7 +121,8 @@ class ChatHistoryService {
         limitedMessages,
         modelConfig,
         options,
-        isThinkingModeEnabled // Pass thinking mode state
+        isThinkingModeEnabled, // Pass thinking mode state
+        systemPromptForThisTurn // Pass system prompt for this turn
       );
 
       return stats;

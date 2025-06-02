@@ -183,78 +183,6 @@ class SidePanelStateManager {
   }
 
   /**
-   * Stores the system prompt for a specific tab.
-   * @param {number} tabId - The ID of the tab.
-   * @param {string|null} systemPrompt - The system prompt string, or null/empty to clear.
-   * @returns {Promise<void>}
-   */
-  static async storeSystemPromptForTab(tabId, systemPrompt) {
-    if (tabId === null || tabId === undefined) {
-      logger.service.warn(
-        'SidePanelStateManager: storeSystemPromptForTab called with invalid tabId.'
-      );
-      return;
-    }
-    try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.TAB_SYSTEM_PROMPTS
-      );
-      const allPrompts = result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] || {};
-
-      if (
-        systemPrompt === null ||
-        systemPrompt === undefined ||
-        systemPrompt.trim() === ''
-      ) {
-        delete allPrompts[tabId.toString()];
-        logger.service.info(
-          `Cleared system prompt for tab ${tabId.toString()}.`
-        );
-      } else {
-        allPrompts[tabId.toString()] = systemPrompt;
-        logger.service.info(
-          `Stored system prompt for tab ${tabId.toString()}.`
-        );
-      }
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.TAB_SYSTEM_PROMPTS]: allPrompts,
-      });
-    } catch (error) {
-      logger.service.error(
-        `Error storing/clearing system prompt for tab ${tabId}:`,
-        error
-      );
-    }
-  }
-
-  /**
-   * Retrieves the stored system prompt for a specific tab.
-   * @param {number} tabId - The ID of the tab.
-   * @returns {Promise<string|null>} The system prompt string, or null if not found/error.
-   */
-  static async getSystemPromptForTab(tabId) {
-    if (tabId === null || tabId === undefined) {
-      logger.service.warn(
-        'SidePanelStateManager: getSystemPromptForTab called with invalid tabId.'
-      );
-      return null;
-    }
-    try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.TAB_SYSTEM_PROMPTS
-      );
-      const allPrompts = result[STORAGE_KEYS.TAB_SYSTEM_PROMPTS] || {};
-      return allPrompts[tabId.toString()] || null;
-    } catch (error) {
-      logger.service.error(
-        `Error retrieving system prompt for tab ${tabId}:`,
-        error
-      );
-      return null;
-    }
-  }
-
-  /**
    * Cleans up all tab-specific states (visibility, preferences, data) for tabs that are no longer open.
    * @returns {Promise<void>}
    */
@@ -273,7 +201,6 @@ class SidePanelStateManager {
         STORAGE_KEYS.TAB_CHAT_HISTORIES, // Already handled by ChatHistoryService
         STORAGE_KEYS.TAB_TOKEN_STATISTICS, // Already handled by TokenManagementService
         STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-        STORAGE_KEYS.TAB_SYSTEM_PROMPTS,
       ];
 
       for (const storageKey of keysToClean) {

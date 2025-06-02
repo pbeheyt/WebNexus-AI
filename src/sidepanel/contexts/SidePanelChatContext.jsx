@@ -144,7 +144,8 @@ export function SidePanelChatProvider({ children }) {
             success: false,
             error: result.reason || 'Context extraction was skipped',
             contentSuccessfullyIncluded: false,
-            extractedPageContent: null
+            extractedPageContent: null,
+            systemPromptUsed: null
           };
         }
 
@@ -157,7 +158,8 @@ export function SidePanelChatProvider({ children }) {
           success: true,
           streamId: result.streamId,
           contentSuccessfullyIncluded: result.contentSuccessfullyIncluded,
-          extractedPageContent: result.extractedPageContent
+          extractedPageContent: result.extractedPageContent,
+          systemPromptUsed: result.systemPromptUsed
         };
       } catch (error) {
         logger.sidepanel.error('Error initiating API call:', error);
@@ -198,7 +200,8 @@ export function SidePanelChatProvider({ children }) {
           success: false,
           error: error.message || 'Failed to process request',
           contentSuccessfullyIncluded: false,
-          extractedPageContent: null
+          extractedPageContent: null,
+          systemPromptUsed: null
         };
       }
     },
@@ -509,14 +512,17 @@ export function SidePanelChatProvider({ children }) {
       rerunStatsRef: rerunStatsRef,
     });
 
-    // Update userMessage in the messages array if content was successfully included
-    if (apiCallSetupResult.success && apiCallSetupResult.contentSuccessfullyIncluded && apiCallSetupResult.extractedPageContent) {
+    // Update userMessage in the messages array if API call was successful
+    if (apiCallSetupResult.success) {
       setMessages(prevMessages => prevMessages.map(msg => {
         if (msg.id === userMessageId) {
-          return {
-            ...msg,
-            pageContextUsed: apiCallSetupResult.extractedPageContent
-          };
+          const updatedMsg = { ...msg };
+          if (apiCallSetupResult.contentSuccessfullyIncluded && apiCallSetupResult.extractedPageContent) {
+            updatedMsg.pageContextUsed = apiCallSetupResult.extractedPageContent;
+          }
+          // Add the systemPromptUsed to the user message
+          updatedMsg.systemPromptUsedForThisTurn = apiCallSetupResult.systemPromptUsed;
+          return updatedMsg;
         }
         return msg;
       }));

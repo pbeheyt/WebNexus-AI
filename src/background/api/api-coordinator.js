@@ -15,7 +15,7 @@ import {
   setApiProcessingError,
   completeStreamResponse,
 } from '../core/state-manager.js';
-import SidePanelStateManager from '../../services/SidePanelStateManager.js'; // Keep for other state management if needed
+import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 
 const activeAbortControllers = new Map();
@@ -133,11 +133,11 @@ export async function processContentViaApi(params) {
     source = INTERFACE_SOURCES.POPUP, // Default to POPUP if source not specified
     customPrompt = null,
     conversationHistory = [],
-    isContentExtractionEnabled, // This flag from the side panel now directly controls extraction attempt
+    isContentExtractionEnabled,
     isThinkingModeEnabled,
   } = params;
 
-  let contentSuccessfullyIncluded = false; // New flag to return
+  let contentSuccessfullyIncluded = false;
 
   if (!platformId || !modelId) {
     const missing = [];
@@ -171,13 +171,6 @@ export async function processContentViaApi(params) {
       logger.background.info(
         `Content extraction requested but page is not injectable: ${url}. Skipping extraction.`
       );
-      // Do not set contentSuccessfullyIncluded to true here.
-      // The side panel will be informed that content wasn't included.
-      // We might want to return a specific status or let it proceed without content.
-      // For now, let it proceed, and contentSuccessfullyIncluded will remain false.
-      // The side panel can then decide if it wants to show a message.
-      // Consider if an early return with a specific error/status is better.
-      // For now, we let it proceed and `formattedContentForRequest` will be null.
     }
 
     if (shouldExtract) {
@@ -250,23 +243,7 @@ export async function processContentViaApi(params) {
     // `formattedContentForRequest` will be the `newlyFormattedContent` if extraction occurred
     const formattedContentForRequest = newlyFormattedContent;
 
-    if (tabId) {
-      try {
-        const promptToStoreOrClear = resolvedParams.systemPrompt;
-        logger.background.info(
-          `Updating system prompt state for tab ${tabId}. Prompt is ${promptToStoreOrClear ? 'present' : 'absent/empty'}.`
-        );
-        await SidePanelStateManager.storeSystemPromptForTab(
-          tabId,
-          promptToStoreOrClear
-        );
-      } catch (storeError) {
-        logger.background.error(
-          `Failed to update system prompt state for tab ${tabId}:`,
-          storeError
-        );
-      }
-    }
+
 
     if (contentSuccessfullyIncluded) {
       logger.background.info(
@@ -307,12 +284,20 @@ export async function processContentViaApi(params) {
         streamId,
         response: apiResponse,
         contentType: contentType,
-        contentSuccessfullyIncluded, // Return the flag
-        extractedPageContent: contentSuccessfullyIncluded ? formattedContentForRequest : null, // Add this
+        contentSuccessfullyIncluded,
+        extractedPageContent: contentSuccessfullyIncluded ? formattedContentForRequest : null,
+        systemPromptUsed: resolvedParams.systemPrompt || null,
       };
     } catch (processingError) {
       await setApiProcessingError(processingError.message);
-      throw processingError; // Let the main catch block handle it
+      // Construct a return object instead of just throwing
+      return {
+        success: false,
+        error: processingError.message,
+        contentSuccessfullyIncluded: false,
+        extractedPageContent: null,
+        systemPromptUsed: resolvedParams?.systemPrompt || null,
+      };
     } finally {
       activeAbortControllers.delete(streamId);
       logger.background.info(`Removed AbortController for stream: ${streamId}`);
@@ -323,8 +308,9 @@ export async function processContentViaApi(params) {
     return {
       success: false,
       error: error.message,
-      contentSuccessfullyIncluded: false, // Ensure flag is false on error
-      extractedPageContent: null, // Add this
+      contentSuccessfullyIncluded: false,
+      extractedPageContent: null,
+      systemPromptUsed: null,
     };
   }
 }
