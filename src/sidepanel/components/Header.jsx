@@ -86,6 +86,8 @@ function Header({
               onBlur={() => setIsIncludeTooltipVisible(false)}
               aria-describedby='include-context-tooltip-header'
               className='inline-flex items-center flex-shrink-0'
+              tabIndex={0}
+              role="button"
             >
               <Toggle
                 id='content-extract-toggle-header'
@@ -129,6 +131,9 @@ function Header({
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('inputTokens')}
           onBlur={() => setHoveredTokenElement(null)}
+          tabIndex={0}
+          role="button"
+          aria-describedby="header-input-tokens-tooltip"
         >
           <InputTokenIcon className='w-3.5 h-3.5 mr-1 select-none flex-shrink-0' />
           <span className='whitespace-nowrap'>{formatTokenCount(inputTokensInLastApiCall)}</span>
@@ -137,6 +142,7 @@ function Header({
             message={tokenTooltipContent.inputTokens}
             targetRef={inputTokensRef}
             position='bottom'
+            id="header-input-tokens-tooltip"
           />
         </div>
 
@@ -148,6 +154,9 @@ function Header({
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('outputTokens')}
           onBlur={() => setHoveredTokenElement(null)}
+          tabIndex={0}
+          role="button"
+          aria-describedby="header-output-tokens-tooltip"
         >
           <OutputTokenIcon className='w-3.5 h-3.5 mr-1 select-none flex-shrink-0' />
           <span className='whitespace-nowrap'>{formatTokenCount(outputTokens)}</span>
@@ -156,6 +165,7 @@ function Header({
             message={tokenTooltipContent.outputTokens}
             targetRef={outputTokensRef}
             position='bottom'
+            id="header-output-tokens-tooltip"
           />
         </div>
 
@@ -167,6 +177,9 @@ function Header({
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('contextWindow')}
           onBlur={() => setHoveredTokenElement(null)}
+          tabIndex={0}
+          role="button"
+          aria-describedby="header-context-window-tooltip"
         >
           <ContextWindowIcon className='w-3 h-3 mr-2 select-none flex-shrink-0' />
           <span className='whitespace-nowrap'>{`${(contextData.percentage || 0).toFixed(0)}%`}</span>
@@ -175,6 +188,7 @@ function Header({
             message={tokenTooltipContent.contextWindow}
             targetRef={contextWindowRef}
             position='bottom'
+            id="header-context-window-tooltip"
           />
         </div>
 
@@ -186,6 +200,9 @@ function Header({
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('cost')}
           onBlur={() => setHoveredTokenElement(null)}
+          tabIndex={0}
+          role="button"
+          aria-describedby="header-cost-tooltip"
         >
           {/* No icon for cost, just the value */}
           <span className='whitespace-nowrap font-semibold'>{formattedAccumulatedCost}</span>
@@ -194,6 +211,7 @@ function Header({
             message={tokenTooltipContent.cost}
             targetRef={costRef}
             position='bottom'
+            id="header-cost-tooltip"
           />
         </div>
       </div>

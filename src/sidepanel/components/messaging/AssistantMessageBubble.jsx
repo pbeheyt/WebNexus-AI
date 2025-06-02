@@ -406,7 +406,11 @@ export const AssistantMessageBubble = memo(
                     className="text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help"
                       onMouseEnter={() => setCostTooltipVisible(true)}
                       onMouseLeave={() => setCostTooltipVisible(false)}
-                      role="status"
+                      onFocus={() => setCostTooltipVisible(true)}
+                      onBlur={() => setCostTooltipVisible(false)}
+                      tabIndex={0}
+                      role="button"
+                      aria-describedby={`cost-tooltip-assistant-${id}`}
                       aria-label={`Estimated cost: ${formatCost(apiCost)}`}
                     >
                       {formatCost(apiCost)}
@@ -416,6 +420,7 @@ export const AssistantMessageBubble = memo(
                       message={`Est. cost for this response: ${formatCost(apiCost)}`}
                       targetRef={costDisplayRef}
                       position="top"
+                      id={`cost-tooltip-assistant-${id}`}
                     />
                   </>
                 )}

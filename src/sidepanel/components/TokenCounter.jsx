@@ -54,6 +54,9 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           onMouseLeave={() => setHoveredElement(null)}
           onFocus={() => setHoveredElement('inputTokens')}
           onBlur={() => setHoveredElement(null)}
+          tabIndex={0}
+          role="button"
+          aria-describedby="counter-input-tokens-tooltip"
         >
           <InputTokenIcon className='w-3 h-3 mr-1 select-none' />
           <span>{formatTokenCount(inputTokensInLastApiCall)}</span>
@@ -62,6 +65,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             message={tooltipContent.inputTokens}
             targetRef={inputTokensRef}
             position='bottom'
+            id="counter-input-tokens-tooltip"
           />
         </div>
 
@@ -73,6 +77,9 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           onMouseLeave={() => setHoveredElement(null)}
           onFocus={() => setHoveredElement('outputTokens')}
           onBlur={() => setHoveredElement(null)}
+          tabIndex={0}
+          role="button"
+          aria-describedby="counter-output-tokens-tooltip"
         >
           <OutputTokenIcon className='w-3 h-3 mr-1 select-none' />
           <span>{formatTokenCount(outputTokens)}</span>
@@ -81,6 +88,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             message={tooltipContent.outputTokens}
             targetRef={outputTokensRef}
             position='bottom'
+            id="counter-output-tokens-tooltip"
           />
         </div>
 
@@ -92,6 +100,9 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           onMouseLeave={() => setHoveredElement(null)}
           onFocus={() => setHoveredElement('contextWindow')}
           onBlur={() => setHoveredElement(null)}
+          tabIndex={0}
+          role="button"
+          aria-describedby="counter-context-window-tooltip"
         >
           <ContextWindowIcon className='w-3 h-3 mr-1 select-none' />
           <span>{`${(contextData.percentage || 0).toFixed(1)}%`}</span>
@@ -100,6 +111,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             message={tooltipContent.contextWindow}
             targetRef={contextWindowRef}
             position='bottom'
+            id="counter-context-window-tooltip"
           />
         </div>
 
@@ -111,6 +123,9 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
           onMouseLeave={() => setHoveredElement(null)}
           onFocus={() => setHoveredElement('cost')}
           onBlur={() => setHoveredElement(null)}
+          tabIndex={0}
+          role="button"
+          aria-describedby="counter-cost-tooltip"
         >
           <span>{formattedCost}</span>
           <Tooltip
@@ -118,6 +133,7 @@ function TokenCounter({ tokenStats, contextStatus, className = '' }) {
             message={tooltipContent.cost}
             targetRef={costRef}
             position='bottom'
+            id="counter-cost-tooltip"
           />
         </div>
       </div>

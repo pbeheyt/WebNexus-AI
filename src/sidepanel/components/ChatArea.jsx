@@ -473,6 +473,9 @@ function ChatArea({
                       onMouseLeave={() => setHoveredElement(null)}
                       onFocus={() => setHoveredElement('freeTier')}
                       onBlur={() => setHoveredElement(null)}
+                      tabIndex={0}
+                      role="button"
+                      aria-describedby="chat-area-free-tier-tooltip"
                     >
                       <FreeTierIcon className='w-3.5 h-3.5 mr-1 select-none'/> <span>Free</span>
                       <Tooltip
@@ -480,6 +483,7 @@ function ChatArea({
                         message='This model is currently free to use via API.'
                         targetRef={freeTierRef}
                         position='bottom'
+                        id="chat-area-free-tier-tooltip"
                       />
                     </div>
                   ) : (
@@ -493,6 +497,9 @@ function ChatArea({
                             onMouseLeave={() => setHoveredElement(null)}
                             onFocus={() => setHoveredElement('inputPrice')}
                             onBlur={() => setHoveredElement(null)}
+                            tabIndex={0}
+                            role="button"
+                            aria-describedby="chat-area-input-price-tooltip"
                           >
                             <InputTokenIcon className='w-3.5 h-3.5 mr-1 select-none'/>
                             <span>{`$${dynamicSpecs.inputPrice.toFixed(2)}`}</span>
@@ -501,6 +508,7 @@ function ChatArea({
                               message={`$${dynamicSpecs.inputPrice.toFixed(2)} / 1M input tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                               targetRef={inputPriceRef}
                               position='bottom'
+                              id="chat-area-input-price-tooltip"
                             />
                           </div>
                         )}
@@ -515,6 +523,9 @@ function ChatArea({
                             onMouseLeave={() => setHoveredElement(null)}
                             onFocus={() => setHoveredElement('outputPrice')}
                             onBlur={() => setHoveredElement(null)}
+                            tabIndex={0}
+                            role="button"
+                            aria-describedby="chat-area-output-price-tooltip"
                           >
                             <OutputTokenIcon className='w-3.5 h-3.5 mr-1 select-none'/>
                             <span>{`$${dynamicSpecs.outputPrice.toFixed(2)}`}</span>
@@ -523,6 +534,7 @@ function ChatArea({
                               message={`$${dynamicSpecs.outputPrice.toFixed(2)} / 1M output tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                               targetRef={outputPriceRef}
                               position='bottom'
+                              id="chat-area-output-price-tooltip"
                             />
                           </div>
                         )}
@@ -537,6 +549,9 @@ function ChatArea({
                         onMouseLeave={() => setHoveredElement(null)}
                         onFocus={() => setHoveredElement('contextWindow')}
                         onBlur={() => setHoveredElement(null)}
+                        tabIndex={0}
+                        role="button"
+                        aria-describedby="chat-area-context-window-tooltip"
                       >
                         <ContextWindowIcon className='w-3 h-3 mr-2 select-none'/>
                         <span>
@@ -547,6 +562,7 @@ function ChatArea({
                           message={`Max context window: ${formatTokenCount(dynamicSpecs.contextWindow)} tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                           targetRef={contextWindowRef}
                           position='bottom'
+                          id="chat-area-context-window-tooltip"
                         />
                       </div>
                     )}
