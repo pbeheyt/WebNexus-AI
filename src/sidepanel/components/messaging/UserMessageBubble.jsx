@@ -1,4 +1,4 @@
-import React, { useState, memo, forwardRef } from 'react';
+import React, { useState, memo, forwardRef, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 import {
@@ -7,7 +7,7 @@ import {
   IconButton,
   EditIcon,
   RerunIcon,
-  ContentTypeIcon, 
+  ContentTypeIcon,
   Tooltip
 } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
@@ -29,14 +29,9 @@ export const UserMessageBubble = memo(
         contextTypeUsed,
         className = '',
         style = {},
-        // Other props are destructured but not used directly in this component
-        // They are included to accept the full original props signature
-        // isStreaming, model, platformIconUrl, platformId, metadata, etc.
       },
       ref
     ) => {
-      console.log('Rendering UserMessageBubble', { id, content, pageContextUsed, contextTypeUsed });
-      // User message logic copied from original MessageBubble.jsx
       const [isEditing, setIsEditing] = useState(false);
       const [editedContent, setEditedContent] = useState(content);
       const { rerunMessage, editAndRerunMessage, isProcessing, isCanceling } =
@@ -44,18 +39,20 @@ export const UserMessageBubble = memo(
       const { copyState, handleCopy, IconComponent, iconClassName, disabled } =
         useCopyToClipboard(content);
 
+      const [isContextBadgeTooltipVisible, setIsContextBadgeTooltipVisible] = useState(false);
+      const contextBadgeTriggerRef = useRef(null); // Ref for the element that triggers the tooltip (the icon wrapper)
+
       const handleKeyDown = (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
-          event.preventDefault(); // Prevent newline
+          event.preventDefault();
           if (editedContent.trim()) {
-            // Check if content is not just whitespace
             editAndRerunMessage(id, editedContent);
             setIsEditing(false);
           }
         } else if (event.key === 'Escape') {
-          event.preventDefault(); // Prevent potential browser/modal escape actions
-          setIsEditing(false); // Cancel editing
-          setEditedContent(content); // Optionally reset changes on escape
+          event.preventDefault();
+          setIsEditing(false);
+          setEditedContent(content);
         }
       };
 
@@ -68,8 +65,10 @@ export const UserMessageBubble = memo(
 
       const handleCancelEdit = () => {
         setIsEditing(false);
-        setEditedContent(content); // Reset content to original
+        setEditedContent(content);
       };
+
+      const shouldDisplayBadgeElements = !isEditing && pageContextUsed && contextTypeUsed && CONTENT_TYPE_LABELS[contextTypeUsed];
 
       return (
         <div
@@ -78,30 +77,47 @@ export const UserMessageBubble = memo(
           style={style}
           className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full flex flex-col items-end message-group user-message relative ${className}`}
         >
-          {/* Container for badge and bubble, aligned to the right */}
-          <div className={`flex flex-row items-start justify-end w-full ${isEditing ? 'max-w-full' : 'max-w-[95%]'}`}>
-            {/* Badge: Appears to the left of the bubble */}
-            {!isEditing && pageContextUsed && contextTypeUsed && CONTENT_TYPE_LABELS[contextTypeUsed] && (
-              <div className="mr-2 flex-shrink-0 self-start mt-1"> {/* Use self-start for top alignment, mt-1 for slight push down */}
-                <Tooltip
-                  message={`${CONTENT_TYPE_LABELS[contextTypeUsed]} context included`}
-                  position="top"
-                >
-                  <ContentTypeIcon
-                    contentType={contextTypeUsed}
-                    className="w-5 h-5 text-theme-secondary"
-                  />
-                </Tooltip>
+          {/* Container for badge and bubble, aligned to the right. Changed items-start to items-center */}
+          <div className={`flex flex-row items-center justify-end w-full ${isEditing ? 'max-w-full' : 'max-w-[95%]'}`}>
+            {/* Badge Trigger: Appears to the left of the bubble */}
+            {shouldDisplayBadgeElements && (
+              <div
+                ref={contextBadgeTriggerRef} // This div is the trigger and anchor for the tooltip
+                className="mr-3 flex-shrink-0 cursor-help p-1 rounded-full hover:bg-theme-hover"
+                onMouseEnter={() => setIsContextBadgeTooltipVisible(true)}
+                onMouseLeave={() => setIsContextBadgeTooltipVisible(false)}
+                onFocus={() => setIsContextBadgeTooltipVisible(true)}
+                onBlur={() => setIsContextBadgeTooltipVisible(false)}
+                tabIndex={0}
+                role="button"
+                aria-describedby={`context-badge-tooltip-${id}`}
+              >
+                <ContentTypeIcon
+                  contentType={contextTypeUsed}
+                  className="w-6 h-6 text-theme-secondary"
+                />
               </div>
             )}
+
+            {/* Tooltip: Rendered separately but positioned relative to contextBadgeTriggerRef */}
+            {shouldDisplayBadgeElements && (
+                 <Tooltip
+                    id={`context-badge-tooltip-${id}`}
+                    show={isContextBadgeTooltipVisible}
+                    message={`${CONTENT_TYPE_LABELS[contextTypeUsed]} context included`}
+                    position="left"
+                    targetRef={contextBadgeTriggerRef} // Points to the div wrapping the icon
+                  />
+            )}
+
 
             {/* Bubble container with conditional width */}
             <div
               className={`
                       bg-gray-200 dark:bg-gray-700
                       rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl
-                      p-3 
-                      ${isEditing ? 'w-full' : 'max-w-[85%]'} {/* Adjust max-width if badge takes space */}
+                      p-3
+                      ${isEditing ? 'w-full' : 'max-w-[85%]'}
                       transition-all duration-150 ease-in-out
                   `}
             >
@@ -160,7 +176,7 @@ export const UserMessageBubble = memo(
                 iconClassName='w-4 h-4 select-none'
                 onClick={() => {
                   setIsEditing(true);
-                  setEditedContent(content); // Ensure editor starts with current content
+                  setEditedContent(content);
                 }}
                 aria-label='Edit message'
                 title='Edit message'

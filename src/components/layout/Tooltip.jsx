@@ -1,8 +1,10 @@
+// --- START FULL FILE: src/components/layout/Tooltip.jsx ---
 import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 /**
  * Tooltip component for displaying messages with configurable delay.
+ * @param {string} [id] - Optional ID for the tooltip, useful for aria-describedby.
  * @param {boolean} show - Whether to show the tooltip.
  * @param {React.ReactNode} message - Tooltip content (string or JSX).
  * @param {string} [position='top'] - Position of the tooltip.
@@ -12,12 +14,13 @@ import PropTypes from 'prop-types';
  * @param {object} targetRef - Reference to the target element.
  */
 export function Tooltip({
+  id,
   show,
   message,
   position = 'top',
   offset = 8,
   width = 'auto',
-  delay = 500, // Default delay of 500ms
+  delay = 500,
   targetRef,
 }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -26,23 +29,19 @@ export function Tooltip({
   const timeoutRef = useRef(null);
 
   useEffect(() => {
-    // Clear previous timeout if exists
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
 
     if (show) {
-      // Set timeout for the specified delay
       timeoutRef.current = setTimeout(() => {
         setIsVisible(true);
       }, delay);
     } else {
-      // Hide immediately when show becomes false
       setIsVisible(false);
     }
 
-    // Cleanup on unmount or when dependencies change
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -76,46 +75,50 @@ export function Tooltip({
           top = rect.top + rect.height / 2 - tooltipHeight / 2;
           left = rect.right + offset;
           break;
-        default:
-          top = rect.bottom + offset;
+        default: // Default to top if position is invalid
+          top = rect.top - offset - tooltipHeight;
           left = rect.left + rect.width / 2 - tooltipWidth / 2;
           break;
       }
 
       // Adjust for viewport overflow
-      if (top < 0) {
+      if (top < 0 && position === 'top') { // If top overflow, try to switch to bottom
         top = rect.bottom + offset;
-      } else if (top + tooltipHeight > window.innerHeight) {
+      } else if (top + tooltipHeight > window.innerHeight && position === 'bottom') { // If bottom overflow, try to switch to top
         top = rect.top - offset - tooltipHeight;
       }
+      // Ensure top is not negative after potential switch
+      if (top < 0) top = offset;
+
 
       if (left < 0) {
-        left = 0;
+        left = offset;
       } else if (left + tooltipWidth > window.innerWidth) {
-        left = window.innerWidth - tooltipWidth;
+        left = window.innerWidth - tooltipWidth - offset;
       }
 
       setTooltipStyle({ top, left });
     }
-  }, [isVisible, position, offset, targetRef]);
+  }, [isVisible, position, offset, targetRef, message]);
 
-  // Don't render anything if not visible
   if (!isVisible) {
     return null;
   }
 
-  // Handle width styling
   const widthClass = width === 'auto' ? '' : `w-${width}`;
 
   return (
     <div
+      id={id} // Apply the id
       ref={tooltipRef}
       style={{
         ...tooltipStyle,
         position: 'fixed',
         visibility: Object.keys(tooltipStyle).length ? 'visible' : 'hidden',
+        pointerEvents: 'none',
       }}
       className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 opacity-100 select-none`}
+      role="tooltip" // ARIA role
     >
       {message}
     </div>
@@ -123,6 +126,7 @@ export function Tooltip({
 }
 
 Tooltip.propTypes = {
+  id: PropTypes.string,
   show: PropTypes.bool.isRequired,
   message: PropTypes.node.isRequired,
   position: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
