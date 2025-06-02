@@ -42,7 +42,8 @@ class ChatGptApiService extends BaseApiService {
       messages.push({ role: 'system', content: params.systemPrompt });
     }
     if (params.conversationHistory && params.conversationHistory.length > 0) {
-      messages.push(...this._formatOpenAIMessages(params.conversationHistory));
+      const transformedHistory = this._transformConversationHistory(params.conversationHistory);
+      messages.push(...this._formatOpenAIMessages(transformedHistory));
     }
     messages.push({ role: 'user', content: prompt }); // Use the structured prompt
     requestPayload.messages = messages;

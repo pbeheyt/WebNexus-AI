@@ -38,8 +38,9 @@ class DeepSeekApiService extends BaseApiService {
 
     // Format history, merging consecutive roles (excluding system)
     if (params.conversationHistory && params.conversationHistory.length > 0) {
+      const transformedHistory = this._transformConversationHistory(params.conversationHistory);
       messages.push(
-        ...this._formatDeepSeekMessages(params.conversationHistory)
+        ...this._formatDeepSeekMessages(transformedHistory)
       );
     }
 

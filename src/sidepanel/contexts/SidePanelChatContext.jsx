@@ -475,11 +475,18 @@ export function SidePanelChatProvider({ children }) {
             msg.role === MESSAGE_ROLES.ASSISTANT) &&
           !msg.isStreaming
       )
-      .map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-        timestamp: msg.timestamp,
-      }));
+      .map((msg) => {
+        const historyItem = {
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp,
+        };
+        // Conditionally add pageContextUsed if it exists on the user message
+        if (msg.role === MESSAGE_ROLES.USER && msg.pageContextUsed) {
+          historyItem.pageContextUsed = msg.pageContextUsed;
+        }
+        return historyItem;
+      });
 
     const apiCallSetupResult = await _initiateApiCall({
       platformId: currentPlatformId,

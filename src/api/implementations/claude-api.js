@@ -76,9 +76,10 @@ class ClaudeApiService extends BaseApiService {
 
     // Prepend conversation history if available
     if (params.conversationHistory && params.conversationHistory.length > 0) {
+      const transformedHistory = this._transformConversationHistory(params.conversationHistory);
       // Use the helper to format history and add the current prompt correctly
       requestPayload.messages = this._formatClaudeMessages(
-        params.conversationHistory,
+        transformedHistory,
         prompt
       );
     }

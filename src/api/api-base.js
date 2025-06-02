@@ -50,6 +50,10 @@ class BaseApiService extends ApiInterface {
         resolvedParams,
         apiKey
       );
+      this.logger.info(
+        `[${this.platformId}] Resolved params before executing for model ${model}:`,
+        resolvedParams
+      );
       const streamSuccess = await this._executeStreamingRequest(
         fetchOptions,
         onChunk,
@@ -197,6 +201,23 @@ class BaseApiService extends ApiInterface {
 
   _resetStreamState() {
     // Base implementation does nothing. Subclasses can override.
+  }
+
+  _transformConversationHistory(rawHistory) {
+    if (!rawHistory || !Array.isArray(rawHistory)) {
+      return [];
+    }
+    return rawHistory.map(msg => {
+      if (msg.role === 'user' && msg.pageContextUsed && typeof msg.pageContextUsed === 'string' && msg.pageContextUsed.trim().length > 0) {
+        return {
+          ...msg,
+          content: this._createStructuredPrompt(msg.content, msg.pageContextUsed)
+        };
+      }
+      // For assistant messages or user messages without pageContextUsed, return as is.
+      // The content of assistant messages is directly from the LLM.
+      return msg; 
+    });
   }
 
   /**

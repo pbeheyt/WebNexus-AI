@@ -42,8 +42,9 @@ class GeminiApiService extends BaseApiService {
 
     let formattedRequest;
     if (params.conversationHistory && params.conversationHistory.length > 0) {
+      const transformedHistory = this._transformConversationHistory(params.conversationHistory);
       formattedRequest = this._formatGeminiRequestWithHistory(
-        params.conversationHistory,
+        transformedHistory,
         prompt
       );
     } else {
