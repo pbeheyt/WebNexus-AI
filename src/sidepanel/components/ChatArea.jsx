@@ -652,6 +652,7 @@ function ChatArea({
                   platformId={message.platformId}
                   style={dynamicStyle}
                   apiCost={message.apiCost}
+                  contextTypeUsed={message.contextTypeUsed}
                 />
               );
             })}

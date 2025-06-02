@@ -7,8 +7,11 @@ import {
   IconButton,
   EditIcon,
   RerunIcon,
+  ContentTypeIcon, 
+  Tooltip
 } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
+import { CONTENT_TYPE_LABELS } from '../../../shared/constants';
 
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 
@@ -23,6 +26,7 @@ export const UserMessageBubble = memo(
         id,
         content,
         pageContextUsed,
+        contextTypeUsed,
         className = '',
         style = {},
         // Other props are destructured but not used directly in this component
@@ -31,6 +35,7 @@ export const UserMessageBubble = memo(
       },
       ref
     ) => {
+      console.log('Rendering UserMessageBubble', { id, content, pageContextUsed, contextTypeUsed });
       // User message logic copied from original MessageBubble.jsx
       const [isEditing, setIsEditing] = useState(false);
       const [editedContent, setEditedContent] = useState(content);
@@ -73,63 +78,76 @@ export const UserMessageBubble = memo(
           style={style}
           className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full flex flex-col items-end message-group user-message relative ${className}`}
         >
-          {/* Bubble container with conditional width */}
-          <div
-            className={`
-                    bg-gray-200 dark:bg-gray-700
-                    rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl
-                    p-3 max-w-[85%]
-                    transition-all duration-150 ease-in-out
-                    ${isEditing ? 'w-full' : ''}
-                `}
-          >
-            {/* Display Mode */}
-            {!isEditing && (
-              <>
-                <div className='whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm'>
-                  {content}
-                </div>
-                {pageContextUsed && (
-                  <div className="mt-1 pt-1 border-t border-gray-300 dark:border-gray-600">
-                    <span className="text-xs text-gray-500 dark:text-gray-400 italic">(Page context was included)</span>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Editing Mode */}
-            {isEditing && (
-              <div className='flex flex-col w-full space-y-3 select-none'>
-                <TextArea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className='w-full text-sm border border-primary rounded-md p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary'
-                  style={{ minHeight: '4rem' }}
-                  focusAtEnd={isEditing}
-                  aria-label='Edit message content'
-                />
-                <div className='flex justify-end gap-2'>
-                  <Button
-                    variant='secondary'
-                    size='sm'
-                    onClick={handleCancelEdit}
-                    className='px-4 select-none'
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant='primary'
-                    size='sm'
-                    onClick={handleSaveAndRerun}
-                    disabled={!editedContent.trim()}
-                    className='px-4 select-none'
-                  >
-                    Save & Rerun
-                  </Button>
-                </div>
+          {/* Container for badge and bubble, aligned to the right */}
+          <div className={`flex flex-row items-start justify-end w-full ${isEditing ? 'max-w-full' : 'max-w-[95%]'}`}>
+            {/* Badge: Appears to the left of the bubble */}
+            {!isEditing && pageContextUsed && contextTypeUsed && CONTENT_TYPE_LABELS[contextTypeUsed] && (
+              <div className="mr-2 flex-shrink-0 self-start mt-1"> {/* Use self-start for top alignment, mt-1 for slight push down */}
+                <Tooltip
+                  message={`${CONTENT_TYPE_LABELS[contextTypeUsed]} context included`}
+                  position="top"
+                >
+                  <ContentTypeIcon
+                    contentType={contextTypeUsed}
+                    className="w-5 h-5 text-theme-secondary"
+                  />
+                </Tooltip>
               </div>
             )}
+
+            {/* Bubble container with conditional width */}
+            <div
+              className={`
+                      bg-gray-200 dark:bg-gray-700
+                      rounded-tl-xl rounded-tr-xl rounded-br-none rounded-bl-xl
+                      p-3 
+                      ${isEditing ? 'w-full' : 'max-w-[85%]'} {/* Adjust max-width if badge takes space */}
+                      transition-all duration-150 ease-in-out
+                  `}
+            >
+              {/* Display Mode */}
+              {!isEditing && (
+                <>
+                  <div className='whitespace-pre-wrap break-words overflow-wrap-anywhere leading-relaxed text-sm'>
+                    {content}
+                  </div>
+                </>
+              )}
+
+              {/* Editing Mode */}
+              {isEditing && (
+                <div className='flex flex-col w-full space-y-3 select-none'>
+                  <TextArea
+                    value={editedContent}
+                    onChange={(e) => setEditedContent(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className='w-full text-sm border border-primary rounded-md p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary'
+                    style={{ minHeight: '4rem' }}
+                    focusAtEnd={isEditing}
+                    aria-label='Edit message content'
+                  />
+                  <div className='flex justify-end gap-2'>
+                    <Button
+                      variant='secondary'
+                      size='sm'
+                      onClick={handleCancelEdit}
+                      className='px-4 select-none'
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant='primary'
+                      size='sm'
+                      onClick={handleSaveAndRerun}
+                      disabled={!editedContent.trim()}
+                      className='px-4 select-none'
+                    >
+                      Save & Rerun
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Action buttons below bubble (only show when not editing) */}
@@ -179,6 +197,7 @@ UserMessageBubble.propTypes = {
   id: PropTypes.string.isRequired,
   content: PropTypes.string,
   pageContextUsed: PropTypes.string,
+  contextTypeUsed: PropTypes.string,
   className: PropTypes.string,
   style: PropTypes.object,
   role: PropTypes.string,

@@ -520,9 +520,13 @@ export function SidePanelChatProvider({ children }) {
           if (apiCallSetupResult.contentSuccessfullyIncluded && apiCallSetupResult.extractedPageContent) {
             updatedMsg.pageContextUsed = apiCallSetupResult.extractedPageContent;
           }
-          // Add the systemPromptUsed to the user message
-          updatedMsg.systemPromptUsedForThisTurn = apiCallSetupResult.systemPromptUsed;
-          return updatedMsg;
+            // Add the systemPromptUsed to the user message
+            updatedMsg.systemPromptUsedForThisTurn = apiCallSetupResult.systemPromptUsed;
+            // Store contextTypeUsed if context was included
+            if (apiCallSetupResult.contentSuccessfullyIncluded) {
+              updatedMsg.contextTypeUsed = contentType;
+            }
+            return updatedMsg;
         }
         return msg;
       }));

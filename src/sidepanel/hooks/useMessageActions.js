@@ -127,6 +127,10 @@ const _initiateRerunSequence = async ({
         currentUserMessageForApi.pageContextUsed = apiCallSetupResult.extractedPageContent;
       }
       currentUserMessageForApi.systemPromptUsedForThisTurn = apiCallSetupResult.systemPromptUsed;
+      // Store contextTypeUsed if context was included during rerun/edit
+      if (apiCallSetupResult.contentSuccessfullyIncluded && currentTab) {
+        currentUserMessageForApi.contextTypeUsed = currentTab.contentType;
+      }
     } else {
       // This case should ideally not happen if logic is correct
       logger.sidepanel.warn('currentUserMessageForApi was not defined in _initiateRerunSequence when trying to set systemPromptUsedForThisTurn');

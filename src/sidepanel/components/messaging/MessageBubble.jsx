@@ -23,8 +23,10 @@ const MessageBubbleComponent = forwardRef(
     switch (role) {
       case MESSAGE_ROLES.SYSTEM:
         return <SystemMessageBubble ref={ref} role={role} {...props} />;
-      case MESSAGE_ROLES.USER:
-        return <UserMessageBubble ref={ref} role={role} {...props} />;
+      case MESSAGE_ROLES.USER: {
+        const { contextTypeUsed, ...userProps } = props;
+        return <UserMessageBubble ref={ref} role={role} contextTypeUsed={contextTypeUsed} {...userProps} />;
+      }
       case MESSAGE_ROLES.ASSISTANT:
         return <AssistantMessageBubble ref={ref} role={role} {...props} />;
       default:
@@ -38,6 +40,7 @@ MessageBubbleComponent.propTypes = {
   role: PropTypes.oneOf(Object.values(MESSAGE_ROLES)).isRequired,
   id: PropTypes.string,
   apiCost: PropTypes.number,
+  contextTypeUsed: PropTypes.string,
 };
 
 MessageBubbleComponent.displayName = 'MessageBubble';
