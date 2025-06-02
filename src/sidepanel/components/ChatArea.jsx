@@ -653,6 +653,7 @@ function ChatArea({
                   style={dynamicStyle}
                   apiCost={message.apiCost}
                   contextTypeUsed={message.contextTypeUsed}
+                  pageContextUsed={message.pageContextUsed}
                 />
               );
             })}
