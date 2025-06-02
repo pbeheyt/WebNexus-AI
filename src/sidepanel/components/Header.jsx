@@ -68,7 +68,7 @@ function Header({
   return (
     <div className='px-5 py-2 border-b border-t border-theme flex justify-between items-center min-h-[40px]'>
       {/* Left Section: Content Extraction Controls */}
-      <div className='flex items-center gap-1 text-xs text-theme-secondary cursor-default'>
+      <div className='flex items-center gap-1 mr-2 text-xs text-theme-secondary cursor-default'>
         {isPageInjectable ? (
           <>
             <ContentTypeIcon
