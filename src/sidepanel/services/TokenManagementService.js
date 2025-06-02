@@ -4,6 +4,7 @@ import { encode } from 'gpt-tokenizer';
 
 import { logger } from '../../shared/logger';
 import { STORAGE_KEYS, MESSAGE_ROLES } from '../../shared/constants';
+import { createStructuredPromptString } from '../../shared/utils/prompt-formatting-utils.js'; // <-- ADD THIS LINE
 
 import ChatHistoryService from './ChatHistoryService';
 
@@ -126,8 +127,17 @@ class TokenManagementService {
     for (const [index, msg] of messages.entries()) {
       if (msg.role === 'user') {
         // Sync estimateTokens
-        const msgInputTokens =
-          msg.inputTokens || this.estimateTokens(msg.content);
+            let contentToEstimateForTokens;
+            if (typeof msg.pageContextUsed === 'string' && msg.pageContextUsed.trim().length > 0) {
+              // If pageContextUsed is present, use the shared utility to combine it with the main content for token estimation.
+              contentToEstimateForTokens = createStructuredPromptString(msg.content, msg.pageContextUsed);
+            } else {
+              // Otherwise, just use the main content.
+              contentToEstimateForTokens = msg.content;
+            }
+            // Estimate tokens based on the potentially combined content.
+            // The original `msg.inputTokens` is not used here as we are re-calculating based on history structure.
+            const msgInputTokens = this.estimateTokens(contentToEstimateForTokens);
 
         // Determine if this is the most recent user prompt
         const isLastUserPrompt = index === lastUserMsgIndex;

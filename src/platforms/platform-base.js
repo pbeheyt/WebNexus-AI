@@ -1,6 +1,7 @@
 // src/platforms/platform-base.js
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { logger } from '../shared/logger.js';
+import { createStructuredPromptString } from '../shared/utils/prompt-formatting-utils.js';
 
 import PlatformInterface from './platform-interface.js';
 
@@ -904,20 +905,11 @@ class BasePlatform extends PlatformInterface {
    * @returns {string} The full structured prompt
    */
   createStructuredPrompt(prePrompt, formattedContent) {
-    if (!formattedContent || formattedContent.trim() === '') {
-      // Check for null, undefined, or empty string
-      this.logger.info(
-        `[${this.platformId}] No formatted content provided, returning only the prompt.`
-      );
-      return prePrompt;
-    }
     this.logger.info(
-      `[${this.platformId}] Formatting prompt with included content.`
+      `[${this.platformId}] Structuring prompt. Content provided: ${!!(formattedContent && formattedContent.trim() !== '')}`
     );
-    return `# INSTRUCTION
-${prePrompt}
-# EXTRACTED CONTENT
-${formattedContent}`;
+    // Use the shared utility to create the structured prompt.
+    return createStructuredPromptString(prePrompt, formattedContent);
   }
 }
 

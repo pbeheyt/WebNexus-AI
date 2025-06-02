@@ -1,6 +1,7 @@
 // src/api/api-base.js
 import ConfigService from '../services/ConfigService.js';
 import { logger } from '../shared/logger.js';
+import { createStructuredPromptString } from '../shared/utils/prompt-formatting-utils.js'; // <-- ADD THIS LINE
 
 import { extractApiErrorMessage } from './utils/error-utils.js';
 import ApiInterface from './api-interface.js';
@@ -102,16 +103,10 @@ class BaseApiService extends ApiInterface {
     }
   }
 
-  _createStructuredPrompt(prompt, formattedContent) {
-    if (
-      typeof formattedContent === 'string' &&
-      formattedContent.trim().length > 0
-    ) {
-      return `# INSTRUCTION\n${prompt}\n# EXTRACTED CONTENT\n${formattedContent}`;
-    } else {
-      return prompt;
+    _createStructuredPrompt(prompt, formattedContent) {
+      // Use the shared utility to create the structured prompt.
+      return createStructuredPromptString(prompt, formattedContent);
     }
-  }
 
   async validateCredentials() {
     try {
