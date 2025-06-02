@@ -83,12 +83,6 @@ export function SidePanelChatProvider({ children }) {
     [platforms, selectedPlatformId]
   );
 
- useEffect(() => {
-    // Using your logger for consistency, but console.log is fine too
-    logger.sidepanel.debug('[DEBUG SidePanelChatContext] `messages` state updated:', JSON.parse(JSON.stringify(messages)));
-    // You could also log other relevant states here if needed, e.g., streamingMessageId
-  }, [messages]);
-
   // --- Internal Helper: Initiate API Call ---
   const _initiateApiCall = useCallback(
     async ({

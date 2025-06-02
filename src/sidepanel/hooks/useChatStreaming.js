@@ -3,7 +3,6 @@ import { useEffect, useCallback, useRef } from 'react';
 
 import { logger } from '../../shared/logger';
 import { MESSAGE_ROLES, STORAGE_KEYS } from '../../shared/constants';
-import ConfigService from '../../services/ConfigService';
 
 /**
  * Custom hook to manage chat streaming logic, including receiving chunks,
@@ -100,118 +99,151 @@ export function useChatStreaming({
       isError = false,
       isCancelled = false
     ) => {
+      // Log the messages array as it exists in this callback's closure *before* the functional update
+      // This is for debugging to see what 'messages' (the prop) holds at this point.
+      logger.sidepanel.debug(
+        '[DEBUG useChatStreaming] handleStreamComplete INVOKED. `messages` prop in its closure:',
+        JSON.parse(JSON.stringify(messages))
+      );
+
       const savedStats = rerunStatsRef.current;
       const retrievedPreTruncationCost = savedStats?.preTruncationCost || 0;
       const retrievedPreTruncationOutput = savedStats?.preTruncationOutput || 0;
 
       try {
-        let finalOutputTokensForMessage = 0;
-        let finalContent = finalContentInput || '';
-        let finalThinkingContent = finalThinkingContentInput || '';
-
-        if (isCancelled) {
-          const regularTokens =
-            TokenManagementService.estimateTokens(finalContent);
-          const thinkingTokens =
-            TokenManagementService.estimateTokens(finalThinkingContent);
-          finalOutputTokensForMessage = regularTokens + thinkingTokens;
-          finalContent += '\n\n_Stream cancelled by user._';
-        } else if (isError) {
-          finalOutputTokensForMessage = 0;
-          finalThinkingContent = '';
-        } else {
-          const regularTokens =
-            TokenManagementService.estimateTokens(finalContent);
-          const thinkingTokens =
-            TokenManagementService.estimateTokens(finalThinkingContent);
-          finalOutputTokensForMessage = regularTokens + thinkingTokens;
-        }
-
-        let updatedMessages = messages.map((msg) => {
-          if (msg.id === messageId) {
-            return {
-              ...msg,
-              content: finalContent,
-              thinkingContent: finalThinkingContent,
-              isStreaming: false,
-              modelId: model || selectedModel,
-              platformId: msg.platformId,
-              timestamp: new Date().toISOString(),
-              outputTokens: finalOutputTokensForMessage,
-              role: isError ? MESSAGE_ROLES.SYSTEM : msg.role,
-            };
-          }
-          return msg;
-        });
-
-        const messageToUpdateWithCost = updatedMessages.find(msg => msg.id === messageId);
-        let calculatedApiCost = null;
-
-        if (messageToUpdateWithCost && messageToUpdateWithCost.platformId && messageToUpdateWithCost.modelId && !isError) {
-          try {
-            const platformConfig = await ConfigService.getPlatformApiConfig(messageToUpdateWithCost.platformId);
-            if (platformConfig && platformConfig.models) {
-              const modelDetails = platformConfig.models.find(m => m.id === messageToUpdateWithCost.modelId);
-              if (modelDetails && modelDetails.pricing) {
-                const messagesUpToCurrent = updatedMessages.slice(0, updatedMessages.findIndex(msg => msg.id === messageId) + 1);
-                const systemPromptForCost = await ChatHistoryService.getSystemPrompt(tabId);
-                const turnStats = TokenManagementService.calculateTokenStatisticsFromMessages(messagesUpToCurrent, systemPromptForCost);
-                const costInfo = TokenManagementService.calculateCost(
-                  turnStats.inputTokensInLastApiCall,
-                  finalOutputTokensForMessage,
-                  modelDetails,
-                  isThinkingModeEnabled
-                );
-                calculatedApiCost = costInfo.totalCost;
-              }
-            }
-          } catch (costCalcError) {
-            logger.sidepanel.error(`Error calculating apiCost for message ${messageId}:`, costCalcError);
-          }
-        }
-
-        updatedMessages = updatedMessages.map(msg => {
-          if (msg.id === messageId) {
-            return { ...msg, apiCost: calculatedApiCost };
-          }
-          return msg;
-        });
-
-        if (tabId) {
-          const correctModelConfigForHistory = modelConfigData;
-          await ChatHistoryService.saveHistory(
-            tabId,
-            updatedMessages,
-            correctModelConfigForHistory,
-            {
-              initialAccumulatedCost: retrievedPreTruncationCost,
-              initialOutputTokens: retrievedPreTruncationOutput,
-            },
-            isThinkingModeEnabled
+        // Use functional update for setMessages
+        setMessages((prevMessages) => {
+          // Log prevMessages to see what React provides
+          logger.sidepanel.debug(
+            '[DEBUG useChatStreaming] Inside setMessages functional update. `prevMessages`:',
+            JSON.parse(JSON.stringify(prevMessages))
           );
-        }
-        
-        setMessages(updatedMessages);
+
+          let finalOutputTokensForMessage = 0;
+          let finalContent = finalContentInput || '';
+          let finalThinkingContent = finalThinkingContentInput || '';
+
+          if (isCancelled) {
+            const regularTokens =
+              TokenManagementService.estimateTokens(finalContent);
+            const thinkingTokens =
+              TokenManagementService.estimateTokens(finalThinkingContent);
+            finalOutputTokensForMessage = regularTokens + thinkingTokens;
+            finalContent += '\n\n_Stream cancelled by user._';
+          } else if (isError) {
+            finalOutputTokensForMessage = 0;
+            finalThinkingContent = ''; // Clear thinking content on error
+          } else {
+            const regularTokens =
+              TokenManagementService.estimateTokens(finalContent);
+            const thinkingTokens =
+              TokenManagementService.estimateTokens(finalThinkingContent);
+            finalOutputTokensForMessage = regularTokens + thinkingTokens;
+          }
+
+          let updatedMessagesArray = prevMessages.map((msg) => {
+            if (msg.id === messageId) {
+              return {
+                ...msg,
+                content: finalContent,
+                thinkingContent: finalThinkingContent,
+                isStreaming: false,
+                modelId: model || selectedModel, // Use model from chunkData if available
+                platformId: msg.platformId, // Keep existing platformId
+                timestamp: new Date().toISOString(),
+                outputTokens: finalOutputTokensForMessage,
+                role: isError ? MESSAGE_ROLES.SYSTEM : msg.role, // Change role on error
+                // apiCost will be calculated and added below
+              };
+            }
+            return msg; // Return other messages unchanged (this preserves pageContextUsed on user messages)
+          });
+
+          // --- API Cost Calculation and History Saving (moved inside functional update) ---
+          logger.sidepanel.debug(
+            '[DEBUG useChatStreaming] handleStreamComplete - `updatedMessagesArray` before cost calc and save:',
+            JSON.parse(JSON.stringify(updatedMessagesArray))
+          );
+
+          if (tabId) {
+             // This saveHistory call is now the critical one.
+             // We need to ensure updatedMessagesArray has the cost if possible.
+             // The previous calculateAndSave structure was problematic.
+
+             // Let's refine:
+             // 1. Map messages to update content, streaming status etc. (DONE)
+             // 2. Try to calculate cost for the *current* message.
+             // 3. Save to history.
+             // 4. Return the updated array.
+
+            const finalUpdatedMessagesForStateAndHistory = updatedMessagesArray.map(msg => {
+                if (msg.id === messageId && !isError) { // Only try to add cost if not an error
+                    // Simplified synchronous attempt to get pricing if modelConfigData is available
+                    let tempApiCost = null;
+                    if (modelConfigData && modelConfigData.pricing) {
+                        const tempTurnStats = TokenManagementService.calculateTokenStatisticsFromMessages(
+                            // Use the array *as it is being built* for this turn's stats
+                            updatedMessagesArray.slice(0, updatedMessagesArray.findIndex(m => m.id === messageId) + 1),
+                            null // System prompt for cost is complex to get sync here, might lead to slight inaccuracy if not already loaded
+                        );
+                        const costInfo = TokenManagementService.calculateCost(
+                            tempTurnStats.inputTokensInLastApiCall,
+                            finalOutputTokensForMessage,
+                            modelConfigData, // Use modelConfigData from the hook's closure
+                            isThinkingModeEnabled
+                        );
+                        tempApiCost = costInfo.totalCost;
+                    }
+                    return { ...msg, apiCost: tempApiCost };
+                }
+                return msg;
+            });
+            
+            logger.sidepanel.debug(
+                '[DEBUG useChatStreaming] handleStreamComplete - `finalUpdatedMessagesForStateAndHistory` before save:',
+                JSON.parse(JSON.stringify(finalUpdatedMessagesForStateAndHistory))
+            );
+
+            ChatHistoryService.saveHistory( // This is async but doesn't block the return of setMessages
+                tabId,
+                finalUpdatedMessagesForStateAndHistory,
+                modelConfigData, // Use modelConfigData from the hook's closure
+                {
+                  initialAccumulatedCost: retrievedPreTruncationCost,
+                  initialOutputTokens: retrievedPreTruncationOutput,
+                },
+                isThinkingModeEnabled
+            ).catch(err => logger.sidepanel.error("Error saving history in functional update:", err));
+
+            return finalUpdatedMessagesForStateAndHistory; // Return the array with cost (if calculated)
+          }
+          return updatedMessagesArray; // Fallback if no tabId
+        });
+
         batchedStreamingContentRef.current = '';
         batchedThinkingContentRef.current = '';
       } catch (error) {
         logger.sidepanel.error('Error handling stream completion:', error);
+        // Ensure state is cleaned up even on error
+        setMessages(prev => prev.map(m => m.id === messageId ? {...m, isStreaming: false, role: MESSAGE_ROLES.SYSTEM, content: m.content || "Error during completion."} : m));
       } finally {
         rerunStatsRef.current = null;
       }
     },
     [
-      messages, // This is allMessages from context
+      // Keep dependencies that `handleStreamComplete`'s logic actually uses from its outer scope.
+      messages, // Still needed for debug logging
       selectedModel,
       tabId,
-      modelConfigData,
+      modelConfigData, // Needed for cost calculation and saving history
       rerunStatsRef,
       batchedStreamingContentRef,
       batchedThinkingContentRef,
-      setMessages,
-      ChatHistoryService,
-      TokenManagementService,
-      isThinkingModeEnabled,
+      setMessages, // Still needed to call the state updater
+      ChatHistoryService, // Assuming this is stable
+      TokenManagementService, // Assuming this is stable
+      isThinkingModeEnabled, // Dependency for cost calculation
+      // logger, ConfigService are typically stable module imports
     ]
   );
 
