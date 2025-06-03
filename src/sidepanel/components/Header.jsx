@@ -194,7 +194,7 @@ function Header({
         {/* Accumulated Cost */}
         <div
           ref={costRef}
-          className='text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help'
+          className='flex items-center relative cursor-help mr-1'
           onMouseEnter={() => setHoveredTokenElement('cost')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('cost')}
@@ -204,7 +204,7 @@ function Header({
           aria-describedby="header-cost-tooltip"
         >
           {/* No icon for cost, just the value */}
-          <span className='whitespace-nowrap font-semibold'>{formattedAccumulatedCost}</span>
+          <span className='text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold'>{formattedAccumulatedCost}</span>
           <Tooltip
             show={hoveredTokenElement === 'cost'}
             message={tokenTooltipContent.cost}
