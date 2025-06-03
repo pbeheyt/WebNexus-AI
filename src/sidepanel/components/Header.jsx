@@ -97,7 +97,6 @@ function Header({
                     setIsContentExtractionEnabled(newCheckedState);
                 }}
                 disabled={!hasAnyPlatformCredentials}
-                className='w-9 h-5 ml-1'
               />
             </span>
             <Tooltip
