@@ -75,18 +75,18 @@ async function startBackgroundService() {
     // 4. Add the onStartup listener for cleanup
     // This listener persists across service worker restarts.
     chrome.runtime.onStartup.addListener(async () => {
-      // Reset all side panel visibility states as Chrome starts fresh.
+      // Reset all tab UI states as Chrome starts fresh.
       try {
         logger.background.info(
-          'Resetting all side panel visibility states due to browser startup...'
+          'Resetting all tab UI states due to browser startup...'
         );
-        await SidePanelStateManager.resetAllSidePanelVisibilityStates();
+        await SidePanelStateManager.resetAllTabUIStates();
         logger.background.info(
-          'Side panel visibility states reset successfully on startup.'
+          'Tab UI states reset successfully on startup.'
         );
       } catch (resetError) {
         logger.background.error(
-          'Error resetting side panel visibility states during browser startup:',
+          'Error resetting tab UI states during browser startup:',
           resetError
         );
       }

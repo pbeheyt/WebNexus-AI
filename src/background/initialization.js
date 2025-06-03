@@ -83,16 +83,16 @@ async function handleInstallation(details) {
   logger.background.info(`Extension event: ${details.reason}`, details);
 
   // --- Default Prompt Initialization Logic ---
-  // Reset all side panel visibility states as Chrome closes them on install/update.
+  // Reset all tab UI states as Chrome closes them on install/update.
   try {
     logger.background.info(
-      'Resetting all side panel visibility states due to installation event...'
+      'Resetting all tab UI states due to installation event...'
     );
-    await SidePanelStateManager.resetAllSidePanelVisibilityStates();
-    logger.background.info('Side panel visibility states reset successfully.');
+    await SidePanelStateManager.resetAllTabUIStates();
+    logger.background.info('Tab UI states reset successfully.');
   } catch (resetError) {
     logger.background.error(
-      'Error resetting side panel visibility states during installation:',
+      'Error resetting tab UI states during installation:',
       resetError
     );
   }

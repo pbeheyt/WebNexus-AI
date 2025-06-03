@@ -82,18 +82,19 @@ export async function toggleSidePanel(message, sender, sendResponse) {
     }
 
     // Read the current *intended* state from storage
-    const currentState =
-      await SidePanelStateManager.getSidePanelVisibilityForTab(targetTabId);
+    const currentTabUIState =
+      await SidePanelStateManager.getTabUIState(targetTabId);
     logger.background.info(
-      `Current stored visibility for tab ${targetTabId}: ${currentState}`
+      `Current stored UI state for tab ${targetTabId}:`, currentTabUIState
     );
 
     // Determine the new state and perform actions
-    if (currentState === false) {
+    newState = !currentTabUIState.isVisible; // The new visibility state
+
+    if (newState === true) {
       // Current state is closed, so we intend to open (enable) it
-      newState = true;
       logger.background.info(`Action: Enable sidepanel for tab ${targetTabId}`);
-      await SidePanelStateManager.setSidePanelVisibilityForTab(
+      await SidePanelStateManager.setTabUIVisibility(
         targetTabId,
         true
       );
@@ -107,11 +108,10 @@ export async function toggleSidePanel(message, sender, sendResponse) {
       );
     } else {
       // Current state is open, so we intend to close (disable) it
-      newState = false;
       logger.background.info(
         `Action: Disable sidepanel for tab ${targetTabId}`
       );
-      await SidePanelStateManager.setSidePanelVisibilityForTab(
+      await SidePanelStateManager.setTabUIVisibility(
         targetTabId,
         false
       );
@@ -182,7 +182,7 @@ export async function handleCloseCurrentSidePanelRequest(
   );
 
   try {
-    await SidePanelStateManager.setSidePanelVisibilityForTab(tabId, false);
+    await SidePanelStateManager.setTabUIVisibility(tabId, false);
     if (chrome.sidePanel && typeof chrome.sidePanel.setOptions === 'function') {
       await chrome.sidePanel.setOptions({ tabId, enabled: false });
       logger.background.info(

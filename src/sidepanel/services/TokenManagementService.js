@@ -14,29 +14,32 @@ import { createStructuredPromptString } from '../../shared/utils/prompt-formatti
  */
 class TokenManagementService {
   /**
-   * Get token statistics for a specific tab
-   * @param {number} tabId - Tab identifier
+   * Get token statistics for a specific chat session
+   * @param {string} chatSessionId - Chat session identifier
    * @returns {Promise<Object>} - Token usage statistics
    */
-  static async getTokenStatistics(tabId) {
-    if (!tabId) {
+  static async getTokenStatistics(chatSessionId) {
+    if (!chatSessionId) {
+      logger.sidepanel.warn(
+        'TokenManagementService: No chatSessionId provided for getTokenStatistics'
+      );
       return this._getEmptyStats();
     }
 
     try {
-      // Get all tab token statistics
+      // Get all global chat token statistics
       const result = await chrome.storage.local.get([
-        STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+        STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
       ]);
-      const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
-      const tabStats = allTokenStats[tabId] || {};
+      const allTokenStats = result[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
+      const sessionStats = allTokenStats[chatSessionId] || {};
 
       // Return merged stats, ensuring all default fields are present
-      const mergedStats = { ...this._getEmptyStats(), ...tabStats };
+      const mergedStats = { ...this._getEmptyStats(), ...sessionStats };
       return mergedStats;
     } catch (error) {
       logger.sidepanel.error(
-        'TokenManagementService: Error getting token statistics:',
+        `TokenManagementService: Error getting token statistics for chat session ${chatSessionId}:`,
         error
       );
       return this._getEmptyStats();
@@ -44,35 +47,35 @@ class TokenManagementService {
   }
 
   /**
-   * Update token statistics for a specific tab
-   * @param {number} tabId - Tab identifier
+   * Update token statistics for a specific chat session
+   * @param {string} chatSessionId - Chat session identifier
    * @param {Object} stats - Token statistics to store
    * @returns {Promise<boolean>} - Success status
    */
-  static async updateTokenStatistics(tabId, stats) {
-    if (!tabId) return false;
+  static async updateTokenStatistics(chatSessionId, stats) {
+    if (!chatSessionId) return false;
 
     try {
-      // Get all tab token statistics
+      // Get all global chat token statistics
       const result = await chrome.storage.local.get([
-        STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+        STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
       ]);
-      const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
+      const allTokenStats = result[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
 
-      // Update stats for this tab
-      allTokenStats[tabId] = {
+      // Update stats for this session
+      allTokenStats[chatSessionId] = {
         ...stats,
         lastUpdated: Date.now(),
       };
 
       // Save all token statistics
       await chrome.storage.local.set({
-        [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats,
+        [STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS]: allTokenStats,
       });
       return true;
     } catch (error) {
       logger.sidepanel.error(
-        'TokenManagementService: Error updating token statistics:',
+        `TokenManagementService: Error updating token statistics for chat session ${chatSessionId}:`,
         error
       );
       return false;
@@ -212,31 +215,31 @@ class TokenManagementService {
   }
 
   /**
-   * Clear token statistics for a tab
-   * @param {number} tabId - Tab identifier
+   * Clear token statistics for a chat session
+   * @param {string} chatSessionId - Chat session identifier
    * @returns {Promise<boolean>} - Success status
    */
-  static async clearTokenStatistics(tabId) {
-    if (!tabId) return false;
+  static async clearTokenStatistics(chatSessionId) {
+    if (!chatSessionId) return false;
 
     try {
-      // Get all tab token statistics
+      // Get all global chat token statistics
       const result = await chrome.storage.local.get([
-        STORAGE_KEYS.TAB_TOKEN_STATISTICS,
+        STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
       ]);
-      const allTokenStats = result[STORAGE_KEYS.TAB_TOKEN_STATISTICS] || {};
+      const allTokenStats = result[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
 
-      // Remove stats for this tab
-      delete allTokenStats[tabId];
+      // Remove stats for this session
+      delete allTokenStats[chatSessionId];
 
       // Save updated stats
       await chrome.storage.local.set({
-        [STORAGE_KEYS.TAB_TOKEN_STATISTICS]: allTokenStats,
+        [STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS]: allTokenStats,
       });
       return true;
     } catch (error) {
       logger.sidepanel.error(
-        'TokenManagementService: Error clearing token statistics:',
+        `TokenManagementService: Error clearing token statistics for chat session ${chatSessionId}:`,
         error
       );
       return false;
@@ -245,7 +248,7 @@ class TokenManagementService {
 
   /**
    * Calculate token statistics for a specific chat history
-   * @param {number} tabId - Tab identifier
+   * @param {string} chatSessionId - Chat session identifier
    * @param {Array} messages - Chat messages
    * @param {Object} modelConfig - Model configuration
    * @param {Object} [options={}] - Optional parameters like initial stats for reruns.
@@ -255,7 +258,7 @@ class TokenManagementService {
    * @returns {Promise<Object>} - Token statistics
    */
   static async calculateAndUpdateStatistics(
-    tabId,
+    chatSessionId,
     messages,
     // eslint-disable-next-line no-unused-vars
     modelConfig = null,
@@ -264,7 +267,7 @@ class TokenManagementService {
     isThinkingModeEnabled = false,
     systemPromptForThisTurn = null
   ) {
-    if (!tabId) return this._getEmptyStats();
+    if (!chatSessionId) return this._getEmptyStats();
 
     let initialAccumulatedCost;
     let initialOutputTokens;
@@ -280,7 +283,7 @@ class TokenManagementService {
       initialOutputTokens = options.initialOutputTokens;
     } else {
       // Fetch currently stored statistics if options are not valid
-      const currentStats = await this.getTokenStatistics(tabId);
+      const currentStats = await this.getTokenStatistics(chatSessionId);
       initialAccumulatedCost = currentStats.accumulatedCost || 0;
       initialOutputTokens = currentStats.outputTokens || 0;
     }
@@ -359,7 +362,7 @@ class TokenManagementService {
       };
 
       // 7. Save the complete, updated statistics
-      await this.updateTokenStatistics(tabId, finalStatsObject);
+      await this.updateTokenStatistics(chatSessionId, finalStatsObject);
 
       // 8. Return the final statistics object
       return finalStatsObject;

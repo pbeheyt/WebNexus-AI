@@ -8,43 +8,42 @@ import { logger } from '../shared/logger';
  */
 class SidePanelStateManager {
   /**
-   * Get the visibility state of the side panel for a specific tab.
+   * Get the UI state of the side panel for a specific tab.
    * @param {number} tabId - The ID of the tab.
-   * @returns {Promise<boolean>} - True if the side panel is intended to be visible, false otherwise.
+   * @returns {Promise<Object>} An object containing { isVisible: boolean, activeChatSessionId: string|null, currentView: string }.
    */
-  static async getSidePanelVisibilityForTab(tabId) {
+  static async getTabUIState(tabId) {
     if (tabId === null || tabId === undefined) {
       logger.service.warn(
-        'SidePanelStateManager: getSidePanelVisibilityForTab called with invalid tabId.'
+        'SidePanelStateManager: getTabUIState called with invalid tabId.'
       );
-      return false;
+      return { isVisible: false, activeChatSessionId: null, currentView: 'chat' }; // Default state for invalid tabId
     }
     try {
       const result = await chrome.storage.local.get(
         STORAGE_KEYS.TAB_SIDEPANEL_STATES
       );
       const states = result[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
-      return !!states[tabId.toString()]; // Default to false if not found
+      return states[tabId.toString()] || { isVisible: false, activeChatSessionId: null, currentView: 'chat' };
     } catch (error) {
       logger.service.error(
-        `Error getting side panel visibility for tab ${tabId}:`,
+        `SidePanelStateManager: Error getting tab UI state for tab ${tabId}:`,
         error
       );
-      return false; // Default to false on error
+      return { isVisible: false, activeChatSessionId: null, currentView: 'chat' }; // Default state on error
     }
   }
 
   /**
    * Set the visibility state of the side panel for a specific tab.
-   * If setting to false (closed), it will remove the key for that tab to save space.
    * @param {number} tabId - The ID of the tab.
    * @param {boolean} isVisible - The new visibility state.
    * @returns {Promise<void>}
    */
-  static async setSidePanelVisibilityForTab(tabId, isVisible) {
+  static async setTabUIVisibility(tabId, isVisible) {
     if (tabId === null || tabId === undefined) {
       logger.service.warn(
-        'SidePanelStateManager: setSidePanelVisibilityForTab called with invalid tabId.'
+        'SidePanelStateManager: setTabUIVisibility called with invalid tabId.'
       );
       return;
     }
@@ -53,42 +52,90 @@ class SidePanelStateManager {
         STORAGE_KEYS.TAB_SIDEPANEL_STATES
       );
       const states = result[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
-
-      if (isVisible) {
-        states[tabId.toString()] = true;
-      } else {
-        // If setting to not visible, remove the key for that tab to save storage space
-        delete states[tabId.toString()];
+      const tabIdStr = tabId.toString();
+      if (!states[tabIdStr]) {
+        states[tabIdStr] = { isVisible: false, activeChatSessionId: null, currentView: 'chat' };
       }
+      states[tabIdStr].isVisible = isVisible;
 
+      // Optional: Cleanup if state is default and not visible
+      // if (!isVisible && states[tabIdStr].activeChatSessionId === null && states[tabIdStr].currentView === 'chat') {
+      //   delete states[tabIdStr];
+      // }
       await chrome.storage.local.set({
         [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: states,
       });
       logger.service.info(
-        `Side panel visibility for tab ${tabId} set to ${isVisible} (key ${isVisible ? 'added/updated' : 'removed'}).`
+        `SidePanelStateManager: Tab UI visibility for tab ${tabId} set to ${isVisible}.`
       );
     } catch (error) {
       logger.service.error(
-        `Error setting side panel visibility for tab ${tabId}:`,
+        `SidePanelStateManager: Error setting tab UI visibility for tab ${tabId}:`,
         error
       );
     }
   }
 
+  static async setActiveChatSessionForTab(tabId, chatSessionId) {
+    if (tabId === null || tabId === undefined) {
+      logger.service.warn('SidePanelStateManager: setActiveChatSessionForTab called with invalid tabId.');
+      return;
+    }
+    try {
+      const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
+      const states = result[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
+      const tabIdStr = tabId.toString();
+
+      if (!states[tabIdStr]) {
+        states[tabIdStr] = { isVisible: true, activeChatSessionId: null, currentView: 'chat' }; // Assume visible if setting active chat
+      }
+      states[tabIdStr].activeChatSessionId = chatSessionId;
+      // Optionally, ensure currentView is 'chat' when a session is made active
+      // states[tabIdStr].currentView = 'chat'; 
+
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: states });
+      logger.service.info(`SidePanelStateManager: Active chat session for tab ${tabId} set to ${chatSessionId}.`);
+    } catch (error) {
+      logger.service.error(`SidePanelStateManager: Error setting active chat session for tab ${tabId}:`, error);
+    }
+  }
+
+  static async setTabViewMode(tabId, viewMode) {
+    if (tabId === null || tabId === undefined || (viewMode !== 'chat' && viewMode !== 'history')) {
+      logger.service.warn('SidePanelStateManager: setTabViewMode called with invalid parameters.', { tabId, viewMode });
+      return;
+    }
+    try {
+      const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
+      const states = result[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
+      const tabIdStr = tabId.toString();
+
+      if (!states[tabIdStr]) {
+        states[tabIdStr] = { isVisible: true, activeChatSessionId: null, currentView: 'chat' }; // Assume visible if setting view mode
+      }
+      states[tabIdStr].currentView = viewMode;
+
+      await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: states });
+      logger.service.info(`SidePanelStateManager: View mode for tab ${tabId} set to ${viewMode}.`);
+    } catch (error) {
+      logger.service.error(`SidePanelStateManager: Error setting view mode for tab ${tabId}:`, error);
+    }
+  }
+
   /**
-   * Resets all side panel visibility states stored. Typically called on browser startup or extension install/update.
+   * Resets all tab UI states stored. Typically called on browser startup or extension install/update.
    * This effectively clears the TAB_SIDEPANEL_STATES storage key.
    * @returns {Promise<void>}
    */
-  static async resetAllSidePanelVisibilityStates() {
+  static async resetAllTabUIStates() {
     try {
       await chrome.storage.local.remove(STORAGE_KEYS.TAB_SIDEPANEL_STATES);
       logger.service.info(
-        'All side panel visibility states have been reset (storage key removed).'
+        'All tab UI states have been reset (storage key removed).'
       );
     } catch (error) {
       logger.service.error(
-        'Error resetting all side panel visibility states:',
+        'Error resetting all tab UI states:',
         error
       );
     }
@@ -194,14 +241,14 @@ class SidePanelStateManager {
       const openTabs = await chrome.tabs.query({});
       const openTabIds = new Set(openTabs.map((tab) => tab.id.toString()));
 
+      // Only clean TAB_SIDEPANEL_STATES directly. Other keys are managed by their respective services or deprecated.
       const keysToClean = [
         STORAGE_KEYS.TAB_SIDEPANEL_STATES,
-        STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
-        STORAGE_KEYS.TAB_MODEL_PREFERENCES,
-        STORAGE_KEYS.TAB_CHAT_HISTORIES, // Already handled by ChatHistoryService
-        STORAGE_KEYS.TAB_TOKEN_STATISTICS, // Already handled by TokenManagementService
-        STORAGE_KEYS.TAB_FORMATTED_CONTENT,
+        // STORAGE_KEYS.TAB_PLATFORM_PREFERENCES, // Potentially keep if still used independently
+        // STORAGE_KEYS.TAB_MODEL_PREFERENCES, // Potentially keep if still used independently
+        STORAGE_KEYS.TAB_FORMATTED_CONTENT, // Keep if used for non-chat tab-specific content
       ];
+      // Deprecated keys like TAB_CHAT_HISTORIES and TAB_TOKEN_STATISTICS are no longer cleaned here.
 
       for (const storageKey of keysToClean) {
         const result = await chrome.storage.local.get(storageKey);

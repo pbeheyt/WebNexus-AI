@@ -118,8 +118,8 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
           `Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`
         );
         const isAllowed = isSidePanelAllowedPage(tab.url);
-        const isVisible =
-          await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+        const tabUIState =
+          await SidePanelStateManager.getTabUIState(tabId);
 
         if (
           chrome.sidePanel &&
@@ -129,10 +129,10 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
             await chrome.sidePanel.setOptions({
               tabId: tabId,
               path: `sidepanel.html?tabId=${tabId}`, // Always set path when allowed
-              enabled: isVisible, // Enable based on stored visibility
+              enabled: tabUIState.isVisible, // Enable based on stored visibility
             });
             logger.background.info(
-              `Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${isVisible}`
+              `Side Panel state set for completed tab ${tabId}: Allowed=${isAllowed}, Enabled=${tabUIState.isVisible}`
             );
           } else {
             await chrome.sidePanel.setOptions({
@@ -265,10 +265,10 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
   if ((changeInfo.status === 'complete' || changeInfo.url) && tab.url) {
     try {
       // Check if the side panel is *intended* to be visible for this tab
-      const isVisible =
-        await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+      const tabUIState =
+        await SidePanelStateManager.getTabUIState(tabId);
 
-      if (isVisible) {
+      if (tabUIState.isVisible) {
         logger.background.info(
           `Tab ${tabId} navigated to ${tab.url}. Side panel is relevant. Checking content type.`
         );
@@ -333,23 +333,23 @@ async function handleTabActivation(activeInfo) {
       }
 
       // Retrieve the intended visibility state for the activated tab
-      const isVisible =
-        await SidePanelStateManager.getSidePanelVisibilityForTab(tabId);
+      const tabUIState =
+        await SidePanelStateManager.getTabUIState(tabId);
 
       // Conditionally set side panel options based on stored visibility
-      if (isVisible) {
+      if (tabUIState.isVisible) {
         // Enable and set the path ONLY if it should be visible
         await chrome.sidePanel.setOptions({
           tabId: tabId,
           path: `sidepanel.html?tabId=${tabId}`,
-          enabled: true,
+          enabled: true, // Use tabUIState.isVisible
         });
         logger.background.info(`Side Panel enabled for activated tab ${tabId}`);
       } else {
         // Disable the panel if it shouldn't be visible
         await chrome.sidePanel.setOptions({
           tabId: tabId,
-          enabled: false,
+          enabled: false, // Use tabUIState.isVisible
         });
         logger.background.info(
           `Side Panel disabled for activated tab ${tabId}`
