@@ -797,20 +797,38 @@ export function SidePanelChatProvider({ children }) {
     }
 
     // Confirmation dialog
-    if (!window.confirm('Are you sure you want to start a new chat for this tab? The current chat session will remain in your history.')) {
+    if (!window.confirm('Are you sure you want to start a new chat for this tab? This will DELETE the current chat session and its history.')) {
       return;
     }
 
     setIsRefreshing(true);
     logger.sidepanel.info(`SidePanelChatContext: resetCurrentTabData (starting new chat) for tab ${tabId}`);
     try {
+      const sessionToPotentiallyDelete = currentChatSessionId;
       if (streamingMessageId && isProcessing && !isCanceling) {
         logger.sidepanel.info('Refresh requested: Cancelling ongoing stream first...');
         await cancelStream(); // cancelStream is from useChatStreaming
         logger.sidepanel.info('Stream cancellation attempted.');
       }
 
-      // This now means "start a new chat for this tab"
+      // Existing stream cancellation logic ends here or above
+
+      if (sessionToPotentiallyDelete) {
+        logger.sidepanel.info(`Refresh requested: Attempting to delete previous session ${sessionToPotentiallyDelete}.`);
+        try {
+          const deleteSuccess = await ChatHistoryService.deleteChatSession(sessionToPotentiallyDelete);
+          if (deleteSuccess) {
+            logger.sidepanel.info(`Successfully deleted previous session ${sessionToPotentiallyDelete} as part of refresh.`);
+          } else {
+            logger.sidepanel.warn(`Failed to delete previous session ${sessionToPotentiallyDelete} during refresh, but proceeding to create new chat.`);
+          }
+        } catch (deleteError) {
+          logger.sidepanel.error(`Error deleting previous session ${sessionToPotentiallyDelete} during refresh:`, deleteError);
+          // Continue to create new chat even if deletion fails
+        }
+      }
+
+      // Call to createNewChat() follows
       await createNewChat(); 
       
       // The original 'clearTabData' message to background is no longer directly relevant here
