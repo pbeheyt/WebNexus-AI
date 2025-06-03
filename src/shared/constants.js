@@ -159,8 +159,8 @@ export const DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG = {
  * General content extraction strategies
  */
 export const EXTRACTION_STRATEGIES = {
-  FOCUSED: 'focused',
   BROAD: 'broad',
+  FOCUSED: 'focused',
 };
 
-export const DEFAULT_EXTRACTION_STRATEGY = EXTRACTION_STRATEGIES.FOCUSED;
+export const DEFAULT_EXTRACTION_STRATEGY = EXTRACTION_STRATEGIES.BROAD;
