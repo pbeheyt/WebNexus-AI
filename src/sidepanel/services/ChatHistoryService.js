@@ -75,10 +75,13 @@ class ChatHistoryService {
       }
 
       // Get all global chat sessions
-      const result = await chrome.storage.local.get([
-        STORAGE_KEYS.GLOBAL_CHAT_SESSIONS,
-      ]);
+      const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
       const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
+
+      if (allSessions[chatSessionId] && allSessions[chatSessionId].metadata && allSessions[chatSessionId].metadata.isProvisional === true && messages.length > 0) {
+        logger.sidepanel.info(`ChatHistoryService: Committing provisional session ${chatSessionId} as messages are being saved.`);
+        allSessions[chatSessionId].metadata.isProvisional = false; 
+      }
 
       // Limit number of messages to prevent storage problems
       const limitedMessages = messages.slice(-MAX_MESSAGES_PER_TAB_HISTORY);
@@ -164,6 +167,7 @@ class ChatHistoryService {
           modelId: modelId || null,
           initialTabUrl: initialTabUrl || null,
           initialTabTitle: initialTabTitle || null,
+          isProvisional: true,
         },
         messages: [],
       };
@@ -173,7 +177,7 @@ class ChatHistoryService {
       allSessions[chatSessionId] = newSession;
 
       await chrome.storage.local.set({ [STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]: allSessions });
-      logger.sidepanel.info(`ChatHistoryService: Created new chat session: ${chatSessionId}`);
+      logger.sidepanel.info(`ChatHistoryService: Created new PROVISIONAL chat session: ${chatSessionId}`);
       return newSession; // Return the full session object
     } catch (error) {
       logger.sidepanel.error('ChatHistoryService: Error creating new chat session:', error);
@@ -288,6 +292,7 @@ class ChatHistoryService {
       const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
       const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
       const metadataArray = Object.values(allSessions)
+        .filter(session => session.metadata && session.metadata.isProvisional !== true)
         .map(session => session.metadata)
         .sort((a, b) => new Date(b.lastActivityAt) - new Date(a.lastActivityAt));
       return metadataArray;
@@ -366,6 +371,21 @@ class ChatHistoryService {
    */
   static async clearTokenStatistics(tabId) {
     return TokenManagementService.clearTokenStatistics(tabId);
+  }
+
+  static async getSessionMetadata(chatSessionId) {
+    if (!chatSessionId) {
+      logger.sidepanel.warn('ChatHistoryService: getSessionMetadata called without chatSessionId.');
+      return null;
+    }
+    try {
+      const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
+      const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
+      return allSessions[chatSessionId]?.metadata || null;
+    } catch (error) {
+      logger.sidepanel.error(`ChatHistoryService: Error getting metadata for session ${chatSessionId}:`, error);
+      return null;
+    }
   }
 }
 

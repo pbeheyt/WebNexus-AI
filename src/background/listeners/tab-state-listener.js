@@ -1,6 +1,7 @@
 // src/background/listeners/tab-state-listener.js
 
 import SidePanelStateManager from '../../services/SidePanelStateManager.js';
+import ChatHistoryService from '../../sidepanel/services/ChatHistoryService.js';
 import { logger } from '../../shared/logger.js';
 
 // List of tab-specific storage keys to clear on manual refresh (excluding sidepanel visibility)
@@ -215,6 +216,27 @@ export function setupTabStateListener() {
         logger.background.info(
           `Tab UI visibility set to false for closed tab ${tabId}.`
         );
+
+        // Check and clean up provisional chat session if necessary
+        try {
+          const tabUIState = await SidePanelStateManager.getTabUIState(tabId);
+          const activeChatSessionId = tabUIState?.activeChatSessionId;
+
+          if (activeChatSessionId) {
+            logger.background.info(`Tab ${tabId} closed, checking active session ${activeChatSessionId} for provisional cleanup.`);
+            const sessionMetadata = await ChatHistoryService.getSessionMetadata(activeChatSessionId);
+            if (sessionMetadata && sessionMetadata.isProvisional === true) {
+              logger.background.info(`Active session ${activeChatSessionId} for closed tab ${tabId} is provisional. Deleting.`);
+              await ChatHistoryService.deleteChatSession(activeChatSessionId);
+            } else if (sessionMetadata) {
+              logger.background.info(`Active session ${activeChatSessionId} for closed tab ${tabId} is not provisional. No cleanup needed for session itself.`);
+            } else {
+              logger.background.warn(`Could not retrieve metadata for session ${activeChatSessionId} associated with closed tab ${tabId}.`);
+            }
+          }
+        } catch (cleanupError) {
+          logger.background.error(`Error during provisional session cleanup for closed tab ${tabId}:`, cleanupError);
+        }
 
         // If TAB_FORMATTED_CONTENT is still purely tab-specific and not tied to global sessions, clear it.
         // Otherwise, this line might be removed if formatted content is now part of a global session.
