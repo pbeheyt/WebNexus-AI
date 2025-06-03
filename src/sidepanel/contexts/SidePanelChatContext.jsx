@@ -66,6 +66,7 @@ export function SidePanelChatProvider({ children }) {
   const batchedStreamingContentRef = useRef('');
   const rafIdRef = useRef(null);
   const rerunStatsRef = useRef(null);
+  const isInitializingSessionRef = useRef(false);
 
   // Use the token tracking hook
   const { tokenStats, calculateContextStatus, clearTokenData, calculateStats } =
@@ -328,8 +329,15 @@ export function SidePanelChatProvider({ children }) {
   // Comprehensive Initialization Logic
   useEffect(() => {
     const initializeContext = async () => {
+      if (isInitializingSessionRef.current) {
+        logger.sidepanel.debug('SidePanelChatContext: Initialization already in progress, skipping.');
+        return;
+      }
+      isInitializingSessionRef.current = true;
+
       if (!tabId || !selectedPlatformId) { // selectedModel might not be ready immediately
         // Don't clear messages here, wait for valid context or new session
+        isInitializingSessionRef.current = false; // Release lock if exiting early
         return;
       }
 
@@ -340,51 +348,86 @@ export function SidePanelChatProvider({ children }) {
         let sessionMessages = [];
 
         if (!activeSessionId) {
-          logger.sidepanel.info(`No active session for tab ${tabId}. Creating new one.`);
+          logger.sidepanel.info(`SidePanelChatContext: No active session for tab ${tabId}. Creating new one.`);
           const newSession = await ChatHistoryService.createNewChatSession({
             platformId: selectedPlatformId,
-            modelId: selectedModel, // selectedModel might be null initially, ChatHistoryService handles null
+            modelId: selectedModel, // Pass current selectedModel (could be null)
             initialTabUrl: currentTab?.url,
             initialTabTitle: currentTab?.title,
           });
+
           if (newSession && newSession.metadata) {
             activeSessionId = newSession.metadata.id;
-            await SidePanelStateManager.setTabUIVisibility(tabId, true);
+            await SidePanelStateManager.setTabUIVisibility(tabId, true); // Ensure visibility
             await SidePanelStateManager.setActiveChatSessionForTab(tabId, activeSessionId);
-            await SidePanelStateManager.setTabViewMode(tabId, 'chat');
-            logger.sidepanel.info(`New session ${activeSessionId} created and set for tab ${tabId}.`);
-            // New session means empty messages and cleared token data for this session
-            setMessages([]); // Handled by useTokenTracking based on session ID change
-            if (typeof clearTokenData === 'function') await clearTokenData(activeSessionId); // Pass session ID
+            await SidePanelStateManager.setTabViewMode(tabId, 'chat'); // Default to chat view
+            logger.sidepanel.info(`SidePanelChatContext: New provisional session ${activeSessionId} created and set for tab ${tabId}.`);
+            
+            setMessages([]);
+            if (typeof clearTokenData === 'function') await clearTokenData(activeSessionId);
+            setCurrentChatSessionId(activeSessionId);
+            setCurrentView('chat');
           } else {
-            logger.sidepanel.error('Failed to create a new chat session.');
-            setMessages([]); // Fallback to empty messages
+            logger.sidepanel.error('SidePanelChatContext: Failed to create a new chat session.');
+            setMessages([]);
             setCurrentChatSessionId(null);
             setCurrentView('chat');
+            // Exit early from initializeContext if session creation fails
+            // The finally block will still run to release the lock
+            return; 
+          }
+        } else { // activeSessionId exists for the tab
+          logger.sidepanel.info(`SidePanelChatContext: Tab ${tabId} has active session ${activeSessionId}. Checking its status.`);
+          const sessionMetadata = await ChatHistoryService.getSessionMetadata(activeSessionId);
+
+          if (sessionMetadata) {
+            if (sessionMetadata.isProvisional === true && selectedModel && selectedModel !== sessionMetadata.modelId) {
+              logger.sidepanel.info(`SidePanelChatContext: Active session ${activeSessionId} is provisional and model changed (or was null). Updating metadata from ${sessionMetadata.modelId} to ${selectedModel}.`);
+              await ChatHistoryService.updateSessionMetadata(activeSessionId, {
+                platformId: selectedPlatformId, // Re-affirm platformId too
+                modelId: selectedModel,
+              });
+              // Metadata updated, proceed to load this session
+            } else if (sessionMetadata.isProvisional === true) {
+                 logger.sidepanel.info(`SidePanelChatContext: Active session ${activeSessionId} is provisional. Model is ${sessionMetadata.modelId || 'null'}, selectedModel is ${selectedModel || 'null'}. No metadata update needed or selectedModel not ready.`);
+            } else {
+                 logger.sidepanel.info(`SidePanelChatContext: Active session ${activeSessionId} is not provisional. Loading as is.`);
+            }
+            
+            // Load messages for the (potentially updated) active session
+            sessionMessages = await ChatHistoryService.getHistory(activeSessionId);
+            setCurrentChatSessionId(activeSessionId);
+            setMessages(sessionMessages);
+            setCurrentView(tabUIState.currentView || 'chat'); // Respect stored view or default to chat
+          } else {
+            // Metadata for activeSessionId not found - inconsistent state
+            logger.sidepanel.error(`SidePanelChatContext: Metadata not found for supposedly active session ${activeSessionId} on tab ${tabId}. Resetting tab's active session.`);
+            await SidePanelStateManager.setActiveChatSessionForTab(tabId, null);
+            // This will cause initializeContext to re-run (due to potential state change or next render),
+            // and it should then fall into the `!activeSessionId` path to create a new session.
+            // Reset local state to reflect no active session for this render.
+            setCurrentChatSessionId(null);
+            setMessages([]);
+            setCurrentView('chat');
+            // Exit early, the next run of initializeContext will handle creation.
+            // The finally block will still run to release the lock.
             return;
           }
-        } else {
-          logger.sidepanel.info(`Loading existing session ${activeSessionId} for tab ${tabId}.`);
-          sessionMessages = await ChatHistoryService.getHistory(activeSessionId);
         }
-
-        setCurrentChatSessionId(activeSessionId);
-        setCurrentView(tabUIState.currentView || 'chat');
-        setMessages(sessionMessages);
-
-        // Token stats loading is handled by useTokenTracking hook via currentChatSessionId change
-
       } catch (error) {
         logger.sidepanel.error('Error initializing SidePanelChatContext:', error);
-        setMessages([]); // Fallback
+        setMessages([]); 
         setCurrentChatSessionId(null);
         setCurrentView('chat');
+      } finally {
+        isInitializingSessionRef.current = false;
+        logger.sidepanel.debug('SidePanelChatContext: Initialization lock released.');
       }
     };
 
     initializeContext();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabId, selectedPlatformId, selectedModel, currentTab?.url, currentTab?.title]); // Dependencies for re-initialization
+  }, [tabId, selectedPlatformId, selectedModel, currentTab?.url, currentTab?.title, clearTokenData]); // Dependencies for re-initialization
 
   // Get visible messages (filtering out extracted content - this might be removed if extracted content is no longer a separate message type)
   const visibleMessages = useMemo(() => {

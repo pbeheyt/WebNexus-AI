@@ -326,6 +326,37 @@ class ChatHistoryService {
     }
   }
 
+  static async updateSessionMetadata(chatSessionId, metadataUpdate) {
+    if (!chatSessionId || !metadataUpdate || typeof metadataUpdate !== 'object') {
+      logger.sidepanel.error('ChatHistoryService: updateSessionMetadata called with invalid arguments.', { chatSessionId, metadataUpdate });
+      return false;
+    }
+
+    try {
+      const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
+      const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
+
+      if (allSessions[chatSessionId] && allSessions[chatSessionId].metadata) {
+        // Merge new metadata and update last activity timestamp
+        allSessions[chatSessionId].metadata = {
+          ...allSessions[chatSessionId].metadata,
+          ...metadataUpdate,
+          lastActivityAt: new Date().toISOString(),
+        };
+
+        await chrome.storage.local.set({ [STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]: allSessions });
+        logger.sidepanel.info(`ChatHistoryService: Updated metadata for session ${chatSessionId}.`, metadataUpdate);
+        return true;
+      } else {
+        logger.sidepanel.warn(`ChatHistoryService: Session ${chatSessionId} not found for metadata update.`);
+        return false;
+      }
+    } catch (error) {
+      logger.sidepanel.error(`ChatHistoryService: Error updating metadata for session ${chatSessionId}:`, error);
+      return false;
+    }
+  }
+
   /**
    * Get token statistics for a specific tab
    * Delegates to TokenManagementService
