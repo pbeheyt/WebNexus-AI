@@ -194,7 +194,7 @@ function Header({
         {/* Accumulated Cost */}
         <div
           ref={costRef}
-          className='flex items-center relative cursor-help mr-1'
+          className='text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help'
           onMouseEnter={() => setHoveredTokenElement('cost')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('cost')}
