@@ -14,6 +14,7 @@ import {
   ChevronDownIcon,
   XIcon,
   ArrowUpIcon, // Added for history button
+  HistoryIcon, // Added for history button
 } from '../';
 
 export function AppHeader({
@@ -142,8 +143,7 @@ export function AppHeader({
             title={currentView === 'chat' ? 'View Chat History' : 'Back to Active Chat'}
             aria-label={currentView === 'chat' ? 'View Chat History' : 'Back to Active Chat'}
           >
-            {/* Replace with a proper HistoryIcon eventually */}
-            {currentView === 'chat' ? <span>H</span> : <ArrowUpIcon className="w-4 h-4 transform rotate-[-90deg]" />} 
+            {currentView === 'chat' ? <HistoryIcon className="w-4 h-4" /> : <ArrowUpIcon className="w-4 h-4 transform rotate-[-90deg]" />}
           </button>
         )}
 

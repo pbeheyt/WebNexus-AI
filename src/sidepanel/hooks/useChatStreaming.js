@@ -32,7 +32,6 @@ import { MESSAGE_ROLES, STORAGE_KEYS } from '../../shared/constants';
  * @returns {object} - Object containing the cancelStream function.
  */
 export function useChatStreaming({
-  tabId, // Kept if needed for logging or other tab-specific interactions not related to history/stats
   chatSessionId,
   setMessages,
   modelConfigData,

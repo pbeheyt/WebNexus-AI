@@ -41,16 +41,12 @@ export default function SidePanelApp() {
     currentChatSessionId,
     switchToHistoryView,
     switchToChatView,
-    createNewChat,
   } = useSidePanelChat();
   const { contentType, currentTab, updateContentContext } = useContent();
   const { textSize } = useUI();
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
-
-  // Placeholder for HistoryIcon, replace with actual icon later
-  const HistoryIcon = () => <span>H</span>; 
 
   const handleCloseShortcut = useCallback(async () => {
     if (!tabId) {

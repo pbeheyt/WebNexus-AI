@@ -69,7 +69,7 @@ export function SidePanelChatProvider({ children }) {
   const isInitializingSessionRef = useRef(false);
 
   // Use the token tracking hook
-  const { tokenStats, calculateContextStatus, clearTokenData, calculateStats } =
+  const { tokenStats, calculateContextStatus, clearTokenData } =
     useTokenTracking(currentChatSessionId);
 
   // Use the content processing hook
@@ -220,7 +220,6 @@ export function SidePanelChatProvider({ children }) {
 
   // --- Instantiate Hooks (Pass _initiateApiCall) ---
   const { cancelStream } = useChatStreaming({
-    tabId, // Kept for potential other uses, core logic shifts to chatSessionId
     chatSessionId: currentChatSessionId,
     setMessages,
     messages,
