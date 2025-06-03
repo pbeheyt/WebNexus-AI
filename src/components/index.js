@@ -60,7 +60,7 @@ export { ModelParametersIcon } from './icons/ModelParametersIcon';
 export { PlusIcon } from './icons/PlusIcon';
 export { TrashIcon } from './icons/TrashIcon';
 export { ArrowRightIcon } from './icons/ArrowRightIcon';
-export { HistoryIcon } from './icons/HistoryIcon'; // Ensure HistoryIcon is also exported
+export { HistoryIcon } from './icons/HistoryIcon';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';

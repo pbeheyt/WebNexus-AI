@@ -4,13 +4,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import ChatHistoryService from '../services/ChatHistoryService';
 import { PlatformIcon } from '../../components/layout/PlatformIcon'; // Adjusted path
-import { SpinnerIcon, PlusIcon, TrashIcon, ArrowRightIcon } from '../../components'; // Assuming SpinnerIcon is in components/index.js
+import { SpinnerIcon, TrashIcon, ArrowRightIcon } from '../../components'; // Assuming SpinnerIcon is in components/index.js
 import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
 
 
 export default function ChatHistoryListView() {
-  const { createNewChat, selectChatSession, deleteSelectedChatSession, currentChatSessionId, switchToChatView } = useSidePanelChat();
+  const { selectChatSession, deleteSelectedChatSession, currentChatSessionId, switchToChatView } = useSidePanelChat();
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,11 +50,6 @@ export default function ChatHistoryListView() {
     // The context will switch the view
   };
 
-  const handleNewChat = () => {
-    createNewChat();
-    // The context will switch the view
-  };
-
   const handleDeleteSession = async (sessionId, sessionTitle) => {
     if (window.confirm(`Are you sure you want to delete the chat titled "${sessionTitle}"? This action cannot be undone.`)) {
       setDeletingSessionId(sessionId);
@@ -87,16 +82,6 @@ export default function ChatHistoryListView() {
 
   return (
     <div className="flex-1 flex flex-col p-3 bg-theme-primary overflow-y-auto">
-      <div className="flex justify-between items-center mb-3 pb-2 border-b border-theme">
-        <h2 className="text-lg font-semibold text-theme-primary">Chat History</h2>
-        <button
-          onClick={handleNewChat}
-          className="flex items-center px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-md hover:bg-primary-hover transition-colors"
-        >
-          <PlusIcon />
-          <span className="ml-1.5">New Chat</span>
-        </button>
-      </div>
 
       {sessions.length === 0 ? (
         <div className="text-center text-theme-secondary py-10">

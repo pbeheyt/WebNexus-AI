@@ -41,6 +41,7 @@ export default function SidePanelApp() {
     currentChatSessionId,
     switchToHistoryView,
     switchToChatView,
+    createNewChat, // Add/Ensure this is present
   } = useSidePanelChat();
   const { contentType, currentTab, updateContentContext } = useContent();
   const { textSize } = useUI();
@@ -282,6 +283,8 @@ export default function SidePanelApp() {
               onToggleHistoryView={() => currentView === 'chat' ? switchToHistoryView() : switchToChatView()}
               showHistoryButton={true}
               currentView={currentView} // To determine icon/tooltip for history button
+              showNewChatButton={true} // Add this line
+              onNewChatClick={createNewChat} // Add this line
               onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
               showExpandToggle={true}
               showBorder={!headerExpanded}

@@ -15,6 +15,7 @@ import {
   XIcon,
   ArrowUpIcon, // Added for history button
   HistoryIcon, // Added for history button
+  PlusIcon, // Add this
 } from '../';
 
 export function AppHeader({
@@ -40,6 +41,8 @@ export function AppHeader({
   showHistoryButton = false,
   onToggleHistoryView,
   currentView = 'chat',
+  showNewChatButton = false, // Add this line
+  onNewChatClick,            // Add this line
 }) {
   const { theme, toggleTheme, textSize, toggleTextSize } = useUI();
 
@@ -147,6 +150,18 @@ export function AppHeader({
           </button>
         )}
 
+        {/* New Chat Button */}
+        {showNewChatButton && (
+          <button
+            onClick={onNewChatClick}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
+            title='New Chat'
+            aria-label='Start a new chat'
+          >
+            <PlusIcon className='w-4 h-4' />
+          </button>
+        )}
+
         {/* Render any custom buttons passed as children */}
         {children}
 
@@ -226,4 +241,6 @@ AppHeader.propTypes = {
   showHistoryButton: PropTypes.bool,
   onToggleHistoryView: PropTypes.func,
   currentView: PropTypes.oneOf(['chat', 'history']),
+  showNewChatButton: PropTypes.bool, // Add this line
+  onNewChatClick: PropTypes.func,    // Add this line
 };
