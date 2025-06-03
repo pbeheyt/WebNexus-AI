@@ -391,8 +391,6 @@ function ChatArea({
     ? isInjectablePage(currentTab.url)
     : false;
 
-  const { currentChatSessionId } = useSidePanelChat(); // Get currentChatSessionId
-
   const renderInitialView = () => {
     if (!hasAnyPlatformCredentials) {
       return (
@@ -584,10 +582,10 @@ function ChatArea({
           </div>
           <div className='flex flex-col items-center py-3 w-full'>
             <h3 className='text-base font-semibold mb-2'>
-              {currentChatSessionId ? "New chat started" : "Start a conversation"}
+              Start a conversation
             </h3>
-            <p className='text-xs max-w-xs mx-auto'>
-              {currentChatSessionId ? "Ask me anything!" : getWelcomeMessage(contentType, isPageInjectableValue)}
+            <p className='text-sm max-w-xs mx-auto'>
+              {getWelcomeMessage(contentType, isPageInjectableValue)}
             </p>
           </div>
         </div>
