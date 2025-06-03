@@ -83,7 +83,7 @@ export const UserMessageBubble = memo(
             {shouldDisplayBadgeElements && (
               <div
                 ref={contextBadgeTriggerRef} // This div is the trigger and anchor for the tooltip
-                className="mr-3 flex-shrink-0 cursor-help p-1 rounded-full"
+                className="mr-1 flex-shrink-0 cursor-help p-1 rounded-full"
                 onMouseEnter={() => setIsContextBadgeTooltipVisible(true)}
                 onMouseLeave={() => setIsContextBadgeTooltipVisible(false)}
                 onFocus={() => setIsContextBadgeTooltipVisible(true)}
@@ -94,7 +94,7 @@ export const UserMessageBubble = memo(
               >
                 <ContentTypeIcon
                   contentType={contextTypeUsed}
-                  className="w-6 h-6 text-theme-secondary"
+                  className="w-5 h-5 text-theme-secondary"
                 />
               </div>
             )}
