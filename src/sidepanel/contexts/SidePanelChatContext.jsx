@@ -582,7 +582,7 @@ export function SidePanelChatProvider({ children }) {
           } else if (previousSessionMetadata) {
             logger.sidepanel.info(`Previous session ${previousActiveSessionId} was not provisional. No cleanup needed.`);
           } else {
-            logger.sidepanel.warn(`Could not retrieve metadata for previous session ${previousActiveSessionId}. No cleanup performed.`);
+            logger.sidepanel.info(`Metadata not found for previous session ${previousActiveSessionId}. This is expected if the session was just deleted (e.g., during a refresh). No further cleanup needed for this session ID.`);
           }
         }
 
