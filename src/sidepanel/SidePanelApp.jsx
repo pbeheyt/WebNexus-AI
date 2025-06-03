@@ -326,7 +326,7 @@ export default function SidePanelApp() {
                 otherUIHeight={otherUIHeight}
                 requestHeightRecalculation={debouncedCalculateHeight}
               />
-              <div ref={userInputRef} className='flex-shrink-0 relative z-10 border-t border-theme select-none'>
+              <div ref={userInputRef} className='flex-shrink-0 relative z-10 select-none'>
                 <UserInput
                   className=''
                   requestHeightRecalculation={debouncedCalculateHeight}
