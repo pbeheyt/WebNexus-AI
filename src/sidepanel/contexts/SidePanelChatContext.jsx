@@ -473,6 +473,80 @@ export function SidePanelChatProvider({ children }) {
     loadPreference();
   }, [selectedPlatformId, selectedModel, tabId, modelConfigData]);
 
+  // Add this useEffect hook inside SidePanelChatProvider
+  useEffect(() => {
+    if (!chrome.storage || !chrome.storage.onChanged) {
+      logger.sidepanel.warn('chrome.storage.onChanged API not available. Cannot listen for chat session updates.');
+      return;
+    }
+
+    const handleStorageChange = async (changes, areaName) => {
+      if (areaName !== 'local' || !changes[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || !currentChatSessionId) {
+        return;
+      }
+
+      logger.sidepanel.debug('SidePanelChatContext: Storage change detected for GLOBAL_CHAT_SESSIONS.', { currentChatSessionId });
+
+      const newValue = changes[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS].newValue;
+      const oldValue = changes[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS].oldValue;
+
+      const currentSessionNewData = newValue ? newValue[currentChatSessionId] : null;
+      const currentSessionOldData = oldValue ? oldValue[currentChatSessionId] : null;
+
+      // Determine if a reload is needed for the current session
+      let needsReload = false;
+      if (currentSessionNewData) { // If new data for the current session exists
+        if (!currentSessionOldData) { // And old data didn't exist (e.g., session just created by another context)
+          needsReload = true;
+          logger.sidepanel.info(`SidePanelChatContext: Session ${currentChatSessionId} appeared in storage. Reloading messages.`);
+        } else {
+          // Compare relevant parts, e.g., lastActivityAt or message count if metadata is simple
+          // For now, comparing lastActivityAt is a good proxy for "content changed"
+          const newTimestamp = currentSessionNewData.metadata?.lastActivityAt;
+          const oldTimestamp = currentSessionOldData.metadata?.lastActivityAt;
+          if (newTimestamp && newTimestamp !== oldTimestamp) {
+            needsReload = true;
+            logger.sidepanel.info(`SidePanelChatContext: Session ${currentChatSessionId} updated (lastActivityAt changed). Reloading messages.`);
+          } else if (!newTimestamp && oldTimestamp) {
+            // New data exists but has no timestamp, while old one did (unlikely but possible)
+            needsReload = true;
+            logger.sidepanel.info(`SidePanelChatContext: Session ${currentChatSessionId} metadata changed (timestamp removed). Reloading messages.`);
+          }
+          // More sophisticated diffing could be added here if needed, e.g., comparing message array lengths
+          // or a dedicated "version" or "revision" number in the session metadata.
+        }
+      } else if (currentSessionOldData && !currentSessionNewData) {
+        // Session was deleted
+        logger.sidepanel.info(`SidePanelChatContext: Session ${currentChatSessionId} was deleted from storage. Clearing local messages.`);
+        setMessages([]); // Clear messages as the session is gone
+        // Potentially call createNewChat or logic to handle session deletion here if needed
+        return; // Exit early, no messages to fetch
+      }
+
+
+      if (needsReload) {
+        logger.sidepanel.info(`SidePanelChatContext: Reloading messages for session ${currentChatSessionId} due to storage change.`);
+        try {
+          const updatedMessages = await ChatHistoryService.getHistory(currentChatSessionId);
+          setMessages(updatedMessages);
+          logger.sidepanel.info(`SidePanelChatContext: Messages for session ${currentChatSessionId} reloaded successfully.`);
+        } catch (error) {
+          logger.sidepanel.error(`SidePanelChatContext: Error reloading messages for session ${currentChatSessionId} after storage change:`, error);
+        }
+      } else {
+        logger.sidepanel.debug(`SidePanelChatContext: Storage change for GLOBAL_CHAT_SESSIONS did not affect current session ${currentChatSessionId}, or no detectable change requiring reload.`);
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    logger.sidepanel.info('SidePanelChatContext: Added storage.onChanged listener for chat sessions.');
+
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+      logger.sidepanel.info('SidePanelChatContext: Removed storage.onChanged listener for chat sessions.');
+    };
+  }, [currentChatSessionId, setMessages]);
+
   const createNewChat = useCallback(async () => {
     if (!tabId || !selectedPlatformId ) return; // selectedModel can be null initially
     logger.sidepanel.info(`SidePanelChatContext: createNewChat called for tab ${tabId}`);
