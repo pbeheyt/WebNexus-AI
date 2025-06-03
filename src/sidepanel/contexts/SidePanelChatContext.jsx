@@ -476,6 +476,9 @@ export function SidePanelChatProvider({ children }) {
   const createNewChat = useCallback(async () => {
     if (!tabId || !selectedPlatformId ) return; // selectedModel can be null initially
     logger.sidepanel.info(`SidePanelChatContext: createNewChat called for tab ${tabId}`);
+    
+    const previousActiveSessionId = currentChatSessionId; // Capture previous session ID
+
     try {
       const newSession = await ChatHistoryService.createNewChatSession({
         platformId: selectedPlatformId,
@@ -493,13 +496,29 @@ export function SidePanelChatProvider({ children }) {
         setCurrentView('chat');
         if (typeof clearTokenData === 'function') await clearTokenData(newChatSessionId);
         logger.sidepanel.info(`Successfully created and switched to new session ${newChatSessionId} for tab ${tabId}.`);
+
+        // Cleanup previous provisional session if necessary
+        if (previousActiveSessionId && previousActiveSessionId !== newChatSessionId) {
+          logger.sidepanel.info(`Checking previous session ${previousActiveSessionId} for cleanup.`);
+          const previousSessionMetadata = await ChatHistoryService.getSessionMetadata(previousActiveSessionId);
+          if (previousSessionMetadata && previousSessionMetadata.isProvisional === true) {
+            logger.sidepanel.info(`Previous session ${previousActiveSessionId} was provisional. Deleting it.`);
+            await ChatHistoryService.deleteChatSession(previousActiveSessionId);
+            logger.sidepanel.info(`Successfully deleted provisional session ${previousActiveSessionId}.`);
+          } else if (previousSessionMetadata) {
+            logger.sidepanel.info(`Previous session ${previousActiveSessionId} was not provisional. No cleanup needed.`);
+          } else {
+            logger.sidepanel.warn(`Could not retrieve metadata for previous session ${previousActiveSessionId}. No cleanup performed.`);
+          }
+        }
+
       } else {
          logger.sidepanel.error('Failed to create new chat session in createNewChat.');
       }
     } catch (error) {
       logger.sidepanel.error('Error in createNewChat:', error);
     }
-  }, [tabId, selectedPlatformId, selectedModel, currentTab, clearTokenData]);
+  }, [tabId, selectedPlatformId, selectedModel, currentTab, clearTokenData, currentChatSessionId]); // Added currentChatSessionId to dependencies
 
   const selectChatSession = useCallback(async (chatSessionIdToSelect) => {
     if (!tabId || !chatSessionIdToSelect) return;
