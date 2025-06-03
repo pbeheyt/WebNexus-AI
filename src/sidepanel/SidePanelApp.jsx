@@ -287,7 +287,7 @@ export default function SidePanelApp() {
               onNewChatClick={createNewChat} // Add this line
               onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
               showExpandToggle={true}
-              showBorder={!headerExpanded}
+              showBorder={true}
               className='px-5 py-2'
             />
           </div>
