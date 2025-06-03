@@ -9,7 +9,8 @@ import { MESSAGE_ROLES, STORAGE_KEYS } from '../../shared/constants';
  * updating UI, handling completion/errors/cancellation, and managing cancellation requests.
  *
  * @param {object} args - Dependencies passed from the parent context.
- * @param {number} args.tabId - The current tab ID.
+ * @param {number} [args.tabId] - The current tab ID (optional, for logging or specific tab interactions).
+ * @param {string} args.chatSessionId - The current chat session ID.
  * @param {function} args.setMessages - State setter for the messages array.
  * @param {Array} args.messages - Current messages array (read-only).
  * @param {object} args.modelConfigData - Configuration for the selected model.
@@ -31,7 +32,8 @@ import { MESSAGE_ROLES, STORAGE_KEYS } from '../../shared/constants';
  * @returns {object} - Object containing the cancelStream function.
  */
 export function useChatStreaming({
-  tabId,
+  tabId, // Kept if needed for logging or other tab-specific interactions not related to history/stats
+  chatSessionId,
   setMessages,
   modelConfigData,
   selectedModel,
@@ -156,7 +158,7 @@ export function useChatStreaming({
           });
 
           // --- API Cost Calculation and History Saving ---
-          if (tabId) {
+          if (chatSessionId) { // Use chatSessionId here
             const finalUpdatedMessagesForStateAndHistory = updatedMessagesArray.map(msg => {
                 if (msg.id === messageId && !isError) { // Only try to add cost if not an error
                     let tempApiCost = null;
@@ -180,7 +182,7 @@ export function useChatStreaming({
             });
 
             ChatHistoryService.saveHistory(
-                tabId,
+                chatSessionId, // Use chatSessionId here
                 finalUpdatedMessagesForStateAndHistory,
                 modelConfigData, // Use modelConfigData from the hook's closure
                 {
@@ -208,7 +210,7 @@ export function useChatStreaming({
     },
     [
       selectedModel,
-      tabId,
+      chatSessionId, // Use chatSessionId here
       modelConfigData,
       rerunStatsRef,
       batchedStreamingContentRef,
@@ -217,6 +219,8 @@ export function useChatStreaming({
       ChatHistoryService,
       TokenManagementService,
       isThinkingModeEnabled,
+      // tabId is implicitly included if it's part of the dependencies for other reasons,
+      // but the core logic here now depends on chatSessionId for history.
     ]
   );
 

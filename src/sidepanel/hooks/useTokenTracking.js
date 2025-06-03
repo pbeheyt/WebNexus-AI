@@ -10,20 +10,21 @@ import { STORAGE_KEYS } from '../../shared/constants';
  * Hook for tracking token usage and providing token statistics in React components
  * Thin wrapper around TokenManagementService for React state management
  *
- * @param {number} tabId - Tab ID
+ * @param {string} chatSessionId - Chat Session ID
  * @returns {Object} - Token tracking capabilities and statistics
  */
-export function useTokenTracking(tabId) {
+export function useTokenTracking(chatSessionId) {
   // Initialize state using the updated structure from TokenManagementService
   const [tokenStats, setTokenStats] = useState(
     TokenManagementService._getEmptyStats()
   );
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load token data for the tab on mount and when tab changes
+  // Load token data for the session on mount and when session changes
   useEffect(() => {
     const loadData = async () => {
-      if (!tabId) {
+      if (!chatSessionId) {
+        setTokenStats(TokenManagementService._getEmptyStats()); // Reset stats if no session ID
         setIsLoading(false);
         return;
       }
@@ -31,10 +32,10 @@ export function useTokenTracking(tabId) {
       setIsLoading(true);
       try {
         // Load token stats using service
-        const stats = await TokenManagementService.getTokenStatistics(tabId);
+        const stats = await TokenManagementService.getTokenStatistics(chatSessionId);
         setTokenStats(stats);
       } catch (error) {
-        logger.sidepanel.error('Error loading token data:', error);
+        logger.sidepanel.error('Error loading token data for session:', chatSessionId, error);
       } finally {
         setIsLoading(false);
       }
@@ -44,23 +45,26 @@ export function useTokenTracking(tabId) {
 
     // Set up a listener for storage changes to keep state in sync
     const handleStorageChange = (changes, area) => {
-      if (area !== 'local' || !tabId) return;
+      if (area !== 'local' || !chatSessionId) return;
 
-      // Check if token statistics were updated directly in storage
+      // Check if global chat token statistics were updated
+      // Assuming TokenManagementService now stores stats under a global key, keyed by chatSessionId
       if (
-        changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS] &&
-        changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue
+        changes[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] &&
+        changes[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS].newValue
       ) {
-        const allTokenStats =
-          changes[STORAGE_KEYS.TAB_TOKEN_STATISTICS].newValue;
-        const tabStats = allTokenStats[tabId];
-        if (tabStats) {
-          // Ensure all fields, including new ones, are updated
+        const allChatTokenStats =
+          changes[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS].newValue;
+        const sessionStats = allChatTokenStats[chatSessionId];
+        if (sessionStats) {
           setTokenStats((_prevStats) => ({
-            ...TokenManagementService._getEmptyStats(), // Start with default empty stats
-            ...tabStats, // Overwrite with values from storage
-            isCalculated: true, // Mark as calculated
+            ...TokenManagementService._getEmptyStats(),
+            ...sessionStats,
+            isCalculated: true,
           }));
+        } else {
+          // If the current session's stats are not in the new value (e.g., cleared), reset them
+          setTokenStats(TokenManagementService._getEmptyStats());
         }
       }
     };
@@ -72,7 +76,7 @@ export function useTokenTracking(tabId) {
     return () => {
       chrome.storage.onChanged.removeListener(handleStorageChange);
     };
-  }, [tabId]);
+  }, [chatSessionId]);
 
   /**
    * Calculate context window status based on current token stats
@@ -81,7 +85,8 @@ export function useTokenTracking(tabId) {
    */
   const calculateContextStatus = useCallback(
     async (modelConfig) => {
-      if (!tabId || !modelConfig || !modelConfig.tokens.contextWindow) {
+      // Now relies on tokenStats which are for the current chatSessionId
+      if (!modelConfig || !modelConfig.tokens || !modelConfig.tokens.contextWindow) {
         return {
           warningLevel: 'none',
           percentage: 0,
@@ -92,7 +97,7 @@ export function useTokenTracking(tabId) {
       }
 
       try {
-        // Use direct service call with current token stats
+        // Use direct service call with current token stats (already for the correct chatSessionId)
         const status = await TokenManagementService.calculateContextStatus(
           tokenStats,
           modelConfig
@@ -110,7 +115,7 @@ export function useTokenTracking(tabId) {
         );
       } catch (error) {
         logger.sidepanel.error(
-          `[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error before/during static call for tabId: ${tabId}`,
+          `[DIAG_LOG: useTokenTracking:calculateContextStatus] Caught error for chatSessionId: ${chatSessionId}`,
           error
         );
         return {
@@ -122,44 +127,46 @@ export function useTokenTracking(tabId) {
         };
       }
     },
-    [tabId, tokenStats]
+    [chatSessionId, tokenStats] // chatSessionId for logging, tokenStats for calculation
   );
 
   /**
-   * Clear all token data for the current tab
+   * Clear all token data for the current chat session
+   * @param {string} sessionIdToClear - Optional: if provided, clears for this specific session. Defaults to current chatSessionId.
    * @returns {Promise<boolean>} - Success indicator
    */
-  const clearTokenData = useCallback(async () => {
-    if (!tabId) return false;
+  const clearTokenData = useCallback(async (sessionIdToClear) => {
+    const targetSessionId = sessionIdToClear || chatSessionId;
+    if (!targetSessionId) return false;
 
     try {
-      const success = await TokenManagementService.clearTokenStatistics(tabId);
+      const success = await TokenManagementService.clearTokenStatistics(targetSessionId);
 
-      if (success) {
-        // Reset state to empty stats
+      if (success && targetSessionId === chatSessionId) {
+        // Reset state to empty stats only if the cleared session is the current one
         setTokenStats(TokenManagementService._getEmptyStats());
       }
 
       return success;
     } catch (error) {
-      logger.sidepanel.error('Error clearing token data:', error);
+      logger.sidepanel.error('Error clearing token data for session:', targetSessionId, error);
       return false;
     }
-  }, [tabId]);
+  }, [chatSessionId]);
 
   /**
-   * Calculate and update token statistics for the current tab
+   * Calculate and update token statistics for the current chat session
    * @param {Array} messages - Chat messages
    * @param {Object} modelConfig - Model configuration
    * @returns {Promise<Object>} - Updated token statistics
    */
   const calculateStats = useCallback(
     async (messages, modelConfig = null) => {
-      if (!tabId) return tokenStats;
+      if (!chatSessionId) return tokenStats; // Return current (likely empty) stats if no session
 
       try {
         const stats = await TokenManagementService.calculateAndUpdateStatistics(
-          tabId,
+          chatSessionId,
           messages,
           modelConfig
         );
@@ -167,11 +174,11 @@ export function useTokenTracking(tabId) {
         setTokenStats(stats);
         return stats;
       } catch (error) {
-        logger.sidepanel.error('Error calculating token statistics:', error);
-        return tokenStats;
+        logger.sidepanel.error('Error calculating token statistics for session:', chatSessionId, error);
+        return tokenStats; // Return existing stats on error
       }
     },
-    [tabId, tokenStats]
+    [chatSessionId, tokenStats] // Depend on chatSessionId and tokenStats
   );
 
   return {

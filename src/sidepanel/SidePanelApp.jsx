@@ -29,18 +29,27 @@ import { useSidePanelChat } from './contexts/SidePanelChatContext';
 export default function SidePanelApp() {
   const { tabId, setTabId, hasAnyPlatformCredentials } = useSidePanelPlatform();
   const {
-    resetCurrentTabData,
+    resetCurrentTabData, // This now means "start new chat for this tab"
     isRefreshing,
     tokenStats,
     contextStatus,
     isContentExtractionEnabled,
     setIsContentExtractionEnabled,
+    // New context values
+    currentView,
+    currentChatSessionId,
+    switchToHistoryView,
+    switchToChatView,
+    createNewChat,
   } = useSidePanelChat();
   const { contentType, currentTab, updateContentContext } = useContent();
   const { textSize } = useUI();
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const portRef = useRef(null);
+
+  // Placeholder for HistoryIcon, replace with actual icon later
+  const HistoryIcon = () => <span>H</span>; 
 
   const handleCloseShortcut = useCallback(async () => {
     if (!tabId) {
@@ -270,9 +279,12 @@ export default function SidePanelApp() {
           <div ref={appHeaderRef} className='flex-shrink-0'>
             <AppHeader
               showRefreshButton={true}
-              onRefreshClick={resetCurrentTabData}
+              onRefreshClick={resetCurrentTabData} // This now calls the context's resetCurrentTabData
               isRefreshing={isRefreshing}
               isExpanded={headerExpanded}
+              onToggleHistoryView={() => currentView === 'chat' ? switchToHistoryView() : switchToChatView()}
+              showHistoryButton={true}
+              currentView={currentView} // To determine icon/tooltip for history button
               onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
               showExpandToggle={true}
               showBorder={!headerExpanded}
@@ -280,22 +292,24 @@ export default function SidePanelApp() {
             />
           </div>
 
-          {/* Interactive Header Section */}
-          <div
-            ref={collapsibleHeaderRef} // Ref for height calculation
-            className='relative flex-shrink-0 z-10'
-          >
-            <Header
-              isExpanded={headerExpanded}
-              tokenStats={tokenStats}
-              contextStatus={contextStatus}
-              contentType={contentType}
-              isPageInjectable={isPageInjectable}
-              isContentExtractionEnabled={isContentExtractionEnabled}
-              setIsContentExtractionEnabled={setIsContentExtractionEnabled}
-              hasAnyPlatformCredentials={hasAnyPlatformCredentials}
-            />
-          </div>
+          {/* Interactive Header Section - Conditionally rendered if in chat view */}
+          {currentView === 'chat' && (
+            <div
+              ref={collapsibleHeaderRef} // Ref for height calculation
+              className='relative flex-shrink-0 z-10'
+            >
+              <Header
+                isExpanded={headerExpanded}
+                tokenStats={tokenStats}
+                contextStatus={contextStatus}
+                contentType={contentType}
+                isPageInjectable={isPageInjectable}
+                isContentExtractionEnabled={isContentExtractionEnabled}
+                setIsContentExtractionEnabled={setIsContentExtractionEnabled}
+                hasAnyPlatformCredentials={hasAnyPlatformCredentials}
+              />
+            </div>
+          )}
 
           {isReady && tabId && isRefreshing && (
             <div className='absolute inset-0 bg-theme-primary/75 dark:bg-theme-primary/75 z-20 flex items-center justify-center pointer-events-auto'>
@@ -304,21 +318,44 @@ export default function SidePanelApp() {
             </div>
           )}
 
-          <ChatArea
-            className='flex-1 min-h-0 relative z-0'
-            otherUIHeight={otherUIHeight}
-            requestHeightRecalculation={debouncedCalculateHeight}
-          />
-
-          <div
-            ref={userInputRef}
-            className='flex-shrink-0 relative z-10 border-t border-theme select-none'
-          >
-            <UserInput
-              className=''
-              requestHeightRecalculation={debouncedCalculateHeight}
-            />
-          </div>
+          {/* Main Content Area: Chat or History View */}
+          {currentView === 'chat' && currentChatSessionId ? (
+            <>
+              <ChatArea
+                className='flex-1 min-h-0 relative z-0'
+                otherUIHeight={otherUIHeight}
+                requestHeightRecalculation={debouncedCalculateHeight}
+              />
+              <div ref={userInputRef} className='flex-shrink-0 relative z-10 border-t border-theme select-none'>
+                <UserInput
+                  className=''
+                  requestHeightRecalculation={debouncedCalculateHeight}
+                />
+              </div>
+            </>
+          ) : currentView === 'history' ? (
+            <div className="flex-1 overflow-y-auto p-4"> {/* Placeholder for ChatHistoryListView */}
+              <h2 className="text-lg font-semibold mb-2 text-theme-primary">Chat History</h2>
+              <button 
+                onClick={createNewChat} 
+                className="px-4 py-2 mb-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                New Chat
+              </button>
+              <p className="text-theme-secondary">History list will be here (Part 3).</p>
+              <button 
+                onClick={switchToChatView} 
+                className="px-4 py-2 mt-2 bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                Back to Active Chat
+              </button>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              {/* Loading or error state if currentChatSessionId is null even in 'chat' view (should be handled by context init) */}
+              <SpinnerIcon className="w-8 h-8 text-theme-secondary" />
+            </div>
+          )}
         </>
       ) : (
         <div className='flex flex-col h-full w-full items-center justify-center p-4'>

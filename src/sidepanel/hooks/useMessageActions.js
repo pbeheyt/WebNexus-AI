@@ -24,7 +24,8 @@ import { createStructuredPromptString } from '../../shared/utils/prompt-formatti
  * @param {string} args.selectedModel - Current selected model ID.
  * @param {object} args.selectedPlatform - Current selected platform details.
  * @param {string} args.selectedPlatformId - Current selected platform ID.
- * @param {number} args.tabId - Current tab ID.
+ * @param {number} [args.tabId] - Current tab ID (kept for context extraction options).
+ * @param {string} args.chatSessionId - Current chat session ID.
  * @param {object} args.rerunStatsRef - Ref containing pre-truncation stats.
  * @param {function} args.processContentViaApi - API processing function.
  * @param {function} args.resetContentProcessing - Function to reset API state.
@@ -42,7 +43,8 @@ const _initiateRerunSequence = async ({
   batchedStreamingContentRef,
   selectedModel,
   selectedPlatformId,
-  tabId,
+  tabId, // Kept for context extraction options
+  chatSessionId, // Added
   currentTab,
   rerunStatsRef,
   isContentExtractionEnabled,
@@ -100,7 +102,8 @@ const _initiateRerunSequence = async ({
     isContentExtractionEnabled: effectiveExtractionEnabledForRerun,
     isThinkingModeEnabled: isThinkingModeEnabled,
     options: {
-      tabId,
+      tabId, // Kept for context extraction options
+      chatSessionId, // Added
       source: INTERFACE_SOURCES.SIDEPANEL,
       ...(rerunStatsRef.current && {
         preTruncationCost: rerunStatsRef.current.preTruncationCost,
@@ -114,7 +117,7 @@ const _initiateRerunSequence = async ({
     resetContentProcessing,
     ChatHistoryService,
     modelConfigData,
-    tabId,
+    // tabId is already in options if needed by _initiateApiCall for other reasons
     assistantMessageIdOnError: assistantPlaceholderId,
     messagesOnError: truncatedMessages,
     rerunStatsRef,
@@ -142,7 +145,8 @@ const _initiateRerunSequence = async ({
  * Custom hook to manage message actions like rerun, edit & rerun.
  *
  * @param {object} args - Dependencies passed from the parent context.
- * @param {number} args.tabId - The current tab ID.
+ * @param {number} [args.tabId] - The current tab ID (kept for context extraction options).
+ * @param {string} args.chatSessionId - The current chat session ID.
  * @param {function} args.setMessages - State setter for the messages array.
  * @param {Array} args.messages - Current messages array (read-only).
  * @param {string} args.selectedPlatformId - ID of the selected platform.
@@ -162,7 +166,8 @@ const _initiateRerunSequence = async ({
  * @returns {object} - Object containing action functions: { rerunMessage, editAndRerunMessage, rerunAssistantMessage }.
  */
 export function useMessageActions({
-  tabId,
+  tabId, // Kept for context extraction options
+  chatSessionId, // Added
   setMessages,
   messages,
   selectedPlatformId,
@@ -185,7 +190,7 @@ export function useMessageActions({
   const rerunMessage = useCallback(
     async (messageId) => {
       // --- Guards ---
-      if (!tabId || !selectedPlatformId || !selectedModel || isProcessing)
+      if (!chatSessionId || !selectedPlatformId || !selectedModel || isProcessing) // Use chatSessionId
         return;
       const index = messages.findIndex((msg) => msg.id === messageId);
       if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
@@ -229,7 +234,8 @@ export function useMessageActions({
         batchedStreamingContentRef,
         selectedModel,
         selectedPlatformId,
-        tabId,
+        tabId, // Kept for context extraction options
+        chatSessionId, // Added
         currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
@@ -248,7 +254,8 @@ export function useMessageActions({
       selectedPlatformId,
       selectedModel,
       setStreamingMessageId,
-      tabId,
+      tabId, // Kept for context extraction options
+      chatSessionId, // Added
       isProcessing,
       resetContentProcessing,
       modelConfigData,
@@ -267,7 +274,7 @@ export function useMessageActions({
     async (messageId, newContent) => {
       // --- Guards ---
       if (
-        !tabId ||
+        !chatSessionId || // Use chatSessionId
         !selectedPlatformId ||
         !selectedModel ||
         isProcessing ||
@@ -328,7 +335,8 @@ export function useMessageActions({
         batchedStreamingContentRef,
         selectedModel,
         selectedPlatformId,
-        tabId,
+        tabId, // Kept for context extraction options
+        chatSessionId, // Added
         currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
@@ -347,7 +355,8 @@ export function useMessageActions({
       selectedPlatformId,
       selectedModel,
       setStreamingMessageId,
-      tabId,
+      tabId, // Kept for context extraction options
+      chatSessionId, // Added
       isProcessing,
       resetContentProcessing,
       modelConfigData,
@@ -366,7 +375,7 @@ export function useMessageActions({
   const rerunAssistantMessage = useCallback(
     async (assistantMessageId) => {
       // --- Guards ---
-      if (!tabId || !selectedPlatformId || !selectedModel || isProcessing)
+      if (!chatSessionId || !selectedPlatformId || !selectedModel || isProcessing) // Use chatSessionId
         return;
       const assistantIndex = messages.findIndex(
         (msg) => msg.id === assistantMessageId
@@ -418,7 +427,8 @@ export function useMessageActions({
         batchedStreamingContentRef,
         selectedModel,
         selectedPlatformId,
-        tabId,
+        tabId, // Kept for context extraction options
+        chatSessionId, // Added
         currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
@@ -431,7 +441,8 @@ export function useMessageActions({
       });
     },
     [
-      tabId,
+      tabId, // Kept for context extraction options
+      chatSessionId, // Added
       selectedPlatformId,
       selectedModel,
       isProcessing,

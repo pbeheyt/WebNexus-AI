@@ -13,6 +13,7 @@ import {
   RefreshIcon,
   ChevronDownIcon,
   XIcon,
+  ArrowUpIcon, // Added for history button
 } from '../';
 
 export function AppHeader({
@@ -34,6 +35,10 @@ export function AppHeader({
   onInfoFocus,
   onInfoBlur,
   infoButtonAriaLabel,
+  // New props for history view toggle
+  showHistoryButton = false,
+  onToggleHistoryView,
+  currentView = 'chat',
 }) {
   const { theme, toggleTheme, textSize, toggleTextSize } = useUI();
 
@@ -129,6 +134,19 @@ export function AppHeader({
           </button>
         )}
 
+        {/* History Toggle Button */}
+        {showHistoryButton && (
+          <button
+            onClick={onToggleHistoryView}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
+            title={currentView === 'chat' ? 'View Chat History' : 'Back to Active Chat'}
+            aria-label={currentView === 'chat' ? 'View Chat History' : 'Back to Active Chat'}
+          >
+            {/* Replace with a proper HistoryIcon eventually */}
+            {currentView === 'chat' ? <span>H</span> : <ArrowUpIcon className="w-4 h-4 transform rotate-[-90deg]" />} 
+          </button>
+        )}
+
         {/* Render any custom buttons passed as children */}
         {children}
 
@@ -204,4 +222,8 @@ AppHeader.propTypes = {
   onInfoFocus: PropTypes.func,
   onInfoBlur: PropTypes.func,
   infoButtonAriaLabel: PropTypes.string,
+  // New prop types
+  showHistoryButton: PropTypes.bool,
+  onToggleHistoryView: PropTypes.func,
+  currentView: PropTypes.oneOf(['chat', 'history']),
 };
