@@ -131,7 +131,7 @@ function PlatformModelControls({ onToggleExpand }) {
                     />
                     <div
                       ref={infoIconRef}
-                      className='ml-1.5 cursor-help'
+                      className='ml-2 cursor-help'
                       onMouseEnter={() => setTooltipVisible(true)}
                       onMouseLeave={() => setTooltipVisible(false)}
                       onFocus={() => setTooltipVisible(true)}
@@ -140,7 +140,7 @@ function PlatformModelControls({ onToggleExpand }) {
                       role='button'
                       aria-describedby='thinking-mode-tooltip-platform-controls'
                     >
-                      <InfoIcon className='w-3.5 h-3.5 text-theme-secondary' />
+                      <InfoIcon className='w-4 h-4 text-theme-secondary' />
                     </div>
                     <Tooltip
                       show={tooltipVisible}

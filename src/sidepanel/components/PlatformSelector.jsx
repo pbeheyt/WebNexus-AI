@@ -116,7 +116,7 @@ function PlatformSelector({ className = '' }) {
       <button
         ref={platformTriggerRef}
         onClick={toggleDropdown}
-        className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary text-sm transition-colors cursor-pointer'
+        className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary font-semibold text-sm transition-colors cursor-pointer w-full min-w-30'
         aria-haspopup='listbox'
         aria-expanded={isOpen}
         aria-label={`Selected platform: ${displayPlatformDetails?.name}. Click to change.`}
@@ -136,7 +136,7 @@ function PlatformSelector({ className = '' }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className='absolute bottom-full left-0 mb-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 w-auto overflow-y-auto'
+          className='absolute bottom-full left-0 mb-1 bg-theme-surface border border-theme rounded-md shadow-md z-40 max-h-60 w-auto overflow-y-auto'
           role='listbox'
           aria-labelledby={platformTriggerRef.current?.id || undefined}
           tabIndex={0} // Make listbox focusable

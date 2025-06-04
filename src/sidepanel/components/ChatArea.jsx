@@ -438,16 +438,16 @@ function ChatArea({
                   platformId={displayPlatformConfig.id}
                   iconUrl={displayPlatformConfig.iconUrl}
                   altText={`${displayPlatformConfig.name || 'Platform'} logo`}
-                  className='w-8 h-8 mb-2 object-contain'
+                  className='w-10 h-10 mb-2 object-contain'
                 />
               </div>
             ) : (
-              <div className='w-8 h-8 mb-2 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse select-none'></div>
+              <div className='w-10 h-10 mb-2 text-theme-secondary rounded-full animate-pulse select-none'></div>
             )}
             {modelReady ? (
               <>
                 <div
-                  className='text-sm text-theme-primary dark:text-theme-primary-dark font-medium'
+                  className='text-base text-theme-primary font-medium'
                   title={displayModelConfig.id}
                 >
                   {displayModelConfig.displayName ||
@@ -459,11 +459,11 @@ function ChatArea({
                     : ''}
                 </div>
                 {displayModelConfig.description && (
-                  <p className='text-xs text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto'>
+                  <p className='text-sm text-theme-secondary text-center mt-1 mb-2 max-w-xs mx-auto'>
                     {displayModelConfig.description}
                   </p>
                 )}
-                <div className='flex flex-row flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-theme-secondary mt-1'>
+                <div className='flex flex-row flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-theme-secondary mt-1'>
                   {dynamicSpecs.inputPrice === 0 &&
                   dynamicSpecs.outputPrice === 0 ? (
                     <div
@@ -581,10 +581,10 @@ function ChatArea({
             )}
           </div>
           <div className='flex flex-col items-center py-3 w-full'>
-            <h3 className='text-base font-semibold mb-2'>
+            <h3 className='text-base text-theme-primary font-semibold mb-2'>
               Start a conversation
             </h3>
-            <p className='text-sm max-w-xs mx-auto'>
+            <p className='text-sm text-theme-secondary max-w-xs mx-auto'>
               {getWelcomeMessage(contentType, isPageInjectableValue)}
             </p>
           </div>
