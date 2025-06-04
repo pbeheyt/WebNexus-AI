@@ -186,7 +186,7 @@ export function PromptDropdown({
               role='option'
               aria-selected={promptItem.id === currentDefaultPromptId}
               tabIndex={0}
-              className={`flex items-center justify-between px-3 py-1.5 text-theme-primary cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
+              className={`flex items-center justify-between px-3 py-1.5 gap-2 text-theme-primary cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
             >
               <span
                 className='flex-grow text-left whitespace-nowrap overflow-hidden text-ellipsis mr-2 disabled:cursor-not-allowed'
