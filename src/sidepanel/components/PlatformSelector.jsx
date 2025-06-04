@@ -136,7 +136,7 @@ function PlatformSelector({ className = '' }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className='absolute bottom-full left-0 mb-1 bg-theme-surface border border-theme rounded-md shadow-md z-40 max-h-60 w-auto overflow-y-auto'
+          className='absolute bottom-full left-0 mb-3 bg-theme-surface border border-theme rounded-md shadow-md z-40 max-h-60 w-max overflow-y-auto' // Changed w-auto to w-max
           role='listbox'
           aria-labelledby={platformTriggerRef.current?.id || undefined}
           tabIndex={0} // Make listbox focusable

@@ -111,7 +111,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className='absolute bottom-full left-0 mb-1 bg-theme-surface border border-theme rounded-md shadow-md z-40 max-h-60 w-auto overflow-y-auto'
+          className='absolute bottom-full left-0 mb-3 bg-theme-surface border border-theme rounded-md shadow-md z-40 max-h-60 w-auto overflow-y-auto'
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           role='listbox' // ARIA role
