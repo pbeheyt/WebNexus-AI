@@ -129,7 +129,7 @@ export function ExtractionStrategySelector({
       >
         <button
           onClick={() => handleStrategyChange(EXTRACTION_STRATEGIES.FOCUSED)}
-          className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-theme-hover cursor-pointer text-theme-primary ${
+          className={`w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-theme-hover cursor-pointer text-theme-primary ${
   currentStrategy === EXTRACTION_STRATEGIES.FOCUSED
     ? 'font-medium bg-theme-hover'
     : ''
@@ -142,7 +142,7 @@ export function ExtractionStrategySelector({
         </button>
         <button
           onClick={() => handleStrategyChange(EXTRACTION_STRATEGIES.BROAD)}
-          className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-theme-hover cursor-pointer text-theme-primary ${
+          className={`w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-theme-hover cursor-pointer text-theme-primary ${
   currentStrategy === EXTRACTION_STRATEGIES.BROAD
     ? 'font-medium bg-theme-hover'
     : ''

@@ -157,7 +157,7 @@ export function PromptDropdown({
   return (
     <div
       ref={dropdownRef}
-      className={`absolute bottom-full mb-2 right-0 z-50 bg-theme-surface border border-theme rounded-md shadow-md p-1 w-fit min-w-0 max-w-48 ${className} transition-all duration-300 ease-in-out ${isVisible ? 'opacity-100 max-h-[150px] overflow-y-auto' : 'opacity-0 max-h-0 overflow-hidden'}`}
+      className={`absolute bottom-full mb-1 right-0 z-50 bg-theme-surface border border-theme rounded-md shadow-md w-fit min-w-0 max-w-48 ${className} transition-all duration-300 ease-in-out ${isVisible ? 'opacity-100 max-h-[150px] overflow-y-auto' : 'opacity-0 max-h-0 overflow-hidden'}`}
       role='listbox'
       aria-label='Select a prompt'
     >
@@ -177,7 +177,7 @@ export function PromptDropdown({
           return (
             <div
               key={promptItem.id}
-              className={`flex items-center justify-between px-3 py-1.5 text-theme-base rounded cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
+              className={`flex items-center justify-between px-3 py-1.5 text-theme-primary cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
               role='option'
               aria-selected='false'
             >
