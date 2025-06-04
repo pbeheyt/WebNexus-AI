@@ -13,7 +13,6 @@ import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import {
   ChevronUpIcon,
   Toggle,
-  InfoIcon,
   Tooltip,
   IconButton,
 } from '../../components';
@@ -43,7 +42,7 @@ function PlatformModelControls({ onToggleExpand }) {
 
   const [isParametersExpanded, setIsParametersExpanded] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState(false);
-  const infoIconRef = useRef(null);
+  const thinkingToggleWrapperRef = useRef(null);
   const [openDropdown, setOpenDropdown] = useState(null); // Manages which dropdown is open: 'platform', 'model', or null
 
   const [fullSelectedPlatformConfig, setFullSelectedPlatformConfig] =
@@ -121,7 +120,17 @@ function PlatformModelControls({ onToggleExpand }) {
 
                 {/* Thinking Mode Toggle */}
                 {modelConfigData?.thinking?.toggleable === true && (
-                  <div className='flex items-center ml-2 flex-shrink-0 select-none'>
+                  <div
+                    className='flex items-center ml-2 flex-shrink-0 select-none'
+                    ref={thinkingToggleWrapperRef}
+                    onMouseEnter={() => setTooltipVisible(true)}
+                    onMouseLeave={() => setTooltipVisible(false)}
+                    onFocus={() => setTooltipVisible(true)}
+                    onBlur={() => setTooltipVisible(false)}
+                    tabIndex={0}
+                    role="button"
+                    aria-describedby="thinking-mode-toggle-tooltip"
+                  >
                     <Toggle
                       checked={isThinkingModeEnabled}
                       onChange={toggleThinkingMode}
@@ -129,25 +138,12 @@ function PlatformModelControls({ onToggleExpand }) {
                       id='thinking-mode-toggle-platform-controls'
                       disabled={!hasAnyPlatformCredentials || isLoading}
                     />
-                    <div
-                      ref={infoIconRef}
-                      className='ml-2 cursor-help'
-                      onMouseEnter={() => setTooltipVisible(true)}
-                      onMouseLeave={() => setTooltipVisible(false)}
-                      onFocus={() => setTooltipVisible(true)}
-                      onBlur={() => setTooltipVisible(false)}
-                      tabIndex={0}
-                      role='button'
-                      aria-describedby='thinking-mode-tooltip-platform-controls'
-                    >
-                      <InfoIcon className='w-4 h-4 text-theme-secondary' />
-                    </div>
                     <Tooltip
                       show={tooltipVisible}
-                      targetRef={infoIconRef}
-                      message='Enable Thinking.'
+                      targetRef={thinkingToggleWrapperRef}
+                      message='Toggle Thinking Mode.'
                       position='bottom'
-                      id='thinking-mode-tooltip-platform-controls'
+                      id='thinking-mode-toggle-tooltip'
                     />
                   </div>
                 )}
