@@ -161,9 +161,9 @@ export function PromptDropdown({
       role='listbox'
       aria-label='Select a prompt'
     >
-      {error && <div className='px-3 py-1.5 text-sm text-red-500'>{error}</div>}
+      {error && <div className='px-3 py-2 text-sm text-red-500'>{error}</div>}
       {!error && prompts.length === 0 && (
-        <div className={`px-3 py-1.5 ${className} text-theme-muted`}>
+        <div className={`px-3 py-2 ${className} text-theme-muted`}>
           No prompts available.
         </div>
       )}
@@ -186,10 +186,10 @@ export function PromptDropdown({
               role='option'
               aria-selected={promptItem.id === currentDefaultPromptId}
               tabIndex={0}
-              className={`flex items-center justify-between px-3 py-1.5 gap-2 text-theme-primary cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
+              className={`flex items-center justify-between px-3 py-2 text-theme-primary cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
             >
               <span
-                className='flex-grow text-left whitespace-nowrap overflow-hidden text-ellipsis mr-2 disabled:cursor-not-allowed'
+                className='flex-grow text-left whitespace-nowrap overflow-hidden text-ellipsis mr-1 disabled:cursor-not-allowed'
               >
                 {promptItem.name}
               </span>
@@ -207,7 +207,7 @@ export function PromptDropdown({
                     onClick={(event) => { event.stopPropagation(); handleSetAsDefault(promptItem); }}
                     disabled={isBeingSetAsDefault || !!settingDefaultInProgress}
                     // Ensure IconButton itself doesn't add extra space that causes shift
-                    className={`p-0.5 rounded text-theme-secondary group-hover:text-amber-500 group-hover:opacity-100 flex items-center justify-center ${isBeingSetAsDefault ? 'animate-pulse' : 'opacity-0 focus-within:opacity-100'}`}
+                    className={`rounded text-theme-secondary group-hover:text-amber-500 group-hover:opacity-100 flex items-center justify-center ${isBeingSetAsDefault ? 'animate-pulse' : 'opacity-0 focus-within:opacity-100'}`}
                     iconClassName='w-4 h-4' // Icon size
                     aria-label={`Set "${promptItem.name}" as default prompt`}
                     title={`Set as default`}
