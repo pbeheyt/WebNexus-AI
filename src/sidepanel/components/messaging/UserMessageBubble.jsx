@@ -75,7 +75,7 @@ export const UserMessageBubble = memo(
           ref={ref}
           id={id}
           style={style}
-          className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full flex flex-col items-end message-group user-message relative ${className}`}
+          className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-6 w-full flex flex-col items-end message-group user-message relative ${className}`}
         >
           {/* Container for badge and bubble, aligned to the right. Changed items-start to items-center */}
           <div className={`flex flex-row items-center justify-end w-full ${isEditing ? 'max-w-full' : 'max-w-[95%]'}`}>
@@ -169,7 +169,7 @@ export const UserMessageBubble = memo(
           {/* Action buttons below bubble (only show when not editing) */}
           {!isEditing && (
             <div
-              className={`flex items-center gap-1 mt-1.5 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : copyState === 'copied' || copyState === 'error' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}
+              className={`flex items-center gap-1 mt-1 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : copyState === 'copied' || copyState === 'error' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}
             >
               <IconButton
                 icon={EditIcon}
