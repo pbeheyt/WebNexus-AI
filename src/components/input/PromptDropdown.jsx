@@ -177,19 +177,22 @@ export function PromptDropdown({
           return (
             <div
               key={promptItem.id}
-              className={`flex items-center justify-between px-3 py-1.5 text-theme-primary cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
-              role='option'
-              aria-selected='false'
-            >
-              <button
-                onClick={() => {
+              onClick={() => { if (!isBeingSetAsDefault) onSelectPrompt(promptItem); }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
                   if (!isBeingSetAsDefault) onSelectPrompt(promptItem);
-                }}
+                }
+              }}
+              role='option'
+              aria-selected={promptItem.id === currentDefaultPromptId}
+              tabIndex={0}
+              className={`flex items-center justify-between px-3 py-1.5 text-theme-primary cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
+            >
+              <span
                 className='flex-grow text-left whitespace-nowrap overflow-hidden text-ellipsis mr-2 disabled:cursor-not-allowed'
-                disabled={isBeingSetAsDefault}
               >
                 {promptItem.name}
-              </button>
+              </span>
 
               {/* Icon Container with fixed width */}
               <div className='flex-shrink-0 w-6 h-6 flex items-center justify-center'>
@@ -201,7 +204,7 @@ export function PromptDropdown({
                 ) : (
                   <IconButton
                     icon={StarOutlineIcon}
-                    onClick={() => handleSetAsDefault(promptItem)}
+                    onClick={(event) => { event.stopPropagation(); handleSetAsDefault(promptItem); }}
                     disabled={isBeingSetAsDefault || !!settingDefaultInProgress}
                     // Ensure IconButton itself doesn't add extra space that causes shift
                     className={`p-0.5 rounded text-theme-secondary group-hover:text-amber-500 group-hover:opacity-100 flex items-center justify-center ${isBeingSetAsDefault ? 'animate-pulse' : 'opacity-0 focus-within:opacity-100'}`}
