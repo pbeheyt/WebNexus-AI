@@ -112,7 +112,7 @@ export function ExtractionStrategySelector({
         disabled={disabled}
         aria-label={`Current strategy: ${strategyLabel}. Click to change.`}
         title={`Extraction: ${strategyLabel}`}
-        className={`p-1 rounded-md transition-colors ${
+        className={`rounded-md transition-colors ${
           disabled
             ? 'text-theme-disabled cursor-not-allowed'
             : 'text-theme-secondary hover:text-primary hover:bg-theme-active'
@@ -120,7 +120,7 @@ export function ExtractionStrategySelector({
         iconClassName='w-5 h-5'
       />
       <div
-        className={`absolute top-full right-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-md p-1 w-fit min-w-0 max-w-48 z-50 transition-all duration-300 ease-in-out ${
+        className={`absolute top-full right-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-md w-fit min-w-0 max-w-48 z-50 transition-all duration-300 ease-in-out ${
           isDropdownOpen
             ? 'opacity-100 max-h-[150px] overflow-y-auto'
             : 'opacity-0 max-h-0 overflow-hidden'
@@ -129,28 +129,28 @@ export function ExtractionStrategySelector({
       >
         <button
           onClick={() => handleStrategyChange(EXTRACTION_STRATEGIES.FOCUSED)}
-          className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-theme-hover rounded cursor-pointer ${
-            currentStrategy === EXTRACTION_STRATEGIES.FOCUSED
-              ? 'text-primary'
-              : 'text-theme-primary'
-          }`}
+          className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-theme-hover cursor-pointer text-theme-primary ${
+  currentStrategy === EXTRACTION_STRATEGIES.FOCUSED
+    ? 'font-medium bg-theme-hover'
+    : ''
+}`}
           role='menuitem'
           disabled={disabled}
         >
-          <FocusedStrategyIcon className='w-5 h-5 mr-1' />
+          <FocusedStrategyIcon className='w-4 h-4 mr-1' />
           Focused
         </button>
         <button
           onClick={() => handleStrategyChange(EXTRACTION_STRATEGIES.BROAD)}
-          className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-theme-hover rounded cursor-pointer ${
-            currentStrategy === EXTRACTION_STRATEGIES.BROAD
-              ? 'text-primary'
-              : 'text-theme-primary'
-          }`}
+          className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-theme-hover cursor-pointer text-theme-primary ${
+  currentStrategy === EXTRACTION_STRATEGIES.BROAD
+    ? 'font-medium bg-theme-hover'
+    : ''
+}`}
           role='menuitem'
           disabled={disabled}
         >
-          <BroadStrategyIcon className='w-5 h-5 mr-1' />
+          <BroadStrategyIcon className='w-4 h-4 mr-1' />
           Broad
         </button>
       </div>

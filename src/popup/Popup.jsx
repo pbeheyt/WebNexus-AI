@@ -386,9 +386,9 @@ export function Popup() {
                       <>
                         <ContentTypeIcon
                           contentType={contentType}
-                          className='w-5 h-5 text-current'
+                          className='w-5 h-5 text-theme-secondary'
                         />
-                        <span className='text-sm font-medium truncate ml-1 cursor-default'>
+                        <span className='text-sm text-theme-secondary font-medium truncate ml-1 cursor-default'>
                           {contentTypeLabel}
                         </span>
                         <span
@@ -422,7 +422,7 @@ export function Popup() {
                               }
                             }}
                             disabled={isToggleDisabled}
-                            className='w-8 h-4 ml-3'
+                            className='w-8 h-4 ml-2'
                           />
                         </span>
                         {contentType === 'general' && (
