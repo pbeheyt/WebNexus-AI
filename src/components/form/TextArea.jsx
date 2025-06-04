@@ -70,7 +70,7 @@ export const TextArea = forwardRef(
         onChange={onChange}
         placeholder={placeholder}
         maxLength={maxLength}
-        className={`w-full p-3 border-none outline-none text-theme-primary resize-vertical ${className}`}
+        className={`w-full p-3 border-none outline-none text-theme-primary resize-none ${className}`}
         style={style}
         {...props}
       />
