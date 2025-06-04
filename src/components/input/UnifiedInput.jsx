@@ -118,7 +118,7 @@ export function UnifiedInput({
           onKeyDown={handleContainerClick}
           role='presentation'
           tabIndex={-1}
-          className='input-container relative bg-theme-surface transition-all cursor-text'
+          className='input-container relative bg-theme-primary transition-all cursor-text'
         >
           <div className='flex w-full'>
             <TextArea

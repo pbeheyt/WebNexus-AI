@@ -288,7 +288,7 @@ export default function SidePanelApp() {
               onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
               showExpandToggle={true}
               showBorder={true}
-              className='px-5 py-2'
+              className='px-5 py-2 bg-theme-secondary'
             />
           </div>
 
@@ -307,6 +307,7 @@ export default function SidePanelApp() {
                 isContentExtractionEnabled={isContentExtractionEnabled}
                 setIsContentExtractionEnabled={setIsContentExtractionEnabled}
                 hasAnyPlatformCredentials={hasAnyPlatformCredentials}
+                className='bg-theme-primary'
               />
             </div>
           )}
@@ -322,7 +323,7 @@ export default function SidePanelApp() {
           {currentView === 'chat' && currentChatSessionId ? (
             <>
               <ChatArea
-                className='flex-1 min-h-0 relative z-0'
+                className='flex-1 min-h-0 relative z-0 bg-theme-surface'
                 otherUIHeight={otherUIHeight}
                 requestHeightRecalculation={debouncedCalculateHeight}
               />

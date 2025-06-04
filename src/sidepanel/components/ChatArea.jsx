@@ -395,7 +395,7 @@ function ChatArea({
     if (!hasAnyPlatformCredentials) {
       return (
         <div
-          className={`flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5`}
+          className={`flex flex-col items-center justify-center h-full text-theme-secondary text-center px-5 ${className}`}
         >
           <button
             onClick={openApiSettings}
@@ -415,7 +415,7 @@ function ChatArea({
     }
     if (hasAnyPlatformCredentials && !hasCompletedInitialLoad) {
       return (
-        <div className={`flex items-center justify-center h-full`}>
+        <div className={`flex items-center justify-center h-full ${className}`}>
           <div
             className='w-6 h-6 border-4 border-theme-secondary border-t-transparent rounded-full animate-spin select-none'
             role='status'
@@ -429,7 +429,7 @@ function ChatArea({
       return (
         <div
           ref={initialViewContainerRef}
-          className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3 overflow-y-auto`}
+          className={`flex flex-col items-center justify-evenly h-full text-theme-secondary text-center px-5 py-3 overflow-y-auto ${className}`}
         >
           <div className='flex flex-col items-center py-3 w-full'>
             {displayPlatformConfig ? (

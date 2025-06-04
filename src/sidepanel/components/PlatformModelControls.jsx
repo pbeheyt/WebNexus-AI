@@ -102,7 +102,7 @@ function PlatformModelControls({ onToggleExpand }) {
     <DropdownContext.Provider value={{ openDropdown, setOpenDropdown }}>
       <div
         ref={selfRef}
-        className='flex flex-col px-3 py-2 border-b border-t border-theme'
+        className='flex flex-col px-3 py-2 border-b border-t border-theme bg-theme-secondary'
       >
         {/* Top row: Platform, Model, Thinking Toggle, Expander Chevron */}
         <div className='flex items-center w-full min-w-0'>

@@ -71,29 +71,31 @@ module.exports = {
       // Define theme-aware utility classes
       const themeUtilities = {
         // Light theme (default)
-        '.bg-theme-primary': { backgroundColor: '#F8F8F8' },
         '.bg-theme-surface': { backgroundColor: '#FFFFFF' },
+        '.bg-theme-primary': { backgroundColor: '#FAFBFC' },
+        '.bg-theme-secondary': { backgroundColor: '#F1F3F4' },
         '.bg-theme-hover': { backgroundColor: '#F2F2F2' },
         '.bg-theme-active': { backgroundColor: 'rgba(255, 123, 0, 0.05)' },
-
+        
         '.text-theme-primary': { color: '#333333' },
         '.text-theme-secondary': { color: '#666666' },
-
-        '.border-theme': { borderColor: '#E0E0E0' },
+        
+        '.border-theme': { borderColor: '#EEEEEE' },
         '.divide-theme': { divideColor: '#E0E0E0' },
-
+        
         '.shadow-theme-light': { boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' },
         '.shadow-theme-medium': { boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)' },
-
-        '.dark .bg-theme-primary': { backgroundColor: '#1E1E1E' },
-        '.dark .bg-theme-surface': { backgroundColor: '#2D2D2D' },
+        
+        '.dark .bg-theme-surface': { backgroundColor: '#1A1A1A' },
+        '.dark .bg-theme-primary': { backgroundColor: '#232323' },
+        '.dark .bg-theme-secondary': { backgroundColor: '#2D2D2D' },
         '.dark .bg-theme-hover': { backgroundColor: '#4A4A4A' },
         '.dark .bg-theme-active': { backgroundColor: 'rgba(255, 123, 0, 0.1)' },
 
         '.dark .text-theme-primary': { color: '#FFFFFF' },
         '.dark .text-theme-secondary': { color: '#B0B0B0' },
 
-        '.dark .border-theme': { borderColor: '#3D3D3D' },
+        '.dark .border-theme': { borderColor: '#404040' },
         '.dark .divide-theme': { divideColor: '#3D3D3D' },
 
         '.dark .shadow-theme-light': {
