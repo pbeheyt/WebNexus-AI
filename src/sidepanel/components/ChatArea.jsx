@@ -403,7 +403,7 @@ function ChatArea({
             aria-label='Configure API Credentials in Settings'
           >
             <NoCredentialsIcon className='w-8 h-8 mb-3 text-theme-secondary select-none' />
-            <h3 className='text-base font-semibold mb-2'>
+            <h3 className='text-base font-medium mb-2'>
               API Credentials Required
             </h3>
             <p className='text-sm'>
@@ -581,7 +581,7 @@ function ChatArea({
             )}
           </div>
           <div className='flex flex-col items-center py-3 w-full'>
-            <h3 className='text-base text-theme-primary font-semibold mb-2'>
+            <h3 className='text-base text-theme-primary font-medium mb-2'>
               Start a conversation
             </h3>
             <p className='text-sm text-theme-secondary max-w-xs mx-auto'>

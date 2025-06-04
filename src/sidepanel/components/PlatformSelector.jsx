@@ -116,7 +116,7 @@ function PlatformSelector({ className = '' }) {
       <button
         ref={platformTriggerRef}
         onClick={toggleDropdown}
-        className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary font-semibold text-sm transition-colors cursor-pointer w-full min-w-30'
+        className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary font-medium text-sm transition-colors cursor-pointer w-full min-w-30'
         aria-haspopup='listbox'
         aria-expanded={isOpen}
         aria-label={`Selected platform: ${displayPlatformDetails?.name}. Click to change.`}
