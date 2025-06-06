@@ -246,28 +246,27 @@ class ModelParameterService {
         throw new Error(`Model configuration not found for ${modelId}`);
       }
 
-      // Determine if thinking mode is requested AND actually available/applicable for this model & request
-      const isThinkingAvailableForModel =
-        modelConfig?.thinking?.available === true;
-      const isThinkingToggleable = modelConfig?.thinking?.toggleable === true;
-      const isThinkingEnabledForThisRequest =
-        useThinkingMode && isThinkingAvailableForModel;
+      // Explicitly get thinking capability flags from modelConfig
+      const modelHasThinkingAvailable = modelConfig?.thinking?.available === true;
+      const modelThinkingIsUserToggleable = modelConfig?.thinking?.toggleable === true;
 
-      // Determine the modeKey based on whether thinking is enabled for *this specific request*
-      // If thinking is toggleable and the user wants to use it, modeKey is 'thinking'.
-      // If thinking is available but not toggleable (always on for this model), modeKey is 'thinking'.
-      // Otherwise, modeKey is 'base'.
-      let modeKey = 'base';
-      if (isThinkingAvailableForModel) {
-        if (isThinkingToggleable && useThinkingMode) {
-          modeKey = 'thinking';
-        } else if (!isThinkingToggleable) {
-          // Thinking is available and not toggleable (always on)
-          modeKey = 'thinking';
-        }
+      // This flag determines if API-level thinking features (like budget/effort) should be activated
+      // because the user *explicitly enabled a toggleable thinking mode*.
+      // If thinking is available but not toggleable, its parameters from config are part of base defaults.
+      const isThinkingEnabledForThisRequest = modelHasThinkingAvailable && modelThinkingIsUserToggleable && useThinkingMode;
+
+      // This key determines which set of user preferences to load ('base' or 'thinking').
+      // It's 'thinking' only if the model has thinking available, it's user-toggleable, AND the user has it enabled.
+      let modeKey = 'base'; 
+      if (isThinkingEnabledForThisRequest) {
+        modeKey = 'thinking';
       }
+      
       logger.service.info(
-        `Resolving parameters using modeKey: ${modeKey}. isThinkingEnabledForThisRequest: ${isThinkingEnabledForThisRequest}`
+        `Resolving parameters for ${platformId}/${modelId}. ` +
+        `Config: thinking.available=${modelHasThinkingAvailable}, thinking.toggleable=${modelThinkingIsUserToggleable}. ` +
+        `User choice (useThinkingMode): ${!!useThinkingMode}. ` +
+        `Result: API thinking features active for this request=${isThinkingEnabledForThisRequest}, User preferences loaded from modeKey='${modeKey}'.`
       );
 
       const modelParametersResult = await chrome.storage.local.get(
@@ -380,7 +379,7 @@ class ModelParameterService {
         logger.service.info(`Resolved thinking budget: ${budgetValue}`);
       } else if (
         useThinkingMode &&
-        isThinkingAvailableForModel &&
+        modelHasThinkingAvailable &&
         !modelConfig?.thinking?.budget
       ) {
         logger.service.info(
@@ -421,7 +420,7 @@ class ModelParameterService {
         }
       } else if (
         useThinkingMode &&
-        isThinkingAvailableForModel &&
+        modelHasThinkingAvailable &&
         !modelConfig?.thinking?.reasoningEffort
       ) {
         logger.service.info(
@@ -474,13 +473,10 @@ class ModelParameterService {
         params.conversationHistory = conversationHistory;
       }
 
-      // Include tabId if provided (useful for downstream token tracking)
+      // Include tabId if provided
       if (tabId) {
         params.tabId = tabId;
       }
-
-      params.isThinkingEnabledForRequest =
-        useThinkingMode && modelConfig?.thinking?.available === true;
 
       return params;
     } catch (error) {
