@@ -181,7 +181,7 @@ function PlatformModelControls({ onToggleExpand }) {
 
         {/* Collapsible Model Parameters Editor */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          className={`overflow-hidden ${
             isParametersExpanded && isParamsEditorReady
               ? 'max-h-[500px] opacity-100 my-2'
               : 'max-h-0 opacity-0'

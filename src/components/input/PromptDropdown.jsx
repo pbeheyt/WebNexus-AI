@@ -157,7 +157,7 @@ export function PromptDropdown({
   return (
     <div
       ref={dropdownRef}
-      className={`absolute bottom-full mb-1 right-0 z-50 bg-theme-surface border border-theme rounded-md shadow-md w-fit min-w-0 max-w-48 ${className} transition-all duration-300 ease-in-out ${isVisible ? 'opacity-100 max-h-[150px] overflow-y-auto' : 'opacity-0 max-h-0 overflow-hidden'}`}
+      className={`absolute bottom-full mb-1 right-0 z-50 bg-theme-surface border border-theme rounded-md shadow-md w-fit min-w-0 max-w-48 ${className}  ${isVisible ? 'opacity-100 max-h-[150px] overflow-y-auto' : 'opacity-0 max-h-0 overflow-hidden'}`}
       role='listbox'
       aria-label='Select a prompt'
     >
