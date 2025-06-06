@@ -296,7 +296,7 @@ export default function SidePanelApp() {
           {currentView === 'chat' && (
             <div
               ref={collapsibleHeaderRef} // Ref for height calculation
-              className='relative flex-shrink-0 z-10'
+              className='@container relative flex-shrink-0 z-10'
             >
               <Header
                 isExpanded={headerExpanded}
