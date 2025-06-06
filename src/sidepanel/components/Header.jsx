@@ -126,7 +126,7 @@ function Header({
         {/* Input Tokens */}
         <div
           ref={inputTokensRef}
-          className='hidden @[22rem]:flex items-center relative cursor-help'
+          className='hidden @[26rem]:flex items-center relative cursor-help'
           onMouseEnter={() => setHoveredTokenElement('inputTokens')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('inputTokens')}
@@ -149,7 +149,7 @@ function Header({
         {/* Output Tokens */}
         <div
           ref={outputTokensRef}
-          className='hidden @[22rem]:flex items-center relative cursor-help'
+          className='hidden @[26rem]:flex items-center relative cursor-help'
           onMouseEnter={() => setHoveredTokenElement('outputTokens')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('outputTokens')}
