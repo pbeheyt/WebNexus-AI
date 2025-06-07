@@ -4,26 +4,6 @@ import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import ChatHistoryService from '../../sidepanel/services/ChatHistoryService.js';
 import { logger } from '../../shared/logger.js';
 
-// List of tab-specific storage keys to clear on manual refresh (excluding sidepanel visibility)
-// const TAB_SPECIFIC_DATA_KEYS_TO_CLEAR_ON_MANUAL_REFRESH = [ // This array is no longer used directly in clearSingleTabData
-//   STORAGE_KEYS.TAB_CHAT_HISTORIES, // Deprecated
-//   STORAGE_KEYS.TAB_TOKEN_STATISTICS, // Deprecated
-//   STORAGE_KEYS.TAB_MODEL_PREFERENCES, // Might be part of global session or tab UI state
-//   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES, // Might be part of global session or tab UI state
-//   STORAGE_KEYS.TAB_FORMATTED_CONTENT, // This might be tied to global sessions or still tab-specific for non-chat
-// ];
-
-// List of all storage keys that are tab-specific and need automatic cleanup (used for onRemoved/periodic cleanup)
-// This includes TAB_SIDEPANEL_STATES which is handled by SidePanelStateManager.cleanupTabStates
-// const ALL_TAB_SPECIFIC_KEYS_FOR_AUTOMATIC_CLEANUP = [ // This array is no longer used directly in performStaleTabCleanup or onRemoved
-//   STORAGE_KEYS.TAB_PLATFORM_PREFERENCES,
-//   STORAGE_KEYS.TAB_MODEL_PREFERENCES,
-//   STORAGE_KEYS.TAB_SIDEPANEL_STATES,
-//   STORAGE_KEYS.TAB_CHAT_HISTORIES, // Deprecated
-//   STORAGE_KEYS.TAB_TOKEN_STATISTICS, // Deprecated
-//   STORAGE_KEYS.TAB_FORMATTED_CONTENT,
-// ];
-
 /**
  * Resets the UI state for a single tab, effectively preparing it for a new chat session.
  * Used for the manual refresh action initiated from the UI.
@@ -47,10 +27,6 @@ export async function clearSingleTabData(tabId) {
     await SidePanelStateManager.setActiveChatSessionForTab(tabId, null); // Clear active session
     await SidePanelStateManager.setTabViewMode(tabId, 'chat'); // Reset view to chat
     
-    // If TAB_FORMATTED_CONTENT is still purely tab-specific and not tied to global sessions, clear it.
-    // Otherwise, this line might be removed if formatted content is now part of a global session.
-    // For now, assuming it might still be relevant for the tab context before a new session starts.
-    await SidePanelStateManager.clearFormattedContentForTab(tabId);
 
     logger.background.info(
       `Successfully reset tab UI state for tab ${tabId}.`
@@ -109,89 +85,6 @@ export function handleClearTabDataRequest(message, sender, sendResponse) {
 }
 
 /**
- * Clean up a specific tab-based storage item. Used internally by automatic cleanup processes.
- * @param {string} storageKey - The storage key to clean up (e.g., STORAGE_KEYS.TAB_CHAT_HISTORIES).
- * @param {number|null} tabId - Tab ID to remove (for single tab cleanup on close). If null, uses validTabIds.
- * @param {Set<number>|null} [validTabIds=null] - Set of currently open tab IDs (for periodic cleanup). If null, uses tabId.
- * @returns {Promise<boolean>} - True if changes were made, false otherwise.
- */
-/*
-async function cleanupTabStorage(storageKey, tabId, validTabIds = null) {
-  try {
-    // Get the current storage data for the specified key
-    const storageData = await chrome.storage.local.get(storageKey);
-    if (
-      !storageData[storageKey] ||
-      typeof storageData[storageKey] !== 'object'
-    ) {
-      return false; // No data or invalid data structure for this key, no changes needed
-    }
-
-    const currentData = storageData[storageKey];
-    let updatedData = { ...currentData }; // Create a mutable copy to modify
-    let hasChanges = false;
-
-    if (validTabIds instanceof Set) {
-      // Periodic Cleanup Mode (onStartup / Service Worker Wake-up) ---
-      // Remove entries for tabs that are NOT in the validTabIds set.
-      for (const storedTabIdStr of Object.keys(updatedData)) {
-        const storedTabId = parseInt(storedTabIdStr, 10);
-        // Check if the stored ID is valid number AND if it's NOT present in the set of currently open tabs
-        if (isNaN(storedTabId) || !validTabIds.has(storedTabId)) {
-          delete updatedData[storedTabIdStr]; // Delete data for the closed/invalid tab
-          hasChanges = true;
-          logger.background.info(
-            `Periodic cleanup: Removed stale ${storageKey} data for tab ID ${storedTabIdStr}`
-          );
-        }
-        // If the storedTabId *is* in validTabIds, it's kept.
-      }
-    } else if (typeof tabId === 'number') {
-      // Single Tab Cleanup Mode (onRemoved) ---
-      // Remove the entry specifically for the closed tab ID.
-      const tabIdStr = tabId.toString();
-      if (Object.hasOwn(updatedData, tabIdStr)) {
-        delete updatedData[tabIdStr];
-        hasChanges = true;
-        logger.background.info(
-          `onRemoved cleanup: Removed ${storageKey} data for tab ${tabIdStr}.`
-        );
-      }
-    } else {
-      // Invalid parameters for cleanup mode
-      logger.background.warn(
-        `cleanupTabStorage called with invalid parameters for ${storageKey}. Mode ambiguity.`
-      );
-      return false;
-    }
-
-    // Save changes back to storage only if modifications were made
-    if (hasChanges) {
-      if (Object.keys(updatedData).length === 0) {
-        // If the entire object for this key is now empty, remove the key itself
-        await chrome.storage.local.remove(storageKey);
-        logger.background.info(
-          `Removed empty storage key ${storageKey} after cleanup.`
-        );
-      } else {
-        await chrome.storage.local.set({
-          [storageKey]: updatedData,
-        });
-        logger.background.info(
-          `Successfully saved updated data for ${storageKey} after cleanup.`
-        );
-      }
-    }
-
-    return hasChanges;
-  } catch (error) {
-    logger.background.error(`Error cleaning up ${storageKey}:`, error);
-    return false; // Indicate failure on error
-  }
-}
-*/
-
-/**
  * Set up tab state cleanup listeners (Handles tab removal).
  */
 export function setupTabStateListener() {
@@ -238,13 +131,6 @@ export function setupTabStateListener() {
           logger.background.error(`Error during provisional session cleanup for closed tab ${tabId}:`, cleanupError);
         }
 
-        // If TAB_FORMATTED_CONTENT is still purely tab-specific and not tied to global sessions, clear it.
-        // Otherwise, this line might be removed if formatted content is now part of a global session.
-        // For now, assuming it might still be relevant for the tab context.
-        await SidePanelStateManager.clearFormattedContentForTab(tabId);
-        logger.background.info(
-          `Formatted content cleared for closed tab ${tabId}.`
-        );
 
       } catch (error) {
         logger.background.error(

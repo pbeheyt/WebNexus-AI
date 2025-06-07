@@ -141,93 +141,6 @@ class SidePanelStateManager {
     }
   }
 
-  /**
-   * Stores the formatted content for a specific tab.
-   * @param {number} tabId - The ID of the tab.
-   * @param {string|null} formattedContent - The formatted content string, or null to clear.
-   * @returns {Promise<void>}
-   */
-  static async storeFormattedContentForTab(tabId, formattedContent) {
-    if (tabId === null || tabId === undefined) {
-      logger.service.warn(
-        'SidePanelStateManager: storeFormattedContentForTab called with invalid tabId.'
-      );
-      return;
-    }
-    try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.TAB_FORMATTED_CONTENT
-      );
-      const allContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
-
-      if (formattedContent === null || formattedContent === undefined) {
-        delete allContents[tabId.toString()];
-        logger.service.info(
-          `Cleared formatted content for tab ${tabId.toString()}.`
-        );
-      } else {
-        allContents[tabId.toString()] = formattedContent;
-        logger.service.info(
-          `Stored formatted content for tab ${tabId.toString()}.`
-        );
-      }
-
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.TAB_FORMATTED_CONTENT]: allContents,
-      });
-    } catch (error) {
-      logger.service.error(
-        `Error storing/clearing formatted content for tab ${tabId}:`,
-        error
-      );
-    }
-  }
-
-  /**
-   * Retrieves the stored formatted content for a specific tab.
-   * @param {number} tabId - The ID of the tab.
-   * @returns {Promise<string|null>} The formatted content string, or null if not found/error.
-   */
-  static async getFormattedContentForTab(tabId) {
-    if (tabId === null || tabId === undefined) {
-      logger.service.warn(
-        'SidePanelStateManager: getFormattedContentForTab called with invalid tabId.'
-      );
-      return null;
-    }
-    try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.TAB_FORMATTED_CONTENT
-      );
-      const allContents = result[STORAGE_KEYS.TAB_FORMATTED_CONTENT] || {};
-      return allContents[tabId.toString()] || null;
-    } catch (error) {
-      logger.service.error(
-        `Error retrieving formatted content for tab ${tabId}:`,
-        error
-      );
-      return null;
-    }
-  }
-
-  /**
-   * Checks if formatted content exists for a specific tab.
-   * @param {number} tabId - The ID of the tab.
-   * @returns {Promise<boolean>} True if content exists, false otherwise.
-   */
-  static async hasFormattedContentForTab(tabId) {
-    const content = await this.getFormattedContentForTab(tabId);
-    return content !== null && content !== undefined;
-  }
-
-  /**
-   * Clears the stored formatted content for a specific tab.
-   * @param {number} tabId - The ID of the tab.
-   * @returns {Promise<void>}
-   */
-  static async clearFormattedContentForTab(tabId) {
-    await this.storeFormattedContentForTab(tabId, null);
-  }
 
   /**
    * Cleans up all tab-specific states (visibility, preferences, data) for tabs that are no longer open.
@@ -244,7 +157,6 @@ class SidePanelStateManager {
       // Only clean TAB_SIDEPANEL_STATES directly. Other keys are managed by their respective services or deprecated.
     const keysToClean = [
       STORAGE_KEYS.TAB_SIDEPANEL_STATES,
-      STORAGE_KEYS.TAB_FORMATTED_CONTENT, // Keep if used for non-chat tab-specific content
     ];
       // Deprecated keys like TAB_CHAT_HISTORIES and TAB_TOKEN_STATISTICS are no longer cleaned here.
 

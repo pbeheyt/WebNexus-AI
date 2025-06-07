@@ -15,7 +15,6 @@ import {
   setApiProcessingError,
   completeStreamResponse,
 } from '../core/state-manager.js';
-import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import { logger } from '../../shared/logger.js';
 
 const activeAbortControllers = new Map();
@@ -192,14 +191,6 @@ export async function processContentViaApi(params) {
         newlyFormattedContent = ContentFormatter.formatContent(
           extractedContent,
           contentType
-        );
-        // Store the newly formatted content for potential future use (though less critical now)
-        await SidePanelStateManager.storeFormattedContentForTab(
-          tabId,
-          newlyFormattedContent
-        );
-        logger.background.info(
-          `Formatted and stored fresh content for tab ${tabId}.`
         );
         contentSuccessfullyIncluded = true; // Mark content as successfully included for this call
       }
