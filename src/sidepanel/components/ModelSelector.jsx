@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from 'react';
+import React, { useEffect, useContext, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { useSidePanelPlatform } from '../../contexts/platform';
@@ -10,40 +10,31 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
   const { models, selectedModel, selectModel, isLoading } =
     useSidePanelPlatform();
 
-  const [formattedModels, setFormattedModels] = useState([]);
-  const [displayModelId, setDisplayModelId] = useState(selectedModel);
-  const [displayedModelName, setDisplayedModelName] = useState('Loading...');
   const { openDropdown, setOpenDropdown } = useContext(DropdownContext);
   const isOpen = openDropdown === 'model';
   const dropdownRef = useRef(null);
   const modelTriggerRef = useRef(null);
 
-  // Format models for dropdown display
-  useEffect(() => {
+  const formattedModels = useMemo(() => {
     if (!models || models.length === 0) {
-      setFormattedModels([]);
-      return;
+      return [];
     }
-
-    // Convert models to consistent format
-    const formatted = models.map((model) => {
+    return models.map((model) => {
       if (typeof model === 'object' && model !== null) {
         return {
           id: model.id,
           name: model.displayName || model.name || model.id,
         };
-      } else {
-        return {
-          id: model,
-          name: model,
-        };
       }
+      return { id: model, name: model };
     });
-
-    setFormattedModels(formatted);
   }, [models]);
 
-  // Effect to handle clicks outside the model dropdown
+  const displayedModelName = useMemo(() => {
+    const currentModel = formattedModels.find((m) => m.id === selectedModel);
+    return currentModel?.name || selectedModel || 'No model selected';
+  }, [selectedModel, formattedModels]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -71,22 +62,6 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
     }
   };
 
-  // Update displayed model data when loading completes
-  useEffect(() => {
-    if (!isLoading) {
-      setDisplayModelId(selectedModel);
-
-      const currentModel = formattedModels.find((m) => m.id === selectedModel);
-      const currentModelName =
-        currentModel?.name || // This 'name' is effectively 'displayName' from the previous step
-        selectedModel ||
-        'Loading...';
-      if (currentModelName) {
-        setDisplayedModelName(currentModelName);
-      }
-    }
-  }, [selectedModel, formattedModels, isLoading]);
-
   const toggleDropdown = (e) => {
     e.stopPropagation();
     setOpenDropdown(isOpen ? null : 'model');
@@ -97,26 +72,22 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
       <button
         ref={modelTriggerRef}
         onClick={toggleDropdown}
-        className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary font-medium text-sm transition-colors cursor-pointer w-full min-w-30'
+        className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary font-medium text-sm transition-colors cursor-pointer w-full min-w-30 disabled:cursor-not-allowed disabled:opacity-75'
         aria-haspopup='listbox'
         aria-expanded={isOpen}
+        disabled={isLoading || !selectedPlatformId || formattedModels.length === 0}
       >
         <span className='truncate mr-1'>{displayedModelName}</span>
-        <span className='text-theme-secondary flex-shrink-0'>
-          <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
-        </span>
+        <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
       </button>
 
-      {/* Dropdown menu */}
       {isOpen && (
         <div
           ref={dropdownRef}
           className='absolute bottom-full left-0 mb-3 bg-theme-surface border border-theme rounded-md shadow-md z-40 max-h-60 w-auto overflow-y-auto'
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role='listbox' // ARIA role
-          aria-labelledby={modelTriggerRef.current?.id || undefined} // Link to button if it has an ID
-          tabIndex={0} // Make listbox focusable
+          role='listbox'
+          aria-labelledby={modelTriggerRef.current?.id || undefined}
+          tabIndex={-1}
         >
           {formattedModels.length === 0 ? (
             <div className='px-3 py-2 text-sm text-theme-secondary'>
@@ -126,10 +97,10 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
             formattedModels.map((model) => (
               <button
                 key={model.id}
-                role='option' // ARIA role for item
-                aria-selected={displayModelId === model.id}
+                role='option'
+                aria-selected={selectedModel === model.id}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap ${
-                  displayModelId === model.id
+                  selectedModel === model.id
                     ? 'font-medium bg-theme-hover'
                     : ''
                 }`}

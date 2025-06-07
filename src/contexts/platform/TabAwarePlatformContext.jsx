@@ -25,6 +25,10 @@ import {
  * Creates a tab-aware platform context with shared functionality,
  * now refactored to use internal hooks for logic separation and includes error handling.
  *
+ * This version introduces a "stable state" layer to prevent UI "jank" during
+ * asynchronous data loading (e.g., when switching platforms). The UI remains
+ * bound to the stable state, which is only updated once all new data is ready.
+ *
  * @param {Object} options - Configuration options
  * @param {string} options.interfaceType - Interface type (popup or sidepanel)
  * @param {string} options.globalStorageKey - Key for global preference storage
@@ -41,33 +45,24 @@ export function createTabAwarePlatformContext(options = {}) {
   const TabAwarePlatformContext = createContext(null);
 
   function TabAwarePlatformProvider({ children }) {
-    // State for Tab ID remains here as it's fundamental
+    // Fundamental state
     const [tabId, setTabId] = useState(null);
 
-    // --- Hook Orchestration ---
-    // The following hooks manage the platform and model state.
-    // They are called in a specific order due to dependencies:
-    // 1. usePlatformConfigurations: Fetches static config for all platforms.
-    // 2. useCredentialStatus: Checks which platforms have credentials (depends on configs).
-    // 3. usePlatformSelection: Determines the initially selected platform based on preferences and credential status.
-    // 4. useModelManagement: Fetches models for the selected platform and determines the active model.
-
-    // 1. Fetch Platform Configurations
+    // --- Hook Orchestration (Transient State) ---
+    // These hooks fetch the latest data but are not exposed directly to the UI.
     const {
       platformConfigs,
       isLoading: isLoadingConfigs,
-      error: configError, // Capture config error
+      error: configError,
     } = usePlatformConfigurations();
 
-    // 2. Fetch Credential Status (depends on configs)
     const {
       credentialStatus,
       hasAnyPlatformCredentials,
       isLoading: isLoadingCredentials,
-      error: credentialError, // Capture credential error
+      error: credentialError,
     } = useCredentialStatus(platformConfigs, interfaceType);
 
-    // 3. Manage Platform Selection (depends on tabId, configs, creds)
     const {
       selectedPlatformId,
       selectPlatform: selectPlatformInternal,
@@ -81,23 +76,31 @@ export function createTabAwarePlatformContext(options = {}) {
       onStatusUpdate
     );
 
-    // 4. Manage Model Selection (depends on selectedPlatformId, tabId)
     const {
       models,
       selectedModelId,
       selectModel,
       isLoading: isLoadingModels,
-      error: modelError, // Capture model error
+      error: modelError,
     } = useModelManagement(selectedPlatformId, tabId, interfaceType);
-
     // --- End Hook Orchestration ---
+
+    // --- Stable State (UI-Facing) ---
+    // This state is what the UI components will consume. It's only updated
+    // when all transient loading is complete.
+    const [stablePlatformConfigs, setStablePlatformConfigs] = useState([]);
+    const [stableCredentialStatus, setStableCredentialStatus] = useState({});
+    const [stableSelectedPlatformId, setStableSelectedPlatformId] =
+      useState(null);
+    const [stableSelectedModelId, setStableSelectedModelId] = useState(null);
+    const [stableModels, setStableModels] = useState([]);
+    const [stableHasAnyPlatformCredentials, setStableHasAnyPlatformCredentials] =
+      useState(false);
+    const [stableError, setStableError] = useState(null);
 
     // Determine overall loading state
     const isLoading = useMemo(() => {
-      // Need tabId before anything else can load properly
       if (!tabId) return true;
-      // Then wait for configs, selection logic, and potentially credentials/models
-      // Loading is finished once all dependent hooks are no longer loading
       return (
         isLoadingConfigs ||
         isLoadingSelection ||
@@ -112,10 +115,34 @@ export function createTabAwarePlatformContext(options = {}) {
       isLoadingModels,
     ]);
 
-    // Determine overall error state (prioritize first error in sequence)
+    // Determine overall error state
     const error = useMemo(() => {
       return configError || credentialError || modelError || null;
     }, [configError, credentialError, modelError]);
+
+    // --- Synchronization Effect ---
+    // This is the core of the stable state pattern. It copies the loaded
+    // transient data to the stable state *only when loading is complete*.
+    useEffect(() => {
+      if (!isLoading) {
+        setStablePlatformConfigs(platformConfigs);
+        setStableCredentialStatus(credentialStatus);
+        setStableSelectedPlatformId(selectedPlatformId);
+        setStableSelectedModelId(selectedModelId);
+        setStableModels(models);
+        setStableHasAnyPlatformCredentials(hasAnyPlatformCredentials);
+        setStableError(error);
+      }
+    }, [
+      isLoading,
+      platformConfigs,
+      credentialStatus,
+      selectedPlatformId,
+      selectedModelId,
+      models,
+      hasAnyPlatformCredentials,
+      error,
+    ]);
 
     // Get current tab ID on mount
     useEffect(() => {
@@ -142,30 +169,29 @@ export function createTabAwarePlatformContext(options = {}) {
       return ConfigService.getPlatformApiConfig(platformId);
     }, []);
 
-    // Construct final platforms array with credential status
-    const platforms = useMemo(() => {
-      // If configs failed to load, return empty array
+    // Construct final platforms array from STABLE data
+    const stablePlatforms = useMemo(() => {
       if (configError) return [];
-      return platformConfigs.map((config) => ({
+      return stablePlatformConfigs.map((config) => ({
         id: config.id,
         name: config.name,
         url: config.url || null,
         iconUrl: config.iconUrl,
         hasCredentials:
           interfaceType === INTERFACE_SOURCES.SIDEPANEL
-            ? credentialStatus[config.id] || false
-            : true, // Popups don't check/need creds here
+            ? stableCredentialStatus[config.id] || false
+            : true,
       }));
-    }, [platformConfigs, credentialStatus, configError]);
+    }, [stablePlatformConfigs, stableCredentialStatus, configError]);
 
-    // Build the context value
+    // Build the context value from STABLE data
     const contextValue = useMemo(() => {
       const baseValue = {
-        platforms,
-        selectedPlatformId,
-        selectPlatform: selectPlatformInternal,
-        isLoading,
-        error, // Expose the combined error state
+        platforms: stablePlatforms,
+        selectedPlatformId: stableSelectedPlatformId,
+        selectPlatform: selectPlatformInternal, // Expose the internal selector to trigger changes
+        isLoading, // Expose the real-time loading state for subtle UI indicators
+        error: stableError,
         getPlatformApiConfig,
         tabId,
         setTabId,
@@ -174,28 +200,28 @@ export function createTabAwarePlatformContext(options = {}) {
       if (interfaceType === INTERFACE_SOURCES.SIDEPANEL) {
         return {
           ...baseValue,
-          models: modelError ? [] : models, // Return empty models if model loading failed
-          selectedModel: selectedModelId,
-          selectModel,
+          models: modelError ? [] : stableModels,
+          selectedModel: stableSelectedModelId,
+          selectModel, // Expose internal selector
           hasAnyPlatformCredentials: credentialError
             ? false
-            : hasAnyPlatformCredentials, // Assume no creds if fetch failed
+            : stableHasAnyPlatformCredentials,
         };
       }
 
       return baseValue;
     }, [
-      platforms,
-      selectedPlatformId,
+      stablePlatforms,
+      stableSelectedPlatformId,
       selectPlatformInternal,
       isLoading,
-      error,
+      stableError,
       getPlatformApiConfig,
       tabId,
-      models,
-      selectedModelId,
+      stableModels,
+      stableSelectedModelId,
       selectModel,
-      hasAnyPlatformCredentials,
+      stableHasAnyPlatformCredentials,
       modelError,
       credentialError,
     ]);
