@@ -1,8 +1,7 @@
 // src/extractor/strategies/youtube-strategy.js
-import { YoutubeTranscript } from 'youtube-transcript';
-
 import BaseExtractor from '../base-extractor.js';
 import { normalizeText } from '../utils/text-utils.js';
+import { robustSendMessage } from '../../shared/utils/message-utils.js';
 
 class YoutubeExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -41,49 +40,66 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       const rawTitle = this.extractVideoTitle();
       const rawChannel = this.extractChannelName();
       const rawDescription = this.extractVideoDescription();
-      const fullVideoUrl = window.location.href;
       const videoId = new URLSearchParams(window.location.search).get('v');
 
-      this.logger.info('Extracting transcript for video ID:', videoId);
-      let transcriptText = 'Transcript not available or error occurred.'; // Default
+      this.logger.info('Requesting transcript for video ID from background:', videoId);
+      let transcriptText = 'Transcript not available or error occurred.';
       let transcriptLang = 'unknown';
+
       try {
-        const transcriptData =
-          await YoutubeTranscript.fetchTranscript(fullVideoUrl);
-        transcriptText = this.formatTranscript(transcriptData, {
-          timestampInterval: 15,
+        const response = await robustSendMessage({
+          action: 'fetchYouTubeTranscript',
+          videoId,
         });
-        transcriptLang =
-          transcriptData.length > 0 ? transcriptData[0].lang : 'unknown';
-        this.logger.info(
-          'Transcript data extracted:',
-          transcriptData.length,
-          'segments'
-        );
-      } catch (transcriptError) {
-        this.logger.warn(
-          'Failed to fetch or format transcript:',
-          transcriptError.message
-        );
-        if (transcriptError.message?.includes('disabled')) {
-          transcriptText =
-            'Transcript is not available for this video. The creator may have disabled it.';
-        } else if (
-          transcriptError.message?.includes('No transcript available')
-        ) {
-          transcriptText = 'No transcript is available for this video.';
-        } else if (transcriptError.message?.includes('too many requests')) {
-          transcriptText =
-            'YouTube is limiting transcript access due to too many requests. Please try again later.';
-        } else if (transcriptError.message?.includes('unavailable')) {
-          transcriptText = 'The video appears to be unavailable or private.';
+
+        if (response && response.success) {
+          const rawTranscriptData = response.transcript;
+          const transcriptDataForFormatting = rawTranscriptData.map(
+            (segment) => ({
+              text: segment.text,
+              offset: parseFloat(segment.start) * 1000,
+              duration: parseFloat(segment.duration) * 1000,
+            })
+          );
+          transcriptText = this.formatTranscript(transcriptDataForFormatting, {
+            timestampInterval: 15,
+          });
+          this.logger.info(
+            'Transcript data received from background script:',
+            rawTranscriptData.length,
+            'segments'
+          );
         } else {
-          transcriptText = `Error getting transcript: ${transcriptError.message}`;
+          // Handle failure response from background
+          const errorMessage =
+            response?.error || 'Unknown error from background script.';
+          this.logger.warn(
+            'Failed to fetch transcript via background:',
+            errorMessage
+          );
+          // Map error messages for user-friendly text
+          if (errorMessage.includes('captions disabled')) {
+            transcriptText =
+              'Transcript is not available for this video. The creator may have disabled it.';
+          } else if (errorMessage.includes('invalid video ID')) {
+            transcriptText = 'Could not find a video with the provided ID.';
+          } else if (errorMessage.includes('unavailable')) {
+            transcriptText = 'The video appears to be unavailable or private.';
+          } else {
+            transcriptText = `Error getting transcript: ${errorMessage}`;
+          }
         }
+      } catch (commError) {
+        // Handle communication error with background script
+        this.logger.error(
+          'Error communicating with background for transcript:',
+          commError
+        );
+        transcriptText = `Error communicating with extension background: ${commError.message}`;
       }
 
       this.logger.info('Starting comment extraction...');
-      const commentsResult = await this.extractComments(); // Comments normalized within extractComments
+      const commentsResult = await this.extractComments();
       this.logger.info(
         'Comment extraction complete, status:',
         commentsResult.status
@@ -94,7 +110,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         videoTitle: normalizeText(rawTitle),
         channelName: normalizeText(rawChannel),
         videoDescription: normalizeText(rawDescription),
-        transcript: transcriptText, // Transcript has its own complex formatting, not using normalizeText
+        transcript: transcriptText,
         comments: commentsResult.items,
         commentStatus: commentsResult.status,
         transcriptLanguage: transcriptLang,
@@ -102,7 +118,6 @@ class YoutubeExtractorStrategy extends BaseExtractor {
         contentType: this.contentType,
       };
     } catch (error) {
-      // This catch is for errors in the main extractData logic, not transcript-specific ones
       this.logger.error('Critical error in extractData (YouTube):', error);
       let commentsResultOnError = {
         items: [],
@@ -294,7 +309,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     transcriptData.forEach((segment, index) => {
       const currentOffset = segment.offset;
       const currentText = this.decodeDoubleEncodedEntities(segment.text.trim());
-      const currentTime = Math.floor(currentOffset);
+      const currentTime = Math.floor(currentOffset / 1000); // Convert ms to seconds for timestamp logic
 
       if (currentTime >= lastTimestampTime + config.timestampInterval) {
         if (formattedText.length > 0) formattedText += ' ';
@@ -328,7 +343,7 @@ class YoutubeExtractorStrategy extends BaseExtractor {
 
   /**
    * Decodes HTML entities from a string using DOM parsing.
-   * Handles various encodings, including double-encoded entities like &#39;.
+   * Handles various encodings, including double-encoded entities like '.
    * @param {string} text - The text containing HTML entities.
    * @returns {string} The decoded text.
    */

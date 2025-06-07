@@ -502,14 +502,14 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 
-**Package:** youtube-transcript
-**Version:** ^1.2.1
+**Package:** youtube-transcript-api
+**Version:** ^2.0.4
 **License Type:** MIT License
-**Repository:** https://github.com/Kakulukian/youtube-transcript
+**Repository:** https://github.com/0x6a69616e/youtube-transcript-api
 
 MIT License
 
-Copyright (c) 2022 Kakulukian
+Copyright (c) 2023 0x6a69616e
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

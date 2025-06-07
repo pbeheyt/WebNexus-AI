@@ -18,6 +18,7 @@ import {
 } from '../services/sidepanel-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
+import { handleFetchYouTubeTranscriptRequest } from '../services/youtube-service.js';
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -191,4 +192,13 @@ function registerServiceHandlers() {
     handleFetchPdfRequest(message, sendResponse);
     return true; // Keep channel open for async response
   });
+
+  // Handle YouTube transcript requests
+  messageHandlers.set(
+    'fetchYouTubeTranscript',
+    (message, sender, sendResponse) => {
+      handleFetchYouTubeTranscriptRequest(message, sender, sendResponse);
+      return true; // Keep channel open for async response
+    }
+  );
 }

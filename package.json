@@ -56,6 +56,6 @@
     "react-syntax-highlighter": "^15.6.1",
     "remark-gfm": "^4.0.1",
     "tiktoken": "^1.0.20",
-    "youtube-transcript": "^1.2.1"
+    "youtube-transcript-api": "^2.0.4"
   }
 }
