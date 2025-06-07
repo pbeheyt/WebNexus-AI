@@ -140,9 +140,10 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
         !selectedPlatformId ||
         !tabId ||
         modelId === selectedModelId || // No change needed
-        !models.some((m) => m.id === modelId) // Validate selection
+        // BUG FIX: Relax validation to allow setting a model before the list is loaded
+        (models.length > 0 && !models.some((m) => m.id === modelId))
       ) {
-        if (!models.some((m) => m.id === modelId)) {
+        if (models.length > 0 && !models.some((m) => m.id === modelId)) {
           logger.context.error('Attempted to select invalid model:', modelId);
         }
         return false;
