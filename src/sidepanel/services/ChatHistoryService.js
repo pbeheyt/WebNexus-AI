@@ -418,6 +418,92 @@ class ChatHistoryService {
       return null;
     }
   }
+
+  /**
+   * Scans all chat sessions and removes any that are provisional and have no messages.
+   * Also cleans up any associated token statistics for the deleted sessions.
+   * This is designed to be run on extension startup.
+   * @returns {Promise<boolean>} True if any sessions were cleaned up, false otherwise.
+   */
+  static async cleanupProvisionalSessions() {
+    logger.sidepanel.info('ChatHistoryService: Starting cleanup of provisional chat sessions...');
+    try {
+      const storageData = await chrome.storage.local.get([
+        STORAGE_KEYS.GLOBAL_CHAT_SESSIONS,
+        STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
+      ]);
+
+      const allSessions = storageData[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
+      const allTokenStats = storageData[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
+
+      const sessionIdsToDelete = [];
+      let sessionsChanged = false;
+      let tokensChanged = false;
+
+      for (const sessionId in allSessions) {
+        if (Object.hasOwn(allSessions, sessionId)) {
+          const session = allSessions[sessionId];
+          // A session is provisional if it has the flag AND no messages have been added.
+          if (session.metadata?.isProvisional === true && (!session.messages || session.messages.length === 0)) {
+            sessionIdsToDelete.push(sessionId);
+          }
+        }
+      }
+
+      if (sessionIdsToDelete.length > 0) {
+        logger.sidepanel.info(`ChatHistoryService: Found ${sessionIdsToDelete.length} provisional sessions to delete.`, sessionIdsToDelete);
+
+        for (const sessionId of sessionIdsToDelete) {
+          // Delete from sessions object
+          if (allSessions[sessionId]) {
+            delete allSessions[sessionId];
+            sessionsChanged = true;
+          }
+          // Delete from token stats object
+          if (allTokenStats[sessionId]) {
+            delete allTokenStats[sessionId];
+            tokensChanged = true;
+          }
+        }
+
+        const dataToUpdate = {};
+        const keysToRemove = [];
+
+        if (sessionsChanged) {
+          if (Object.keys(allSessions).length > 0) {
+            dataToUpdate[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] = allSessions;
+          } else {
+            keysToRemove.push(STORAGE_KEYS.GLOBAL_CHAT_SESSIONS);
+          }
+        }
+
+        if (tokensChanged) {
+          if (Object.keys(allTokenStats).length > 0) {
+            dataToUpdate[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] = allTokenStats;
+          } else {
+            keysToRemove.push(STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS);
+          }
+        }
+
+        if (Object.keys(dataToUpdate).length > 0) {
+          await chrome.storage.local.set(dataToUpdate);
+        }
+        if (keysToRemove.length > 0) {
+          await chrome.storage.local.remove(keysToRemove);
+        }
+
+        logger.sidepanel.info('ChatHistoryService: Provisional session cleanup complete.');
+        return true;
+      }
+
+      logger.sidepanel.info('ChatHistoryService: No provisional sessions found to clean up.');
+      return false;
+
+    } catch (error) {
+      logger.sidepanel.error('ChatHistoryService: Error cleaning up provisional sessions:', error);
+      return false;
+    }
+  }
 }
 
 export default ChatHistoryService;

@@ -293,14 +293,14 @@ export async function performStaleTabCleanup() {
       `SidePanelStateManager.cleanupTabStates() completed.`
     );
 
-    // No need to loop through ALL_TAB_SPECIFIC_KEYS_FOR_AUTOMATIC_CLEANUP here anymore,
-    // as deprecated keys are phased out and TAB_SIDEPANEL_STATES is handled above.
-    // If other tab-specific keys were still in use and *not* managed by SidePanelStateManager,
-    // they would be handled by cleanupTabStorage here.
-    // For example, if TAB_PLATFORM_PREFERENCES was still a standalone tab-specific key:
-    // const tabs = await chrome.tabs.query({});
-    // const validTabIds = new Set(tabs.map((tab) => tab.id));
-    // await cleanupTabStorage(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES, null, validTabIds);
+    // Add cleanup for provisional chat sessions
+    try {
+      logger.background.info('Running provisional chat session cleanup...');
+      await ChatHistoryService.cleanupProvisionalSessions();
+      logger.background.info('Provisional chat session cleanup finished.');
+    } catch (error) {
+      logger.background.error('Error during provisional chat session cleanup:', error);
+    }
 
     logger.background.info('Stale tab data cleanup finished successfully.');
   } catch (error) {
