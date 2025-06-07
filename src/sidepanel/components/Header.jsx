@@ -103,7 +103,7 @@ function Header({
             <Tooltip
               show={isIncludeTooltipVisible}
               targetRef={includeToggleRef}
-              message='Send page content with your prompt.'
+              message='Include context.'
               position='bottom'
               id='include-context-tooltip-header'
             />

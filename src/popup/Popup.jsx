@@ -501,7 +501,7 @@ export function Popup() {
         targetRef={includeContextRef}
         message={
           isInjectable
-            ? 'Send content along with your prompt.'
+            ? 'Include context.'
             : 'Content extraction not available for this page.'
         }
         position='top'
