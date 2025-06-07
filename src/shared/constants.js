@@ -97,6 +97,7 @@ export const STORAGE_KEYS = {
   API_RESPONSE_TIMESTAMP: 'api_response_timestamp',
   /** @description Unique identifier for an active API stream. Local. */
   API_STREAM_ID: 'api_stream_id',
+  
   // --- Global Chat Session Data ---
   /** @description Stores all global chat sessions. Keyed by chatSessionId. Local. */
   GLOBAL_CHAT_SESSIONS: 'global_chat_sessions',
@@ -104,13 +105,6 @@ export const STORAGE_KEYS = {
   GLOBAL_CHAT_TOKEN_STATS: 'global_chat_token_stats',
 
   // --- Tab-Specific Data (Primarily for Sidepanel context persistence per tab) ---
-  /** @description Formatted page content specific to a tab, for Sidepanel context. Local. */
-  TAB_FORMATTED_CONTENT: 'tab_formatted_content',
-  /** @description Chat history for each tab's Sidepanel instance. Local. */
-  // DEPRECATED_FOR_GLOBAL_HISTORY: TAB_CHAT_HISTORIES: 'tab_chat_histories',
-
-  /** @description Token usage statistics for each tab's Sidepanel instance. Local. */
-  // DEPRECATED_FOR_GLOBAL_HISTORY: TAB_TOKEN_STATISTICS: 'tab_token_statistics',
   /** @description Visibility state (true/false) of the Sidepanel for each tab. Local. */
   TAB_SIDEPANEL_STATES: 'tab_sidepanel_states',
   // --- Identifiers & Prefixes ---
