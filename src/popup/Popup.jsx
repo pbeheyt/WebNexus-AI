@@ -386,9 +386,9 @@ export function Popup() {
                       <>
                         <ContentTypeIcon
                           contentType={contentType}
-                          className='w-5 h-5 text-theme-secondary'
+                          className='w-5 h-5 text-theme-primary'
                         />
-                        <span className='text-sm text-theme-secondary font-medium truncate ml-1 cursor-default'>
+                        <span className='text-sm text-theme-primary font-medium truncate ml-1 cursor-default'>
                           {contentTypeLabel}
                         </span>
                         <span

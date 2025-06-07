@@ -115,7 +115,7 @@ export function ExtractionStrategySelector({
         className={`rounded-md transition-colors ${
           disabled
             ? 'text-theme-disabled cursor-not-allowed'
-            : 'text-theme-secondary hover:text-primary hover:bg-theme-active'
+            : 'text-theme-primary hover:text-primary hover:bg-theme-active'
         }`}
         iconClassName='w-5 h-5'
       />

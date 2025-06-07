@@ -74,9 +74,9 @@ function Header({
           <>
             <ContentTypeIcon
               contentType={contentType}
-              className='w-5 h-5 text-theme-secondary flex-shrink-0'
+              className='w-5 h-5 text-theme-primary flex-shrink-0'
             />
-            <span className='text-sm font-medium ml-1 mr-2 whitespace-nowrap truncate overflow-hidden'>
+            <span className='text-sm text-theme-primary font-medium ml-1 mr-2 whitespace-nowrap truncate overflow-hidden'>
               {CONTENT_TYPE_LABELS[contentType] || 'Content'}
             </span>
             <span
