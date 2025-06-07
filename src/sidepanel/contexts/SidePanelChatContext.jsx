@@ -40,6 +40,8 @@ export function SidePanelChatProvider({ children }) {
     tabId,
     platforms,
     getPlatformApiConfig,
+    selectPlatform,
+    selectModel,
   } = useSidePanelPlatform();
 
   const { contentType, currentTab } = useContent();
@@ -260,10 +262,62 @@ export function SidePanelChatProvider({ children }) {
       modelConfigData,
       ChatHistoryService,
       TokenManagementService,
-      _initiateApiCall,
-      isContentExtractionEnabled,
-      isThinkingModeEnabled,
-    });
+    _initiateApiCall,
+    isContentExtractionEnabled,
+    isThinkingModeEnabled,
+  });
+
+  // This effect synchronizes the platform/model selection with the loaded chat session
+  useEffect(() => {
+    const syncPlatformWithSession = async () => {
+      if (!currentChatSessionId || !selectPlatform || !selectModel) {
+        return;
+      }
+
+      try {
+        const sessionMetadata =
+          await ChatHistoryService.getSessionMetadata(currentChatSessionId);
+        if (!sessionMetadata || sessionMetadata.isProvisional) {
+          // Don't change selection for new/provisional sessions; they should inherit the current global selection.
+          return;
+        }
+
+        const { platformId: sessionPlatformId, modelId: sessionModelId } =
+          sessionMetadata;
+
+        // Step 1: Sync Platform if necessary.
+        if (sessionPlatformId && sessionPlatformId !== selectedPlatformId) {
+          logger.sidepanel.info(
+            `Session loading: Syncing platform to ${sessionPlatformId}.`
+          );
+          // This call will trigger a re-render and this effect will run again.
+          // We stop here to let the platform context update before attempting to select a model.
+          await selectPlatform(sessionPlatformId, { savePreference: false });
+          return;
+        }
+
+        // Step 2: Sync Model, only if the platform is already correct.
+        if (
+          sessionModelId &&
+          sessionPlatformId === selectedPlatformId &&
+          sessionModelId !== selectedModel
+        ) {
+          logger.sidepanel.info(
+            `Session loading: Syncing model to ${sessionModelId}.`
+          );
+          await selectModel(sessionModelId, { savePreference: false });
+        }
+      } catch (error) {
+        logger.sidepanel.error(
+          'Error syncing platform/model with session:',
+          error
+        );
+      }
+    };
+
+    syncPlatformWithSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChatSessionId, selectedPlatformId, selectedModel, selectPlatform]);
 
   // Load full platform configuration when platform or model changes
   useEffect(() => {

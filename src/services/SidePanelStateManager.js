@@ -242,12 +242,10 @@ class SidePanelStateManager {
       const openTabIds = new Set(openTabs.map((tab) => tab.id.toString()));
 
       // Only clean TAB_SIDEPANEL_STATES directly. Other keys are managed by their respective services or deprecated.
-      const keysToClean = [
-        STORAGE_KEYS.TAB_SIDEPANEL_STATES,
-        // STORAGE_KEYS.TAB_PLATFORM_PREFERENCES, // Potentially keep if still used independently
-        // STORAGE_KEYS.TAB_MODEL_PREFERENCES, // Potentially keep if still used independently
-        STORAGE_KEYS.TAB_FORMATTED_CONTENT, // Keep if used for non-chat tab-specific content
-      ];
+    const keysToClean = [
+      STORAGE_KEYS.TAB_SIDEPANEL_STATES,
+      STORAGE_KEYS.TAB_FORMATTED_CONTENT, // Keep if used for non-chat tab-specific content
+    ];
       // Deprecated keys like TAB_CHAT_HISTORIES and TAB_TOKEN_STATISTICS are no longer cleaned here.
 
       for (const storageKey of keysToClean) {

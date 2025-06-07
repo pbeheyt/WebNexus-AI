@@ -134,7 +134,7 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
 
   // Callback to handle model selection
   const selectModel = useCallback(
-    async (modelId) => {
+    async (modelId, options = {}) => {
       if (
         interfaceType !== INTERFACE_SOURCES.SIDEPANEL ||
         !selectedPlatformId ||
@@ -151,17 +151,14 @@ export function useModelManagement(selectedPlatformId, tabId, interfaceType) {
       try {
         setSelectedModelId(modelId); // Update state immediately
 
-        // Use centralized ModelParameterService to save preferences
-        await ModelParameterService.saveTabModelPreference(
-          tabId,
-          selectedPlatformId,
-          modelId
-        );
-        await ModelParameterService.saveSourceModelPreference(
-          interfaceType,
-          selectedPlatformId,
-          modelId
-        );
+        // Use centralized ModelParameterService to save preferences, unless opted out
+        if (options.savePreference !== false) {
+          await ModelParameterService.saveSourceModelPreference(
+            interfaceType,
+            selectedPlatformId,
+            modelId
+          );
+        }
         return true;
       } catch (err) {
         logger.context.error('Error setting model preference:', err);

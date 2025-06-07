@@ -110,10 +110,6 @@ export const STORAGE_KEYS = {
 
   /** @description Token usage statistics for each tab's Sidepanel instance. Local. */
   // DEPRECATED_FOR_GLOBAL_HISTORY: TAB_TOKEN_STATISTICS: 'tab_token_statistics',
-  /** @description Last selected/preferred platform for each tab's Sidepanel instance. Local. */
-  TAB_PLATFORM_PREFERENCES: 'tab_platform_preferences',
-  /** @description Last selected/preferred model (per platform) for each tab's Sidepanel instance. Local. */
-  TAB_MODEL_PREFERENCES: 'tab_model_preferences',
   /** @description Visibility state (true/false) of the Sidepanel for each tab. Local. */
   TAB_SIDEPANEL_STATES: 'tab_sidepanel_states',
   // --- Identifiers & Prefixes ---

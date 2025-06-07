@@ -21,30 +21,10 @@ class ModelParameterService {
    * @returns {Promise<string>} Resolved model ID
    */
   async resolveModel(platformId, options = {}) {
-    const { tabId, source } = options;
+    const { source } = options;
     let modelId = null;
 
-    // 1. Try tab-specific model preference (highest priority)
-    if (tabId) {
-      try {
-        const tabPrefs = await chrome.storage.local.get(
-          STORAGE_KEYS.TAB_MODEL_PREFERENCES
-        );
-        const tabModels = tabPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
-
-        if (tabModels[tabId] && tabModels[tabId][platformId]) {
-          modelId = tabModels[tabId][platformId];
-          logger.service.info(
-            `Using tab-specific model for ${platformId}: ${modelId}`
-          );
-          return modelId;
-        }
-      } catch (error) {
-        logger.service.error('Error getting tab-specific model:', error);
-      }
-    }
-
-    // 2. Try source-specific global preference (Sidepanel only)
+    // Try source-specific global preference (Sidepanel only)
     if (source === INTERFACE_SOURCES.SIDEPANEL) {
       const storageKey = STORAGE_KEYS.SIDEPANEL_DEFAULT_MODEL_ID_BY_PLATFORM;
 
@@ -130,44 +110,6 @@ class ModelParameterService {
     } catch (error) {
       logger.service.error('Error getting user model settings:', error);
       return {};
-    }
-  }
-
-  /**
-   * Save model preference for a specific tab
-   * @param {number} tabId - Tab ID
-   * @param {string} platformId - Platform ID
-   * @param {string} modelId - Model ID to save
-   * @returns {Promise<boolean>} Success indicator
-   */
-  async saveTabModelPreference(tabId, platformId, modelId) {
-    try {
-      // Get current tab preferences
-      const tabPrefs = await chrome.storage.local.get(
-        STORAGE_KEYS.TAB_MODEL_PREFERENCES
-      );
-      const tabModels = tabPrefs[STORAGE_KEYS.TAB_MODEL_PREFERENCES] || {};
-
-      // Initialize tab entry if needed
-      if (!tabModels[tabId]) {
-        tabModels[tabId] = {};
-      }
-
-      // Save model preference
-      tabModels[tabId][platformId] = modelId;
-
-      // Store updated preferences
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.TAB_MODEL_PREFERENCES]: tabModels,
-      });
-
-      logger.service.info(
-        `Saved tab model preference: Tab ${tabId}, Platform ${platformId}, Model ${modelId}`
-      );
-      return true;
-    } catch (error) {
-      logger.service.error('Error saving tab model preference:', error);
-      return false;
     }
   }
 

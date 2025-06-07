@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { logger } from '../../../shared/logger';
-import { STORAGE_KEYS, INTERFACE_SOURCES } from '../../../shared/constants';
+import { INTERFACE_SOURCES } from '../../../shared/constants';
 
 /**
  * Hook to manage the selection of the active platform based on preferences and availability.
@@ -57,31 +57,14 @@ export function usePlatformSelection(
         }
 
         // Get preferences
-        const [tabPreferences, globalPreferences] = await Promise.all([
-          chrome.storage.local.get(STORAGE_KEYS.TAB_PLATFORM_PREFERENCES),
-          chrome.storage.sync.get(globalStorageKey),
-        ]);
+        const globalPreferences = await chrome.storage.sync.get(globalStorageKey);
 
-        const tabPlatformPrefs =
-          tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
-        const lastUsedTabPlatform = tabPlatformPrefs[tabId];
         const globalPlatformPref = globalPreferences[globalStorageKey];
 
         let platformToUse = null;
 
-        // Priority 1: Tab-specific preference (ONLY IF SIDEPANEL)
+        // Priority 1: Global preference (if valid and available)
         if (
-          interfaceType === INTERFACE_SOURCES.SIDEPANEL &&
-          lastUsedTabPlatform &&
-          platformConfigs.some((p) => p.id === lastUsedTabPlatform) && // Check if it's a known platform
-          availablePlatformIds.has(lastUsedTabPlatform) // Check if available based on creds
-        ) {
-          platformToUse = lastUsedTabPlatform;
-        }
-
-        // Priority 2: Global preference (if valid and available)
-        if (
-          !platformToUse &&
           globalPlatformPref &&
           platformConfigs.some((p) => p.id === globalPlatformPref) && // Check if it's a known platform
           availablePlatformIds.has(globalPlatformPref) // Check if available based on creds
@@ -89,7 +72,7 @@ export function usePlatformSelection(
           platformToUse = globalPlatformPref;
         }
 
-        // Priority 3: First available platform (if any)
+        // Priority 2: First available platform (if any)
         if (!platformToUse && availablePlatforms.length > 0) {
           platformToUse = availablePlatforms[0].id;
         }
@@ -118,7 +101,7 @@ export function usePlatformSelection(
 
   // Callback to handle platform selection
   const selectPlatform = useCallback(
-    async (platformId) => {
+    async (platformId, options = {}) => {
       if (!platformConfigs.some((p) => p.id === platformId)) {
         logger.context.error(
           'Attempted to select invalid platform:',
@@ -131,21 +114,10 @@ export function usePlatformSelection(
       try {
         setSelectedPlatformId(platformId); // Update state immediately
 
-        // Update tab-specific preference ONLY IF SIDEPANEL
-        if (interfaceType === INTERFACE_SOURCES.SIDEPANEL) {
-          const tabPreferences = await chrome.storage.local.get(
-            STORAGE_KEYS.TAB_PLATFORM_PREFERENCES
-          );
-          const tabPlatformPrefs =
-            tabPreferences[STORAGE_KEYS.TAB_PLATFORM_PREFERENCES] || {};
-          tabPlatformPrefs[tabId] = platformId;
-          await chrome.storage.local.set({
-            [STORAGE_KEYS.TAB_PLATFORM_PREFERENCES]: tabPlatformPrefs,
-          });
+        // Update global preference for new tabs, unless opted out
+        if (options.savePreference !== false) {
+          await chrome.storage.sync.set({ [globalStorageKey]: platformId });
         }
-
-        // Update global preference for new tabs
-        await chrome.storage.sync.set({ [globalStorageKey]: platformId });
 
         // Notify parent/context if needed
         const platformName =
@@ -164,7 +136,6 @@ export function usePlatformSelection(
       platformConfigs,
       globalStorageKey,
       onPlatformSelected,
-      interfaceType,
     ]
   );
 
