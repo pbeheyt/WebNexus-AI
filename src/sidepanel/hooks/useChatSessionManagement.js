@@ -32,10 +32,16 @@ export function useChatSessionManagement({
   const [currentChatSessionId, setCurrentChatSessionId] = useState(null);
   const [currentView, setCurrentView] = useState('chat'); // 'chat' or 'history'
   const isInitializingSessionRef = useRef(false);
+  const syncedSessionIdRef = useRef(null); // Ref to prevent re-syncing
 
   // Effect to synchronize the platform/model with the loaded chat session
   useEffect(() => {
     const syncPlatformWithSession = async () => {
+      // FIX: Prevent re-syncing for the same session after user interaction
+      if (currentChatSessionId === syncedSessionIdRef.current) {
+        return;
+      }
+
       if (
         !currentChatSessionId ||
         isPlatformLoading || // Wait for platform context to be ready
@@ -60,6 +66,8 @@ export function useChatSessionManagement({
             `Session loading: Syncing platform to ${sessionPlatformId}.`
           );
           await selectPlatform(sessionPlatformId, { savePreference: false });
+          // FIX: Mark as synced after initiating the change
+          syncedSessionIdRef.current = currentChatSessionId;
           return; // Allow context to update before proceeding
         }
 
@@ -71,10 +79,10 @@ export function useChatSessionManagement({
           logger.sidepanel.info(
             `Session loading: Syncing model to ${sessionModelId}.`
           );
-          // The bug fix is here: by waiting for isPlatformLoading to be false,
-          // we ensure the model list is available before trying to select.
           await selectModel(sessionModelId, { savePreference: false });
         }
+        // FIX: Mark as synced after platform/model checks are complete
+        syncedSessionIdRef.current = currentChatSessionId;
       } catch (error) {
         logger.sidepanel.error(
           'Error syncing platform/model with session:',
@@ -115,6 +123,7 @@ export function useChatSessionManagement({
           logger.sidepanel.info(
             `ChatSessionManagement: No active session for tab ${tabId}. Creating new one.`
           );
+          syncedSessionIdRef.current = null; // Reset sync state for new session
           const newSession = await ChatHistoryService.createNewChatSession({
             platformId: selectedPlatformId,
             modelId: selectedModel,
@@ -191,6 +200,8 @@ export function useChatSessionManagement({
     );
 
     const previousActiveSessionId = currentChatSessionId;
+    syncedSessionIdRef.current = null; // Allow sync for new session
+
     try {
       const newSession = await ChatHistoryService.createNewChatSession({
         platformId: selectedPlatformId,
@@ -235,6 +246,7 @@ export function useChatSessionManagement({
     async (chatSessionIdToSelect) => {
       if (!tabId || !chatSessionIdToSelect) return;
       try {
+        syncedSessionIdRef.current = null; // Allow sync for newly selected session
         await SidePanelStateManager.setActiveChatSessionForTab(
           tabId,
           chatSessionIdToSelect
