@@ -156,6 +156,11 @@
     scrollbar-gutter: stable;
   }
 
+  /* Utility to add padding for the scrollbar gutter */
+  .pb-gutter {
+    padding-bottom: 12px; /* Adjust this value to match scrollbar height if needed */
+  }
+
   .logo-hover-effect {
     transition-property: transform;
     transition-duration: 300ms;

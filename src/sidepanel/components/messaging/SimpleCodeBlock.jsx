@@ -41,8 +41,8 @@ const SimpleCodeBlock = ({ children }) => {
   return (
     // Main container using flexbox for single-line alignment
     <div className='relative group my-4 rounded-lg bg-theme-secondary flex items-center px-3 py-1.5 shadow-sm'>
-      {/* Code content area, grows to fill space */}
-      <div className='flex-grow overflow-x-auto overflow-y-hidden whitespace-nowrap text-theme-primary text-sm font-mono'>
+      {/* Code content area, grows to fill space. Added scrollbar-gutter-stable and py-1 for consistent padding. */}
+      <div className='flex-grow overflow-x-auto overflow-y-hidden whitespace-nowrap text-theme-primary text-sm font-mono scrollbar-gutter-stable py-1.5'>
         {codeContent}
       </div>
       {/* Copy button container */}
