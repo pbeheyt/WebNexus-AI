@@ -16,12 +16,13 @@ import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
 
 export default function ChatHistoryListView() {
-  const {
-    deleteSelectedChatSession,
-    deleteMultipleChatSessions,
-    currentChatSessionId,
-    switchToChatView,
-  } = useSidePanelChat();
+const {
+  deleteSelectedChatSession,
+  deleteMultipleChatSessions,
+  currentChatSessionId,
+  switchToChatView,
+  selectChatSession, // Add this
+} = useSidePanelChat();
 
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,6 +132,16 @@ export default function ChatHistoryListView() {
     }
   };
 
+  const handleItemClick = (sessionId) => {
+    if (isSelectionMode) {
+      // In selection mode, a click toggles the checkbox
+      handleToggleSelection(sessionId);
+    } else {
+      // Outside selection mode, a click loads the chat
+      selectChatSession(sessionId);
+    }
+  };
+
   const areAllSelected = useMemo(
     () => sessions.length > 0 && selectedSessionIds.size === sessions.length,
     [sessions, selectedSessionIds]
@@ -207,16 +218,23 @@ export default function ChatHistoryListView() {
               return (
                 <li
                   key={session.id}
-                  className={`p-3 rounded-lg flex items-center justify-between transition-colors
-                    ${
-                      isSelected
-                        ? 'bg-primary/20 ring-2 ring-primary'
-                        : isActiveSession
-                          ? 'bg-theme-active'
-                          : 'bg-theme-surface hover:bg-theme-hover'
-                    }
-                  `}
+                  className={`rounded-lg ${
+                    isSelected
+                      ? 'bg-primary/20 ring-2 ring-primary'
+                      : isActiveSession
+                        ? 'bg-theme-active'
+                        : 'bg-theme-surface'
+                  }`}
                 >
+                  <button
+                    onClick={() => handleItemClick(session.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        handleItemClick(session.id);
+                      }
+                    }}
+                    className="w-full p-3 flex items-center justify-between transition-colors cursor-pointer hover:bg-theme-hover"
+                  >
                   {isSelectionMode && (
                     <div className='mr-3 flex-shrink-0'>
                       <Checkbox
@@ -227,10 +245,9 @@ export default function ChatHistoryListView() {
                     </div>
                   )}
 
-                  {/* Make the entire content area a label for the checkbox in selection mode */}
-                  <label
-                    htmlFor={isSelectionMode ? `select-${session.id}` : undefined}
-                    className={`flex items-center flex-grow min-w-0 text-left ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                  {/* Content area */}
+                  <div
+                    className={`flex items-center flex-grow min-w-0 text-left`}
                   >
                     {platformConfig?.iconUrl && (
                       <PlatformIcon
@@ -260,7 +277,7 @@ export default function ChatHistoryListView() {
                         </p>
                       )}
                     </div>
-                  </label>
+                  </div>
 
                   {/* Action buttons on the right */}
                   <div className='flex-shrink-0 flex items-center ml-2'>
@@ -268,7 +285,10 @@ export default function ChatHistoryListView() {
                       <>
                         {isActiveSession && (
                           <button
-                            onClick={switchToChatView}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              switchToChatView();
+                            }}
                             className='p-1.5 text-theme-secondary hover:text-primary rounded-md mr-1'
                             title='Go to active chat'
                           >
@@ -296,6 +316,7 @@ export default function ChatHistoryListView() {
                       </>
                     )}
                   </div>
+                  </button>
                 </li>
               );
             })}
