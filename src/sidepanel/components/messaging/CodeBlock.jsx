@@ -1,8 +1,8 @@
 // src/sidepanel/components/messaging/CodeBlock.jsx
-import React, { useState, memo, useEffect } from 'react';
+import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
 import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
@@ -33,6 +33,7 @@ import ini from 'react-syntax-highlighter/dist/esm/languages/prism/ini';
 import makefile from 'react-syntax-highlighter/dist/esm/languages/prism/makefile';
 
 import { IconButton } from '../../../components';
+import { useUI } from '../../../contexts/UIContext';
 
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 
@@ -94,29 +95,14 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   const codeContent = String(children).replace(/\n$/, '');
   const { copyState, handleCopy, IconComponent, iconClassName, disabled } =
     useCopyToClipboard(codeContent);
-  const [isDarkMode, setIsDarkMode] = useState(
-    typeof window !== 'undefined' &&
-      window.matchMedia &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  const { theme } = useUI(); // Get theme from the extension's context
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e) => setIsDarkMode(e.matches);
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    } else if (mediaQuery.addListener) {
-      mediaQuery.addListener(handleChange);
-      return () => mediaQuery.removeListener(handleChange);
-    }
-  }, []);
+        const isDarkMode = theme === 'dark';
 
   const languageMatch = /language-(\w+)/.exec(className || '');
   const language = languageMatch ? languageMatch[1] : 'text';
   const displayLanguage = language.charAt(0).toUpperCase() + language.slice(1);
-  const syntaxTheme = isDarkMode ? oneDark : vs;
+        const syntaxTheme = isDarkMode ? oneDark : oneLight;
 
   // Refactored button classes for readability
   const idleClasses =
@@ -139,7 +125,7 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   }
 
   return (
-    <div className='relative code-block-group my-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm'>
+    <div className='relative code-block-group my-4 rounded-lg border border-gray-200 dark:border-gray-700'>
       {/* Header with language display and copy button */}
       <div className='flex justify-between items-center px-3 py-1.5 bg-theme-secondary rounded-t-lg'>
         <span className='font-mono text-xs text-theme-secondary'>
@@ -159,7 +145,7 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
       </div>
 
       {/* Code content area with syntax highlighting and distinct background */}
-      <div className='overflow-x-auto w-full rounded-b-lg bg-white dark:bg-gray-900'>
+        <div className='overflow-x-auto w-full rounded-b-lg bg-white dark:bg-gray-900'>
         <SyntaxHighlighter
           language={language}
           style={syntaxTheme}
