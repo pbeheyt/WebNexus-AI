@@ -120,7 +120,7 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
 
   // Refactored button classes for readability
   const idleClasses =
-    'text-theme-secondary opacity-0 group-hover:opacity-100 focus-within:opacity-100 hover:bg-theme-hover hover:text-theme-primary';
+    'text-theme-secondary opacity-0 code-block-group-hover:opacity-100 focus-within:opacity-100 hover:bg-theme-hover hover:text-theme-primary';
   const copiedClasses =
     'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 opacity-100';
   const errorClasses =
@@ -139,7 +139,7 @@ const CodeBlock = memo(({ className, children, isStreaming = false }) => {
   }
 
   return (
-    <div className='relative group my-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm'>
+    <div className='relative code-block-group my-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm'>
       {/* Header with language display and copy button */}
       <div className='flex justify-between items-center px-3 py-1.5 bg-theme-secondary rounded-t-lg'>
         <span className='font-mono text-xs text-theme-secondary'>

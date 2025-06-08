@@ -20,7 +20,7 @@ const SimpleCodeBlock = ({ children }) => {
 
   // Define classes based on the copy state for better readability and maintenance
   const idleClasses =
-    'text-theme-secondary opacity-0 group-hover:opacity-100 focus-within:opacity-100 hover:bg-theme-hover hover:text-theme-primary';
+    'text-theme-secondary opacity-0 code-block-group-hover:opacity-100 focus-within:opacity-100 hover:bg-theme-hover hover:text-theme-primary';
   const copiedClasses =
     'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 opacity-100';
   const errorClasses =
@@ -40,7 +40,7 @@ const SimpleCodeBlock = ({ children }) => {
 
   return (
     // Changed to `inline-flex` and added `max-w-full` to allow shrink-to-fit behavior
-    <div className='relative group my-4 mx-2 rounded-lg bg-theme-secondary inline-flex items-center max-w-full px-3 py-1.5 shadow-sm'>
+    <div className='relative code-block-group my-4 mx-2 rounded-lg bg-theme-secondary inline-flex items-center max-w-full px-3 py-1.5 shadow-sm'>
       {/* Code content area, grows to fill space */}
       <div className='flex-grow overflow-x-auto overflow-y-hidden whitespace-nowrap text-theme-primary text-sm font-mono scrollbar-gutter-stable py-1'>
         {codeContent}

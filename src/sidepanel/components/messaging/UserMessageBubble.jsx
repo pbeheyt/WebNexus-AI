@@ -71,12 +71,12 @@ export const UserMessageBubble = memo(
       const shouldDisplayBadgeElements = !isEditing && pageContextUsed && contextTypeUsed && CONTENT_TYPE_LABELS[contextTypeUsed];
 
       return (
-        <div
-          ref={ref}
-          id={id}
-          style={style}
-          className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-6 w-full flex flex-col items-end message-group user-message relative ${className}`}
-        >
+    <div
+      ref={ref}
+      id={id}
+      style={style}
+      className={`message-group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-6 w-full flex flex-col items-end user-message relative ${className}`}
+    >
           {/* Container for badge and bubble, aligned to the right. Changed items-start to items-center */}
           <div className={`flex flex-row items-center justify-end w-full ${isEditing ? 'max-w-full' : 'max-w-[95%]'}`}>
             {/* Badge Trigger: Appears to the left of the bubble */}
@@ -168,9 +168,9 @@ export const UserMessageBubble = memo(
 
           {/* Action buttons below bubble (only show when not editing) */}
           {!isEditing && (
-            <div
-              className={`flex items-center gap-1 mt-1 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : copyState === 'copied' || copyState === 'error' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}
-            >
+    <div
+      className={`flex items-center gap-1 mt-1 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : copyState === 'copied' || copyState === 'error' ? 'opacity-100' : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'}`}
+    >
               <IconButton
                 icon={EditIcon}
                 iconClassName='w-4 h-4 select-none'

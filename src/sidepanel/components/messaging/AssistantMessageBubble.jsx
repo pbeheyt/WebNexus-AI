@@ -360,12 +360,12 @@ export const AssistantMessageBubble = memo(
       // --- End Memoized Component Overrides ---
 
       return (
-        <div
-          ref={ref}
-          id={id}
-          style={style}
-          className={`group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full message-group assistant-message relative ${className}`}
-        >
+    <div
+      ref={ref}
+      id={id}
+      style={style}
+      className={`message-group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full assistant-message relative ${className}`}
+    >
           {/* Render Thinking Block if content exists */}
           {thinkingContent && thinkingContent.trim() && (
             <ThinkingBlock
@@ -449,9 +449,9 @@ export const AssistantMessageBubble = memo(
               </div>
             </div>
             {/* Buttons Container (Rerun + Copy) */}
-            <div
-              className={`flex items-center justify-center gap-1 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : assistantCopyState === 'copied' || assistantCopyState === 'error' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}
-            >
+    <div
+      className={`flex items-center justify-center gap-1 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : assistantCopyState === 'copied' || assistantCopyState === 'error' ? 'opacity-100' : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'}`}
+    >
               {!isStreaming && content && content.trim() && (
                 <>
                   {' '}
