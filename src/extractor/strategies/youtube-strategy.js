@@ -1,5 +1,5 @@
 // src/extractor/strategies/youtube-strategy.js
-import { Innertube, ClientType } from 'youtubei.js/web';
+import { Innertube, ClientType, Log } from 'youtubei.js/web';
 
 import BaseExtractor from '../base-extractor.js';
 import { normalizeText } from '../utils/text-utils.js';
@@ -38,6 +38,9 @@ class YoutubeExtractorStrategy extends BaseExtractor {
    */
   async extractData() {
     try {
+      // Suppress the harmless "CompositeVideoPrimaryInfo not found" parser error from the library
+      Log.setLevel('fatal');
+
       const rawTitle = this.extractVideoTitle();
       const rawChannel = this.extractChannelName();
       const rawDescription = this.extractVideoDescription();
