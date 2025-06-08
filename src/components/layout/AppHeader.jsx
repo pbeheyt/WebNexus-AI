@@ -193,9 +193,10 @@ export function AppHeader({
         {showExpandToggle && (
           <button
             onClick={onToggleExpand}
-            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-            title={isExpanded ? 'Collapse header' : 'Expand header'}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            title={currentView === 'history' ? 'Not available in history view' : (isExpanded ? 'Collapse header' : 'Expand header')}
             aria-expanded={isExpanded}
+            disabled={currentView === 'history'}
           >
             <ChevronDownIcon
               className={`w-4 h-4 transition-transform select-none ${isExpanded ? 'rotate-180' : ''}`}
