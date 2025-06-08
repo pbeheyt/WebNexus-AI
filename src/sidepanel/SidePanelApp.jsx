@@ -270,7 +270,6 @@ export default function SidePanelApp() {
           aria-busy='true'
         >
           <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
-          <span className='sr-only'>Loading...</span>
         </div>
       ) : tabId ? (
         <>

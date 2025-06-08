@@ -17,14 +17,14 @@ const Checkbox = ({
   const uniqueId = id || `checkbox-${generatedId}`;
 
   return (
-    <div className={`inline-flex items-center ${className}`}>
+    <div className={`flex items-center ${className}`}>
       <input
         type='checkbox'
         id={uniqueId}
         checked={checked}
         onChange={onChange}
         disabled={disabled}
-        className='sr-only' // Hide the default checkbox
+        className='opacity-0 w-0 h-0' // Visually hide the input without disrupting layout
       />
       <label
         htmlFor={uniqueId}
