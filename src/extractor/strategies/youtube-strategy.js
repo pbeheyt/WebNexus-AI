@@ -1,7 +1,8 @@
 // src/extractor/strategies/youtube-strategy.js
+import { Innertube, ClientType } from 'youtubei.js/web';
+
 import BaseExtractor from '../base-extractor.js';
 import { normalizeText } from '../utils/text-utils.js';
-import { robustSendMessage } from '../../shared/utils/message-utils.js';
 
 class YoutubeExtractorStrategy extends BaseExtractor {
   constructor() {
@@ -41,61 +42,57 @@ class YoutubeExtractorStrategy extends BaseExtractor {
       const rawChannel = this.extractChannelName();
       const rawDescription = this.extractVideoDescription();
       const videoId = new URLSearchParams(window.location.search).get('v');
+      const lang = 'en'; // Default language
 
-      this.logger.info('Requesting transcript for video ID from background:', videoId);
+      this.logger.info(
+        'Requesting transcript for video ID from content script:',
+        videoId
+      );
       let transcriptText = 'Transcript not available or error occurred.';
       let transcriptLang = 'unknown';
 
       try {
-        const response = await robustSendMessage({
-          action: 'fetchYouTubeTranscript',
-          videoId,
+        // Initialize Innertube directly within the content script
+        const youtube = await Innertube.create({
+          client_type: ClientType.WEB,
+          lang: lang,
+          region: 'US',
+          fetch: async (input, init) => {
+            // We must use `window.fetch` to ensure the correct context in a content script.
+            return window.fetch(input, init);
+          },
         });
 
-        if (response && response.success) {
-          const rawTranscriptData = response.transcript;
-          const transcriptDataForFormatting = rawTranscriptData.map(
-            (segment) => ({
-              text: segment.text,
-              offset: parseFloat(segment.start) * 1000,
-              duration: parseFloat(segment.duration) * 1000,
-            })
-          );
+        const info = await youtube.getInfo(videoId, 'WEB');
+        const transcriptInfo = await info.getTranscript();
+
+        if (transcriptInfo && transcriptInfo.transcript) {
+          const segments =
+            transcriptInfo.transcript.content.body.initial_segments || [];
+          const transcriptDataForFormatting = segments.map((segment) => ({
+            text: segment.snippet.text,
+            offset: segment.start_ms,
+            duration: segment.end_ms - segment.start_ms,
+          }));
+
           transcriptText = this.formatTranscript(transcriptDataForFormatting, {
             timestampInterval: 15,
           });
+          transcriptLang = transcriptInfo.transcript.language_code || lang;
           this.logger.info(
-            'Transcript data received from background script:',
-            rawTranscriptData.length,
+            'Transcript data fetched successfully from content script:',
+            segments.length,
             'segments'
           );
         } else {
-          // Handle failure response from background
-          const errorMessage =
-            response?.error || 'Unknown error from background script.';
-          this.logger.warn(
-            'Failed to fetch transcript via background:',
-            errorMessage
-          );
-          // Map error messages for user-friendly text
-          if (errorMessage.includes('captions disabled')) {
-            transcriptText =
-              'Transcript is not available for this video. The creator may have disabled it.';
-          } else if (errorMessage.includes('invalid video ID')) {
-            transcriptText = 'Could not find a video with the provided ID.';
-          } else if (errorMessage.includes('unavailable')) {
-            transcriptText = 'The video appears to be unavailable or private.';
-          } else {
-            transcriptText = `Error getting transcript: ${errorMessage}`;
-          }
+          throw new Error('Transcript is not available for this video.');
         }
-      } catch (commError) {
-        // Handle communication error with background script
-        this.logger.error(
-          'Error communicating with background for transcript:',
-          commError
+      } catch (fetchError) {
+        this.logger.warn(
+          'Failed to fetch transcript via youtubei.js in content script:',
+          fetchError
         );
-        transcriptText = `Error communicating with extension background: ${commError.message}`;
+        transcriptText = `Error getting transcript: ${fetchError.message}`;
       }
 
       this.logger.info('Starting comment extraction...');
@@ -307,6 +304,11 @@ class YoutubeExtractorStrategy extends BaseExtractor {
     let lastTimestampTime = -config.timestampInterval;
 
     transcriptData.forEach((segment, index) => {
+      // Check for text existence at the very beginning and skip if not present
+      if (!segment.text || !segment.text.trim()) {
+        return; // Skip segments with no text content
+      }
+
       const currentOffset = segment.offset;
       const currentText = this.decodeDoubleEncodedEntities(segment.text.trim());
       const currentTime = Math.floor(currentOffset / 1000); // Convert ms to seconds for timestamp logic
