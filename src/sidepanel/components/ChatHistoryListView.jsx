@@ -218,15 +218,15 @@ const {
               return (
                 <li
                   key={session.id}
-                  className={`rounded-lg flex items-center justify-between transition-colors
-                    ${
-                      isSelected
-                        ? 'bg-primary/20 ring-2 ring-primary'
-                        : isActiveSession
-                          ? 'bg-theme-active'
-                          : 'bg-theme-surface'
-                    }
-                  `}
+        className={`rounded-lg flex items-center justify-between transition-colors
+          ${
+            isSelected
+              ? 'bg-primary/20 ring-2 ring-primary'
+              : isActiveSession
+                ? 'bg-theme-active'
+                : 'bg-theme-surface hover:bg-theme-hover'
+          }
+        `}
                 >
                   {/* CHECKBOX (for selection mode) */}
                   {isSelectionMode && (
@@ -244,7 +244,7 @@ const {
                   {/* MAIN CLICKABLE AREA (as a button) */}
                   <button
                     onClick={() => handleItemClick(session.id)}
-                    className={`flex items-center flex-grow min-w-0 text-left p-3 w-full h-full hover:bg-theme-hover rounded-lg
+                    className={`flex items-center flex-grow min-w-0 text-left p-3 w-full h-full rounded-lg
                       ${isSelectionMode ? 'cursor-pointer' : 'cursor-pointer'}
                     `}
                   >
