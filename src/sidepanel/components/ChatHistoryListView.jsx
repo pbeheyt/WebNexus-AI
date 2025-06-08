@@ -218,36 +218,35 @@ const {
               return (
                 <li
                   key={session.id}
-                  className={`rounded-lg ${
-                    isSelected
-                      ? 'bg-primary/20 ring-2 ring-primary'
-                      : isActiveSession
-                        ? 'bg-theme-active'
-                        : 'bg-theme-surface'
-                  }`}
+                  className={`rounded-lg flex items-center justify-between transition-colors
+                    ${
+                      isSelected
+                        ? 'bg-primary/20 ring-2 ring-primary'
+                        : isActiveSession
+                          ? 'bg-theme-active'
+                          : 'bg-theme-surface'
+                    }
+                  `}
                 >
-                  <button
-                    onClick={() => handleItemClick(session.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        handleItemClick(session.id);
-                      }
-                    }}
-                    className="w-full p-3 flex items-center justify-between transition-colors cursor-pointer hover:bg-theme-hover"
-                  >
+                  {/* CHECKBOX (for selection mode) */}
                   {isSelectionMode && (
-                    <div className='mr-3 flex-shrink-0'>
+                    <div className='pl-3 py-3 flex-shrink-0'>
                       <Checkbox
                         id={`select-${session.id}`}
                         checked={isSelected}
                         onChange={() => handleToggleSelection(session.id)}
+                        // Stop propagation to prevent the main button click
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </div>
                   )}
 
-                  {/* Content area */}
-                  <div
-                    className={`flex items-center flex-grow min-w-0 text-left`}
+                  {/* MAIN CLICKABLE AREA (as a button) */}
+                  <button
+                    onClick={() => handleItemClick(session.id)}
+                    className={`flex items-center flex-grow min-w-0 text-left p-3 w-full h-full hover:bg-theme-hover rounded-lg
+                      ${isSelectionMode ? 'cursor-pointer' : 'cursor-pointer'}
+                    `}
                   >
                     {platformConfig?.iconUrl && (
                       <PlatformIcon
@@ -277,10 +276,10 @@ const {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </button>
 
-                  {/* Action buttons on the right */}
-                  <div className='flex-shrink-0 flex items-center ml-2'>
+                  {/* ACTION BUTTONS (Delete, Go to Active) */}
+                  <div className='flex-shrink-0 flex items-center pr-3'>
                     {!isSelectionMode && (
                       <>
                         {isActiveSession && (
@@ -289,7 +288,7 @@ const {
                               e.stopPropagation();
                               switchToChatView();
                             }}
-                            className='p-1.5 text-theme-secondary hover:text-primary rounded-md mr-1'
+                            className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
                             title='Go to active chat'
                           >
                             <ArrowRightIcon />
@@ -297,7 +296,7 @@ const {
                         )}
                         <button
                           onClick={(e) => {
-                            e.stopPropagation(); // Prevent li click handler in future
+                            e.stopPropagation();
                             handleDeleteSession(
                               session.id,
                               session.title || 'Untitled Chat'
@@ -316,7 +315,6 @@ const {
                       </>
                     )}
                   </div>
-                  </button>
                 </li>
               );
             })}
