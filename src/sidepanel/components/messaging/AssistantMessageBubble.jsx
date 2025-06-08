@@ -11,6 +11,7 @@ import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 import { formatCost } from '../../../shared/utils/number-format-utils.js';
 
 import ThinkingBlock from './ThinkingBlock';
+import SimpleCodeBlock from './SimpleCodeBlock';
 import CodeBlock from './CodeBlock.jsx';
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 import { parseTextAndMath } from './utils/parse-text-and-math-utils';
@@ -256,6 +257,14 @@ export const AssistantMessageBubble = memo(
                 </CodeBlock>
               );
             }
+
+            // Handle non-fenced (indented) code blocks
+            const codeContent = node?.children?.[0]?.children?.[0]?.value;
+            if (codeContent) {
+              return <SimpleCodeBlock>{codeContent}</SimpleCodeBlock>;
+            }
+
+            // Fallback for other <pre> tags which might not contain code (rare)
             const processedChildren = hasMathPlaceholders
               ? renderWithPlaceholdersRecursive(children, mathMap)
               : children;
