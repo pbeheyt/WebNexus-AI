@@ -502,14 +502,14 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 
-**Package:** youtube-transcript-api
-**Version:** ^2.0.4
+**Package:** youtubei.js
+**Version:** ^13.4.0
 **License Type:** MIT License
-**Repository:** https://github.com/0x6a69616e/youtube-transcript-api
+**Repository:** https://github.com/LuanRT/YouTube.js
 
 MIT License
 
-Copyright (c) 2023 0x6a69616e
+Copyright (c) 2021 LuanRT
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
