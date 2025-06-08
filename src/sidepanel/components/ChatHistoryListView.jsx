@@ -1,21 +1,37 @@
 // src/sidepanel/components/ChatHistoryListView.jsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
 import ChatHistoryService from '../services/ChatHistoryService';
-import { PlatformIcon } from '../../components/layout/PlatformIcon'; // Adjusted path
-import { SpinnerIcon, TrashIcon, ArrowRightIcon } from '../../components'; // Assuming SpinnerIcon is in components/index.js
+import { PlatformIcon } from '../../components/layout/PlatformIcon';
+import {
+  SpinnerIcon,
+  TrashIcon,
+  ArrowRightIcon,
+  XIcon,
+  Checkbox,
+  Button,
+} from '../../components';
 import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
 
-
 export default function ChatHistoryListView() {
-  const { selectChatSession, deleteSelectedChatSession, currentChatSessionId, switchToChatView } = useSidePanelChat();
+  const {
+    deleteSelectedChatSession,
+    deleteMultipleChatSessions,
+    currentChatSessionId,
+    switchToChatView,
+  } = useSidePanelChat();
+
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingSessionId, setDeletingSessionId] = useState(null);
   const [platformConfigs, setPlatformConfigs] = useState({});
+
+  // State for selection mode
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedSessionIds, setSelectedSessionIds] = useState(new Set());
 
   const fetchSessionsAndConfigs = useCallback(async () => {
     setIsLoading(true);
@@ -23,7 +39,7 @@ export default function ChatHistoryListView() {
     try {
       const [sessionsMetadata, allPlatformConfigs] = await Promise.all([
         ChatHistoryService.getAllChatSessionsMetadata(),
-        ConfigService.getAllPlatformConfigs()
+        ConfigService.getAllPlatformConfigs(),
       ]);
       setSessions(sessionsMetadata);
 
@@ -32,9 +48,11 @@ export default function ChatHistoryListView() {
         return acc;
       }, {});
       setPlatformConfigs(configs);
-
     } catch (err) {
-      logger.sidepanel.error('Error fetching chat sessions metadata or platform configs:', err);
+      logger.sidepanel.error(
+        'Error fetching chat sessions metadata or platform configs:',
+        err
+      );
       setError('Failed to load chat history.');
     } finally {
       setIsLoading(false);
@@ -43,112 +61,247 @@ export default function ChatHistoryListView() {
 
   useEffect(() => {
     fetchSessionsAndConfigs();
-  }, [fetchSessionsAndConfigs, currentChatSessionId]); // Re-fetch if currentChatSessionId changes (e.g., after delete/create)
+  }, [fetchSessionsAndConfigs, currentChatSessionId]);
 
-  const handleSelectSession = (sessionId) => {
-    selectChatSession(sessionId);
-    // The context will switch the view
-  };
 
   const handleDeleteSession = async (sessionId, sessionTitle) => {
-    if (window.confirm(`Are you sure you want to delete the chat titled "${sessionTitle}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the chat titled "${
+          sessionTitle || 'Untitled Chat'
+        }"? This action cannot be undone.`
+      )
+    ) {
       setDeletingSessionId(sessionId);
       try {
         await deleteSelectedChatSession(sessionId);
-        // fetchSessionsAndConfigs will be called by useEffect due to currentChatSessionId change if active session was deleted,
-        // or we might need a more direct way to signal list refresh for non-active deletions.
-        // For now, let's rely on the useEffect dependency or explicitly call it.
-        await fetchSessionsAndConfigs(); // Explicitly re-fetch after any deletion
+        await fetchSessionsAndConfigs();
       } catch (err) {
-        logger.sidepanel.error(`Error during delete operation for session ${sessionId}:`, err);
-        setError('Failed to delete session.'); // Show error to user
+        logger.sidepanel.error(
+          `Error during delete operation for session ${sessionId}:`,
+          err
+        );
+        setError('Failed to delete session.');
       } finally {
         setDeletingSessionId(null);
       }
     }
   };
 
+  // --- Selection Mode Handlers ---
+  const enterSelectionMode = () => setIsSelectionMode(true);
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedSessionIds(new Set());
+  };
+
+  const handleToggleSelection = (sessionId) => {
+    setSelectedSessionIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(sessionId)) {
+        newSet.delete(sessionId);
+      } else {
+        newSet.add(sessionId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedSessionIds.size === sessions.length) {
+      // If all are selected, deselect all
+      setSelectedSessionIds(new Set());
+    } else {
+      // Otherwise, select all
+      const allIds = new Set(sessions.map((s) => s.id));
+      setSelectedSessionIds(allIds);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedSessionIds.size === 0) return;
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedSessionIds.size} selected chat(s)? This action cannot be undone.`
+      )
+    ) {
+      await deleteMultipleChatSessions(Array.from(selectedSessionIds));
+      exitSelectionMode(); // Exit mode after deletion
+      await fetchSessionsAndConfigs(); // Refresh list
+    }
+  };
+
+  const areAllSelected = useMemo(
+    () => sessions.length > 0 && selectedSessionIds.size === sessions.length,
+    [sessions, selectedSessionIds]
+  );
+
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <SpinnerIcon className="w-8 h-8 text-theme-secondary" />
+      <div className='flex-1 flex items-center justify-center p-4'>
+        <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
       </div>
     );
   }
 
   if (error) {
-    return <div className="flex-1 p-4 text-center text-red-500">{error}</div>;
+    return <div className='flex-1 p-4 text-center text-red-500'>{error}</div>;
   }
 
   return (
-    <div className="flex-1 flex flex-col p-3 bg-theme-primary overflow-y-auto">
-
-      {sessions.length === 0 ? (
-        <div className="text-center text-theme-secondary py-10">
-          <p>No chat history yet.</p>
-          <p>Start a new chat to see it here.</p>
-        </div>
-      ) : (
-        <ul className="space-y-2">
-          {sessions.map((session) => {
-            const platformConfig = platformConfigs[session.platformId];
-            const isActiveSession = session.id === currentChatSessionId;
-            return (
-              <li
-                key={session.id}
-                className={`p-3 rounded-lg flex items-center justify-between transition-colors ${isActiveSession ? 'bg-theme-active ring-1 ring-primary' : 'bg-theme-surface hover:bg-theme-hover'}`}
+    <div className='flex-1 flex flex-col bg-theme-primary overflow-hidden'>
+      {/* Action Bar */}
+      <div className='flex items-center justify-between px-3 py-2 border-b border-theme flex-shrink-0'>
+        {!isSelectionMode ? (
+          <>
+            <h2 className='text-sm font-medium text-theme-primary'>
+              Chat History
+            </h2>
+            <Button
+              variant='secondary'
+              size='sm'
+              onClick={enterSelectionMode}
+              disabled={sessions.length === 0}
+            >
+              Select
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant='secondary' size='sm' onClick={exitSelectionMode}>
+              <XIcon className='w-4 h-4 mr-1' />
+              Cancel
+            </Button>
+            <div className='flex items-center gap-2'>
+              <Button variant='secondary' size='sm' onClick={handleSelectAll}>
+                {areAllSelected ? 'Deselect All' : 'Select All'}
+              </Button>
+              <Button
+                variant='danger'
+                size='sm'
+                onClick={handleDeleteSelected}
+                disabled={selectedSessionIds.size === 0}
               >
-                <button
-                  onClick={() => handleSelectSession(session.id)}
-                  className="flex items-center flex-grow min-w-0 text-left mr-2 focus:outline-none"
-                  title={`Open chat: ${session.title}`}
+                <TrashIcon className='w-4 h-4 mr-1' />
+                Delete ({selectedSessionIds.size})
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* List Area */}
+      <div className='flex-1 overflow-y-auto p-3'>
+        {sessions.length === 0 ? (
+          <div className='text-center text-theme-secondary py-10'>
+            <p>No chat history yet.</p>
+            <p>Start a new chat to see it here.</p>
+          </div>
+        ) : (
+          <ul className='space-y-2'>
+            {sessions.map((session) => {
+              const platformConfig = platformConfigs[session.platformId];
+              const isActiveSession = session.id === currentChatSessionId;
+              const isSelected = selectedSessionIds.has(session.id);
+
+              return (
+                <li
+                  key={session.id}
+                  className={`p-3 rounded-lg flex items-center justify-between transition-colors
+                    ${
+                      isSelected
+                        ? 'bg-primary/20 ring-2 ring-primary'
+                        : isActiveSession
+                          ? 'bg-theme-active'
+                          : 'bg-theme-surface hover:bg-theme-hover'
+                    }
+                  `}
                 >
-                  {platformConfig?.iconUrl && (
-                    <PlatformIcon
-                      platformId={session.platformId}
-                      iconUrl={platformConfig.iconUrl}
-                      altText={`${platformConfig.name} logo`}
-                      className="w-6 h-6 mr-3 flex-shrink-0"
-                    />
+                  {isSelectionMode && (
+                    <div className='mr-3 flex-shrink-0'>
+                      <Checkbox
+                        id={`select-${session.id}`}
+                        checked={isSelected}
+                        onChange={() => handleToggleSelection(session.id)}
+                      />
+                    </div>
                   )}
-                  <div className="flex-grow min-w-0">
-                    <p className={`text-sm font-medium truncate ${isActiveSession ? 'text-primary' : 'text-theme-primary'}`}>
-                      {session.title || 'Untitled Chat'}
-                    </p>
-                    <p className="text-xs text-theme-secondary">
-                      {new Date(session.lastActivityAt).toLocaleDateString()} - {new Date(session.lastActivityAt).toLocaleTimeString()}
-                    </p>
-                    {session.modelId && <p className="text-xxs text-theme-secondary truncate">Model: {session.modelId}</p>}
-                  </div>
-                </button>
-                <div className="flex-shrink-0 flex items-center">
-                  {isActiveSession && (
-                     <button
-                        onClick={switchToChatView}
-                        className="p-1.5 text-theme-secondary hover:text-primary rounded-md mr-1"
-                        title="Go to active chat"
-                      >
-                       <ArrowRightIcon />
-                     </button>
-                  )}
-                  <button
-                    onClick={() => handleDeleteSession(session.id, session.title || 'Untitled Chat')}
-                    disabled={deletingSessionId === session.id}
-                    className="p-1.5 text-red-500 hover:text-red-700 disabled:opacity-50 rounded-md"
-                    title="Delete chat session"
+
+                  {/* Make the entire content area a label for the checkbox in selection mode */}
+                  <label
+                    htmlFor={isSelectionMode ? `select-${session.id}` : undefined}
+                    className={`flex items-center flex-grow min-w-0 text-left ${isSelectionMode ? 'cursor-pointer' : ''}`}
                   >
-                    {deletingSessionId === session.id ? (
-                      <SpinnerIcon className="w-5 h-5" />
-                    ) : (
-                      <TrashIcon />
+                    {platformConfig?.iconUrl && (
+                      <PlatformIcon
+                        platformId={session.platformId}
+                        iconUrl={platformConfig.iconUrl}
+                        altText={`${platformConfig.name} logo`}
+                        className='w-6 h-6 mr-3 flex-shrink-0'
+                      />
                     )}
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                    <div className='flex-grow min-w-0'>
+                      <p
+                        className={`text-sm font-medium truncate ${
+                          isActiveSession && !isSelected
+                            ? 'text-primary'
+                            : 'text-theme-primary'
+                        }`}
+                      >
+                        {session.title || 'Untitled Chat'}
+                      </p>
+                      <p className='text-xs text-theme-secondary'>
+                        {new Date(session.lastActivityAt).toLocaleDateString()}{' '}
+                        - {new Date(session.lastActivityAt).toLocaleTimeString()}
+                      </p>
+                      {session.modelId && (
+                        <p className='text-xxs text-theme-secondary truncate'>
+                          Model: {session.modelId}
+                        </p>
+                      )}
+                    </div>
+                  </label>
+
+                  {/* Action buttons on the right */}
+                  <div className='flex-shrink-0 flex items-center ml-2'>
+                    {!isSelectionMode && (
+                      <>
+                        {isActiveSession && (
+                          <button
+                            onClick={switchToChatView}
+                            className='p-1.5 text-theme-secondary hover:text-primary rounded-md mr-1'
+                            title='Go to active chat'
+                          >
+                            <ArrowRightIcon />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent li click handler in future
+                            handleDeleteSession(
+                              session.id,
+                              session.title || 'Untitled Chat'
+                            );
+                          }}
+                          disabled={deletingSessionId === session.id}
+                          className='p-1.5 text-red-500 hover:text-red-700 disabled:opacity-50 rounded-md'
+                          title='Delete chat session'
+                        >
+                          {deletingSessionId === session.id ? (
+                            <SpinnerIcon className='w-5 h-5' />
+                          ) : (
+                            <TrashIcon />
+                          )}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

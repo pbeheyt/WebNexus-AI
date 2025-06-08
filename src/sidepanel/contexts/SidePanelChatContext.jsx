@@ -20,6 +20,7 @@ import { useMessageActions } from '../hooks/useMessageActions';
 import { useChatSessionManagement } from '../hooks/useChatSessionManagement';
 import ChatHistoryService from '../services/ChatHistoryService';
 import TokenManagementService from '../services/TokenManagementService';
+import { useNotification } from '../../components';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
 import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
@@ -82,6 +83,8 @@ export function SidePanelChatProvider({ children }) {
     selectModel,
     isPlatformLoading,
   });
+
+  const { success: showSuccessNotification, error: showErrorNotification } = useNotification();
 
   // FIX: Now call useTokenTracking with the defined currentChatSessionId
   const { tokenStats, calculateContextStatus, clearTokenData } =
@@ -687,6 +690,28 @@ export function SidePanelChatProvider({ children }) {
     [selectedPlatformId, selectedModel]
   );
 
+  const deleteMultipleChatSessions = useCallback(async (sessionIdsToDelete) => {
+    if (!Array.isArray(sessionIdsToDelete) || sessionIdsToDelete.length === 0) {
+      return;
+    }
+
+    try {
+      await ChatHistoryService.deleteMultipleChatSessions(sessionIdsToDelete);
+      
+      // Check if the currently active session was among those deleted
+      if (currentChatSessionId && sessionIdsToDelete.includes(currentChatSessionId)) {
+        logger.sidepanel.info(`Active session ${currentChatSessionId} was deleted. Creating a new one.`);
+        await createNewChat(); // This will handle the transition gracefully
+      }
+      
+      showSuccessNotification(`${sessionIdsToDelete.length} chat(s) deleted successfully.`);
+
+    } catch (error) {
+      logger.sidepanel.error('Error in context deleteMultipleChatSessions:', error);
+      showErrorNotification('Failed to delete chats. Please try again.');
+    }
+  }, [currentChatSessionId, createNewChat, showSuccessNotification, showErrorNotification]);
+
   return (
     <SidePanelChatContext.Provider
       value={{
@@ -719,6 +744,7 @@ export function SidePanelChatProvider({ children }) {
         switchToHistoryView,
         switchToChatView,
         deleteSelectedChatSession,
+        deleteMultipleChatSessions,
       }}
     >
       {children}

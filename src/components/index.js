@@ -1,6 +1,7 @@
 // src/components/index.js
 // Core components
 export { Button } from './core/Button';
+export { default as Checkbox } from './core/Checkbox.jsx';
 export { Toggle } from './core/Toggle';
 export { CustomSelect } from './core/CustomSelect';
 export { IconButton } from './core/IconButton';

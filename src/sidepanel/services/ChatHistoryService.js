@@ -224,6 +224,70 @@ class ChatHistoryService {
     }
   }
 
+  static async deleteMultipleChatSessions(chatSessionIds) {
+    if (!Array.isArray(chatSessionIds) || chatSessionIds.length === 0) {
+      logger.sidepanel.warn('ChatHistoryService: deleteMultipleChatSessions called with invalid or empty array.');
+      return false;
+    }
+
+    try {
+      const storageData = await chrome.storage.local.get([
+        STORAGE_KEYS.GLOBAL_CHAT_SESSIONS,
+        STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
+      ]);
+
+      const allSessions = storageData[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
+      const allTokenStats = storageData[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
+
+      let sessionsChanged = false;
+      let tokensChanged = false;
+
+      for (const sessionId of chatSessionIds) {
+        if (allSessions[sessionId]) {
+          delete allSessions[sessionId];
+          sessionsChanged = true;
+        }
+        if (allTokenStats[sessionId]) {
+          delete allTokenStats[sessionId];
+          tokensChanged = true;
+        }
+      }
+
+      const dataToUpdate = {};
+      const keysToRemove = [];
+
+      if (sessionsChanged) {
+        if (Object.keys(allSessions).length > 0) {
+          dataToUpdate[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] = allSessions;
+        } else {
+          keysToRemove.push(STORAGE_KEYS.GLOBAL_CHAT_SESSIONS);
+        }
+      }
+
+      if (tokensChanged) {
+        if (Object.keys(allTokenStats).length > 0) {
+          dataToUpdate[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] = allTokenStats;
+        } else {
+          keysToRemove.push(STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS);
+        }
+      }
+
+      if (Object.keys(dataToUpdate).length > 0) {
+        await chrome.storage.local.set(dataToUpdate);
+      }
+      if (keysToRemove.length > 0) {
+        await chrome.storage.local.remove(keysToRemove);
+      }
+
+      logger.sidepanel.info(`ChatHistoryService: Deleted ${chatSessionIds.length} chat sessions.`);
+      return true;
+
+    } catch (error) {
+      logger.sidepanel.error('ChatHistoryService: Error deleting multiple chat sessions:', error);
+      return false;
+    }
+  }
+
   static async updateSessionMetadata(chatSessionId, metadataUpdate) {
     if (!chatSessionId || !metadataUpdate || typeof metadataUpdate !== 'object') {
       logger.sidepanel.error('ChatHistoryService: updateSessionMetadata called with invalid arguments.', { chatSessionId, metadataUpdate });
