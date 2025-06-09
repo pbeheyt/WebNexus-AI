@@ -35,6 +35,10 @@ export function PlatformLogoItem({
     }
   };
 
+  const glowClasses = isSelected
+    ? 'drop-shadow-glow-light dark:drop-shadow-glow-dark'
+    : '';
+
   return (
     <button
       type='button'
@@ -49,7 +53,7 @@ export function PlatformLogoItem({
         platformId={id}
         iconUrl={iconUrl}
         altText={altText}
-        className={`platform-logo-img-fixed`}
+        className={`platform-logo-img-fixed ${glowClasses}`}
       />
     </button>
   );

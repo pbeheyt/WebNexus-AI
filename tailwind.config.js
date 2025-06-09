@@ -44,6 +44,14 @@ module.exports = {
         success: '#4CAF50',
         warning: '#FFC107',
       },
+      boxShadow: {
+        'glow-light': '0 0 8px rgba(0, 0, 0, 0.15)',
+        'glow-dark': '0 0 15px rgba(255, 255, 255, 0.07)',
+      },
+      dropShadow: {
+        'glow-light': '0 0 12px rgba(0, 0, 0, 0.15)',
+        'glow-dark': '0 0 12px rgba(255, 255, 255, 0.2)',
+      },
       scale: {
         200: '2',
       },

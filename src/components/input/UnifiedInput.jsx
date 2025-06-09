@@ -183,7 +183,7 @@ export function UnifiedInput({
   else if (layoutVariant === 'popup') {
     return (
       <div className={`flex flex-col ${className}`}>
-        <div className='rounded-lg bg-theme-surface shadow-theme-light'>
+        <div className='rounded-lg bg-theme-surface shadow-glow-light dark:shadow-glow-dark'>
           <div
             ref={containerRef}
             onClick={handleContainerClick}
