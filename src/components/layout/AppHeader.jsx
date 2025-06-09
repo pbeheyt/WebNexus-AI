@@ -104,8 +104,10 @@ export function AppHeader({
         )}
 
         {/* Text size toggle button */}
-        <button
+        <IconButton
           onClick={toggleTextSize}
+          icon={TextSizeIcon}
+          iconClassName='w-4 h-4'
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
           title={
             textSize === 'sm'
@@ -114,52 +116,50 @@ export function AppHeader({
                 ? 'Switch to Large Size'
                 : 'Switch to Small Size'
           }
-        >
-          <TextSizeIcon />
-        </button>
+        />
 
         {/* Theme toggle button */}
-        <button
+        <IconButton
           onClick={toggleTheme}
+          icon={theme === 'dark' ? SunIcon : MoonIcon}
+          iconClassName='w-4 h-4'
           className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
           title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-        >
-          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-        </button>
+        />
 
         {/* Settings button */}
         {showSettingsButton && (
-          <button
+          <IconButton
             onClick={openSettings}
+            icon={SettingsIcon}
+            iconClassName='w-4 h-4'
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
             title='Settings'
-          >
-            <SettingsIcon />
-          </button>
+          />
         )}
 
         {/* History Toggle Button */}
         {showHistoryButton && (
-          <button
+          <IconButton
             onClick={onToggleHistoryView}
+            icon={currentView === 'chat' ? HistoryIcon : ArrowUpIcon}
+            iconClassName={`w-4 h-4 ${currentView === 'chat' ? '' : 'transform rotate-[-90deg]'}`}
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
             title={currentView === 'chat' ? 'View Chat History' : 'Back to Active Chat'}
             aria-label={currentView === 'chat' ? 'View Chat History' : 'Back to Active Chat'}
-          >
-            {currentView === 'chat' ? <HistoryIcon className="w-4 h-4" /> : <ArrowUpIcon className="w-4 h-4 transform rotate-[-90deg]" />}
-          </button>
+          />
         )}
 
         {/* New Chat Button */}
         {showNewChatButton && (
-          <button
+          <IconButton
             onClick={onNewChatClick}
+            icon={PlusIcon}
+            iconClassName='w-4 h-4'
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
             title='New Chat'
             aria-label='Start a new chat'
-          >
-            <PlusIcon className='w-4 h-4' />
-          </button>
+          />
         )}
 
         {/* Render any custom buttons passed as children */}
@@ -167,8 +167,11 @@ export function AppHeader({
 
         {/* Conditionally render Refresh button */}
         {showRefreshButton && (
-          <button
+          <IconButton
             onClick={onRefreshClick}
+            icon={RefreshIcon}
+            isLoading={isRefreshing}
+            iconClassName='w-4 h-4 select-none'
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             title={
               currentView === 'history'
@@ -178,39 +181,31 @@ export function AppHeader({
                   : 'Clear chat'
             }
             disabled={isRefreshing || currentView === 'history'}
-          >
-            <RefreshIcon
-              className={`w-4 h-4 select-none ${
-                isRefreshing ? 'animate-spin' : ''
-              }`}
-            />
-          </button>
+          />
         )}
 
         {/* Chevron Expand/Collapse Button - Conditionally Rendered */}
         {showExpandToggle && (
-          <button
+          <IconButton
             onClick={onToggleExpand}
+            icon={ChevronDownIcon}
+            iconClassName={`w-4 h-4 transition-transform select-none ${isExpanded ? 'rotate-180' : ''}`}
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             title={currentView === 'history' ? 'Not available in history view' : (isExpanded ? 'Collapse header' : 'Expand header')}
             aria-expanded={isExpanded}
             disabled={currentView === 'history'}
-          >
-            <ChevronDownIcon
-              className={`w-4 h-4 transition-transform select-none ${isExpanded ? 'rotate-180' : ''}`}
-            />
-          </button>
+          />
         )}
 
         {/* Conditionally render Close button if onClose prop is provided */}
         {typeof onClose === 'function' && (
-          <button
+          <IconButton
             onClick={onClose}
+            icon={XIcon}
+            iconClassName='w-4 h-4'
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
             title='Close'
-          >
-            <XIcon />
-          </button>
+          />
         )}
       </div>
     </header>
