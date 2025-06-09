@@ -168,18 +168,16 @@ export function AppHeader({
         {/* Conditionally render Refresh button */}
         {showRefreshButton && (
           <button
-            onClick={
-              typeof onRefreshClick === 'function' && !isRefreshing
-                ? onRefreshClick
-                : undefined
+            onClick={onRefreshClick}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            title={
+              currentView === 'history'
+                ? 'Not available in history view'
+                : isRefreshing
+                  ? 'Refreshing...'
+                  : 'Clear chat'
             }
-            className={`p-1 rounded transition-colors ${
-              isRefreshing
-                ? 'text-theme-disabled cursor-not-allowed'
-                : 'text-theme-secondary hover:text-primary hover:bg-theme-active'
-            }`}
-            title={isRefreshing ? 'Refreshing...' : 'Clear chat'}
-            disabled={isRefreshing}
+            disabled={isRefreshing || currentView === 'history'}
           >
             <RefreshIcon
               className={`w-4 h-4 select-none ${
