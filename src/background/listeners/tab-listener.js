@@ -2,7 +2,7 @@
 
 // In-memory sets to track processing state for tabs during a load sequence
 const platformScriptInjectedTabs = new Set();
-const sidePanelOptionsSetForLoad = new Set(); // Renamed for clarity
+const sidePanelOptionsSetForLoad = new Set();
 
 import {
   isPlatformTab,

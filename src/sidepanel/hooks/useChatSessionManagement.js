@@ -37,7 +37,7 @@ export function useChatSessionManagement({
   // Effect to synchronize the platform/model with the loaded chat session
   useEffect(() => {
     const syncPlatformWithSession = async () => {
-      // FIX: Prevent re-syncing for the same session after user interaction
+      // Prevent re-syncing for the same session after user interaction
       if (currentChatSessionId === syncedSessionIdRef.current) {
         return;
       }
@@ -66,7 +66,7 @@ export function useChatSessionManagement({
             `Session loading: Syncing platform to ${sessionPlatformId}.`
           );
           await selectPlatform(sessionPlatformId, { savePreference: false });
-          // FIX: Mark as synced after initiating the change
+          // Mark as synced after initiating the change
           syncedSessionIdRef.current = currentChatSessionId;
           return; // Allow context to update before proceeding
         }
@@ -81,7 +81,7 @@ export function useChatSessionManagement({
           );
           await selectModel(sessionModelId, { savePreference: false });
         }
-        // FIX: Mark as synced after platform/model checks are complete
+        // Mark as synced after platform/model checks are complete
         syncedSessionIdRef.current = currentChatSessionId;
       } catch (error) {
         logger.sidepanel.error(
@@ -93,7 +93,7 @@ export function useChatSessionManagement({
 
     syncPlatformWithSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChatSessionId, selectedPlatformId, isPlatformLoading]); // Rely on isPlatformLoading
+  }, [currentChatSessionId, selectedPlatformId, isPlatformLoading]);
 
   // Comprehensive Initialization Logic
   useEffect(() => {
@@ -191,7 +191,7 @@ export function useChatSessionManagement({
 
     initializeContext();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabId, selectedPlatformId, selectedModel, currentTab?.url]);
+  }, [tabId, selectedPlatformId, selectedModel]);
 
   const createNewChat = useCallback(async () => {
     if (!tabId || !selectedPlatformId) return;

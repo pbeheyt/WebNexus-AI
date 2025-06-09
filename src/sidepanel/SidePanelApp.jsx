@@ -282,8 +282,8 @@ export default function SidePanelApp() {
               onToggleHistoryView={() => currentView === 'chat' ? switchToHistoryView() : switchToChatView()}
               showHistoryButton={true}
               currentView={currentView} // To determine icon/tooltip for history button
-              showNewChatButton={true} // Add this line
-              onNewChatClick={createNewChat} // Add this line
+              showNewChatButton={true}
+              onNewChatClick={createNewChat}
               onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
               showExpandToggle={true}
               showBorder={true}
