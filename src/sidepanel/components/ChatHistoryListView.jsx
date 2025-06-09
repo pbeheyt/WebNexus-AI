@@ -22,13 +22,13 @@ import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
 
 export default function ChatHistoryListView() {
-const {
-  deleteSelectedChatSession,
-  deleteMultipleChatSessions,
-  currentChatSessionId,
-  switchToChatView,
-  selectChatSession, // Add this
-} = useSidePanelChat();
+  const {
+    deleteSelectedChatSession,
+    deleteMultipleChatSessions,
+    currentChatSessionId,
+    switchToChatView,
+    selectChatSession,
+  } = useSidePanelChat();
 
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +74,6 @@ const {
   useEffect(() => {
     fetchSessionsAndConfigs();
   }, [fetchSessionsAndConfigs, currentChatSessionId]);
-
 
   const handleDeleteSession = async (sessionId, sessionTitle) => {
     if (
@@ -164,13 +163,16 @@ const {
   };
 
   const handleSaveTitle = async (sessionId) => {
-    const originalTitle = sessions.find(s => s.id === sessionId)?.title;
+    const originalTitle = sessions.find((s) => s.id === sessionId)?.title;
     if (editingTitle.trim() === originalTitle) {
       handleCancelEdit();
       return;
     }
 
-    const result = await ChatHistoryService.updateSessionTitle(sessionId, editingTitle);
+    const result = await ChatHistoryService.updateSessionTitle(
+      sessionId,
+      editingTitle
+    );
     if (result.success) {
       showSuccess('Chat title updated.');
       await fetchSessionsAndConfigs();
@@ -256,7 +258,7 @@ const {
               return (
                 <li
                   key={session.id}
-        className={`rounded-lg flex items-center justify-between transition-colors
+                  className={`rounded-lg flex items-center justify-between transition-colors
           ${
             isSelected
               ? 'bg-primary/20 ring-2 ring-primary'
@@ -298,6 +300,7 @@ const {
                     <div className='flex-grow min-w-0'>
                       {editingSessionId === session.id ? (
                         <Input
+                          id={`edit-title-${session.id}`}
                           value={editingTitle}
                           onChange={(e) => setEditingTitle(e.target.value)}
                           onKeyDown={(e) => {

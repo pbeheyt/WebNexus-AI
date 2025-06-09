@@ -28,6 +28,7 @@ export const TextArea = forwardRef(
   ) => {
     const textareaRef = useRef(null);
     const [error, setError] = useState(null);
+const [touched, setTouched] = useState(false);
 
     const validate = (currentValue) => {
       let errorMessage = null;
@@ -52,16 +53,18 @@ export const TextArea = forwardRef(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value, required, maxLength]);
 
-    const handleChange = (e) => {
-      validate(e.target.value);
-      if (onChange) {
-        onChange(e);
-      }
-    };
+const handleChange = (e) => {
+  if (!touched) setTouched(true);
+  validate(e.target.value);
+  if (onChange) {
+    onChange(e);
+  }
+};
 
-    const handleBlur = (e) => {
-      validate(e.target.value);
-    };
+const handleBlur = (e) => {
+  if (!touched) setTouched(true);
+  validate(e.target.value);
+};
 
     // Auto-resize functionality
     useEffect(() => {
@@ -90,30 +93,31 @@ export const TextArea = forwardRef(
     }, [focusAtEnd, value]);
 
     const errorClasses = error ? 'border-error ring-1 ring-error' : '';
+const showVisualError = error && touched;
     const combinedClasses =
       `w-full p-3 border-none outline-none text-theme-primary resize-none ${errorClasses} ${className}`.trim();
 
-    return (
-      <div className={`w-full ${wrapperClassName}`}>
-        <textarea
-          ref={combinedRef}
-          id={id}
-          value={value}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder={placeholder}
-          maxLength={maxLength}
-          className={combinedClasses}
-          style={style}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : undefined}
-          {...props}
-        />
-        <div id={`${id}-error`}>
-          <ValidationError message={error} />
-        </div>
-      </div>
-    );
+return (
+  <div className={`w-full ${wrapperClassName}`}>
+    <textarea
+      ref={combinedRef}
+      id={id}
+      value={value}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      className={combinedClasses}
+      style={style}
+      aria-invalid={!!showVisualError}
+      aria-describedby={showVisualError ? `${id}-error` : undefined}
+      {...props}
+    />
+    <div id={`${id}-error`}>
+      <ValidationError message={showVisualError ? error : null} />
+    </div>
+  </div>
+);
   }
 );
 
