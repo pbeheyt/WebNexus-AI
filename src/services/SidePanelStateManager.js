@@ -1,4 +1,3 @@
-// src/services/SidePanelStateManager.js
 import { STORAGE_KEYS } from '../shared/constants';
 import { logger } from '../shared/logger';
 
@@ -58,10 +57,6 @@ class SidePanelStateManager {
       }
       states[tabIdStr].isVisible = isVisible;
 
-      // Optional: Cleanup if state is default and not visible
-      // if (!isVisible && states[tabIdStr].activeChatSessionId === null && states[tabIdStr].currentView === 'chat') {
-      //   delete states[tabIdStr];
-      // }
       await chrome.storage.local.set({
         [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: states,
       });
@@ -87,11 +82,9 @@ class SidePanelStateManager {
       const tabIdStr = tabId.toString();
 
       if (!states[tabIdStr]) {
-        states[tabIdStr] = { isVisible: true, activeChatSessionId: null, currentView: 'chat' }; // Assume visible if setting active chat
+        states[tabIdStr] = { isVisible: true, activeChatSessionId: null, currentView: 'chat' };
       }
       states[tabIdStr].activeChatSessionId = chatSessionId;
-      // Optionally, ensure currentView is 'chat' when a session is made active
-      // states[tabIdStr].currentView = 'chat'; 
 
       await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: states });
       logger.service.info(`SidePanelStateManager: Active chat session for tab ${tabId} set to ${chatSessionId}.`);
@@ -101,7 +94,8 @@ class SidePanelStateManager {
   }
 
   static async setTabViewMode(tabId, viewMode) {
-    if (tabId === null || tabId === undefined || (viewMode !== 'chat' && viewMode !== 'history')) {
+    const validModes = ['chat', 'history', 'context'];
+    if (tabId === null || tabId === undefined || !validModes.includes(viewMode)) {
       logger.service.warn('SidePanelStateManager: setTabViewMode called with invalid parameters.', { tabId, viewMode });
       return;
     }
@@ -154,11 +148,9 @@ class SidePanelStateManager {
       const openTabs = await chrome.tabs.query({});
       const openTabIds = new Set(openTabs.map((tab) => tab.id.toString()));
 
-      // Only clean TAB_SIDEPANEL_STATES directly. Other keys are managed by their respective services or deprecated.
     const keysToClean = [
       STORAGE_KEYS.TAB_SIDEPANEL_STATES,
     ];
-      // Deprecated keys like TAB_CHAT_HISTORIES and TAB_TOKEN_STATISTICS are no longer cleaned here.
 
       for (const storageKey of keysToClean) {
         const result = await chrome.storage.local.get(storageKey);

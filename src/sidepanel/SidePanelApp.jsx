@@ -273,32 +273,35 @@ export default function SidePanelApp() {
         </div>
       ) : tabId ? (
         <>
-          <div ref={appHeaderRef} className='flex-shrink-0'>
-            <AppHeader
-              showRefreshButton={true}
-              onRefreshClick={resetCurrentTabData} // This now calls the context's resetCurrentTabData
-              isRefreshing={isRefreshing}
-              isExpanded={headerExpanded}
-              onToggleHistoryView={() =>
-                currentView === 'chat'
-                  ? switchToView('history')
-                  : switchToView('chat')
-              }
-              showHistoryButton={true}
-              currentView={currentView} // To determine icon/tooltip for history button
-              showNewChatButton={true}
-              onNewChatClick={createNewChat}
-              onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
-              showExpandToggle={true}
-              showBorder={true}
-              className='px-5 py-2 bg-theme-secondary'
-            />
-          </div>
+          {/* Main App Header - Conditionally rendered */}
+          {currentView !== 'context' && (
+            <div ref={appHeaderRef} className='flex-shrink-0'>
+              <AppHeader
+                showRefreshButton={true}
+                onRefreshClick={resetCurrentTabData}
+                isRefreshing={isRefreshing}
+                isExpanded={headerExpanded}
+                onToggleHistoryView={() =>
+                  currentView === 'chat'
+                    ? switchToView('history')
+                    : switchToView('chat')
+                }
+                showHistoryButton={true}
+                currentView={currentView}
+                showNewChatButton={true}
+                onNewChatClick={createNewChat}
+                onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
+                showExpandToggle={true}
+                showBorder={true}
+                className='px-5 py-2 bg-theme-secondary'
+              />
+            </div>
+          )}
 
-          {/* Interactive Header Section - Conditionally rendered if in chat view */}
+          {/* Interactive Header Section - Conditionally rendered */}
           {currentView === 'chat' && (
             <div
-              ref={collapsibleHeaderRef} // Ref for height calculation
+              ref={collapsibleHeaderRef}
               className='@container relative flex-shrink-0 z-10'
             >
               <Header
