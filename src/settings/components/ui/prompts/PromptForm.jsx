@@ -29,63 +29,38 @@ const PromptForm = ({
 }) => {
   const { success, error } = useNotification();
   const [isSavingActual, setIsSavingActual] = useState(false);
-  const shouldShowSaving = useMinimumLoadingTime(isSavingActual); // Derived UI loading state
+  const shouldShowSaving = useMinimumLoadingTime(isSavingActual);
 
   const [isDefaultForType, setIsDefaultForType] = useState(false);
-  const [originalFormData, setOriginalFormData] = useState(null);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [inputValidity, setInputValidity] = useState({
+    name: false,
+    content: false,
+  });
 
   const isEditing = !!prompt;
+  const isFormValid = Object.values(inputValidity).every(Boolean);
 
-  const [formData, setFormData] = useState(() => {
-    if (prompt) {
-      return {
-        name: prompt.prompt.name || '',
-        content: prompt.prompt.content || '',
-        contentType: prompt.contentType || CONTENT_TYPES.GENERAL,
-      };
-    } else {
-      return {
-        name: '',
-        content: '',
-        contentType: initialContentType,
-      };
-    }
+  const [formData, setFormData] = useState({
+    name: prompt?.prompt.name || '',
+    content: prompt?.prompt.content || '',
+    contentType: prompt?.contentType || initialContentType,
   });
 
   useEffect(() => {
     if (isEditing && prompt) {
-      const initialData = {
+      setFormData({
         name: prompt.prompt.name || '',
         content: prompt.prompt.content || '',
         contentType: prompt.contentType || CONTENT_TYPES.GENERAL,
-      };
-      setFormData(initialData);
-      setOriginalFormData(initialData);
-      setHasChanges(false);
+      });
     } else if (!isEditing) {
       setFormData({
         name: '',
         content: '',
         contentType: initialContentType,
       });
-      setOriginalFormData(null);
-      setHasChanges(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt, isEditing, initialContentType]);
-
-  useEffect(() => {
-    if (isEditing && originalFormData) {
-      const nameChanged = formData.name.trim() !== originalFormData.name.trim();
-      const contentChanged =
-        formData.content.trim() !== originalFormData.content.trim();
-      const typeChanged = formData.contentType !== originalFormData.contentType;
-      setHasChanges(nameChanged || contentChanged || typeChanged);
-    } else {
-      setHasChanges(false);
-    }
-  }, [formData, originalFormData, isEditing]);
 
   useEffect(() => {
     const checkDefaultStatus = async () => {
@@ -111,64 +86,30 @@ const PromptForm = ({
     checkDefaultStatus();
   }, [prompt, isEditing, formData.contentType]);
 
-  const handleChange = useCallback(
-    (e) => {
-      const { name, value } = e.target;
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    },
-    [setFormData]
-  );
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const handleContentTypeChange = useCallback(
-    (selectedContentType) => {
-      setFormData((prev) => ({
-        ...prev,
-        contentType: selectedContentType,
-      }));
-    },
-    [setFormData]
-  );
+  const handleContentTypeChange = (selectedContentType) => {
+    setFormData((prev) => ({ ...prev, contentType: selectedContentType }));
+  };
+
+  const handleInputValidation = useCallback((inputName, isValid) => {
+    setInputValidity((prev) => ({ ...prev, [inputName]: isValid }));
+  }, []);
 
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
+      if (!isFormValid) {
+        error('Please fix the errors before saving.');
+        return;
+      }
       setIsSavingActual(true);
 
       try {
         const { name, content, contentType } = formData;
-
-        if (!name.trim()) {
-          error('Prompt Name is required.');
-          setIsSavingActual(false);
-          return;
-        }
-        if (name.length > MAX_PROMPT_NAME_LENGTH) {
-          error(
-            `Prompt Name cannot exceed ${MAX_PROMPT_NAME_LENGTH} characters.`
-          );
-          setIsSavingActual(false);
-          return;
-        }
-        if (!content.trim()) {
-          error('Prompt Content is required.');
-          setIsSavingActual(false);
-          return;
-        }
-        if (content.length > MAX_PROMPT_CONTENT_LENGTH) {
-          error(
-            `Prompt Content cannot exceed ${MAX_PROMPT_CONTENT_LENGTH} characters.`
-          );
-          setIsSavingActual(false);
-          return;
-        }
-        if (!contentType) {
-          error('Content Type is required.');
-          setIsSavingActual(false);
-          return;
-        }
 
         const result = await chrome.storage.local.get(
           STORAGE_KEYS.USER_CUSTOM_PROMPTS
@@ -181,13 +122,10 @@ const PromptForm = ({
           const actualPromptsInType = Object.keys(typeData).filter(
             (key) => key !== '_defaultPromptId_'
           );
-          const currentPromptCount = actualPromptsInType.length;
-          if (currentPromptCount >= MAX_PROMPTS_PER_TYPE) {
-            error(
+          if (actualPromptsInType.length >= MAX_PROMPTS_PER_TYPE) {
+            throw new Error(
               `Cannot add more than ${MAX_PROMPTS_PER_TYPE} prompts for ${CONTENT_TYPE_LABELS[contentType] || contentType}.`
             );
-            setIsSavingActual(false);
-            return;
           }
         }
 
@@ -201,10 +139,8 @@ const PromptForm = ({
           updatedAt: new Date().toISOString(),
         };
 
-        let currentPromptId;
-
         if (isEditing) {
-          currentPromptId = prompt.id;
+          const currentPromptId = prompt.id;
           promptObjectToSave.createdAt =
             prompt.prompt.createdAt || promptObjectToSave.updatedAt;
 
@@ -213,64 +149,34 @@ const PromptForm = ({
               customPromptsByType[prompt.contentType] || {};
             const isCurrentDefaultForOriginalType =
               originalTypeData['_defaultPromptId_'] === prompt.id;
-
-            const promptsForOriginalType = {};
-            if (customPromptsByType[prompt.contentType]) {
-              for (const key in customPromptsByType[prompt.contentType]) {
-                if (key !== '_defaultPromptId_') {
-                  promptsForOriginalType[key] =
-                    customPromptsByType[prompt.contentType][key];
-                }
-              }
-            }
-            const isLastPromptForOriginalType =
-              Object.keys(promptsForOriginalType).length === 1 &&
-              promptsForOriginalType[prompt.id];
-
+            const promptsForOriginalType = Object.keys(originalTypeData).filter(
+              (k) => k !== '_defaultPromptId_'
+            );
             if (
               isCurrentDefaultForOriginalType &&
-              isLastPromptForOriginalType
+              promptsForOriginalType.length === 1
             ) {
-              const originalContentTypeLabel =
-                CONTENT_TYPE_LABELS[prompt.contentType] || prompt.contentType;
               throw new Error(
-                `Cannot change content type. This is the last default prompt for "${originalContentTypeLabel}". Create another prompt for this type first, or change the default.`
+                `Cannot change content type. This is the last default prompt for "${CONTENT_TYPE_LABELS[prompt.contentType]}".`
               );
             }
-
-            if (customPromptsByType[prompt.contentType]?.[prompt.id]) {
-              delete customPromptsByType[prompt.contentType][prompt.id];
-              logger.settings.info(
-                `Moved prompt ${prompt.id} from old content type ${prompt.contentType} to ${formData.contentType}`
-              );
-            }
+            delete customPromptsByType[prompt.contentType][prompt.id];
           }
           customPromptsByType[formData.contentType][currentPromptId] =
             promptObjectToSave;
           success('Prompt updated successfully.');
         } else {
-          currentPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+          const newPromptId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
           promptObjectToSave.createdAt = promptObjectToSave.updatedAt;
-          customPromptsByType[contentType][currentPromptId] =
-            promptObjectToSave;
+          customPromptsByType[contentType][newPromptId] = promptObjectToSave;
           success('Prompt created successfully.');
         }
 
-        try {
-          await chrome.storage.local.set({
-            [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: customPromptsByType,
-          });
-          await ensureDefaultPrompts();
-          onSuccess();
-        } catch (err) {
-          logger.settings.error('Error saving prompt:', err);
-          const lastError = chrome.runtime.lastError;
-          if (lastError?.message?.includes('QUOTA_BYTES')) {
-            error('Local storage limit reached. Please remove some prompts.');
-          } else {
-            error(`Error saving prompt: ${err.message}`);
-          }
-        }
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: customPromptsByType,
+        });
+        await ensureDefaultPrompts();
+        onSuccess();
       } catch (err) {
         logger.settings.error('Error saving prompt:', err);
         error(`Error saving prompt: ${err.message}`);
@@ -278,14 +184,11 @@ const PromptForm = ({
         setIsSavingActual(false);
       }
     },
-    [formData, isEditing, prompt, success, error, onSuccess]
+    [formData, isEditing, prompt, success, error, onSuccess, isFormValid]
   );
 
   const contentTypeOptions = Object.entries(CONTENT_TYPE_LABELS).map(
-    ([type, label]) => ({
-      id: type,
-      name: label,
-    })
+    ([type, label]) => ({ id: type, name: label })
   );
 
   return (
@@ -319,52 +222,55 @@ const PromptForm = ({
             selectedValue={formData.contentType}
             onChange={handleContentTypeChange}
             placeholder='Select Content Type'
-            disabled={shouldShowSaving} // Disable if UI loading state is active
+            disabled={shouldShowSaving}
           />
         </div>
       </div>
 
       <div className='form-group mb-6'>
         <label
-          htmlFor='name'
+          htmlFor='prompt-name'
           className='block mb-3 text-base font-semibold text-theme-secondary'
         >
           Prompt Name
         </label>
         <div className='select-none'>
           <Input
-            type='text'
-            id='name'
+            id='prompt-name'
             name='name'
             placeholder='Give your prompt a descriptive name'
             value={formData.name}
             onChange={handleChange}
             maxLength={MAX_PROMPT_NAME_LENGTH}
-            disabled={shouldShowSaving} // Disable if UI loading state is active
+            disabled={shouldShowSaving}
             className='bg-theme-hover text-sm border border-theme rounded-md'
+            required
+            onValidation={(isValid) => handleInputValidation('name', isValid)}
           />
         </div>
       </div>
 
       <div className='form-group mb-6'>
         <label
-          htmlFor='content'
+          htmlFor='prompt-content'
           className='block mb-3 text-base font-semibold text-theme-secondary'
         >
           Prompt Content
         </label>
         <div className='select-none'>
           <TextArea
-            id='content'
+            id='prompt-content'
             name='content'
             placeholder='Enter your prompt content here...'
             value={formData.content}
             onChange={handleChange}
             maxLength={MAX_PROMPT_CONTENT_LENGTH}
-            disabled={shouldShowSaving} // Disable if UI loading state is active
+            disabled={shouldShowSaving}
             className='bg-theme-hover text-sm border border-theme rounded-md'
             style={{ minHeight: '120px' }}
             autoResize={true}
+            required
+            onValidation={(isValid) => handleInputValidation('content', isValid)}
           />
         </div>
       </div>
@@ -375,7 +281,7 @@ const PromptForm = ({
           variant='secondary'
           className='px-5 py-2 select-none'
           onClick={onCancel}
-          disabled={shouldShowSaving} // Disable if UI loading state is active
+          disabled={shouldShowSaving}
         >
           Cancel
         </Button>
@@ -383,15 +289,11 @@ const PromptForm = ({
         <Button
           type='submit'
           className='px-5 py-2 select-none'
-          isLoading={shouldShowSaving} // Use derived UI loading state
-          disabled={shouldShowSaving || (isEditing && !hasChanges)}
-          variant={
-            shouldShowSaving || (isEditing && !hasChanges)
-              ? 'inactive'
-              : 'primary'
-          }
+          isLoading={shouldShowSaving}
+          disabled={shouldShowSaving || !isFormValid}
+          variant={shouldShowSaving || !isFormValid ? 'inactive' : 'primary'}
         >
-          {isSavingActual // Text based on actual saving state
+          {isSavingActual
             ? 'Saving...'
             : isEditing
               ? 'Update Prompt'

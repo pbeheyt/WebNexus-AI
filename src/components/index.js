@@ -21,6 +21,7 @@ export { TextArea } from './form/TextArea';
 export { SelectList } from './form/SelectList';
 export { SliderInput } from './form/SliderInput';
 export { Input } from './form/Input';
+export { ValidationError } from './form/ValidationError';
 
 // Layout components
 export { PlatformLogoItem } from './layout/PlatformLogoItem';

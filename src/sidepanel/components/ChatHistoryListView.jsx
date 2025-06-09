@@ -17,6 +17,7 @@ import {
   useNotification,
   IconButton,
 } from '../../components';
+import { MAX_CHAT_TITLE_LENGTH } from '../../shared/constants';
 import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
 
@@ -304,8 +305,10 @@ const {
                             if (e.key === 'Escape') handleCancelEdit();
                           }}
                           onClick={(e) => e.stopPropagation()}
+                          maxLength={MAX_CHAT_TITLE_LENGTH}
                           // eslint-disable-next-line jsx-a11y/no-autofocus
                           autoFocus
+                          required
                           className='bg-theme-surface border border-primary text-sm p-1 rounded-md'
                         />
                       ) : (

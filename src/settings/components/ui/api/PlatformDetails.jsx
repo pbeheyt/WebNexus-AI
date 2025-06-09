@@ -32,6 +32,7 @@ const PlatformDetails = ({
   const [originalApiKey, setOriginalApiKey] = useState('');
   const [hasApiKeyChanges, setHasApiKeyChanges] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [isApiKeyValid, setIsApiKeyValid] = useState(false);
 
   const [isSavingApiKeyActual, setIsSavingApiKeyActual] = useState(false);
   const [isRemovingApiKeyActual, setIsRemovingApiKeyActual] = useState(false);
@@ -45,8 +46,6 @@ const PlatformDetails = ({
     { id: 'modelParams', label: 'Model Parameters' },
   ];
 
-  // internalIntendedActiveSubTab: Tracks the tab the user intends to see (button style).
-  // displayedSubTabContentId: Tracks which tab's content is actually rendered.
   const [internalIntendedActiveSubTab, setInternalIntendedActiveSubTab] =
     useState(activeSubTab);
   const [displayedSubTabContentId, setDisplayedSubTabContentId] =
@@ -58,18 +57,13 @@ const PlatformDetails = ({
       : 'default'
   );
 
-  // Sync internal tab states with the activeSubTab prop from parent.
   useEffect(() => {
     setInternalIntendedActiveSubTab(activeSubTab);
     if (activeSubTab === 'apiKey') {
       setDisplayedSubTabContentId('apiKey');
     }
-    // 'modelParams' display is handled by its onReady callback.
   }, [activeSubTab]);
 
-  // Reset API key form and selected model when platform or credentials change.
-  // Sub-tab persistence across platform changes is now handled by the parent (ApiSettings.jsx)
-  // correctly managing the `activeSubTab` prop.
   useEffect(() => {
     if (credentials?.apiKey) {
       setApiKey(credentials.apiKey);
@@ -90,8 +84,11 @@ const PlatformDetails = ({
       );
       setSelectedModelId(fallbackModelId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform.id, platform.apiConfig, credentials]);
+
+  const handleApiKeyValidation = useCallback((isValid) => {
+    setIsApiKeyValid(isValid);
+  }, []);
 
   const handleApiKeyChange = (e) => {
     const newApiKey = e.target.value;
@@ -100,7 +97,7 @@ const PlatformDetails = ({
   };
 
   const handleSaveCredentials = async () => {
-    if (!apiKey.trim()) {
+    if (!isApiKeyValid) {
       error('API Key is required.');
       return;
     }
@@ -135,12 +132,17 @@ const PlatformDetails = ({
     setSelectedModelId(modelId);
   };
 
-  // Callback for when ModelParametersSettings content is ready to be displayed.
   const handleModelParametersReady = useCallback(() => {
     if (internalIntendedActiveSubTab === 'modelParams') {
       setDisplayedSubTabContentId('modelParams');
     }
   }, [internalIntendedActiveSubTab]);
+
+  const isSaveDisabled =
+    shouldShowApiKeySaving ||
+    isRemovingApiKeyActual ||
+    !isApiKeyValid ||
+    (credentials && !hasApiKeyChanges);
 
   return (
     <div className='platform-details-panel flex-1'>
@@ -202,14 +204,14 @@ const PlatformDetails = ({
 
       <SubTabLayout
         tabs={subTabs}
-        activeTabId={internalIntendedActiveSubTab} // Controls button styles
+        activeTabId={internalIntendedActiveSubTab}
         onTabSelect={(tabId) => {
           setInternalIntendedActiveSubTab(tabId);
           if (tabId === 'apiKey') {
             setDisplayedSubTabContentId('apiKey');
           }
           if (typeof onSubTabSelect === 'function') {
-            onSubTabSelect(tabId); // Inform parent of selection
+            onSubTabSelect(tabId);
           }
         }}
       >
@@ -234,32 +236,34 @@ const PlatformDetails = ({
                     >
                       API Key
                     </label>
-                    <div className='relative flex items-center select-none'>
-                      <Input
-                        type={showApiKey ? 'text' : 'password'}
-                        id={`${platform.id}-api-key`}
-                        value={apiKey}
-                        onChange={handleApiKeyChange}
-                        placeholder={
-                          credentials?.apiKey
-                            ? '••••••••••••••••••••••••••'
-                            : 'Enter your API key'
-                        }
-                        disabled={shouldShowApiKeySaving}
-                        className='api-key-input p-2 pr-16 bg-theme-hover border border-theme rounded-md font-mono focus:ring-primary focus:border-primary'
-                      />
-                      <button
-                        type='button'
-                        className='show-key-toggle absolute right-2 px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded select-none'
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        aria-label={
-                          showApiKey ? 'Hide API key' : 'Show API key'
-                        }
-                        disabled={shouldShowApiKeySaving}
-                      >
-                        {showApiKey ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
+                    <Input
+                      type={showApiKey ? 'text' : 'password'}
+                      id={`${platform.id}-api-key`}
+                      value={apiKey}
+                      onChange={handleApiKeyChange}
+                      placeholder={
+                        credentials?.apiKey
+                          ? '••••••••••••••••••••••••••'
+                          : 'Enter your API key'
+                      }
+                      disabled={shouldShowApiKeySaving}
+                      className='api-key-input p-2 bg-theme-hover border border-theme rounded-md font-mono focus:ring-primary focus:border-primary'
+                      required
+                      onValidation={handleApiKeyValidation}
+                      endContent={
+                        <button
+                          type='button'
+                          className='show-key-toggle px-2 py-1 text-primary hover:text-primary-hover bg-transparent rounded select-none'
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          aria-label={
+                            showApiKey ? 'Hide API key' : 'Show API key'
+                          }
+                          disabled={shouldShowApiKeySaving}
+                        >
+                          {showApiKey ? 'Hide' : 'Show'}
+                        </button>
+                      }
+                    />
                   </div>
                   <div className='my-3 flex items-start text-xs text-amber-600 dark:text-amber-500'>
                     <InfoIcon className='w-4 h-4 mr-2 flex-shrink-0' />
@@ -290,22 +294,8 @@ const PlatformDetails = ({
                       onClick={handleSaveCredentials}
                       isLoading={shouldShowApiKeySaving}
                       loadingText='Saving...'
-                      disabled={
-                        shouldShowApiKeySaving ||
-                        isRemovingApiKeyActual ||
-                        (!isSavingApiKeyActual &&
-                          ((credentials && !hasApiKeyChanges) ||
-                            (!credentials && !apiKey.trim())))
-                      }
-                      variant={
-                        isRemovingApiKeyActual ||
-                        (!shouldShowApiKeySaving &&
-                          !isSavingApiKeyActual &&
-                          ((credentials && !hasApiKeyChanges) ||
-                            (!credentials && !apiKey.trim())))
-                          ? 'inactive'
-                          : 'primary'
-                      }
+                      disabled={isSaveDisabled}
+                      variant={isSaveDisabled ? 'inactive' : 'primary'}
                       className='select-none'
                     >
                       {credentials ? 'Update Key' : 'Save Key'}

@@ -454,6 +454,7 @@ export function Popup() {
                 <div className='hidden'>{contentTypeLabel}</div>
               )}
               <UnifiedInput
+                id="popup-unified-input"
                 value={inputText}
                 onChange={setInputText}
                 onSubmit={handleProcessWithText}

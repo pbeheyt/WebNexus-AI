@@ -1,5 +1,5 @@
 // src/components/input/UnifiedInput.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 import PropTypes from 'prop-types';
 
 import { TextArea } from '../form/TextArea';
@@ -26,11 +26,14 @@ export function UnifiedInput({
   className = '',
   placeholder,
   onDefaultPromptSetCallback,
+  id,
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const textareaRef = useRef(null);
   const promptButtonRef = useRef(null);
   const containerRef = useRef(null);
+  const generatedId = useId();
+  const uniqueId = id || generatedId;
 
   useEffect(() => {
     if (!isProcessing && !isDropdownOpen && textareaRef.current) {
@@ -123,14 +126,16 @@ export function UnifiedInput({
           <div className='flex w-full'>
             <TextArea
               ref={textareaRef}
+              id={uniqueId}
               value={value}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled || isProcessing}
               autoResize={true}
-              style={sidepanelStyle} // Use sidepanelStyle for the TextArea
-              className='flex-grow w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable text-sm text-theme-primary placeholder-theme-secondary'
+              style={sidepanelStyle}
+              wrapperClassName='flex-grow'
+              className='w-full py-3 pl-4 pr-12 bg-transparent resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 scrollbar-gutter-stable text-sm text-theme-primary placeholder-theme-secondary'
             />
           </div>
           <div className='absolute right-3.5 top-3 flex flex-col items-center gap-2'>
@@ -174,7 +179,7 @@ export function UnifiedInput({
     );
   }
 
-  // --- Popup Variant (remains unchanged) ---
+  // --- Popup Variant ---
   else if (layoutVariant === 'popup') {
     return (
       <div className={`flex flex-col ${className}`}>
@@ -190,14 +195,16 @@ export function UnifiedInput({
             <div className='flex w-full'>
               <TextArea
                 ref={textareaRef}
+                id={uniqueId}
                 value={value}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
                 disabled={disabled || isProcessing}
                 autoResize={true}
-                style={popupStyle} // Use popupStyle for the TextArea
-                className='flex-grow w-full py-3 pl-3 pr-10 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary scrollbar-gutter-stable text-xs'
+                style={popupStyle}
+                wrapperClassName='flex-grow'
+                className='w-full py-3 pl-3 pr-10 bg-transparent rounded-lg resize-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 outline-none transition-all duration-200 text-theme-primary placeholder-theme-secondary scrollbar-gutter-stable text-xs'
               />
             </div>
             <div className='absolute right-3.5 top-3 flex flex-col items-center gap-2'>
@@ -256,4 +263,5 @@ UnifiedInput.propTypes = {
   placeholder: PropTypes.string,
   className: PropTypes.string,
   onDefaultPromptSetCallback: PropTypes.func,
+  id: PropTypes.string,
 };

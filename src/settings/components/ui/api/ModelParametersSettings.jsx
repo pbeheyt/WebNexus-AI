@@ -384,7 +384,7 @@ const ModelParametersSettings = ({
               <TextArea
                 id={`${platform.id}-${selectedModelId}-system-prompt`}
                 name='systemPrompt'
-                placeholder='Enter a system prompt for API requests'
+                placeholder='Enter a system prompt for API requests...'
                 value={formValues.systemPrompt ?? ''}
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}
                 maxLength={MAX_SYSTEM_PROMPT_LENGTH}

@@ -126,6 +126,7 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
 
       {/* Unified Input (TextArea and buttons) Section */}
       <UnifiedInput
+        id="sidepanel-unified-input" // Add this ID prop
         value={inputValue}
         onChange={handleInputChange}
         onSubmit={handleSend}
