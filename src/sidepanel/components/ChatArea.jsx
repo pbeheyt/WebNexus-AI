@@ -29,6 +29,7 @@ import {
   FreeTierIcon,
   ScrollDownIcon,
   NoCredentialsIcon,
+  IconButton,
 } from '../../components'; // Removed ExtractionStrategySelector, ContentTypeIcon, Toggle from here
 import { MESSAGE_ROLES } // Added MESSAGE_ROLES import
 from '../../shared/constants';
@@ -681,20 +682,20 @@ function ChatArea({
           </>
         )}
       </div>
-      <button
+      <IconButton
+        icon={ScrollDownIcon}
         onClick={() => scrollToBottom('smooth')}
+        iconClassName='w-6 h-6 select-none'
         className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10 p-1 rounded-full text-theme-primary dark:text-theme-primary-dark transition-opacity duration-300 ease-in-out ${
           showScrollDownButton
             ? 'opacity-100 bg-theme-primary/50'
             : 'opacity-0 pointer-events-none'
         }`}
-        aria-label='Scroll to bottom'
+        ariaLabel='Scroll to bottom'
         title='Scroll to bottom'
         aria-hidden={!showScrollDownButton}
         tabIndex={showScrollDownButton ? 0 : -1}
-      >
-        <ScrollDownIcon className='w-6 h-6 select-none' />
-      </button>
+      />
     </div>
   );
 }

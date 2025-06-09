@@ -15,6 +15,7 @@ import {
   EditIcon,
   CheckIcon,
   useNotification,
+  IconButton,
 } from '../../components';
 import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
@@ -336,53 +337,58 @@ const {
                   <div className='flex-shrink-0 flex items-center pr-3'>
                     {editingSessionId === session.id ? (
                       <>
-                        <button
+                        <IconButton
+                          icon={CheckIcon}
+                          iconClassName='w-5 h-5'
+                          className='p-1.5 text-green-500 hover:text-green-700 rounded-md'
+                          title='Confirm change'
                           onClick={(e) => {
                             e.stopPropagation();
                             handleSaveTitle(session.id);
                           }}
-                          className='p-1.5 text-green-500 hover:text-green-700 rounded-md'
-                          title='Confirm change'
-                        >
-                          <CheckIcon className='w-5 h-5' />
-                        </button>
-                        <button
+                        />
+                        <IconButton
+                          icon={XIcon}
+                          iconClassName='w-5 h-5'
+                          className='p-1.5 text-red-500 hover:text-red-700 rounded-md'
+                          title='Cancel edit'
                           onClick={(e) => {
                             e.stopPropagation();
                             handleCancelEdit();
                           }}
-                          className='p-1.5 text-red-500 hover:text-red-700 rounded-md'
-                          title='Cancel edit'
-                        >
-                          <XIcon className='w-5 h-5' />
-                        </button>
+                        />
                       </>
                     ) : (
                       !isSelectionMode && (
                         <>
                           {isActiveSession && (
-                            <button
+                            <IconButton
+                              icon={ArrowRightIcon}
+                              className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
+                              title='Go to active chat'
                               onClick={(e) => {
                                 e.stopPropagation();
                                 switchToChatView();
                               }}
-                              className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
-                              title='Go to active chat'
-                            >
-                              <ArrowRightIcon />
-                            </button>
+                            />
                           )}
-                          <button
+                          <IconButton
+                            icon={EditIcon}
+                            iconClassName='w-5 h-5'
+                            className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
+                            title='Edit title'
                             onClick={(e) => {
                               e.stopPropagation();
                               handleStartEdit(session);
                             }}
-                            className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
-                            title='Edit title'
-                          >
-                            <EditIcon className='w-5 h-5' />
-                          </button>
-                          <button
+                          />
+                          <IconButton
+                            icon={TrashIcon}
+                            isLoading={deletingSessionId === session.id}
+                            iconClassName='w-5 h-5'
+                            className='p-1.5 text-red-500 hover:text-red-700 disabled:opacity-50 rounded-md'
+                            title='Delete chat session'
+                            disabled={deletingSessionId === session.id}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteSession(
@@ -390,16 +396,7 @@ const {
                                 session.title || 'Untitled Chat'
                               );
                             }}
-                            disabled={deletingSessionId === session.id}
-                            className='p-1.5 text-red-500 hover:text-red-700 disabled:opacity-50 rounded-md'
-                            title='Delete chat session'
-                          >
-                            {deletingSessionId === session.id ? (
-                              <SpinnerIcon className='w-5 h-5' />
-                            ) : (
-                              <TrashIcon />
-                            )}
-                          </button>
+                          />
                         </>
                       )
                     )}
