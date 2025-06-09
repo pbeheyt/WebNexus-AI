@@ -109,25 +109,31 @@ class ChatHistoryService {
       const currentSession = allSessions[chatSessionId];
 
       if (currentSession) {
-        // --- Auto-Titling for Provisional Sessions ---
+        // --- Smart Auto-Titling for Provisional Sessions ---
         if (currentSession.metadata?.isProvisional === true && messages.length > 0) {
           const firstUserMessage = messages.find((msg) => msg.role === 'user');
-          if (firstUserMessage && firstUserMessage.content) {
-            const words = firstUserMessage.content.trim().split(/\s+/);
-            // Only generate a new title if the first user message is long enough
-            if (words.length >= 4) {
-              currentSession.metadata.title =
-                words.slice(0, 7).join(' ') + (words.length > 7 ? '...' : '');
-              logger.sidepanel.info(
-                `ChatHistoryService: Generated new title for session ${chatSessionId}: "${currentSession.metadata.title}"`
-              );
+          const initialTabTitle = currentSession.metadata.initialTabTitle;
+
+          if (firstUserMessage) {
+            // Priority 1: If page context was used, use the page's title.
+            if (firstUserMessage.pageContextUsed && initialTabTitle) {
+              currentSession.metadata.title = initialTabTitle.substring(0, 150); // Use a reasonable length
+              logger.sidepanel.info(`ChatHistoryService: Set title from page context for session ${chatSessionId}: "${currentSession.metadata.title}"`);
+            
+            // Priority 2: If no context, use the first user message if it's long enough.
+            } else if (firstUserMessage.content) {
+              const words = firstUserMessage.content.trim().split(/\s+/);
+              if (words.length >= 4) {
+                currentSession.metadata.title = words.slice(0, 20).join(' ') + (words.length > 20 ? '...' : '');
+                logger.sidepanel.info(`ChatHistoryService: Generated title from first message for session ${chatSessionId}: "${currentSession.metadata.title}"`);
+              }
+              // Priority 3 (Fallback): If the message is too short, the title remains "New Chat".
             }
           }
-          // Commit the session (remove provisional status) regardless of title change
+          
+          // Commit the session (remove provisional status) to lock the title.
           currentSession.metadata.isProvisional = false;
-          logger.sidepanel.info(
-            `ChatHistoryService: Committed provisional session ${chatSessionId}.`
-          );
+          logger.sidepanel.info(`ChatHistoryService: Committed provisional session ${chatSessionId}.`);
         }
 
         // --- Update History and Metadata ---
@@ -187,7 +193,7 @@ class ChatHistoryService {
       const newSession = {
         metadata: {
           id: chatSessionId,
-          title: initialTabTitle ? `Chat: ${initialTabTitle.substring(0, 30)}` : `Chat ${new Date(now).toLocaleString()}`,
+          title: 'New Chat',
           createdAt: now,
           lastActivityAt: now,
           platformId: platformId || null,
