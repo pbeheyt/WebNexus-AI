@@ -270,11 +270,7 @@ const {
                         {new Date(session.lastActivityAt).toLocaleDateString()}{' '}
                         - {new Date(session.lastActivityAt).toLocaleTimeString()}
                       </p>
-                      {session.modelId && (
-                        <p className='text-xxs text-theme-secondary truncate'>
-                          Model: {session.modelId}
-                        </p>
-                      )}
+                      {/* Model ID has been removed from this view */}
                     </div>
                   </button>
 

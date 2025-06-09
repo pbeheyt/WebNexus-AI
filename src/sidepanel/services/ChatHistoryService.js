@@ -78,11 +78,6 @@ class ChatHistoryService {
       const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
       const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
 
-      if (allSessions[chatSessionId] && allSessions[chatSessionId].metadata && allSessions[chatSessionId].metadata.isProvisional === true && messages.length > 0) {
-        logger.sidepanel.info(`ChatHistoryService: Committing provisional session ${chatSessionId} as messages are being saved.`);
-        allSessions[chatSessionId].metadata.isProvisional = false; 
-      }
-
       // Limit number of messages to prevent storage problems
       const limitedMessages = messages.slice(-MAX_MESSAGES_PER_TAB_HISTORY);
 
@@ -111,20 +106,52 @@ class ChatHistoryService {
         return storableMsg;
       });
 
-      // Update history for this session
-      if (allSessions[chatSessionId]) {
-        allSessions[chatSessionId].messages = storableMessages;
-        allSessions[chatSessionId].metadata.lastActivityAt = new Date().toISOString();
-        // Update platformId and modelId if they were part of the message or options
-        if (modelConfig && modelConfig.platformId) { // Assuming modelConfig contains platformId
-            allSessions[chatSessionId].metadata.platformId = modelConfig.platformId;
+      const currentSession = allSessions[chatSessionId];
+
+      if (currentSession) {
+        // --- Auto-Titling for Provisional Sessions ---
+        if (currentSession.metadata?.isProvisional === true && messages.length > 0) {
+          const firstUserMessage = messages.find((msg) => msg.role === 'user');
+          if (firstUserMessage && firstUserMessage.content) {
+            const words = firstUserMessage.content.trim().split(/\s+/);
+            // Only generate a new title if the first user message is long enough
+            if (words.length >= 4) {
+              currentSession.metadata.title =
+                words.slice(0, 7).join(' ') + (words.length > 7 ? '...' : '');
+              logger.sidepanel.info(
+                `ChatHistoryService: Generated new title for session ${chatSessionId}: "${currentSession.metadata.title}"`
+              );
+            }
+          }
+          // Commit the session (remove provisional status) regardless of title change
+          currentSession.metadata.isProvisional = false;
+          logger.sidepanel.info(
+            `ChatHistoryService: Committed provisional session ${chatSessionId}.`
+          );
         }
-        if (modelConfig && modelConfig.id) { // Assuming modelConfig.id is the modelId
-           allSessions[chatSessionId].metadata.modelId = modelConfig.id;
+
+        // --- Update History and Metadata ---
+        currentSession.messages = storableMessages;
+        currentSession.metadata.lastActivityAt = new Date().toISOString();
+
+        // --- Update Platform & Model ID from Last Assistant Message ---
+        const lastAssistantMessage = messages
+          .slice()
+          .reverse()
+          .find((msg) => msg.role === 'assistant');
+
+        if (lastAssistantMessage) {
+          if (lastAssistantMessage.platformId) {
+            currentSession.metadata.platformId = lastAssistantMessage.platformId;
+          }
+          if (lastAssistantMessage.modelId) {
+            currentSession.metadata.modelId = lastAssistantMessage.modelId;
+          }
         }
       } else {
-        logger.sidepanel.error(`ChatHistoryService: Attempted to save history for non-existent chatSessionId: ${chatSessionId}`);
-        // Potentially create it, but for now, log error. Creation should be explicit.
+        logger.sidepanel.error(
+          `ChatHistoryService: Attempted to save history for non-existent chatSessionId: ${chatSessionId}`
+        );
         return false;
       }
 
