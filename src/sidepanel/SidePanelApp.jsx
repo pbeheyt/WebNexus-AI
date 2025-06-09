@@ -26,22 +26,22 @@ import ChatArea from './components/ChatArea';
 import { UserInput } from './components/UserInput';
 import { useSidePanelChat } from './contexts/SidePanelChatContext';
 import ChatHistoryListView from './components/ChatHistoryListView.jsx';
+import { ContextView } from './components';
 
 export default function SidePanelApp() {
   const { tabId, setTabId, hasAnyPlatformCredentials } = useSidePanelPlatform();
   const {
-    resetCurrentTabData, // This now means "start new chat for this tab"
+    resetCurrentTabData,
     isRefreshing,
     tokenStats,
     contextStatus,
     isContentExtractionEnabled,
     setIsContentExtractionEnabled,
-    // New context values
     currentView,
     currentChatSessionId,
-    switchToHistoryView,
-    switchToChatView,
-    createNewChat, // Add/Ensure this is present
+    switchToView,
+    createNewChat,
+    contextViewData,
   } = useSidePanelChat();
   const { contentType, currentTab, updateContentContext } = useContent();
   const { textSize } = useUI();
@@ -279,7 +279,11 @@ export default function SidePanelApp() {
               onRefreshClick={resetCurrentTabData} // This now calls the context's resetCurrentTabData
               isRefreshing={isRefreshing}
               isExpanded={headerExpanded}
-              onToggleHistoryView={() => currentView === 'chat' ? switchToHistoryView() : switchToChatView()}
+              onToggleHistoryView={() =>
+                currentView === 'chat'
+                  ? switchToView('history')
+                  : switchToView('chat')
+              }
               showHistoryButton={true}
               currentView={currentView} // To determine icon/tooltip for history button
               showNewChatButton={true}
@@ -318,7 +322,7 @@ export default function SidePanelApp() {
             </div>
           )}
 
-          {/* Main Content Area: Chat or History View */}
+          {/* Main Content Area: Chat, History, or Context View */}
           {currentView === 'chat' && currentChatSessionId ? (
             <>
               <ChatArea
@@ -326,7 +330,10 @@ export default function SidePanelApp() {
                 otherUIHeight={otherUIHeight}
                 requestHeightRecalculation={debouncedCalculateHeight}
               />
-              <div ref={userInputRef} className='flex-shrink-0 relative z-10 select-none'>
+              <div
+                ref={userInputRef}
+                className='flex-shrink-0 relative z-10 select-none'
+              >
                 <UserInput
                   className=''
                   requestHeightRecalculation={debouncedCalculateHeight}
@@ -335,10 +342,14 @@ export default function SidePanelApp() {
             </>
           ) : currentView === 'history' ? (
             <ChatHistoryListView />
+          ) : currentView === 'context' ? (
+            <ContextView
+              contextData={contextViewData}
+              onBackToChat={() => switchToView('chat')}
+            />
           ) : (
-            <div className="flex-1 flex items-center justify-center">
-              {/* Loading or error state if currentChatSessionId is null even in 'chat' view (should be handled by context init) */}
-              <SpinnerIcon className="w-8 h-8 text-theme-secondary" />
+            <div className='flex-1 flex items-center justify-center'>
+              <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
             </div>
           )}
         </>

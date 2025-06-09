@@ -8,7 +8,8 @@ import {
   EditIcon,
   RerunIcon,
   ContentTypeIcon,
-  Tooltip
+  Tooltip,
+  ArrowRightIcon,
 } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 import { CONTENT_TYPE_LABELS } from '../../../shared/constants';
@@ -34,8 +35,13 @@ export const UserMessageBubble = memo(
     ) => {
       const [isEditing, setIsEditing] = useState(false);
       const [editedContent, setEditedContent] = useState(content);
-      const { rerunMessage, editAndRerunMessage, isProcessing, isCanceling } =
-        useSidePanelChat();
+      const {
+        rerunMessage,
+        editAndRerunMessage,
+        isProcessing,
+        isCanceling,
+        switchToContextView,
+      } = useSidePanelChat();
       const { copyState, handleCopy, IconComponent, iconClassName, disabled } =
         useCopyToClipboard(content);
 
@@ -165,6 +171,29 @@ export const UserMessageBubble = memo(
               )}
             </div>
           </div>
+
+          {/* View Context Button - Placed below the bubble */}
+          {!isEditing &&
+            pageContextUsed &&
+            pageContextUsed.trim().length > 0 && (
+              <div className='w-full flex justify-end mt-1 pr-1'>
+                <Button
+                  variant='secondary'
+                  size='sm'
+                  onClick={() =>
+                    switchToContextView({
+                      title: `Context for: "${content.substring(0, 30)}..."`,
+                      content: pageContextUsed,
+                    })
+                  }
+                  className='text-xs'
+                  title='View the page context that was included with this message'
+                >
+                  View Context
+                  <ArrowRightIcon className='w-3 h-3 ml-1' />
+                </Button>
+              </div>
+            )}
 
           {/* Action buttons below bubble (only show when not editing) */}
           {!isEditing && (

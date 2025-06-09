@@ -161,7 +161,12 @@ export function useChatSessionManagement({
             );
             setCurrentChatSessionId(activeSessionId);
             setMessages(sessionMessages);
-            setCurrentView(tabUIState.currentView || 'chat');
+            // Prevent getting stuck in context view on reload
+            const viewToSet =
+              tabUIState.currentView === 'context'
+                ? 'chat'
+                : tabUIState.currentView || 'chat';
+            setCurrentView(viewToSet);
           } else {
             logger.sidepanel.error(
               `ChatSessionManagement: Metadata not found for active session ${activeSessionId}. Resetting.`
@@ -265,17 +270,14 @@ export function useChatSessionManagement({
     [tabId]
   );
 
-  const switchToHistoryView = useCallback(async () => {
-    if (!tabId) return;
-    await SidePanelStateManager.setTabViewMode(tabId, 'history');
-    setCurrentView('history');
-  }, [tabId]);
-
-  const switchToChatView = useCallback(async () => {
-    if (!tabId) return;
-    await SidePanelStateManager.setTabViewMode(tabId, 'chat');
-    setCurrentView('chat');
-  }, [tabId]);
+  const switchToView = useCallback(
+    async (viewName) => {
+      if (!tabId || !['chat', 'history', 'context'].includes(viewName)) return;
+      await SidePanelStateManager.setTabViewMode(tabId, viewName);
+      setCurrentView(viewName);
+    },
+    [tabId]
+  );
 
   const deleteSelectedChatSession = useCallback(
     async (chatSessionIdToDelete) => {
@@ -300,7 +302,6 @@ export function useChatSessionManagement({
     createNewChat,
     selectChatSession,
     deleteSelectedChatSession,
-    switchToHistoryView,
-    switchToChatView,
+    switchToView,
   };
 }

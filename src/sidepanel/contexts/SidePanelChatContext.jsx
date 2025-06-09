@@ -65,6 +65,7 @@ export function SidePanelChatProvider({ children }) {
 
   // --- Core Hooks ---
   // FIX: Call useChatSessionManagement first to define currentChatSessionId
+  const [contextViewData, setContextViewData] = useState(null);
   const {
     messages,
     setMessages,
@@ -73,8 +74,7 @@ export function SidePanelChatProvider({ children }) {
     createNewChat,
     selectChatSession,
     deleteSelectedChatSession,
-    switchToHistoryView,
-    switchToChatView,
+    switchToView,
   } = useChatSessionManagement({
     tabId,
     selectedPlatformId,
@@ -690,6 +690,14 @@ export function SidePanelChatProvider({ children }) {
     [selectedPlatformId, selectedModel]
   );
 
+  const switchToContextView = useCallback(
+    (data) => {
+      setContextViewData(data);
+      switchToView('context');
+    },
+    [switchToView]
+  );
+
   const deleteMultipleChatSessions = useCallback(async (sessionIdsToDelete) => {
     if (!Array.isArray(sessionIdsToDelete) || sessionIdsToDelete.length === 0) {
       return;
@@ -718,6 +726,7 @@ export function SidePanelChatProvider({ children }) {
         messages: visibleMessages,
         currentChatSessionId,
         currentView,
+        contextViewData,
         inputValue,
         contextStatus: stableContextStatus,
         isContentExtractionEnabled,
@@ -741,8 +750,8 @@ export function SidePanelChatProvider({ children }) {
         rerunAssistantMessage,
         createNewChat,
         selectChatSession,
-        switchToHistoryView,
-        switchToChatView,
+        switchToView,
+        switchToContextView,
         deleteSelectedChatSession,
         deleteMultipleChatSessions,
       }}
