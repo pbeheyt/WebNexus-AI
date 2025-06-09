@@ -108,7 +108,7 @@ export function ShortcutCaptureInput({ value, onChange, defaultShortcut }) {
       onKeyDown={handleKeyDown}
       readOnly
       placeholder='Click to set shortcut'
-      className='w-full px-3 py-2 border border-theme rounded-md bg-theme-hover text-theme-primary focus:ring-primary focus:border-primary sm:text-sm'
+      className='w-full px-3 py-2 border border-theme rounded-md bg-theme-surface text-theme-primary focus:ring-primary focus:border-primary sm:text-sm'
     />
   );
 }

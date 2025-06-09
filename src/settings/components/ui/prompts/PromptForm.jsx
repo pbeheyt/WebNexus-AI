@@ -194,7 +194,7 @@ const PromptForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className='add-prompt-form bg-theme-surface shadow-sm rounded-lg p-6 border border-theme'
+      className='add-prompt-form bg-theme-secondary shadow-sm rounded-lg p-6 border border-theme'
       noValidate
     >
       <div className='flex items-center justify-between mb-5 pb-3 border-b border-theme'>
@@ -243,7 +243,7 @@ const PromptForm = ({
             onChange={handleChange}
             maxLength={MAX_PROMPT_NAME_LENGTH}
             disabled={shouldShowSaving}
-            className='bg-theme-hover text-sm border border-theme rounded-md'
+            className='bg-theme-surface text-sm border border-theme rounded-md'
             required
             onValidation={(isValid) => handleInputValidation('name', isValid)}
           />
@@ -266,7 +266,7 @@ const PromptForm = ({
             onChange={handleChange}
             maxLength={MAX_PROMPT_CONTENT_LENGTH}
             disabled={shouldShowSaving}
-            className='bg-theme-hover text-sm border border-theme rounded-md'
+            className='bg-theme-surface text-sm border border-theme rounded-md'
             style={{ minHeight: '120px' }}
             autoResize={true}
             required

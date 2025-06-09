@@ -66,7 +66,7 @@ export function Modal({
     >
       <div
         ref={contentRef}
-        className={`bg-theme-surface p-6 rounded-lg shadow-xl relative ${widthClass} w-full transform transition-all duration-300 ease-in-out outline-none`}
+        className={`bg-theme-primary p-6 rounded-lg shadow-xl relative ${widthClass} w-full transform transition-all duration-300 ease-in-out outline-none`}
         tabIndex='-1'
       >
         {/* Modal Header */}

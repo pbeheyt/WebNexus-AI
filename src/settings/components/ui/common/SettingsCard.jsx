@@ -18,7 +18,7 @@ export function SettingsCard({
   ...otherProps
 }) {
   const baseClasses =
-    'bg-theme-surface p-4 rounded-lg border border-theme shadow-sm';
+    'bg-theme-secondary p-4 rounded-lg border border-theme shadow-sm';
 
   const combinedClasses = [baseClasses, className].join(' ').trim();
 

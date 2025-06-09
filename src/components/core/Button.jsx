@@ -48,9 +48,9 @@ export function Button({
 
   // Variant classes
   const variantClasses = {
-    primary: 'bg-primary text-white hover:bg-primary-hover',
+    primary: 'bg-primary text-white',
     secondary:
-      'bg-theme-surface text-theme-primary border border-theme hover:border-primary',
+      'bg-transparent text-theme-primary border border-theme hover:border-primary',
     danger: 'bg-error text-white hover:bg-red-600',
     success: 'bg-success text-white hover:bg-green-600',
     inactive: 'bg-gray-400 text-gray-100 cursor-not-allowed opacity-50',

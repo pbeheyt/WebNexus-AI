@@ -181,7 +181,7 @@ const PromptList = ({
       {filteredPrompts.length === 0 ? (
         <div
           ref={promptListRef} // Ref for scrollbar check even when empty
-          className={`empty-state bg-theme-surface p-6 text-center text-theme-secondary rounded-lg border border-theme ${promptListHasScrollbar ? 'pr-4' : ''}`}
+          className={`empty-state bg-theme-secondary p-6 text-center text-theme-secondary rounded-lg border border-theme ${promptListHasScrollbar ? 'pr-4' : ''}`}
         >
           <p className='text-sm'>
             No prompts available
@@ -200,8 +200,8 @@ const PromptList = ({
               className={`prompt-item rounded-lg p-4 mb-4 shadow-sm cursor-pointer select-none transition-all border border-theme w-full text-left
                 ${
                   selectedPromptId === item.id
-                    ? ' bg-theme-hover shadow-sm'
-                    : ' bg-white dark:bg-theme-surface'
+                    ? ' bg-theme-hover'
+                    : ' bg-theme-secondary'
                 }
               `}
               onClick={() => onSelectPrompt(item)}

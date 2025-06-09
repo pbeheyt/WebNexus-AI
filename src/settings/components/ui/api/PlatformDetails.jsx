@@ -247,7 +247,7 @@ const PlatformDetails = ({
                           : 'Enter your API key'
                       }
                       disabled={shouldShowApiKeySaving}
-                      className='api-key-input p-2 bg-theme-hover border border-theme rounded-md font-mono focus:ring-primary focus:border-primary'
+                      className='api-key-input p-2 bg-theme-surface border border-theme rounded-md font-mono focus:ring-primary focus:border-primary'
                       required
                       onValidation={handleApiKeyValidation}
                       endContent={

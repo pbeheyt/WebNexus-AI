@@ -167,7 +167,7 @@ const SidePanelModelParametersEditor = ({
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}
                 maxLength={parameterSpecs.systemPrompt.maxLength}
                 disabled={isSaving || isResetting}
-                className='bg-theme-hover text-xs border border-theme rounded-md w-full p-1.5'
+                className='bg-theme-secondary text-xs border border-theme rounded-md w-full p-1.5'
                 style={{ minHeight: '40px', maxHeight: '80px' }}
                 autoResize={true}
               />

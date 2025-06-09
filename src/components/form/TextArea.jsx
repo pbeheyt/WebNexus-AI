@@ -95,7 +95,7 @@ const handleBlur = (e) => {
     const errorClasses = error ? 'border-error ring-1 ring-error' : '';
 const showVisualError = error && touched;
     const combinedClasses =
-      `w-full p-3 border-none outline-none text-theme-primary resize-none ${errorClasses} ${className}`.trim();
+      `w-full p-3 outline-none text-theme-primary resize-none ${errorClasses} ${className}`.trim();
 
 return (
   <div className={`w-full ${wrapperClassName}`}>

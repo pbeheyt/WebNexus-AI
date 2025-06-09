@@ -74,7 +74,7 @@ const ModelParametersSettings = ({
 
   if (!derivedSettings || !isFormReady) {
     return (
-      <div className='p-5 bg-theme-surface border border-theme rounded-lg mb-4'>
+      <div className='p-5 bg-theme-secondary border border-theme rounded-lg mb-4'>
         <div className='flex items-center justify-center text-theme-secondary text-center py-10'>
           <SpinnerIcon className='w-8 h-8' />
           <span className='ml-2'>Loading model settings...</span>
@@ -164,7 +164,7 @@ const ModelParametersSettings = ({
 
         <div className='border-b border-theme my-4 select-none'></div>
 
-        <div className='model-specs-section bg-theme-hover rounded-lg border border-theme p-4'>
+        <div className='model-specs-section bg-theme-surface rounded-lg border border-theme p-4'>
           <h4 className='specs-title text-base font-semibold mb-3 text-theme-primary'>
             Model Specifications{' '}
             {currentEditingMode === 'thinking' ? '(Thinking)' : ''}
@@ -389,7 +389,7 @@ const ModelParametersSettings = ({
                 onChange={(e) => handleChange('systemPrompt', e.target.value)}
                 maxLength={MAX_SYSTEM_PROMPT_LENGTH}
                 disabled={isSaving || isResetting || isTransitioningMode}
-                className='bg-theme-hover text-sm border border-theme rounded-md'
+                className='bg-theme-surface text-sm border border-theme rounded-md'
                 style={{ minHeight: '120px' }}
                 autoResize={true}
               />

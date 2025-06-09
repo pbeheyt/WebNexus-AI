@@ -106,7 +106,7 @@ const PromptManagement = () => {
     );
   } else {
     detailContent = (
-      <div className='empty-state bg-theme-surface shadow-sm p-8 text-center text-sm text-theme-secondary rounded-lg border border-theme'>
+      <div className='empty-state bg-theme-secondary shadow-sm p-8 text-center text-sm text-theme-secondary rounded-lg border border-theme'>
         <p className=''>Select a prompt from the list or create a new one.</p>
       </div>
     );

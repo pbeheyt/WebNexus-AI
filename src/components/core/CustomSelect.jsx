@@ -75,7 +75,7 @@ export function CustomSelect({
         type='button'
         onClick={handleTriggerClick}
         disabled={disabled}
-        className={`flex items-center justify-between text-left px-3 py-1.5 h-9 bg-theme-hover text-theme-primary border border-theme rounded-md text-sm transition-colors focus-primary ${buttonClassName} ${
+        className={`flex items-center justify-between text-left px-3 py-1.5 h-9 bg-tranparent text-theme-primary border border-theme rounded-md text-sm transition-colors focus-primary ${buttonClassName} ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-theme-hover'
         }`}
         aria-haspopup='listbox'
@@ -92,7 +92,7 @@ export function CustomSelect({
       {/* Dropdown Panel */}
       {isOpen && (
         <div
-          className='absolute top-full left-0 mt-1 bg-theme-surface border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-y-auto py-1 min-w-full'
+          className='absolute top-full left-0 mt-1 bg-theme-secondary border border-theme rounded-md shadow-lg z-40 max-h-60 overflow-y-auto py-1 min-w-full'
           role='listbox'
         >
           {options.length === 0 ? (
