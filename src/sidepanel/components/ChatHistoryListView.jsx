@@ -11,6 +11,10 @@ import {
   XIcon,
   Checkbox,
   Button,
+  Input,
+  EditIcon,
+  CheckIcon,
+  useNotification,
 } from '../../components';
 import { logger } from '../../shared/logger';
 import ConfigService from '../../services/ConfigService';
@@ -33,6 +37,11 @@ const {
   // State for selection mode
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedSessionIds, setSelectedSessionIds] = useState(new Set());
+
+  // State for inline editing
+  const [editingSessionId, setEditingSessionId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const { success: showSuccess, error: showError } = useNotification();
 
   const fetchSessionsAndConfigs = useCallback(async () => {
     setIsLoading(true);
@@ -142,6 +151,33 @@ const {
     }
   };
 
+  const handleStartEdit = (session) => {
+    setEditingSessionId(session.id);
+    setEditingTitle(session.title);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSessionId(null);
+    setEditingTitle('');
+  };
+
+  const handleSaveTitle = async (sessionId) => {
+    const originalTitle = sessions.find(s => s.id === sessionId)?.title;
+    if (editingTitle.trim() === originalTitle) {
+      handleCancelEdit();
+      return;
+    }
+
+    const result = await ChatHistoryService.updateSessionTitle(sessionId, editingTitle);
+    if (result.success) {
+      showSuccess('Chat title updated.');
+      await fetchSessionsAndConfigs();
+    } else {
+      showError(result.message || 'Failed to update title.');
+    }
+    handleCancelEdit();
+  };
+
   const areAllSelected = useMemo(
     () => sessions.length > 0 && selectedSessionIds.size === sessions.length,
     [sessions, selectedSessionIds]
@@ -244,7 +280,8 @@ const {
                   {/* MAIN CLICKABLE AREA (as a button) */}
                   <button
                     onClick={() => handleItemClick(session.id)}
-                    className={`flex items-center flex-grow min-w-0 text-left p-3 w-full h-full rounded-lg
+                    disabled={editingSessionId === session.id}
+                    className={`flex items-center flex-grow min-w-0 text-left p-3 w-full h-full rounded-lg disabled:cursor-default
                       ${isSelectionMode ? 'cursor-pointer' : 'cursor-pointer'}
                     `}
                   >
@@ -257,58 +294,114 @@ const {
                       />
                     )}
                     <div className='flex-grow min-w-0'>
-                      <p
-                        className={`text-sm font-medium truncate ${
-                          isActiveSession && !isSelected
-                            ? 'text-primary'
-                            : 'text-theme-primary'
-                        }`}
-                      >
-                        {session.title || 'Untitled Chat'}
-                      </p>
-                      <p className='text-xs text-theme-secondary'>
-                        {new Date(session.lastActivityAt).toLocaleDateString()}{' '}
-                        - {new Date(session.lastActivityAt).toLocaleTimeString()}
-                      </p>
-                      {/* Model ID has been removed from this view */}
+                      {editingSessionId === session.id ? (
+                        <Input
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveTitle(session.id);
+                            if (e.key === 'Escape') handleCancelEdit();
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
+                          autoFocus
+                          className='bg-theme-surface border border-primary text-sm p-1 rounded-md'
+                        />
+                      ) : (
+                        <>
+                          <p
+                            className={`text-sm font-medium truncate ${
+                              isActiveSession && !isSelected
+                                ? 'text-primary'
+                                : 'text-theme-primary'
+                            }`}
+                          >
+                            {session.title || 'Untitled Chat'}
+                          </p>
+                          <p className='text-xs text-theme-secondary'>
+                            {new Date(
+                              session.lastActivityAt
+                            ).toLocaleDateString()}{' '}
+                            -{' '}
+                            {new Date(
+                              session.lastActivityAt
+                            ).toLocaleTimeString()}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </button>
 
-                  {/* ACTION BUTTONS (Delete, Go to Active) */}
+                  {/* ACTION BUTTONS */}
                   <div className='flex-shrink-0 flex items-center pr-3'>
-                    {!isSelectionMode && (
+                    {editingSessionId === session.id ? (
                       <>
-                        {isActiveSession && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              switchToChatView();
-                            }}
-                            className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
-                            title='Go to active chat'
-                          >
-                            <ArrowRightIcon />
-                          </button>
-                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteSession(
-                              session.id,
-                              session.title || 'Untitled Chat'
-                            );
+                            handleSaveTitle(session.id);
                           }}
-                          disabled={deletingSessionId === session.id}
-                          className='p-1.5 text-red-500 hover:text-red-700 disabled:opacity-50 rounded-md'
-                          title='Delete chat session'
+                          className='p-1.5 text-green-500 hover:text-green-700 rounded-md'
+                          title='Confirm change'
                         >
-                          {deletingSessionId === session.id ? (
-                            <SpinnerIcon className='w-5 h-5' />
-                          ) : (
-                            <TrashIcon />
-                          )}
+                          <CheckIcon className='w-5 h-5' />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelEdit();
+                          }}
+                          className='p-1.5 text-red-500 hover:text-red-700 rounded-md'
+                          title='Cancel edit'
+                        >
+                          <XIcon className='w-5 h-5' />
                         </button>
                       </>
+                    ) : (
+                      !isSelectionMode && (
+                        <>
+                          {isActiveSession && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                switchToChatView();
+                              }}
+                              className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
+                              title='Go to active chat'
+                            >
+                              <ArrowRightIcon />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartEdit(session);
+                            }}
+                            className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
+                            title='Edit title'
+                          >
+                            <EditIcon className='w-5 h-5' />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSession(
+                                session.id,
+                                session.title || 'Untitled Chat'
+                              );
+                            }}
+                            disabled={deletingSessionId === session.id}
+                            className='p-1.5 text-red-500 hover:text-red-700 disabled:opacity-50 rounded-md'
+                            title='Delete chat session'
+                          >
+                            {deletingSessionId === session.id ? (
+                              <SpinnerIcon className='w-5 h-5' />
+                            ) : (
+                              <TrashIcon />
+                            )}
+                          </button>
+                        </>
+                      )
                     )}
                   </div>
                 </li>

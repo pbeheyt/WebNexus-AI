@@ -4,6 +4,7 @@ import { logger } from '../../shared/logger';
 import {
   STORAGE_KEYS,
   MAX_MESSAGES_PER_TAB_HISTORY,
+  MAX_CHAT_TITLE_LENGTH,
 } from '../../shared/constants';
 
 
@@ -254,6 +255,36 @@ class ChatHistoryService {
     } catch (error) {
       logger.sidepanel.error(`ChatHistoryService: Error deleting chat session ${chatSessionId}:`, error);
       return false;
+    }
+  }
+
+  static async updateSessionTitle(chatSessionId, newTitle) {
+    const trimmedTitle = newTitle?.trim();
+    if (!trimmedTitle) {
+      return { success: false, message: 'Title cannot be empty.' };
+    }
+    if (trimmedTitle.length > MAX_CHAT_TITLE_LENGTH) {
+      return {
+        success: false,
+        message: `Title cannot exceed ${MAX_CHAT_TITLE_LENGTH} characters.`,
+      };
+    }
+
+    // Basic XSS check: check for < and > characters
+    if (/[<>]/.test(trimmedTitle)) {
+      return { success: false, message: 'Title contains invalid characters.' };
+    }
+
+    const success = await this.updateSessionMetadata(chatSessionId, {
+      title: trimmedTitle,
+    });
+    if (success) {
+      return { success: true, message: 'Title updated successfully.' };
+    } else {
+      return {
+        success: false,
+        message: 'Failed to update title in storage.',
+      };
     }
   }
 
