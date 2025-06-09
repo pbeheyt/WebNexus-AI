@@ -1,4 +1,4 @@
-import React, { useState, memo, forwardRef, useRef } from 'react';
+import React, { useState, memo, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 
 import {
@@ -8,8 +8,6 @@ import {
   EditIcon,
   RerunIcon,
   ContentTypeIcon,
-  Tooltip,
-  ArrowRightIcon,
 } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 import { CONTENT_TYPE_LABELS } from '../../../shared/constants';
@@ -45,9 +43,6 @@ export const UserMessageBubble = memo(
       const { copyState, handleCopy, IconComponent, iconClassName, disabled } =
         useCopyToClipboard(content);
 
-      const [isContextBadgeTooltipVisible, setIsContextBadgeTooltipVisible] = useState(false);
-      const contextBadgeTriggerRef = useRef(null); // Ref for the element that triggers the tooltip (the icon wrapper)
-
       const handleKeyDown = (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
           event.preventDefault();
@@ -74,48 +69,46 @@ export const UserMessageBubble = memo(
         setEditedContent(content);
       };
 
-      const shouldDisplayBadgeElements = !isEditing && pageContextUsed && contextTypeUsed && CONTENT_TYPE_LABELS[contextTypeUsed];
+      const shouldDisplayBadgeElements =
+        !isEditing &&
+        pageContextUsed &&
+        contextTypeUsed &&
+        CONTENT_TYPE_LABELS[contextTypeUsed];
 
       return (
-    <div
-      ref={ref}
-      id={id}
-      style={style}
-      className={`message-group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-6 w-full flex flex-col items-end user-message relative ${className}`}
-    >
+        <div
+          ref={ref}
+          id={id}
+          style={style}
+          className={`message-group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-6 w-full flex flex-col items-end user-message relative ${className}`}
+        >
           {/* Container for badge and bubble, aligned to the right. Changed items-start to items-center */}
-          <div className={`flex flex-row items-center justify-end w-full ${isEditing ? 'max-w-full' : 'max-w-[95%]'}`}>
-            {/* Badge Trigger: Appears to the left of the bubble */}
+          <div
+            className={`flex flex-row items-center justify-end w-full ${
+              isEditing ? 'max-w-full' : 'max-w-[95%]'
+            }`}
+          >
+            {/* Combined View Context Button: Appears to the left of the bubble */}
             {shouldDisplayBadgeElements && (
-              <div
-                ref={contextBadgeTriggerRef} // This div is the trigger and anchor for the tooltip
-                className="mr-1 flex-shrink-0 cursor-help p-1 rounded-full"
-                onMouseEnter={() => setIsContextBadgeTooltipVisible(true)}
-                onMouseLeave={() => setIsContextBadgeTooltipVisible(false)}
-                onFocus={() => setIsContextBadgeTooltipVisible(true)}
-                onBlur={() => setIsContextBadgeTooltipVisible(false)}
-                tabIndex={0}
-                role="button"
-                aria-describedby={`context-badge-tooltip-${id}`}
+              <Button
+                variant='secondary'
+                size='sm'
+                onClick={() =>
+                  switchToContextView({
+                    title: `Context for: "${content.substring(0, 30)}..."`,
+                    content: pageContextUsed,
+                  })
+                }
+                className='mr-3 flex-shrink-0 !px-2 !py-1' // Override padding for a tighter fit
+                title={`View the ${CONTENT_TYPE_LABELS[contextTypeUsed]} context included with this message`}
               >
                 <ContentTypeIcon
                   contentType={contextTypeUsed}
-                  className="w-5 h-5 text-theme-secondary"
+                  className='w-4 h-4 mr-1.5'
                 />
-              </div>
+                <span className='text-xs'>Context</span>
+              </Button>
             )}
-
-            {/* Tooltip: Rendered separately but positioned relative to contextBadgeTriggerRef */}
-            {shouldDisplayBadgeElements && (
-                 <Tooltip
-                    id={`context-badge-tooltip-${id}`}
-                    show={isContextBadgeTooltipVisible}
-                    message={`${CONTENT_TYPE_LABELS[contextTypeUsed]} context included`}
-                    position="left"
-                    targetRef={contextBadgeTriggerRef} // Points to the div wrapping the icon
-                  />
-            )}
-
 
             {/* Bubble container with conditional width */}
             <div
@@ -147,6 +140,7 @@ export const UserMessageBubble = memo(
                     style={{ minHeight: '4rem' }}
                     focusAtEnd={isEditing}
                     aria-label='Edit message content'
+                    id={`edit-message-${id}`}
                   />
                   <div className='flex justify-end gap-2'>
                     <Button
@@ -179,29 +173,10 @@ export const UserMessageBubble = memo(
                 isProcessing
                   ? 'opacity-0 pointer-events-none'
                   : copyState === 'copied' || copyState === 'error'
-                    ? 'opacity-100'
-                    : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'
+                  ? 'opacity-100'
+                  : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'
               }`}
             >
-              {/* View Context Button */}
-              {pageContextUsed && pageContextUsed.trim().length > 0 && (
-                <Button
-                  variant='secondary'
-                  size='sm'
-                  onClick={() =>
-                    switchToContextView({
-                      title: `Context for: "${content.substring(0, 30)}..."`,
-                      content: pageContextUsed,
-                    })
-                  }
-                  className='text-xs'
-                  title='View the page context that was included with this message'
-                >
-                  View Context
-                  <ArrowRightIcon className='w-3 h-3 ml-1' />
-                </Button>
-              )}
-
               {/* Standard Action Icons */}
               <div className='flex items-center gap-1'>
                 <IconButton
