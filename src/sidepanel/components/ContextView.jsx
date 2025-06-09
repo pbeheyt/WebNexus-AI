@@ -8,19 +8,14 @@ export function ContextView({ contextData, onBackToChat }) {
   if (!contextData) {
     // Fallback in case this view is rendered without data
     return (
-      <div className='flex-1 flex flex-col p-4'>
-        <div className='flex justify-between items-center pb-2 border-b border-theme'>
-          <h2 className='text-base font-semibold text-theme-primary'>
-            No Context
-          </h2>
-          <IconButton
-            icon={XIcon}
-            onClick={onBackToChat}
-            ariaLabel='Back to chat'
-            title='Back to chat'
-            className='p-1.5 text-theme-secondary hover:text-primary'
-          />
-        </div>
+      <div className='relative flex-1 flex flex-col p-4 bg-theme-surface'>
+        <IconButton
+          icon={XIcon}
+          onClick={onBackToChat}
+          ariaLabel='Back to chat'
+          title='Back to chat'
+          className='absolute top-2 right-4 z-10 p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
+        />
         <div className='flex-1 flex items-center justify-center text-theme-secondary'>
           <p>No context data to display.</p>
         </div>
@@ -28,23 +23,17 @@ export function ContextView({ contextData, onBackToChat }) {
     );
   }
 
-  const { title, content } = contextData;
+  const { content } = contextData;
 
   return (
-    <div className='flex-1 flex flex-col h-full bg-theme-surface'>
-      {/* Header for the Context View */}
-      <div className='flex-shrink-0 flex justify-between items-center p-3 border-b border-theme bg-theme-secondary'>
-        <h2 className='text-sm font-medium text-theme-primary truncate'>
-          {title || 'Included Context'}
-        </h2>
-        <IconButton
-          icon={XIcon}
-          onClick={onBackToChat}
-          ariaLabel='Back to chat'
-          title='Back to chat'
-          className='p-1.5 text-theme-secondary hover:text-primary rounded-md'
-        />
-      </div>
+    <div className='relative flex-1 flex flex-col h-full bg-theme-surface'>
+      <IconButton
+        icon={XIcon}
+        onClick={onBackToChat}
+        ariaLabel='Back to chat'
+        title='Back to chat'
+        className='absolute top-2 right-4 z-10 p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
+      />
 
       {/* Scrollable Content Area */}
       <div className='flex-1 p-4 overflow-y-auto'>

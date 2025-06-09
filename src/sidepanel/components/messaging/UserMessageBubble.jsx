@@ -172,11 +172,19 @@ export const UserMessageBubble = memo(
             </div>
           </div>
 
-          {/* View Context Button - Placed below the bubble */}
-          {!isEditing &&
-            pageContextUsed &&
-            pageContextUsed.trim().length > 0 && (
-              <div className='w-full flex justify-end mt-1 pr-1'>
+          {/* Action buttons container (only show when not editing) */}
+          {!isEditing && (
+            <div
+              className={`w-full flex justify-end items-center gap-2 mt-1 pr-1 transition-opacity duration-150 ${
+                isProcessing
+                  ? 'opacity-0 pointer-events-none'
+                  : copyState === 'copied' || copyState === 'error'
+                    ? 'opacity-100'
+                    : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'
+              }`}
+            >
+              {/* View Context Button */}
+              {pageContextUsed && pageContextUsed.trim().length > 0 && (
                 <Button
                   variant='secondary'
                   size='sm'
@@ -192,44 +200,41 @@ export const UserMessageBubble = memo(
                   View Context
                   <ArrowRightIcon className='w-3 h-3 ml-1' />
                 </Button>
-              </div>
-            )}
+              )}
 
-          {/* Action buttons below bubble (only show when not editing) */}
-          {!isEditing && (
-    <div
-      className={`flex items-center gap-1 mt-1 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : copyState === 'copied' || copyState === 'error' ? 'opacity-100' : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'}`}
-    >
-              <IconButton
-                icon={EditIcon}
-                iconClassName='w-4 h-4 select-none'
-                onClick={() => {
-                  setIsEditing(true);
-                  setEditedContent(content);
-                }}
-                aria-label='Edit message'
-                title='Edit message'
-                className={actionButtonClasses}
-                disabled={isProcessing || isCanceling}
-              />
-              <IconButton
-                icon={RerunIcon}
-                iconClassName='w-4 h-4 select-none'
-                onClick={() => rerunMessage(id)}
-                aria-label='Rerun message'
-                title='Rerun message'
-                className={actionButtonClasses}
-                disabled={isProcessing || isCanceling}
-              />
-              <IconButton
-                onClick={handleCopy}
-                className={actionButtonClasses}
-                aria-label='Copy message'
-                title='Copy message'
-                icon={IconComponent}
-                iconClassName={`w-4 h-4 select-none ${iconClassName}`}
-                disabled={disabled}
-              />
+              {/* Standard Action Icons */}
+              <div className='flex items-center gap-1'>
+                <IconButton
+                  icon={EditIcon}
+                  iconClassName='w-4 h-4 select-none'
+                  onClick={() => {
+                    setIsEditing(true);
+                    setEditedContent(content);
+                  }}
+                  aria-label='Edit message'
+                  title='Edit message'
+                  className={actionButtonClasses}
+                  disabled={isProcessing || isCanceling}
+                />
+                <IconButton
+                  icon={RerunIcon}
+                  iconClassName='w-4 h-4 select-none'
+                  onClick={() => rerunMessage(id)}
+                  aria-label='Rerun message'
+                  title='Rerun message'
+                  className={actionButtonClasses}
+                  disabled={isProcessing || isCanceling}
+                />
+                <IconButton
+                  onClick={handleCopy}
+                  className={actionButtonClasses}
+                  aria-label='Copy message'
+                  title='Copy message'
+                  icon={IconComponent}
+                  iconClassName={`w-4 h-4 select-none ${iconClassName}`}
+                  disabled={disabled}
+                />
+              </div>
             </div>
           )}
         </div>

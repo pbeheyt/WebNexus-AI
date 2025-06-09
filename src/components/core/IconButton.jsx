@@ -8,7 +8,7 @@ export const IconButton = forwardRef(
   (
     {
       icon: IconComponent,
-      iconClassName = '',
+      iconClassName = 'w-4 h-4',
       className = '',
       onClick,
       disabled,
