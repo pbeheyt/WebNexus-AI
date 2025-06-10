@@ -1,4 +1,4 @@
-// src/content/index.js - Modify existing or create new
+// src/content/extractor-content.js
 import ExtractorFactory from '../extractor/extractor-factory.js';
 import { logger } from '../shared/logger.js';
 import {
@@ -6,11 +6,6 @@ import {
   DEFAULT_EXTRACTION_STRATEGY,
   CONTENT_TYPES,
 } from '../shared/constants.js';
-
-// Track active extraction process
-let currentExtractionId = null;
-
-// Initialize content script state
 
 // Guard to ensure one-time initialization
 if (window.webNexusAIContentScriptInitialized) {
@@ -20,32 +15,14 @@ if (window.webNexusAIContentScriptInitialized) {
 } else {
   window.webNexusAIContentScriptInitialized = true;
   logger.content.info(
-    'Initializing content script message listener and one-time setup.'
+    'Initializing central content script message listener.'
   );
 
   // Centralized message handler
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    // Handle reset extractor command
-    if (message.action === 'resetExtractor') {
-      currentExtractionId = Date.now().toString();
+    // --- Message Router Logic ---
 
-      // Force cleanup of all extractors
-      ExtractorFactory.cleanup();
-
-      // Initialize fresh extractor - strategy will be fetched again if needed by 'extractContent'
-      // or passed if we decide to send it with reset command in future. For now, simple init.
-      // Let's assume strategy is only relevant at the point of 'extractContent' for general type.
-      // So, for reset, a simple initialize is fine. The strategy will be read/passed upon the next 'extractContent' call.
-      ExtractorFactory.initialize(CONTENT_TYPES.GENERAL); // Initialize with a sensible default
-      if (ExtractorFactory.activeExtractor) {
-        ExtractorFactory.activeExtractor.extractionId = currentExtractionId;
-      }
-
-      sendResponse({ status: 'reset', extractionId: currentExtractionId });
-      return true;
-    }
-
-    // Extract content command
+    // 1. Handle 'extractContent' action specifically
     if (message.action === 'extractContent') {
       (async () => {
         try {
@@ -55,20 +32,21 @@ if (window.webNexusAIContentScriptInitialized) {
             const result = await chrome.storage.sync.get(
               STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY
             );
-            // The value from storage should exist post-install.
-            // If it's somehow undefined (e.g. storage error, manual clear),
-            // preferredStrategy will be undefined here, and the factory will use its default.
             preferredStrategy =
-              result[STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY];
+              result[STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY] ||
+              DEFAULT_EXTRACTION_STRATEGY;
             logger.content.info(
-              `Using general extraction strategy from storage: ${preferredStrategy} (Factory will apply global default if this is undefined)`
+              `Using general extraction strategy from storage: ${preferredStrategy}`
             );
           }
 
-          // Always re-initialize the extractor with the content type from the message
-          // This ensures the correct extractor (e.g., SelectedText) is used.
+          // Always re-initialize the extractor with the content type from the message.
+          // This is the core of the fix: it ensures the correct extractor is made active.
           ExtractorFactory.initialize(message.contentType, preferredStrategy);
-
+          logger.content.info(
+            `Extractor initialized with content type: ${message.contentType}`
+          );
+          
           if (ExtractorFactory.activeExtractor) {
             await ExtractorFactory.activeExtractor.extractAndSaveContent();
             sendResponse({
@@ -76,10 +54,7 @@ if (window.webNexusAIContentScriptInitialized) {
               contentType: ExtractorFactory.activeExtractor.contentType,
             });
           } else {
-            sendResponse({
-              status: 'error',
-              message: 'Failed to initialize extractor',
-            });
+            throw new Error('Failed to initialize an active extractor.');
           }
         } catch (e) {
           logger.content.error(
@@ -95,23 +70,33 @@ if (window.webNexusAIContentScriptInitialized) {
       return true; // Keep channel open for async response
     }
 
-    // Let active extractor handle other messages
+    // 2. Handle 'resetExtractor' action
+    if (message.action === 'resetExtractor') {
+      ExtractorFactory.cleanup();
+      // On reset, we don't know the content type, so we don't initialize a new one.
+      // The next 'extractContent' call will initialize the correct one.
+      logger.content.info('Extractor factory cleaned up by reset command.');
+      sendResponse({ status: 'reset' });
+      return false; // Synchronous response
+    }
+
+    // 3. Delegate any other messages to the currently active extractor
     if (ExtractorFactory.activeExtractor) {
       try {
-        // Custom handler for specialized extractor-specific messages
-        const handled = ExtractorFactory.activeExtractor.handleMessage?.(
+        // The return value of handleMessage determines if the response is async
+        return ExtractorFactory.activeExtractor.handleMessage(
           message,
           sender,
           sendResponse
         );
-        if (handled) return true;
       } catch (error) {
-        logger.content.error('Error in extractor message handler:', error);
+        logger.content.error('Error in delegated message handler:', error);
       }
     }
 
-    return false; // Indicate message was not handled here
-  }); // This is the closing of addListener
+    // 4. Default case: message was not handled
+    return false;
+  });
 }
 
 // Export for webpack

@@ -3,7 +3,8 @@ import {
   CONTENT_TYPES,
   DEFAULT_EXTRACTION_STRATEGY,
 } from '../shared/constants.js';
-import { determineContentType } from '../shared/utils/content-utils.js';
+// No longer need determineContentType here
+// import { determineContentType } from '../shared/utils/content-utils.js';
 
 import GeneralExtractorStrategy from './strategies/general-strategy.js';
 import RedditExtractorStrategy from './strategies/reddit-strategy.js';
@@ -33,10 +34,12 @@ class ExtractorFactory {
   };
 
   /**
-   * Create an extractor based on the current URL
+   * Create an extractor based on the content type
+   * @param {string} contentType - The type of content to extract.
+   * @param {string|null} preferredStrategy - The preferred strategy for general content.
+   * @returns {BaseExtractor} An instance of the appropriate extractor.
    */
-  static createExtractor(url, preferredStrategy = null) {
-    const contentType = determineContentType(url);
+  static createExtractor(contentType, preferredStrategy = null) {
     const StrategyClass =
       this.STRATEGY_MAP[contentType] || GeneralExtractorStrategy;
 
@@ -53,18 +56,20 @@ class ExtractorFactory {
   }
 
   /**
-   * Initialize the appropriate extractor based on the current page
+   * Initialize the appropriate extractor based on the content type
+   * @param {string} contentType - The type of content to extract.
+   * @param {string|null} preferredStrategy - The preferred strategy for general content.
+   * @returns {BaseExtractor} The initialized active extractor instance.
    */
-  static initialize(preferredStrategy = null) {
+  static initialize(contentType, preferredStrategy = null) {
     // Clean up any existing extractor
     if (this.activeExtractor) {
       this.activeExtractor.cleanup();
     }
 
-    const url = window.location.href;
-    // Pass the preferredStrategy to createExtractor
+    // Create the new extractor using the provided contentType
     this.activeExtractor = ExtractorFactory.createExtractor(
-      url,
+      contentType,
       preferredStrategy
     );
     this.activeExtractor.initialize();

@@ -16,7 +16,6 @@ class BaseExtractor {
   initialize() {
     try {
       this.logger.info(`${this.contentType} extractor initializing...`);
-      this.setupMessageListeners();
       this.contentScriptReady = true;
       this.logger.info(`${this.contentType} extractor ready`);
     } catch (error) {
@@ -31,35 +30,20 @@ class BaseExtractor {
    * Clean up extractor resources and listeners
    */
   cleanup() {
-    try {
-      if (this.messageListener) {
-        chrome.runtime.onMessage.removeListener(this.messageListener);
-        this.messageListener = null;
-      }
-      this.logger.info(`${this.contentType} extractor cleaned up`);
-    } catch (error) {
-      this.logger.error(
-        `Error cleaning up ${this.contentType} extractor:`,
-        error
-      );
-    }
+    this.logger.info(`${this.contentType} extractor cleaned up`);
   }
 
   /**
-   * Set up message listeners for communication
+   * Placeholder for handling specific messages. Subclasses can override this.
+   * @param {object} message - The message object from the runtime.
+   * @param {object} sender - The sender of the message.
+   * @param {function} sendResponse - The function to call to send a response.
+   * @returns {boolean|undefined} - Return true to indicate an async response.
    */
-  setupMessageListeners() {
-    this.messageListener = (message, _sender, _sendResponse) => {
-      // Only log if the action is not 'streamChunk'
-      if (message.action !== 'streamChunk') {
-        this.logger.info(
-          `Message received in ${this.contentType} extractor:`,
-          message
-        );
-      }
-    };
-
-    chrome.runtime.onMessage.addListener(this.messageListener);
+  handleMessage(_message, _sender, _sendResponse) {
+    // Subclasses can implement this method to handle custom messages.
+    // Return true if you intend to send an asynchronous response.
+    return false;
   }
 
   /**
