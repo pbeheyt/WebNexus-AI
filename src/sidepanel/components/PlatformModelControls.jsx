@@ -183,7 +183,7 @@ function PlatformModelControls({ onToggleExpand }) {
         <div
           className={`overflow-hidden ${
             isParametersExpanded && isParamsEditorReady
-              ? 'max-h-[500px] opacity-100 my-2'
+              ? 'max-h-[500px] opacity-100 mt-2 mb-1'
               : 'max-h-0 opacity-0'
           }`}
           aria-hidden={!isParametersExpanded || !isParamsEditorReady}
