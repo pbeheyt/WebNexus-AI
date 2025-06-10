@@ -63,11 +63,8 @@ const PromptList = ({
         );
 
         const allPrompts = Array.from(uniquePromptsMap.values());
-        allPrompts.sort(
-          (a, b) =>
-            new Date(b.prompt.updatedAt || 0) -
-            new Date(a.prompt.updatedAt || 0)
-        );
+        // Sort prompts alphabetically by name
+        allPrompts.sort((a, b) => a.prompt.name.localeCompare(b.prompt.name));
         setPrompts(allPrompts);
         setDefaultPromptIds(newDefaultPromptIds);
       } catch (err) {
