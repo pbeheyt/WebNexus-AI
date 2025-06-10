@@ -1,7 +1,6 @@
 // src/background/services/content-extraction.js - Content extraction coordination
 
 import {
-  determineContentType,
   isInjectablePage,
 } from '../../shared/utils/content-utils.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
@@ -11,9 +10,10 @@ import { logger } from '../../shared/logger.js';
  * Extract content from a tab
  * @param {number} tabId - Tab ID to extract content from
  * @param {string} url - URL of the page
+ * @param {string} contentType - The determined content type for the page/selection.
  * @returns {Promise<boolean>} Success indicator
  */
-export async function extractContent(tabId, url) {
+export async function extractContent(tabId, url, contentType) {
   // Check if the page is injectable before proceeding
   if (!isInjectablePage(url)) {
     logger.background.warn(
@@ -26,7 +26,6 @@ export async function extractContent(tabId, url) {
     return false;
   }
 
-  const contentType = determineContentType(url);
   // Use a single content script for all types
   const scriptFile = 'dist/extractor-content.bundle.js';
 

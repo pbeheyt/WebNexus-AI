@@ -30,7 +30,11 @@ export async function processWithDefaultPromptWebUI(tab) {
   }
 
   try {
-    const contentType = determineContentType(tab.url);
+    const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
+    const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE] || {};
+    const hasSelection = !!selectionStates[tab.id];
+
+    const contentType = determineContentType(tab.url, hasSelection);
     logger.background.info(
       `Determined content type: ${contentType} for URL: ${tab.url}`
     );
@@ -108,6 +112,7 @@ export async function processContent(params) {
     promptContent = null,
     useApi = false,
     includeContext,
+    contentType, // Receive contentType from params
   } = params;
 
   let formattedContentString = null; // Initialize to null
@@ -118,6 +123,7 @@ export async function processContent(params) {
       url: params.url,
       platformId,
       includeContext,
+      contentType, // Log received contentType
     });
 
     // If API mode requested, use API path
@@ -148,9 +154,8 @@ export async function processContent(params) {
       await resetExtractionState();
 
       // 2. Extract content (Only if extracting)
-      const contentType = determineContentType(params.url);
       logger.background.info(`Content type determined: ${contentType}`);
-      const extractionResult = await extractContent(tabId, params.url);
+      const extractionResult = await extractContent(tabId, params.url, contentType);
       if (!extractionResult) {
         logger.background.warn('Content extraction completed with issues');
       }
@@ -223,7 +228,7 @@ export async function processContent(params) {
 
     // Determine contentType only if context was included, otherwise it's irrelevant
     const finalContentType = includeContext
-      ? determineContentType(params.url)
+      ? contentType
       : null;
 
     return {

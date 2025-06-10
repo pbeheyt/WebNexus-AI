@@ -4,7 +4,6 @@ import ModelParameterService from '../../services/ModelParameterService.js';
 import ContentFormatter from '../../services/ContentFormatter.js';
 import { extractContent } from '../services/content-extraction.js';
 import {
-  determineContentType,
   isInjectablePage,
 } from '../../shared/utils/content-utils.js';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
@@ -134,6 +133,7 @@ export async function processContentViaApi(params) {
     conversationHistory = [],
     isContentExtractionEnabled,
     isThinkingModeEnabled,
+    contentType, // Receive contentType from params
   } = params;
 
   let contentSuccessfullyIncluded = false;
@@ -159,7 +159,6 @@ export async function processContentViaApi(params) {
     );
 
     let newlyFormattedContent = null;
-    const contentType = determineContentType(url);
     const canInject = isInjectablePage(url);
 
     // 1. Decide whether to extract content
@@ -178,7 +177,7 @@ export async function processContentViaApi(params) {
       );
       await resetExtractionState(); // Reset before fresh extraction
       logger.background.info(`Content type determined: ${contentType}`);
-      await extractContent(tabId, url); // Perform fresh extraction
+      await extractContent(tabId, url, contentType); // Perform fresh extraction
       const extractedContent = await getExtractedContent();
 
       if (!extractedContent) {

@@ -19,7 +19,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   const [streamId, setStreamId] = useState(null);
   const [error, setError] = useState(null);
 
-  // Get content context
+  // Get content context at the top level of the hook
   const { currentTab, contentType } = useContent();
 
   // Cleanup function when component unmounts
@@ -77,7 +77,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
           url: currentTab?.url,
           platformId,
           promptContent,
-          contentType,
+          contentType, // Pass the contentType from the hook's scope
           source,
           useApi: false,
           includeContext: includeContext,
@@ -110,7 +110,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         }
       }
     },
-    [currentTab, contentType, source]
+    [currentTab, contentType, source] // Add contentType and currentTab to dependencies
   );
 
   /**
@@ -155,7 +155,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
           url: currentTab?.url,
           platformId,
           promptId,
-          contentType,
+          contentType, // Pass the contentType from the hook's scope
           source,
           streaming,
           isContentExtractionEnabled, // Pass this to background
@@ -212,7 +212,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         throw apiError;
       }
     },
-    [currentTab, contentType, source]
+    [currentTab, contentType, source] // Add contentType and currentTab to dependencies
   );
 
   const reset = useCallback(() => {

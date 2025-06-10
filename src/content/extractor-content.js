@@ -36,8 +36,10 @@ if (window.webNexusAIContentScriptInitialized) {
       // or passed if we decide to send it with reset command in future. For now, simple init.
       // Let's assume strategy is only relevant at the point of 'extractContent' for general type.
       // So, for reset, a simple initialize is fine. The strategy will be read/passed upon the next 'extractContent' call.
-      ExtractorFactory.initialize(); // Keep simple initialize for reset.
-      ExtractorFactory.activeExtractor.extractionId = currentExtractionId;
+      ExtractorFactory.initialize(CONTENT_TYPES.GENERAL); // Initialize with a sensible default
+      if (ExtractorFactory.activeExtractor) {
+        ExtractorFactory.activeExtractor.extractionId = currentExtractionId;
+      }
 
       sendResponse({ status: 'reset', extractionId: currentExtractionId });
       return true;
@@ -63,17 +65,9 @@ if (window.webNexusAIContentScriptInitialized) {
             );
           }
 
-          if (!ExtractorFactory.activeExtractor) {
-            // Initialize extractor if not present, passing the strategy
-            // The factory will decide if the strategy is relevant for the current content type
-            ExtractorFactory.initialize(preferredStrategy);
-          } else if (message.contentType === CONTENT_TYPES.GENERAL) {
-            // If extractor exists and it's general, re-initialize with potentially new strategy
-            // This handles cases where the extractor might persist across messages for the same tab
-            // if the user changes the strategy in the UI without a page reload.
-            // For non-general types, the strategy isn't used by initialize, so no need to re-init.
-            ExtractorFactory.initialize(preferredStrategy);
-          }
+          // Always re-initialize the extractor with the content type from the message
+          // This ensures the correct extractor (e.g., SelectedText) is used.
+          ExtractorFactory.initialize(message.contentType, preferredStrategy);
 
           if (ExtractorFactory.activeExtractor) {
             await ExtractorFactory.activeExtractor.extractAndSaveContent();
