@@ -9,6 +9,7 @@ import GeneralExtractorStrategy from './strategies/general-strategy.js';
 import RedditExtractorStrategy from './strategies/reddit-strategy.js';
 import YoutubeExtractorStrategy from './strategies/youtube-strategy.js';
 import PdfExtractorStrategy from './strategies/pdf-strategy.js';
+import SelectedTextExtractorStrategy from './strategies/selected-text-strategy.js';
 
 /**
  * Factory to create the appropriate content extractor
@@ -28,6 +29,7 @@ class ExtractorFactory {
     [CONTENT_TYPES.REDDIT]: RedditExtractorStrategy,
     [CONTENT_TYPES.YOUTUBE]: YoutubeExtractorStrategy,
     [CONTENT_TYPES.PDF]: PdfExtractorStrategy,
+    [CONTENT_TYPES.SELECTED_TEXT]: SelectedTextExtractorStrategy,
   };
 
   /**

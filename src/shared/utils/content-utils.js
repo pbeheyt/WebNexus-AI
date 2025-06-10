@@ -7,9 +7,15 @@ import { logger } from '../logger';
  * This is the single source of truth for content type detection
  *
  * @param {string} url - The URL to check
+ * @param {boolean} [hasSelection=false] - Whether there is active text selection
  * @returns {string} - The detected content type
  */
-export function determineContentType(url) {
+export function determineContentType(url, hasSelection = false) {
+  // Prioritize selected text over any other content type
+  if (hasSelection) {
+    return CONTENT_TYPES.SELECTED_TEXT;
+  }
+
   // PDF detection criteria evaluation
   const isPdf = url.endsWith('.pdf');
   const containsPdfPath = url.includes('/pdf/');

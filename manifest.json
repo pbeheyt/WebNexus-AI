@@ -41,8 +41,7 @@
     "https://api.mistral.ai/",
     "https://api.deepseek.com/",
     "https://generativelanguage.googleapis.com/",
-    "https://api.grok.ai/",
-    "https://tactiq-apps-prod.tactiq.io/"
+    "https://api.grok.ai/"
   ],
   "background": {
     "service_worker": "dist/background.bundle.js"

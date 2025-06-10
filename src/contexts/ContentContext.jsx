@@ -1,4 +1,4 @@
-// src/components/content/ContentContext.jsx
+// src/contexts/ContentContext.jsx
 import { createContext, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useEffect, useState, useCallback } from 'react';
@@ -25,7 +25,6 @@ export function ContentProvider({ children, detectOnMount = true }) {
   const [isSupported, setIsSupported] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isInjectable, setIsInjectable] = useState(true);
-  const [hasSelection, setHasSelection] = useState(false);
 
   /**
    * Detect the current tab and content type
@@ -57,12 +56,15 @@ export function ContentProvider({ children, detectOnMount = true }) {
       setCurrentTab(tab);
 
       // Get initial selection state for this tab
-      const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
-      const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE] || {};
-      setHasSelection(!!selectionStates[tab.id]);
+      const selectionResult = await chrome.storage.local.get(
+        STORAGE_KEYS.TAB_SELECTION_STATE
+      );
+      const selectionStates =
+        selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE] || {};
+      const currentTabSelection = !!selectionStates[tab.id];
 
-      // Determine content type based solely on URL
-      const detectedType = determineContentType(tab.url);
+      // Determine content type based on URL and selection status
+      const detectedType = determineContentType(tab.url, currentTabSelection);
       setContentType(detectedType);
       setIsSupported(true);
     } catch (error) {
@@ -99,13 +101,19 @@ export function ContentProvider({ children, detectOnMount = true }) {
 
   // Listen for real-time selection changes
   useEffect(() => {
-    if (!currentTab?.id) return;
+    if (!currentTab?.id || !currentTab?.url) return;
 
     const handleStorageChange = (changes, area) => {
       if (area === 'local' && changes[STORAGE_KEYS.TAB_SELECTION_STATE]) {
-        const newSelectionStates = changes[STORAGE_KEYS.TAB_SELECTION_STATE].newValue || {};
+        const newSelectionStates =
+          changes[STORAGE_KEYS.TAB_SELECTION_STATE].newValue || {};
         const currentTabSelection = !!newSelectionStates[currentTab.id];
-        setHasSelection(currentTabSelection);
+        // Re-determine content type when selection changes
+        const newType = determineContentType(
+          currentTab.url,
+          currentTabSelection
+        );
+        setContentType(newType);
       }
     };
 
@@ -113,7 +121,7 @@ export function ContentProvider({ children, detectOnMount = true }) {
     return () => {
       chrome.storage.onChanged.removeListener(handleStorageChange);
     };
-  }, [currentTab?.id]);
+  }, [currentTab?.id, currentTab?.url]);
 
   return (
     <ContentContext.Provider
@@ -123,7 +131,6 @@ export function ContentProvider({ children, detectOnMount = true }) {
         isSupported,
         isLoading,
         isInjectable,
-        hasSelection,
         refreshContent,
         setContentType: setManualContentType,
         updateContentContext,

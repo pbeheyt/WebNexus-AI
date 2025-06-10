@@ -2,8 +2,6 @@
 import { logger } from '../shared/logger.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 
-import { normalizeText } from './utils/text-utils.js';
-
 class BaseExtractor {
   constructor(contentType) {
     this.contentType = contentType;
@@ -117,27 +115,6 @@ class BaseExtractor {
     }
   }
 
-  /**
-   * Checks for user-selected text on the page. If found, returns a standardized
-   * object representing the selection. Otherwise, returns null.
-   * @returns {Object|null} A selection object or null.
-   */
-  checkForSelection() {
-    const selectedText = window.getSelection().toString();
-    if (selectedText && selectedText.trim()) {
-      const normalizedContent = normalizeText(selectedText);
-      this.logger.info(
-        `User selection detected (${normalizedContent.length} chars). Bypassing standard extraction.`
-      );
-      return {
-        isSelection: true,
-        content: normalizedContent,
-        contentType: this.contentType,
-        extractedAt: new Date().toISOString(),
-      };
-    }
-    return null;
-  }
 }
 
 export default BaseExtractor;

@@ -8,6 +8,7 @@ export const CONTENT_TYPES = {
   REDDIT: 'reddit',
   YOUTUBE: 'youtube',
   PDF: 'pdf',
+  SELECTED_TEXT: 'selectedText',
 };
 
 /**
@@ -18,6 +19,7 @@ export const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.REDDIT]: 'Reddit Post',
   [CONTENT_TYPES.YOUTUBE]: 'YouTube Video',
   [CONTENT_TYPES.PDF]: 'PDF Document',
+  [CONTENT_TYPES.SELECTED_TEXT]: 'Selected Text',
 };
 
 /**

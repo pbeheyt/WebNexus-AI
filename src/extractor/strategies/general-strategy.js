@@ -67,8 +67,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
    * @returns {Promise<Object>} An object containing the extracted page data.
    */
   async extractData() {
-    const selection = this.checkForSelection();
-    if (selection) return selection;
 
     let title = this.extractPageTitle();
     const url = this.extractPageUrl();
