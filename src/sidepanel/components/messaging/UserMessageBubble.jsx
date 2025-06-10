@@ -95,8 +95,11 @@ export const UserMessageBubble = memo(
                 size='sm'
                 onClick={() =>
                   switchToContextView({
-                    title: `Context for: "${content.substring(0, 30)}..."`,
-                    content: pageContextUsed,
+                    data: {
+                      title: `Context for: "${content.substring(0, 30)}..."`,
+                      content: pageContextUsed,
+                    },
+                    messageId: id,
                   })
                 }
                 className='mr-3 flex-shrink-0 !px-2 !py-1' // Override padding for a tighter fit

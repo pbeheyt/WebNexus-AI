@@ -45,13 +45,15 @@ function ChatArea({
   otherUIHeight = 160, // Default value, will be updated by SidePanelApp
   requestHeightRecalculation, // Prop to trigger height update in parent
 }) {
-  const {
-    messages,
-    // isContentExtractionEnabled, // No longer used directly here
-    // setIsContentExtractionEnabled, // No longer used directly here
-    modelConfigData,
-    isThinkingModeEnabled,
-  } = useSidePanelChat();
+const {
+  messages,
+  scrollToMessageId, // Add this
+  clearScrollToMessageId, // Add this
+  // isContentExtractionEnabled, // No longer used directly here
+  // setIsContentExtractionEnabled, // No longer used directly here
+  modelConfigData,
+  isThinkingModeEnabled,
+} = useSidePanelChat();
   const { contentType, currentTab } = useContent();
   const { textSize } = useUI();
   const messagesEndRef = useRef(null);
@@ -111,7 +113,19 @@ function ChatArea({
   ] = useState(true);
   const rafIdHeightCalc = useRef(null); // Used for user message height calc
   const showButtonTimerRef = useRef(null);
-  // const includeToggleRef = useRef(null); // Removed
+  // Effect to scroll to a specific message when requested by the context
+      useLayoutEffect(() => {
+        if (scrollToMessageId && messages.length > 0) {
+          const element = document.getElementById(scrollToMessageId);
+          if (element) {
+            // Use a short timeout to ensure the DOM is fully ready, especially after view switches
+            setTimeout(() => {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+          }
+          clearScrollToMessageId(); // Clear the scroll target ID
+        }
+      }, [scrollToMessageId, clearScrollToMessageId, messages]);
 
   useEffect(() => {
     const targetPlatform = platforms.find((p) => p.id === selectedPlatformId);
@@ -135,7 +149,7 @@ function ChatArea({
     modelConfigData,
     selectedModel,
     hasCompletedInitialLoad,
-  ]); // Removed hasAnyPlatformCredentials as it's for initial view
+  ]);
 
   function getWelcomeMessage(contentType, isPageInjectableParam) {
     if (!isPageInjectableParam) {

@@ -26,6 +26,7 @@ import { MESSAGE_ROLES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { robustSendMessage } from '../../shared/utils/message-utils';
+import SidePanelStateManager from '../../services/SidePanelStateManager';
 
 const SidePanelChatContext = createContext(null);
 
@@ -49,6 +50,8 @@ export function SidePanelChatProvider({ children }) {
   const { contentType, currentTab } = useContent();
   const [inputValue, setInputValue] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState(null);
+  const [scrollToMessageId, setScrollToMessageId] = useState(null);
+  const [contextMessageOriginId, setContextMessageOriginId] = useState(null);
   const [stableContextStatus, setStableContextStatus] = useState({
     warningLevel: 'none',
   });
@@ -64,7 +67,6 @@ export function SidePanelChatProvider({ children }) {
   const [isThinkingModeEnabled, setIsThinkingModeEnabled] = useState(false);
 
   // --- Core Hooks ---
-  // FIX: Call useChatSessionManagement first to define currentChatSessionId
   const [contextViewData, setContextViewData] = useState(null);
   const {
     messages,
@@ -74,7 +76,7 @@ export function SidePanelChatProvider({ children }) {
     createNewChat,
     selectChatSession,
     deleteSelectedChatSession,
-    switchToView,
+    switchToView: switchToViewFromHook,
   } = useChatSessionManagement({
     tabId,
     selectedPlatformId,
@@ -82,11 +84,11 @@ export function SidePanelChatProvider({ children }) {
     selectPlatform,
     selectModel,
     isPlatformLoading,
+    setScrollToMessageId,
   });
 
   const { success: showSuccessNotification, error: showErrorNotification } = useNotification();
 
-  // FIX: Now call useTokenTracking with the defined currentChatSessionId
   const { tokenStats, calculateContextStatus, clearTokenData } =
     useTokenTracking(currentChatSessionId);
 
@@ -108,7 +110,25 @@ export function SidePanelChatProvider({ children }) {
     [platforms, selectedPlatformId]
   );
 
-  // --- Internal Helper: Initiate API Call ---
+  const switchToView = useCallback(
+    async (viewName) => {
+      if (!tabId || !['chat', 'history', 'context'].includes(viewName)) return;
+
+      if (
+        viewName === 'chat' &&
+        currentView === 'context' &&
+        contextMessageOriginId
+      ) {
+        setScrollToMessageId(contextMessageOriginId);
+        setContextMessageOriginId(null);
+      }
+
+      await SidePanelStateManager.setTabViewMode(tabId, viewName);
+      switchToViewFromHook(viewName);
+    },
+    [tabId, currentView, contextMessageOriginId, switchToViewFromHook]
+  );
+
   const _initiateApiCall = useCallback(
     async ({
       platformId,
@@ -239,7 +259,6 @@ export function SidePanelChatProvider({ children }) {
     ]
   );
 
-  // --- Instantiate Hooks (Pass _initiateApiCall) ---
   const { cancelStream } = useChatStreaming({
     chatSessionId: currentChatSessionId,
     setMessages,
@@ -286,7 +305,6 @@ export function SidePanelChatProvider({ children }) {
       isThinkingModeEnabled,
     });
 
-  // Load full platform configuration when platform or model changes
   useEffect(() => {
     const loadFullConfig = async () => {
       if (!selectedPlatformId || !selectedModel || !tabId) return;
@@ -319,7 +337,6 @@ export function SidePanelChatProvider({ children }) {
     loadFullConfig();
   }, [selectedPlatformId, selectedModel, tabId, getPlatformApiConfig]);
 
-  // Update context status when model config or token stats change
   useEffect(() => {
     const updateContextStatus = async () => {
       if (!tabId || !modelConfigData) {
@@ -337,26 +354,22 @@ export function SidePanelChatProvider({ children }) {
     updateContextStatus();
   }, [tabId, modelConfigData, tokenStats, calculateContextStatus]);
 
-  // Stabilize tokenStats for UI consumers
   useEffect(() => {
     if (!isPlatformLoading) {
       setStableTokenStats(tokenStats);
     }
   }, [tokenStats, isPlatformLoading]);
 
-  // Get visible messages (filtering out extracted content)
   const visibleMessages = useMemo(() => {
     return messages.filter((msg) => !msg.isExtractedContent);
   }, [messages]);
 
-  // Reset processing when the tab changes
   useEffect(() => {
     if (tabId) {
       resetContentProcessing();
     }
   }, [tabId, resetContentProcessing]);
 
-  // Load Thinking Mode preference when dependencies change
   useEffect(() => {
     const loadPreference = async () => {
       if (!selectedPlatformId || !selectedModel || !tabId || !modelConfigData) {
@@ -388,7 +401,6 @@ export function SidePanelChatProvider({ children }) {
     loadPreference();
   }, [selectedPlatformId, selectedModel, tabId, modelConfigData]);
 
-  // Listen for external changes to the current chat session
   useEffect(() => {
     if (!chrome.storage?.onChanged) return;
 
@@ -428,7 +440,6 @@ export function SidePanelChatProvider({ children }) {
     };
   }, [currentChatSessionId, messages, setMessages]);
 
-  // --- Send Message Logic ---
   const sendMessage = async (text = inputValue) => {
     const currentPlatformId = selectedPlatformId;
     const currentModelId = selectedModel;
@@ -691,8 +702,9 @@ export function SidePanelChatProvider({ children }) {
   );
 
   const switchToContextView = useCallback(
-    (data) => {
+    ({ data, messageId }) => {
       setContextViewData(data);
+      setContextMessageOriginId(messageId);
       switchToView('context');
     },
     [switchToView]
@@ -706,10 +718,9 @@ export function SidePanelChatProvider({ children }) {
     try {
       await ChatHistoryService.deleteMultipleChatSessions(sessionIdsToDelete);
       
-      // Check if the currently active session was among those deleted
       if (currentChatSessionId && sessionIdsToDelete.includes(currentChatSessionId)) {
         logger.sidepanel.info(`Active session ${currentChatSessionId} was deleted. Creating a new one.`);
-        await createNewChat(); // This will handle the transition gracefully
+        await createNewChat();
       }
       
       showSuccessNotification(`${sessionIdsToDelete.length} chat(s) deleted successfully.`);
@@ -724,6 +735,8 @@ export function SidePanelChatProvider({ children }) {
     <SidePanelChatContext.Provider
       value={{
         messages: visibleMessages,
+        scrollToMessageId,
+        clearScrollToMessageId: () => setScrollToMessageId(null),
         currentChatSessionId,
         currentView,
         contextViewData,

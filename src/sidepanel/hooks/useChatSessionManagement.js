@@ -26,6 +26,7 @@ export function useChatSessionManagement({
   selectPlatform,
   selectModel,
   isPlatformLoading,
+  setScrollToMessageId, // Add this line
 }) {
   const { currentTab } = useContent();
   const [messages, setMessages] = useState([]);
@@ -263,11 +264,22 @@ export function useChatSessionManagement({
         );
         setMessages(history);
         setCurrentView('chat');
+
+        // New logic: set scroll target to last user message
+        if (history.length > 0) {
+          const lastUserMessage = history
+            .slice()
+            .reverse()
+            .find((msg) => msg.role === 'user');
+          if (lastUserMessage) {
+            setScrollToMessageId(lastUserMessage.id);
+          }
+        }
       } catch (error) {
         logger.sidepanel.error('Error in selectChatSession:', error);
       }
     },
-    [tabId]
+    [tabId, setMessages, setScrollToMessageId] // Add dependencies
   );
 
   const switchToView = useCallback(
