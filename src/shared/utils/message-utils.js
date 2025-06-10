@@ -33,10 +33,11 @@ export async function robustSendMessage(message, attempt = 1) {
     }
 
     // Attempt to send the message
-    chrome.runtime.sendMessage(message, (response) => {
-      const lastError = chrome.runtime.lastError;
+    try {
+      chrome.runtime.sendMessage(message, (response) => {
+        const lastError = chrome.runtime.lastError;
 
-      if (lastError) {
+        if (lastError) {
         // --- Context Invalidated Error Handling (Permanent & Unrecoverable) ---
         if (lastError.message?.includes('Extension context invalidated') ||
             lastError.message?.includes('Chrome runtime API is not available')) {
@@ -92,5 +93,16 @@ export async function robustSendMessage(message, attempt = 1) {
       // --- Success Logic ---
       resolve(response);
     });
+    } catch (e) {
+      // This catches synchronous errors thrown by sendMessage, which can happen if the context
+      // is invalidated so severely that the browser knows it's impossible to even attempt the call.
+      if (e.message?.includes('Extension context invalidated')) {
+        // This is an expected error from an orphaned content script.
+        // Silently resolve to prevent console spam. The script is non-functional.
+        return resolve();
+      }
+      // For any other unexpected synchronous error, we should reject.
+      return reject(e);
+    }
   });
 }
