@@ -17,6 +17,43 @@ import { setupContextMenuListener } from './listeners/context-menu-listener.js';
 import { processWithDefaultPromptWebUI } from './services/content-processing.js';
 
 /**
+ * Injects the selection listener content script into all existing, relevant tabs.
+ * This is crucial for ensuring functionality is restored after an extension reload.
+ */
+async function injectSelectionListenerIntoExistingTabs() {
+  logger.background.info('Injecting selection listener into existing tabs...');
+  const tabs = await chrome.tabs.query({
+    url: ['http://*/*', 'https://*/*'],
+  });
+
+  for (const tab of tabs) {
+    try {
+      // We are ignoring the result of the injection, as it's a fire-and-forget action.
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['dist/selection-listener.bundle.js'],
+      });
+    } catch (err) {
+      // This can happen on special pages like chrome:// pages or the web store.
+      // It's an expected behavior, so we'll just log it for debugging and continue.
+      if (
+        err.message &&
+        !err.message.includes('Cannot access a chrome:// URL') &&
+        !err.message.includes('No tab with id') &&
+        !err.message.includes('The extensions gallery cannot be scripted')
+      ) {
+        logger.background.warn(
+          `Could not inject selection listener into tab ${tab.id} (${tab.url}): ${err.message}`
+        );
+      }
+    }
+  }
+  logger.background.info(
+    `Finished injecting selection listener into ${tabs.length} tabs.`
+  );
+}
+
+/**
  * Main entry point for the background service worker
  */
 async function startBackgroundService() {
@@ -24,6 +61,9 @@ async function startBackgroundService() {
     logger.background.info('Starting background service...');
     // 1. Initialize extension configuration and state
     await initializeExtension();
+
+    // Inject the selection listener on startup to handle existing tabs
+    await injectSelectionListenerIntoExistingTabs();
 
     // 2. Set up message router to handle communication
     setupMessageRouter();

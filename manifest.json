@@ -11,18 +11,7 @@
     "contextMenus",
     "sidePanel"
   ],
-  "content_scripts": [
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "js": [
-        "dist/selection-listener.bundle.js"
-      ],
-      "run_at": "document_idle"
-    }
-  ],
+  "content_scripts": [],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self'; script-src-elem 'self'"
   },
