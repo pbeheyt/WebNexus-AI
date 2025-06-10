@@ -42,6 +42,7 @@ module.exports = {
     popup: './src/popup/index.jsx',
     settings: './src/settings/index.jsx',
     sidepanel: './src/sidepanel/index.jsx',
+    'selection-listener': './src/content/selection-listener.js',
     'extractor-content': './src/content/extractor-content.js',
     'platform-content': './src/content/platform-content.js',
   },
