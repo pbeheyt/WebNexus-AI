@@ -57,10 +57,10 @@ export function ContentProvider({ children, detectOnMount = true }) {
 
       // Get initial selection state for this tab
       const selectionResult = await chrome.storage.local.get(
-        STORAGE_KEYS.TAB_SELECTION_STATE
+        STORAGE_KEYS.TAB_SELECTION_STATES
       );
       const selectionStates =
-        selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE] || {};
+        selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] || {};
       const currentTabSelection = !!selectionStates[tab.id];
 
       // Determine content type based on URL and selection status
@@ -104,9 +104,9 @@ export function ContentProvider({ children, detectOnMount = true }) {
     if (!currentTab?.id || !currentTab?.url) return;
 
     const handleStorageChange = (changes, area) => {
-      if (area === 'local' && changes[STORAGE_KEYS.TAB_SELECTION_STATE]) {
+      if (area === 'local' && changes[STORAGE_KEYS.TAB_SELECTION_STATES]) {
         const newSelectionStates =
-          changes[STORAGE_KEYS.TAB_SELECTION_STATE].newValue || {};
+          changes[STORAGE_KEYS.TAB_SELECTION_STATES].newValue || {};
         const currentTabSelection = !!newSelectionStates[currentTab.id];
         // Re-determine content type when selection changes
         const newType = determineContentType(

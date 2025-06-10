@@ -58,15 +58,25 @@ export async function updateTabSelectionState(tabId, hasSelection) {
     return;
   }
   try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
-    const selectionStates = result[STORAGE_KEYS.TAB_SELECTION_STATE] || {};
-    
-    // Only update if the state has changed to avoid unnecessary writes
-    if (selectionStates[tabId] !== hasSelection) {
-      selectionStates[tabId] = hasSelection;
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.TAB_SELECTION_STATE]: selectionStates,
-      });
+    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATES);
+    const selectionStates = result[STORAGE_KEYS.TAB_SELECTION_STATES] || {};
+
+    if (hasSelection) {
+      // Add or update the key only if it's not already true, to avoid unnecessary writes
+      if (selectionStates[tabId] !== true) {
+        selectionStates[tabId] = true;
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.TAB_SELECTION_STATES]: selectionStates,
+        });
+      }
+    } else {
+      // Delete the key if selection is lost and the key exists
+      if (selectionStates[tabId]) {
+        delete selectionStates[tabId];
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.TAB_SELECTION_STATES]: selectionStates,
+        });
+      }
     }
   } catch (error) {
     logger.background.error(`Error updating selection state for tab ${tabId}:`, error);
@@ -128,17 +138,16 @@ export function setupTabStateListener() {
       }
 
       logger.background.info(
-        `Tab ${tabId} closed, cleaning up tab-specific state via onRemoved.`
+        `Tab ${tabId} closed, performing immediate cleanup via onRemoved.`
       );
 
       try {
-        // Set tab UI visibility to false. The generic cleanupTabStates will handle full removal later if needed.
-        await SidePanelStateManager.setTabUIVisibility(tabId, false);
-        logger.background.info(
-          `Tab UI visibility set to false for closed tab ${tabId}.`
-        );
+        // --- Immediate Sidepanel State Cleanup ---
+        // Completely remove the state object for the closed tab.
+        await SidePanelStateManager.removeTabUIState(tabId);
 
-        // Check and clean up provisional chat session if necessary
+        // --- Provisional Chat Session Cleanup ---
+        // This logic remains important for cleaning up unsaved chats.
         try {
           const tabUIState = await SidePanelStateManager.getTabUIState(tabId);
           const activeChatSessionId = tabUIState?.activeChatSessionId;
@@ -159,13 +168,14 @@ export function setupTabStateListener() {
           logger.background.error(`Error during provisional session cleanup for closed tab ${tabId}:`, cleanupError);
         }
 
-        // Clean up selection state for the closed tab
+        // --- Immediate Selection State Cleanup ---
+        // Unconditionally remove the key for the closed tab.
         try {
-          const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
-          const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE];
+          const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATES);
+          const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES];
           if (selectionStates && selectionStates[tabId]) {
             delete selectionStates[tabId];
-            await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SELECTION_STATE]: selectionStates });
+            await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SELECTION_STATES]: selectionStates });
             logger.background.info(`Cleaned up selection state for closed tab ${tabId}.`);
           }
         } catch (selectionCleanupError) {
@@ -180,8 +190,8 @@ export function setupTabStateListener() {
         );
       }
 
-      // Also attempt to disable the side panel for the closed tab, if it was enabled.
-      // This might fail if the tab is truly gone, so catch errors gracefully.
+      // The attempt to disable the side panel is less critical now but can be kept as a good practice.
+      // It might fail if the tab is truly gone, so catch errors gracefully.
       logger.background.info(
         `Attempting to disable side panel for closed tab ${tabId}`
       );
@@ -223,8 +233,8 @@ export async function performStaleTabCleanup() {
     // Also clean up stale selection states
     const openTabs = await chrome.tabs.query({});
     const openTabIds = new Set(openTabs.map(tab => tab.id.toString()));
-    const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
-    const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE];
+    const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATES);
+    const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES];
     if (selectionStates) {
       let changed = false;
       for (const storedTabIdStr in selectionStates) {
@@ -235,7 +245,7 @@ export async function performStaleTabCleanup() {
         }
       }
       if (changed) {
-        await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SELECTION_STATE]: selectionStates });
+        await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SELECTION_STATES]: selectionStates });
       }
     }
 

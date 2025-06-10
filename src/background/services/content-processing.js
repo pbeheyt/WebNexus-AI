@@ -30,8 +30,8 @@ export async function processWithDefaultPromptWebUI(tab) {
   }
 
   try {
-    const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
-    const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE] || {};
+    const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATES);
+    const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] || {};
     const hasSelection = !!selectionStates[tab.id];
 
     const contentType = determineContentType(tab.url, hasSelection);

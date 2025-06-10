@@ -137,6 +137,43 @@ class SidePanelStateManager {
 
 
   /**
+   * Completely removes the UI state for a single tab.
+   * @param {number} tabId - The ID of the tab to remove.
+   * @returns {Promise<void>}
+   */
+  static async removeTabUIState(tabId) {
+    if (tabId === null || tabId === undefined) {
+      logger.service.warn(
+        'SidePanelStateManager: removeTabUIState called with invalid tabId.'
+      );
+      return;
+    }
+    try {
+      const result = await chrome.storage.local.get(
+        STORAGE_KEYS.TAB_SIDEPANEL_STATES
+      );
+      const states = result[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
+      const tabIdStr = tabId.toString();
+
+      if (states[tabIdStr]) {
+        delete states[tabIdStr];
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.TAB_SIDEPANEL_STATES]: states,
+        });
+        logger.service.info(
+          `SidePanelStateManager: Removed UI state for tab ${tabId}.`
+        );
+      }
+    } catch (error) {
+      logger.service.error(
+        `SidePanelStateManager: Error removing UI state for tab ${tabId}:`,
+        error
+      );
+    }
+  }
+
+
+  /**
    * Cleans up all tab-specific states (visibility, preferences, data) for tabs that are no longer open.
    * @returns {Promise<void>}
    */

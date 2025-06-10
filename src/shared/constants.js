@@ -99,19 +99,22 @@ export const STORAGE_KEYS = {
   API_RESPONSE_TIMESTAMP: 'api_response_timestamp',
   /** @description Unique identifier for an active API stream. Local. */
   API_STREAM_ID: 'api_stream_id',
-TAB_SELECTION_STATE: 'tab_selection_state', // { [tabId]: boolean }
-  
+
   // --- Global Chat Session Data ---
   /** @description Stores all global chat sessions. Keyed by chatSessionId. Local. */
   GLOBAL_CHAT_SESSIONS: 'global_chat_sessions',
   /** @description Stores token statistics for each global chat session. Keyed by chatSessionId. Local. */
   GLOBAL_CHAT_TOKEN_STATS: 'global_chat_token_stats',
-
-  // --- Tab-Specific Data (Primarily for Sidepanel context persistence per tab) ---
+  
+  // --- Tab-Specific Data ---
+  /** @description Selection state (true/false) for each tab, indicating if text is selected. Local. */
+  TAB_SELECTION_STATES: 'tab_selection_states',
   /** @description Visibility state (true/false) of the Sidepanel for each tab. Local. */
   TAB_SIDEPANEL_STATES: 'tab_sidepanel_states',
+
   // --- Identifiers & Prefixes ---
-  CHAT_SESSION_ID_PREFIX: 'chat_', // Used for generating global chat session IDs
+  /** @description Prefix used for generating unique IDs for global chat sessions. Local. */
+  CHAT_SESSION_ID_PREFIX: 'chat_',
 };
 
 // Prompt limits
