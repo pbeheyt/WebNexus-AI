@@ -1,5 +1,6 @@
 // src/services/ContentFormatter.js
 import { logger } from '../shared/logger.js';
+import { CONTENT_TYPES } from '../shared/constants.js';
 
 class ContentFormatter {
   /**
@@ -12,6 +13,20 @@ class ContentFormatter {
     if (!contentData) {
       logger.service.error('No content data available for formatting');
       return '[Error: No content data available]'; // Clear error indication
+    }
+
+    // Handle user-selected text from general web pages with a simplified format
+    if (
+      contentData.isSelection === true &&
+      contentType === CONTENT_TYPES.GENERAL
+    ) {
+      logger.service.info(
+        'Formatting user-selected text with simplified format.'
+      );
+      return `## SELECTED TEXT\n${this._getData(
+        contentData.content,
+        'No content selected.'
+      )}`;
     }
 
     logger.service.info(`Formatting content of type: ${contentType}`);
