@@ -11,6 +11,7 @@ import {
   Toggle,
   ContentTypeIcon,
   ExtractionStrategySelector,
+  SelectionModeIndicator,
 } from '../components';
 import { useContent } from '../contexts/ContentContext';
 import { UnifiedInput } from '../components/input/UnifiedInput';
@@ -36,6 +37,7 @@ export function Popup() {
     isSupported,
     isLoading: contentLoading,
     isInjectable,
+    hasSelection,
   } = useContent();
   const { selectedPlatformId, platforms } = usePopupPlatform();
   const platformName = useMemo(() => {
@@ -379,70 +381,55 @@ export function Popup() {
             <div className='flex justify-between items-center mb-3 px-3'>
               {isInjectable ? (
                 <>
-                  <div
-                    className={`flex items-center gap-1 w-full mt-3 cursor-default`}
-                  >
-                    {contentTypeLabel ? (
-                      <>
-                        <ContentTypeIcon
-                          contentType={contentType}
-                          className='w-5 h-5 text-theme-primary'
-                        />
-                        <span className='text-sm text-theme-primary font-medium truncate ml-1 cursor-default'>
-                          {contentTypeLabel}
-                        </span>
-                        <span
-                          ref={includeContextRef}
-                          onMouseEnter={() =>
-                            setIsIncludeContextTooltipVisible(true)
-                          }
-                          onMouseLeave={() =>
-                            setIsIncludeContextTooltipVisible(false)
-                          }
-                          onFocus={() =>
-                            setIsIncludeContextTooltipVisible(true)
-                          }
-                          onBlur={() =>
-                            setIsIncludeContextTooltipVisible(false)
-                          }
-                          aria-describedby='include-context-tooltip'
-                          className='inline-flex items-center'
-                          tabIndex={0}
-                          role="button"
-                        >
-                          <Toggle
-                            id='include-context-toggle'
-                            checked={includeContext}
-                            onChange={(newCheckedState) => {
-                              if (!isToggleDisabled) {
-                                setIncludeContext(newCheckedState);
-                                updateStatus(
-                                  `Content inclusion ${newCheckedState ? 'enabled' : 'disabled'}`
-                                );
-                              }
-                            }}
-                            disabled={isToggleDisabled}
-                            className='w-8 h-4 ml-2'
-                          />
-                        </span>
-                        {contentType === 'general' && (
-                          <ExtractionStrategySelector
-                            disabled={isToggleDisabled}
-                            className='ml-2'
-                            onChange={(newStrategy) => {
-                              updateStatus(
-                                `Extraction strategy set to ${newStrategy}.`
-                              );
-                            }}
-                          />
-                        )}
-                      </>
-                    ) : (
-                      <span className='text-sm text-theme-secondary cursor-default'>
-                        Detecting type...
-                      </span>
-                    )}
-                  </div>
+                  {hasSelection ? (
+                    <SelectionModeIndicator />
+                  ) : (
+                    <div className="flex items-center gap-1 w-full mt-3 cursor-default">
+                      {contentTypeLabel ? (
+                        <>
+                          <ContentTypeIcon contentType={contentType} className="w-5 h-5 text-theme-primary" />
+                          <span className="text-sm text-theme-primary font-medium truncate ml-1 cursor-default">
+                            {contentTypeLabel}
+                          </span>
+                          <span
+                            ref={includeContextRef}
+                            onMouseEnter={() => setIsIncludeContextTooltipVisible(true)}
+                            onMouseLeave={() => setIsIncludeContextTooltipVisible(false)}
+                            onFocus={() => setIsIncludeContextTooltipVisible(true)}
+                            onBlur={() => setIsIncludeContextTooltipVisible(false)}
+                            aria-describedby="include-context-tooltip"
+                            className="inline-flex items-center"
+                            tabIndex={0}
+                            role="button"
+                          >
+                            <Toggle
+                              id="include-context-toggle"
+                              checked={includeContext}
+                              onChange={(newCheckedState) => {
+                                if (!isToggleDisabled) {
+                                  setIncludeContext(newCheckedState);
+                                  updateStatus(`Content inclusion ${newCheckedState ? 'enabled' : 'disabled'}`);
+                                }
+                              }}
+                              disabled={isToggleDisabled}
+                              className="w-8 h-4 ml-2"
+                            />
+                          </span>
+                          {contentType === 'general' && (
+                            <ExtractionStrategySelector
+                              disabled={isToggleDisabled}
+                              className="ml-2"
+                              onChange={(newStrategy) => {
+                                updateStatus(`Extraction strategy set to ${newStrategy}.`);
+                              }}
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-sm text-theme-secondary cursor-default">Detecting type...</span>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div></div>

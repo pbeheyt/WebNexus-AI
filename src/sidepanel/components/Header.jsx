@@ -10,6 +10,7 @@ import {
   Toggle,
   Tooltip,
   ExtractionStrategySelector,
+  SelectionModeIndicator,
 } from '../../components';
 import {
   CONTENT_TYPE_LABELS,
@@ -26,6 +27,7 @@ function Header({
   isContentExtractionEnabled,
   setIsContentExtractionEnabled,
   hasAnyPlatformCredentials,
+  hasSelection,
   className = '',
 }) {
   const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false);
@@ -70,7 +72,11 @@ function Header({
     <div className={`px-5 py-2 border-b border-theme flex justify-between items-center min-h-[40px] ${className}`}>
       {/* Left Section: Content Extraction Controls */}
       <div className='flex items-center gap-1 mr-5 text-sm text-theme-secondary cursor-default min-w-0'>
-        {isPageInjectable ? (
+        {hasSelection ? (
+          <div className="flex items-center gap-1 w-full cursor-default">
+            <SelectionModeIndicator className="mt-0" />
+          </div>
+        ) : isPageInjectable ? (
           <>
             <ContentTypeIcon
               contentType={contentType}
@@ -228,6 +234,7 @@ Header.propTypes = {
   isContentExtractionEnabled: PropTypes.bool,
   setIsContentExtractionEnabled: PropTypes.func,
   hasAnyPlatformCredentials: PropTypes.bool,
+  hasSelection: PropTypes.bool,
   className: PropTypes.string,
 };
 

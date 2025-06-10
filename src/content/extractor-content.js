@@ -1,5 +1,7 @@
 // src/content/index.js - Modify existing or create new
 import ExtractorFactory from '../extractor/extractor-factory.js';
+import { debounce } from '../shared/utils/debounce-utils';
+import { robustSendMessage } from '../shared/utils/message-utils';
 import { logger } from '../shared/logger.js';
 import {
   STORAGE_KEYS,
@@ -121,4 +123,24 @@ if (window.webNexusAIContentScriptInitialized) {
 }
 
 // Export for webpack
+// --- Text Selection Detection ---
+const handleSelectionChange = async () => {
+  try {
+    const selection = window.getSelection();
+    const hasSelection = selection ? selection.toString().trim().length > 0 : false;
+    await robustSendMessage({
+      action: 'updateSelectionStatus',
+      hasSelection: hasSelection,
+    });
+  } catch (error) {
+    logger.content.error('Error sending selection status update:', error);
+  }
+};
+
+// Debounce the handler to avoid flooding the background script with messages
+const debouncedSelectionChangeHandler = debounce(handleSelectionChange, 250);
+
+// Listen for selection changes on the document
+document.addEventListener('selectionchange', debouncedSelectionChangeHandler);
+
 export default {};

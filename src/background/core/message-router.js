@@ -17,7 +17,7 @@ import {
   handleCloseCurrentSidePanelRequest,
 } from '../services/sidepanel-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
-import { handleClearTabDataRequest } from '../listeners/tab-state-listener.js';
+import { handleClearTabDataRequest, updateTabSelectionState } from '../listeners/tab-state-listener.js';
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -176,6 +176,15 @@ function registerServiceHandlers() {
 
   // Clear specific tab data (for sidepanel refresh)
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
+
+  // Selection status update from content script
+  messageHandlers.set('updateSelectionStatus', (message, sender, sendResponse) => {
+    if (sender.tab && sender.tab.id) {
+      updateTabSelectionState(sender.tab.id, message.hasSelection);
+    }
+    sendResponse({ success: true }); // Acknowledge receipt
+    return false; // No async response needed
+  });
 
   // Handle requests to toggle the side panel
   messageHandlers.set('toggleSidePanelAction', handleToggleSidePanelAction);

@@ -8,6 +8,7 @@ import {
   isInjectablePage,
 } from '../shared/utils/content-utils';
 import { logger } from '../shared/logger';
+import { STORAGE_KEYS } from '../shared/constants';
 
 const ContentContext = createContext(null);
 
@@ -24,6 +25,7 @@ export function ContentProvider({ children, detectOnMount = true }) {
   const [isSupported, setIsSupported] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isInjectable, setIsInjectable] = useState(true);
+  const [hasSelection, setHasSelection] = useState(false);
 
   /**
    * Detect the current tab and content type
@@ -53,6 +55,11 @@ export function ContentProvider({ children, detectOnMount = true }) {
       const injectable = isInjectablePage(tab.url);
       setIsInjectable(injectable);
       setCurrentTab(tab);
+
+      // Get initial selection state for this tab
+      const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
+      const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE] || {};
+      setHasSelection(!!selectionStates[tab.id]);
 
       // Determine content type based solely on URL
       const detectedType = determineContentType(tab.url);
@@ -90,6 +97,24 @@ export function ContentProvider({ children, detectOnMount = true }) {
     setContentType(newContentType);
   }, []);
 
+  // Listen for real-time selection changes
+  useEffect(() => {
+    if (!currentTab?.id) return;
+
+    const handleStorageChange = (changes, area) => {
+      if (area === 'local' && changes[STORAGE_KEYS.TAB_SELECTION_STATE]) {
+        const newSelectionStates = changes[STORAGE_KEYS.TAB_SELECTION_STATE].newValue || {};
+        const currentTabSelection = !!newSelectionStates[currentTab.id];
+        setHasSelection(currentTabSelection);
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
+  }, [currentTab?.id]);
+
   return (
     <ContentContext.Provider
       value={{
@@ -98,6 +123,7 @@ export function ContentProvider({ children, detectOnMount = true }) {
         isSupported,
         isLoading,
         isInjectable,
+        hasSelection,
         refreshContent,
         setContentType: setManualContentType,
         updateContentContext,

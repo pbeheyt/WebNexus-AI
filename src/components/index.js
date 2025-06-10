@@ -7,6 +7,7 @@ export { CustomSelect } from './core/CustomSelect';
 export { IconButton } from './core/IconButton';
 export { Modal } from './core/Modal';
 export { ExtractionStrategySelector } from './core/ExtractionStrategySelector';
+export { SelectionModeIndicator } from './core/SelectionModeIndicator';
 
 // Feedback components
 export { StatusMessage } from './feedback/StatusMessage';
@@ -63,6 +64,7 @@ export { PlusIcon } from './icons/PlusIcon';
 export { TrashIcon } from './icons/TrashIcon';
 export { ArrowRightIcon } from './icons/ArrowRightIcon';
 export { HistoryIcon } from './icons/HistoryIcon';
+export { MouseIcon } from './icons/MouseIcon';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';

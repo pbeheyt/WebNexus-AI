@@ -43,7 +43,7 @@ export default function SidePanelApp() {
     createNewChat,
     contextViewData,
   } = useSidePanelChat();
-  const { contentType, currentTab, updateContentContext } = useContent();
+  const { contentType, currentTab, updateContentContext, hasSelection } = useContent();
   const { textSize } = useUI();
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
@@ -313,6 +313,7 @@ export default function SidePanelApp() {
                 isContentExtractionEnabled={isContentExtractionEnabled}
                 setIsContentExtractionEnabled={setIsContentExtractionEnabled}
                 hasAnyPlatformCredentials={hasAnyPlatformCredentials}
+                hasSelection={hasSelection}
                 className='bg-theme-primary'
               />
             </div>

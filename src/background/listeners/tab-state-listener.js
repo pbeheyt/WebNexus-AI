@@ -3,6 +3,7 @@
 import SidePanelStateManager from '../../services/SidePanelStateManager.js';
 import ChatHistoryService from '../../sidepanel/services/ChatHistoryService.js';
 import { logger } from '../../shared/logger.js';
+import { STORAGE_KEYS } from '../../shared/constants';
 
 /**
  * Resets the UI state for a single tab, effectively preparing it for a new chat session.
@@ -45,6 +46,33 @@ export async function clearSingleTabData(tabId) {
  * @param {function} sendResponse - Function to call to send the response.
  * @returns {boolean} - True to indicate an asynchronous response.
  */
+/**
+ * Updates the selection state for a specific tab in storage.
+ * @param {number} tabId - The ID of the tab to update.
+ * @param {boolean} hasSelection - The new selection state.
+ * @returns {Promise<void>}
+ */
+export async function updateTabSelectionState(tabId, hasSelection) {
+  if (typeof tabId !== 'number') {
+    logger.background.error('updateTabSelectionState called with invalid tabId:', tabId);
+    return;
+  }
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
+    const selectionStates = result[STORAGE_KEYS.TAB_SELECTION_STATE] || {};
+    
+    // Only update if the state has changed to avoid unnecessary writes
+    if (selectionStates[tabId] !== hasSelection) {
+      selectionStates[tabId] = hasSelection;
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.TAB_SELECTION_STATE]: selectionStates,
+      });
+    }
+  } catch (error) {
+    logger.background.error(`Error updating selection state for tab ${tabId}:`, error);
+  }
+}
+
 export function handleClearTabDataRequest(message, sender, sendResponse) {
   if (!message.tabId) {
     logger.background.error('handleClearTabDataRequest called without tabId');
@@ -131,6 +159,19 @@ export function setupTabStateListener() {
           logger.background.error(`Error during provisional session cleanup for closed tab ${tabId}:`, cleanupError);
         }
 
+        // Clean up selection state for the closed tab
+        try {
+          const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
+          const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE];
+          if (selectionStates && selectionStates[tabId]) {
+            delete selectionStates[tabId];
+            await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SELECTION_STATE]: selectionStates });
+            logger.background.info(`Cleaned up selection state for closed tab ${tabId}.`);
+          }
+        } catch (selectionCleanupError) {
+          logger.background.error(`Error during selection state cleanup for closed tab ${tabId}:`, selectionCleanupError);
+        }
+
 
       } catch (error) {
         logger.background.error(
@@ -178,6 +219,25 @@ export async function performStaleTabCleanup() {
     logger.background.info(
       `SidePanelStateManager.cleanupTabStates() completed.`
     );
+
+    // Also clean up stale selection states
+    const openTabs = await chrome.tabs.query({});
+    const openTabIds = new Set(openTabs.map(tab => tab.id.toString()));
+    const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATE);
+    const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATE];
+    if (selectionStates) {
+      let changed = false;
+      for (const storedTabIdStr in selectionStates) {
+        if (!openTabIds.has(storedTabIdStr)) {
+          delete selectionStates[storedTabIdStr];
+          changed = true;
+          logger.background.debug(`Cleaned up stale selection state for closed tab ${storedTabIdStr}.`);
+        }
+      }
+      if (changed) {
+        await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SELECTION_STATE]: selectionStates });
+      }
+    }
 
     // Add cleanup for provisional chat sessions
     try {
