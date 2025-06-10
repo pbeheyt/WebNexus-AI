@@ -18,7 +18,9 @@ class ContentFormatter {
     // Handle user-selected text from general web pages with a simplified format
     if (
       contentData.isSelection === true &&
-      contentType === CONTENT_TYPES.GENERAL
+      (contentType === CONTENT_TYPES.GENERAL ||
+        contentType === CONTENT_TYPES.YOUTUBE ||
+        contentType === CONTENT_TYPES.REDDIT)
     ) {
       logger.service.info(
         'Formatting user-selected text with simplified format.'

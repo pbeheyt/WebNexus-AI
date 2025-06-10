@@ -37,6 +37,9 @@ class YoutubeExtractorStrategy extends BaseExtractor {
    * @returns {Promise<Object>} The extracted video data
    */
   async extractData() {
+    const selection = this.checkForSelection();
+    if (selection) return selection;
+
     try {
       // Suppress the harmless "CompositeVideoPrimaryInfo not found" parser error from the library
       Log.setLevel('fatal');

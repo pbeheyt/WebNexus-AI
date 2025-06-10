@@ -17,10 +17,6 @@
         "http://*/*",
         "https://*/*"
       ],
-      "exclude_matches": [
-        "*://*.youtube.com/*",
-        "*://*.reddit.com/*"
-      ],
       "js": [
         "dist/selection-listener.bundle.js"
       ],

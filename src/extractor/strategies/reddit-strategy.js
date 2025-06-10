@@ -31,6 +31,9 @@ class RedditExtractorStrategy extends BaseExtractor {
    * @returns {Promise<Object>} Promise resolving to the extracted post data
    */
   async extractData() {
+    const selection = this.checkForSelection();
+    if (selection) return selection;
+
     try {
       const rawTitle = this.extractPostTitle();
       const rawContent = this.extractPostContent();

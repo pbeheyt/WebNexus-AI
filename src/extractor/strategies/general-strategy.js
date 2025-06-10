@@ -67,69 +67,62 @@ class GeneralExtractorStrategy extends BaseExtractor {
    * @returns {Promise<Object>} An object containing the extracted page data.
    */
   async extractData() {
+    const selection = this.checkForSelection();
+    if (selection) return selection;
+
     let title = this.extractPageTitle();
     const url = this.extractPageUrl();
     let description = this.extractMetaDescription();
     let author = this.extractAuthor();
     let content = '';
-    let isSelection = false;
     const extractionMode = this.config.extractionMode;
 
     try {
-      const selectedText = window.getSelection().toString();
-      isSelection = !!selectedText.trim();
+      if (extractionMode === 'focused') {
+        this.logger.info(
+          'No user selection. Attempting FOCUSED (Readability.js) extraction.'
+        );
+        const readabilityOptions = {
+          charThreshold: 150,
+          nbTopCandidates: 7,
+        };
+        const documentClone = document.cloneNode(true);
+        const reader = new Readability(documentClone, readabilityOptions);
+        const article = reader.parse();
 
-      if (isSelection) {
-        content = normalizeText(this._moderateCleanText(selectedText));
-        this.logger.info('Used user-selected text as content.');
-      } else {
-        isSelection = false;
-        if (extractionMode === 'focused') {
-          this.logger.info(
-            'No user selection. Attempting FOCUSED (Readability.js) extraction.'
+        if (
+          article &&
+          article.textContent &&
+          article.textContent.trim() !== ''
+        ) {
+          content = normalizeText(
+            this._moderateCleanText(article.textContent)
           );
-          const readabilityOptions = {
-            charThreshold: 150,
-            nbTopCandidates: 7,
-          };
-          const documentClone = document.cloneNode(true);
-          const reader = new Readability(documentClone, readabilityOptions);
-          const article = reader.parse();
-
+          this.logger.info(
+            `Readability.js extracted main content (${content.length} chars).`
+          );
+          if (article.title && article.title.trim() !== '')
+            title = article.title;
+          if (article.byline && article.byline.trim() !== '')
+            author = article.byline;
           if (
-            article &&
-            article.textContent &&
-            article.textContent.trim() !== ''
+            (!description || description.trim() === '') &&
+            article.excerpt &&
+            article.excerpt.trim() !== ''
           ) {
-            content = normalizeText(
-              this._moderateCleanText(article.textContent)
-            );
-            this.logger.info(
-              `Readability.js extracted main content (${content.length} chars).`
-            );
-            if (article.title && article.title.trim() !== '')
-              title = article.title;
-            if (article.byline && article.byline.trim() !== '')
-              author = article.byline;
-            if (
-              (!description || description.trim() === '') &&
-              article.excerpt &&
-              article.excerpt.trim() !== ''
-            ) {
-              description = this._moderateCleanText(article.excerpt);
-            }
-          } else {
-            content =
-              'Could not identify sufficient main content (focused mode).';
-            this.logger.warn('Readability.js returned no significant content.');
+            description = this._moderateCleanText(article.excerpt);
           }
         } else {
-          // extractionMode === 'broad'
-          this.logger.info(
-            'No user selection. Attempting BROAD content extraction (TreeWalker).'
-          );
-          content = await this._extractBroadContentTreeWalker();
+          content =
+            'Could not identify sufficient main content (focused mode).';
+          this.logger.warn('Readability.js returned no significant content.');
         }
+      } else {
+        // extractionMode === 'broad'
+        this.logger.info(
+          'No user selection. Attempting BROAD content extraction (TreeWalker).'
+        );
+        content = await this._extractBroadContentTreeWalker();
       }
 
       return {
@@ -137,8 +130,8 @@ class GeneralExtractorStrategy extends BaseExtractor {
         pageUrl: url,
         pageDescription: normalizeText(description),
         pageAuthor: normalizeText(author),
-        content: content, // Content is already normalized by its respective extraction method
-        isSelection: isSelection,
+        content: content,
+        isSelection: false,
         extractedAt: new Date().toISOString(),
         contentType: this.contentType,
         mode: extractionMode,
