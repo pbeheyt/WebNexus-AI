@@ -44,7 +44,8 @@ export async function robustSendMessage(message, attempt = 1) {
         const isConnectionError =
           lastError.message?.includes('Port closed') ||
           lastError.message?.includes('Could not establish connection') ||
-          lastError.message?.includes('The message port closed');
+          lastError.message?.includes('The message port closed') ||
+          lastError.message?.includes('Extension context invalidated');
 
         if (isConnectionError && attempt <= MAX_RETRIES) {
           // --- Retry Logic ---
