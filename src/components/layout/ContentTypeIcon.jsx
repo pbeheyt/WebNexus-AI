@@ -13,9 +13,9 @@ function getContentTypeIconSvgInternal(contentType) {
 
   switch (contentType) {
     case CONTENT_TYPES.SELECTED_TEXT:
-      // SVG for Selected Text icon (formerly MouseIcon)
+      // SVG for Selected Text icon
       iconSvg = `
-        <svg class="selected-text-icon w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="selected-text-icon w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 4v12l3-3 2.5 5 3-1.5-2.5-4.5h4L6 4z" fill="none" stroke="currentColor"/>
         </svg>
       `;
