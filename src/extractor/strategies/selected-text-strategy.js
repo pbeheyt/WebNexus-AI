@@ -47,7 +47,6 @@ class SelectedTextExtractorStrategy extends BaseExtractor {
       pageTitle: document.title || 'Selected Text',
       pageUrl: window.location.href,
       content: content,
-      isSelection: true, // Keep this for potential downstream logic that still checks this flag.
       extractedAt: new Date().toISOString(),
       contentType: this.contentType,
     };

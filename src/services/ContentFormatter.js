@@ -15,15 +15,10 @@ class ContentFormatter {
       return '[Error: No content data available]'; // Clear error indication
     }
 
-    // Handle user-selected text from general web pages with a simplified format
-    if (
-      contentData.isSelection === true &&
-      (contentType === CONTENT_TYPES.GENERAL ||
-        contentType === CONTENT_TYPES.YOUTUBE ||
-        contentType === CONTENT_TYPES.REDDIT)
-    ) {
+    // Handle selected text first, as it's a distinct content type now.
+    if (contentType === CONTENT_TYPES.SELECTED_TEXT) {
       logger.service.info(
-        'Formatting user-selected text with simplified format.'
+        'Formatting content for SELECTED_TEXT type.'
       );
       return `## SELECTED TEXT\n${this._getData(
         contentData.content,
@@ -47,6 +42,10 @@ class ContentFormatter {
           break;
         case 'pdf':
           formatted = this._formatPdfData(contentData);
+          break;
+        default:
+          logger.service.warn(`Unknown content type for formatting: ${contentType}. Using general format as fallback.`);
+          formatted = this._formatGeneralData(contentData);
           break;
       }
     } catch (error) {
