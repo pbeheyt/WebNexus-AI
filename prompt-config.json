@@ -1,18 +1,28 @@
 {
   "general": {
-    "Short Summary": "Summarize the provided primary textual content of a webpage. First, identify its content type (e.g., news article, blog post, product description, forum discussion). Then, create a concise 3-sentence summary highlighting the main topic and key takeaways.",
-    "Detailed Summary": "Summarize the provided primary textual content of a webpage. First, identify its content type (e.g., news article, blog post, product description, forum discussion). Then, provide a comprehensive summary that includes: the main topic or purpose, key sections or arguments presented, important facts or features discussed, and the overall conclusion or primary objective of the content."
+    "Short Summary": "Summarize this webpage content in 3 sentences, covering the main topic and key points.",
+    "Detailed Summary": "Summarize this webpage content comprehensively, including the main topic, key sections or arguments, important facts, and overall conclusions.",
+    "Fact-Check": "Examine the webpage content for accuracy. Identify any claims made, check if they can be verified, point out any potential biases or misleading information, and provide additional context or corrections if needed."
   },
   "youtube": {
     "Short Summary": "Summarize this YouTube video in 3-5 sentences covering the main topic and key points discussed or shown.",
-    "Detailed Summary": "Create a detailed summary of this YouTube video including: introduction (topic/presenter), timeline of main points with approximate timestamps, key insights or demonstrations, and important quotes or conclusions presented."
+    "Detailed Summary": "Summarize this YouTube video comprehensively, including: introduction (topic/presenter), timeline of main points with approximate timestamps, key insights or demonstrations, and important quotes or conclusions presented.",
+    "Fact-Check": "Examine the claims and information presented in this YouTube video for accuracy. Identify any factual statements made, check if they can be verified, point out any potential biases or misleading information, and provide additional context or corrections if needed."
   },
   "reddit": {
     "Short Summary": "Summarize this Reddit post in a brief 3-sentence overview, including the main question/topic and the key community responses or perspectives shared.",
-    "Detailed Summary": "Summarize this Reddit post comprehensively, including: the original post's question/topic, main arguments in top comments, differing perspectives shared, comments offering notable information or expertise, and any useful resources or links mentioned (if any)."
+    "Detailed Summary": "Summarize this Reddit post comprehensively, including: the original post's question/topic, main arguments in top comments, differing perspectives shared, comments offering notable information or expertise, and any useful resources or links mentioned (if any).",
+    "Fact-Check": "Examine the Reddit post and top comments for accuracy. Identify any claims made, check if they can be verified, point out any potential biases or misleading information, and provide additional context or corrections if needed."
   },
   "pdf": {
     "Short Summary": "Summarize this PDF in 5 sentences or less, covering the document type, main topic, and key findings or conclusions.",
-    "Detailed Summary": "Create a detailed summary of this PDF including: document type, author/organization (if available), executive summary/abstract (if present), methodology (if applicable), key points from each main section, important data/statistics, and the main conclusions or recommendations."
+    "Detailed Summary": "Summarize this PDF comprehensively, including: document type, author/organization (if available), executive summary/abstract (if present), methodology (if applicable), key points from each main section, important data/statistics, and the main conclusions or recommendations.",
+    "Fact-Check": "Examine the PDF content for accuracy and reliability. Identify any claims or data presented, assess the credibility of sources cited, point out any potential biases or methodological issues, and provide additional context or corrections if needed."
+  },
+  "selectedText": {
+    "Short Summary": "Summarize the selected text in a brief 1-2 sentence overview highlighting the main point or key information.",
+    "Detailed Summary": "Summarize the selected text comprehensively, including the main topic, key points discussed, important details or data mentioned, and any conclusions or takeaways presented.",
+    "Explain": "Explain the selected text in clear language. Break down any complex concepts, technical terms, or jargon into easy-to-understand explanations.",
+    "Fact-Check": "Examine the selected text for accuracy. Identify any claims made, check if they can be verified, point out any potential biases or misleading information, and provide additional context or corrections if needed."
   }
 }
