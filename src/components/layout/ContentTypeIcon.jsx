@@ -12,6 +12,14 @@ function getContentTypeIconSvgInternal(contentType) {
   const pdfColor = '#F40F02'; // Custom red for PDF
 
   switch (contentType) {
+    case CONTENT_TYPES.SELECTED_TEXT:
+      // SVG for Selected Text icon (formerly MouseIcon)
+      iconSvg = `
+        <svg class="selected-text-icon w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4v12l3-3 2.5 5 3-1.5-2.5-4.5h4L6 4z" fill="none" stroke="currentColor"/>
+        </svg>
+      `;
+      break;
     case CONTENT_TYPES.YOUTUBE:
       // SVG for YouTube icon (red play button style)
       iconSvg = `

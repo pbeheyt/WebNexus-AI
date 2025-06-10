@@ -10,7 +10,6 @@ import {
   Toggle,
   Tooltip,
   ExtractionStrategySelector,
-  SelectionModeIndicator,
 } from '../../components';
 import {
   CONTENT_TYPE_LABELS,
@@ -27,7 +26,6 @@ function Header({
   isContentExtractionEnabled,
   setIsContentExtractionEnabled,
   hasAnyPlatformCredentials,
-  hasSelection,
   className = '',
 }) {
   const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false);
@@ -72,11 +70,7 @@ function Header({
     <div className={`px-5 py-2 border-b border-theme flex justify-between items-center min-h-[40px] ${className}`}>
       {/* Left Section: Content Extraction Controls */}
       <div className='flex items-center gap-1 mr-5 text-sm text-theme-secondary cursor-default min-w-0'>
-        {hasSelection ? (
-          <div className="flex items-center gap-1 w-full cursor-default">
-            <SelectionModeIndicator className="mt-0" />
-          </div>
-        ) : isPageInjectable ? (
+        {isPageInjectable ? (
           <>
             <ContentTypeIcon
               contentType={contentType}
@@ -85,39 +79,44 @@ function Header({
             <span className='text-sm text-theme-primary font-medium ml-1 mr-2 whitespace-nowrap truncate overflow-hidden'>
               {CONTENT_TYPE_LABELS[contentType] || 'Content'}
             </span>
-            <span
-              ref={includeToggleRef}
-              onMouseEnter={() => setIsIncludeTooltipVisible(true)}
-              onMouseLeave={() => setIsIncludeTooltipVisible(false)}
-              onFocus={() => setIsIncludeTooltipVisible(true)}
-              onBlur={() => setIsIncludeTooltipVisible(false)}
-              aria-describedby='include-context-tooltip-header'
-              className='inline-flex items-center flex-shrink-0'
-              tabIndex={0}
-              role="button"
-            >
-              <Toggle
-                id='content-extract-toggle-header'
-                checked={isContentExtractionEnabled}
-                onChange={(newCheckedState) => {
-                  if (hasAnyPlatformCredentials)
-                    setIsContentExtractionEnabled(newCheckedState);
-                }}
-                disabled={!hasAnyPlatformCredentials}
-              />
-            </span>
-            <Tooltip
-              show={isIncludeTooltipVisible}
-              targetRef={includeToggleRef}
-              message='Include context.'
-              position='bottom'
-              id='include-context-tooltip-header'
-            />
-            {contentType === CONTENT_TYPES.GENERAL && (
-              <ExtractionStrategySelector
-                disabled={!hasAnyPlatformCredentials}
-                className='ml-2 flex-shrink-0'
-              />
+            {/* Only show context/strategy controls for non-selection types */}
+            {contentType !== CONTENT_TYPES.SELECTED_TEXT && (
+              <>
+                <span
+                  ref={includeToggleRef}
+                  onMouseEnter={() => setIsIncludeTooltipVisible(true)}
+                  onMouseLeave={() => setIsIncludeTooltipVisible(false)}
+                  onFocus={() => setIsIncludeTooltipVisible(true)}
+                  onBlur={() => setIsIncludeTooltipVisible(false)}
+                  aria-describedby='include-context-tooltip-header'
+                  className='inline-flex items-center flex-shrink-0'
+                  tabIndex={0}
+                  role="button"
+                >
+                  <Toggle
+                    id='content-extract-toggle-header'
+                    checked={isContentExtractionEnabled}
+                    onChange={(newCheckedState) => {
+                      if (hasAnyPlatformCredentials)
+                        setIsContentExtractionEnabled(newCheckedState);
+                    }}
+                    disabled={!hasAnyPlatformCredentials}
+                  />
+                </span>
+                <Tooltip
+                  show={isIncludeTooltipVisible}
+                  targetRef={includeToggleRef}
+                  message='Include context.'
+                  position='bottom'
+                  id='include-context-tooltip-header'
+                />
+                {contentType === CONTENT_TYPES.GENERAL && (
+                  <ExtractionStrategySelector
+                    disabled={!hasAnyPlatformCredentials}
+                    className='ml-2 flex-shrink-0'
+                  />
+                )}
+              </>
             )}
           </>
         ) : (
@@ -234,7 +233,6 @@ Header.propTypes = {
   isContentExtractionEnabled: PropTypes.bool,
   setIsContentExtractionEnabled: PropTypes.func,
   hasAnyPlatformCredentials: PropTypes.bool,
-  hasSelection: PropTypes.bool,
   className: PropTypes.string,
 };
 
