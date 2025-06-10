@@ -270,6 +270,25 @@ export async function processContentViaApi(params) {
         requestConfig
       );
 
+      // Handle pre-stream errors (e.g., missing credentials)
+      if (apiResponse.success === false) {
+        logger.background.error(
+          `Pre-stream error from ApiServiceManager: ${apiResponse.error}`
+        );
+        // Manually trigger the 'done' chunk with the error to notify the UI
+        requestConfig.onChunk({
+          done: true,
+          error: apiResponse.error,
+          model: resolvedParams.model,
+        });
+        // Return a failure object to the caller
+        return {
+          success: false,
+          error: apiResponse.error,
+          streamId,
+        };
+      }
+
       return {
         success: true,
         streamId,
