@@ -15,8 +15,11 @@ export function MouseIcon({ className = 'w-5 h-5', ...props }) {
       className={className}
       {...props}
     >
-      <path d="M10.33 4.15l9.06 7.39a2.3 2.3 0 01.3 3.23l-4.14 5.2a2.3 2.3 0 01-3.48.21L3.92 12.8a2.3 2.3 0 01-.1-3.32l4.4-4.48a2.3 2.3 0 013.11.15z" />
-      <path d="M10.33 4.15L14 7.8" />
+      <path 
+        d="M6 4v12l3-3 2.5 5 3-1.5-2.5-4.5h4L6 4z" 
+        fill="none" 
+        stroke="currentColor"
+      />
     </svg>
   );
 }
