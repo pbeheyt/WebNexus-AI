@@ -19,6 +19,7 @@ import { STORAGE_KEYS } from '../../shared/constants.js';
 import {
   determineContentType,
   isSidePanelAllowedPage,
+  isInjectablePage,
 } from '../../shared/utils/content-utils.js';
 
 /**
@@ -291,6 +292,33 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
         `Error handling side panel navigation detection for tab ${tabId}:`,
         error
       );
+    }
+  }
+
+  // --- Inject Selection Listener on Navigation ---
+  // This ensures that new tabs or tabs navigating to a new page get the listener.
+  // The content script itself has a guard to prevent it from running more than once.
+  if (changeInfo.status === 'complete' && tab.url) {
+    if (isInjectablePage(tab.url)) {
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ['dist/selection-listener.bundle.js'],
+        });
+      } catch (err) {
+        // This error is expected on certain pages (e.g., chrome web store)
+        // where content script injection is forbidden. We can safely ignore it.
+        if (
+          err.message &&
+          !err.message.includes('Cannot access a chrome:// URL') &&
+          !err.message.includes('The extensions gallery cannot be scripted') &&
+          !err.message.includes('No tab with id')
+        ) {
+          logger.background.warn(
+            `Could not inject selection listener into tab ${tabId} during navigation: ${err.message}`
+          );
+        }
+      }
     }
   }
 }
