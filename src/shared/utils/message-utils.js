@@ -20,79 +20,77 @@ export async function robustSendMessage(message, attempt = 1) {
   }
 
   return new Promise((resolve, reject) => {
-    // Check for Chrome API availability
+    // --- Guard against missing runtime API ---
+    // This can happen in orphaned content scripts after an extension reload.
     if (
       typeof chrome === 'undefined' ||
       !chrome.runtime ||
       !chrome.runtime.sendMessage
     ) {
-      const errorMsg =
-        'robustSendMessage: Chrome runtime API is not available.';
-      logger.message.error(errorMsg);
-      return reject(new Error(errorMsg));
+      // Silently resolve, as this context is non-functional and cannot recover.
+      // This prevents console errors from orphaned scripts.
+      return resolve();
     }
-
-    logger.message.info(
-      `robustSendMessage: Sending action "${message.action}"...`
-    );
 
     // Attempt to send the message
     chrome.runtime.sendMessage(message, (response) => {
       const lastError = chrome.runtime.lastError;
 
       if (lastError) {
-        const isConnectionError =
+        // --- Context Invalidated Error Handling (Permanent & Unrecoverable) ---
+        if (lastError.message?.includes('Extension context invalidated') ||
+            lastError.message?.includes('Chrome runtime API is not available')) {
+          // This is an expected error from an orphaned content script.
+          // Silently resolve to prevent console spam. The script is non-functional.
+          return resolve();
+        }
+
+        // --- Retryable Connection Error Handling ---
+        const isRetryableError =
           lastError.message?.includes('Port closed') ||
           lastError.message?.includes('Could not establish connection') ||
-          lastError.message?.includes('The message port closed') ||
-          lastError.message?.includes('Extension context invalidated');
+          lastError.message?.includes('The message port closed');
 
-        if (isConnectionError && attempt <= MAX_RETRIES) {
-          // --- Retry Logic ---
-          const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1); // Exponential backoff
+        if (isRetryableError && attempt <= MAX_RETRIES) {
+          const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1);
           logger.message.info(
             `robustSendMessage: Connection error for action "${message.action}" on attempt ${attempt}. Retrying in ${delay}ms...`
           );
-
           setTimeout(() => {
-            robustSendMessage(message, attempt + 1) // Recursive call with incremented attempt count
-              .then(resolve) // Pass successful resolution up the promise chain
-              .catch(reject); // Pass final rejection up the promise chain
+            robustSendMessage(message, attempt + 1)
+              .then(resolve)
+              .catch(reject);
           }, delay);
-          // --- End Retry Logic ---
-        } else if (isConnectionError && attempt > MAX_RETRIES) {
-          // --- Max Retries Reached Logic ---
+          return; // Important: exit promise callback after starting timeout
+        }
+
+        // --- Max Retries Reached or Non-Retryable Error ---
+        if (isRetryableError && attempt > MAX_RETRIES) {
           logger.message.warn(
-            `robustSendMessage: Communication failed for action "${message.action}" after ${attempt} attempts (Max retries reached).`
+            `robustSendMessage: Communication failed for action "${message.action}" after ${attempt} attempts.`
           );
           const communicationError = new Error(
-            `Communication failed for action "${message.action}" after ${MAX_RETRIES + 1} attempts.`
+            `Communication failed after ${MAX_RETRIES + 1} attempts.`
           );
           communicationError.isPortClosed = true;
-          reject(communicationError);
-          // --- End Max Retries Reached Logic ---
-        } else {
-          // --- Non-Connection Error Logic ---
-          logger.message.error(
-            `robustSendMessage: Unrecoverable error for action "${message.action}".`,
-            lastError
-          );
-          reject(
-            new Error(
-              lastError.message ||
-                `Unknown runtime error for action ${message.action}`
-            )
-          );
-          // --- End Non-Connection Error Logic ---
+          return reject(communicationError);
         }
-      } else {
-        // --- Success Logic ---
-        logger.message.info(
-          `robustSendMessage: Received response for action "${message.action}" (Attempt ${attempt}).`
+
+        // --- Other Unrecoverable Errors ---
+        logger.message.error(
+          `robustSendMessage: Unrecoverable error for action "${message.action}".`,
+          lastError
         );
-        resolve(response);
-        // --- End Success Logic ---
+        return reject(
+          new Error(
+            lastError.message ||
+              `Unknown runtime error for action ${message.action}`
+          )
+        );
       }
+
+      // --- Success Logic ---
+      resolve(response);
     });
   });
 }
