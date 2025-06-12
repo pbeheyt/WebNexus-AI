@@ -92,7 +92,7 @@ export default function ChatHistoryListView() {
           `Error during delete operation for session ${sessionId}:`,
           err
         );
-        setError('Failed to delete session.');
+        showError('Failed to delete session. Storage might be full.');
       } finally {
         setDeletingSessionId(null);
       }

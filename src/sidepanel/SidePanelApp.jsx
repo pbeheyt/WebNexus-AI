@@ -17,7 +17,12 @@ import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
 import { useSidePanelPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
-import { AppHeader, ErrorIcon, SpinnerIcon } from '../components';
+import {
+  AppHeader,
+  ErrorIcon,
+  SpinnerIcon,
+  Toast, // Added Toast import
+} from '../components';
 import { debounce } from '../shared/utils/debounce-utils';
 import { isInjectablePage } from '../shared/utils/content-utils';
 
@@ -273,6 +278,7 @@ export default function SidePanelApp() {
         </div>
       ) : tabId ? (
         <>
+          <Toast /> {/* Added Toast component */}
           {/* Main App Header - Conditionally rendered */}
           {currentView !== 'context' && (
             <div ref={appHeaderRef} className='flex-shrink-0'>

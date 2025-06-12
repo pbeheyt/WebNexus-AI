@@ -59,21 +59,23 @@ class ChatHistoryService {
    * @param {string | null} [systemPromptForThisTurn=null] - The system prompt used for the current turn.
    * @returns {Promise<boolean|Object>} Success status or token stats object
    */
-  static async saveHistory(
-    chatSessionId,
-    messages,
-    modelConfig = null,
-    options = {},
-    isThinkingModeEnabled = false,
-    systemPromptForThisTurn = null
-  ) {
-    try {
-      if (!chatSessionId) {
-        logger.sidepanel.error(
-          'ChatHistoryService: No chatSessionId provided for saveHistory'
-        );
-        return false;
-      }
+    static async saveHistory(
+        chatSessionId,
+        messages,
+        modelConfig = null,
+        options = {},
+        isThinkingModeEnabled = false,
+        systemPromptForThisTurn = null
+      ) {
+        if (!chatSessionId) {
+          logger.sidepanel.error(
+            'ChatHistoryService: No chatSessionId provided for saveHistory'
+          );
+          // Throw an error instead of returning false
+          throw new Error('Cannot save history without a chatSessionId.');
+        }
+    
+        try {
 
       // Get all global chat sessions
       const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
@@ -177,21 +179,22 @@ class ChatHistoryService {
         systemPromptForThisTurn // Pass system prompt for this turn
       );
 
-      return stats;
-    } catch (error) {
-      logger.sidepanel.error(
-        'ChatHistoryService: Error saving chat session:',
-        error
-      );
-      return false;
-    }
-  }
+          return stats;
+        } catch (error) {
+          logger.sidepanel.error(
+            'ChatHistoryService: Error saving chat session:',
+            error
+          );
+          // Re-throw the error to be handled by the caller
+          throw error;
+        }
+      }
 
-  static async createNewChatSession({ platformId, modelId, initialTabUrl, initialTabTitle } = {}) {
-    try {
-      const chatSessionId = `${STORAGE_KEYS.CHAT_SESSION_ID_PREFIX}${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const now = new Date().toISOString();
-      const newSession = {
+      static async createNewChatSession({ platformId, modelId, initialTabUrl, initialTabTitle } = {}) {
+        // No try-catch here, let errors propagate
+        const chatSessionId = `${STORAGE_KEYS.CHAT_SESSION_ID_PREFIX}${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const now = new Date().toISOString();
+        const newSession = {
         metadata: {
           id: chatSessionId,
           title: 'New Chat',
@@ -210,14 +213,10 @@ class ChatHistoryService {
       const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
       allSessions[chatSessionId] = newSession;
 
-      await chrome.storage.local.set({ [STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]: allSessions });
-      logger.sidepanel.info(`ChatHistoryService: Created new PROVISIONAL chat session: ${chatSessionId}`);
-      return newSession; // Return the full session object
-    } catch (error) {
-      logger.sidepanel.error('ChatHistoryService: Error creating new chat session:', error);
-      return null;
-    }
-  }
+          await chrome.storage.local.set({ [STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]: allSessions });
+          logger.sidepanel.info(`ChatHistoryService: Created new PROVISIONAL chat session: ${chatSessionId}`);
+          return newSession; // Return the full session object
+      }
 
   static async getAllChatSessionsMetadata() {
     try {
@@ -234,12 +233,13 @@ class ChatHistoryService {
     }
   }
 
-  static async deleteChatSession(chatSessionId) {
-    try {
-      if (!chatSessionId) {
-        logger.sidepanel.error('ChatHistoryService: No chatSessionId provided for deleteChatSession');
-        return false;
-      }
+      static async deleteChatSession(chatSessionId) {
+        if (!chatSessionId) {
+          logger.sidepanel.error('ChatHistoryService: No chatSessionId provided for deleteChatSession');
+          throw new Error('Cannot delete session without a chatSessionId.');
+        }
+    
+        try {
       const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
       const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
 
@@ -251,12 +251,12 @@ class ChatHistoryService {
         return true;
       }
       logger.sidepanel.warn(`ChatHistoryService: Chat session ${chatSessionId} not found for deletion.`);
-      return false;
-    } catch (error) {
-      logger.sidepanel.error(`ChatHistoryService: Error deleting chat session ${chatSessionId}:`, error);
-      return false;
-    }
-  }
+          return false;
+        } catch (error) {
+          logger.sidepanel.error(`ChatHistoryService: Error deleting chat session ${chatSessionId}:`, error);
+          throw error;
+        }
+      }
 
   static async updateSessionTitle(chatSessionId, newTitle) {
     const trimmedTitle = newTitle?.trim();
@@ -288,15 +288,15 @@ class ChatHistoryService {
     }
   }
 
-  static async deleteMultipleChatSessions(chatSessionIds) {
-    if (!Array.isArray(chatSessionIds) || chatSessionIds.length === 0) {
-      logger.sidepanel.warn('ChatHistoryService: deleteMultipleChatSessions called with invalid or empty array.');
-      return false;
-    }
-
-    try {
-      const storageData = await chrome.storage.local.get([
-        STORAGE_KEYS.GLOBAL_CHAT_SESSIONS,
+      static async deleteMultipleChatSessions(chatSessionIds) {
+        if (!Array.isArray(chatSessionIds) || chatSessionIds.length === 0) {
+          logger.sidepanel.warn('ChatHistoryService: deleteMultipleChatSessions called with invalid or empty array.');
+          return; // Return early, not an error state.
+        }
+    
+        try {
+          const storageData = await chrome.storage.local.get([
+            STORAGE_KEYS.GLOBAL_CHAT_SESSIONS,
         STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
       ]);
 
@@ -343,23 +343,23 @@ class ChatHistoryService {
         await chrome.storage.local.remove(keysToRemove);
       }
 
-      logger.sidepanel.info(`ChatHistoryService: Deleted ${chatSessionIds.length} chat sessions.`);
-      return true;
+          logger.sidepanel.info(`ChatHistoryService: Deleted ${chatSessionIds.length} chat sessions.`);
+          return true;
+    
+        } catch (error) {
+          logger.sidepanel.error('ChatHistoryService: Error deleting multiple chat sessions:', error);
+          throw error;
+        }
+      }
 
-    } catch (error) {
-      logger.sidepanel.error('ChatHistoryService: Error deleting multiple chat sessions:', error);
-      return false;
-    }
-  }
-
-  static async updateSessionMetadata(chatSessionId, metadataUpdate) {
-    if (!chatSessionId || !metadataUpdate || typeof metadataUpdate !== 'object') {
-      logger.sidepanel.error('ChatHistoryService: updateSessionMetadata called with invalid arguments.', { chatSessionId, metadataUpdate });
-      return false;
-    }
-
-    try {
-      const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
+      static async updateSessionMetadata(chatSessionId, metadataUpdate) {
+        if (!chatSessionId || !metadataUpdate || typeof metadataUpdate !== 'object') {
+          logger.sidepanel.error('ChatHistoryService: updateSessionMetadata called with invalid arguments.', { chatSessionId, metadataUpdate });
+          throw new Error('Invalid arguments for updateSessionMetadata.');
+        }
+    
+        try {
+          const result = await chrome.storage.local.get([STORAGE_KEYS.GLOBAL_CHAT_SESSIONS]);
       const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
 
       if (allSessions[chatSessionId] && allSessions[chatSessionId].metadata) {
@@ -376,12 +376,12 @@ class ChatHistoryService {
       } else {
         logger.sidepanel.warn(`ChatHistoryService: Session ${chatSessionId} not found for metadata update.`);
         return false;
+          }
+        } catch (error) {
+          logger.sidepanel.error(`ChatHistoryService: Error updating metadata for session ${chatSessionId}:`, error);
+          throw error;
+        }
       }
-    } catch (error) {
-      logger.sidepanel.error(`ChatHistoryService: Error updating metadata for session ${chatSessionId}:`, error);
-      return false;
-    }
-  }
 
   /**
    * Get token statistics for a specific tab
@@ -523,13 +523,13 @@ class ChatHistoryService {
       }
 
       logger.sidepanel.info('ChatHistoryService: No provisional sessions found to clean up.');
-      return false;
-
-    } catch (error) {
-      logger.sidepanel.error('ChatHistoryService: Error cleaning up provisional sessions:', error);
-      return false;
-    }
-  }
+          return false;
+    
+        } catch (error) {
+          logger.sidepanel.error('ChatHistoryService: Error cleaning up provisional sessions:', error);
+          throw error;
+        }
+      }
 }
 
 export default ChatHistoryService;

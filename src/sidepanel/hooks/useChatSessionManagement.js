@@ -199,88 +199,79 @@ export function useChatSessionManagement({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabId, selectedPlatformId, selectedModel]);
 
-  const createNewChat = useCallback(async () => {
-    if (!tabId || !selectedPlatformId) return;
-    logger.sidepanel.info(
-      `ChatSessionManagement: createNewChat called for tab ${tabId}`
-    );
-
-    const previousActiveSessionId = currentChatSessionId;
-    syncedSessionIdRef.current = null; // Allow sync for new session
-
-    try {
-      const newSession = await ChatHistoryService.createNewChatSession({
-        platformId: selectedPlatformId,
-        modelId: selectedModel,
-        initialTabUrl: currentTab?.url,
-        initialTabTitle: currentTab?.title,
-      });
-      if (newSession?.metadata) {
-        const newChatSessionId = newSession.metadata.id;
-        await SidePanelStateManager.setActiveChatSessionForTab(
-          tabId,
-          newChatSessionId
+      const createNewChat = useCallback(async () => {
+        if (!tabId || !selectedPlatformId) return;
+        logger.sidepanel.info(
+          `ChatSessionManagement: createNewChat called for tab ${tabId}`
         );
-        await SidePanelStateManager.setTabViewMode(tabId, 'chat');
-        setCurrentChatSessionId(newChatSessionId);
-        setMessages([]);
-        setCurrentView('chat');
+    
+        const previousActiveSessionId = currentChatSessionId;
+        syncedSessionIdRef.current = null; // Allow sync for new session
+    
+        // Let errors propagate to be caught by the caller
+        const newSession = await ChatHistoryService.createNewChatSession({
+          platformId: selectedPlatformId,
+          modelId: selectedModel,
+          initialTabUrl: currentTab?.url,
+          initialTabTitle: currentTab?.title,
+        });
+        
+        if (newSession?.metadata) {
+          const newChatSessionId = newSession.metadata.id;
+          await SidePanelStateManager.setActiveChatSessionForTab(
+            tabId,
+            newChatSessionId
+          );
+          await SidePanelStateManager.setTabViewMode(tabId, 'chat');
+          setCurrentChatSessionId(newChatSessionId);
+          setMessages([]);
+          setCurrentView('chat');
 
-        if (
-          previousActiveSessionId &&
-          previousActiveSessionId !== newChatSessionId
-        ) {
-          const prevMeta =
-            await ChatHistoryService.getSessionMetadata(previousActiveSessionId);
-          if (prevMeta?.isProvisional) {
-            await ChatHistoryService.deleteChatSession(previousActiveSessionId);
+          if (previousActiveSessionId && previousActiveSessionId !== newChatSessionId) {
+            const prevMeta = await ChatHistoryService.getSessionMetadata(previousActiveSessionId);
+            if (prevMeta?.isProvisional) {
+              await ChatHistoryService.deleteChatSession(previousActiveSessionId);
+            }
           }
         }
-      }
-    } catch (error) {
-      logger.sidepanel.error('Error in createNewChat:', error);
-    }
-  }, [
-    tabId,
-    selectedPlatformId,
-    selectedModel,
-    currentTab,
-    currentChatSessionId,
-  ]);
+      }, [
+        tabId,
+        selectedPlatformId,
+        selectedModel,
+        currentTab,
+        currentChatSessionId,
+      ]);
 
-  const selectChatSession = useCallback(
-    async (chatSessionIdToSelect) => {
-      if (!tabId || !chatSessionIdToSelect) return;
-      try {
-        syncedSessionIdRef.current = null; // Allow sync for newly selected session
-        await SidePanelStateManager.setActiveChatSessionForTab(
-          tabId,
-          chatSessionIdToSelect
-        );
-        await SidePanelStateManager.setTabViewMode(tabId, 'chat');
-        setCurrentChatSessionId(chatSessionIdToSelect);
-        const history = await ChatHistoryService.getHistory(
-          chatSessionIdToSelect
-        );
-        setMessages(history);
-        setCurrentView('chat');
+      const selectChatSession = useCallback(
+        async (chatSessionIdToSelect) => {
+          if (!tabId || !chatSessionIdToSelect) return;
+          // Let errors propagate to be caught by the caller
+          syncedSessionIdRef.current = null; // Allow sync for newly selected session
+          await SidePanelStateManager.setActiveChatSessionForTab(
+            tabId,
+            chatSessionIdToSelect
+          );
+          await SidePanelStateManager.setTabViewMode(tabId, 'chat');
+          setCurrentChatSessionId(chatSessionIdToSelect);
+          const history = await ChatHistoryService.getHistory(
+            chatSessionIdToSelect
+          );
+          setMessages(history);
+          setCurrentView('chat');
 
-        // New logic: set scroll target to last user message
-        if (history.length > 0) {
-          const lastUserMessage = history
-            .slice()
-            .reverse()
-            .find((msg) => msg.role === 'user');
-          if (lastUserMessage) {
-            setScrollToMessageId(lastUserMessage.id);
+          // New logic: set scroll target to last user message
+          if (history.length > 0) {
+            const lastUserMessage = history
+              .slice()
+              .reverse()
+              .find((msg) => msg.role === 'user');
+            if (lastUserMessage) {
+              setScrollToMessageId(lastUserMessage.id);
+            }
           }
-        }
-      } catch (error) {
-        logger.sidepanel.error('Error in selectChatSession:', error);
-      }
-    },
-    [tabId, setMessages, setScrollToMessageId] // Add dependencies
-  );
+        },
+        [tabId, setMessages, setScrollToMessageId]
+      );
 
   const switchToView = useCallback(
     async (viewName) => {
@@ -291,20 +282,17 @@ export function useChatSessionManagement({
     [tabId]
   );
 
-  const deleteSelectedChatSession = useCallback(
-    async (chatSessionIdToDelete) => {
-      if (!tabId || !chatSessionIdToDelete) return;
-      try {
-        await ChatHistoryService.deleteChatSession(chatSessionIdToDelete);
-        if (chatSessionIdToDelete === currentChatSessionId) {
-          await createNewChat();
-        }
-      } catch (error) {
-        logger.sidepanel.error('Error in deleteSelectedChatSession:', error);
-      }
-    },
-    [tabId, currentChatSessionId, createNewChat]
-  );
+      const deleteSelectedChatSession = useCallback(
+        async (chatSessionIdToDelete) => {
+          if (!tabId || !chatSessionIdToDelete) return;
+          // Let errors propagate to be caught by the caller
+          await ChatHistoryService.deleteChatSession(chatSessionIdToDelete);
+          if (chatSessionIdToDelete === currentChatSessionId) {
+            await createNewChat();
+          }
+        },
+        [tabId, currentChatSessionId, createNewChat]
+      );
 
   return {
     messages,

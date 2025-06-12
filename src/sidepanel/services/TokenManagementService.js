@@ -52,12 +52,14 @@ class TokenManagementService {
    * @param {Object} stats - Token statistics to store
    * @returns {Promise<boolean>} - Success status
    */
-  static async updateTokenStatistics(chatSessionId, stats) {
-    if (!chatSessionId) return false;
-
-    try {
-      // Get all global chat token statistics
-      const result = await chrome.storage.local.get([
+      static async updateTokenStatistics(chatSessionId, stats) {
+        if (!chatSessionId) {
+          throw new Error('Cannot update token statistics without a chatSessionId.');
+        }
+    
+        try {
+          // Get all global chat token statistics
+          const result = await chrome.storage.local.get([
         STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
       ]);
       const allTokenStats = result[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
@@ -72,15 +74,15 @@ class TokenManagementService {
       await chrome.storage.local.set({
         [STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS]: allTokenStats,
       });
-      return true;
-    } catch (error) {
-      logger.sidepanel.error(
-        `TokenManagementService: Error updating token statistics for chat session ${chatSessionId}:`,
-        error
-      );
-      return false;
-    }
-  }
+          return true;
+        } catch (error) {
+          logger.sidepanel.error(
+            `TokenManagementService: Error updating token statistics for chat session ${chatSessionId}:`,
+            error
+          );
+          throw error;
+        }
+      }
 
   /**
    * Calculate token statistics from chat history
@@ -219,12 +221,14 @@ class TokenManagementService {
    * @param {string} chatSessionId - Chat session identifier
    * @returns {Promise<boolean>} - Success status
    */
-  static async clearTokenStatistics(chatSessionId) {
-    if (!chatSessionId) return false;
-
-    try {
-      // Get all global chat token statistics
-      const result = await chrome.storage.local.get([
+      static async clearTokenStatistics(chatSessionId) {
+        if (!chatSessionId) {
+          throw new Error('Cannot clear token statistics without a chatSessionId.');
+        }
+    
+        try {
+          // Get all global chat token statistics
+          const result = await chrome.storage.local.get([
         STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
       ]);
       const allTokenStats = result[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
@@ -236,15 +240,15 @@ class TokenManagementService {
       await chrome.storage.local.set({
         [STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS]: allTokenStats,
       });
-      return true;
-    } catch (error) {
-      logger.sidepanel.error(
-        `TokenManagementService: Error clearing token statistics for chat session ${chatSessionId}:`,
-        error
-      );
-      return false;
-    }
-  }
+          return true;
+        } catch (error) {
+          logger.sidepanel.error(
+            `TokenManagementService: Error clearing token statistics for chat session ${chatSessionId}:`,
+            error
+          );
+          throw error;
+        }
+      }
 
   /**
    * Calculate token statistics for a specific chat history
