@@ -126,8 +126,15 @@ export const ApiSettingsProvider = ({ children }) => {
         showSuccessNotification('API key saved successfully.');
         return true;
       } catch (err) {
-        logger.settings.error('Error saving API key in context:', err);
-        showErrorNotification(`Failed to save API key: ${err.message}`);
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES')) {
+          showErrorNotification(
+            'Local storage limit reached. Could not save API key.'
+          );
+        } else {
+          logger.settings.error('Error saving API key in context:', err);
+          showErrorNotification(`Failed to save API key: ${err.message}`);
+        }
         return false;
       }
     },
@@ -146,8 +153,15 @@ export const ApiSettingsProvider = ({ children }) => {
         showSuccessNotification('API key removed successfully.');
         return true;
       } catch (err) {
-        logger.settings.error('Error removing API key in context:', err);
-        showErrorNotification(`Failed to remove API key: ${err.message}`);
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES')) {
+          showErrorNotification(
+            'Local storage limit reached. Could not remove API key.'
+          );
+        } else {
+          logger.settings.error('Error removing API key in context:', err);
+          showErrorNotification(`Failed to remove API key: ${err.message}`);
+        }
         return false;
       }
     },
@@ -299,9 +313,16 @@ export const ApiSettingsProvider = ({ children }) => {
           'Error resetting model parameters in context:',
           err
         );
-        showErrorNotification(
-          `Failed to reset model parameters: ${err.message}`
-        );
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES')) {
+          showErrorNotification(
+            'Local storage limit reached. Could not reset parameters.'
+          );
+        } else {
+          showErrorNotification(
+            `Failed to reset model parameters: ${err.message}`
+          );
+        }
         return false;
       }
     },
