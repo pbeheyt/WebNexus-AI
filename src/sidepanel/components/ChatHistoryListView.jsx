@@ -88,11 +88,16 @@ export default function ChatHistoryListView() {
         await deleteSelectedChatSession(sessionId);
         await fetchSessionsAndConfigs();
       } catch (err) {
-        logger.sidepanel.error(
-          `Error during delete operation for session ${sessionId}:`,
-          err
-        );
-        showError('Failed to delete session. Storage might be full.');
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES')) {
+          showError('Local storage limit reached. Could not delete session.');
+        } else {
+          logger.sidepanel.error(
+            `Error during delete operation for session ${sessionId}:`,
+            err
+          );
+          showError('Failed to delete session. Storage might be full.');
+        }
       } finally {
         setDeletingSessionId(null);
       }
@@ -177,8 +182,13 @@ export default function ChatHistoryListView() {
       showSuccess('Chat title updated.');
       await fetchSessionsAndConfigs();
     } catch (err) {
-      // The service now throws errors with user-friendly messages for validation
-      showError(err.message || 'Failed to update title.');
+      const lastError = chrome.runtime.lastError;
+      if (lastError?.message?.includes('QUOTA_BYTES')) {
+        showError('Local storage limit reached. Could not update title.');
+      } else {
+        // The service now throws errors with user-friendly messages for validation
+        showError(err.message || 'Failed to update title.');
+      }
     } finally {
       // Ensure the editing UI is always closed after the attempt
       handleCancelEdit();
