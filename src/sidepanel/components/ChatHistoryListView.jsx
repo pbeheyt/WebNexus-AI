@@ -169,17 +169,20 @@ export default function ChatHistoryListView() {
       return;
     }
 
-    const result = await ChatHistoryService.updateSessionTitle(
-      sessionId,
-      editingTitle
-    );
-    if (result.success) {
+    try {
+      await ChatHistoryService.updateSessionTitle(
+        sessionId,
+        editingTitle
+      );
       showSuccess('Chat title updated.');
       await fetchSessionsAndConfigs();
-    } else {
-      showError(result.message || 'Failed to update title.');
+    } catch (err) {
+      // The service now throws errors with user-friendly messages for validation
+      showError(err.message || 'Failed to update title.');
+    } finally {
+      // Ensure the editing UI is always closed after the attempt
+      handleCancelEdit();
     }
-    handleCancelEdit();
   };
 
   const areAllSelected = useMemo(
