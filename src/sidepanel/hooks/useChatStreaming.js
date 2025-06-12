@@ -48,6 +48,7 @@ export function useChatStreaming({
   TokenManagementService,
   robustSendMessage,
   isThinkingModeEnabled = false,
+  showErrorNotification,
 }) {
   const batchedThinkingContentRef = useRef('');
   const performThinkingStreamingStateUpdate = useCallback(() => {
@@ -189,8 +190,24 @@ export function useChatStreaming({
                   initialOutputTokens: retrievedPreTruncationOutput,
                 },
                 isThinkingModeEnabled,
-                systemPromptForThisTurn 
-            ).catch(err => logger.sidepanel.error("Error saving history in functional update:", err));
+                systemPromptForThisTurn
+              )
+              .catch((err) => {
+                const lastError = chrome.runtime.lastError;
+                if (lastError?.message?.includes('QUOTA_BYTES')) {
+                  showErrorNotification(
+                    'Local storage limit reached. Could not save chat history.'
+                  );
+                } else {
+                  logger.sidepanel.error(
+                    'Error saving history in functional update:',
+                    err
+                  );
+                  showErrorNotification(
+                    'An error occurred while saving chat history.'
+                  );
+                }
+              });
 
             return finalUpdatedMessagesForStateAndHistory; // Return the array with cost (if calculated)
           }
@@ -218,6 +235,7 @@ export function useChatStreaming({
       ChatHistoryService,
       TokenManagementService,
       isThinkingModeEnabled,
+      showErrorNotification,
       // tabId is implicitly included if it's part of the dependencies for other reasons,
       // but the core logic here now depends on chatSessionId for history.
     ]

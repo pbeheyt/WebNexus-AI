@@ -295,8 +295,13 @@ export function useSidePanelModelParameters({
       showSuccessNotification(successMessage);
 
     } catch (err) {
-      logger.sidepanel.error('Error saving model parameters in sidepanel hook:', err);
-      showNotificationError(err.message || 'An unknown error occurred during save.');
+      const lastError = chrome.runtime.lastError;
+      if (lastError?.message?.includes('QUOTA_BYTES')) {
+        showNotificationError('Local storage limit reached. Could not save changes.');
+      } else {
+        logger.sidepanel.error('Error saving model parameters in sidepanel hook:', err);
+        showNotificationError(err.message || 'An unknown error occurred during save.');
+      }
     } finally {
       setIsSavingActual(false);
     }
@@ -344,8 +349,13 @@ export function useSidePanelModelParameters({
       showSuccessNotification(`Parameters for '${modelConfigData?.displayName || selectedModelId}' reset.`);
       
     } catch (err) {
-      logger.sidepanel.error('Error resetting model parameters in sidepanel hook:', err);
-      showNotificationError('Failed to reset model parameters.');
+      const lastError = chrome.runtime.lastError;
+      if (lastError?.message?.includes('QUOTA_BYTES')) {
+        showNotificationError('Local storage limit reached. Could not reset parameters.');
+      } else {
+        logger.sidepanel.error('Error resetting model parameters in sidepanel hook:', err);
+        showNotificationError('Failed to reset model parameters.');
+      }
     } finally {
       setIsResettingActual(false);
       setTimeout(() => setIsAnimatingReset(false), 500);

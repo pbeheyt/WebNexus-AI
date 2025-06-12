@@ -234,7 +234,14 @@ export function KeyboardShortcutsTab() {
       setIsShortcutModalOpen(false);
     } catch (error) {
       logger.settings.error('Error saving custom popup shortcut:', error);
-      showErrorNotification(`Error saving shortcut: ${error.message}`);
+      const lastError = chrome.runtime.lastError;
+      if (lastError?.message?.includes('QUOTA_BYTES')) {
+        showErrorNotification(
+          'Sync storage limit reached. Could not save shortcut.'
+        );
+      } else {
+        showErrorNotification(`Error saving shortcut: ${error.message}`);
+      }
     } finally {
       setIsSavingShortcut(false);
     }
