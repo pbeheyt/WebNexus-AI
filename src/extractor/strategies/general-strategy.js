@@ -223,7 +223,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
       'popup',
       'modal',
       'cookie-banner',
-      'alert',
       'gdpr',
       'cookie-consent',
     ];
@@ -237,41 +236,14 @@ class GeneralExtractorStrategy extends BaseExtractor {
     if (classList && classList.length > 0) {
       for (let i = 0; i < classList.length; i++) {
         const className = classList[i].toLowerCase();
-        if (
-          navIdsAndClasses.some(
-            (navCls) => className.includes(navCls) || className === navCls
-          )
-        ) {
+        // True "whole word" matching. Split by hyphen and check for exact match in parts.
+        const classParts = className.split('-');
+        if (classParts.some(part => navIdsAndClasses.includes(part))) {
           return true;
         }
       }
     }
 
-    if (
-      tagName === 'div' ||
-      tagName === 'ul' ||
-      tagName === 'section' ||
-      tagName === 'header' ||
-      tagName === 'footer'
-    ) {
-      const links = element.querySelectorAll('a');
-      if (links.length > 2) {
-        let textContentLength = 0;
-        Array.from(element.childNodes).forEach((childNode) => {
-          if (childNode.nodeType === Node.TEXT_NODE) {
-            textContentLength += (childNode.textContent || '').trim().length;
-          } else if (
-            childNode.nodeType === Node.ELEMENT_NODE &&
-            childNode.tagName.toLowerCase() !== 'a'
-          ) {
-            textContentLength += (childNode.textContent || '').trim().length;
-          }
-        });
-        if (textContentLength < links.length * 20 + 10) {
-          return true;
-        }
-      }
-    }
     return false;
   }
 
@@ -418,11 +390,9 @@ class GeneralExtractorStrategy extends BaseExtractor {
       'BUTTON',
       'SELECT',
       'OPTION',
-      'LABEL',
       'LEGEND',
       'TEXTAREA',
       'INPUT',
-      'A',
       'SCRIPT',
       'STYLE',
       'NOSCRIPT',
