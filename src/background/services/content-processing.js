@@ -89,12 +89,95 @@ export async function processWithDefaultPromptWebUI(tab) {
       promptContent: promptContent,
       useApi: false, // Explicitly use the Web UI interaction flow
       includeContext: true, // Always include context for default processing
+      contentType: contentType,
     });
     logger.background.info(
       `processContent call initiated via default prompt processing.`
     );
   } catch (error) {
     logger.background.error('Error in processWithDefaultPromptWebUI:', error);
+    throw error; // Re-throw to allow callers to handle
+  }
+}
+
+/**
+ * Process content with a specific prompt from the context menu in Web UI.
+ * @param {Object} tab - Browser tab object.
+ * @param {string} promptId - The ID of the prompt to use.
+ * @returns {Promise<void>}
+ */
+export async function processWithSpecificPromptWebUI(tab, promptId) {
+  if (!tab || !tab.id || !tab.url) {
+    logger.background.error(
+      'processWithSpecificPromptWebUI: Missing tab information.'
+    );
+    return;
+  }
+  if (!promptId) {
+    logger.background.error('processWithSpecificPromptWebUI: Missing promptId.');
+    return;
+  }
+
+  try {
+    const selectionResult = await chrome.storage.local.get(
+      STORAGE_KEYS.TAB_SELECTION_STATES
+    );
+    const selectionStates =
+      selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] || {};
+    const hasSelection = !!selectionStates[tab.id];
+
+    const contentType = determineContentType(tab.url, hasSelection);
+    logger.background.info(
+      `Determined content type: ${contentType} for URL: ${tab.url}`
+    );
+
+    // Get the prompt content from storage using the provided ID
+    const promptsResult = await chrome.storage.local.get(
+      STORAGE_KEYS.USER_CUSTOM_PROMPTS
+    );
+    const promptsByType =
+      promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+    const promptObject = promptsByType[contentType]?.[promptId];
+
+    if (!promptObject || !promptObject.content) {
+      logger.background.error(
+        `Prompt object or content not found for ID: ${promptId} under type ${contentType}`
+      );
+      return;
+    }
+    const promptContent = promptObject.content;
+    logger.background.info(
+      `Found prompt content for ${promptId} (length: ${promptContent.length}).`
+    );
+
+    // Get the last used popup platform
+    const platformResult = await chrome.storage.sync.get(
+      STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID
+    );
+    const platformId =
+      platformResult[STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID] || 'chatgpt';
+    logger.background.info(
+      `Using platform: ${platformId} for context menu flow.`
+    );
+
+    // Call processContent with the specific prompt
+    logger.background.info(
+      `Calling processContent for tab ${tab.id} with specific prompt ID ${promptId}.`
+    );
+    await processContent({
+      tabId: tab.id,
+      url: tab.url,
+      platformId: platformId,
+      promptContent: promptContent,
+      useApi: false,
+      includeContext: true,
+      contentType: contentType,
+    });
+    logger.background.info(
+      `processContent call initiated via specific prompt processing.`
+    );
+  } catch (error) {
+    logger.background.error('Error in processWithSpecificPromptWebUI:', error);
     throw error; // Re-throw to allow callers to handle
   }
 }

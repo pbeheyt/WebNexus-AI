@@ -170,13 +170,13 @@ async function handleInstallation(details) {
     try {
       // Remove existing menu items first to prevent duplicates on update
       await chrome.contextMenus.removeAll();
-      // Create the new context menu item
+      // Create the new parent context menu item
       await chrome.contextMenus.create({
-        id: 'menu-quick-process',
-        title: 'Process in Web UI (Default Prompt)',
+        id: 'parent-menu',
+        title: 'Process with WebNexus AI',
         contexts: ['page'], // Show only when right-clicking on the page
       });
-      logger.background.info('Context menu created successfully.');
+      logger.background.info('Parent context menu created successfully.');
     } catch (menuError) {
       logger.background.error('Failed to create context menu:', menuError);
     }
