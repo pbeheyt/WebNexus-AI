@@ -52,6 +52,12 @@ This permission is fundamental for enabling the WebNexus AI Side Panel interface
 
 ---
 
+### Permission: `notifications`
+
+WebNexus AI uses the `notifications` permission to provide essential, non-intrusive feedback to the user for actions initiated from contexts without a visible UI, such as keyboard shortcuts or context menu actions. For example, if a user tries to process content with a shortcut but has not configured a required setting (like a default prompt), the extension will display a system notification to inform the user of the issue and guide them on how to resolve it. This prevents silent failures and improves the overall user experience.
+
+---
+
 ### Host Permissions (`host_permissions`)
 
 **(A) If a single field is provided for _all_ `host_permissions` in the CWS Dashboard:**

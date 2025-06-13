@@ -10,111 +10,23 @@ import {
 } from '../core/state-manager.js';
 import { processContentViaApi } from '../api/api-coordinator.js';
 import { logger } from '../../shared/logger.js';
-import { STORAGE_KEYS } from '../../shared/constants.js';
+import { STORAGE_KEYS, CONTENT_TYPE_LABELS } from '../../shared/constants.js';
 import ContentFormatter from '../../services/ContentFormatter.js';
 
 import { openAiPlatformWithContent } from './platform-integration.js';
 import { extractContent } from './content-extraction.js';
 
 /**
- * Process content with default prompt in Web UI
- * @param {Object} tab - Browser tab object
- * @returns {Promise<void>}
- */
-export async function processWithDefaultPromptWebUI(tab) {
-  if (!tab || !tab.id || !tab.url) {
-    logger.background.error(
-      'processWithDefaultPromptWebUI: Missing tab information.'
-    );
-    return;
-  }
-
-  try {
-    const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATES);
-    const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] || {};
-    const hasSelection = !!selectionStates[tab.id];
-
-    const contentType = determineContentType(tab.url, hasSelection);
-    logger.background.info(
-      `Determined content type: ${contentType} for URL: ${tab.url}`
-    );
-
-    // 1. Get the default prompt ID and content from PROMPTS
-    const promptsResult = await chrome.storage.local.get(
-      STORAGE_KEYS.USER_CUSTOM_PROMPTS
-    );
-    const customPrompts = promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-    const typeData = customPrompts[contentType] || {};
-    const defaultPromptId = typeData['_defaultPromptId_'];
-
-    if (!defaultPromptId) {
-      logger.background.warn(
-        `No default prompt set for content type: ${contentType}. Aborting quick process.`
-      );
-      return;
-    }
-    logger.background.info(`Found default prompt ID: ${defaultPromptId}`);
-
-    // 2. Get the actual prompt content from the same result
-    const promptsByType = promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-    const promptObject = promptsByType[contentType]?.[defaultPromptId];
-
-    if (!promptObject || !promptObject.content) {
-      logger.background.error(
-        `Default prompt object or content not found for ID: ${defaultPromptId} under type ${contentType}`
-      );
-      return;
-    }
-    const promptContent = promptObject.content;
-    logger.background.info(
-      `Found default prompt content (length: ${promptContent.length}).`
-    );
-
-    // 3. Get the last used popup platform
-    const platformResult = await chrome.storage.sync.get(
-      STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID
-    );
-    const platformId =
-      platformResult[STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID] || 'chatgpt';
-    logger.background.info(`Using platform: ${platformId} for popup flow.`);
-
-    // 4. Call processContent
-    logger.background.info(
-      `Calling processContent for tab ${tab.id} with default prompt.`
-    );
-    await processContent({
-      tabId: tab.id,
-      url: tab.url,
-      platformId: platformId,
-      promptContent: promptContent,
-      useApi: false, // Explicitly use the Web UI interaction flow
-      includeContext: true, // Always include context for default processing
-      contentType: contentType,
-    });
-    logger.background.info(
-      `processContent call initiated via default prompt processing.`
-    );
-  } catch (error) {
-    logger.background.error('Error in processWithDefaultPromptWebUI:', error);
-    throw error; // Re-throw to allow callers to handle
-  }
-}
-
-/**
- * Process content with a specific prompt from the context menu in Web UI.
+ * Internal function to handle all Web UI processing, including shortcuts and context menus.
+ * Contains centralized logic for prompt resolution, platform selection, and user feedback via notifications.
+ * This function is not exported.
  * @param {Object} tab - Browser tab object.
- * @param {string} promptId - The ID of the prompt to use.
+ * @param {string|null} [promptId=null] - The ID of a specific prompt to use. If null, the default prompt is used.
  * @returns {Promise<void>}
  */
-export async function processWithSpecificPromptWebUI(tab, promptId) {
+async function _processViaWebUI(tab, promptId = null) {
   if (!tab || !tab.id || !tab.url) {
-    logger.background.error(
-      'processWithSpecificPromptWebUI: Missing tab information.'
-    );
-    return;
-  }
-  if (!promptId) {
-    logger.background.error('processWithSpecificPromptWebUI: Missing promptId.');
+    logger.background.error('_processViaWebUI: Missing tab information.');
     return;
   }
 
@@ -131,38 +43,60 @@ export async function processWithSpecificPromptWebUI(tab, promptId) {
       `Determined content type: ${contentType} for URL: ${tab.url}`
     );
 
-    // Get the prompt content from storage using the provided ID
     const promptsResult = await chrome.storage.local.get(
       STORAGE_KEYS.USER_CUSTOM_PROMPTS
     );
     const promptsByType =
       promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-    const promptObject = promptsByType[contentType]?.[promptId];
+    const typeData = promptsByType[contentType] || {};
 
-    if (!promptObject || !promptObject.content) {
-      logger.background.error(
-        `Prompt object or content not found for ID: ${promptId} under type ${contentType}`
-      );
+    let promptToUse = null;
+    if (promptId) {
+      // Use a specific prompt if an ID is provided
+      promptToUse = typeData[promptId];
+      logger.background.info(`Attempting to use specific prompt ID: ${promptId}`);
+    } else {
+      // Otherwise, find and use the default prompt for the content type
+      const defaultPromptId = typeData['_defaultPromptId_'];
+      if (defaultPromptId) {
+        promptToUse = typeData[defaultPromptId];
+        logger.background.info(`Found default prompt ID: ${defaultPromptId}`);
+      }
+    }
+
+    if (!promptToUse || !promptToUse.content) {
+      const contentTypeLabel =
+        CONTENT_TYPE_LABELS[contentType] || 'this content';
+      const errorMessage = promptId
+        ? `Prompt with ID ${promptId} not found for "${contentTypeLabel}".`
+        : `No default prompt is configured for "${contentTypeLabel}". Please set one in settings.`;
+
+      logger.background.warn(errorMessage);
+
+      // Provide user feedback via notification for the silent failure case
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'images/logo_128.png',
+        title: 'WebNexus AI Action Failed',
+        message: errorMessage,
+      });
       return;
     }
-    const promptContent = promptObject.content;
+
+    const promptContent = promptToUse.content;
     logger.background.info(
-      `Found prompt content for ${promptId} (length: ${promptContent.length}).`
+      `Found prompt content (length: ${promptContent.length}).`
     );
 
-    // Get the last used popup platform
     const platformResult = await chrome.storage.sync.get(
       STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID
     );
     const platformId =
       platformResult[STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID] || 'chatgpt';
-    logger.background.info(
-      `Using platform: ${platformId} for context menu flow.`
-    );
+    logger.background.info(`Using platform: ${platformId} for Web UI flow.`);
 
-    // Call processContent with the specific prompt
     logger.background.info(
-      `Calling processContent for tab ${tab.id} with specific prompt ID ${promptId}.`
+      `Calling processContent for tab ${tab.id} via _processViaWebUI.`
     );
     await processContent({
       tabId: tab.id,
@@ -173,13 +107,35 @@ export async function processWithSpecificPromptWebUI(tab, promptId) {
       includeContext: true,
       contentType: contentType,
     });
-    logger.background.info(
-      `processContent call initiated via specific prompt processing.`
-    );
   } catch (error) {
-    logger.background.error('Error in processWithSpecificPromptWebUI:', error);
-    throw error; // Re-throw to allow callers to handle
+    logger.background.error('Error in _processViaWebUI:', error);
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'images/logo_128.png',
+      title: 'WebNexus AI Error',
+      message:
+        'An unexpected error occurred while processing your request. Please check the console for details.',
+    });
   }
+}
+
+/**
+ * Process content with default prompt in Web UI.
+ * @param {Object} tab - Browser tab object
+ * @returns {Promise<void>}
+ */
+export async function processWithDefaultPromptWebUI(tab) {
+  await _processViaWebUI(tab, null); // Call the centralized function with no specific promptId
+}
+
+/**
+ * Process content with a specific prompt from the context menu in Web UI.
+ * @param {Object} tab - Browser tab object.
+ * @param {string} promptId - The ID of the prompt to use.
+ * @returns {Promise<void>}
+ */
+export async function processWithSpecificPromptWebUI(tab, promptId) {
+  await _processViaWebUI(tab, promptId); // Call the centralized function with the specific promptId
 }
 
 /**
@@ -238,7 +194,11 @@ export async function processContent(params) {
 
       // 2. Extract content (Only if extracting)
       logger.background.info(`Content type determined: ${contentType}`);
-      const extractionResult = await extractContent(tabId, params.url, contentType);
+      const extractionResult = await extractContent(
+        tabId,
+        params.url,
+        contentType
+      );
       if (!extractionResult) {
         logger.background.warn('Content extraction completed with issues');
       }
@@ -247,7 +207,8 @@ export async function processContent(params) {
       const storageResult = await chrome.storage.local.get(
         STORAGE_KEYS.EXTRACTED_CONTENT // This key's value is 'extracted_content'
       );
-      const extractedContent = storageResult[STORAGE_KEYS.EXTRACTED_CONTENT]; // Access using the actual key string
+      const extractedContent =
+        storageResult[STORAGE_KEYS.EXTRACTED_CONTENT]; // Access using the actual key string
 
       if (!extractedContent) {
         logger.background.error(
@@ -310,9 +271,7 @@ export async function processContent(params) {
     );
 
     // Determine contentType only if context was included, otherwise it's irrelevant
-    const finalContentType = includeContext
-      ? contentType
-      : null;
+    const finalContentType = includeContext ? contentType : null;
 
     return {
       success: true,
