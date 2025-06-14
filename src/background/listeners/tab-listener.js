@@ -93,7 +93,7 @@ async function updateContextMenuForTab(tab) {
         id: menuId,
         title: prompt.name,
         parentId: 'parent-menu',
-        contexts: ['page'],
+        contexts: ['page', 'selection'],
       });
     }
   } else {
@@ -105,7 +105,7 @@ async function updateContextMenuForTab(tab) {
       title: 'No prompts for this content type',
       enabled: false,
       parentId: 'parent-menu',
-      contexts: ['page'],
+      contexts: ['page', 'selection'],
     });
   }
 }

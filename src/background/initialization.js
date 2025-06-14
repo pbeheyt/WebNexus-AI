@@ -174,7 +174,7 @@ async function handleInstallation(details) {
       await chrome.contextMenus.create({
         id: 'parent-menu',
         title: 'Process with WebNexus AI',
-        contexts: ['page'], // Show only when right-clicking on the page
+        contexts: ['page', 'selection'], // Show on page and text selection
       });
       logger.background.info('Parent context menu created successfully.');
     } catch (menuError) {
