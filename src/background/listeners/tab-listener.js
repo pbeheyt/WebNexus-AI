@@ -1,8 +1,19 @@
 // src/background/listeners/tab-listener.js - Tab update monitoring
 
-// In-memory sets to track processing state for tabs during a load sequence
-const platformScriptInjectedTabs = new Set();
-const sidePanelOptionsSetForLoad = new Set();
+ // In-memory sets to track processing state for tabs during a single page load.
+ // A single navigation can fire multiple `onUpdated` events (e.g., status 'loading', then 'complete',
+ // then for sub-frame loads). These sets prevent redundant actions within one logical page load.
+ 
+ // Tracks tabs where the platform-specific content script injection sequence has *started*.
+ // This prevents re-injection if `onUpdated` fires multiple times with `status: 'complete'`.
+ // Cleared on navigation start.
+ const platformScriptInjectedTabs = new Set();
+ 
+ // Tracks tabs where `sidePanel.setOptions` has been called for the current page load.
+ // This prevents redundant API calls for minor updates (like fragment changes) that
+ // might also fire `onUpdated` with `status: 'complete'`.
+ // Cleared on major navigation events.
+ const sidePanelOptionsSetForLoad = new Set();
 
 // In-memory store for dynamically created context menu item IDs
 let createdMenuIDs = [];
@@ -183,8 +194,9 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
   // --- Side Panel State Check on Completion ---
   if (changeInfo.status === 'complete' && tab.url) {
     try {
-      // Guard against setting side panel options multiple times for the same load
-      if (sidePanelOptionsSetForLoad.has(tabId)) {
+        // Guard against setting side panel options multiple times for the same load sequence.
+        // A single page load can fire onUpdated multiple times; we only want to run this logic once.
+        if (sidePanelOptionsSetForLoad.has(tabId)) {
         logger.background.info(
           `Side panel options already set for tab ${tabId} during this load sequence. Skipping.`
         );
@@ -243,6 +255,8 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
   // --- Platform Tab Injection Logic ---
   if (changeInfo.status === 'complete' && tab.url) {
     // Check if we've already initiated platform script injection for this tab in this load sequence.
+    // This prevents re-running the injection logic for multiple 'complete' status updates
+    // during a single navigation.
     if (platformScriptInjectedTabs.has(tabId)) {
       logger.background.info(
         `Platform script injection sequence already processed for tab ${tabId} during this load. Skipping platform injection block.`

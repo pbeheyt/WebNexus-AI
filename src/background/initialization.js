@@ -42,13 +42,13 @@ async function populateInitialPromptsAndSetDefaults() {
       logger.background.info(
         'Set initial prompts populated flag after successful repopulation.'
       );
-      return true; // Population ran
     } else {
       logger.background.error(
         'Full prompt repopulation failed during initial setup.'
       );
-      return false; // Population failed
     }
+    // The repopulation function now handles ensuring defaults internally.
+    return success;
   } catch (error) {
     logger.background.error(
       'Error in populateInitialPromptsAndSetDefaults:',
