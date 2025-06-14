@@ -5,9 +5,6 @@
  * Console-only implementation with backward compatibility
  */
 
-// Determine if running in production mode (set by Webpack's mode option)
-const isProduction = process.env.NODE_ENV === 'production';
-
 /**
  * Log a message to console, conditionally skipping 'info' and 'debug' logs in production.
  * @param {string} context - The context (background, content, popup, etc.)
