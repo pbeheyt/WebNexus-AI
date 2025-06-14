@@ -151,6 +151,21 @@ export async function toggleSidePanel(message, sender, sendResponse) {
  * @param {function} sendResponse - Function to call to send the response.
  * @returns {boolean} - True to indicate an asynchronous response.
  */
+export function handleIsSidePanelAllowedPageRequest(
+  message,
+  _sender,
+  sendResponse
+) {
+  try {
+    const isAllowed = isSidePanelAllowedPage(message.url);
+    sendResponse(isAllowed);
+  } catch (error) {
+    logger.background.error('Error checking side panel allowance:', error);
+    sendResponse(false);
+  }
+  return false;
+}
+
 export function handleToggleSidePanelAction(message, sender, sendResponse) {
   logger.background.info(
     'Received toggleSidePanelAction request via message router'

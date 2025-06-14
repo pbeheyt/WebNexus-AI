@@ -129,6 +129,18 @@ export async function processWithDefaultPromptWebUI(tab) {
 }
 
 /**
+ * Handle get content type request from message
+ * @param {Object} message - Message object
+ * @param {Object} sender - Sender of the message
+ * @param {Function} sendResponse - Response function
+ */
+export function handleGetContentTypeRequest(message, _sender, sendResponse) {
+  const contentType = determineContentType(message.url, message.hasSelection);
+  sendResponse({ contentType });
+  return false;
+}
+
+/**
  * Process content with a specific prompt from the context menu in Web UI.
  * @param {Object} tab - Browser tab object.
  * @param {string} promptId - The ID of the prompt to use.

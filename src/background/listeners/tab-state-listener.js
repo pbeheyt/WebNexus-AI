@@ -5,6 +5,8 @@ import ChatHistoryService from '../../sidepanel/services/ChatHistoryService.js';
 import { logger } from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants';
 
+import { debouncedUpdateContextMenuForTab } from './context-menu-listener.js';
+
 /**
  * Resets the UI state for a single tab, effectively preparing it for a new chat session.
  * Used for the manual refresh action initiated from the UI.
@@ -81,6 +83,27 @@ export async function updateTabSelectionState(tabId, hasSelection) {
   } catch (error) {
     logger.background.error(`Error updating selection state for tab ${tabId}:`, error);
   }
+}
+
+export function handleUpdateSelectionStatusRequest(
+  message,
+  sender,
+  sendResponse
+) {
+  // This handler is now async inside, but returns true synchronously
+  (async () => {
+    if (sender.tab && sender.tab.id) {
+      // Update the selection state in storage
+      await updateTabSelectionState(sender.tab.id, message.hasSelection);
+      // Crucially, now update the context menu based on the new selection state
+      if (sender.tab) {
+        debouncedUpdateContextMenuForTab(sender.tab);
+      }
+    }
+    sendResponse({ success: true }); // Acknowledge receipt
+  })(); // IIFE
+
+  return true; // Keep the message channel open for the async response
 }
 
 export function handleClearTabDataRequest(message, sender, sendResponse) {

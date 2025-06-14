@@ -1,24 +1,30 @@
 // src/background/core/message-router.js - Centralized message handling
 
 import { logger } from '../../shared/logger.js';
-import {
-  determineContentType,
-  isSidePanelAllowedPage,
-} from '../../shared/utils/content-utils.js';
 import { handleCredentialOperation } from '../services/credential-manager.js';
 import { handleFetchPdfRequest } from '../services/file-access-service.js';
 import { handleApiModelRequest } from '../api/api-coordinator.js';
 import {
   handleProcessContentRequest,
   handleProcessContentViaApiRequest,
+  handleGetContentTypeRequest,
 } from '../services/content-processing.js';
 import {
   handleToggleSidePanelAction,
   handleCloseCurrentSidePanelRequest,
+  handleIsSidePanelAllowedPageRequest,
 } from '../services/sidepanel-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
-import { handleClearTabDataRequest, updateTabSelectionState } from '../listeners/tab-state-listener.js';
-import { debouncedUpdateContextMenuForTab } from '../listeners/context-menu-listener.js';
+import {
+  handleClearTabDataRequest,
+  handleUpdateSelectionStatusRequest,
+} from '../listeners/tab-state-listener.js';
+
+import {
+  handleCheckStatus,
+  handleNotifyError,
+  handleGetCurrentTabId,
+} from './core-handlers.js';
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -49,18 +55,6 @@ export function setupMessageRouter() {
       return result === true; // Keep channel open for async response if needed
     }
 
-    // Default simple responses
-    if (message.action === 'checkStatus') {
-      sendResponse({ status: 'ok' });
-      return false;
-    }
-
-    // Handle getCurrentTabId for tab-specific sidepanel functionality
-    if (message.action === 'getCurrentTabId') {
-      sendResponse({ tabId: sender.tab ? sender.tab.id : null });
-      return false;
-    }
-
     logger.background.warn(
       `No handler registered for message action: ${message.action}`
     );
@@ -75,48 +69,22 @@ export function setupMessageRouter() {
  */
 function registerCoreHandlers() {
   // Content type detection handler
-  messageHandlers.set('getContentType', (message, _sender, sendResponse) => {
-    const contentType = determineContentType(message.url, message.hasSelection);
-    sendResponse({ contentType });
-    return false;
-  });
+  messageHandlers.set('getContentType', handleGetContentTypeRequest);
 
   // Status check handler
-  messageHandlers.set('checkStatus', (_message, _sender, sendResponse) => {
-    sendResponse({ status: 'ok' });
-    return false;
-  });
+  messageHandlers.set('checkStatus', handleCheckStatus);
 
   // Error notification handler
-  messageHandlers.set('notifyError', (message, _sender, _sendResponse) => {
-    logger.background.error('Error from content script:', message.error);
-    return false;
-  });
+  messageHandlers.set('notifyError', handleNotifyError);
 
   // Side panel allowed check
   messageHandlers.set(
     'isSidePanelAllowedPage',
-    (message, sender, sendResponse) => {
-      try {
-        const isAllowed = isSidePanelAllowedPage(message.url);
-        sendResponse(isAllowed);
-      } catch (error) {
-        logger.background.error('Error checking side panel allowance:', error);
-        sendResponse(false);
-      }
-      return false;
-    }
+    handleIsSidePanelAllowedPageRequest
   );
 
   // Tab ID provider for content scripts
-  messageHandlers.set('getCurrentTabId', (_message, sender, sendResponse) => {
-    if (sender.tab) {
-      sendResponse({ tabId: sender.tab.id });
-    } else {
-      sendResponse({ tabId: null, error: 'Not in a tab context' });
-    }
-    return false;
-  });
+  messageHandlers.set('getCurrentTabId', handleGetCurrentTabId);
 }
 
 /**
@@ -130,21 +98,12 @@ function registerApiHandlers() {
   });
 
   // API credential operations
-  messageHandlers.set(
-    'credentialOperation',
-    (message, _sender, sendResponse) => {
-      handleCredentialOperation(message, sendResponse);
-      return true; // Keep channel open for async response
-    }
-  );
+  messageHandlers.set('credentialOperation', handleCredentialOperation);
 
   // API content processing
   messageHandlers.set(
     'processContentViaApi',
-    (message, _sender, sendResponse) => {
-      handleProcessContentViaApiRequest(message, sendResponse);
-      return true; // Keep channel open for async response
-    }
+    handleProcessContentViaApiRequest
   );
 
   messageHandlers.set('cancelStream', (message, _sender, sendResponse) => {
@@ -158,22 +117,13 @@ function registerApiHandlers() {
  */
 function registerServiceHandlers() {
   // Process content
-  messageHandlers.set('processContent', (message, _sender, sendResponse) => {
-    handleProcessContentRequest(message, sendResponse);
-    return true; // Keep channel open for async response
-  });
+  messageHandlers.set('processContent', handleProcessContentRequest);
 
   // Get theme
-  messageHandlers.set('getTheme', (message, _sender, sendResponse) => {
-    handleThemeOperation(message, sendResponse);
-    return true; // Keep channel open for async response
-  });
+  messageHandlers.set('getTheme', handleThemeOperation);
 
   // Set theme
-  messageHandlers.set('setTheme', (message, _sender, sendResponse) => {
-    handleThemeOperation(message, sendResponse);
-    return true; // Keep channel open for async response
-  });
+  messageHandlers.set('setTheme', handleThemeOperation);
 
   // Clear specific tab data (for sidepanel refresh)
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
@@ -181,22 +131,7 @@ function registerServiceHandlers() {
   // Selection status update from content script
   messageHandlers.set(
     'updateSelectionStatus',
-    (message, sender, sendResponse) => {
-      // This handler is now async inside, but returns true synchronously
-      (async () => {
-        if (sender.tab && sender.tab.id) {
-          // Update the selection state in storage
-          await updateTabSelectionState(sender.tab.id, message.hasSelection);
-          // Crucially, now update the context menu based on the new selection state
-          if (sender.tab) {
-            debouncedUpdateContextMenuForTab(sender.tab);
-          }
-        }
-        sendResponse({ success: true }); // Acknowledge receipt
-      })(); // IIFE
-
-      return true; // Keep the message channel open for the async response
-    }
+    handleUpdateSelectionStatusRequest
   );
 
   // Handle requests to toggle the side panel
@@ -209,9 +144,5 @@ function registerServiceHandlers() {
   );
 
   // Handle PDF fetch requests for file:// URLs
-  messageHandlers.set('fetchPdfAsBase64', (message, _sender, sendResponse) => {
-    handleFetchPdfRequest(message, sendResponse);
-    return true; // Keep channel open for async response
-  });
-
+  messageHandlers.set('fetchPdfAsBase64', handleFetchPdfRequest);
 }
