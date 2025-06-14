@@ -18,6 +18,7 @@ import {
 } from '../services/sidepanel-manager.js';
 import { handleThemeOperation } from '../services/theme-service.js';
 import { handleClearTabDataRequest, updateTabSelectionState } from '../listeners/tab-state-listener.js';
+import { debouncedUpdateContextMenuForTab } from '../listeners/context-menu-listener.js';
 
 // Store for message handlers
 const messageHandlers = new Map();
@@ -178,13 +179,21 @@ function registerServiceHandlers() {
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
 
   // Selection status update from content script
-  messageHandlers.set('updateSelectionStatus', (message, sender, sendResponse) => {
-    if (sender.tab && sender.tab.id) {
-      updateTabSelectionState(sender.tab.id, message.hasSelection);
+  messageHandlers.set(
+    'updateSelectionStatus',
+    async (message, sender, sendResponse) => {
+      if (sender.tab && sender.tab.id) {
+        // Update the selection state in storage
+        await updateTabSelectionState(sender.tab.id, message.hasSelection);
+        // Crucially, now update the context menu based on the new selection state
+        if (sender.tab) {
+          debouncedUpdateContextMenuForTab(sender.tab);
+        }
+      }
+      sendResponse({ success: true }); // Acknowledge receipt
+      return false; // No async response needed, but the handler is now async
     }
-    sendResponse({ success: true }); // Acknowledge receipt
-    return false; // No async response needed
-  });
+  );
 
   // Handle requests to toggle the side panel
   messageHandlers.set('toggleSidePanelAction', handleToggleSidePanelAction);
