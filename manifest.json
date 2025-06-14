@@ -61,6 +61,14 @@
         "http://*/*",
         "https://*/*"
       ]
+    },
+    {
+      "resources": [
+        "images/*.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "commands": {

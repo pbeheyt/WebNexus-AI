@@ -200,4 +200,5 @@ function registerServiceHandlers() {
     handleFetchPdfRequest(message, sendResponse);
     return true; // Keep channel open for async response
   });
+
 }

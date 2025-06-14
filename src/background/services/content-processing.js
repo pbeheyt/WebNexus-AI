@@ -74,9 +74,9 @@ async function _processViaWebUI(tab, promptId = null) {
       logger.background.warn(errorMessage);
 
       // Provide user feedback via notification for the silent failure case
-      chrome.notifications.create({
+      chrome.notifications.create('prompt-config-error', {
         type: 'basic',
-        iconUrl: 'images/logo_128.png',
+        iconUrl: chrome.runtime.getURL('images/logo_128.png'),
         title: 'WebNexus AI Action Failed',
         message: errorMessage,
       });
@@ -109,9 +109,9 @@ async function _processViaWebUI(tab, promptId = null) {
     });
   } catch (error) {
     logger.background.error('Error in _processViaWebUI:', error);
-    chrome.notifications.create({
+    chrome.notifications.create('generic-processing-error', {
       type: 'basic',
-      iconUrl: 'images/logo_128.png',
+      iconUrl: chrome.runtime.getURL('images/logo_128.png'),
       title: 'WebNexus AI Error',
       message:
         'An unexpected error occurred while processing your request. Please check the console for details.',

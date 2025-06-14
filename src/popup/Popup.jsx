@@ -250,6 +250,7 @@ export function Popup() {
     }
   }, [currentTab, updateStatus]);
 
+
   const { currentShortcutConfig: popupSidepanelShortcut } =
     useConfigurableShortcut(
       STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
@@ -491,6 +492,7 @@ export function Popup() {
             context='popup'
             className='py-3'
           />
+
         </>
       )}
 
