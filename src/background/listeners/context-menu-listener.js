@@ -9,34 +9,31 @@ import { loadRelevantPrompts } from '../../shared/utils/prompt-utils.js';
 import { debounce } from '../../shared/utils/debounce-utils.js';
 
 /**
- * Handles clicks on the context menu item.
- */
-// In-memory store for dynamically created context menu item IDs
-let createdMenuIDs = [];
-
-/**
  * Updates the context menu with relevant prompts for the given tab.
+ * This function uses an atomic remove-and-recreate strategy to avoid state management issues.
  * @param {chrome.tabs.Tab} tab - The tab object to create the context menu for.
  */
 async function updateContextMenuForTab(tab) {
-  // Clear previous dynamic items to prevent duplicates
-  for (const id of createdMenuIDs) {
-    try {
-      // Use a simple try-catch as remove can fail if the item was already removed
-      await chrome.contextMenus.remove(id);
-    } catch (e) {
-      // It's safe to ignore "No such context menu item" errors here.
-    }
+  // Atomically remove the parent menu and all its children.
+  // Use a try-catch to handle the first run where the menu doesn't exist.
+  try {
+    await chrome.contextMenus.remove('parent-menu');
+  } catch (e) {
+    // It's safe to ignore "No such context menu item" errors here.
   }
-  createdMenuIDs = []; // Reset the list of created IDs
 
   // Do not show the menu on pages where the side panel is not allowed (e.g., chrome://)
   if (!tab || !tab.id || !isSidePanelAllowedPage(tab.url)) {
-    await chrome.contextMenus.update('parent-menu', { visible: false });
+    // By not recreating the menu, it remains hidden.
     return;
   }
-  // Ensure the parent menu is visible for allowed pages
-  await chrome.contextMenus.update('parent-menu', { visible: true });
+
+  // Recreate the parent menu item.
+  await chrome.contextMenus.create({
+    id: 'parent-menu',
+    title: 'Process with WebNexus AI',
+    contexts: ['page', 'selection'],
+  });
 
   const selectionResult = await chrome.storage.local.get(
     STORAGE_KEYS.TAB_SELECTION_STATES
@@ -49,21 +46,18 @@ async function updateContextMenuForTab(tab) {
 
   if (prompts.length > 0) {
     for (const prompt of prompts) {
-      const menuId = `prompt-item-${prompt.id}`;
-      createdMenuIDs.push(menuId);
+      // Create children under the newly created parent menu.
       await chrome.contextMenus.create({
-        id: menuId,
+        id: `prompt-item-${prompt.id}`,
         title: prompt.name,
         parentId: 'parent-menu',
         contexts: ['page', 'selection'],
       });
     }
   } else {
-    // Add a disabled item to inform the user if no prompts are available
-    const menuId = 'no-prompts-item';
-    createdMenuIDs.push(menuId);
+    // Add a disabled item to inform the user if no prompts are available.
     await chrome.contextMenus.create({
-      id: menuId,
+      id: 'no-prompts-item',
       title: 'No prompts for this content type',
       enabled: false,
       parentId: 'parent-menu',
@@ -72,17 +66,21 @@ async function updateContextMenuForTab(tab) {
   }
 }
 
-// Create a debounced version of the context menu update function to prevent race conditions
+/**
+ * Debounced function to update the context menu for a specific tab.
+ * This function will wait for 150ms after the last call before executing the update.
+ * It helps to avoid multiple rapid updates that could lead to performance issues.
+ */
 export const debouncedUpdateContextMenuForTab = debounce(async (tab) => {
   // Use a try-catch block as this is an async operation that can fail
   try {
-    if (tab) { // Add a guard to ensure tab object is valid
+    if (tab) { // Guard to ensure tab object is valid
       await updateContextMenuForTab(tab);
     }
   } catch (error) {
     logger.background.error('Error in debounced context menu update:', error);
   }
-}, 150); // 150ms delay is a good balance
+}, 150); // 150ms delay 
 async function handleContextMenuClick(info, tab) {
   // Handle clicks on dynamically created prompt items
   if (info.menuItemId.startsWith('prompt-item-')) {
