@@ -181,17 +181,21 @@ function registerServiceHandlers() {
   // Selection status update from content script
   messageHandlers.set(
     'updateSelectionStatus',
-    async (message, sender, sendResponse) => {
-      if (sender.tab && sender.tab.id) {
-        // Update the selection state in storage
-        await updateTabSelectionState(sender.tab.id, message.hasSelection);
-        // Crucially, now update the context menu based on the new selection state
-        if (sender.tab) {
-          debouncedUpdateContextMenuForTab(sender.tab);
+    (message, sender, sendResponse) => {
+      // This handler is now async inside, but returns true synchronously
+      (async () => {
+        if (sender.tab && sender.tab.id) {
+          // Update the selection state in storage
+          await updateTabSelectionState(sender.tab.id, message.hasSelection);
+          // Crucially, now update the context menu based on the new selection state
+          if (sender.tab) {
+            debouncedUpdateContextMenuForTab(sender.tab);
+          }
         }
-      }
-      sendResponse({ success: true }); // Acknowledge receipt
-      return false; // No async response needed, but the handler is now async
+        sendResponse({ success: true }); // Acknowledge receipt
+      })(); // IIFE
+
+      return true; // Keep the message channel open for the async response
     }
   );
 
