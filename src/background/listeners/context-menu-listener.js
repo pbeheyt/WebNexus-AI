@@ -1,6 +1,6 @@
 import { logger } from '../../shared/logger.js';
 import { processWithSpecificPromptWebUI } from '../services/content-processing.js';
-import { STORAGE_KEYS } from '../../shared/constants.js';
+import { STORAGE_KEYS, CONTENT_TYPE_LABELS } from '../../shared/constants.js';
 import {
   determineContentType,
   isSidePanelAllowedPage,
@@ -37,24 +37,8 @@ async function updateContextMenuForTab(tab) {
   const contentType = determineContentType(tab.url, hasSelection);
 
   // Generate a dynamic title based on the content type
-  let dynamicTitle = 'Process with WebNexus AI'; // Default title
-  switch (contentType) {
-    case 'youtube':
-      dynamicTitle = 'Process YouTube Video';
-      break;
-    case 'reddit':
-      dynamicTitle = 'Process Reddit Post';
-      break;
-    case 'pdf':
-      dynamicTitle = 'Process PDF Document';
-      break;
-    case 'selectedText':
-      dynamicTitle = 'Process Selected Text';
-      break;
-    case 'general':
-      dynamicTitle = 'Process Web Page';
-      break;
-  }
+  const label = CONTENT_TYPE_LABELS[contentType] || 'Content';
+  const dynamicTitle = `Process ${label} (Web UI)`;
 
   // Recreate the parent menu item with the dynamic title.
   await chrome.contextMenus.create({
