@@ -135,7 +135,7 @@
       "temperature": {
         "min": 0.0,
         "max": 2.0,
-        "default": 0.5
+        "default": 0.7
       },
       "topP": {
         "min": 0.0,
@@ -231,8 +231,8 @@
             "contextWindow": 200000
           },
           "pricing": {
-            "inputTokenPrice": 10.0,
-            "outputTokenPrice": 40.0
+            "inputTokenPrice": 2.0,
+            "outputTokenPrice": 8.0
           },
           "capabilities": {
             "supportsTemperature": false,
@@ -280,14 +280,14 @@
     "claude": {
       "endpoint": "https://api.anthropic.com/v1/messages",
       "temperature": {
-        "min": -1.0,
+        "min": 0.0,
         "max": 1.0,
-        "default": 0.5
+        "default": 0.7
       },
       "topP": {
         "min": 0.0,
         "max": 1.0,
-        "default": 0.7
+        "default": 0.9
       },
       "auth": {
         "type": "header",
@@ -422,7 +422,7 @@
       "temperature": {
         "min": 0.0,
         "max": 2.0,
-        "default": 1.0
+        "default": 0.7
       },
       "topP": {
         "min": 0.1,
@@ -616,12 +616,12 @@
       "temperature": {
         "min": 0.0,
         "max": 1.5,
-        "default": 0.3
+        "default": 0.7
       },
       "topP": {
         "min": 0.0,
         "max": 1.0,
-        "default": 0.7
+        "default": 0.9
       },
       "auth": {
         "type": "bearer",
