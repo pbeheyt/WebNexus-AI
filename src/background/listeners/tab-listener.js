@@ -486,7 +486,11 @@ async function handleTabCreation(newTab) {
     `Tab creation handler running for new tabId: ${newTab.id}`
   );
   try {
-    // Store the initial visibility state (false) without enabling/disabling the panel itself
+    // This function is intentionally left empty.
+    // The SidePanelStateManager is designed to handle tabs without an explicit state
+    // by providing a default "closed" state (`isVisible: false`).
+    // This design avoids unnecessary `chrome.storage.local.set` operations
+    // for every new tab creation, optimizing performance by minimizing storage writes.
   } catch (error) {
     logger.background.error(
       `Error storing initial sidepanel state for new tab ${newTab.id}:`,
