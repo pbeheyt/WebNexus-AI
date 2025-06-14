@@ -306,7 +306,7 @@ export async function processContent(params) {
  * @param {Object} message - Message object
  * @param {Function} sendResponse - Response function
  */
-export async function handleProcessContentRequest(message, sendResponse) {
+export async function handleProcessContentRequest(message, _sender, sendResponse) {
   try {
     // Destructure includeContext along with other properties
     const { tabId, platformId, useApi, includeContext } = message;
@@ -341,7 +341,7 @@ export async function handleProcessContentRequest(message, sendResponse) {
  * @param {Object} message - Message object
  * @param {Function} sendResponse - Response function
  */
-export async function handleProcessContentViaApiRequest(message, sendResponse) {
+export async function handleProcessContentViaApiRequest(message, _sender, sendResponse) {
   try {
     const result = await processContentViaApi(message);
     sendResponse(result);

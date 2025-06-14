@@ -49,7 +49,7 @@ async function fetchPdfAsBase64(url) {
  * @param {object} message - The message object containing the URL.
  * @param {function} sendResponse - The function to send the response.
  */
-export async function handleFetchPdfRequest(message, sendResponse) {
+export async function handleFetchPdfRequest(message, _sender, sendResponse) {
   if (!message.url) {
     logger.background.error('handleFetchPdfRequest: Missing URL in message.');
     // Ensure synchronous response for this specific error

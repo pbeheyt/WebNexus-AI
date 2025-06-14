@@ -8,7 +8,7 @@ import { logger } from '../../shared/logger.js';
  * @param {Object} message - Message with operation details
  * @param {Function} sendResponse - Response function
  */
-export async function handleThemeOperation(message, sendResponse) {
+export async function handleThemeOperation(message, _sender, sendResponse) {
   try {
     const { action, theme } = message;
 
