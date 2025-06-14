@@ -31,7 +31,7 @@
     "https://api.mistral.ai/",
     "https://api.deepseek.com/",
     "https://generativelanguage.googleapis.com/",
-    "https://api.grok.ai/"
+    "https:///api.x.ai/"
   ],
   "background": {
     "service_worker": "dist/background.bundle.js"
