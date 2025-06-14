@@ -146,7 +146,10 @@ function registerServiceHandlers() {
   // Selection status update from content script
   messageHandlers.set(
     'updateSelectionStatus',
-    handleUpdateSelectionStatusRequest
+    (message, sender, sendResponse) => {
+      handleUpdateSelectionStatusRequest(message, sender, sendResponse);
+      return true; // Keep channel open for async response
+    }
   );
 
   // Handle requests to toggle the side panel

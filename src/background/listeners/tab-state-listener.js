@@ -85,25 +85,20 @@ export async function updateTabSelectionState(tabId, hasSelection) {
   }
 }
 
-export function handleUpdateSelectionStatusRequest(
+export async function handleUpdateSelectionStatusRequest(
   message,
   sender,
   sendResponse
 ) {
-  // This handler is now async inside, but returns true synchronously
-  (async () => {
-    if (sender.tab && sender.tab.id) {
-      // Update the selection state in storage
-      await updateTabSelectionState(sender.tab.id, message.hasSelection);
-      // Crucially, now update the context menu based on the new selection state
-      if (sender.tab) {
-        debouncedUpdateContextMenuForTab(sender.tab);
-      }
+  if (sender.tab && sender.tab.id) {
+    // Update the selection state in storage
+    await updateTabSelectionState(sender.tab.id, message.hasSelection);
+    // Crucially, now update the context menu based on the new selection state
+    if (sender.tab) {
+      debouncedUpdateContextMenuForTab(sender.tab);
     }
-    sendResponse({ success: true }); // Acknowledge receipt
-  })(); // IIFE
-
-  return true; // Keep the message channel open for the async response
+  }
+  sendResponse({ success: true }); // Acknowledge receipt
 }
 
 export function handleClearTabDataRequest(message, sender, sendResponse) {
