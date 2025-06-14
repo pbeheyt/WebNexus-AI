@@ -16,13 +16,6 @@ const isProduction = process.env.NODE_ENV === 'production';
  * @param {any} [data=null] - Optional data to include
  */
 function log(context, level, message, data = null) {
-  // --- Production Log Filtering ---
-  // Skip 'info' and 'debug' level logs when in production mode
-  if (isProduction && (level === 'info' || level === 'debug')) {
-    return; // Exit early, do not log
-  }
-  // -----------------------------
-
   // Map level to allowed console method
   let consoleMethod;
   switch (level) {
