@@ -13,9 +13,9 @@ import {
   RefreshIcon,
   ChevronDownIcon,
   XIcon,
-  ArrowUpIcon, // Added for history button
-  HistoryIcon, // Added for history button
-  PlusIcon, // Add this
+  ArrowUpIcon,
+  HistoryIcon,
+  PlusIcon,
 } from '../';
 
 export function AppHeader({
@@ -37,12 +37,11 @@ export function AppHeader({
   onInfoFocus,
   onInfoBlur,
   infoButtonAriaLabel,
-  // New props for history view toggle
   showHistoryButton = false,
   onToggleHistoryView,
   currentView = 'chat',
-  showNewChatButton = false, // Add this line
-  onNewChatClick,            // Add this line
+  showNewChatButton = false,
+  onNewChatClick,
 }) {
   const { theme, toggleTheme, textSize, toggleTextSize } = useUI();
 
@@ -235,6 +234,6 @@ AppHeader.propTypes = {
   showHistoryButton: PropTypes.bool,
   onToggleHistoryView: PropTypes.func,
   currentView: PropTypes.oneOf(['chat', 'history']),
-  showNewChatButton: PropTypes.bool, // Add this line
-  onNewChatClick: PropTypes.func,    // Add this line
+  showNewChatButton: PropTypes.bool,
+  onNewChatClick: PropTypes.func,
 };

@@ -26,7 +26,7 @@ export function useChatSessionManagement({
   selectPlatform,
   selectModel,
   isPlatformLoading,
-  setScrollToMessageId, // Add this line
+  setScrollToMessageId,
 }) {
   const { currentTab } = useContent();
   const [messages, setMessages] = useState([]);

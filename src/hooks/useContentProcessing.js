@@ -110,7 +110,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         }
       }
     },
-    [currentTab, contentType, source] // Add contentType and currentTab to dependencies
+    [currentTab, contentType, source]
   );
 
   /**
@@ -212,7 +212,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
         throw apiError;
       }
     },
-    [currentTab, contentType, source] // Add contentType and currentTab to dependencies
+    [currentTab, contentType, source]
   );
 
   const reset = useCallback(() => {

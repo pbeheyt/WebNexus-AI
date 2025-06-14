@@ -147,7 +147,7 @@ export function useChatStreaming({
                 thinkingContent: finalThinkingContent,
                 isStreaming: false,
                 modelId: model || selectedModel, // Use model from chunkData if available
-                platformId: msg.platformId, // Keep existing platformId
+                platformId: msg.platformId,
                 timestamp: new Date().toISOString(),
                 outputTokens: finalOutputTokensForMessage,
                 role: isError ? MESSAGE_ROLES.SYSTEM : msg.role, // Change role on error

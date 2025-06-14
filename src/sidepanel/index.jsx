@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { UIProvider } from '../contexts/UIContext';
 import { SidePanelPlatformProvider } from '../contexts/platform';
 import { ContentProvider } from '../contexts/ContentContext';
-import { NotificationProvider } from '../components'; // Added import
+import { NotificationProvider } from '../components';
 
 import { SidePanelChatProvider } from './contexts/SidePanelChatContext';
 import SidePanelApp from './SidePanelApp';

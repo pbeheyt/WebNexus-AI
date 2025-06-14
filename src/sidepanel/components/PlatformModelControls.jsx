@@ -20,7 +20,7 @@ import { logger } from '../../shared/logger';
 
 import SidePanelModelParametersEditor from './SidePanelModelParametersEditor';
 import ModelSelector from './ModelSelector';
-import PlatformSelector from './PlatformSelector'; // Import the new component
+import PlatformSelector from './PlatformSelector';
 
 // Create a context for dropdown state coordination
 export const DropdownContext = createContext({
@@ -31,7 +31,7 @@ export const DropdownContext = createContext({
 function PlatformModelControls({ onToggleExpand }) {
   const {
     selectedPlatformId,
-    platforms, // Keep for fullSelectedPlatformConfig logic
+    platforms,
     hasAnyPlatformCredentials,
     isLoading,
     getPlatformApiConfig,

@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
 import { logger } from '../../../shared/logger';
-import ConfigService from '../../../services/ConfigService'; // Add this import
+import ConfigService from '../../../services/ConfigService';
 import { IconButton, RerunIcon, PlatformIcon, Tooltip } from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 import { formatCost } from '../../../shared/utils/number-format-utils.js';

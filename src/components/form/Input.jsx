@@ -64,7 +64,7 @@ export const Input = forwardRef(
     const baseClasses =
       'w-full p-3 outline-none text-theme-primary';
     const errorClasses = showVisualError ? 'border-error ring-1 ring-error' : '';
-    const paddingClasses = endContent ? 'pr-12' : ''; // Add padding if there's end content
+    const paddingClasses = endContent ? 'pr-12' : '';
     const combinedClasses =
       `${baseClasses} ${errorClasses} ${paddingClasses} ${className}`.trim();
 

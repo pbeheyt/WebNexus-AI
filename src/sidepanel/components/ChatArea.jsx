@@ -30,8 +30,8 @@ import {
   ScrollDownIcon,
   NoCredentialsIcon,
   IconButton,
-} from '../../components'; // Removed ExtractionStrategySelector, ContentTypeIcon, Toggle from here
-import { MESSAGE_ROLES } // Added MESSAGE_ROLES import
+} from '../../components';
+import { MESSAGE_ROLES }
 from '../../shared/constants';
 
 import { MessageBubble } from './messaging/MessageBubble';
@@ -47,10 +47,8 @@ function ChatArea({
 }) {
 const {
   messages,
-  scrollToMessageId, // Add this
-  clearScrollToMessageId, // Add this
-  // isContentExtractionEnabled, // No longer used directly here
-  // setIsContentExtractionEnabled, // No longer used directly here
+  scrollToMessageId,
+  clearScrollToMessageId,
   modelConfigData,
   isThinkingModeEnabled,
 } = useSidePanelChat();
@@ -71,7 +69,6 @@ const {
   } = useSidePanelPlatform();
 
   // --- State ---
-  // const [isIncludeTooltipVisible, setIsIncludeTooltipVisible] = useState(false); // Removed
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
   const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
   const [displayModelConfig, setDisplayModelConfig] = useState(null);

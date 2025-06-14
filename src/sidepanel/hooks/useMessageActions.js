@@ -43,8 +43,8 @@ const _initiateRerunSequence = async ({
   batchedStreamingContentRef,
   selectedModel,
   selectedPlatformId,
-  tabId, // Kept for context extraction options
-  chatSessionId, // Added
+  tabId,
+  chatSessionId,
   currentTab,
   rerunStatsRef,
   isContentExtractionEnabled,
@@ -102,8 +102,8 @@ const _initiateRerunSequence = async ({
     isContentExtractionEnabled: effectiveExtractionEnabledForRerun,
     isThinkingModeEnabled: isThinkingModeEnabled,
     options: {
-      tabId, // Kept for context extraction options
-      chatSessionId, // Added
+      tabId,
+      chatSessionId,
       source: INTERFACE_SOURCES.SIDEPANEL,
       ...(rerunStatsRef.current && {
         preTruncationCost: rerunStatsRef.current.preTruncationCost,
@@ -166,8 +166,8 @@ const _initiateRerunSequence = async ({
  * @returns {object} - Object containing action functions: { rerunMessage, editAndRerunMessage, rerunAssistantMessage }.
  */
 export function useMessageActions({
-  tabId, // Kept for context extraction options
-  chatSessionId, // Added
+  tabId,
+  chatSessionId,
   setMessages,
   messages,
   selectedPlatformId,
@@ -234,8 +234,8 @@ export function useMessageActions({
         batchedStreamingContentRef,
         selectedModel,
         selectedPlatformId,
-        tabId, // Kept for context extraction options
-        chatSessionId, // Added
+        tabId,
+        chatSessionId,
         currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
@@ -254,8 +254,8 @@ export function useMessageActions({
       selectedPlatformId,
       selectedModel,
       setStreamingMessageId,
-      tabId, // Kept for context extraction options
-      chatSessionId, // Added
+      tabId,
+      chatSessionId,
       isProcessing,
       resetContentProcessing,
       modelConfigData,
@@ -335,8 +335,8 @@ export function useMessageActions({
         batchedStreamingContentRef,
         selectedModel,
         selectedPlatformId,
-        tabId, // Kept for context extraction options
-        chatSessionId, // Added
+        tabId,
+        chatSessionId,
         currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
@@ -355,8 +355,8 @@ export function useMessageActions({
       selectedPlatformId,
       selectedModel,
       setStreamingMessageId,
-      tabId, // Kept for context extraction options
-      chatSessionId, // Added
+      tabId,
+      chatSessionId,
       isProcessing,
       resetContentProcessing,
       modelConfigData,
@@ -427,8 +427,8 @@ export function useMessageActions({
         batchedStreamingContentRef,
         selectedModel,
         selectedPlatformId,
-        tabId, // Kept for context extraction options
-        chatSessionId, // Added
+        tabId,
+        chatSessionId,
         currentTab: currentTab,
         rerunStatsRef,
         isContentExtractionEnabled,
@@ -441,8 +441,8 @@ export function useMessageActions({
       });
     },
     [
-      tabId, // Kept for context extraction options
-      chatSessionId, // Added
+      tabId,
+      chatSessionId,
       selectedPlatformId,
       selectedModel,
       isProcessing,

@@ -18,16 +18,10 @@ export const parseTextAndMath = (text) => {
   // Regex:
   // Group 1: Content of $$...$$
   // Group 2: Content of \[...\]
-  // Group 3: Content of $...$ (Stricter: no digit before, no space/{ inside, no newline/}/space before closing $)
+  // Group 3: Content of $...$ (no digit before, no space/{ inside, no newline/}/space before closing $)
   // Group 4: Content of \(...\)
   const regex =
     /(\$\$([\s\S]*?)\$\$)|(\\\[([\s\S]*?)\\])|((?<![\d$])\$(?![\s{])((?:[^$\r\n\\}]|\\.)+?)(?<![\s}])\$(?![\w$]))|(\\\((.+?)\\\))/g;
-  // Changes in $...$ part:
-  // (?<![\d$]): Not preceded by digit or $ (prevents $5, $$)
-  // (?![\s{]): Opening $ not followed by space or { (prevents $ {var}, $ E=mc^2 $)
-  // ((?:[^$\r\n\\}]|\\.)+?): Content: No $, newline, \, or } (prevents multiline, ${var}) Allows escaped chars. Non-greedy.
-  // (?<![\s}]): Closing $ not preceded by space or } (prevents ${var} $, $ E=mc^2 $)
-  // (?![\w$]): Not followed by word char or $ (prevents $5$, $variable$)
 
   const result = [];
   let lastIndex = 0;

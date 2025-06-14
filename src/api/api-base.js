@@ -1,7 +1,7 @@
 // src/api/api-base.js
 import ConfigService from '../services/ConfigService.js';
 import { logger } from '../shared/logger.js';
-import { createStructuredPromptString } from '../shared/utils/prompt-formatting-utils.js'; // <-- ADD THIS LINE
+import { createStructuredPromptString } from '../shared/utils/prompt-formatting-utils.js';
 
 import { extractApiErrorMessage } from './utils/error-utils.js';
 import ApiInterface from './api-interface.js';

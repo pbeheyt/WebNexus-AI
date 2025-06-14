@@ -25,7 +25,7 @@ export function formatTokenCount(number, options = { precision: 1 }) {
     });
   }
 
-  const suffixes = ['', 'K', 'M', 'B', 'T']; // Add 'T' for Trillions if needed
+  const suffixes = ['', 'K', 'M', 'B', 'T'];
   const i = Math.floor(Math.log(Math.abs(num)) / Math.log(1000));
 
   if (i >= suffixes.length) {

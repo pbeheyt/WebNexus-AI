@@ -687,7 +687,7 @@ export function SidePanelChatProvider({ children }) {
     isThinkingModeEnabled,
     clearTokenData,
     setMessages,
-    showErrorNotification, // Added missing dependency
+    showErrorNotification,
   ]);
 
   const toggleThinkingMode = useCallback(

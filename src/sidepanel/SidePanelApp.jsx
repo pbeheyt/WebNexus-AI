@@ -21,7 +21,7 @@ import {
   AppHeader,
   ErrorIcon,
   SpinnerIcon,
-  Toast, // Added Toast import
+  Toast,
 } from '../components';
 import { debounce } from '../shared/utils/debounce-utils';
 import { isInjectablePage } from '../shared/utils/content-utils';
