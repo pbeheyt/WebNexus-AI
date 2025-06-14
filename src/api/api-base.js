@@ -13,7 +13,6 @@ class BaseApiService extends ApiInterface {
   constructor(platformId) {
     super();
     this.platformId = platformId;
-    // Assign the shared logger directlylog
     this.logger = logger.api;
     this.credentials = null;
     this.config = null;
