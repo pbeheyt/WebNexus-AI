@@ -389,6 +389,8 @@ class BaseApiService extends ApiInterface {
         // Send a specific 'Cancelled by user' message via onChunk
         onChunk({ done: true, error: 'Cancelled by user', model });
         // No need to re-throw AbortError, it's handled.
+        // Return true to indicate the cancellation was handled successfully and is not a failure.
+        return true;
       } else {
         // Handle other errors during fetch or reading
         const networkOrStreamErrorMsg = `Network/Stream Error: ${error.message || 'An unknown streaming error occurred'}`;
@@ -398,8 +400,9 @@ class BaseApiService extends ApiInterface {
         );
         onChunk({ done: true, error: networkOrStreamErrorMsg, model });
         // Don't re-throw - error is already handled via onChunk
+        // Return false for actual errors.
+        return false;
       }
-      return false; // Indicate handled error (AbortError) or that an error occurred
     } finally {
       // Cleanup: Attempt to cancel the reader if it exists.
       if (reader) {
