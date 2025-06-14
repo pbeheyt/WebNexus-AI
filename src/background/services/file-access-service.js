@@ -1,4 +1,10 @@
-// Helper to convert ArrayBuffer to Base64
+import { logger } from '../../shared/logger.js';
+
+/**
+ * Converts an ArrayBuffer to a Base64 string.
+ * @param {*} buffer - The ArrayBuffer to convert.
+ * @returns {string} The Base64-encoded string.
+ */
 function _arrayBufferToBase64(buffer) {
   let binary = '';
   const bytes = new Uint8Array(buffer);
@@ -8,8 +14,6 @@ function _arrayBufferToBase64(buffer) {
   }
   return btoa(binary);
 }
-
-import { logger } from '../../shared/logger.js';
 
 /**
  * Fetches a PDF from a file URL and returns its content as Base64.
@@ -56,20 +60,9 @@ export async function handleFetchPdfRequest(message, sendResponse) {
     return; // Exit early
   }
 
-  try {
-    // Call the internal (non-exported) fetch function
-    const response = await fetchPdfAsBase64(message.url);
-    sendResponse(response);
-  } catch (error) {
-    // Catch potential errors within fetchPdfAsBase64 itself if it rejects unexpectedly
-    logger.background.error(
-      'Unexpected error during fetchPdfAsBase64 execution:',
-      error
-    );
-    sendResponse({
-      success: false,
-      error: error.message || 'Internal background error fetching PDF',
-    });
-  }
+  // The fetchPdfAsBase64 function is designed to never throw; it always returns
+  // a {success, ...} object. The outer try/catch was redundant.
+  const response = await fetchPdfAsBase64(message.url);
+  sendResponse(response);
   // No return true here, the listener handles that
 }

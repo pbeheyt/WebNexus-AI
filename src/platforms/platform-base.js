@@ -25,11 +25,6 @@ class BasePlatform extends PlatformInterface {
    * @returns {Promise<void>}
    */
   async initialize() {
-    if (!this.isCurrentPlatform()) {
-      this.logger.info(`[${this.platformId}] Not on platform, exiting`);
-      return;
-    }
-
     this.logger.info(`[${this.platformId}] Initializing platform integration`);
 
     if (document.readyState === 'complete') {
