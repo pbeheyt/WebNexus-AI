@@ -2,7 +2,6 @@
 import ConfigService from '../services/ConfigService.js';
 import { logger } from '../shared/logger.js';
 import { createStructuredPromptString } from '../shared/utils/prompt-formatting-utils.js';
-
 import { extractApiErrorMessage } from './utils/error-utils.js';
 import ApiInterface from './api-interface.js';
 
@@ -80,7 +79,7 @@ class BaseApiService extends ApiInterface {
         };
       }
     } catch (error) {
-      // This catch block now primarily handles SETUP errors before the fetch call
+      // This catch block handles errors during request preparation (e.g., in _buildApiRequest) before the fetch call is made.
       const setupErrorMsg = `Setup Error: ${error.message}`;
       this.logger.error(
         `[${this.platformId}] Error during API request setup for model ${model}:`,
