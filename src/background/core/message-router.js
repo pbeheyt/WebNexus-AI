@@ -98,12 +98,18 @@ function registerApiHandlers() {
   });
 
   // API credential operations
-  messageHandlers.set('credentialOperation', handleCredentialOperation);
+  messageHandlers.set('credentialOperation', (message, sender, sendResponse) => {
+    handleCredentialOperation(message, sender, sendResponse);
+    return true; // Keep channel open for async response
+  });
 
   // API content processing
   messageHandlers.set(
     'processContentViaApi',
-    handleProcessContentViaApiRequest
+    (message, sender, sendResponse) => {
+      handleProcessContentViaApiRequest(message, sender, sendResponse);
+      return true; // Keep channel open for async response
+    }
   );
 
   messageHandlers.set('cancelStream', (message, _sender, sendResponse) => {
@@ -117,13 +123,22 @@ function registerApiHandlers() {
  */
 function registerServiceHandlers() {
   // Process content
-  messageHandlers.set('processContent', handleProcessContentRequest);
+  messageHandlers.set('processContent', (message, sender, sendResponse) => {
+    handleProcessContentRequest(message, sender, sendResponse);
+    return true; // Keep channel open for async response
+  });
 
   // Get theme
-  messageHandlers.set('getTheme', handleThemeOperation);
+  messageHandlers.set('getTheme', (message, sender, sendResponse) => {
+    handleThemeOperation(message, sender, sendResponse);
+    return true; // Keep channel open for async response
+  });
 
   // Set theme
-  messageHandlers.set('setTheme', handleThemeOperation);
+  messageHandlers.set('setTheme', (message, sender, sendResponse) => {
+    handleThemeOperation(message, sender, sendResponse);
+    return true; // Keep channel open for async response
+  });
 
   // Clear specific tab data (for sidepanel refresh)
   messageHandlers.set('clearTabData', handleClearTabDataRequest);
@@ -140,9 +155,15 @@ function registerServiceHandlers() {
   // Handle requests to close the current side panel
   messageHandlers.set(
     'closeCurrentSidePanel',
-    handleCloseCurrentSidePanelRequest
+    (message, sender, sendResponse) => {
+      handleCloseCurrentSidePanelRequest(message, sender, sendResponse);
+      return true; // Keep channel open for async response
+    }
   );
 
   // Handle PDF fetch requests for file:// URLs
-  messageHandlers.set('fetchPdfAsBase64', handleFetchPdfRequest);
+  messageHandlers.set('fetchPdfAsBase64', (message, sender, sendResponse) => {
+    handleFetchPdfRequest(message, sender, sendResponse);
+    return true; // Keep channel open for async response
+  });
 }
