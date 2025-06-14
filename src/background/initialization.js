@@ -165,20 +165,14 @@ async function handleInstallation(details) {
     await initializeExtension();
     logger.background.info('Core extension initialization completed.');
 
-    // --- Context Menu Setup ---
-    logger.background.info('Setting up context menu...');
+    // Context menu is now created dynamically by tab listeners,
+    // so we only need to ensure any old menus are cleared on install/update.
+    logger.background.info('Clearing all context menus on installation...');
     try {
-      // Remove existing menu items first to prevent duplicates on update
       await chrome.contextMenus.removeAll();
-      // Create the new parent context menu item
-      await chrome.contextMenus.create({
-        id: 'parent-menu',
-        title: 'Process with WebNexus AI',
-        contexts: ['page', 'selection'], // Show on page and text selection
-      });
-      logger.background.info('Parent context menu created successfully.');
+      logger.background.info('Context menus cleared successfully.');
     } catch (menuError) {
-      logger.background.error('Failed to create context menu:', menuError);
+      logger.background.error('Failed to clear context menus:', menuError);
     }
   } catch (error) {
     logger.background.error(

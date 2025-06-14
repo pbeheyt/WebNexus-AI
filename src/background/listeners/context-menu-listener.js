@@ -28,13 +28,6 @@ async function updateContextMenuForTab(tab) {
     return;
   }
 
-  // Recreate the parent menu item.
-  await chrome.contextMenus.create({
-    id: 'parent-menu',
-    title: 'Process with WebNexus AI',
-    contexts: ['page', 'selection'],
-  });
-
   const selectionResult = await chrome.storage.local.get(
     STORAGE_KEYS.TAB_SELECTION_STATES
   );
@@ -42,6 +35,34 @@ async function updateContextMenuForTab(tab) {
     selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] || {}
   )[tab.id];
   const contentType = determineContentType(tab.url, hasSelection);
+
+  // Generate a dynamic title based on the content type
+  let dynamicTitle = 'Process with WebNexus AI'; // Default title
+  switch (contentType) {
+    case 'youtube':
+      dynamicTitle = 'Process YouTube Video';
+      break;
+    case 'reddit':
+      dynamicTitle = 'Process Reddit Post';
+      break;
+    case 'pdf':
+      dynamicTitle = 'Process PDF Document';
+      break;
+    case 'selectedText':
+      dynamicTitle = 'Process Selected Text';
+      break;
+    case 'general':
+      dynamicTitle = 'Process Web Page';
+      break;
+  }
+
+  // Recreate the parent menu item with the dynamic title.
+  await chrome.contextMenus.create({
+    id: 'parent-menu',
+    title: dynamicTitle,
+    contexts: ['page', 'selection'],
+  });
+
   const prompts = await loadRelevantPrompts(contentType);
 
   if (prompts.length > 0) {
@@ -80,7 +101,15 @@ export const debouncedUpdateContextMenuForTab = debounce(async (tab) => {
   } catch (error) {
     logger.background.error('Error in debounced context menu update:', error);
   }
-}, 150); // 150ms delay 
+}, 150); // 150ms delay
+
+/**
+ * Handles context menu item clicks.
+ * This function is called when a user clicks on a context menu item.
+ * It processes clicks on dynamically created prompt items.
+ * @param {chrome.contextMenus.OnClickData} info - The context menu click data.
+ * @param {chrome.tabs.Tab} tab - The tab where the click occurred.
+ */
 async function handleContextMenuClick(info, tab) {
   // Handle clicks on dynamically created prompt items
   if (info.menuItemId.startsWith('prompt-item-')) {
