@@ -6,8 +6,7 @@ export function useConfigurableShortcut(
   shortcutStorageKey,
   defaultShortcutConfig,
   onShortcutPressCallback,
-  loggerInstance,
-  dependenciesForCallback = [] // Default to empty array
+  loggerInstance
 ) {
   const [currentShortcutConfig, setCurrentShortcutConfig] = useState(
     defaultShortcutConfig
@@ -85,17 +84,7 @@ export function useConfigurableShortcut(
       document.removeEventListener('keydown', handleKeyDown);
       loggerInstance.info('Shortcut keydown listener removed.');
     };
-  }, [
-    currentShortcutConfig,
-    onShortcutPressCallback,
-    loggerInstance,
-    // This is an intentional pattern for a reusable hook.
-    // The spread allows the consumer of this hook to pass a dynamic list of dependencies
-    // for the `onShortcutPressCallback`, ensuring the effect's closure has the latest values.
-    // The linter cannot statically analyze the spread dependencies, but this is the desired behavior.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    ...dependenciesForCallback,
-  ]);
+  }, [currentShortcutConfig, onShortcutPressCallback, loggerInstance]);
 
   return { currentShortcutConfig };
 }

@@ -91,8 +91,7 @@ export default function SidePanelApp() {
     STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
     DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
     handleCloseShortcut,
-    logger.sidepanel,
-    [handleCloseShortcut]
+    logger.sidepanel
   );
 
   const appHeaderRef = useRef(null);

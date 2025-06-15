@@ -91,13 +91,13 @@ export function usePlatformSelection(
     };
 
     determineInitialPlatform();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tabId,
     platformConfigs,
     credentialStatus,
     globalStorageKey,
     interfaceType,
+    selectedPlatformId, // Ensure effect re-runs if selection changes externally
   ]);
 
   // Callback to handle platform selection
