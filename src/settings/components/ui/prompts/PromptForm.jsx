@@ -99,6 +99,16 @@ const PromptForm = ({
     setInputValidity((prev) => ({ ...prev, [inputName]: isValid }));
   }, []);
 
+  const handleNameValidation = useCallback(
+    (isValid) => handleInputValidation('name', isValid),
+    [handleInputValidation]
+  );
+
+  const handleContentValidation = useCallback(
+    (isValid) => handleInputValidation('content', isValid),
+    [handleInputValidation]
+  );
+
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
@@ -252,7 +262,7 @@ const PromptForm = ({
             disabled={shouldShowSaving}
             className='bg-theme-surface text-sm border border-theme rounded-md'
             required
-            onValidation={(isValid) => handleInputValidation('name', isValid)}
+            onValidation={handleNameValidation}
           />
         </div>
       </div>
@@ -277,7 +287,7 @@ const PromptForm = ({
             style={{ minHeight: '120px' }}
             autoResize={true}
             required
-            onValidation={(isValid) => handleInputValidation('content', isValid)}
+            onValidation={handleContentValidation}
           />
         </div>
       </div>
