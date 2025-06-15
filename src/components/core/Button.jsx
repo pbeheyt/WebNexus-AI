@@ -53,22 +53,16 @@ export const Button = forwardRef(
 
     // Variant classes
     const variantClasses = {
-      primary: 'bg-primary text-white',
+      primary:
+        'bg-primary text-white disabled:bg-gray-400 disabled:text-gray-100 disabled:cursor-not-allowed disabled:opacity-50',
       secondary:
-        'bg-transparent text-theme-primary border border-theme hover:border-primary',
-      danger: 'bg-error text-white hover:bg-red-600',
-      success: 'bg-success text-white hover:bg-green-600',
+        'bg-transparent text-theme-primary border border-theme hover:border-primary disabled:bg-gray-400 disabled:text-gray-100 disabled:cursor-not-allowed disabled:opacity-50',
+      danger:
+        'bg-error text-white hover:bg-red-600 disabled:bg-gray-400 disabled:text-gray-100 disabled:cursor-not-allowed disabled:opacity-50',
+      success:
+        'bg-success text-white hover:bg-green-600 disabled:bg-gray-400 disabled:text-gray-100 disabled:cursor-not-allowed disabled:opacity-50',
       inactive: 'bg-gray-400 text-gray-100 cursor-not-allowed opacity-50',
     };
-
-    // Effective disabled state
-    const effectiveDisabled = disabled || isLoading;
-
-    // Disabled class - don't apply if using inactive variant or if loading (loading has its own opacity potentially)
-    const disabledStylingClass =
-      effectiveDisabled && variant !== 'inactive'
-        ? 'bg-gray-400 text-gray-100 cursor-not-allowed opacity-50'
-        : '';
 
     // Loading specific style to ensure content is centered with spinner
     const loadingSpecificClass = isLoading ? 'opacity-80' : '';
@@ -78,7 +72,6 @@ export const Button = forwardRef(
       baseClasses,
       sizeClasses[size] || sizeClasses.md,
       variantClasses[variant] || variantClasses.primary,
-      disabledStylingClass,
       loadingSpecificClass,
       className,
     ]
@@ -89,7 +82,7 @@ export const Button = forwardRef(
       <button
         ref={ref}
         className={combinedClasses}
-        disabled={effectiveDisabled}
+        disabled={disabled || isLoading}
         onClick={onClick}
         {...props}
       >
