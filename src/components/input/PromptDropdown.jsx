@@ -28,14 +28,7 @@ export function PromptDropdown({
   const [currentDefaultPromptId, setCurrentDefaultPromptId] = useState(null);
   const [settingDefaultInProgress, setSettingDefaultInProgress] =
     useState(null); // Tracks ID of prompt being set as default
-  const notificationContext = useNotification();
-  const showNotificationError = notificationContext
-    ? notificationContext.error
-    : (message) => {
-        logger.popup.error(
-          `NotificationContext not available. Error: ${message}`
-        );
-      };
+  const { error: showNotificationError } = useNotification() || {};
   const [isVisible, setIsVisible] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -81,7 +74,13 @@ export function PromptDropdown({
             err
           );
           setError('Failed to load prompts or default setting.');
-          showNotificationError('Failed to load prompts or default setting.');
+          if (showNotificationError) {
+            showNotificationError('Failed to load prompts or default setting.');
+          } else {
+            logger.popup.error(
+              'NotificationContext not available. Error: Failed to load prompts or default setting.'
+            );
+          }
         }
       };
       fetchPromptsAndDefault();
@@ -92,8 +91,7 @@ export function PromptDropdown({
       setCurrentDefaultPromptId(null);
       setSettingDefaultInProgress(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, contentType, notificationContext]); // Depend on the context itself
+  }, [isOpen, contentType, showNotificationError]); // Depend on the stable function reference
 
   // Handle clicks outside the dropdown
   useEffect(() => {
