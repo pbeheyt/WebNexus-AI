@@ -43,7 +43,7 @@ export const Toggle = forwardRef(
           type='checkbox'
           className='sr-only'
           checked={checked}
-          onChange={() => {}} // onChange on input is redundant now due to button click
+          onChange={() => {}}
           disabled={disabled}
           tabIndex={-1} // Prevent redundant focus on the hidden input
           aria-hidden='true' // Hide from accessibility tree as button handles interaction
