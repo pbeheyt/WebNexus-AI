@@ -82,6 +82,11 @@ async function initializeExtension() {
 async function handleInstallation(details) {
   logger.background.info(`Extension event: ${details.reason}`, details);
 
+  if (details.reason === 'update') {
+    logger.background.info('Extension updated. Invalidating configuration cache.');
+    ConfigService.invalidateCache();
+  }
+
   try {
     // --- Default Prompt Initialization Logic ---
     // Reset all tab UI states as Chrome closes them on install/update.

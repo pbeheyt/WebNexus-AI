@@ -156,6 +156,15 @@ async function getAllPlatformConfigs() {
   }
 }
 
+/**
+ * Invalidates the configuration cache. Called on extension update.
+ */
+function invalidateCache() {
+  cachedApiConfig = null;
+  cachedDisplayConfig = null;
+  logger.service.info('Configuration cache invalidated.');
+}
+
 // Define the ConfigService object with all exported functions
 const ConfigService = {
   getApiConfig,
@@ -163,6 +172,7 @@ const ConfigService = {
   getPlatformApiConfig,
   getPlatformDisplayConfig,
   getAllPlatformConfigs,
+  invalidateCache,
 };
 
 export default ConfigService;
