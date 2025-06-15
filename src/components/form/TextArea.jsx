@@ -99,8 +99,8 @@ const handleBlur = (e) => {
       }
     }, [focusAtEnd, value]);
 
-    const errorClasses = error ? 'border-error ring-1 ring-error' : '';
-const showVisualError = error && touched;
+    const showVisualError = error && touched;
+    const errorClasses = showVisualError ? 'border-error ring-1 ring-error' : '';
     const combinedClasses =
       `w-full p-3 outline-none text-theme-primary resize-none ${errorClasses} ${className}`.trim();
 
