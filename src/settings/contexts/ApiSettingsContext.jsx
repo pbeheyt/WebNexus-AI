@@ -10,6 +10,7 @@ import React, {
 import PropTypes from 'prop-types';
 
 import { logger } from '../../shared/logger';
+import { robustDeepClone } from '../../shared/utils/object-utils';
 import { STORAGE_KEYS } from '../../shared/constants';
 import ConfigService from '../../services/ConfigService';
 import CredentialManager from '../../services/CredentialManager';
@@ -171,9 +172,8 @@ export const ApiSettingsProvider = ({ children }) => {
   const saveModelParametersSettings = useCallback(
     async (platformId, modelId, mode, settings, changedParamsList = []) => {
       try {
-        const updatedAllModelParameterSettings = JSON.parse(
-          JSON.stringify(allModelParameterSettings)
-        ); // Deep copy
+        const updatedAllModelParameterSettings =
+          robustDeepClone(allModelParameterSettings);
 
         if (!updatedAllModelParameterSettings[platformId]) {
           updatedAllModelParameterSettings[platformId] = { models: {} };
@@ -234,9 +234,8 @@ export const ApiSettingsProvider = ({ children }) => {
   const resetModelParametersSettingsToDefaults = useCallback(
     async (platformId, modelId, mode) => {
       try {
-        const updatedAllModelParameterSettings = JSON.parse(
-          JSON.stringify(allModelParameterSettings)
-        ); // Deep copy
+        const updatedAllModelParameterSettings =
+          robustDeepClone(allModelParameterSettings);
         let settingsChanged = false;
 
         if (

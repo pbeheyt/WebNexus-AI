@@ -2,34 +2,7 @@
 import { logger } from '../logger';
 import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
 
-/**
- * Creates a robust deep copy of a given object.
- * This is safer than JSON.parse(JSON.stringify(obj)) as it handles more data types
- * and doesn't discard undefined properties.
- * @param {any} obj - The object or value to clone.
- * @returns {any} A deep copy of the object or value.
- */
-function _robustDeepClone(obj) {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-
-  if (obj instanceof Date) {
-    return new Date(obj.getTime());
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map((item) => _robustDeepClone(item));
-  }
-
-  const newObj = {};
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      newObj[key] = _robustDeepClone(obj[key]);
-    }
-  }
-  return newObj;
-}
+import { robustDeepClone } from './object-utils.js';
 
 /**
  * Internal pure function to validate and fix default prompt IDs on a given object.
@@ -40,7 +13,7 @@ function _robustDeepClone(obj) {
 function _validateAndFixDefaultsOnObject(promptsByType) {
   let changesMade = false;
   // Use the new robust deep clone function instead of the unsafe JSON method.
-  const correctedPrompts = _robustDeepClone(promptsByType);
+  const correctedPrompts = robustDeepClone(promptsByType);
 
   for (const contentType of Object.values(CONTENT_TYPES)) {
     const typeData = correctedPrompts[contentType] || {};
