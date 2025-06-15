@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 // Tab IDs from the original constants.js
@@ -24,24 +24,32 @@ export const TabProvider = ({ children }) => {
     }
   }, []);
 
-  const switchTab = (tabId) => {
-    if (tabId === activeTab) return;
+  const switchTab = useCallback(
+    (tabId) => {
+      if (tabId === activeTab) return;
 
-    // Store current scroll position
-    const scrollPosition = window.scrollY;
+      // Store current scroll position
+      const scrollPosition = window.scrollY;
 
-    // Update active tab
-    setActiveTab(tabId);
+      // Update active tab
+      setActiveTab(tabId);
 
-    // Update URL hash without scrolling
-    history.replaceState(null, null, `#${tabId}`);
+      // Update URL hash without scrolling
+      history.replaceState(null, null, `#${tabId}`);
 
-    // Restore scroll position
-    window.scrollTo(0, scrollPosition);
-  };
+      // Restore scroll position
+      window.scrollTo(0, scrollPosition);
+    },
+    [activeTab]
+  );
+
+  const value = useMemo(
+    () => ({ TABS, activeTab, switchTab }),
+    [activeTab, switchTab]
+  );
 
   return (
-    <TabContext.Provider value={{ TABS, activeTab, switchTab }}>
+    <TabContext.Provider value={value}>
       {children}
     </TabContext.Provider>
   );

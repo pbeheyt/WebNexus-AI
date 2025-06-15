@@ -1,7 +1,7 @@
 // src/contexts/ContentContext.jsx
 import { createContext, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 
 import {
   determineContentType,
@@ -123,19 +123,31 @@ export function ContentProvider({ children, detectOnMount = true }) {
     };
   }, [currentTab?.id, currentTab?.url]);
 
+  const value = useMemo(
+    () => ({
+      currentTab,
+      contentType,
+      isSupported,
+      isLoading,
+      isInjectable,
+      refreshContent,
+      setContentType: setManualContentType,
+      updateContentContext,
+    }),
+    [
+      currentTab,
+      contentType,
+      isSupported,
+      isLoading,
+      isInjectable,
+      refreshContent,
+      setManualContentType,
+      updateContentContext,
+    ]
+  );
+
   return (
-    <ContentContext.Provider
-      value={{
-        currentTab,
-        contentType,
-        isSupported,
-        isLoading,
-        isInjectable,
-        refreshContent,
-        setContentType: setManualContentType,
-        updateContentContext,
-      }}
-    >
+    <ContentContext.Provider value={value}>
       {children}
     </ContentContext.Provider>
   );

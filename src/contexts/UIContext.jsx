@@ -1,5 +1,5 @@
 // src/contexts/UIContext.jsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import uiService from '../services/UIService';
@@ -52,7 +52,7 @@ export function UIProvider({ children }) {
     };
   }, []);
 
-  const toggleTheme = async () => {
+  const toggleTheme = useCallback(async () => {
     try {
       // Toggle theme using service
       const newTheme = await uiService.toggleTheme();
@@ -60,9 +60,9 @@ export function UIProvider({ children }) {
     } catch (error) {
       logger.popup.error('Error toggling theme:', error);
     }
-  };
+  }, []);
 
-  const toggleTextSize = async () => {
+  const toggleTextSize = useCallback(async () => {
     try {
       // Toggle text size using service
       const newTextSize = await uiService.toggleTextSize();
@@ -70,7 +70,12 @@ export function UIProvider({ children }) {
     } catch (error) {
       logger.popup.error('Error toggling text size:', error);
     }
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ theme, toggleTheme, textSize, toggleTextSize }),
+    [theme, toggleTheme, textSize, toggleTextSize]
+  );
 
   // Show loading state if UI isn't initialized yet
   if (!initialized) {
@@ -82,9 +87,7 @@ export function UIProvider({ children }) {
   }
 
   return (
-    <UIContext.Provider
-      value={{ theme, toggleTheme, textSize, toggleTextSize }}
-    >
+    <UIContext.Provider value={value}>
       {children}
     </UIContext.Provider>
   );

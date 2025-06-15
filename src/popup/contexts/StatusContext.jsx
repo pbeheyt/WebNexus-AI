@@ -1,5 +1,5 @@
 // src/components/context/StatusContext.jsx
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 const StatusContext = createContext(null);
@@ -18,14 +18,17 @@ export function StatusProvider({ children }) {
     [updateStatus]
   );
 
+  const value = useMemo(
+    () => ({
+      statusMessage,
+      updateStatus,
+      notifyPlatformChanged,
+    }),
+    [statusMessage, updateStatus, notifyPlatformChanged]
+  );
+
   return (
-    <StatusContext.Provider
-      value={{
-        statusMessage,
-        updateStatus,
-        notifyPlatformChanged,
-      }}
-    >
+    <StatusContext.Provider value={value}>
       {children}
     </StatusContext.Provider>
   );
