@@ -1,5 +1,10 @@
-// src/components/form/TextArea.jsx
-import React, { forwardRef, useEffect, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 
 import ValidationError from './ValidationError';
@@ -28,19 +33,22 @@ export const TextArea = forwardRef(
   ) => {
     const textareaRef = useRef(null);
     const [error, setError] = useState(null);
-const [touched, setTouched] = useState(false);
+    const [touched, setTouched] = useState(false);
 
-    const validate = (currentValue) => {
-      let errorMessage = null;
-      if (required && !currentValue.trim()) {
-        errorMessage = 'This field is required.';
-      } else if (maxLength && currentValue.length > maxLength) {
-        errorMessage = `Cannot exceed ${maxLength} characters.`;
-      }
-      setError(errorMessage);
-      onValidation(!errorMessage); // Pass validity state to parent
-      return !errorMessage;
-    };
+    const validate = useCallback(
+      (currentValue) => {
+        let errorMessage = null;
+        if (required && !currentValue.trim()) {
+          errorMessage = 'This field is required.';
+        } else if (maxLength && currentValue.length > maxLength) {
+          errorMessage = `Cannot exceed ${maxLength} characters.`;
+        }
+        setError(errorMessage);
+        onValidation(!errorMessage); // Pass validity state to parent
+        return !errorMessage;
+      },
+      [required, maxLength, onValidation]
+    );
     const combinedRef = (element) => {
       textareaRef.current = element;
       if (typeof ref === 'function') ref(element);
@@ -50,8 +58,7 @@ const [touched, setTouched] = useState(false);
     // Perform validation on initial mount and when value changes from parent
     useEffect(() => {
       validate(value || '');
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value, required, maxLength]);
+    }, [value, validate]);
 
 const handleChange = (e) => {
   if (!touched) setTouched(true);
