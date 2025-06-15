@@ -478,15 +478,14 @@ const {
                 <div className='flex flex-row flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-theme-secondary mt-1'>
                   {dynamicSpecs.inputPrice === 0 &&
                   dynamicSpecs.outputPrice === 0 ? (
-                    <div
+                    <button
+                      type="button"
                       ref={freeTierRef}
-                      className='flex items-center relative cursor-help'
+                      className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
                       onMouseEnter={() => setHoveredElement('freeTier')}
                       onMouseLeave={() => setHoveredElement(null)}
                       onFocus={() => setHoveredElement('freeTier')}
                       onBlur={() => setHoveredElement(null)}
-                      tabIndex={0}
-                      role="button"
                       aria-describedby="chat-area-free-tier-tooltip"
                     >
                       <FreeTierIcon className='w-3.5 h-3.5 mr-1 select-none'/> <span>Free</span>
@@ -497,20 +496,19 @@ const {
                         position='bottom'
                         id="chat-area-free-tier-tooltip"
                       />
-                    </div>
+                    </button>
                   ) : (
                     <>
                       {typeof dynamicSpecs.inputPrice === 'number' &&
                         dynamicSpecs.inputPrice >= 0 && (
-                          <div
+                          <button
+                            type="button"
                             ref={inputPriceRef}
-                            className='flex items-center relative cursor-help'
+                            className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
                             onMouseEnter={() => setHoveredElement('inputPrice')}
                             onMouseLeave={() => setHoveredElement(null)}
                             onFocus={() => setHoveredElement('inputPrice')}
                             onBlur={() => setHoveredElement(null)}
-                            tabIndex={0}
-                            role="button"
                             aria-describedby="chat-area-input-price-tooltip"
                           >
                             <InputTokenIcon className='w-3.5 h-3.5 mr-1 select-none'/>
@@ -522,21 +520,20 @@ const {
                               position='bottom'
                               id="chat-area-input-price-tooltip"
                             />
-                          </div>
+                          </button>
                         )}
                       {typeof dynamicSpecs.outputPrice === 'number' &&
                         dynamicSpecs.outputPrice > 0 && (
-                          <div
+                          <button
+                            type="button"
                             ref={outputPriceRef}
-                            className='flex items-center relative cursor-help'
+                            className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
                             onMouseEnter={() =>
                               setHoveredElement('outputPrice')
                             }
                             onMouseLeave={() => setHoveredElement(null)}
                             onFocus={() => setHoveredElement('outputPrice')}
                             onBlur={() => setHoveredElement(null)}
-                            tabIndex={0}
-                            role="button"
                             aria-describedby="chat-area-output-price-tooltip"
                           >
                             <OutputTokenIcon className='w-3.5 h-3.5 mr-1 select-none'/>
@@ -548,21 +545,20 @@ const {
                               position='bottom'
                               id="chat-area-output-price-tooltip"
                             />
-                          </div>
+                          </button>
                         )}
                     </>
                   )}
                   {typeof dynamicSpecs.contextWindow === 'number' &&
                     dynamicSpecs.contextWindow > 0 && (
-                      <div
+                      <button
+                        type="button"
                         ref={contextWindowRef}
-                        className='flex items-center relative cursor-help'
+                        className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
                         onMouseEnter={() => setHoveredElement('contextWindow')}
                         onMouseLeave={() => setHoveredElement(null)}
                         onFocus={() => setHoveredElement('contextWindow')}
                         onBlur={() => setHoveredElement(null)}
-                        tabIndex={0}
-                        role="button"
                         aria-describedby="chat-area-context-window-tooltip"
                       >
                         <ContextWindowIcon className='w-3 h-3 mr-2 select-none'/>
@@ -576,7 +572,7 @@ const {
                           position='bottom'
                           id="chat-area-context-window-tooltip"
                         />
-                      </div>
+                      </button>
                     )}
                 </div>
               </>

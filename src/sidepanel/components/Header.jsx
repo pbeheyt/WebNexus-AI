@@ -82,27 +82,21 @@ function Header({
             {/* Only show context/strategy controls for non-selection types */}
             {contentType !== CONTENT_TYPES.SELECTED_TEXT && (
               <>
-                <span
-                  ref={includeToggleRef}
-                  onMouseEnter={() => setIsIncludeTooltipVisible(true)}
-                  onMouseLeave={() => setIsIncludeTooltipVisible(false)}
-                  onFocus={() => setIsIncludeTooltipVisible(true)}
-                  onBlur={() => setIsIncludeTooltipVisible(false)}
-                  aria-describedby='include-context-tooltip-header'
-                  className='inline-flex items-center flex-shrink-0'
-                  tabIndex={0}
-                  role="button"
-                >
-                  <Toggle
-                    id='content-extract-toggle-header'
-                    checked={isContentExtractionEnabled}
-                    onChange={(newCheckedState) => {
-                      if (hasAnyPlatformCredentials)
-                        setIsContentExtractionEnabled(newCheckedState);
-                    }}
-                    disabled={!hasAnyPlatformCredentials}
-                  />
-                </span>
+            <Toggle
+              ref={includeToggleRef}
+              onMouseEnter={() => setIsIncludeTooltipVisible(true)}
+              onMouseLeave={() => setIsIncludeTooltipVisible(false)}
+              onFocus={() => setIsIncludeTooltipVisible(true)}
+              onBlur={() => setIsIncludeTooltipVisible(false)}
+              aria-describedby='include-context-tooltip-header'
+              id='content-extract-toggle-header'
+              checked={isContentExtractionEnabled}
+              onChange={(newCheckedState) => {
+                if (hasAnyPlatformCredentials)
+                  setIsContentExtractionEnabled(newCheckedState);
+              }}
+              disabled={!hasAnyPlatformCredentials}
+            />
                 <Tooltip
                   show={isIncludeTooltipVisible}
                   targetRef={includeToggleRef}
@@ -129,15 +123,14 @@ function Header({
       {/* Right Section: Token Information */}
       <div className='flex items-center space-x-4 text-xs text-theme-secondary'>
         {/* Input Tokens */}
-        <div
+        <button
+          type="button"
           ref={inputTokensRef}
-          className='hidden @[26rem]:flex items-center relative cursor-help'
+          className='hidden @[26rem]:flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
           onMouseEnter={() => setHoveredTokenElement('inputTokens')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('inputTokens')}
           onBlur={() => setHoveredTokenElement(null)}
-          tabIndex={0}
-          role="button"
           aria-describedby="header-input-tokens-tooltip"
         >
           <InputTokenIcon className='w-3.5 h-3.5 mr-1 select-none flex-shrink-0' />
@@ -149,18 +142,17 @@ function Header({
             position='bottom'
             id="header-input-tokens-tooltip"
           />
-        </div>
+        </button>
 
         {/* Output Tokens */}
-        <div
+        <button
+          type="button"
           ref={outputTokensRef}
-          className='hidden @[26rem]:flex items-center relative cursor-help'
+          className='hidden @[26rem]:flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
           onMouseEnter={() => setHoveredTokenElement('outputTokens')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('outputTokens')}
           onBlur={() => setHoveredTokenElement(null)}
-          tabIndex={0}
-          role="button"
           aria-describedby="header-output-tokens-tooltip"
         >
           <OutputTokenIcon className='w-3.5 h-3.5 mr-1 select-none flex-shrink-0' />
@@ -172,18 +164,17 @@ function Header({
             position='bottom'
             id="header-output-tokens-tooltip"
           />
-        </div>
+        </button>
 
         {/* Context Window Percentage */}
-        <div
+        <button
+          type="button"
           ref={contextWindowRef}
-          className='flex items-center relative cursor-help'
+          className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
           onMouseEnter={() => setHoveredTokenElement('contextWindow')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('contextWindow')}
           onBlur={() => setHoveredTokenElement(null)}
-          tabIndex={0}
-          role="button"
           aria-describedby="header-context-window-tooltip"
         >
           <ContextWindowIcon className='w-3 h-3 mr-2 select-none flex-shrink-0' />
@@ -195,18 +186,17 @@ function Header({
             position='bottom'
             id="header-context-window-tooltip"
           />
-        </div>
+        </button>
 
         {/* Accumulated Cost */}
-        <div
+        <button
+          type="button"
           ref={costRef}
-          className='flex items-center relative cursor-help mr-1'
+          className='flex items-center relative cursor-help mr-1 bg-transparent border-none p-0 m-0 text-left'
           onMouseEnter={() => setHoveredTokenElement('cost')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('cost')}
           onBlur={() => setHoveredTokenElement(null)}
-          tabIndex={0}
-          role="button"
           aria-describedby="header-cost-tooltip"
         >
           {/* No icon for cost, just the value */}
@@ -218,7 +208,7 @@ function Header({
             position='bottom'
             id="header-cost-tooltip"
           />
-        </div>
+        </button>
       </div>
     </div>
   );
