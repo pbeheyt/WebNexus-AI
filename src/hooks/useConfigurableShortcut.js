@@ -39,7 +39,7 @@ export function useConfigurableShortcut(
       }
     };
     loadShortcut();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shortcutStorageKey]); // Dependencies for loading
 
   // Effect to set up the keydown listener
@@ -89,6 +89,10 @@ export function useConfigurableShortcut(
     currentShortcutConfig,
     onShortcutPressCallback,
     loggerInstance,
+    // This is an intentional pattern for a reusable hook.
+    // The spread allows the consumer of this hook to pass a dynamic list of dependencies
+    // for the `onShortcutPressCallback`, ensuring the effect's closure has the latest values.
+    // The linter cannot statically analyze the spread dependencies, but this is the desired behavior.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     ...dependenciesForCallback,
   ]);

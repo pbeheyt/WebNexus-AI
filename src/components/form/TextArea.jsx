@@ -20,7 +20,7 @@ export const TextArea = forwardRef(
       placeholder,
       maxLength,
       className = '',
-      wrapperClassName = '', // New prop for the outer div
+      wrapperClassName = '',
       autoResize = true,
       style = {},
       focusAtEnd = false,
