@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 import { useSidePanelPlatform } from '../../contexts/platform';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
-import { UnifiedInput } from '../../components/input/UnifiedInput';
+import { UnifiedInput, useNotification } from '../../components';
 import { useContent } from '../../contexts/ContentContext';
 import {
   getSidepanelInitialPlaceholder,
@@ -36,6 +36,7 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
     messages,
     isContentExtractionEnabled,
   } = useSidePanelChat();
+  const { success: showSuccessNotification } = useNotification();
 
   const selfRef = useRef(null);
 
@@ -59,6 +60,19 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
   const handleCancel = () => {
     cancelStream();
   };
+
+  const handleDefaultPromptUpdate = useCallback(
+    (promptName, contentTypeLabel) => {
+      if (showSuccessNotification) {
+        showSuccessNotification(
+          `"${promptName}" set as default for ${
+            contentTypeLabel || 'this content type'
+          }.`
+        );
+      }
+    },
+    [showSuccessNotification]
+  );
 
   const platformName = useMemo(() => {
     return platforms.find((p) => p.id === selectedPlatformId)?.name || null;
@@ -141,6 +155,7 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
         contentType={contentType}
         layoutVariant='sidepanel'
         className=''
+        onDefaultPromptSetCallback={handleDefaultPromptUpdate}
       />
     </div>
   );
