@@ -28,26 +28,30 @@ const Checkbox = ({
       />
       <label
         htmlFor={uniqueId}
-        className={`relative flex items-center justify-center w-5 h-5 rounded border-2 transition-colors cursor-pointer
-          ${
-            checked
-              ? 'bg-primary border-primary'
-              : 'bg-transparent border-gray-400 dark:border-gray-500'
-          }
-          ${
-            disabled
-              ? 'cursor-not-allowed opacity-50'
-              : 'hover:border-primary'
-          }
-          ${labelClassName}`}
+        className={`flex items-center cursor-pointer ${
+          disabled ? 'cursor-not-allowed' : ''
+        }`}
       >
-        {checked && <CheckIcon className='w-4 h-4 text-white' />}
+        {/* Visual checkbox part */}
+        <div
+          className={`relative flex flex-shrink-0 items-center justify-center w-5 h-5 rounded border-2 transition-colors
+            ${
+              checked
+                ? 'bg-primary border-primary'
+                : 'bg-transparent border-gray-400 dark:border-gray-500'
+            }
+            ${
+              disabled
+                ? 'opacity-50'
+                : 'hover:border-primary'
+            }
+            ${labelClassName}`}
+        >
+          {checked && <CheckIcon className='w-4 h-4 text-white' />}
+        </div>
+        {/* Text part */}
+        {label && <span className='ml-2 text-sm'>{label}</span>}
       </label>
-      {label && (
-        <label htmlFor={uniqueId} className='ml-2 text-sm cursor-pointer'>
-          {label}
-        </label>
-      )}
     </div>
   );
 };
