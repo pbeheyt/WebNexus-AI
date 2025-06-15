@@ -8,7 +8,11 @@ import { logger } from '../../shared/logger.js';
  * @param {Object} message - Message with operation details
  * @param {Function} sendResponse - Response function
  */
-export async function handleCredentialOperation(message, _sender, sendResponse) {
+export async function handleCredentialOperation(
+  message,
+  _sender,
+  sendResponse
+) {
   try {
     const { operation, platformId, credentials } = message;
 

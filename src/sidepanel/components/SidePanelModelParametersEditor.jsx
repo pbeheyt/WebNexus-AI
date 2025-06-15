@@ -1,4 +1,3 @@
-
 // src/sidepanel/components/SidePanelModelParametersEditor.jsx
 import { useCallback } from 'react';
 import PropTypes from 'prop-types';
@@ -42,13 +41,34 @@ const SidePanelModelParametersEditor = ({
     onReady,
   });
 
-  const handleMaxTokensChange = useCallback((newValue) => handleChange('maxTokens', newValue), [handleChange]);
-  const handleIncludeTemperatureChange = useCallback((newCheckedState) => handleChange('includeTemperature', newCheckedState), [handleChange]);
-  const handleTemperatureChange = useCallback((newValue) => handleChange('temperature', newValue), [handleChange]);
-  const handleIncludeTopPChange = useCallback((newCheckedState) => handleChange('includeTopP', newCheckedState), [handleChange]);
-  const handleTopPChange = useCallback((newValue) => handleChange('topP', newValue), [handleChange]);
-  const handleThinkingBudgetChange = useCallback((newValue) => handleChange('thinkingBudget', newValue), [handleChange]);
-  const handleSystemPromptChange = useCallback((e) => handleChange('systemPrompt', e.target.value), [handleChange]);
+  const handleMaxTokensChange = useCallback(
+    (newValue) => handleChange('maxTokens', newValue),
+    [handleChange]
+  );
+  const handleIncludeTemperatureChange = useCallback(
+    (newCheckedState) => handleChange('includeTemperature', newCheckedState),
+    [handleChange]
+  );
+  const handleTemperatureChange = useCallback(
+    (newValue) => handleChange('temperature', newValue),
+    [handleChange]
+  );
+  const handleIncludeTopPChange = useCallback(
+    (newCheckedState) => handleChange('includeTopP', newCheckedState),
+    [handleChange]
+  );
+  const handleTopPChange = useCallback(
+    (newValue) => handleChange('topP', newValue),
+    [handleChange]
+  );
+  const handleThinkingBudgetChange = useCallback(
+    (newValue) => handleChange('thinkingBudget', newValue),
+    [handleChange]
+  );
+  const handleSystemPromptChange = useCallback(
+    (e) => handleChange('systemPrompt', e.target.value),
+    [handleChange]
+  );
 
   if (!isVisible) {
     return null;
@@ -65,7 +85,8 @@ const SidePanelModelParametersEditor = ({
     effectiveShowTopPSection,
   } = derivedSettings;
 
-  const showBudgetSlider = parameterSpecs?.thinkingBudget && currentEditingMode === 'thinking';
+  const showBudgetSlider =
+    parameterSpecs?.thinkingBudget && currentEditingMode === 'thinking';
   const modelSupportsSystemPrompt =
     capabilities?.supportsSystemPrompt !== false &&
     platform?.apiConfig?.apiStructure?.supportsSystemPrompt !== false;
@@ -76,7 +97,12 @@ const SidePanelModelParametersEditor = ({
         <div className='space-y-4 text-xs'>
           {parameterSpecs.maxTokens && (
             <div>
-              <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-maxTokens`} className='block mb-2 font-medium text-theme-secondary'>Max Tokens</label>
+              <label
+                htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-maxTokens`}
+                className='block mb-2 font-medium text-theme-secondary'
+              >
+                Max Tokens
+              </label>
               <SliderInput
                 id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-maxTokens`}
                 label=''
@@ -93,7 +119,12 @@ const SidePanelModelParametersEditor = ({
           {effectiveShowTempSection && parameterSpecs.temperature && (
             <div>
               <div className='flex items-center mb-2'>
-                <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTemperature`} className='font-medium text-theme-secondary mr-2'>Temperature</label>
+                <label
+                  htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTemperature`}
+                  className='font-medium text-theme-secondary mr-2'
+                >
+                  Temperature
+                </label>
                 <Toggle
                   checked={formValues.includeTemperature ?? true}
                   onChange={handleIncludeTemperatureChange}
@@ -105,7 +136,9 @@ const SidePanelModelParametersEditor = ({
                 <SliderInput
                   id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-temperatureValue`}
                   label=''
-                  value={formValues.temperature ?? parameterSpecs.temperature.min}
+                  value={
+                    formValues.temperature ?? parameterSpecs.temperature.min
+                  }
                   onChange={handleTemperatureChange}
                   min={parameterSpecs.temperature.min}
                   max={parameterSpecs.temperature.max}
@@ -117,9 +150,14 @@ const SidePanelModelParametersEditor = ({
           )}
 
           {effectiveShowTopPSection && parameterSpecs.topP && (
-             <div>
+            <div>
               <div className='flex items-center mb-2'>
-                <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTopP`} className='font-medium text-theme-secondary mr-2'>Top P</label>
+                <label
+                  htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTopP`}
+                  className='font-medium text-theme-secondary mr-2'
+                >
+                  Top P
+                </label>
                 <Toggle
                   checked={formValues.includeTopP ?? false}
                   onChange={handleIncludeTopPChange}
@@ -142,20 +180,31 @@ const SidePanelModelParametersEditor = ({
             </div>
           )}
 
-          {effectiveShowTempSection && effectiveShowTopPSection && formValues.includeTemperature && formValues.includeTopP && (
+          {effectiveShowTempSection &&
+            effectiveShowTopPSection &&
+            formValues.includeTemperature &&
+            formValues.includeTopP && (
               <div className='my-1 flex items-start text-xs text-amber-600 dark:text-amber-500'>
                 <InfoIcon className='w-3 h-3 mr-1 flex-shrink-0' />
                 <span>Temp & Top P active. Usually one is preferred.</span>
               </div>
-          )}
+            )}
 
           {showBudgetSlider && parameterSpecs.thinkingBudget && (
             <div>
-              <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-thinkingBudget`} className='block mb-2 font-medium text-theme-secondary'>Thinking Budget</label>
+              <label
+                htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-thinkingBudget`}
+                className='block mb-2 font-medium text-theme-secondary'
+              >
+                Thinking Budget
+              </label>
               <SliderInput
                 id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-thinkingBudget`}
                 label=''
-                value={formValues.thinkingBudget ?? parameterSpecs.thinkingBudget.default}
+                value={
+                  formValues.thinkingBudget ??
+                  parameterSpecs.thinkingBudget.default
+                }
                 onChange={handleThinkingBudgetChange}
                 min={parameterSpecs.thinkingBudget.min}
                 max={parameterSpecs.thinkingBudget.max}
@@ -167,7 +216,12 @@ const SidePanelModelParametersEditor = ({
 
           {modelSupportsSystemPrompt && parameterSpecs.systemPrompt && (
             <div>
-              <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-systemPrompt`} className='block mb-2 font-medium text-theme-secondary'>System Prompt</label>
+              <label
+                htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-systemPrompt`}
+                className='block mb-2 font-medium text-theme-secondary'
+              >
+                System Prompt
+              </label>
               <TextArea
                 id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-systemPrompt`}
                 name='systemPrompt'
@@ -203,7 +257,7 @@ const SidePanelModelParametersEditor = ({
               isLoading={isSaving}
               disabled={isSaving || isResetting || !hasChanges}
               variant={!hasChanges || isResetting ? 'inactive' : 'primary'}
-              size="md"
+              size='md'
               className='px-3 py-1 text-xs select-none'
             >
               {isSaving ? 'Saving...' : 'Save'}

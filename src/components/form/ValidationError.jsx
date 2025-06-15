@@ -16,8 +16,8 @@ export function ValidationError({ message, className = '' }) {
   return (
     <div
       className={`flex items-center text-error text-xs mt-2 ${className}`}
-      role="alert"
-      aria-live="assertive"
+      role='alert'
+      aria-live='assertive'
     >
       <span>{message}</span>
     </div>

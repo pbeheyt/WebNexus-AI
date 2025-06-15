@@ -10,12 +10,7 @@ import PropTypes from 'prop-types';
 
 import { useSidePanelPlatform } from '../../contexts/platform';
 import { useSidePanelChat } from '../contexts/SidePanelChatContext';
-import {
-  ChevronUpIcon,
-  Toggle,
-  Tooltip,
-  IconButton,
-} from '../../components';
+import { ChevronUpIcon, Toggle, Tooltip, IconButton } from '../../components';
 import { logger } from '../../shared/logger';
 
 import SidePanelModelParametersEditor from './SidePanelModelParametersEditor';
@@ -128,8 +123,8 @@ function PlatformModelControls({ onToggleExpand }) {
                     onFocus={() => setTooltipVisible(true)}
                     onBlur={() => setTooltipVisible(false)}
                     tabIndex={0}
-                    role="button"
-                    aria-describedby="thinking-mode-toggle-tooltip"
+                    role='button'
+                    aria-describedby='thinking-mode-toggle-tooltip'
                   >
                     <Toggle
                       checked={isThinkingModeEnabled}

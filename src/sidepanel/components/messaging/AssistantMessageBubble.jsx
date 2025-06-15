@@ -1,4 +1,11 @@
-import React, { memo, forwardRef, useMemo, useRef, useState, useEffect } from 'react';
+import React, {
+  memo,
+  forwardRef,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -6,7 +13,12 @@ import 'katex/dist/katex.min.css';
 
 import { logger } from '../../../shared/logger';
 import ConfigService from '../../../services/ConfigService';
-import { IconButton, RerunIcon, PlatformIcon, Tooltip } from '../../../components';
+import {
+  IconButton,
+  RerunIcon,
+  PlatformIcon,
+  Tooltip,
+} from '../../../components';
 import { useSidePanelChat } from '../../contexts/SidePanelChatContext';
 import { formatCost } from '../../../shared/utils/number-format-utils.js';
 
@@ -55,8 +67,10 @@ export const AssistantMessageBubble = memo(
       const [costTooltipVisible, setCostTooltipVisible] = useState(false);
       const costDisplayRef = useRef(null);
 
-      const [resolvedPlatformIconUrl, setResolvedPlatformIconUrl] = useState(null);
-      const [resolvedModelDisplayName, setResolvedModelDisplayName] = useState(modelId);
+      const [resolvedPlatformIconUrl, setResolvedPlatformIconUrl] =
+        useState(null);
+      const [resolvedModelDisplayName, setResolvedModelDisplayName] =
+        useState(modelId);
 
       useEffect(() => {
         let isMounted = true;
@@ -64,36 +78,53 @@ export const AssistantMessageBubble = memo(
           if (platformId && modelId) {
             try {
               // Fetch platform display config for icon
-              const platformDisplayConfig = await ConfigService.getPlatformDisplayConfig(platformId);
-              if (isMounted && platformDisplayConfig && platformDisplayConfig.icon) {
-                setResolvedPlatformIconUrl(chrome.runtime.getURL(platformDisplayConfig.icon));
+              const platformDisplayConfig =
+                await ConfigService.getPlatformDisplayConfig(platformId);
+              if (
+                isMounted &&
+                platformDisplayConfig &&
+                platformDisplayConfig.icon
+              ) {
+                setResolvedPlatformIconUrl(
+                  chrome.runtime.getURL(platformDisplayConfig.icon)
+                );
               } else if (isMounted) {
                 setResolvedPlatformIconUrl(null); // Explicitly set to null if not found
               }
 
               // Fetch platform API config for model display name
-              const platformApiConfig = await ConfigService.getPlatformApiConfig(platformId);
-              const modelConfig = platformApiConfig?.models?.find(m => m.id === modelId);
+              const platformApiConfig =
+                await ConfigService.getPlatformApiConfig(platformId);
+              const modelConfig = platformApiConfig?.models?.find(
+                (m) => m.id === modelId
+              );
               if (isMounted) {
-                setResolvedModelDisplayName(modelConfig?.displayName || modelId); // Fallback to modelId
+                setResolvedModelDisplayName(
+                  modelConfig?.displayName || modelId
+                ); // Fallback to modelId
               }
             } catch (error) {
-              logger.sidepanel.error(`Error fetching details for assistant message (Platform: ${platformId}, Model: ${modelId}):`, error);
+              logger.sidepanel.error(
+                `Error fetching details for assistant message (Platform: ${platformId}, Model: ${modelId}):`,
+                error
+              );
               if (isMounted) {
                 setResolvedModelDisplayName(modelId); // Fallback to modelId on error
                 setResolvedPlatformIconUrl(null);
               }
             }
           } else {
-             if (isMounted) {
-                 setResolvedModelDisplayName(modelId || 'N/A');
-                 setResolvedPlatformIconUrl(null);
-             }
+            if (isMounted) {
+              setResolvedModelDisplayName(modelId || 'N/A');
+              setResolvedPlatformIconUrl(null);
+            }
           }
         };
 
         fetchDetails();
-        return () => { isMounted = false; };
+        return () => {
+          isMounted = false;
+        };
       }, [platformId, modelId]);
 
       // For assistant rerun
@@ -360,12 +391,12 @@ export const AssistantMessageBubble = memo(
       // --- End Memoized Component Overrides ---
 
       return (
-    <div
-      ref={ref}
-      id={id}
-      style={style}
-      className={`message-group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full assistant-message relative ${className}`}
-    >
+        <div
+          ref={ref}
+          id={id}
+          style={style}
+          className={`message-group px-5 @md:px-6 @lg:px-7 @xl:px-8 pt-4 w-full assistant-message relative ${className}`}
+        >
           {/* Render Thinking Block if content exists */}
           {thinkingContent && thinkingContent.trim() && (
             <ThinkingBlock
@@ -402,23 +433,30 @@ export const AssistantMessageBubble = memo(
                 </div>
               )}
               {modelId && (
-                <span className='mr-4' title={resolvedModelDisplayName !== modelId ? modelId : undefined}> 
+                <span
+                  className='mr-4'
+                  title={
+                    resolvedModelDisplayName !== modelId ? modelId : undefined
+                  }
+                >
                   {' '}
                   {resolvedModelDisplayName || modelId}{' '}
                 </span>
               )}
               {/* API Cost Badge */}
-              {!isStreaming && typeof apiCost === 'number' && apiCost > 0 && ( // Show if apiCost is a number and > 0
-                <>
-                  <span
-                    ref={costDisplayRef}
-                    className="text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help"
+              {!isStreaming &&
+                typeof apiCost === 'number' &&
+                apiCost > 0 && ( // Show if apiCost is a number and > 0
+                  <>
+                    <span
+                      ref={costDisplayRef}
+                      className='text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help'
                       onMouseEnter={() => setCostTooltipVisible(true)}
                       onMouseLeave={() => setCostTooltipVisible(false)}
                       onFocus={() => setCostTooltipVisible(true)}
                       onBlur={() => setCostTooltipVisible(false)}
                       tabIndex={0}
-                      role="button"
+                      role='button'
                       aria-describedby={`cost-tooltip-assistant-${id}`}
                       aria-label={`Estimated cost: ${formatCost(apiCost)}`}
                     >
@@ -428,12 +466,12 @@ export const AssistantMessageBubble = memo(
                       show={costTooltipVisible}
                       message={`Est. cost for this response: ${formatCost(apiCost)}`}
                       targetRef={costDisplayRef}
-                      position="top"
+                      position='top'
                       id={`cost-tooltip-assistant-${id}`}
                     />
                   </>
                 )}
-                {/* End API Cost Badge */}
+              {/* End API Cost Badge */}
               <div
                 className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
               >
@@ -449,9 +487,9 @@ export const AssistantMessageBubble = memo(
               </div>
             </div>
             {/* Buttons Container (Rerun + Copy) */}
-    <div
-      className={`flex items-center justify-center gap-1 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : assistantCopyState === 'copied' || assistantCopyState === 'error' ? 'opacity-100' : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'}`}
-    >
+            <div
+              className={`flex items-center justify-center gap-1 transition-opacity duration-150 ${isProcessing ? 'opacity-0 pointer-events-none' : assistantCopyState === 'copied' || assistantCopyState === 'error' ? 'opacity-100' : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'}`}
+            >
               {!isStreaming && content && content.trim() && (
                 <>
                   {' '}

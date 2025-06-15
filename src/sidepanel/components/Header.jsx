@@ -11,11 +11,11 @@ import {
   Tooltip,
   ExtractionStrategySelector,
 } from '../../components';
+import { CONTENT_TYPE_LABELS, CONTENT_TYPES } from '../../shared/constants';
 import {
-  CONTENT_TYPE_LABELS,
-  CONTENT_TYPES,
-} from '../../shared/constants';
-import { formatTokenCount, formatCost } from '../../shared/utils/number-format-utils';
+  formatTokenCount,
+  formatCost,
+} from '../../shared/utils/number-format-utils';
 
 function Header({
   isExpanded,
@@ -60,14 +60,16 @@ function Header({
   const formattedAccumulatedCost = formatCost(accumulatedCost);
 
   const tokenTooltipContent = {
-    inputTokens: `Est. Input: ${promptTokensInLastApiCall} (Prompt) + ${historyTokensSentInLastApiCall} (History) + ${(systemTokensInLastApiCall)} (System) = ${inputTokensInLastApiCall} total.`,
+    inputTokens: `Est. Input: ${promptTokensInLastApiCall} (Prompt) + ${historyTokensSentInLastApiCall} (History) + ${systemTokensInLastApiCall} (System) = ${inputTokensInLastApiCall} total.`,
     outputTokens: `Est. total output tokens generated in this chat session.`,
     contextWindow: `Est. ${contextData.tokensRemaining} tokens remaining (${contextData.totalTokens} / ${contextData.maxContextWindow} used).`,
     cost: `Est. total accumulated cost for this chat session.`,
   };
 
   return (
-    <div className={`px-5 py-2 border-b border-theme flex justify-between items-center min-h-[40px] ${className}`}>
+    <div
+      className={`px-5 py-2 border-b border-theme flex justify-between items-center min-h-[40px] ${className}`}
+    >
       {/* Left Section: Content Extraction Controls */}
       <div className='flex items-center gap-1 mr-5 text-sm text-theme-secondary cursor-default min-w-0'>
         {isPageInjectable ? (
@@ -82,21 +84,21 @@ function Header({
             {/* Only show context/strategy controls for non-selection types */}
             {contentType !== CONTENT_TYPES.SELECTED_TEXT && (
               <>
-            <Toggle
-              ref={includeToggleRef}
-              onMouseEnter={() => setIsIncludeTooltipVisible(true)}
-              onMouseLeave={() => setIsIncludeTooltipVisible(false)}
-              onFocus={() => setIsIncludeTooltipVisible(true)}
-              onBlur={() => setIsIncludeTooltipVisible(false)}
-              aria-describedby='include-context-tooltip-header'
-              id='content-extract-toggle-header'
-              checked={isContentExtractionEnabled}
-              onChange={(newCheckedState) => {
-                if (hasAnyPlatformCredentials)
-                  setIsContentExtractionEnabled(newCheckedState);
-              }}
-              disabled={!hasAnyPlatformCredentials}
-            />
+                <Toggle
+                  ref={includeToggleRef}
+                  onMouseEnter={() => setIsIncludeTooltipVisible(true)}
+                  onMouseLeave={() => setIsIncludeTooltipVisible(false)}
+                  onFocus={() => setIsIncludeTooltipVisible(true)}
+                  onBlur={() => setIsIncludeTooltipVisible(false)}
+                  aria-describedby='include-context-tooltip-header'
+                  id='content-extract-toggle-header'
+                  checked={isContentExtractionEnabled}
+                  onChange={(newCheckedState) => {
+                    if (hasAnyPlatformCredentials)
+                      setIsContentExtractionEnabled(newCheckedState);
+                  }}
+                  disabled={!hasAnyPlatformCredentials}
+                />
                 <Tooltip
                   show={isIncludeTooltipVisible}
                   targetRef={includeToggleRef}
@@ -124,58 +126,62 @@ function Header({
       <div className='flex items-center space-x-4 text-xs text-theme-secondary'>
         {/* Input Tokens */}
         <button
-          type="button"
+          type='button'
           ref={inputTokensRef}
           className='hidden @[26rem]:flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
           onMouseEnter={() => setHoveredTokenElement('inputTokens')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('inputTokens')}
           onBlur={() => setHoveredTokenElement(null)}
-          aria-describedby="header-input-tokens-tooltip"
+          aria-describedby='header-input-tokens-tooltip'
         >
           <InputTokenIcon className='w-3.5 h-3.5 mr-1 select-none flex-shrink-0' />
-          <span className='whitespace-nowrap'>{formatTokenCount(inputTokensInLastApiCall)}</span>
+          <span className='whitespace-nowrap'>
+            {formatTokenCount(inputTokensInLastApiCall)}
+          </span>
           <Tooltip
             show={hoveredTokenElement === 'inputTokens'}
             message={tokenTooltipContent.inputTokens}
             targetRef={inputTokensRef}
             position='bottom'
-            id="header-input-tokens-tooltip"
+            id='header-input-tokens-tooltip'
           />
         </button>
 
         {/* Output Tokens */}
         <button
-          type="button"
+          type='button'
           ref={outputTokensRef}
           className='hidden @[26rem]:flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
           onMouseEnter={() => setHoveredTokenElement('outputTokens')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('outputTokens')}
           onBlur={() => setHoveredTokenElement(null)}
-          aria-describedby="header-output-tokens-tooltip"
+          aria-describedby='header-output-tokens-tooltip'
         >
           <OutputTokenIcon className='w-3.5 h-3.5 mr-1 select-none flex-shrink-0' />
-          <span className='whitespace-nowrap'>{formatTokenCount(outputTokens)}</span>
+          <span className='whitespace-nowrap'>
+            {formatTokenCount(outputTokens)}
+          </span>
           <Tooltip
             show={hoveredTokenElement === 'outputTokens'}
             message={tokenTooltipContent.outputTokens}
             targetRef={outputTokensRef}
             position='bottom'
-            id="header-output-tokens-tooltip"
+            id='header-output-tokens-tooltip'
           />
         </button>
 
         {/* Context Window Percentage */}
         <button
-          type="button"
+          type='button'
           ref={contextWindowRef}
           className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
           onMouseEnter={() => setHoveredTokenElement('contextWindow')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('contextWindow')}
           onBlur={() => setHoveredTokenElement(null)}
-          aria-describedby="header-context-window-tooltip"
+          aria-describedby='header-context-window-tooltip'
         >
           <ContextWindowIcon className='w-3 h-3 mr-2 select-none flex-shrink-0' />
           <span className='whitespace-nowrap'>{`${(contextData.percentage || 0).toFixed(0)}%`}</span>
@@ -184,29 +190,31 @@ function Header({
             message={tokenTooltipContent.contextWindow}
             targetRef={contextWindowRef}
             position='bottom'
-            id="header-context-window-tooltip"
+            id='header-context-window-tooltip'
           />
         </button>
 
         {/* Accumulated Cost */}
         <button
-          type="button"
+          type='button'
           ref={costRef}
           className='flex items-center relative cursor-help mr-1 bg-transparent border-none p-0 m-0 text-left'
           onMouseEnter={() => setHoveredTokenElement('cost')}
           onMouseLeave={() => setHoveredTokenElement(null)}
           onFocus={() => setHoveredTokenElement('cost')}
           onBlur={() => setHoveredTokenElement(null)}
-          aria-describedby="header-cost-tooltip"
+          aria-describedby='header-cost-tooltip'
         >
           {/* No icon for cost, just the value */}
-          <span className='text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold'>{formattedAccumulatedCost}</span>
+          <span className='text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold'>
+            {formattedAccumulatedCost}
+          </span>
           <Tooltip
             show={hoveredTokenElement === 'cost'}
             message={tokenTooltipContent.cost}
             targetRef={costRef}
             position='bottom'
-            id="header-cost-tooltip"
+            id='header-cost-tooltip'
           />
         </button>
       </div>

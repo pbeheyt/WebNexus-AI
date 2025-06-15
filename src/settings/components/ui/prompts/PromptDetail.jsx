@@ -90,9 +90,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       logger.settings.error('Error deleting prompt:', err);
       const lastError = chrome.runtime.lastError;
       if (lastError?.message?.includes('QUOTA_BYTES')) {
-        error(
-          'Local storage limit reached. Could not delete the prompt.'
-        );
+        error('Local storage limit reached. Could not delete the prompt.');
       } else {
         error(`Error deleting prompt: ${err.message}`);
       }
@@ -168,9 +166,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
       logger.settings.error('Error setting default prompt:', err);
       const lastError = chrome.runtime.lastError;
       if (lastError?.message?.includes('QUOTA_BYTES')) {
-        error(
-          'Local storage limit reached. Could not set default prompt.'
-        );
+        error('Local storage limit reached. Could not set default prompt.');
       } else {
         error(`Failed to set default prompt: ${err.message}`);
       }

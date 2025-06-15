@@ -62,9 +62,10 @@ export const Input = forwardRef(
 
     const showVisualError = error && touched;
 
-    const baseClasses =
-      'w-full p-3 outline-none text-theme-primary';
-    const errorClasses = showVisualError ? 'border-error ring-1 ring-error' : '';
+    const baseClasses = 'w-full p-3 outline-none text-theme-primary';
+    const errorClasses = showVisualError
+      ? 'border-error ring-1 ring-error'
+      : '';
     const paddingClasses = endContent ? 'pr-12' : '';
     const combinedClasses =
       `${baseClasses} ${errorClasses} ${paddingClasses} ${className}`.trim();

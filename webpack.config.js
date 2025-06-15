@@ -66,7 +66,7 @@ module.exports = {
                 '@babel/preset-env',
                 {
                   targets: {
-                    chrome: '130', // Or your target Chrome version
+                    chrome: '130',
                   },
                   useBuiltIns: 'usage',
                   corejs: 3,

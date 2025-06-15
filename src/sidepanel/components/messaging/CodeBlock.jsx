@@ -2,7 +2,10 @@
 import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {
+  oneDark,
+  oneLight,
+} from 'react-syntax-highlighter/dist/esm/styles/prism';
 // --- Static Language Imports ---
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
 import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
@@ -69,10 +72,12 @@ const languagesToRegister = [
   { name: 'makefile', module: makefile },
 ];
 
-languagesToRegister.forEach(lang => {
+languagesToRegister.forEach((lang) => {
   SyntaxHighlighter.registerLanguage(lang.name, lang.module);
   if (lang.aliases) {
-    lang.aliases.forEach(alias => SyntaxHighlighter.registerLanguage(alias, lang.module));
+    lang.aliases.forEach((alias) =>
+      SyntaxHighlighter.registerLanguage(alias, lang.module)
+    );
   }
 });
 // --- End Registration ---

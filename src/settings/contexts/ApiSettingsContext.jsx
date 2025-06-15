@@ -172,8 +172,9 @@ export const ApiSettingsProvider = ({ children }) => {
   const saveModelParametersSettings = useCallback(
     async (platformId, modelId, mode, settings, changedParamsList = []) => {
       try {
-        const updatedAllModelParameterSettings =
-          robustDeepClone(allModelParameterSettings);
+        const updatedAllModelParameterSettings = robustDeepClone(
+          allModelParameterSettings
+        );
 
         if (!updatedAllModelParameterSettings[platformId]) {
           updatedAllModelParameterSettings[platformId] = { models: {} };
@@ -234,8 +235,9 @@ export const ApiSettingsProvider = ({ children }) => {
   const resetModelParametersSettingsToDefaults = useCallback(
     async (platformId, modelId, mode) => {
       try {
-        const updatedAllModelParameterSettings =
-          robustDeepClone(allModelParameterSettings);
+        const updatedAllModelParameterSettings = robustDeepClone(
+          allModelParameterSettings
+        );
         let settingsChanged = false;
 
         if (

@@ -17,9 +17,7 @@ import { useUI } from '../../contexts/UIContext';
 import { Tooltip } from '../../components';
 import { PlatformIcon } from '../../components/layout/PlatformIcon';
 import { useContent } from '../../contexts/ContentContext';
-import {
-  CONTENT_TYPES,
-} from '../../shared/constants';
+import { CONTENT_TYPES } from '../../shared/constants';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { logger } from '../../shared/logger';
 import {
@@ -31,11 +29,9 @@ import {
   NoCredentialsIcon,
   IconButton,
 } from '../../components';
-import { MESSAGE_ROLES }
-from '../../shared/constants';
+import { MESSAGE_ROLES } from '../../shared/constants';
 
 import { MessageBubble } from './messaging/MessageBubble';
-
 
 // --- Constants ---
 const MIN_ASSISTANT_BUBBLE_HEIGHT_REM = 2; // Equivalent to 2rem minimum height
@@ -45,13 +41,13 @@ function ChatArea({
   otherUIHeight = 160, // Default value, will be updated by SidePanelApp
   requestHeightRecalculation, // Prop to trigger height update in parent
 }) {
-const {
-  messages,
-  scrollToMessageId,
-  clearScrollToMessageId,
-  modelConfigData,
-  isThinkingModeEnabled,
-} = useSidePanelChat();
+  const {
+    messages,
+    scrollToMessageId,
+    clearScrollToMessageId,
+    modelConfigData,
+    isThinkingModeEnabled,
+  } = useSidePanelChat();
   const { contentType, currentTab } = useContent();
   const { textSize } = useUI();
   const messagesEndRef = useRef(null);
@@ -111,18 +107,18 @@ const {
   const rafIdHeightCalc = useRef(null); // Used for user message height calc
   const showButtonTimerRef = useRef(null);
   // Effect to scroll to a specific message when requested by the context
-      useLayoutEffect(() => {
-        if (scrollToMessageId && messages.length > 0) {
-          const element = document.getElementById(scrollToMessageId);
-          if (element) {
-            // Use a short timeout to ensure the DOM is fully ready, especially after view switches
-            setTimeout(() => {
-              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-          }
-          clearScrollToMessageId(); // Clear the scroll target ID
-        }
-      }, [scrollToMessageId, clearScrollToMessageId, messages]);
+  useLayoutEffect(() => {
+    if (scrollToMessageId && messages.length > 0) {
+      const element = document.getElementById(scrollToMessageId);
+      if (element) {
+        // Use a short timeout to ensure the DOM is fully ready, especially after view switches
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+      clearScrollToMessageId(); // Clear the scroll target ID
+    }
+  }, [scrollToMessageId, clearScrollToMessageId, messages]);
 
   useEffect(() => {
     const targetPlatform = platforms.find((p) => p.id === selectedPlatformId);
@@ -201,7 +197,7 @@ const {
         setShowScrollDownButton(false);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, showScrollDownButton, SCROLL_THRESHOLD, textSize]);
 
   const lastMessage = messages[messages.length - 1];
@@ -479,22 +475,23 @@ const {
                   {dynamicSpecs.inputPrice === 0 &&
                   dynamicSpecs.outputPrice === 0 ? (
                     <button
-                      type="button"
+                      type='button'
                       ref={freeTierRef}
                       className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
                       onMouseEnter={() => setHoveredElement('freeTier')}
                       onMouseLeave={() => setHoveredElement(null)}
                       onFocus={() => setHoveredElement('freeTier')}
                       onBlur={() => setHoveredElement(null)}
-                      aria-describedby="chat-area-free-tier-tooltip"
+                      aria-describedby='chat-area-free-tier-tooltip'
                     >
-                      <FreeTierIcon className='w-3.5 h-3.5 mr-1 select-none'/> <span>Free</span>
+                      <FreeTierIcon className='w-3.5 h-3.5 mr-1 select-none' />{' '}
+                      <span>Free</span>
                       <Tooltip
                         show={hoveredElement === 'freeTier'}
                         message='This model is currently free to use via API.'
                         targetRef={freeTierRef}
                         position='bottom'
-                        id="chat-area-free-tier-tooltip"
+                        id='chat-area-free-tier-tooltip'
                       />
                     </button>
                   ) : (
@@ -502,30 +499,30 @@ const {
                       {typeof dynamicSpecs.inputPrice === 'number' &&
                         dynamicSpecs.inputPrice >= 0 && (
                           <button
-                            type="button"
+                            type='button'
                             ref={inputPriceRef}
                             className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
                             onMouseEnter={() => setHoveredElement('inputPrice')}
                             onMouseLeave={() => setHoveredElement(null)}
                             onFocus={() => setHoveredElement('inputPrice')}
                             onBlur={() => setHoveredElement(null)}
-                            aria-describedby="chat-area-input-price-tooltip"
+                            aria-describedby='chat-area-input-price-tooltip'
                           >
-                            <InputTokenIcon className='w-3.5 h-3.5 mr-1 select-none'/>
+                            <InputTokenIcon className='w-3.5 h-3.5 mr-1 select-none' />
                             <span>{`$${dynamicSpecs.inputPrice.toFixed(2)}`}</span>
                             <Tooltip
                               show={hoveredElement === 'inputPrice'}
                               message={`$${dynamicSpecs.inputPrice.toFixed(2)} / 1M input tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                               targetRef={inputPriceRef}
                               position='bottom'
-                              id="chat-area-input-price-tooltip"
+                              id='chat-area-input-price-tooltip'
                             />
                           </button>
                         )}
                       {typeof dynamicSpecs.outputPrice === 'number' &&
                         dynamicSpecs.outputPrice > 0 && (
                           <button
-                            type="button"
+                            type='button'
                             ref={outputPriceRef}
                             className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
                             onMouseEnter={() =>
@@ -534,16 +531,16 @@ const {
                             onMouseLeave={() => setHoveredElement(null)}
                             onFocus={() => setHoveredElement('outputPrice')}
                             onBlur={() => setHoveredElement(null)}
-                            aria-describedby="chat-area-output-price-tooltip"
+                            aria-describedby='chat-area-output-price-tooltip'
                           >
-                            <OutputTokenIcon className='w-3.5 h-3.5 mr-1 select-none'/>
+                            <OutputTokenIcon className='w-3.5 h-3.5 mr-1 select-none' />
                             <span>{`$${dynamicSpecs.outputPrice.toFixed(2)}`}</span>
                             <Tooltip
                               show={hoveredElement === 'outputPrice'}
                               message={`$${dynamicSpecs.outputPrice.toFixed(2)} / 1M output tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                               targetRef={outputPriceRef}
                               position='bottom'
-                              id="chat-area-output-price-tooltip"
+                              id='chat-area-output-price-tooltip'
                             />
                           </button>
                         )}
@@ -552,16 +549,16 @@ const {
                   {typeof dynamicSpecs.contextWindow === 'number' &&
                     dynamicSpecs.contextWindow > 0 && (
                       <button
-                        type="button"
+                        type='button'
                         ref={contextWindowRef}
                         className='flex items-center relative cursor-help bg-transparent border-none p-0 m-0 text-left'
                         onMouseEnter={() => setHoveredElement('contextWindow')}
                         onMouseLeave={() => setHoveredElement(null)}
                         onFocus={() => setHoveredElement('contextWindow')}
                         onBlur={() => setHoveredElement(null)}
-                        aria-describedby="chat-area-context-window-tooltip"
+                        aria-describedby='chat-area-context-window-tooltip'
                       >
-                        <ContextWindowIcon className='w-3 h-3 mr-2 select-none'/>
+                        <ContextWindowIcon className='w-3 h-3 mr-2 select-none' />
                         <span>
                           {formatTokenCount(dynamicSpecs.contextWindow)}
                         </span>
@@ -570,7 +567,7 @@ const {
                           message={`Max context window: ${formatTokenCount(dynamicSpecs.contextWindow)} tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
                           targetRef={contextWindowRef}
                           position='bottom'
-                          id="chat-area-context-window-tooltip"
+                          id='chat-area-context-window-tooltip'
                         />
                       </button>
                     )}

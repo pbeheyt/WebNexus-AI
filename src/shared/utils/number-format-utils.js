@@ -21,7 +21,7 @@ export function formatTokenCount(number, options = { precision: 1 }) {
   if (Math.abs(num) < 1000) {
     return num.toLocaleString(undefined, {
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     });
   }
 
@@ -60,7 +60,8 @@ export function formatCost(cost) {
 
   if (numCost === 0) return '$0.00';
 
-  if (Math.abs(numCost) < 0.01 && numCost !== 0) { // Check absolute value for small non-zero numbers
+  if (Math.abs(numCost) < 0.01 && numCost !== 0) {
+    // Check absolute value for small non-zero numbers
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',

@@ -38,7 +38,7 @@ export function useConfigurableShortcut(
       }
     };
     loadShortcut();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shortcutStorageKey]); // Dependencies for loading
 
   // Effect to set up the keydown listener

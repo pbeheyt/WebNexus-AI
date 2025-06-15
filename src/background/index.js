@@ -121,9 +121,7 @@ async function startBackgroundService() {
           'Resetting all tab UI states due to browser startup...'
         );
         await SidePanelStateManager.resetAllTabUIStates();
-        logger.background.info(
-          'Tab UI states reset successfully on startup.'
-        );
+        logger.background.info('Tab UI states reset successfully on startup.');
       } catch (resetError) {
         logger.background.error(
           'Error resetting tab UI states during browser startup:',

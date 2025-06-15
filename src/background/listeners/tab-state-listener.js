@@ -21,22 +21,27 @@ export async function clearSingleTabData(tabId) {
     );
     return false;
   }
-  logger.background.info(`Resetting tab UI state for tab ${tabId} for a new chat...`);
+  logger.background.info(
+    `Resetting tab UI state for tab ${tabId} for a new chat...`
+  );
 
   try {
     // Get current visibility to preserve it, or assume true if resetting
     const currentTabState = await SidePanelStateManager.getTabUIState(tabId);
-    await SidePanelStateManager.setTabUIVisibility(tabId, currentTabState.isVisible); // This sets the visibility part
+    await SidePanelStateManager.setTabUIVisibility(
+      tabId,
+      currentTabState.isVisible
+    ); // This sets the visibility part
     await SidePanelStateManager.setActiveChatSessionForTab(tabId, null); // Clear active session
     await SidePanelStateManager.setTabViewMode(tabId, 'chat'); // Reset view to chat
-    
 
-    logger.background.info(
-      `Successfully reset tab UI state for tab ${tabId}.`
-    );
+    logger.background.info(`Successfully reset tab UI state for tab ${tabId}.`);
     return true;
   } catch (error) {
-    logger.background.error(`Error resetting tab UI state for tab ${tabId}:`, error);
+    logger.background.error(
+      `Error resetting tab UI state for tab ${tabId}:`,
+      error
+    );
     return false;
   }
 }
@@ -56,11 +61,16 @@ export async function clearSingleTabData(tabId) {
  */
 export async function updateTabSelectionState(tabId, hasSelection) {
   if (typeof tabId !== 'number') {
-    logger.background.error('updateTabSelectionState called with invalid tabId:', tabId);
+    logger.background.error(
+      'updateTabSelectionState called with invalid tabId:',
+      tabId
+    );
     return;
   }
   try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATES);
+    const result = await chrome.storage.local.get(
+      STORAGE_KEYS.TAB_SELECTION_STATES
+    );
     const selectionStates = result[STORAGE_KEYS.TAB_SELECTION_STATES] || {};
 
     if (hasSelection) {
@@ -81,7 +91,10 @@ export async function updateTabSelectionState(tabId, hasSelection) {
       }
     }
   } catch (error) {
-    logger.background.error(`Error updating selection state for tab ${tabId}:`, error);
+    logger.background.error(
+      `Error updating selection state for tab ${tabId}:`,
+      error
+    );
   }
 }
 
@@ -179,36 +192,56 @@ export function setupTabStateListener() {
           const activeChatSessionId = tabUIState?.activeChatSessionId;
 
           if (activeChatSessionId) {
-            logger.background.info(`Tab ${tabId} closed, checking active session ${activeChatSessionId} for provisional cleanup.`);
-            const sessionMetadata = await ChatHistoryService.getSessionMetadata(activeChatSessionId);
+            logger.background.info(
+              `Tab ${tabId} closed, checking active session ${activeChatSessionId} for provisional cleanup.`
+            );
+            const sessionMetadata =
+              await ChatHistoryService.getSessionMetadata(activeChatSessionId);
             if (sessionMetadata && sessionMetadata.isProvisional === true) {
-              logger.background.info(`Active session ${activeChatSessionId} for closed tab ${tabId} is provisional. Deleting.`);
+              logger.background.info(
+                `Active session ${activeChatSessionId} for closed tab ${tabId} is provisional. Deleting.`
+              );
               await ChatHistoryService.deleteChatSession(activeChatSessionId);
             } else if (sessionMetadata) {
-              logger.background.info(`Active session ${activeChatSessionId} for closed tab ${tabId} is not provisional. No cleanup needed for session itself.`);
+              logger.background.info(
+                `Active session ${activeChatSessionId} for closed tab ${tabId} is not provisional. No cleanup needed for session itself.`
+              );
             } else {
-              logger.background.warn(`Could not retrieve metadata for session ${activeChatSessionId} associated with closed tab ${tabId}.`);
+              logger.background.warn(
+                `Could not retrieve metadata for session ${activeChatSessionId} associated with closed tab ${tabId}.`
+              );
             }
           }
         } catch (cleanupError) {
-          logger.background.error(`Error during provisional session cleanup for closed tab ${tabId}:`, cleanupError);
+          logger.background.error(
+            `Error during provisional session cleanup for closed tab ${tabId}:`,
+            cleanupError
+          );
         }
 
         // --- Immediate Selection State Cleanup ---
         // Unconditionally remove the key for the closed tab.
         try {
-          const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATES);
-          const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES];
+          const selectionResult = await chrome.storage.local.get(
+            STORAGE_KEYS.TAB_SELECTION_STATES
+          );
+          const selectionStates =
+            selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES];
           if (selectionStates && selectionStates[tabId]) {
             delete selectionStates[tabId];
-            await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SELECTION_STATES]: selectionStates });
-            logger.background.info(`Cleaned up selection state for closed tab ${tabId}.`);
+            await chrome.storage.local.set({
+              [STORAGE_KEYS.TAB_SELECTION_STATES]: selectionStates,
+            });
+            logger.background.info(
+              `Cleaned up selection state for closed tab ${tabId}.`
+            );
           }
         } catch (selectionCleanupError) {
-          logger.background.error(`Error during selection state cleanup for closed tab ${tabId}:`, selectionCleanupError);
+          logger.background.error(
+            `Error during selection state cleanup for closed tab ${tabId}:`,
+            selectionCleanupError
+          );
         }
-
-
       } catch (error) {
         logger.background.error(
           `Error during onRemoved cleanup for tab ${tabId}:`,
@@ -222,7 +255,10 @@ export function setupTabStateListener() {
         `Attempting to disable side panel for closed tab ${tabId}`
       );
       try {
-        if (chrome.sidePanel && typeof chrome.sidePanel.setOptions === 'function') {
+        if (
+          chrome.sidePanel &&
+          typeof chrome.sidePanel.setOptions === 'function'
+        ) {
           await chrome.sidePanel.setOptions({ tabId: tabId, enabled: false });
           logger.background.info(
             `Successfully requested side panel disable for closed tab ${tabId}.`
@@ -258,8 +294,10 @@ export async function performStaleTabCleanup() {
 
     // Also clean up stale selection states
     const openTabs = await chrome.tabs.query({});
-    const openTabIds = new Set(openTabs.map(tab => tab.id.toString()));
-    const selectionResult = await chrome.storage.local.get(STORAGE_KEYS.TAB_SELECTION_STATES);
+    const openTabIds = new Set(openTabs.map((tab) => tab.id.toString()));
+    const selectionResult = await chrome.storage.local.get(
+      STORAGE_KEYS.TAB_SELECTION_STATES
+    );
     const selectionStates = selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES];
     if (selectionStates) {
       let changed = false;
@@ -267,11 +305,15 @@ export async function performStaleTabCleanup() {
         if (!openTabIds.has(storedTabIdStr)) {
           delete selectionStates[storedTabIdStr];
           changed = true;
-          logger.background.debug(`Cleaned up stale selection state for closed tab ${storedTabIdStr}.`);
+          logger.background.debug(
+            `Cleaned up stale selection state for closed tab ${storedTabIdStr}.`
+          );
         }
       }
       if (changed) {
-        await chrome.storage.local.set({ [STORAGE_KEYS.TAB_SELECTION_STATES]: selectionStates });
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.TAB_SELECTION_STATES]: selectionStates,
+        });
       }
     }
 
@@ -281,7 +323,10 @@ export async function performStaleTabCleanup() {
       await ChatHistoryService.cleanupProvisionalSessions();
       logger.background.info('Provisional chat session cleanup finished.');
     } catch (error) {
-      logger.background.error('Error during provisional chat session cleanup:', error);
+      logger.background.error(
+        'Error during provisional chat session cleanup:',
+        error
+      );
     }
 
     logger.background.info('Stale tab data cleanup finished successfully.');

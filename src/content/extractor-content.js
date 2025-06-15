@@ -14,9 +14,7 @@ if (window.webNexusAIContentScriptInitialized) {
   );
 } else {
   window.webNexusAIContentScriptInitialized = true;
-  logger.content.info(
-    'Initializing central content script message listener.'
-  );
+  logger.content.info('Initializing central content script message listener.');
 
   // Centralized message handler
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -46,7 +44,7 @@ if (window.webNexusAIContentScriptInitialized) {
           logger.content.info(
             `Extractor initialized with content type: ${message.contentType}`
           );
-          
+
           if (ExtractorFactory.activeExtractor) {
             await ExtractorFactory.activeExtractor.extractAndSaveContent();
             sendResponse({

@@ -32,10 +32,15 @@ export function useTokenTracking(chatSessionId) {
       setIsLoading(true);
       try {
         // Load token stats using service
-        const stats = await TokenManagementService.getTokenStatistics(chatSessionId);
+        const stats =
+          await TokenManagementService.getTokenStatistics(chatSessionId);
         setTokenStats(stats);
       } catch (error) {
-        logger.sidepanel.error('Error loading token data for session:', chatSessionId, error);
+        logger.sidepanel.error(
+          'Error loading token data for session:',
+          chatSessionId,
+          error
+        );
       } finally {
         setIsLoading(false);
       }
@@ -86,7 +91,11 @@ export function useTokenTracking(chatSessionId) {
   const calculateContextStatus = useCallback(
     async (modelConfig) => {
       // Now relies on tokenStats which are for the current chatSessionId
-      if (!modelConfig || !modelConfig.tokens || !modelConfig.tokens.contextWindow) {
+      if (
+        !modelConfig ||
+        !modelConfig.tokens ||
+        !modelConfig.tokens.contextWindow
+      ) {
         return {
           warningLevel: 'none',
           percentage: 0,
@@ -135,24 +144,32 @@ export function useTokenTracking(chatSessionId) {
    * @param {string} sessionIdToClear - Optional: if provided, clears for this specific session. Defaults to current chatSessionId.
    * @returns {Promise<boolean>} - Success indicator
    */
-  const clearTokenData = useCallback(async (sessionIdToClear) => {
-    const targetSessionId = sessionIdToClear || chatSessionId;
-    if (!targetSessionId) return false;
+  const clearTokenData = useCallback(
+    async (sessionIdToClear) => {
+      const targetSessionId = sessionIdToClear || chatSessionId;
+      if (!targetSessionId) return false;
 
-    try {
-      const success = await TokenManagementService.clearTokenStatistics(targetSessionId);
+      try {
+        const success =
+          await TokenManagementService.clearTokenStatistics(targetSessionId);
 
-      if (success && targetSessionId === chatSessionId) {
-        // Reset state to empty stats only if the cleared session is the current one
-        setTokenStats(TokenManagementService._getEmptyStats());
+        if (success && targetSessionId === chatSessionId) {
+          // Reset state to empty stats only if the cleared session is the current one
+          setTokenStats(TokenManagementService._getEmptyStats());
+        }
+
+        return success;
+      } catch (error) {
+        logger.sidepanel.error(
+          'Error clearing token data for session:',
+          targetSessionId,
+          error
+        );
+        return false;
       }
-
-      return success;
-    } catch (error) {
-      logger.sidepanel.error('Error clearing token data for session:', targetSessionId, error);
-      return false;
-    }
-  }, [chatSessionId]);
+    },
+    [chatSessionId]
+  );
 
   /**
    * Calculate and update token statistics for the current chat session
@@ -174,7 +191,11 @@ export function useTokenTracking(chatSessionId) {
         setTokenStats(stats);
         return stats;
       } catch (error) {
-        logger.sidepanel.error('Error calculating token statistics for session:', chatSessionId, error);
+        logger.sidepanel.error(
+          'Error calculating token statistics for session:',
+          chatSessionId,
+          error
+        );
         return tokenStats; // Return existing stats on error
       }
     },

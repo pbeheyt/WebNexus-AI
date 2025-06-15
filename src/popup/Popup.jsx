@@ -250,7 +250,6 @@ export function Popup() {
     }
   }, [currentTab, updateStatus]);
 
-
   const { currentShortcutConfig: popupSidepanelShortcut } =
     useConfigurableShortcut(
       STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
@@ -460,7 +459,7 @@ export function Popup() {
                 <div className='hidden'>{contentTypeLabel}</div>
               )}
               <UnifiedInput
-                id="popup-unified-input"
+                id='popup-unified-input'
                 value={inputText}
                 onChange={setInputText}
                 onSubmit={handleProcessWithText}
@@ -492,7 +491,6 @@ export function Popup() {
             context='popup'
             className='py-3'
           />
-
         </>
       )}
 

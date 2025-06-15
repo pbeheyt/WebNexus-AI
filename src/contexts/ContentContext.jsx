@@ -147,9 +147,7 @@ export function ContentProvider({ children, detectOnMount = true }) {
   );
 
   return (
-    <ContentContext.Provider value={value}>
-      {children}
-    </ContentContext.Provider>
+    <ContentContext.Provider value={value}>{children}</ContentContext.Provider>
   );
 }
 

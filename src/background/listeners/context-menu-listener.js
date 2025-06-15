@@ -31,9 +31,8 @@ async function updateContextMenuForTab(tab) {
   const selectionResult = await chrome.storage.local.get(
     STORAGE_KEYS.TAB_SELECTION_STATES
   );
-  const hasSelection = !!(
-    selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] || {}
-  )[tab.id];
+  const hasSelection = !!(selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] ||
+    {})[tab.id];
   const contentType = determineContentType(tab.url, hasSelection);
 
   // Generate a dynamic title based on the content type
@@ -79,7 +78,8 @@ async function updateContextMenuForTab(tab) {
 export const debouncedUpdateContextMenuForTab = debounce(async (tab) => {
   // Use a try-catch block as this is an async operation that can fail
   try {
-    if (tab) { // Guard to ensure tab object is valid
+    if (tab) {
+      // Guard to ensure tab object is valid
       await updateContextMenuForTab(tab);
     }
   } catch (error) {

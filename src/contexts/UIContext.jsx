@@ -1,5 +1,12 @@
 // src/contexts/UIContext.jsx
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 
 import uiService from '../services/UIService';
@@ -86,11 +93,7 @@ export function UIProvider({ children }) {
     );
   }
 
-  return (
-    <UIContext.Provider value={value}>
-      {children}
-    </UIContext.Provider>
-  );
+  return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }
 
 UIProvider.propTypes = {

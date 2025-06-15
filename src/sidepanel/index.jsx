@@ -26,7 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     root.render(
       <UIProvider>
-        <NotificationProvider> {/* Added NotificationProvider wrapper */}
+        <NotificationProvider>
+          {' '}
+          {/* Added NotificationProvider wrapper */}
           <ContentProvider>
             <SidePanelPlatformProvider tabId={tabId}>
               <SidePanelChatProvider tabId={tabId}>
@@ -34,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
               </SidePanelChatProvider>
             </SidePanelPlatformProvider>
           </ContentProvider>
-        </NotificationProvider> {/* Closing NotificationProvider wrapper */}
+        </NotificationProvider>{' '}
+        {/* Closing NotificationProvider wrapper */}
       </UIProvider>
     );
   }

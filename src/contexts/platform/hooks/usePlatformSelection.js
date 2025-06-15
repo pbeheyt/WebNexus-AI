@@ -57,9 +57,8 @@ export function usePlatformSelection(
         }
 
         // Get preferences
-        const globalPreferences = await chrome.storage.sync.get(
-          globalStorageKey
-        );
+        const globalPreferences =
+          await chrome.storage.sync.get(globalStorageKey);
         const globalPlatformPref = globalPreferences[globalStorageKey];
 
         let platformToUse = null;

@@ -144,8 +144,16 @@ export function AppHeader({
             icon={currentView === 'chat' ? HistoryIcon : ArrowUpIcon}
             iconClassName={`w-4 h-4 ${currentView === 'chat' ? '' : 'transform rotate-[-90deg]'}`}
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-            title={currentView === 'chat' ? 'View Chat History' : 'Back to Active Chat'}
-            aria-label={currentView === 'chat' ? 'View Chat History' : 'Back to Active Chat'}
+            title={
+              currentView === 'chat'
+                ? 'View Chat History'
+                : 'Back to Active Chat'
+            }
+            aria-label={
+              currentView === 'chat'
+                ? 'View Chat History'
+                : 'Back to Active Chat'
+            }
           />
         )}
 
@@ -190,7 +198,13 @@ export function AppHeader({
             icon={ChevronDownIcon}
             iconClassName={`w-4 h-4 transition-transform select-none ${isExpanded ? 'rotate-180' : ''}`}
             className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-            title={currentView === 'history' ? 'Not available in history view' : (isExpanded ? 'Collapse header' : 'Expand header')}
+            title={
+              currentView === 'history'
+                ? 'Not available in history view'
+                : isExpanded
+                  ? 'Collapse header'
+                  : 'Expand header'
+            }
             aria-expanded={isExpanded}
             disabled={currentView === 'history'}
           />

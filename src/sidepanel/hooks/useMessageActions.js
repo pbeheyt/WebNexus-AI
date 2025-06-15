@@ -77,15 +77,22 @@ const _initiateRerunSequence = async ({
   // --- Prepare prompt content with page context if it exists ---
   let finalPromptContent = promptContent;
   let effectiveExtractionEnabledForRerun;
-  
+
   if (currentUserMessageForApi && currentUserMessageForApi.pageContextUsed) {
     // Context is already part of the message, reconstruct the full prompt
-    finalPromptContent = createStructuredPromptString(currentUserMessageForApi.content, currentUserMessageForApi.pageContextUsed)
+    finalPromptContent = createStructuredPromptString(
+      currentUserMessageForApi.content,
+      currentUserMessageForApi.pageContextUsed
+    );
     effectiveExtractionEnabledForRerun = false; // Don't re-extract since context is already included
   } else {
     // No existing context, use current toggle state
-    const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
-    effectiveExtractionEnabledForRerun = isPageInjectable ? isContentExtractionEnabled : false;
+    const isPageInjectable = currentTab?.url
+      ? isInjectablePage(currentTab.url)
+      : false;
+    effectiveExtractionEnabledForRerun = isPageInjectable
+      ? isContentExtractionEnabled
+      : false;
   }
 
   logger.sidepanel.info(
@@ -126,17 +133,24 @@ const _initiateRerunSequence = async ({
   if (apiCallSetupResult.success) {
     // Update the currentUserMessageForApi in truncatedMessages
     if (currentUserMessageForApi) {
-      if (apiCallSetupResult.contentSuccessfullyIncluded && apiCallSetupResult.extractedPageContent) {
-        currentUserMessageForApi.pageContextUsed = apiCallSetupResult.extractedPageContent;
+      if (
+        apiCallSetupResult.contentSuccessfullyIncluded &&
+        apiCallSetupResult.extractedPageContent
+      ) {
+        currentUserMessageForApi.pageContextUsed =
+          apiCallSetupResult.extractedPageContent;
       }
-      currentUserMessageForApi.systemPromptUsedForThisTurn = apiCallSetupResult.systemPromptUsed;
+      currentUserMessageForApi.systemPromptUsedForThisTurn =
+        apiCallSetupResult.systemPromptUsed;
       // Store contextTypeUsed if context was included during rerun/edit
       if (apiCallSetupResult.contentSuccessfullyIncluded && currentTab) {
         currentUserMessageForApi.contextTypeUsed = currentTab.contentType;
       }
     } else {
       // This case should ideally not happen if logic is correct
-      logger.sidepanel.warn('currentUserMessageForApi was not defined in _initiateRerunSequence when trying to set systemPromptUsedForThisTurn');
+      logger.sidepanel.warn(
+        'currentUserMessageForApi was not defined in _initiateRerunSequence when trying to set systemPromptUsedForThisTurn'
+      );
     }
   }
 };
@@ -190,7 +204,13 @@ export function useMessageActions({
   const rerunMessage = useCallback(
     async (messageId) => {
       // --- Guards ---
-      if (!chatSessionId || !selectedPlatformId || !selectedModel || isProcessing) // Use chatSessionId
+      if (
+        !chatSessionId ||
+        !selectedPlatformId ||
+        !selectedModel ||
+        isProcessing
+      )
+        // Use chatSessionId
         return;
       const index = messages.findIndex((msg) => msg.id === messageId);
       if (index === -1 || messages[index].role !== MESSAGE_ROLES.USER) {
@@ -375,7 +395,13 @@ export function useMessageActions({
   const rerunAssistantMessage = useCallback(
     async (assistantMessageId) => {
       // --- Guards ---
-      if (!chatSessionId || !selectedPlatformId || !selectedModel || isProcessing) // Use chatSessionId
+      if (
+        !chatSessionId ||
+        !selectedPlatformId ||
+        !selectedModel ||
+        isProcessing
+      )
+        // Use chatSessionId
         return;
       const assistantIndex = messages.findIndex(
         (msg) => msg.id === assistantMessageId

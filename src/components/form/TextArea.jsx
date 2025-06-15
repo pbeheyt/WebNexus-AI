@@ -60,18 +60,18 @@ export const TextArea = forwardRef(
       validate(value || '');
     }, [value, validate]);
 
-const handleChange = (e) => {
-  if (!touched) setTouched(true);
-  validate(e.target.value);
-  if (onChange) {
-    onChange(e);
-  }
-};
+    const handleChange = (e) => {
+      if (!touched) setTouched(true);
+      validate(e.target.value);
+      if (onChange) {
+        onChange(e);
+      }
+    };
 
-const handleBlur = (e) => {
-  if (!touched) setTouched(true);
-  validate(e.target.value);
-};
+    const handleBlur = (e) => {
+      if (!touched) setTouched(true);
+      validate(e.target.value);
+    };
 
     // Auto-resize functionality
     useEffect(() => {
@@ -100,31 +100,33 @@ const handleBlur = (e) => {
     }, [focusAtEnd, value]);
 
     const showVisualError = error && touched;
-    const errorClasses = showVisualError ? 'border-error ring-1 ring-error' : '';
+    const errorClasses = showVisualError
+      ? 'border-error ring-1 ring-error'
+      : '';
     const combinedClasses =
       `w-full p-3 outline-none text-theme-primary resize-none ${errorClasses} ${className}`.trim();
 
-return (
-  <div className={`w-full ${wrapperClassName}`}>
-    <textarea
-      ref={combinedRef}
-      id={id}
-      value={value}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      placeholder={placeholder}
-      maxLength={maxLength}
-      className={combinedClasses}
-      style={style}
-      aria-invalid={!!showVisualError}
-      aria-describedby={showVisualError ? `${id}-error` : undefined}
-      {...props}
-    />
-    <div id={`${id}-error`}>
-      <ValidationError message={showVisualError ? error : null} />
-    </div>
-  </div>
-);
+    return (
+      <div className={`w-full ${wrapperClassName}`}>
+        <textarea
+          ref={combinedRef}
+          id={id}
+          value={value}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          className={combinedClasses}
+          style={style}
+          aria-invalid={!!showVisualError}
+          aria-describedby={showVisualError ? `${id}-error` : undefined}
+          {...props}
+        />
+        <div id={`${id}-error`}>
+          <ValidationError message={showVisualError ? error : null} />
+        </div>
+      </div>
+    );
   }
 );
 

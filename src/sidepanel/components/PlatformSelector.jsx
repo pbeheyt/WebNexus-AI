@@ -72,7 +72,10 @@ function PlatformSelector({ className = '' }) {
         await selectPlatform(platformId);
         setOpenDropdown(null);
       } catch (error) {
-        logger.sidepanel.error(`Error selecting platform ${platformId}:`, error);
+        logger.sidepanel.error(
+          `Error selecting platform ${platformId}:`,
+          error
+        );
       }
     }
   };

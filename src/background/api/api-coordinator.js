@@ -3,9 +3,7 @@ import ApiServiceManager from '../../services/ApiServiceManager.js';
 import ModelParameterService from '../../services/ModelParameterService.js';
 import ContentFormatter from '../../services/ContentFormatter.js';
 import { extractContent } from '../services/content-extraction.js';
-import {
-  isInjectablePage,
-} from '../../shared/utils/content-utils.js';
+import { isInjectablePage } from '../../shared/utils/content-utils.js';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants.js';
 import {
   resetExtractionState,
@@ -233,8 +231,6 @@ export async function processContentViaApi(params) {
     // `formattedContentForRequest` will be the `newlyFormattedContent` if extraction occurred
     const formattedContentForRequest = newlyFormattedContent;
 
-
-
     if (contentSuccessfullyIncluded) {
       logger.background.info(
         `Content was included in this request for tab ${tabId}.`
@@ -294,7 +290,9 @@ export async function processContentViaApi(params) {
         response: apiResponse,
         contentType: contentType,
         contentSuccessfullyIncluded,
-        extractedPageContent: contentSuccessfullyIncluded ? formattedContentForRequest : null,
+        extractedPageContent: contentSuccessfullyIncluded
+          ? formattedContentForRequest
+          : null,
         systemPromptUsed: resolvedParams.systemPrompt || null,
       };
     } catch (processingError) {

@@ -94,8 +94,10 @@ export function createTabAwarePlatformContext(options = {}) {
       useState(null);
     const [stableSelectedModelId, setStableSelectedModelId] = useState(null);
     const [stableModels, setStableModels] = useState([]);
-    const [stableHasAnyPlatformCredentials, setStableHasAnyPlatformCredentials] =
-      useState(false);
+    const [
+      stableHasAnyPlatformCredentials,
+      setStableHasAnyPlatformCredentials,
+    ] = useState(false);
     const [stableError, setStableError] = useState(null);
 
     // Determine overall loading state

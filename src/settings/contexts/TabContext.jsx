@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 
 // Tab IDs from the original constants.js
@@ -48,11 +55,7 @@ export const TabProvider = ({ children }) => {
     [activeTab, switchTab]
   );
 
-  return (
-    <TabContext.Provider value={value}>
-      {children}
-    </TabContext.Provider>
-  );
+  return <TabContext.Provider value={value}>{children}</TabContext.Provider>;
 };
 
 TabProvider.propTypes = {

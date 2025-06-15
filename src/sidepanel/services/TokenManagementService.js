@@ -6,8 +6,6 @@ import { logger } from '../../shared/logger';
 import { STORAGE_KEYS, MESSAGE_ROLES } from '../../shared/constants';
 import { createStructuredPromptString } from '../../shared/utils/prompt-formatting-utils.js';
 
-
-
 /**
  * Service for token estimation, cost calculation, storage, and context window monitoring
  * Central authority for all token-related operations
@@ -52,14 +50,16 @@ class TokenManagementService {
    * @param {Object} stats - Token statistics to store
    * @returns {Promise<boolean>} - Success status
    */
-      static async updateTokenStatistics(chatSessionId, stats) {
-        if (!chatSessionId) {
-          throw new Error('Cannot update token statistics without a chatSessionId.');
-        }
-    
-        try {
-          // Get all global chat token statistics
-          const result = await chrome.storage.local.get([
+  static async updateTokenStatistics(chatSessionId, stats) {
+    if (!chatSessionId) {
+      throw new Error(
+        'Cannot update token statistics without a chatSessionId.'
+      );
+    }
+
+    try {
+      // Get all global chat token statistics
+      const result = await chrome.storage.local.get([
         STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
       ]);
       const allTokenStats = result[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
@@ -74,15 +74,15 @@ class TokenManagementService {
       await chrome.storage.local.set({
         [STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS]: allTokenStats,
       });
-          return true;
-        } catch (error) {
-          logger.sidepanel.error(
-            `TokenManagementService: Error updating token statistics for chat session ${chatSessionId}:`,
-            error
-          );
-          throw error;
-        }
-      }
+      return true;
+    } catch (error) {
+      logger.sidepanel.error(
+        `TokenManagementService: Error updating token statistics for chat session ${chatSessionId}:`,
+        error
+      );
+      throw error;
+    }
+  }
 
   /**
    * Calculate token statistics from chat history
@@ -131,17 +131,23 @@ class TokenManagementService {
     for (const [index, msg] of messages.entries()) {
       if (msg.role === 'user') {
         // Sync estimateTokens
-            let contentToEstimateForTokens;
-            if (typeof msg.pageContextUsed === 'string' && msg.pageContextUsed.trim().length > 0) {
-              // If pageContextUsed is present, use the shared utility to combine it with the main content for token estimation.
-              contentToEstimateForTokens = createStructuredPromptString(msg.content, msg.pageContextUsed);
-            } else {
-              // Otherwise, just use the main content.
-              contentToEstimateForTokens = msg.content;
-            }
-            // Estimate tokens based on the potentially combined content.
-            // The original `msg.inputTokens` is not used here as we are re-calculating based on history structure.
-            const msgInputTokens = this.estimateTokens(contentToEstimateForTokens);
+        let contentToEstimateForTokens;
+        if (
+          typeof msg.pageContextUsed === 'string' &&
+          msg.pageContextUsed.trim().length > 0
+        ) {
+          // If pageContextUsed is present, use the shared utility to combine it with the main content for token estimation.
+          contentToEstimateForTokens = createStructuredPromptString(
+            msg.content,
+            msg.pageContextUsed
+          );
+        } else {
+          // Otherwise, just use the main content.
+          contentToEstimateForTokens = msg.content;
+        }
+        // Estimate tokens based on the potentially combined content.
+        // The original `msg.inputTokens` is not used here as we are re-calculating based on history structure.
+        const msgInputTokens = this.estimateTokens(contentToEstimateForTokens);
 
         // Determine if this is the most recent user prompt
         const isLastUserPrompt = index === lastUserMsgIndex;
@@ -221,14 +227,14 @@ class TokenManagementService {
    * @param {string} chatSessionId - Chat session identifier
    * @returns {Promise<boolean>} - Success status
    */
-      static async clearTokenStatistics(chatSessionId) {
-        if (!chatSessionId) {
-          throw new Error('Cannot clear token statistics without a chatSessionId.');
-        }
-    
-        try {
-          // Get all global chat token statistics
-          const result = await chrome.storage.local.get([
+  static async clearTokenStatistics(chatSessionId) {
+    if (!chatSessionId) {
+      throw new Error('Cannot clear token statistics without a chatSessionId.');
+    }
+
+    try {
+      // Get all global chat token statistics
+      const result = await chrome.storage.local.get([
         STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS,
       ]);
       const allTokenStats = result[STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS] || {};
@@ -240,15 +246,15 @@ class TokenManagementService {
       await chrome.storage.local.set({
         [STORAGE_KEYS.GLOBAL_CHAT_TOKEN_STATS]: allTokenStats,
       });
-          return true;
-        } catch (error) {
-          logger.sidepanel.error(
-            `TokenManagementService: Error clearing token statistics for chat session ${chatSessionId}:`,
-            error
-          );
-          throw error;
-        }
-      }
+      return true;
+    } catch (error) {
+      logger.sidepanel.error(
+        `TokenManagementService: Error clearing token statistics for chat session ${chatSessionId}:`,
+        error
+      );
+      throw error;
+    }
+  }
 
   /**
    * Calculate token statistics for a specific chat history
@@ -307,16 +313,20 @@ class TokenManagementService {
       // This ensures we sum costs from the *current* message list only for a fresh calculation.
       // For reruns, initialAccumulatedCost already reflects the state *before* the rerun.
       if (Object.keys(options).length === 0) {
-          newAccumulatedCost = 0;
-      }
-      
-      let cumulativeOutputTokens = initialOutputTokens;
-      if (Object.keys(options).length === 0) {
-          cumulativeOutputTokens = 0;
+        newAccumulatedCost = 0;
       }
 
-      messages.forEach(msg => {
-        if (msg.role === MESSAGE_ROLES.ASSISTANT && typeof msg.apiCost === 'number' && msg.apiCost >= 0) {
+      let cumulativeOutputTokens = initialOutputTokens;
+      if (Object.keys(options).length === 0) {
+        cumulativeOutputTokens = 0;
+      }
+
+      messages.forEach((msg) => {
+        if (
+          msg.role === MESSAGE_ROLES.ASSISTANT &&
+          typeof msg.apiCost === 'number' &&
+          msg.apiCost >= 0
+        ) {
           // Only add if it's not part of the initialAccumulatedCost already accounted for by a rerun
           // This logic assumes 'messages' contains the full history for a fresh calculation,
           // or a truncated history for a rerun where initialAccumulatedCost covers prior messages.
@@ -326,11 +336,15 @@ class TokenManagementService {
             newAccumulatedCost += msg.apiCost;
           }
           // Update lastApiCallCostValue if this is the most recent assistant message with a cost
-          lastApiCallCostValue = msg.apiCost; 
+          lastApiCallCostValue = msg.apiCost;
         }
-        if (msg.role === MESSAGE_ROLES.ASSISTANT && typeof msg.outputTokens === 'number' && msg.outputTokens >= 0) {
+        if (
+          msg.role === MESSAGE_ROLES.ASSISTANT &&
+          typeof msg.outputTokens === 'number' &&
+          msg.outputTokens >= 0
+        ) {
           if (Object.keys(options).length === 0) {
-              cumulativeOutputTokens += msg.outputTokens;
+            cumulativeOutputTokens += msg.outputTokens;
           }
         }
       });
@@ -338,18 +352,21 @@ class TokenManagementService {
       // If it was a rerun, the newAccumulatedCost should be the initial cost + the cost of the *newly generated* message.
       // The newly generated message's cost is in lastApiCallCostValue if it's the last one.
       if (Object.keys(options).length > 0 && messages.length > 0) {
-          const lastMessage = messages[messages.length - 1];
-          if (lastMessage.role === MESSAGE_ROLES.ASSISTANT && typeof lastMessage.apiCost === 'number') {
-              newAccumulatedCost = initialAccumulatedCost + lastMessage.apiCost;
-              // For output tokens in reruns, it's initial + new message's output
-              cumulativeOutputTokens = initialOutputTokens + (lastMessage.outputTokens || 0);
-          } else {
-              // If the last message wasn't an assistant message with a cost (e.g. error placeholder),
-              // then accumulated cost doesn't change from initial for this "turn".
-              // lastApiCallCostValue would be from the previous valid assistant message or 0.
-          }
+        const lastMessage = messages[messages.length - 1];
+        if (
+          lastMessage.role === MESSAGE_ROLES.ASSISTANT &&
+          typeof lastMessage.apiCost === 'number'
+        ) {
+          newAccumulatedCost = initialAccumulatedCost + lastMessage.apiCost;
+          // For output tokens in reruns, it's initial + new message's output
+          cumulativeOutputTokens =
+            initialOutputTokens + (lastMessage.outputTokens || 0);
+        } else {
+          // If the last message wasn't an assistant message with a cost (e.g. error placeholder),
+          // then accumulated cost doesn't change from initial for this "turn".
+          // lastApiCallCostValue would be from the previous valid assistant message or 0.
+        }
       }
-
 
       // 5. Prepare Final Stats Object to Save
       const finalStatsObject = {
@@ -357,7 +374,8 @@ class TokenManagementService {
         accumulatedCost: newAccumulatedCost,
 
         promptTokensInLastApiCall: baseStats.promptTokensInLastApiCall || 0,
-        historyTokensSentInLastApiCall: baseStats.historyTokensSentInLastApiCall || 0,
+        historyTokensSentInLastApiCall:
+          baseStats.historyTokensSentInLastApiCall || 0,
         systemTokensInLastApiCall: baseStats.systemTokensInLastApiCall || 0,
         inputTokensInLastApiCall: baseStats.inputTokensInLastApiCall || 0,
         outputTokensInLastApiCall: baseStats.outputTokensInLastApiCall || 0, // Output for the very last assistant response

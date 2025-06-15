@@ -79,8 +79,7 @@ export const STORAGE_KEYS = {
 
   // --- WebUI Injection Specific State (Content sent to AI platform websites) ---
   /** @description Flag indicating if the content script for Web UI injection has been successfully injected. Local. */
-  WEBUI_INJECTION_SCRIPT_INJECTED_FLAG:
-    'webui_injection_script_injected_flag',
+  WEBUI_INJECTION_SCRIPT_INJECTED_FLAG: 'webui_injection_script_injected_flag',
   /** @description The formatted content string prepared for Web UI injection. Local. */
   WEBUI_INJECTION_FORMATTED_CONTENT: 'webui_injection_formatted_content',
   /** @description The ID of the AI platform targeted for Web UI injection. Local. */
@@ -105,7 +104,7 @@ export const STORAGE_KEYS = {
   GLOBAL_CHAT_SESSIONS: 'global_chat_sessions',
   /** @description Stores token statistics for each global chat session. Keyed by chatSessionId. Local. */
   GLOBAL_CHAT_TOKEN_STATS: 'global_chat_token_stats',
-  
+
   // --- Tab-Specific Data ---
   /** @description Selection state (true/false) for each tab, indicating if text is selected. Local. */
   TAB_SELECTION_STATES: 'tab_selection_states',

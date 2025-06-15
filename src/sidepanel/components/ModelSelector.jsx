@@ -75,7 +75,9 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
         className='flex items-center px-2 bg-transparent border-0 rounded text-theme-primary font-medium text-sm transition-colors cursor-pointer w-full min-w-30 disabled:cursor-not-allowed disabled:opacity-75'
         aria-haspopup='listbox'
         aria-expanded={isOpen}
-        disabled={isLoading || !selectedPlatformId || formattedModels.length === 0}
+        disabled={
+          isLoading || !selectedPlatformId || formattedModels.length === 0
+        }
       >
         <span className='truncate mr-1'>{displayedModelName}</span>
         <ChevronDownIcon className='w-4 h-4 text-theme-secondary' />
@@ -100,9 +102,7 @@ function ModelSelector({ className = '', selectedPlatformId = null }) {
                 role='option'
                 aria-selected={selectedModel === model.id}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-theme-hover whitespace-nowrap ${
-                  selectedModel === model.id
-                    ? 'font-medium bg-theme-hover'
-                    : ''
+                  selectedModel === model.id ? 'font-medium bg-theme-hover' : ''
                 }`}
                 onClick={() => handleModelChange(model.id)}
               >

@@ -176,8 +176,8 @@ export const UserMessageBubble = memo(
                 isProcessing
                   ? 'opacity-0 pointer-events-none'
                   : copyState === 'copied' || copyState === 'error'
-                  ? 'opacity-100'
-                  : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'
+                    ? 'opacity-100'
+                    : 'opacity-0 message-group-hover:opacity-100 focus-within:opacity-100'
               }`}
             >
               {/* Standard Action Icons */}

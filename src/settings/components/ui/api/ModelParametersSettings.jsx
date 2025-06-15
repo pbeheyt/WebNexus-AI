@@ -61,14 +61,38 @@ const ModelParametersSettings = ({
     onReady,
   });
 
-  const handleMaxTokensChange = useCallback((newValue) => handleChange('maxTokens', newValue), [handleChange]);
-  const handleIncludeTemperatureChange = useCallback((newCheckedState) => handleChange('includeTemperature', newCheckedState), [handleChange]);
-  const handleTemperatureChange = useCallback((newValue) => handleChange('temperature', newValue), [handleChange]);
-  const handleIncludeTopPChange = useCallback((newCheckedState) => handleChange('includeTopP', newCheckedState), [handleChange]);
-  const handleTopPChange = useCallback((newValue) => handleChange('topP', newValue), [handleChange]);
-  const handleThinkingBudgetChange = useCallback((newValue) => handleChange('thinkingBudget', newValue), [handleChange]);
-  const handleReasoningEffortChange = useCallback((selectedValue) => handleChange('reasoningEffort', selectedValue), [handleChange]);
-  const handleSystemPromptChange = useCallback((e) => handleChange('systemPrompt', e.target.value), [handleChange]);
+  const handleMaxTokensChange = useCallback(
+    (newValue) => handleChange('maxTokens', newValue),
+    [handleChange]
+  );
+  const handleIncludeTemperatureChange = useCallback(
+    (newCheckedState) => handleChange('includeTemperature', newCheckedState),
+    [handleChange]
+  );
+  const handleTemperatureChange = useCallback(
+    (newValue) => handleChange('temperature', newValue),
+    [handleChange]
+  );
+  const handleIncludeTopPChange = useCallback(
+    (newCheckedState) => handleChange('includeTopP', newCheckedState),
+    [handleChange]
+  );
+  const handleTopPChange = useCallback(
+    (newValue) => handleChange('topP', newValue),
+    [handleChange]
+  );
+  const handleThinkingBudgetChange = useCallback(
+    (newValue) => handleChange('thinkingBudget', newValue),
+    [handleChange]
+  );
+  const handleReasoningEffortChange = useCallback(
+    (selectedValue) => handleChange('reasoningEffort', selectedValue),
+    [handleChange]
+  );
+  const handleSystemPromptChange = useCallback(
+    (e) => handleChange('systemPrompt', e.target.value),
+    [handleChange]
+  );
 
   const handleModelChange = useCallback(
     (modelId) => {

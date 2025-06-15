@@ -84,16 +84,16 @@ module.exports = {
         '.bg-theme-secondary': { backgroundColor: '#F3F5F6' },
         '.bg-theme-hover': { backgroundColor: '#E5E6E7' },
         '.bg-theme-active': { backgroundColor: 'rgba(255, 123, 0, 0.05)' },
-        
+
         '.text-theme-primary': { color: '#333333' },
         '.text-theme-secondary': { color: '#666666' },
-        
+
         '.border-theme': { borderColor: '#D9D9D9' },
         '.divide-theme': { divideColor: '#E0E0E0' },
-        
+
         '.shadow-theme-light': { boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' },
         '.shadow-theme-medium': { boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)' },
-        
+
         '.dark .bg-theme-surface': { backgroundColor: '#1E1E1E' },
         '.dark .bg-theme-primary': { backgroundColor: '#252525' },
         '.dark .bg-theme-secondary': { backgroundColor: '#2D2D2D' },

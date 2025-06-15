@@ -46,15 +46,16 @@ async function _processViaWebUI(tab, promptId = null) {
     const promptsResult = await chrome.storage.local.get(
       STORAGE_KEYS.USER_CUSTOM_PROMPTS
     );
-    const promptsByType =
-      promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+    const promptsByType = promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
     const typeData = promptsByType[contentType] || {};
 
     let promptToUse = null;
     if (promptId) {
       // Use a specific prompt if an ID is provided
       promptToUse = typeData[promptId];
-      logger.background.info(`Attempting to use specific prompt ID: ${promptId}`);
+      logger.background.info(
+        `Attempting to use specific prompt ID: ${promptId}`
+      );
     } else {
       // Otherwise, find and use the default prompt for the content type
       const defaultPromptId = typeData['_defaultPromptId_'];
@@ -245,8 +246,7 @@ export async function processContent(params) {
       const storageResult = await chrome.storage.local.get(
         STORAGE_KEYS.EXTRACTED_CONTENT // This key's value is 'extracted_content'
       );
-      const extractedContent =
-        storageResult[STORAGE_KEYS.EXTRACTED_CONTENT]; // Access using the actual key string
+      const extractedContent = storageResult[STORAGE_KEYS.EXTRACTED_CONTENT]; // Access using the actual key string
 
       if (!extractedContent) {
         logger.background.error(
@@ -332,7 +332,11 @@ export async function processContent(params) {
  * @param {Object} message - Message object
  * @param {Function} sendResponse - Response function
  */
-export async function handleProcessContentRequest(message, _sender, sendResponse) {
+export async function handleProcessContentRequest(
+  message,
+  _sender,
+  sendResponse
+) {
   try {
     // Destructure includeContext along with other properties
     const { tabId, platformId, useApi, includeContext } = message;
@@ -367,7 +371,11 @@ export async function handleProcessContentRequest(message, _sender, sendResponse
  * @param {Object} message - Message object
  * @param {Function} sendResponse - Response function
  */
-export async function handleProcessContentViaApiRequest(message, _sender, sendResponse) {
+export async function handleProcessContentViaApiRequest(
+  message,
+  _sender,
+  sendResponse
+) {
   try {
     const result = await processContentViaApi(message);
     sendResponse(result);

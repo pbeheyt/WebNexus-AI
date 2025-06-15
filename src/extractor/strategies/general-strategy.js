@@ -67,7 +67,6 @@ class GeneralExtractorStrategy extends BaseExtractor {
    * @returns {Promise<Object>} An object containing the extracted page data.
    */
   async extractData() {
-
     let title = this.extractPageTitle();
     const url = this.extractPageUrl();
     let description = this.extractMetaDescription();
@@ -93,9 +92,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
           article.textContent &&
           article.textContent.trim() !== ''
         ) {
-          content = normalizeText(
-            this._moderateCleanText(article.textContent)
-          );
+          content = normalizeText(this._moderateCleanText(article.textContent));
           this.logger.info(
             `Readability.js extracted main content (${content.length} chars).`
           );
@@ -238,7 +235,7 @@ class GeneralExtractorStrategy extends BaseExtractor {
         const className = classList[i].toLowerCase();
         // True "whole word" matching. Split by hyphen and check for exact match in parts.
         const classParts = className.split('-');
-        if (classParts.some(part => navIdsAndClasses.includes(part))) {
+        if (classParts.some((part) => navIdsAndClasses.includes(part))) {
           return true;
         }
       }

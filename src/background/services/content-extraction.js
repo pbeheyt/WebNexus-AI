@@ -1,8 +1,6 @@
 // src/background/services/content-extraction.js - Content extraction coordination
 
-import {
-  isInjectablePage,
-} from '../../shared/utils/content-utils.js';
+import { isInjectablePage } from '../../shared/utils/content-utils.js';
 import { STORAGE_KEYS } from '../../shared/constants.js';
 import { logger } from '../../shared/logger.js';
 

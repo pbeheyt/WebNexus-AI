@@ -87,10 +87,8 @@ export function SidePanelChatProvider({ children }) {
     setScrollToMessageId,
   });
 
-  const {
-    success: showSuccessNotification,
-    error: showErrorNotification,
-  } = useNotification();
+  const { success: showSuccessNotification, error: showErrorNotification } =
+    useNotification();
 
   const { tokenStats, calculateContextStatus, clearTokenData } =
     useTokenTracking(currentChatSessionId);
@@ -585,51 +583,53 @@ export function SidePanelChatProvider({ children }) {
     }
   };
 
-      const resetCurrentTabData = useCallback(async () => {
-        if (tabId === null) return;
-        if (isRefreshing) return;
-    
-        if (
-          !window.confirm(
-            'Are you sure you want to start a new chat for this tab? This will DELETE the current chat session and its history.'
-          )
-        ) {
-          return;
-        }
-    
-        setIsRefreshing(true);
-        logger.sidepanel.info(
-          `SidePanelChatContext: resetCurrentTabData for tab ${tabId}`
+  const resetCurrentTabData = useCallback(async () => {
+    if (tabId === null) return;
+    if (isRefreshing) return;
+
+    if (
+      !window.confirm(
+        'Are you sure you want to start a new chat for this tab? This will DELETE the current chat session and its history.'
+      )
+    ) {
+      return;
+    }
+
+    setIsRefreshing(true);
+    logger.sidepanel.info(
+      `SidePanelChatContext: resetCurrentTabData for tab ${tabId}`
+    );
+    try {
+      const sessionToPotentiallyDelete = currentChatSessionId;
+      if (streamingMessageId && isProcessing && !isCanceling) {
+        await cancelStream();
+      }
+
+      if (sessionToPotentiallyDelete) {
+        await ChatHistoryService.deleteChatSession(sessionToPotentiallyDelete);
+      }
+
+      await createNewChat();
+    } catch (error) {
+      const lastError = chrome.runtime.lastError;
+      if (lastError?.message?.includes('QUOTA_BYTES')) {
+        showErrorNotification(
+          'Local storage limit reached. Could not start new chat.'
         );
-        try {
-          const sessionToPotentiallyDelete = currentChatSessionId;
-          if (streamingMessageId && isProcessing && !isCanceling) {
-            await cancelStream();
-          }
-    
-          if (sessionToPotentiallyDelete) {
-            await ChatHistoryService.deleteChatSession(sessionToPotentiallyDelete);
-          }
-    
-          await createNewChat();
-        } catch (error) {
-          const lastError = chrome.runtime.lastError;
-          if (lastError?.message?.includes('QUOTA_BYTES')) {
-            showErrorNotification('Local storage limit reached. Could not start new chat.');
-          } else {
-            logger.sidepanel.error(
-              'Error during resetCurrentTabData (starting new chat):',
-              error
-            );
-            showErrorNotification(
-              'Failed to start a new chat. Your storage might be full.'
-            );
-          }
-        } finally {
-          setIsRefreshing(false);
-        }
-      }, [
-        tabId,
+      } else {
+        logger.sidepanel.error(
+          'Error during resetCurrentTabData (starting new chat):',
+          error
+        );
+        showErrorNotification(
+          'Failed to start a new chat. Your storage might be full.'
+        );
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [
+    tabId,
     isRefreshing,
     streamingMessageId,
     isProcessing,
@@ -664,25 +664,27 @@ export function SidePanelChatProvider({ children }) {
       );
       if (typeof clearTokenData === 'function')
         await clearTokenData(currentChatSessionId);
-      } catch (error) {
-        const lastError = chrome.runtime.lastError;
-        if (lastError?.message?.includes('QUOTA_BYTES')) {
-          showErrorNotification('Local storage limit reached. Could not clear chat.');
-        } else {
-          logger.sidepanel.error(
-            `Error clearing chat for session ${currentChatSessionId}:`,
-            error
-          );
-          showErrorNotification(
-            'Failed to clear chat history. Your storage might be full.'
-          );
-        }
-        // Attempt to restore messages on failure
-        const history = await ChatHistoryService.getHistory(currentChatSessionId);
-        setMessages(history);
+    } catch (error) {
+      const lastError = chrome.runtime.lastError;
+      if (lastError?.message?.includes('QUOTA_BYTES')) {
+        showErrorNotification(
+          'Local storage limit reached. Could not clear chat.'
+        );
+      } else {
+        logger.sidepanel.error(
+          `Error clearing chat for session ${currentChatSessionId}:`,
+          error
+        );
+        showErrorNotification(
+          'Failed to clear chat history. Your storage might be full.'
+        );
       }
-    }, [
-      currentChatSessionId,
+      // Attempt to restore messages on failure
+      const history = await ChatHistoryService.getHistory(currentChatSessionId);
+      setMessages(history);
+    }
+  }, [
+    currentChatSessionId,
     modelConfigData,
     isThinkingModeEnabled,
     clearTokenData,
@@ -723,31 +725,55 @@ export function SidePanelChatProvider({ children }) {
     [switchToView]
   );
 
-      const deleteMultipleChatSessions = useCallback(async (sessionIdsToDelete) => {
-        if (!Array.isArray(sessionIdsToDelete) || sessionIdsToDelete.length === 0) {
-          return;
+  const deleteMultipleChatSessions = useCallback(
+    async (sessionIdsToDelete) => {
+      if (
+        !Array.isArray(sessionIdsToDelete) ||
+        sessionIdsToDelete.length === 0
+      ) {
+        return;
+      }
+
+      try {
+        await ChatHistoryService.deleteMultipleChatSessions(sessionIdsToDelete);
+
+        if (
+          currentChatSessionId &&
+          sessionIdsToDelete.includes(currentChatSessionId)
+        ) {
+          logger.sidepanel.info(
+            `Active session ${currentChatSessionId} was deleted. Creating a new one.`
+          );
+          await createNewChat();
         }
-    
-        try {
-          await ChatHistoryService.deleteMultipleChatSessions(sessionIdsToDelete);
-          
-          if (currentChatSessionId && sessionIdsToDelete.includes(currentChatSessionId)) {
-            logger.sidepanel.info(`Active session ${currentChatSessionId} was deleted. Creating a new one.`);
-            await createNewChat();
-          }
-          
-          showSuccessNotification(`${sessionIdsToDelete.length} chat(s) deleted successfully.`);
-    
-        } catch (error) {
-          const lastError = chrome.runtime.lastError;
-          if (lastError?.message?.includes('QUOTA_BYTES')) {
-            showErrorNotification('Local storage limit reached. Could not delete chats.');
-          } else {
-            logger.sidepanel.error('Error in context deleteMultipleChatSessions:', error);
-            showErrorNotification('Failed to delete chats. Your storage might be full.');
-          }
+
+        showSuccessNotification(
+          `${sessionIdsToDelete.length} chat(s) deleted successfully.`
+        );
+      } catch (error) {
+        const lastError = chrome.runtime.lastError;
+        if (lastError?.message?.includes('QUOTA_BYTES')) {
+          showErrorNotification(
+            'Local storage limit reached. Could not delete chats.'
+          );
+        } else {
+          logger.sidepanel.error(
+            'Error in context deleteMultipleChatSessions:',
+            error
+          );
+          showErrorNotification(
+            'Failed to delete chats. Your storage might be full.'
+          );
         }
-      }, [currentChatSessionId, createNewChat, showSuccessNotification, showErrorNotification]);
+      }
+    },
+    [
+      currentChatSessionId,
+      createNewChat,
+      showSuccessNotification,
+      showErrorNotification,
+    ]
+  );
 
   return (
     <SidePanelChatContext.Provider

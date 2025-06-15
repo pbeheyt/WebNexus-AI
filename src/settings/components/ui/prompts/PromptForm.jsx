@@ -191,9 +191,7 @@ const PromptForm = ({
         logger.settings.error('Error saving prompt:', err);
         const lastError = chrome.runtime.lastError;
         if (lastError?.message?.includes('QUOTA_BYTES')) {
-          error(
-            'Local storage limit reached. Could not save the prompt.'
-          );
+          error('Local storage limit reached. Could not save the prompt.');
         } else {
           error(`Error saving prompt: ${err.message}`);
         }

@@ -175,7 +175,9 @@ export function PromptDropdown({
           return (
             <div
               key={promptItem.id}
-              onClick={() => { if (!isBeingSetAsDefault) onSelectPrompt(promptItem); }}
+              onClick={() => {
+                if (!isBeingSetAsDefault) onSelectPrompt(promptItem);
+              }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   if (!isBeingSetAsDefault) onSelectPrompt(promptItem);
@@ -186,9 +188,7 @@ export function PromptDropdown({
               tabIndex={0}
               className={`flex items-center justify-between px-3 py-2 text-theme-primary cursor-pointer group ${className} ${promptItem.id === settingDefaultInProgress ? 'opacity-70' : 'hover:bg-theme-hover'}`}
             >
-              <span
-                className='flex-grow text-left whitespace-nowrap overflow-hidden text-ellipsis mr-1 disabled:cursor-not-allowed'
-              >
+              <span className='flex-grow text-left whitespace-nowrap overflow-hidden text-ellipsis mr-1 disabled:cursor-not-allowed'>
                 {promptItem.name}
               </span>
 
@@ -202,7 +202,10 @@ export function PromptDropdown({
                 ) : (
                   <IconButton
                     icon={StarOutlineIcon}
-                    onClick={(event) => { event.stopPropagation(); handleSetAsDefault(promptItem); }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleSetAsDefault(promptItem);
+                    }}
                     disabled={isBeingSetAsDefault || !!settingDefaultInProgress}
                     // Ensure IconButton itself doesn't add extra space that causes shift
                     className={`rounded text-theme-secondary group-hover:text-amber-500 group-hover:opacity-100 flex items-center justify-center ${isBeingSetAsDefault ? 'animate-pulse' : 'opacity-0 focus-within:opacity-100'}`}

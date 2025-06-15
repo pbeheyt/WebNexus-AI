@@ -133,13 +133,12 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
 
   return (
     <div ref={selfRef} className={`flex flex-col ${className}`}>
-      
       {/* Platform and Model Controls Section */}
       <PlatformModelControls onToggleExpand={handlePlatformControlsToggle} />
 
       {/* Unified Input (TextArea and buttons) Section */}
       <UnifiedInput
-        id="sidepanel-unified-input"
+        id='sidepanel-unified-input'
         value={inputValue}
         onChange={handleInputChange}
         onSubmit={handleSend}

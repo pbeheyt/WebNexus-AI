@@ -85,7 +85,8 @@ export async function toggleSidePanel(message, sender, sendResponse) {
     const currentTabUIState =
       await SidePanelStateManager.getTabUIState(targetTabId);
     logger.background.info(
-      `Current stored UI state for tab ${targetTabId}:`, currentTabUIState
+      `Current stored UI state for tab ${targetTabId}:`,
+      currentTabUIState
     );
 
     // Determine the new state and perform actions
@@ -94,10 +95,7 @@ export async function toggleSidePanel(message, sender, sendResponse) {
     if (newState === true) {
       // Current state is closed, so we intend to open (enable) it
       logger.background.info(`Action: Enable sidepanel for tab ${targetTabId}`);
-      await SidePanelStateManager.setTabUIVisibility(
-        targetTabId,
-        true
-      );
+      await SidePanelStateManager.setTabUIVisibility(targetTabId, true);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         path: `sidepanel.html?tabId=${targetTabId}`, // Pass tabId via URL
@@ -111,10 +109,7 @@ export async function toggleSidePanel(message, sender, sendResponse) {
       logger.background.info(
         `Action: Disable sidepanel for tab ${targetTabId}`
       );
-      await SidePanelStateManager.setTabUIVisibility(
-        targetTabId,
-        false
-      );
+      await SidePanelStateManager.setTabUIVisibility(targetTabId, false);
       await chrome.sidePanel.setOptions({
         tabId: targetTabId,
         enabled: false,

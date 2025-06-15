@@ -40,11 +40,7 @@ const Checkbox = ({
                 ? 'bg-primary border-primary'
                 : 'bg-transparent border-gray-400 dark:border-gray-500'
             }
-            ${
-              disabled
-                ? 'opacity-50'
-                : 'hover:border-primary'
-            }
+            ${disabled ? 'opacity-50' : 'hover:border-primary'}
             ${labelClassName}`}
         >
           {checked && <CheckIcon className='w-4 h-4 text-white' />}

@@ -98,10 +98,13 @@ function registerApiHandlers() {
   });
 
   // API credential operations
-  messageHandlers.set('credentialOperation', (message, sender, sendResponse) => {
-    handleCredentialOperation(message, sender, sendResponse);
-    return true; // Keep channel open for async response
-  });
+  messageHandlers.set(
+    'credentialOperation',
+    (message, sender, sendResponse) => {
+      handleCredentialOperation(message, sender, sendResponse);
+      return true; // Keep channel open for async response
+    }
+  );
 
   // API content processing
   messageHandlers.set(

@@ -102,10 +102,10 @@ class BaseApiService extends ApiInterface {
     }
   }
 
-    _createStructuredPrompt(prompt, formattedContent) {
-      // Use the shared utility to create the structured prompt.
-      return createStructuredPromptString(prompt, formattedContent);
-    }
+  _createStructuredPrompt(prompt, formattedContent) {
+    // Use the shared utility to create the structured prompt.
+    return createStructuredPromptString(prompt, formattedContent);
+  }
 
   async validateCredentials() {
     try {
@@ -201,16 +201,24 @@ class BaseApiService extends ApiInterface {
     if (!rawHistory || !Array.isArray(rawHistory)) {
       return [];
     }
-    return rawHistory.map(msg => {
-      if (msg.role === 'user' && msg.pageContextUsed && typeof msg.pageContextUsed === 'string' && msg.pageContextUsed.trim().length > 0) {
+    return rawHistory.map((msg) => {
+      if (
+        msg.role === 'user' &&
+        msg.pageContextUsed &&
+        typeof msg.pageContextUsed === 'string' &&
+        msg.pageContextUsed.trim().length > 0
+      ) {
         return {
           ...msg,
-          content: this._createStructuredPrompt(msg.content, msg.pageContextUsed)
+          content: this._createStructuredPrompt(
+            msg.content,
+            msg.pageContextUsed
+          ),
         };
       }
       // For assistant messages or user messages without pageContextUsed, return as is.
       // The content of assistant messages is directly from the LLM.
-      return msg; 
+      return msg;
     });
   }
 

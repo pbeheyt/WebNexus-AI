@@ -82,14 +82,18 @@ export function Tooltip({
       }
 
       // Adjust for viewport overflow
-      if (top < 0 && position === 'top') { // If top overflow, try to switch to bottom
+      if (top < 0 && position === 'top') {
+        // If top overflow, try to switch to bottom
         top = rect.bottom + offset;
-      } else if (top + tooltipHeight > window.innerHeight && position === 'bottom') { // If bottom overflow, try to switch to top
+      } else if (
+        top + tooltipHeight > window.innerHeight &&
+        position === 'bottom'
+      ) {
+        // If bottom overflow, try to switch to top
         top = rect.top - offset - tooltipHeight;
       }
       // Ensure top is not negative after potential switch
       if (top < 0) top = offset;
-
 
       if (left < 0) {
         left = offset;
@@ -118,7 +122,7 @@ export function Tooltip({
         pointerEvents: 'none',
       }}
       className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 opacity-100 select-none`}
-      role="tooltip" // ARIA role
+      role='tooltip' // ARIA role
     >
       {message}
     </div>

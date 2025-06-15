@@ -19,8 +19,9 @@ if (window.webNexusAISelectionListenerInitialized) {
   const handleSelectionChange = async () => {
     try {
       const selection = window.getSelection();
-      const currentHasSelection =
-        selection ? selection.toString().trim().length > 0 : false;
+      const currentHasSelection = selection
+        ? selection.toString().trim().length > 0
+        : false;
 
       // Only send a message if the selection state has actually changed.
       if (currentHasSelection !== lastHasSelection) {

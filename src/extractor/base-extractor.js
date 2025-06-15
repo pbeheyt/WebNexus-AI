@@ -98,7 +98,6 @@ class BaseExtractor {
       return false;
     }
   }
-
 }
 
 export default BaseExtractor;

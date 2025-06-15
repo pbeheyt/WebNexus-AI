@@ -40,13 +40,13 @@ const SimpleCodeBlock = ({ children }) => {
 
   return (
     // Changed to `inline-flex` and added `max-w-full` to allow shrink-to-fit behavior
-        <div className='relative code-block-group m-2 rounded-lg bg-theme-secondary inline-flex items-center max-w-full px-1.5'>
+    <div className='relative code-block-group m-2 rounded-lg bg-theme-secondary inline-flex items-center max-w-full px-1.5'>
       {/* Code content area, grows to fill space */}
-        <div className='whitespace-pre-wrap break-words text-theme-primary text-sm font-mono p-1.5'>
+      <div className='whitespace-pre-wrap break-words text-theme-primary text-sm font-mono p-1.5'>
         {codeContent}
       </div>
       {/* Copy button container */}
-        <div className='flex-shrink-0'>
+      <div className='flex-shrink-0'>
         <IconButton
           icon={IconComponent}
           iconClassName={`w-4 h-4 select-none ${iconClassName}`}

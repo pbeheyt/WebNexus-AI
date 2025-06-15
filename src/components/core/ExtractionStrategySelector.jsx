@@ -126,10 +126,10 @@ export function ExtractionStrategySelector({
         <button
           onClick={() => handleStrategyChange(EXTRACTION_STRATEGIES.FOCUSED)}
           className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-theme-hover cursor-pointer text-theme-primary ${
-  currentStrategy === EXTRACTION_STRATEGIES.FOCUSED
-    ? 'font-medium bg-theme-hover'
-    : ''
-}`}
+            currentStrategy === EXTRACTION_STRATEGIES.FOCUSED
+              ? 'font-medium bg-theme-hover'
+              : ''
+          }`}
           role='menuitem'
           disabled={disabled}
         >
@@ -139,10 +139,10 @@ export function ExtractionStrategySelector({
         <button
           onClick={() => handleStrategyChange(EXTRACTION_STRATEGIES.BROAD)}
           className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-theme-hover cursor-pointer text-theme-primary ${
-  currentStrategy === EXTRACTION_STRATEGIES.BROAD
-    ? 'font-medium bg-theme-hover'
-    : ''
-}`}
+            currentStrategy === EXTRACTION_STRATEGIES.BROAD
+              ? 'font-medium bg-theme-hover'
+              : ''
+          }`}
           role='menuitem'
           disabled={disabled}
         >

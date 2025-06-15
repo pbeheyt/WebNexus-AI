@@ -1,20 +1,19 @@
 // src/background/listeners/tab-listener.js - Tab update monitoring
 
- // In-memory sets to track processing state for tabs during a single page load.
- // A single navigation can fire multiple `onUpdated` events (e.g., status 'loading', then 'complete',
- // then for sub-frame loads). These sets prevent redundant actions within one logical page load.
- 
- // Tracks tabs where the platform-specific content script injection sequence has *started*.
- // This prevents re-injection if `onUpdated` fires multiple times with `status: 'complete'`.
- // Cleared on navigation start.
- const platformScriptInjectedTabs = new Set();
- 
- // Tracks tabs where `sidePanel.setOptions` has been called for the current page load.
- // This prevents redundant API calls for minor updates (like fragment changes) that
- // might also fire `onUpdated` with `status: 'complete'`.
- // Cleared on major navigation events.
- const sidePanelOptionsSetForLoad = new Set();
+// In-memory sets to track processing state for tabs during a single page load.
+// A single navigation can fire multiple `onUpdated` events (e.g., status 'loading', then 'complete',
+// then for sub-frame loads). These sets prevent redundant actions within one logical page load.
 
+// Tracks tabs where the platform-specific content script injection sequence has *started*.
+// This prevents re-injection if `onUpdated` fires multiple times with `status: 'complete'`.
+// Cleared on navigation start.
+const platformScriptInjectedTabs = new Set();
+
+// Tracks tabs where `sidePanel.setOptions` has been called for the current page load.
+// This prevents redundant API calls for minor updates (like fragment changes) that
+// might also fire `onUpdated` with `status: 'complete'`.
+// Cleared on major navigation events.
+const sidePanelOptionsSetForLoad = new Set();
 
 import {
   isPlatformTab,
@@ -122,9 +121,9 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
   // --- Side Panel State Check on Completion ---
   if (changeInfo.status === 'complete' && tab.url) {
     try {
-        // Guard against setting side panel options multiple times for the same load sequence.
-        // A single page load can fire onUpdated multiple times; we only want to run this logic once.
-        if (sidePanelOptionsSetForLoad.has(tabId)) {
+      // Guard against setting side panel options multiple times for the same load sequence.
+      // A single page load can fire onUpdated multiple times; we only want to run this logic once.
+      if (sidePanelOptionsSetForLoad.has(tabId)) {
         logger.background.info(
           `Side panel options already set for tab ${tabId} during this load sequence. Skipping.`
         );
@@ -134,8 +133,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
           `Tab ${tabId} finished loading (${tab.url}). Setting final side panel state.`
         );
         const isAllowed = isSidePanelAllowedPage(tab.url);
-        const tabUIState =
-          await SidePanelStateManager.getTabUIState(tabId);
+        const tabUIState = await SidePanelStateManager.getTabUIState(tabId);
 
         if (
           chrome.sidePanel &&
@@ -286,8 +284,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
   if ((changeInfo.status === 'complete' || changeInfo.url) && tab.url) {
     try {
       // Check if the side panel is *intended* to be visible for this tab
-      const tabUIState =
-        await SidePanelStateManager.getTabUIState(tabId);
+      const tabUIState = await SidePanelStateManager.getTabUIState(tabId);
 
       if (tabUIState.isVisible) {
         logger.background.info(
@@ -384,8 +381,7 @@ async function handleTabActivation(activeInfo) {
       }
 
       // Retrieve the intended visibility state for the activated tab
-      const tabUIState =
-        await SidePanelStateManager.getTabUIState(tabId);
+      const tabUIState = await SidePanelStateManager.getTabUIState(tabId);
 
       // Conditionally set side panel options based on stored visibility
       if (tabUIState.isVisible) {

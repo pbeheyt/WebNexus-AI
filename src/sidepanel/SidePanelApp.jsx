@@ -17,12 +17,7 @@ import { useConfigurableShortcut } from '../hooks/useConfigurableShortcut';
 import { useSidePanelPlatform } from '../contexts/platform';
 import { useContent } from '../contexts/ContentContext';
 import { useUI } from '../contexts/UIContext';
-import {
-  AppHeader,
-  ErrorIcon,
-  SpinnerIcon,
-  Toast,
-} from '../components';
+import { AppHeader, ErrorIcon, SpinnerIcon, Toast } from '../components';
 import { debounce } from '../shared/utils/debounce-utils';
 import { isInjectablePage } from '../shared/utils/content-utils';
 
@@ -48,7 +43,8 @@ export default function SidePanelApp() {
     createNewChat,
     contextViewData,
   } = useSidePanelChat();
-  const { contentType, currentTab, updateContentContext, hasSelection } = useContent();
+  const { contentType, currentTab, updateContentContext, hasSelection } =
+    useContent();
   const { textSize } = useUI();
   const [isReady, setIsReady] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(true);
@@ -241,7 +237,7 @@ export default function SidePanelApp() {
       }
       rafIdHeightCalc.current = null;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerExpanded, textSize]);
 
   const debouncedCalculateHeight = useMemo(
@@ -261,7 +257,9 @@ export default function SidePanelApp() {
     };
   }, [isReady, headerExpanded, textSize, debouncedCalculateHeight]);
 
-  const isPageInjectable = currentTab?.url ? isInjectablePage(currentTab.url) : false;
+  const isPageInjectable = currentTab?.url
+    ? isInjectablePage(currentTab.url)
+    : false;
 
   return (
     <div
@@ -302,7 +300,6 @@ export default function SidePanelApp() {
               />
             </div>
           )}
-
           {/* Interactive Header Section - Conditionally rendered */}
           {currentView === 'chat' && (
             <div
@@ -323,14 +320,12 @@ export default function SidePanelApp() {
               />
             </div>
           )}
-
           {isReady && tabId && isRefreshing && (
             <div className='absolute inset-0 bg-theme-primary/75 dark:bg-theme-primary/75 z-20 flex items-center justify-center pointer-events-auto'>
               <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
               <span className='sr-only'>Refreshing...</span>
             </div>
           )}
-
           {/* Main Content Area: Chat, History, or Context View */}
           {currentView === 'chat' && currentChatSessionId ? (
             <>

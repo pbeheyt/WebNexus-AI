@@ -17,9 +17,7 @@ class ContentFormatter {
 
     // Handle selected text first, as it's a distinct content type now.
     if (contentType === CONTENT_TYPES.SELECTED_TEXT) {
-      logger.service.info(
-        'Formatting content for SELECTED_TEXT type.'
-      );
+      logger.service.info('Formatting content for SELECTED_TEXT type.');
       return `## SELECTED TEXT\n${this._getData(
         contentData.content,
         'No content selected.'
@@ -44,7 +42,9 @@ class ContentFormatter {
           formatted = this._formatPdfData(contentData);
           break;
         default:
-          logger.service.warn(`Unknown content type for formatting: ${contentType}. Using general format as fallback.`);
+          logger.service.warn(
+            `Unknown content type for formatting: ${contentType}. Using general format as fallback.`
+          );
           formatted = this._formatGeneralData(contentData);
           break;
       }

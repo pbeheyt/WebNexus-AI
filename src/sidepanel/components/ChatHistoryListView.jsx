@@ -175,10 +175,7 @@ export default function ChatHistoryListView() {
     }
 
     try {
-      await ChatHistoryService.updateSessionTitle(
-        sessionId,
-        editingTitle
-      );
+      await ChatHistoryService.updateSessionTitle(sessionId, editingTitle);
       showSuccess('Chat title updated.');
       await fetchSessionsAndConfigs();
     } catch (err) {

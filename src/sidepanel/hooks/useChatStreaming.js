@@ -108,12 +108,19 @@ export function useChatStreaming({
         // Use functional update for setMessages
         setMessages((prevMessages) => {
           // Find the assistant message and the preceding user message
-          const assistantMessageIndex = prevMessages.findIndex(msg => msg.id === messageId);
+          const assistantMessageIndex = prevMessages.findIndex(
+            (msg) => msg.id === messageId
+          );
           let systemPromptForThisTurn = null;
           if (assistantMessageIndex > 0) {
-            const userMessageForThisTurn = prevMessages[assistantMessageIndex - 1];
-            if (userMessageForThisTurn && userMessageForThisTurn.role === MESSAGE_ROLES.USER) {
-              systemPromptForThisTurn = userMessageForThisTurn.systemPromptUsedForThisTurn || null;
+            const userMessageForThisTurn =
+              prevMessages[assistantMessageIndex - 1];
+            if (
+              userMessageForThisTurn &&
+              userMessageForThisTurn.role === MESSAGE_ROLES.USER
+            ) {
+              systemPromptForThisTurn =
+                userMessageForThisTurn.systemPromptUsedForThisTurn || null;
             }
           }
 
@@ -158,56 +165,64 @@ export function useChatStreaming({
           });
 
           // --- API Cost Calculation and History Saving ---
-          if (chatSessionId) { // Use chatSessionId here
-            const finalUpdatedMessagesForStateAndHistory = updatedMessagesArray.map(msg => {
-                if (msg.id === messageId && !isError) { // Only try to add cost if not an error
-                    let tempApiCost = null;
-                    if (modelConfigData && modelConfigData.pricing) {
-                        const tempTurnStats = TokenManagementService.calculateTokenStatisticsFromMessages(
-                            // Use the array *as it is being built* for this turn's stats
-                            updatedMessagesArray.slice(0, updatedMessagesArray.findIndex(m => m.id === messageId) + 1),
-                            null
-                        );
-                        const costInfo = TokenManagementService.calculateCost(
-                            tempTurnStats.inputTokensInLastApiCall,
-                            finalOutputTokensForMessage,
-                            modelConfigData, // Use modelConfigData from the hook's closure
-                            isThinkingModeEnabled
-                        );
-                        tempApiCost = costInfo.totalCost;
-                    }
-                    return { ...msg, apiCost: tempApiCost };
+          if (chatSessionId) {
+            // Use chatSessionId here
+            const finalUpdatedMessagesForStateAndHistory =
+              updatedMessagesArray.map((msg) => {
+                if (msg.id === messageId && !isError) {
+                  // Only try to add cost if not an error
+                  let tempApiCost = null;
+                  if (modelConfigData && modelConfigData.pricing) {
+                    const tempTurnStats =
+                      TokenManagementService.calculateTokenStatisticsFromMessages(
+                        // Use the array *as it is being built* for this turn's stats
+                        updatedMessagesArray.slice(
+                          0,
+                          updatedMessagesArray.findIndex(
+                            (m) => m.id === messageId
+                          ) + 1
+                        ),
+                        null
+                      );
+                    const costInfo = TokenManagementService.calculateCost(
+                      tempTurnStats.inputTokensInLastApiCall,
+                      finalOutputTokensForMessage,
+                      modelConfigData, // Use modelConfigData from the hook's closure
+                      isThinkingModeEnabled
+                    );
+                    tempApiCost = costInfo.totalCost;
+                  }
+                  return { ...msg, apiCost: tempApiCost };
                 }
                 return msg;
-            });
+              });
 
             ChatHistoryService.saveHistory(
-                chatSessionId, // Use chatSessionId here
-                finalUpdatedMessagesForStateAndHistory,
-                modelConfigData, // Use modelConfigData from the hook's closure
-                {
-                  initialAccumulatedCost: retrievedPreTruncationCost,
-                  initialOutputTokens: retrievedPreTruncationOutput,
-                },
-                isThinkingModeEnabled,
-                systemPromptForThisTurn
-              )
-              .catch((err) => {
-                const lastError = chrome.runtime.lastError;
-                if (lastError?.message?.includes('QUOTA_BYTES')) {
-                  showErrorNotification(
-                    'Local storage limit reached. Could not save chat history.'
-                  );
-                } else {
-                  logger.sidepanel.error(
-                    'Error saving history in functional update:',
-                    err
-                  );
-                  showErrorNotification(
-                    'An error occurred while saving chat history.'
-                  );
-                }
-              });
+              chatSessionId, // Use chatSessionId here
+              finalUpdatedMessagesForStateAndHistory,
+              modelConfigData, // Use modelConfigData from the hook's closure
+              {
+                initialAccumulatedCost: retrievedPreTruncationCost,
+                initialOutputTokens: retrievedPreTruncationOutput,
+              },
+              isThinkingModeEnabled,
+              systemPromptForThisTurn
+            ).catch((err) => {
+              const lastError = chrome.runtime.lastError;
+              if (lastError?.message?.includes('QUOTA_BYTES')) {
+                showErrorNotification(
+                  'Local storage limit reached. Could not save chat history.'
+                );
+              } else {
+                logger.sidepanel.error(
+                  'Error saving history in functional update:',
+                  err
+                );
+                showErrorNotification(
+                  'An error occurred while saving chat history.'
+                );
+              }
+            });
 
             return finalUpdatedMessagesForStateAndHistory; // Return the array with cost (if calculated)
           }
@@ -219,7 +234,18 @@ export function useChatStreaming({
       } catch (error) {
         logger.sidepanel.error('Error handling stream completion:', error);
         // Ensure state is cleaned up even on error
-        setMessages(prev => prev.map(m => m.id === messageId ? {...m, isStreaming: false, role: MESSAGE_ROLES.SYSTEM, content: m.content || "Error during completion."} : m));
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  isStreaming: false,
+                  role: MESSAGE_ROLES.SYSTEM,
+                  content: m.content || 'Error during completion.',
+                }
+              : m
+          )
+        );
       } finally {
         rerunStatsRef.current = null;
       }
