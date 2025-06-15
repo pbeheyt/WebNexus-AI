@@ -1,5 +1,10 @@
-// src/components/feedback/NotificationContext.jsx
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 
 const NotificationContext = createContext(null);
@@ -11,21 +16,21 @@ export const useNotification = () => useContext(NotificationContext);
  */
 export const NotificationProvider = ({ children }) => {
   const [notification, setNotification] = useState(null);
-  const [timeoutId, setTimeoutId] = useState(null);
+  const timeoutIdRef = useRef(null);
 
   const clearNotification = useCallback(() => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      setTimeoutId(null);
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
     }
     setNotification(null);
-  }, [timeoutId]);
+  }, []);
 
   const showNotification = useCallback(
     (message, type = 'info', duration = 5000) => {
       // Clear any existing notification
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
       }
 
       // Set new notification
@@ -34,12 +39,12 @@ export const NotificationProvider = ({ children }) => {
       // Auto dismiss after duration
       const id = setTimeout(() => {
         setNotification(null);
-        setTimeoutId(null);
+        timeoutIdRef.current = null;
       }, duration);
 
-      setTimeoutId(id);
+      timeoutIdRef.current = id;
     },
-    [timeoutId]
+    []
   );
 
   const success = useCallback(
