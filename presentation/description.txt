@@ -1,0 +1,49 @@
+✅ FREE • No extension account required • Uses your existing AI logins or personal API keys.
+
+↔️ TWO INTERACTION MODES:
+----------------
+🌐 WEB UI MODE → Send to AI Websites
+• Uses your existing AI platform logins (no API keys required).
+• Quick content transfer with your custom prompts.
+• Access via: Popup (Alt+W), Right-Click Menu, or Quick Shortcut (Alt+Q).
+
+💬 SIDE PANEL → Direct API Chat
+• Direct API chat with AI models, right beside your content.
+• Requires your personal API keys (configure in Settings > API Settings).
+• Features: Persistent chat history, model selection, token/cost estimates.
+
+🧩 SUPPORTED CONTENT TYPES:
+----------------
+• Selected Text: Any text you highlight on a page.
+• Web Content: General articles, blogs, and documentation.
+• PDF Documents: Both online and local files opened in Chrome.
+• YouTube Videos: Transcripts and comments.
+• Reddit Posts: Posts and comments.
+
+☁️ SUPPORTED AI PLATFORMS:
+----------------
+Gemini • ChatGPT • Claude • DeepSeek • Grok • Mistral
+
+⭐ CORE FEATURES:
+----------------
+• Content Analysis: Extracts content from diverse sources. For Web Content, choose a 'Focused' strategy for main articles or a 'Broad' strategy for all page text.
+• Persistent Chat History: Saves your side panel conversations so you can continue them at any time.
+• Multi-AI Platform Support: Choose from multiple integrated AI platforms.
+• Prompt Management: Create, save, and set default prompts for any content type.
+• Customization: Fine-tune API parameters, themes (Light/Dark), and text size.
+• Secure Storage: API keys and prompts are stored locally on your device.
+• Keyboard Shortcuts: Use default shortcuts or configure your own in settings.
+
+⚠️ USAGE NOTES:
+----------------
+• Content Extraction: For web pages, choose your preferred extraction strategy. For YouTube/Reddit, scroll to load desired comments before processing.
+• Token Estimates: Provided for guidance only. Actual billing can vary—always verify with your AI provider's dashboard.
+• Web UI Automation: This feature depends on AI website layouts and may break if they change. Updates maintain compatibility.
+• Local Storage: API keys are stored on your device. Be aware this is vulnerable if your device is compromised.
+
+🚀 GETTING STARTED:
+----------------
+1. Install & Pin WebNexus AI.
+2. (Optional) Add API keys in Settings for Side Panel features.
+3. (Optional) Customize prompts in Settings.
+4. Start summarizing/interacting with content via the Side Panel, Popup, or Right-Click menu.
