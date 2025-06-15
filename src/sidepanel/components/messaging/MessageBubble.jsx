@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { logger } from '../../../shared/logger';
 import { MESSAGE_ROLES } from '../../../shared/constants';
 
-// Import role-specific components
+// Role-specific components
 import { SystemMessageBubble } from './SystemMessageBubble';
 import { UserMessageBubble } from './UserMessageBubble';
 import { AssistantMessageBubble } from './AssistantMessageBubble';

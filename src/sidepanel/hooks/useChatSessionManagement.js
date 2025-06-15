@@ -259,7 +259,7 @@ export function useChatSessionManagement({
           setMessages(history);
           setCurrentView('chat');
 
-          // New logic: set scroll target to last user message
+          // Set scroll target to last user message
           if (history.length > 0) {
             const lastUserMessage = history
               .slice()

@@ -3,8 +3,6 @@ import {
   CONTENT_TYPES,
   DEFAULT_EXTRACTION_STRATEGY,
 } from '../shared/constants.js';
-// No longer need determineContentType here
-// import { determineContentType } from '../shared/utils/content-utils.js';
 
 import GeneralExtractorStrategy from './strategies/general-strategy.js';
 import RedditExtractorStrategy from './strategies/reddit-strategy.js';

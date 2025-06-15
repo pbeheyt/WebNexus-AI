@@ -117,7 +117,7 @@ module.exports = {
       addUtilities(themeUtilities);
     },
 
-    // New custom group variants for code block hover states
+    // Custom group variants for code block hover states
     function ({ addVariant, e }) {
       // Add custom group variants for code blocks and message containers
       addVariant('code-block-group-hover', ({ modifySelectors, separator }) => {

@@ -327,7 +327,7 @@ class RedditExtractorStrategy extends BaseExtractor {
 
         let rawCommentContent = '';
         const contentSelectors = [
-          'div[slot="comment"]', // New, more reliable selector for modern Reddit UI
+          'div[slot="comment"]',
           '.md.text-14',
           '[data-testid="comment-content"]',
           'div[data-click-id="text"]',

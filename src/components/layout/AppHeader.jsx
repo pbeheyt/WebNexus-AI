@@ -230,7 +230,6 @@ AppHeader.propTypes = {
   onInfoFocus: PropTypes.func,
   onInfoBlur: PropTypes.func,
   infoButtonAriaLabel: PropTypes.string,
-  // New prop types
   showHistoryButton: PropTypes.bool,
   onToggleHistoryView: PropTypes.func,
   currentView: PropTypes.oneOf(['chat', 'history']),
