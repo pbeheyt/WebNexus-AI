@@ -61,6 +61,15 @@ const ModelParametersSettings = ({
     onReady,
   });
 
+  const handleMaxTokensChange = useCallback((newValue) => handleChange('maxTokens', newValue), [handleChange]);
+  const handleIncludeTemperatureChange = useCallback((newCheckedState) => handleChange('includeTemperature', newCheckedState), [handleChange]);
+  const handleTemperatureChange = useCallback((newValue) => handleChange('temperature', newValue), [handleChange]);
+  const handleIncludeTopPChange = useCallback((newCheckedState) => handleChange('includeTopP', newCheckedState), [handleChange]);
+  const handleTopPChange = useCallback((newValue) => handleChange('topP', newValue), [handleChange]);
+  const handleThinkingBudgetChange = useCallback((newValue) => handleChange('thinkingBudget', newValue), [handleChange]);
+  const handleReasoningEffortChange = useCallback((selectedValue) => handleChange('reasoningEffort', selectedValue), [handleChange]);
+  const handleSystemPromptChange = useCallback((e) => handleChange('systemPrompt', e.target.value), [handleChange]);
+
   const handleModelChange = useCallback(
     (modelId) => {
       onModelSelect(modelId);
@@ -227,7 +236,7 @@ const ModelParametersSettings = ({
             <SliderInput
               label=''
               value={formValues?.maxTokens ?? parameterSpecs.maxTokens.min}
-              onChange={(newValue) => handleChange('maxTokens', newValue)}
+              onChange={handleMaxTokensChange}
               min={parameterSpecs.maxTokens.min}
               max={parameterSpecs.maxTokens.max}
               step={parameterSpecs.maxTokens.step}
@@ -245,9 +254,7 @@ const ModelParametersSettings = ({
               </span>
               <Toggle
                 checked={formValues.includeTemperature ?? true}
-                onChange={(newCheckedState) =>
-                  handleChange('includeTemperature', newCheckedState)
-                }
+                onChange={handleIncludeTemperatureChange}
                 disabled={isSaving || isResetting || isTransitioningMode}
                 id={`${platform.id}-${selectedModelId}-include-temperature`}
               />
@@ -260,7 +267,7 @@ const ModelParametersSettings = ({
               <SliderInput
                 label=''
                 value={formValues.temperature ?? parameterSpecs.temperature.min}
-                onChange={(newValue) => handleChange('temperature', newValue)}
+                onChange={handleTemperatureChange}
                 min={parameterSpecs.temperature.min}
                 max={parameterSpecs.temperature.max}
                 step={parameterSpecs.temperature.step}
@@ -279,9 +286,7 @@ const ModelParametersSettings = ({
               </span>
               <Toggle
                 checked={formValues.includeTopP ?? false}
-                onChange={(newCheckedState) =>
-                  handleChange('includeTopP', newCheckedState)
-                }
+                onChange={handleIncludeTopPChange}
                 disabled={isSaving || isResetting || isTransitioningMode}
                 id={`${platform.id}-${selectedModelId}-include-topp`}
               />
@@ -294,7 +299,7 @@ const ModelParametersSettings = ({
               <SliderInput
                 label=''
                 value={formValues.topP ?? parameterSpecs.topP.min}
-                onChange={(newValue) => handleChange('topP', newValue)}
+                onChange={handleTopPChange}
                 min={parameterSpecs.topP.min}
                 max={parameterSpecs.topP.max}
                 step={parameterSpecs.topP.step}
@@ -331,7 +336,7 @@ const ModelParametersSettings = ({
                 formValues.thinkingBudget ??
                 parameterSpecs.thinkingBudget.default
               }
-              onChange={(newValue) => handleChange('thinkingBudget', newValue)}
+              onChange={handleThinkingBudgetChange}
               min={parameterSpecs.thinkingBudget.min}
               max={parameterSpecs.thinkingBudget.max}
               step={parameterSpecs.thinkingBudget.step}
@@ -359,9 +364,7 @@ const ModelParametersSettings = ({
                   formValues.reasoningEffort ??
                   parameterSpecs.reasoningEffort.default
                 }
-                onChange={(selectedValue) =>
-                  handleChange('reasoningEffort', selectedValue)
-                }
+                onChange={handleReasoningEffortChange}
                 placeholder='Select Effort Level'
                 disabled={isSaving || isResetting || isTransitioningMode}
               />
@@ -386,7 +389,7 @@ const ModelParametersSettings = ({
                 name='systemPrompt'
                 placeholder='Enter a system prompt for API requests...'
                 value={formValues.systemPrompt ?? ''}
-                onChange={(e) => handleChange('systemPrompt', e.target.value)}
+                onChange={handleSystemPromptChange}
                 maxLength={MAX_SYSTEM_PROMPT_LENGTH}
                 disabled={isSaving || isResetting || isTransitioningMode}
                 className='bg-theme-surface text-sm border border-theme rounded-md'
