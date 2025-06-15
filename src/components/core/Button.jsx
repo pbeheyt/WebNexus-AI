@@ -90,7 +90,7 @@ export const Button = forwardRef(
         ref={ref}
         className={combinedClasses}
         disabled={effectiveDisabled}
-        onClick={effectiveDisabled ? undefined : onClick}
+        onClick={onClick}
         {...props}
       >
         {isLoading ? (
