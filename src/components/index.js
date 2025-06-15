@@ -63,6 +63,11 @@ export { PlusIcon } from './icons/PlusIcon';
 export { TrashIcon } from './icons/TrashIcon';
 export { ArrowRightIcon } from './icons/ArrowRightIcon';
 export { HistoryIcon } from './icons/HistoryIcon';
+export { GeneralContentIcon } from './icons/GeneralContentIcon';
+export { PdfIcon } from './icons/PdfIcon';
+export { RedditIcon } from './icons/RedditIcon';
+export { SelectedTextIcon } from './icons/SelectedTextIcon';
+export { YouTubeIcon } from './icons/YouTubeIcon';
 
 // Input components
 export { PromptDropdown } from './input/PromptDropdown';
