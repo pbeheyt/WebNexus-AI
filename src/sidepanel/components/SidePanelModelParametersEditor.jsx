@@ -1,5 +1,6 @@
 
 // src/sidepanel/components/SidePanelModelParametersEditor.jsx
+import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 import {
@@ -41,6 +42,14 @@ const SidePanelModelParametersEditor = ({
     onReady,
   });
 
+  const handleMaxTokensChange = useCallback((newValue) => handleChange('maxTokens', newValue), [handleChange]);
+  const handleIncludeTemperatureChange = useCallback((newCheckedState) => handleChange('includeTemperature', newCheckedState), [handleChange]);
+  const handleTemperatureChange = useCallback((newValue) => handleChange('temperature', newValue), [handleChange]);
+  const handleIncludeTopPChange = useCallback((newCheckedState) => handleChange('includeTopP', newCheckedState), [handleChange]);
+  const handleTopPChange = useCallback((newValue) => handleChange('topP', newValue), [handleChange]);
+  const handleThinkingBudgetChange = useCallback((newValue) => handleChange('thinkingBudget', newValue), [handleChange]);
+  const handleSystemPromptChange = useCallback((e) => handleChange('systemPrompt', e.target.value), [handleChange]);
+
   if (!isVisible) {
     return null;
   }
@@ -72,7 +81,7 @@ const SidePanelModelParametersEditor = ({
                 id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-maxTokens`}
                 label=''
                 value={formValues?.maxTokens ?? parameterSpecs.maxTokens.min}
-                onChange={(newValue) => handleChange('maxTokens', newValue)}
+                onChange={handleMaxTokensChange}
                 min={parameterSpecs.maxTokens.min}
                 max={parameterSpecs.maxTokens.max}
                 step={parameterSpecs.maxTokens.step}
@@ -87,7 +96,7 @@ const SidePanelModelParametersEditor = ({
                 <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTemperature`} className='font-medium text-theme-secondary mr-2'>Temperature</label>
                 <Toggle
                   checked={formValues.includeTemperature ?? true}
-                  onChange={(newCheckedState) => handleChange('includeTemperature', newCheckedState)}
+                  onChange={handleIncludeTemperatureChange}
                   disabled={isSaving || isResetting}
                   id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTemperature`}
                 />
@@ -97,7 +106,7 @@ const SidePanelModelParametersEditor = ({
                   id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-temperatureValue`}
                   label=''
                   value={formValues.temperature ?? parameterSpecs.temperature.min}
-                  onChange={(newValue) => handleChange('temperature', newValue)}
+                  onChange={handleTemperatureChange}
                   min={parameterSpecs.temperature.min}
                   max={parameterSpecs.temperature.max}
                   step={parameterSpecs.temperature.step}
@@ -113,7 +122,7 @@ const SidePanelModelParametersEditor = ({
                 <label htmlFor={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTopP`} className='font-medium text-theme-secondary mr-2'>Top P</label>
                 <Toggle
                   checked={formValues.includeTopP ?? false}
-                  onChange={(newCheckedState) => handleChange('includeTopP', newCheckedState)}
+                  onChange={handleIncludeTopPChange}
                   disabled={isSaving || isResetting}
                   id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-includeTopP`}
                 />
@@ -123,7 +132,7 @@ const SidePanelModelParametersEditor = ({
                   id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-topPValue`}
                   label=''
                   value={formValues.topP ?? parameterSpecs.topP.min}
-                  onChange={(newValue) => handleChange('topP', newValue)}
+                  onChange={handleTopPChange}
                   min={parameterSpecs.topP.min}
                   max={parameterSpecs.topP.max}
                   step={parameterSpecs.topP.step}
@@ -147,7 +156,7 @@ const SidePanelModelParametersEditor = ({
                 id={`sp-param-${platform?.id || 'uid1'}-${selectedModelId || 'uid2'}-${currentEditingMode}-thinkingBudget`}
                 label=''
                 value={formValues.thinkingBudget ?? parameterSpecs.thinkingBudget.default}
-                onChange={(newValue) => handleChange('thinkingBudget', newValue)}
+                onChange={handleThinkingBudgetChange}
                 min={parameterSpecs.thinkingBudget.min}
                 max={parameterSpecs.thinkingBudget.max}
                 step={parameterSpecs.thinkingBudget.step}
@@ -164,7 +173,7 @@ const SidePanelModelParametersEditor = ({
                 name='systemPrompt'
                 placeholder='Optional system prompt...'
                 value={formValues.systemPrompt ?? ''}
-                onChange={(e) => handleChange('systemPrompt', e.target.value)}
+                onChange={handleSystemPromptChange}
                 maxLength={parameterSpecs.systemPrompt.maxLength}
                 disabled={isSaving || isResetting}
                 className='bg-theme-secondary text-xs border border-theme rounded-md w-full p-1.5'
