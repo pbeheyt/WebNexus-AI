@@ -71,10 +71,10 @@ class BaseApiService extends ApiInterface {
         this.logger.warn(
           `[${this.platformId}] Streaming request for model ${model} failed (error handled via onChunk).`
         );
-        // Return a failure object, but the specific error is already in the chat via onChunk.
+        // The stream itself has reported the error. Return success:true to prevent the
+        // caller from generating a new, generic error. The stream's outcome is the source of truth.
         return {
-          success: false,
-          error: 'Streaming failed (see chat for details)',
+          success: true,
           model: model || 'unknown',
         };
       }
