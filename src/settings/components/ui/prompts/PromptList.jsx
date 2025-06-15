@@ -24,7 +24,7 @@ const PromptList = ({
   const promptListRef = useRef(null);
   const [promptListHasScrollbar, setPromptListHasScrollbar] = useState(false);
 
-  // Load prompts and default settings
+  // Load prompts, set up storage listener, and manage data fetching
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -72,8 +72,29 @@ const PromptList = ({
         error('Failed to load prompts or default settings');
       }
     };
+
+    // Initial load
     loadData();
-  }, [contentTypeLabels, error]);
+
+    // Listen for storage changes to trigger a full reload of all prompt data
+    const handleStorageChange = (changes, area) => {
+      if (area === 'local' && changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS]) {
+        logger.settings.info(
+          'Custom prompts changed in storage, reloading prompt list data...'
+        );
+        loadData(); // Reload all data, which includes prompts and default IDs
+      }
+    };
+
+    if (chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener(handleStorageChange);
+    }
+    return () => {
+      if (chrome.storage && chrome.storage.onChanged) {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      }
+    };
+  }, [contentTypeLabels, error]); // Dependencies for initial load and listener setup
 
   // Filter prompts
   useEffect(() => {
@@ -116,35 +137,6 @@ const PromptList = ({
       observer.disconnect();
     };
   }, [filteredPrompts, promptListRef]); // Dependencies updated to include promptListRef
-
-  // Listen for storage changes
-  useEffect(() => {
-    const handleStorageChange = (changes, area) => {
-      if (area === 'local' && changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS]) {
-        logger.settings.info(
-          'Custom prompts changed, extracting new defaults...'
-        );
-        const newCustomPrompts =
-          changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS].newValue || {};
-        const newDefaultIds = {};
-        Object.entries(newCustomPrompts).forEach(([type, typeData]) => {
-          if (typeData && typeData['_defaultPromptId_']) {
-            newDefaultIds[type] = typeData['_defaultPromptId_'];
-          }
-        });
-        setDefaultPromptIds(newDefaultIds);
-      }
-    };
-
-    if (chrome.storage && chrome.storage.onChanged) {
-      chrome.storage.onChanged.addListener(handleStorageChange);
-    }
-    return () => {
-      if (chrome.storage && chrome.storage.onChanged) {
-        chrome.storage.onChanged.removeListener(handleStorageChange);
-      }
-    };
-  }, []);
 
   const filterOptions = useMemo(
     () => [
