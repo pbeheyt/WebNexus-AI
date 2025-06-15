@@ -125,7 +125,18 @@ async function _processViaWebUI(tab, promptId = null) {
  * @returns {Promise<void>}
  */
 export async function processWithDefaultPromptWebUI(tab) {
-  await _processViaWebUI(tab, null); // Call the centralized function with no specific promptId
+  try {
+    await _processViaWebUI(tab, null); // Call the centralized function with no specific promptId
+  } catch (error) {
+    logger.background.error('Error in processWithDefaultPromptWebUI:', error);
+    // This function is called from a context without a direct UI, so a notification is appropriate
+    chrome.notifications.create('default-prompt-error', {
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('images/logo_128.png'),
+      title: 'WebNexus AI Error',
+      message: 'An unexpected error occurred during the quick process action.',
+    });
+  }
 }
 
 /**
@@ -147,7 +158,22 @@ export function handleGetContentTypeRequest(message, _sender, sendResponse) {
  * @returns {Promise<void>}
  */
 export async function processWithSpecificPromptWebUI(tab, promptId) {
-  await _processViaWebUI(tab, promptId); // Call the centralized function with the specific promptId
+  try {
+    await _processViaWebUI(tab, promptId); // Call the centralized function with the specific promptId
+  } catch (error) {
+    logger.background.error(
+      `Error in processWithSpecificPromptWebUI for prompt ${promptId}:`,
+      error
+    );
+    // This function is called from a context without a direct UI (context menu), so a notification is appropriate
+    chrome.notifications.create('specific-prompt-error', {
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('images/logo_128.png'),
+      title: 'WebNexus AI Error',
+      message:
+        'An unexpected error occurred while processing the context menu action.',
+    });
+  }
 }
 
 /**

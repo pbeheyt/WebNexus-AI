@@ -50,19 +50,23 @@ async function fetchPdfAsBase64(url) {
  * @param {function} sendResponse - The function to send the response.
  */
 export async function handleFetchPdfRequest(message, _sender, sendResponse) {
-  if (!message.url) {
-    logger.background.error('handleFetchPdfRequest: Missing URL in message.');
-    // Ensure synchronous response for this specific error
+  try {
+    if (!message.url) {
+      logger.background.error('handleFetchPdfRequest: Missing URL in message.');
+      sendResponse({
+        success: false,
+        error: 'Missing URL in fetchPdfAsBase64 request',
+      });
+      return; // Exit early
+    }
+
+    const response = await fetchPdfAsBase64(message.url);
+    sendResponse(response);
+  } catch (error) {
+    logger.background.error('Critical error in handleFetchPdfRequest:', error);
     sendResponse({
       success: false,
-      error: 'Missing URL in fetchPdfAsBase64 request',
+      error: 'An unexpected error occurred while fetching the PDF.',
     });
-    return; // Exit early
   }
-
-  // The fetchPdfAsBase64 function is designed to never throw; it always returns
-  // a {success, ...} object. The outer try/catch was redundant.
-  const response = await fetchPdfAsBase64(message.url);
-  sendResponse(response);
-  // No return true here, the listener handles that
 }

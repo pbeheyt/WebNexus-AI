@@ -90,15 +90,23 @@ export async function handleUpdateSelectionStatusRequest(
   sender,
   sendResponse
 ) {
-  if (sender.tab && sender.tab.id) {
-    // Update the selection state in storage
-    await updateTabSelectionState(sender.tab.id, message.hasSelection);
-    // Crucially, now update the context menu based on the new selection state
-    if (sender.tab) {
-      debouncedUpdateContextMenuForTab(sender.tab);
+  try {
+    if (sender.tab && sender.tab.id) {
+      // Update the selection state in storage
+      await updateTabSelectionState(sender.tab.id, message.hasSelection);
+      // Crucially, now update the context menu based on the new selection state
+      if (sender.tab) {
+        debouncedUpdateContextMenuForTab(sender.tab);
+      }
     }
+    sendResponse({ success: true }); // Acknowledge receipt
+  } catch (error) {
+    logger.background.error(
+      `Error handling selection status update for tab ${sender?.tab?.id}:`,
+      error
+    );
+    sendResponse({ success: false, error: error.message });
   }
-  sendResponse({ success: true }); // Acknowledge receipt
 }
 
 export function handleClearTabDataRequest(message, sender, sendResponse) {

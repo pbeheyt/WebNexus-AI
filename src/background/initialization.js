@@ -82,101 +82,109 @@ async function initializeExtension() {
 async function handleInstallation(details) {
   logger.background.info(`Extension event: ${details.reason}`, details);
 
-  // --- Default Prompt Initialization Logic ---
-  // Reset all tab UI states as Chrome closes them on install/update.
   try {
-    logger.background.info(
-      'Resetting all tab UI states due to installation event...'
-    );
-    await SidePanelStateManager.resetAllTabUIStates();
-    logger.background.info('Tab UI states reset successfully.');
-  } catch (resetError) {
-    logger.background.error(
-      'Error resetting tab UI states during installation:',
-      resetError
-    );
-  }
-
-  // Call the main initialization function on install.
-  // It handles the flag check internally and ensures pointers are set.
-  if (details.reason === 'install') {
-    logger.background.info(
-      'Reason is "install", running populateInitialPromptsAndSetDefaults...'
-    );
-    await populateInitialPromptsAndSetDefaults();
-  }
-  // No specific call for 'update' needed here for this logic,
-  // as ensureDefaultPrompts in startBackgroundService will handle consistency.
-
-  // --- Set Default Popup Platform Preference ---
-  if (details.reason === 'install') {
-    logger.background.info(
-      'Setting default popup platform preference on install...'
-    );
+    // --- Default Prompt Initialization Logic ---
+    // Reset all tab UI states as Chrome closes them on install/update.
     try {
-      const platformList = await ConfigService.getAllPlatformConfigs();
+      logger.background.info(
+        'Resetting all tab UI states due to installation event...'
+      );
+      await SidePanelStateManager.resetAllTabUIStates();
+      logger.background.info('Tab UI states reset successfully.');
+    } catch (resetError) {
+      logger.background.error(
+        'Error resetting tab UI states during installation:',
+        resetError
+      );
+    }
 
-      if (platformList && platformList.length > 0) {
-        const defaultPlatformId = platformList[0].id; // Use the ID of the first platform
-        await chrome.storage.sync.set({
-          [STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID]: defaultPlatformId,
-        });
-        logger.background.info(
-          `Default popup platform set to: ${defaultPlatformId}`
-        );
-      } else {
-        logger.background.warn(
-          'No platforms found in config, cannot set default popup platform.'
+    // Call the main initialization function on install.
+    // It handles the flag check internally and ensures pointers are set.
+    if (details.reason === 'install') {
+      logger.background.info(
+        'Reason is "install", running populateInitialPromptsAndSetDefaults...'
+      );
+      await populateInitialPromptsAndSetDefaults();
+    }
+    // No specific call for 'update' needed here for this logic,
+    // as ensureDefaultPrompts in startBackgroundService will handle consistency.
+
+    // --- Set Default Popup Platform Preference ---
+    if (details.reason === 'install') {
+      logger.background.info(
+        'Setting default popup platform preference on install...'
+      );
+      try {
+        const platformList = await ConfigService.getAllPlatformConfigs();
+
+        if (platformList && platformList.length > 0) {
+          const defaultPlatformId = platformList[0].id; // Use the ID of the first platform
+          await chrome.storage.sync.set({
+            [STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID]: defaultPlatformId,
+          });
+          logger.background.info(
+            `Default popup platform set to: ${defaultPlatformId}`
+          );
+        } else {
+          logger.background.warn(
+            'No platforms found in config, cannot set default popup platform.'
+          );
+        }
+      } catch (error) {
+        logger.background.error(
+          'Error setting default popup platform preference:',
+          error
         );
       }
+    }
+    // --- End Set Default Popup Platform Preference ---
+
+    // --- Set Default General Content Extraction Strategy ---
+    logger.background.info(
+      'Setting default general content extraction strategy on install...'
+    );
+    try {
+      await chrome.storage.sync.set({
+        [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]:
+          DEFAULT_EXTRACTION_STRATEGY,
+      });
+      logger.background.info(
+        `Default general content extraction strategy set to: ${DEFAULT_EXTRACTION_STRATEGY}`
+      );
     } catch (error) {
       logger.background.error(
-        'Error setting default popup platform preference:',
+        'Error setting default general content extraction strategy:',
         error
       );
     }
-  }
-  // --- End Set Default Popup Platform Preference ---
+    // --- End Set Default General Content Extraction Strategy ---
 
-  // --- Set Default General Content Extraction Strategy ---
-  logger.background.info(
-    'Setting default general content extraction strategy on install...'
-  );
-  try {
-    await chrome.storage.sync.set({
-      [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]:
-        DEFAULT_EXTRACTION_STRATEGY,
-    });
-    logger.background.info(
-      `Default general content extraction strategy set to: ${DEFAULT_EXTRACTION_STRATEGY}`
-    );
-  } catch (error) {
-    logger.background.error(
-      'Error setting default general content extraction strategy:',
-      error
-    );
-  }
-  // --- End Set Default General Content Extraction Strategy ---
-
-  // --- Core Initialization ---
-  // Run general initialization on both install and update.
-  // It's generally safe to run this multiple times.
-  try {
-    await initializeExtension();
-    logger.background.info('Core extension initialization completed.');
-
-    // Context menu is now created dynamically by tab listeners,
-    // so we only need to ensure any old menus are cleared on install/update.
-    logger.background.info('Clearing all context menus on installation...');
+    // --- Core Initialization ---
+    // Run general initialization on both install and update.
+    // It's generally safe to run this multiple times.
     try {
-      await chrome.contextMenus.removeAll();
-      logger.background.info('Context menus cleared successfully.');
-    } catch (menuError) {
-      logger.background.error('Failed to clear context menus:', menuError);
+      await initializeExtension();
+      logger.background.info('Core extension initialization completed.');
+
+      // Context menu is now created dynamically by tab listeners,
+      // so we only need to ensure any old menus are cleared on install/update.
+      logger.background.info('Clearing all context menus on installation...');
+      try {
+        await chrome.contextMenus.removeAll();
+        logger.background.info('Context menus cleared successfully.');
+      } catch (menuError) {
+        logger.background.error('Failed to clear context menus:', menuError);
+      }
+    } catch (error) {
+      logger.background.error(
+        'Failed to complete core extension initialization after install/update event.',
+        error
+      );
     }
-  } catch (error) {
+  } catch (outerError) {
     logger.background.error(
-      'Failed to complete core extension initialization after install/update event.'
+      `Critical error during extension installation event (${details.reason}):`,
+      outerError
     );
   }
 }
