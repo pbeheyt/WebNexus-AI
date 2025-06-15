@@ -75,16 +75,8 @@ export function Toast({
     notificationContext,
   ]);
 
-  // Manage portal root element
-  let portalRoot = document.getElementById(TOAST_PORTAL_ROOT_ID);
-  if (!portalRoot && typeof document !== 'undefined') {
-    // Check for document for SSR safety
-    portalRoot = document.createElement('div');
-    portalRoot.id = TOAST_PORTAL_ROOT_ID;
-    portalRoot.style.position = 'relative';
-    portalRoot.style.zIndex = '9999';
-    document.body.appendChild(portalRoot);
-  }
+  // Portal root element is expected to exist in the host HTML file.
+  const portalRoot = document.getElementById(TOAST_PORTAL_ROOT_ID);
 
   // If the toast's internal logic determines it shouldn't be visible, render null.
   if (!isVisible || !portalRoot) {
