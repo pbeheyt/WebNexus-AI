@@ -25,8 +25,7 @@ export function CustomSelect({
   buttonClassName = '',
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const triggerRef = useRef(null);
+  const containerRef = useRef(null);
 
   const selectedOption = options.find(
     (option) => option && option.id === selectedValue
@@ -36,10 +35,8 @@ export function CustomSelect({
     if (!isOpen) return;
     const handleClickOutside = (event) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(event.target)
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
       ) {
         setIsOpen(false);
       }
@@ -66,12 +63,11 @@ export function CustomSelect({
   return (
     // Use inline-block to allow the container to size based on its content (the button)
     <div
-      ref={dropdownRef}
+      ref={containerRef}
       className={`relative inline-block select-none ${className}`}
     >
       {/* Trigger Button */}
       <button
-        ref={triggerRef}
         type='button'
         onClick={handleTriggerClick}
         disabled={disabled}

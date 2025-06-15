@@ -21,8 +21,7 @@ export function ExtractionStrategySelector({
     DEFAULT_EXTRACTION_STRATEGY
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const triggerRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     const loadStrategy = async () => {
@@ -63,10 +62,8 @@ export function ExtractionStrategySelector({
     if (!isDropdownOpen) return;
     const handleClickOutside = (event) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(event.target)
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
       ) {
         setIsDropdownOpen(false);
       }
@@ -104,9 +101,8 @@ export function ExtractionStrategySelector({
     currentStrategy === EXTRACTION_STRATEGIES.FOCUSED ? 'Focused' : 'Broad';
 
   return (
-    <div className={`relative inline-block ${className}`} ref={dropdownRef}>
+    <div className={`relative inline-block ${className}`} ref={containerRef}>
       <IconButton
-        ref={triggerRef}
         icon={StrategyIcon}
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         disabled={disabled}
