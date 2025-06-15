@@ -1,7 +1,5 @@
 // src/hooks/useConfigurableShortcut.js
 import { useState, useEffect } from 'react';
-// robustSendMessage is not directly used in this hook's core logic,
-// but the callback passed to it might use it.
 // The logger instance is passed in for context-specific logging.
 
 export function useConfigurableShortcut(
@@ -42,7 +40,7 @@ export function useConfigurableShortcut(
     };
     loadShortcut();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shortcutStorageKey, defaultShortcutConfig, loggerInstance]); // Dependencies for loading
+  }, [shortcutStorageKey]); // Dependencies for loading
 
   // Effect to set up the keydown listener
   useEffect(() => {
