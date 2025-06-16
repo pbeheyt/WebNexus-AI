@@ -107,7 +107,7 @@ export function useChatSessionManagement({
       }
       isInitializingSessionRef.current = true;
 
-      if (!tabId || !selectedPlatformId) {
+      if (!tabId) {
         isInitializingSessionRef.current = false;
         return;
       }
