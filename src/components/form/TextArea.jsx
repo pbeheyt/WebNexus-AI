@@ -35,6 +35,7 @@ export const TextArea = forwardRef(
     const [error, setError] = useState(null);
     const [touched, setTouched] = useState(false);
 
+    // Pure validation function: returns error message or null, doesn't set state.
     const validate = useCallback(
       (currentValue) => {
         let errorMessage = null;
@@ -43,11 +44,9 @@ export const TextArea = forwardRef(
         } else if (maxLength && currentValue.length > maxLength) {
           errorMessage = `Cannot exceed ${maxLength} characters.`;
         }
-        setError(errorMessage);
-        onValidation(!errorMessage); // Pass validity state to parent
-        return !errorMessage;
+        return errorMessage;
       },
-      [required, maxLength, onValidation]
+      [required, maxLength]
     );
     const combinedRef = (element) => {
       textareaRef.current = element;
@@ -55,14 +54,17 @@ export const TextArea = forwardRef(
       else if (ref) ref.current = element;
     };
 
-    // Perform validation on initial mount and when value changes from parent
+    // Report validity to parent on every value change, without showing visual error.
     useEffect(() => {
-      validate(value || '');
-    }, [value, validate]);
+      const errorMessage = validate(value || '');
+      onValidation(!errorMessage);
+    }, [value, validate, onValidation]);
 
     const handleChange = (e) => {
       if (!touched) setTouched(true);
-      validate(e.target.value);
+      // Show visual error only on user interaction
+      const errorMessage = validate(e.target.value);
+      setError(errorMessage);
       if (onChange) {
         onChange(e);
       }
@@ -70,7 +72,9 @@ export const TextArea = forwardRef(
 
     const handleBlur = (e) => {
       if (!touched) setTouched(true);
-      validate(e.target.value);
+      // Show visual error only on user interaction
+      const errorMessage = validate(e.target.value);
+      setError(errorMessage);
     };
 
     // Auto-resize functionality
