@@ -18,10 +18,7 @@ class ContentFormatter {
     // Handle selected text first, as it's a distinct content type now.
     if (contentType === CONTENT_TYPES.SELECTED_TEXT) {
       logger.service.info('Formatting content for SELECTED_TEXT type.');
-      return `## SELECTED TEXT\n${this._getData(
-        contentData.content,
-        'No content selected.'
-      )}`;
+      return `${this._getData(contentData.content, 'No content selected.')}`;
     }
 
     logger.service.info(`Formatting content of type: ${contentType}`);
