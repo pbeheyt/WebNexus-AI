@@ -92,21 +92,28 @@ export const debouncedUpdateContextMenuForTab = debounce(async (tab) => {
  * This function is called when a user clicks on a context menu item.
  * It processes clicks on dynamically created prompt items.
  * @param {chrome.contextMenus.OnClickData} info - The context menu click data.
- * @param {chrome.tabs.Tab} tab - The tab where the click occurred.
  */
-async function handleContextMenuClick(info, tab) {
+async function handleContextMenuClick(info) {
   // Handle clicks on dynamically created prompt items
   if (info.menuItemId.startsWith('prompt-item-')) {
-    const promptId = info.menuItemId.replace('prompt-item-', '');
-    logger.background.info(`Context menu prompt [${promptId}] clicked:`, {
-      tabId: tab?.id,
-      url: tab?.url,
+    // 1. Reliably get the active tab, ignoring the potentially incorrect `tab` argument from the event.
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
     });
 
     if (!tab || !tab.id || !tab.url) {
-      logger.background.error('Context menu click missing tab information.');
+      logger.background.error(
+        'Context menu click could not determine active tab.'
+      );
       return;
     }
+
+    const promptId = info.menuItemId.replace('prompt-item-', '');
+    logger.background.info(`Context menu prompt [${promptId}] clicked:`, {
+      tabId: tab.id,
+      url: tab.url,
+    });
 
     try {
       await processWithSpecificPromptWebUI(tab, promptId);
