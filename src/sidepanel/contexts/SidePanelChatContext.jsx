@@ -22,7 +22,7 @@ import ChatHistoryService from '../services/ChatHistoryService';
 import TokenManagementService from '../services/TokenManagementService';
 import { useNotification } from '../../components';
 import { useContentProcessing } from '../../hooks/useContentProcessing';
-import { MESSAGE_ROLES } from '../../shared/constants';
+import { MESSAGE_ROLES, CONTENT_TYPES } from '../../shared/constants';
 import { INTERFACE_SOURCES, STORAGE_KEYS } from '../../shared/constants';
 import { isInjectablePage } from '../../shared/utils/content-utils';
 import { robustSendMessage } from '../../shared/utils/message-utils';
@@ -65,6 +65,9 @@ export function SidePanelChatProvider({ children }) {
   );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isThinkingModeEnabled, setIsThinkingModeEnabled] = useState(false);
+
+  const previousExtractionStateRef = useRef(null);
+  const previousContentTypeRef = useRef(contentType);
 
   // --- Core Hooks ---
   const [contextViewData, setContextViewData] = useState(null);
@@ -440,6 +443,42 @@ export function SidePanelChatProvider({ children }) {
       chrome.storage.onChanged.removeListener(handleStorageChange);
     };
   }, [currentChatSessionId, messages, setMessages]);
+
+  // Effect to automatically manage the content extraction toggle based on content type
+  useEffect(() => {
+    const prevContentType = previousContentTypeRef.current;
+
+    // Transitioning TO selected text
+    if (
+      contentType === CONTENT_TYPES.SELECTED_TEXT &&
+      prevContentType !== CONTENT_TYPES.SELECTED_TEXT
+    ) {
+      // Save the current state only if we are not already in selected text mode
+      previousExtractionStateRef.current = isContentExtractionEnabled;
+      setIsContentExtractionEnabled(true);
+      logger.sidepanel.info(
+        `Content type changed to 'selectedText'. Forcing content extraction ON.`
+      );
+    }
+    // Transitioning FROM selected text
+    else if (
+      prevContentType === CONTENT_TYPES.SELECTED_TEXT &&
+      contentType !== CONTENT_TYPES.SELECTED_TEXT
+    ) {
+      // Restore the previous state if it was saved
+      if (previousExtractionStateRef.current !== null) {
+        setIsContentExtractionEnabled(previousExtractionStateRef.current);
+        logger.sidepanel.info(
+          `Content type changed from 'selectedText'. Restoring content extraction to: ${previousExtractionStateRef.current}`
+        );
+      }
+      // Reset the ref
+      previousExtractionStateRef.current = null;
+    }
+
+    // Update the ref for the next render
+    previousContentTypeRef.current = contentType;
+  }, [contentType, isContentExtractionEnabled]);
 
   const sendMessage = async (text = inputValue) => {
     const currentPlatformId = selectedPlatformId;
