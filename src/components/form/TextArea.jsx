@@ -62,9 +62,6 @@ export const TextArea = forwardRef(
 
     const handleChange = (e) => {
       if (!touched) setTouched(true);
-      // Show visual error only on user interaction
-      const errorMessage = validate(e.target.value);
-      setError(errorMessage);
       if (onChange) {
         onChange(e);
       }
