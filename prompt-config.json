@@ -20,9 +20,9 @@
     "Fact-Check": "Examine the PDF content for accuracy and reliability. Identify any claims or data presented, assess the credibility of sources cited, point out any potential biases or methodological issues, and provide additional context or corrections if needed."
   },
   "selectedText": {
-    "Short Summary": "Summarize the selected text in a brief 1-2 sentence overview highlighting the main point or key information.",
-    "Detailed Summary": "Summarize the selected text comprehensively, including the main topic, key points discussed, important details or data mentioned, and any conclusions or takeaways presented.",
-    "Explain": "Explain the selected text in clear language. Break down any complex concepts, technical terms, or jargon into easy-to-understand explanations.",
-    "Fact-Check": "Examine the selected text for accuracy. Identify any claims made, check if they can be verified, point out any potential biases or misleading information, and provide additional context or corrections if needed."
+    "Short Summary": "Summarize the content in a brief 1-2 sentence overview highlighting the main point or key information.",
+    "Detailed Summary": "Summarize the content comprehensively, including the main topic, key points discussed, important details or data mentioned, and any conclusions or takeaways presented.",
+    "Explain": "Explain the content in clear language. Break down any complex concepts, technical terms, or jargon into easy-to-understand explanations.",
+    "Fact-Check": "Examine the content for accuracy. Identify any claims made, check if they can be verified, point out any potential biases or misleading information, and provide additional context or corrections if needed."
   }
 }
