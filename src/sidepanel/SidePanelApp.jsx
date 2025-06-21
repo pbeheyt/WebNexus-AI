@@ -245,6 +245,13 @@ export default function SidePanelApp() {
     [calculateAndSetHeight]
   );
 
+  const handleHeaderToggle = useCallback(() => {
+    setHeaderExpanded((prev) => !prev);
+    // Use a timeout to ensure the state update has been processed by React
+    // and the DOM has been updated before calculating the new height.
+    setTimeout(calculateAndSetHeight, 0);
+  }, [calculateAndSetHeight]);
+
   useEffect(() => {
     if (isReady) {
       debouncedCalculateHeight();
@@ -293,7 +300,7 @@ export default function SidePanelApp() {
                 currentView={currentView}
                 showNewChatButton={true}
                 onNewChatClick={createNewChat}
-                onToggleExpand={() => setHeaderExpanded(!headerExpanded)}
+                onToggleExpand={handleHeaderToggle}
                 showExpandToggle={true}
                 showBorder={true}
                 className='px-5 py-2 bg-theme-secondary'
@@ -340,7 +347,7 @@ export default function SidePanelApp() {
               >
                 <UserInput
                   className=''
-                  requestHeightRecalculation={debouncedCalculateHeight}
+                  requestHeightRecalculation={calculateAndSetHeight}
                 />
               </div>
             </>
