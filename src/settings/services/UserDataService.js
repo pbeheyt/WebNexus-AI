@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from '../../shared/constants.js';
 import { logger } from '../../shared/logger.js';
 import {
   ensureDefaultPrompts,
-  performFullPromptRepopulation,
+  populateInitialPrompts,
 } from '../../shared/utils/prompt-utils.js';
 import {
   validateCredentialsData,
@@ -198,38 +198,16 @@ class UserDataService {
   }
 
   async _resetPrompts() {
-    logger.service.info(
-      'Resetting all prompts and triggering direct repopulation...'
-    );
+    logger.service.info('Resetting all prompts by re-running initial population...');
     try {
-      // Remove prompts and the population flag
-      await chrome.storage.local.remove([
-        STORAGE_KEYS.USER_CUSTOM_PROMPTS,
-        STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_FLAG, // Clear the flag
-      ]);
-      logger.service.info(
-        'Prompts and initial population flag cleared from storage.'
-      );
-
-      // Directly call the shared repopulation function
-      const repopulationSuccess = await performFullPromptRepopulation();
-
-      if (repopulationSuccess) {
-        // Set the flag again after successful direct repopulation
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_FLAG]: true,
-        });
-        logger.service.info(
-          'Prompts directly repopulated and flag set successfully.'
-        );
-      } else {
-        throw new Error('Direct prompt repopulation failed.');
+      // Call the new initial population function which overwrites existing prompts.
+      const success = await populateInitialPrompts();
+      if (!success) {
+        throw new Error('Initial prompt population failed during reset.');
       }
+      logger.service.info('Prompts have been reset to their initial state.');
     } catch (error) {
-      logger.service.error(
-        'Error during prompt reset and direct repopulation:',
-        error
-      );
+      logger.service.error('Error during prompt reset:', error);
       throw error; // Re-throw to be caught by the calling function
     }
   }
