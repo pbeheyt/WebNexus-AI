@@ -1,7 +1,5 @@
-import React, { forwardRef, useState, useEffect, useCallback } from 'react';
+import React, { forwardRef, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-
-import ValidationError from './ValidationError';
 
 export const Input = forwardRef(
   (
@@ -21,12 +19,9 @@ export const Input = forwardRef(
       endContent = null,
       ...restProps
     },
-    ref
-  ) => {
-    const [error, setError] = useState(null);
-    const [touched, setTouched] = useState(false);
-
-    // Pure validation function: returns error message or null, doesn't set state.
+        ref
+      ) => {
+        // Pure validation function: returns error message or null, doesn't set state.
     const validate = useCallback(
       (currentValue) => {
         let errorMessage = null;
@@ -42,65 +37,46 @@ export const Input = forwardRef(
 
     // Report validity to parent on every value change, without showing visual error.
     // This allows parent form to enable/disable save buttons correctly.
-    useEffect(() => {
-      const errorMessage = validate(value || '');
-      onValidation(!errorMessage);
-    }, [value, validate, onValidation]);
-
-    const handleChange = (e) => {
-      if (!touched) setTouched(true);
-      if (onChange) {
-        onChange(e);
-      }
-    };
-
-    const handleBlur = (e) => {
-      if (!touched) setTouched(true);
-      // Show visual error only on user interaction
-      const errorMessage = validate(e.target.value);
-      setError(errorMessage);
-    };
-
-    const showVisualError = error && touched;
-
-    const baseClasses = 'w-full p-3 outline-none text-theme-primary';
-    const errorClasses = showVisualError
-      ? 'border-error ring-1 ring-error'
-      : '';
-    const paddingClasses = endContent ? 'pr-12' : '';
-    const combinedClasses =
-      `${baseClasses} ${errorClasses} ${paddingClasses} ${className}`.trim();
+        useEffect(() => {
+          const errorMessage = validate(value || '');
+          onValidation(!errorMessage);
+        }, [value, validate, onValidation]);
+    
+        const handleChange = (e) => {
+          if (onChange) {
+            onChange(e);
+          }
+        };
+    
+        const baseClasses = 'w-full p-3 outline-none text-theme-primary';
+        const paddingClasses = endContent ? 'pr-12' : '';
+        const combinedClasses =
+          `${baseClasses} ${paddingClasses} ${className}`.trim();
 
     return (
       <div>
         <div className='relative w-full'>
-          <input
-            ref={ref}
-            type={type}
-            id={id}
-            name={name}
-            value={value}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder={placeholder}
-            maxLength={maxLength}
-            disabled={disabled}
-            className={combinedClasses}
-            style={style}
-            aria-invalid={!!showVisualError}
-            aria-describedby={showVisualError ? `${id}-error` : undefined}
-            {...restProps}
-          />
-          {endContent && (
-            <div className='absolute inset-y-0 right-0 flex items-center pr-2'>
-              {endContent}
+              <input
+                ref={ref}
+                type={type}
+                id={id}
+                name={name}
+                value={value}
+                onChange={handleChange}
+                placeholder={placeholder}
+                maxLength={maxLength}
+                disabled={disabled}
+                className={combinedClasses}
+                style={style}
+                {...restProps}
+              />
+              {endContent && (
+                <div className='absolute inset-y-0 right-0 flex items-center pr-2'>
+                  {endContent}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div id={`${id}-error`}>
-          <ValidationError message={showVisualError ? error : null} />
-        </div>
-      </div>
+          </div>
     );
   }
 );
