@@ -1,9 +1,10 @@
-// --- START FULL FILE: src/components/layout/Tooltip.jsx ---
-import React, { useEffect, useState, useRef } from 'react';
+// src/components/layout/Tooltip.jsx
+import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import PropTypes from 'prop-types';
 
 /**
  * Tooltip component for displaying messages with configurable delay.
+ * Uses useLayoutEffect for robust positioning to prevent rendering glitches.
  * @param {string} [id] - Optional ID for the tooltip, useful for aria-describedby.
  * @param {boolean} show - Whether to show the tooltip.
  * @param {React.ReactNode} message - Tooltip content (string or JSX).
@@ -25,13 +26,13 @@ export function Tooltip({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef(null);
-  const [tooltipStyle, setTooltipStyle] = useState({});
+  const [tooltipStyle, setTooltipStyle] = useState({ opacity: 0 });
   const timeoutRef = useRef(null);
 
+  // Effect to manage visibility with a delay
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
     }
 
     if (show) {
@@ -49,9 +50,10 @@ export function Tooltip({
     };
   }, [show, delay]);
 
-  useEffect(() => {
+  // useLayoutEffect for synchronous DOM measurement and positioning
+  useLayoutEffect(() => {
     if (isVisible && targetRef.current && tooltipRef.current) {
-      const rect = targetRef.current.getBoundingClientRect();
+      const targetRect = targetRef.current.getBoundingClientRect();
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
       const tooltipWidth = tooltipRect.width;
       const tooltipHeight = tooltipRect.height;
@@ -60,40 +62,37 @@ export function Tooltip({
 
       switch (position) {
         case 'top':
-          top = rect.top - offset - tooltipHeight;
-          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          top = targetRect.top - offset - tooltipHeight;
+          left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
           break;
         case 'bottom':
-          top = rect.bottom + offset;
-          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          top = targetRect.bottom + offset;
+          left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
           break;
         case 'left':
-          top = rect.top + rect.height / 2 - tooltipHeight / 2;
-          left = rect.left - offset - tooltipWidth;
+          top = targetRect.top + targetRect.height / 2 - tooltipHeight / 2;
+          left = targetRect.left - offset - tooltipWidth;
           break;
         case 'right':
-          top = rect.top + rect.height / 2 - tooltipHeight / 2;
-          left = rect.right + offset;
+          top = targetRect.top + targetRect.height / 2 - tooltipHeight / 2;
+          left = targetRect.right + offset;
           break;
-        default: // Default to top if position is invalid
-          top = rect.top - offset - tooltipHeight;
-          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+        default: // Default to top
+          top = targetRect.top - offset - tooltipHeight;
+          left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
           break;
       }
 
       // Adjust for viewport overflow
       if (top < 0 && position === 'top') {
-        // If top overflow, try to switch to bottom
-        top = rect.bottom + offset;
+        top = targetRect.bottom + offset; // Switch to bottom
       } else if (
         top + tooltipHeight > window.innerHeight &&
         position === 'bottom'
       ) {
-        // If bottom overflow, try to switch to top
-        top = rect.top - offset - tooltipHeight;
+        top = targetRect.top - offset - tooltipHeight; // Switch to top
       }
-      // Ensure top is not negative after potential switch
-      if (top < 0) top = offset;
+      if (top < 0) top = offset; // Final check to prevent top overflow
 
       if (left < 0) {
         left = offset;
@@ -101,7 +100,15 @@ export function Tooltip({
         left = window.innerWidth - tooltipWidth - offset;
       }
 
-      setTooltipStyle({ top, left });
+      setTooltipStyle({
+        top,
+        left,
+        position: 'fixed',
+        opacity: 1,
+      });
+    } else {
+      // Hide if not visible
+      setTooltipStyle({ opacity: 0 });
     }
   }, [isVisible, position, offset, targetRef, message]);
 
@@ -113,16 +120,11 @@ export function Tooltip({
 
   return (
     <div
-      id={id} // Apply the id
+      id={id}
       ref={tooltipRef}
-      style={{
-        ...tooltipStyle,
-        position: 'fixed',
-        visibility: Object.keys(tooltipStyle).length ? 'visible' : 'hidden',
-        pointerEvents: 'none',
-      }}
-      className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 opacity-100 select-none`}
-      role='tooltip' // ARIA role
+      style={tooltipStyle}
+      className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 select-none pointer-events-none`}
+      role='tooltip'
     >
       {message}
     </div>
