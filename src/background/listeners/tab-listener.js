@@ -175,7 +175,7 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
     }
 
     // Update context menu with relevant prompts using the debounced function
-    debouncedUpdateContextMenuForTab(tab);
+    debouncedUpdateContextMenuForTab(tab.id);
   }
 
   // --- Platform Tab Injection Logic ---
@@ -359,7 +359,7 @@ async function handleTabActivation(activeInfo) {
       return; // Exit early, onUpdated will handle it
     }
     // Update context menu for the newly activated tab using the debounced function
-    debouncedUpdateContextMenuForTab(activatedTab);
+    debouncedUpdateContextMenuForTab(activatedTab.id);
 
     if (
       !activatedTab ||

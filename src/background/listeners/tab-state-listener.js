@@ -108,8 +108,8 @@ export async function handleUpdateSelectionStatusRequest(
       // Update the selection state in storage
       await updateTabSelectionState(sender.tab.id, message.hasSelection);
       // Crucially, now update the context menu based on the new selection state
-      if (sender.tab) {
-        debouncedUpdateContextMenuForTab(sender.tab);
+      if (sender.tab && sender.tab.id) {
+        debouncedUpdateContextMenuForTab(sender.tab.id);
       }
     }
     sendResponse({ success: true }); // Acknowledge receipt

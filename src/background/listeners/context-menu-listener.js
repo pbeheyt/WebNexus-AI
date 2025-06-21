@@ -9,11 +9,12 @@ import { loadRelevantPrompts } from '../../shared/utils/prompt-utils.js';
 import { debounce } from '../../shared/utils/debounce-utils.js';
 
 /**
- * Updates the context menu with relevant prompts for the given tab.
- * This function uses an atomic remove-and-recreate strategy to avoid state management issues.
- * @param {chrome.tabs.Tab} tab - The tab object to create the context menu for.
+ * Updates the context menu with relevant prompts for the given tab ID.
+ * This function uses an atomic remove-and-recreate strategy and fetches fresh tab data
+ * to ensure resilience against stale state from an idle service worker.
+ * @param {number} tabId - The ID of the tab to create the context menu for.
  */
-async function updateContextMenuForTab(tab) {
+async function updateContextMenuForTab(tabId) {
   // Atomically remove the parent menu and all its children.
   // Use a try-catch to handle the first run where the menu doesn't exist.
   try {
@@ -21,6 +22,9 @@ async function updateContextMenuForTab(tab) {
   } catch (e) {
     // It's safe to ignore "No such context menu item" errors here.
   }
+
+  // Fetch the latest tab data to ensure the URL is current.
+  const tab = await chrome.tabs.get(tabId);
 
   // Do not show the menu on pages where the side panel is not allowed (e.g., chrome://)
   if (!tab || !tab.id || !isSidePanelAllowedPage(tab.url)) {
@@ -71,19 +75,26 @@ async function updateContextMenuForTab(tab) {
 }
 
 /**
- * Debounced function to update the context menu for a specific tab.
+ * Debounced function to update the context menu for a specific tab ID.
  * This function will wait for 150ms after the last call before executing the update.
  * It helps to avoid multiple rapid updates that could lead to performance issues.
  */
-export const debouncedUpdateContextMenuForTab = debounce(async (tab) => {
+export const debouncedUpdateContextMenuForTab = debounce(async (tabId) => {
   // Use a try-catch block as this is an async operation that can fail
   try {
-    if (tab) {
-      // Guard to ensure tab object is valid
-      await updateContextMenuForTab(tab);
+    if (typeof tabId === 'number') {
+      // Guard to ensure tabId is a valid number
+      await updateContextMenuForTab(tabId);
     }
   } catch (error) {
-    logger.background.error('Error in debounced context menu update:', error);
+    // Ignore "No tab with id" errors, which can happen if the tab closes
+    // before the debounced function runs.
+    if (error.message && !error.message.includes('No tab with id')) {
+      logger.background.error(
+        'Error in debounced context menu update:',
+        error
+      );
+    }
   }
 }, 150); // 150ms delay
 
