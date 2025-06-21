@@ -18,7 +18,6 @@ import {
 } from '../../shared/utils/number-format-utils';
 
 function Header({
-  isExpanded,
   tokenStats,
   contextStatus,
   contentType,
@@ -37,9 +36,6 @@ function Header({
   const contextWindowRef = useRef(null);
   const costRef = useRef(null);
 
-  if (!isExpanded) {
-    return null;
-  }
 
   const {
     outputTokens = 0,

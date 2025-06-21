@@ -247,22 +247,19 @@ export default function SidePanelApp() {
 
   const handleHeaderToggle = useCallback(() => {
     setHeaderExpanded((prev) => !prev);
-    // Use a timeout to ensure the state update has been processed by React
-    // and the DOM has been updated before calculating the new height.
-    setTimeout(calculateAndSetHeight, 0);
-  }, [calculateAndSetHeight]);
+  }, []);
 
   useEffect(() => {
     if (isReady) {
-      debouncedCalculateHeight();
+      // Use a timeout to allow animations to complete before recalculating height.
+      const timerId = setTimeout(() => {
+        calculateAndSetHeight();
+      }, 350); // 300ms animation + 50ms buffer
+
+      return () => clearTimeout(timerId);
     }
-    return () => {
-      if (rafIdHeightCalc.current) {
-        cancelAnimationFrame(rafIdHeightCalc.current);
-        rafIdHeightCalc.current = null;
-      }
-    };
-  }, [isReady, headerExpanded, textSize, debouncedCalculateHeight]);
+    return undefined; // Ensure a function is always returned for cleanup
+  }, [isReady, headerExpanded, textSize, calculateAndSetHeight]);
 
   const isPageInjectable = currentTab?.url
     ? isInjectablePage(currentTab.url)
@@ -309,10 +306,12 @@ export default function SidePanelApp() {
           )}
           {/* Interactive Header Section - Conditionally rendered */}
           {currentView === 'chat' && (
-            <div
-              ref={collapsibleHeaderRef}
-              className='@container relative flex-shrink-0 z-10'
-            >
+          <div
+            ref={collapsibleHeaderRef}
+            className={`@container relative flex-shrink-0 z-10 transition-all duration-300 ease-in-out overflow-hidden ${
+              headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+            }`}
+          >
               <Header
                 isExpanded={headerExpanded}
                 tokenStats={tokenStats}

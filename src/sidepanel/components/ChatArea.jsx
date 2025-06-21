@@ -658,7 +658,10 @@ function ChatArea({
                   minPixelHeight,
                   calculatedHeight
                 );
-                dynamicStyle = { minHeight: `${finalMinHeight}px` };
+                dynamicStyle = {
+                  minHeight: `${finalMinHeight}px`,
+                  transition: 'min-height 0.3s ease-in-out',
+                };
               }
               return (
                 <MessageBubble

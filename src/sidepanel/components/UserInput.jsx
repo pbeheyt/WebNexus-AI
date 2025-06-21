@@ -42,9 +42,12 @@ export function UserInput({ className = '', requestHeightRecalculation }) {
 
   const handlePlatformControlsToggle = useCallback(
     (_newHeight) => {
-      if (typeof requestHeightRecalculation === 'function') {
-        requestHeightRecalculation();
-      }
+      // Delay recalculation to allow for collapse/expand animation to finish
+      setTimeout(() => {
+        if (typeof requestHeightRecalculation === 'function') {
+          requestHeightRecalculation();
+        }
+      }, 350); // 300ms animation + 50ms buffer
     },
     [requestHeightRecalculation]
   );
