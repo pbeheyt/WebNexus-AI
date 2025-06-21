@@ -98,6 +98,7 @@ function Header({
                       setIsContentExtractionEnabled(newCheckedState);
                   }}
                   disabled={!hasAnyPlatformCredentials}
+                  className='w-10 h-5 flex-shrink-0'
                 />
                 <Tooltip
                   show={isIncludeTooltipVisible}
