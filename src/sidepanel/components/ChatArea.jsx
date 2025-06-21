@@ -64,6 +64,23 @@ function ChatArea({
     hasAnyPlatformCredentials,
   } = useSidePanelPlatform();
 
+  const rootFontSize = useMemo(() => {
+    try {
+      const size = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      if (isNaN(size) || size <= 0) {
+        logger.sidepanel.warn(
+          `Could not parse root font size, falling back to 16px. Value was: ${getComputedStyle(document.documentElement).fontSize}`
+        );
+        return 16;
+      }
+      return size;
+    } catch (e) {
+      logger.sidepanel.error('Error getting root font size:', e);
+      return 16;
+    }
+  //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textSize]); // Recalculates only when textSize changes
+
   // --- State ---
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
   const [displayPlatformConfig, setDisplayPlatformConfig] = useState(null);
@@ -637,21 +654,6 @@ function ChatArea({
                 const offset = otherUIHeight + precedingUserMessageHeight;
                 const calculatedHeight =
                   viewportHeight - Math.max(0, offset) + 1;
-                let rootFontSize = 16;
-                try {
-                  rootFontSize = parseFloat(
-                    getComputedStyle(document.documentElement).fontSize
-                  );
-                  if (isNaN(rootFontSize) || rootFontSize <= 0) {
-                    logger.sidepanel.warn(
-                      `Could not parse root font size, falling back to 16px. Value was: ${getComputedStyle(document.documentElement).fontSize}`
-                    );
-                    rootFontSize = 16;
-                  }
-                } catch (e) {
-                  logger.sidepanel.error('Error getting root font size:', e);
-                  rootFontSize = 16;
-                }
                 const minPixelHeight =
                   MIN_ASSISTANT_BUBBLE_HEIGHT_REM * rootFontSize;
                 const finalMinHeight = Math.max(
