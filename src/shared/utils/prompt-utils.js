@@ -5,6 +5,25 @@ import { STORAGE_KEYS, CONTENT_TYPES } from '../constants';
 import { robustDeepClone } from './object-utils.js';
 
 /**
+ * Creates a new, non-customized prompt object.
+ * @param {string} name - The display name of the prompt.
+ * @param {string} defaultId - The stable default ID from the config file.
+ * @param {string} content - The content of the prompt.
+ * @returns {object} A new prompt object.
+ */
+function _createNewDefaultPrompt(name, defaultId, content) {
+  const now = new Date().toISOString();
+  return {
+    name,
+    content,
+    defaultId,
+    isCustomized: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+/**
  * Internal pure function to validate and fix default prompt IDs on a given object.
  * Does not interact with chrome.storage.
  * @param {object} promptsByType - The prompt object to validate.
@@ -58,20 +77,16 @@ export async function populateInitialPrompts() {
     const config = await response.json();
 
     const newPrompts = {};
-    const now = new Date().toISOString();
 
     for (const [contentType, prompts] of Object.entries(config)) {
       newPrompts[contentType] = {};
       for (const [name, { defaultId, content }] of Object.entries(prompts)) {
         const newId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        newPrompts[contentType][newId] = {
+        newPrompts[contentType][newId] = _createNewDefaultPrompt(
           name,
-          content,
           defaultId,
-          isCustomized: false,
-          createdAt: now,
-          updatedAt: now,
-        };
+          content
+        );
       }
     }
 
@@ -133,14 +148,11 @@ export async function syncDefaultPromptsOnUpdate() {
           }
         } else {
           const newId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-          userPrompts[contentType][newId] = {
+          userPrompts[contentType][newId] = _createNewDefaultPrompt(
             name,
-            content,
             defaultId,
-            isCustomized: false,
-            createdAt: now,
-            updatedAt: now,
-          };
+            content
+          );
           changesMade = true;
           logger.service.info(`Added new default prompt: ${name}`);
         }

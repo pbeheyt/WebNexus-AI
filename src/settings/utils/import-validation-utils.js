@@ -368,17 +368,7 @@ export function validatePromptsData(data) {
 
   const definedContentTypes = Object.values(CONTENT_TYPES);
 
-  // Check 1: All defined CONTENT_TYPES must be present as keys in the imported prompts data.
-  for (const expectedContentType of definedContentTypes) {
-    if (!Object.prototype.hasOwnProperty.call(data, expectedContentType)) {
-      return {
-        isValid: false,
-        error: `Missing required content type "${expectedContentType}" in prompts data.`,
-      };
-    }
-  }
-
-  // Check 2 & 3: Validate structure of each content type.
+  // Validate the structure of each content type present in the data.
   for (const contentTypeKey in data) {
     if (Object.prototype.hasOwnProperty.call(data, contentTypeKey)) {
       // Ensure no unknown content types are present.
