@@ -61,10 +61,10 @@ export function PromptDropdown({
           setPrompts(loadedPrompts);
 
           const storageResult = await chrome.storage.local.get(
-            STORAGE_KEYS.USER_CUSTOM_PROMPTS
+            STORAGE_KEYS.USER_PROMPTS
           );
           const customPromptsByType =
-            storageResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+            storageResult[STORAGE_KEYS.USER_PROMPTS] || {};
           const defaultId =
             customPromptsByType[contentType]?.['_defaultPromptId_'];
           setCurrentDefaultPromptId(defaultId || null);

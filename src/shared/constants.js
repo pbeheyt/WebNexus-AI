@@ -64,8 +64,8 @@ export const STORAGE_KEYS = {
   // --- Prompts & WebUI Injection State ---
   /** @description The prompt content to be auto-filled when opening an AI platform's Web UI. Local. */
   WEBUI_INJECTION_PROMPT_CONTENT: 'webui_injection_prompt_content',
-  /** @description Stores all user-created custom prompts, organized by content type. Local. */
-  USER_CUSTOM_PROMPTS: 'user_custom_prompts',
+  /** @description Stores all user prompts, organized by content type. Local. */
+  USER_PROMPTS: 'user_prompts',
 
   // --- Content Extraction State ---
   /** @description Flag indicating if content has been successfully extracted from the current page. Local. */

@@ -44,9 +44,9 @@ async function _processViaWebUI(tab, promptId = null) {
     );
 
     const promptsResult = await chrome.storage.local.get(
-      STORAGE_KEYS.USER_CUSTOM_PROMPTS
+      STORAGE_KEYS.USER_PROMPTS
     );
-    const promptsByType = promptsResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+    const promptsByType = promptsResult[STORAGE_KEYS.USER_PROMPTS] || {};
     const typeData = promptsByType[contentType] || {};
 
     let promptToUse = null;

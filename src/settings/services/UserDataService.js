@@ -113,7 +113,7 @@ class UserDataService {
             await chrome.storage.local.set({
               [storageKey]: parsedJson.data || {},
             });
-            if (storageKey === STORAGE_KEYS.USER_CUSTOM_PROMPTS) {
+            if (storageKey === STORAGE_KEYS.USER_PROMPTS) {
               await ensureDefaultPrompts();
             }
           } else {
@@ -121,7 +121,7 @@ class UserDataService {
             const { prompts, credentials, modelParametersSettings } =
               parsedJson.data;
             await chrome.storage.local.set({
-              [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: prompts || {},
+              [STORAGE_KEYS.USER_PROMPTS]: prompts || {},
               [STORAGE_KEYS.API_CREDENTIALS]: credentials || {},
               [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]:
                 modelParametersSettings || {},
@@ -152,13 +152,13 @@ class UserDataService {
 
   async exportAllSettings() {
     const keysToExport = [
-      STORAGE_KEYS.USER_CUSTOM_PROMPTS,
+      STORAGE_KEYS.USER_PROMPTS,
       STORAGE_KEYS.API_CREDENTIALS,
       STORAGE_KEYS.MODEL_PARAMETER_SETTINGS,
     ];
     const storedData = await chrome.storage.local.get(keysToExport);
     const dataBundle = {
-      prompts: storedData[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {},
+      prompts: storedData[STORAGE_KEYS.USER_PROMPTS] || {},
       credentials: storedData[STORAGE_KEYS.API_CREDENTIALS] || {},
       modelParametersSettings:
         storedData[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {},
@@ -185,7 +185,7 @@ class UserDataService {
   async importSingleSetting(storageKey, fileObject) {
     // Determine settingNameFromFileAndType based on storageKey for dataType validation
     let settingNameForType;
-    if (storageKey === STORAGE_KEYS.USER_CUSTOM_PROMPTS)
+    if (storageKey === STORAGE_KEYS.USER_PROMPTS)
       settingNameForType = 'Prompts';
     else if (storageKey === STORAGE_KEYS.API_CREDENTIALS)
       settingNameForType = 'Credentials';

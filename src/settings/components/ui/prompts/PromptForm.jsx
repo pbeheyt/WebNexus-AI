@@ -70,9 +70,9 @@ const PromptForm = ({
       }
       try {
         const result = await chrome.storage.local.get(
-          STORAGE_KEYS.USER_CUSTOM_PROMPTS
+          STORAGE_KEYS.USER_PROMPTS
         );
-        const customPrompts = result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+        const customPrompts = result[STORAGE_KEYS.USER_PROMPTS] || {};
         const typeData = customPrompts[formData.contentType] || {};
         setIsDefaultForType(typeData['_defaultPromptId_'] === prompt.id);
       } catch (err) {
@@ -122,10 +122,10 @@ const PromptForm = ({
         const { name, content, contentType } = formData;
 
         const result = await chrome.storage.local.get(
-          STORAGE_KEYS.USER_CUSTOM_PROMPTS
+          STORAGE_KEYS.USER_PROMPTS
         );
         const customPromptsByType =
-          result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+          result[STORAGE_KEYS.USER_PROMPTS] || {};
 
         if (!isEditing) {
           const typeData = customPromptsByType[contentType] || {};
@@ -183,7 +183,7 @@ const PromptForm = ({
         }
 
         await chrome.storage.local.set({
-          [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: customPromptsByType,
+          [STORAGE_KEYS.USER_PROMPTS]: customPromptsByType,
         });
         await ensureDefaultPrompts();
         onSuccess();

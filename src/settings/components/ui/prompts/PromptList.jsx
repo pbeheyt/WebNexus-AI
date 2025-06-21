@@ -29,10 +29,10 @@ const PromptList = ({
     const loadData = async () => {
       try {
         const result = await chrome.storage.local.get(
-          STORAGE_KEYS.USER_CUSTOM_PROMPTS
+          STORAGE_KEYS.USER_PROMPTS
         );
         const customPromptsByType =
-          result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
+          result[STORAGE_KEYS.USER_PROMPTS] || {};
         const uniquePromptsMap = new Map();
         const newDefaultPromptIds = {};
 
@@ -78,7 +78,7 @@ const PromptList = ({
 
     // Listen for storage changes to trigger a full reload of all prompt data
     const handleStorageChange = (changes, area) => {
-      if (area === 'local' && changes[STORAGE_KEYS.USER_CUSTOM_PROMPTS]) {
+      if (area === 'local' && changes[STORAGE_KEYS.USER_PROMPTS]) {
         logger.settings.info(
           'Custom prompts changed in storage, reloading prompt list data...'
         );

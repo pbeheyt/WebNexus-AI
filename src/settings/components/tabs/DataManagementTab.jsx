@@ -16,7 +16,7 @@ const DATA_MANAGEMENT_OPTIONS = [
   {
     id: 'prompts',
     name: 'Prompts',
-    storageKey: STORAGE_KEYS.USER_CUSTOM_PROMPTS,
+    storageKey: STORAGE_KEYS.USER_PROMPTS,
     fileTypeName: 'Prompts',
     loadingKeyBase: 'prompts',
   },
