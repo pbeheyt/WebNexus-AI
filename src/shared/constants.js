@@ -66,8 +66,6 @@ export const STORAGE_KEYS = {
   WEBUI_INJECTION_PROMPT_CONTENT: 'webui_injection_prompt_content',
   /** @description Stores all user-created custom prompts, organized by content type. Local. */
   USER_CUSTOM_PROMPTS: 'user_custom_prompts',
-  /** @description Flag indicating if initial default prompts have been populated from config. Local. */
-  INITIAL_PROMPTS_POPULATED_FLAG: 'initial_prompts_populated_flag',
 
   // --- Content Extraction State ---
   /** @description Flag indicating if content has been successfully extracted from the current page. Local. */

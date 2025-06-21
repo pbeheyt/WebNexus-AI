@@ -3,10 +3,7 @@
 import SidePanelStateManager from '../services/SidePanelStateManager.js';
 import { logger } from '../shared/logger.js';
 
-import {
-  initializeExtension,
-  populateInitialPromptsAndSetDefaults,
-} from './initialization.js';
+import { initializeExtension } from './initialization.js';
 import { setupMessageRouter } from './core/message-router.js';
 import { setupTabListener } from './listeners/tab-listener.js';
 import {
@@ -79,21 +76,9 @@ async function startBackgroundService() {
     // Set up command listener
     await setupCommandListener();
 
-    // Ensure default prompts are populated locally if needed and pointers are set on startup
-    logger.background.info(
-      'Running prompt initialization check on service worker start...'
-    );
-    try {
-      // This function now handles checking the local flag and populating defaults
-      // if necessary, then ensures default pointers are set based on local prompts.
-      await populateInitialPromptsAndSetDefaults();
-      logger.background.info('Prompt initialization check completed.');
-    } catch (initError) {
-      logger.background.error(
-        'Error during startup prompt initialization:',
-        initError
-      );
-    }
+    // Prompt initialization and synchronization is now handled entirely
+    // by the onInstalled listener in initialization.js.
+    // No action is needed here on a normal service worker startup.
 
     // This runs every time the service worker starts (initial load, wake-up, after browser start)
     // It complements the onStartup listener.

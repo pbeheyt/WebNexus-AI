@@ -1,62 +1,18 @@
-// src/background/initialization.js - Handles extension initialization
-
 import { logger } from '../shared/logger.js';
 import {
   STORAGE_KEYS,
   DEFAULT_EXTRACTION_STRATEGY,
 } from '../shared/constants.js';
 import {
-  ensureDefaultPrompts,
-  performFullPromptRepopulation,
+  populateInitialPrompts,
+  syncDefaultPromptsOnUpdate,
 } from '../shared/utils/prompt-utils.js';
 import ConfigService from '../services/ConfigService.js';
 import SidePanelStateManager from '../services/SidePanelStateManager.js';
 
 import { resetState } from './core/state-manager.js';
 
-/**
- * Populates initial prompts from prompt-config.json and sets default prompts if not already done.
- * Uses the storage structure with _defaultPromptId_ keys.
- * Relies on the performFullPromptRepopulation shared utility.
- * @returns {Promise<boolean>} True if population ran, false if already populated or failed.
- */
-async function populateInitialPromptsAndSetDefaults() {
-  const flagKey = STORAGE_KEYS.INITIAL_PROMPTS_POPULATED_FLAG;
-  try {
-    const flagResult = await chrome.storage.local.get(flagKey);
-    if (flagResult[flagKey] === true) {
-      logger.background.info(
-        'Initial prompts already populated. Ensuring defaults are still valid...'
-      );
-      await ensureDefaultPrompts(); // Still good to ensure defaults on subsequent starts.
-      return false; // Already populated
-    }
-
-    logger.background.info(
-      'Initial prompts not populated. Running full repopulation...'
-    );
-    const success = await performFullPromptRepopulation();
-
-    if (success) {
-      await chrome.storage.local.set({ [flagKey]: true });
-      logger.background.info(
-        'Set initial prompts populated flag after successful repopulation.'
-      );
-    } else {
-      logger.background.error(
-        'Full prompt repopulation failed during initial setup.'
-      );
-    }
-    // The repopulation function now handles ensuring defaults internally.
-    return success;
-  } catch (error) {
-    logger.background.error(
-      'Error in populateInitialPromptsAndSetDefaults:',
-      error
-    );
-    return false;
-  }
-}
+/* Removed old populateInitialPromptsAndSetDefaults function */
 
 /**
  * Initialize the extension's core configuration and state.
@@ -105,16 +61,30 @@ async function handleInstallation(details) {
       );
     }
 
-    // Call the main initialization function on install.
-    // It handles the flag check internally and ensures pointers are set.
+    // --- Prompt Management ---
     if (details.reason === 'install') {
-      logger.background.info(
-        'Reason is "install", running populateInitialPromptsAndSetDefaults...'
-      );
-      await populateInitialPromptsAndSetDefaults();
+      logger.background.info('Reason is "install", populating initial prompts...');
+      await populateInitialPrompts();
+
+      // --- First-Time Default Settings ---
+      logger.background.info('Setting first-time defaults...');
+      // Set default platform
+      const platformList = await ConfigService.getAllPlatformConfigs();
+      if (platformList?.length > 0) {
+        await chrome.storage.sync.set({
+          [STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID]: platformList[0].id,
+        });
+        logger.background.info(`Default popup platform set to: ${platformList[0].id}`);
+      }
+      // Set default extraction strategy
+      await chrome.storage.sync.set({
+        [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]: DEFAULT_EXTRACTION_STRATEGY,
+      });
+      logger.background.info(`Default extraction strategy set to: ${DEFAULT_EXTRACTION_STRATEGY}`);
+    } else if (details.reason === 'update') {
+      logger.background.info('Reason is "update", synchronizing default prompts...');
+      await syncDefaultPromptsOnUpdate();
     }
-    // No specific call for 'update' needed here for this logic,
-    // as ensureDefaultPrompts in startBackgroundService will handle consistency.
 
     // --- Set Default Popup Platform Preference ---
     if (details.reason === 'install') {
@@ -199,8 +169,4 @@ async function handleInstallation(details) {
 // Setup installation handler
 chrome.runtime.onInstalled.addListener(handleInstallation);
 
-export {
-  initializeExtension,
-  populateInitialPromptsAndSetDefaults,
-  handleInstallation,
-};
+export { initializeExtension, handleInstallation };
