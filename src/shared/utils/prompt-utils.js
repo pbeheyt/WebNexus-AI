@@ -7,17 +7,14 @@ import { robustDeepClone } from './object-utils.js';
 /**
  * Creates a new, non-customized prompt object.
  * @param {string} name - The display name of the prompt.
- * @param {string} defaultId - The stable default ID from the config file.
  * @param {string} content - The content of the prompt.
  * @returns {object} A new prompt object.
  */
-function _createNewDefaultPrompt(name, defaultId, content) {
+function _createNewDefaultPrompt(name, content) {
   const now = new Date().toISOString();
   return {
     name,
     content,
-    defaultId,
-    isCustomized: false,
     createdAt: now,
     updatedAt: now,
   };
@@ -80,13 +77,9 @@ export async function populateInitialPrompts() {
 
     for (const [contentType, prompts] of Object.entries(config)) {
       newPrompts[contentType] = {};
-      for (const [name, { defaultId, content }] of Object.entries(prompts)) {
+      for (const [name, { content }] of Object.entries(prompts)) {
         const newId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        newPrompts[contentType][newId] = _createNewDefaultPrompt(
-          name,
-          defaultId,
-          content
-        );
+        newPrompts[contentType][newId] = _createNewDefaultPrompt(name, content);
       }
     }
 
@@ -100,108 +93,7 @@ export async function populateInitialPrompts() {
   }
 }
 
-/**
- * Synchronizes default prompts on extension update.
- * - Adds new default prompts from config.
- * - Updates existing default prompts if they haven't been customized by the user.
- * - Preserves user's custom prompts and their customized default prompts.
- * @returns {Promise<boolean>} True if successful.
- */
-export async function syncDefaultPromptsOnUpdate() {
-  logger.service.info('Synchronizing default prompts on update...');
-  try {
-    const [configResponse, storageResult] = await Promise.all([
-      fetch(chrome.runtime.getURL('prompt-config.json')),
-      chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS),
-    ]);
 
-    if (!configResponse.ok) throw new Error(`Fetch failed: ${configResponse.statusText}`);
-    const config = await configResponse.json();
-    const userPrompts = storageResult[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-
-    const userPromptsByDefId = new Map();
-    for (const type of Object.values(userPrompts)) {
-      for (const [promptId, prompt] of Object.entries(type)) {
-        if (prompt.defaultId) {
-          userPromptsByDefId.set(prompt.defaultId, { ...prompt, originalId: promptId });
-        }
-      }
-    }
-
-    let changesMade = false;
-    const now = new Date().toISOString();
-
-    for (const [contentType, prompts] of Object.entries(config)) {
-      if (!userPrompts[contentType]) userPrompts[contentType] = {};
-      for (const [name, { defaultId, content }] of Object.entries(prompts)) {
-        const existingPrompt = userPromptsByDefId.get(defaultId);
-        if (existingPrompt) {
-          if (
-            !existingPrompt.isCustomized &&
-            (existingPrompt.name !== name || existingPrompt.content !== content)
-          ) {
-            userPrompts[contentType][existingPrompt.originalId].name = name;
-            userPrompts[contentType][existingPrompt.originalId].content = content;
-            userPrompts[contentType][existingPrompt.originalId].updatedAt = now;
-            changesMade = true;
-            logger.service.info(`Updated default prompt: ${name}`);
-          }
-        } else {
-          const newId = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-          userPrompts[contentType][newId] = _createNewDefaultPrompt(
-            name,
-            defaultId,
-            content
-          );
-          changesMade = true;
-          logger.service.info(`Added new default prompt: ${name}`);
-        }
-      }
-    }
-
-    const { prompts: validatedPrompts, changesMade: validationChanges } = _validateAndFixDefaultsOnObject(userPrompts);
-
-    if (changesMade || validationChanges) {
-      await chrome.storage.local.set({ [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: validatedPrompts });
-      logger.service.info('Prompt synchronization complete, changes saved.');
-    } else {
-      logger.service.info('No prompt changes to synchronize.');
-    }
-
-    return true;
-  } catch (error) {
-    logger.service.error('Error during prompt synchronization:', error);
-    return false;
-  }
-}
-
-/**
- * Marks a prompt as customized by the user.
- * @param {string} contentType - The content type of the prompt.
- * @param {string} promptId - The ID of the prompt to mark.
- * @returns {Promise<boolean>} True if successful.
- */
-export async function markPromptAsCustomized(contentType, promptId) {
-  logger.service.info(`Marking prompt ${promptId} as customized.`);
-  try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.USER_CUSTOM_PROMPTS);
-    const prompts = result[STORAGE_KEYS.USER_CUSTOM_PROMPTS] || {};
-    if (prompts[contentType]?.[promptId]) {
-      if (prompts[contentType][promptId].isCustomized === false) {
-        prompts[contentType][promptId].isCustomized = true;
-        prompts[contentType][promptId].updatedAt = new Date().toISOString();
-        await chrome.storage.local.set({ [STORAGE_KEYS.USER_CUSTOM_PROMPTS]: prompts });
-        logger.service.info(`Successfully marked prompt ${promptId} as customized.`);
-      }
-      return true;
-    }
-    logger.service.warn(`Prompt ${promptId} not found to mark as customized.`);
-    return false;
-  } catch (error) {
-    logger.service.error(`Error marking prompt ${promptId} as customized:`, error);
-    return false;
-  }
-}
 
 /**
  * Ensures that every content type with at least one prompt has a valid default prompt assigned.

@@ -3,10 +3,7 @@ import {
   STORAGE_KEYS,
   DEFAULT_EXTRACTION_STRATEGY,
 } from '../shared/constants.js';
-import {
-  populateInitialPrompts,
-  syncDefaultPromptsOnUpdate,
-} from '../shared/utils/prompt-utils.js';
+import { populateInitialPrompts } from '../shared/utils/prompt-utils.js';
 import ConfigService from '../services/ConfigService.js';
 import SidePanelStateManager from '../services/SidePanelStateManager.js';
 
@@ -81,9 +78,6 @@ async function handleInstallation(details) {
         [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]: DEFAULT_EXTRACTION_STRATEGY,
       });
       logger.background.info(`Default extraction strategy set to: ${DEFAULT_EXTRACTION_STRATEGY}`);
-    } else if (details.reason === 'update') {
-      logger.background.info('Reason is "update", synchronizing default prompts...');
-      await syncDefaultPromptsOnUpdate();
     }
 
     // --- Set Default Popup Platform Preference ---
