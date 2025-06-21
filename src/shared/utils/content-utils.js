@@ -67,47 +67,57 @@ export function determineContentType(url, hasSelection = false) {
 
 export function isInjectablePage(url) {
   if (!url) return false;
+
+  const forbiddenSchemes = [
+    'chrome:',
+    'about:',
+    'edge:',
+    'moz-extension:',
+    'chrome-extension:',
+  ];
+
+  const forbiddenHostnames = [
+    'chromewebstore.google.com',
+    'chrome.google.com',
+    'addons.mozilla.org',
+    'microsoftedge.microsoft.com',
+  ];
+
   try {
-    // Block injection into Chrome internal pages and other extension pages
+    const parsedUrl = new URL(url);
+
+    // 1. Check for forbidden schemes
+    if (forbiddenSchemes.includes(parsedUrl.protocol)) {
+      return false;
+    }
+
+    // 2. Check for forbidden hostnames
+    if (forbiddenHostnames.includes(parsedUrl.hostname)) {
+      return false;
+    }
+
+    // 3. Check for allowed schemes
+    const allowedSchemes = ['http:', 'https:', 'file:'];
+    if (!allowedSchemes.includes(parsedUrl.protocol)) {
+      return false;
+    }
+
+    // 4. Apply special rule for file:// URLs (only PDFs are allowed)
     if (
-      url.startsWith('chrome://') ||
-      url.startsWith('about:') ||
-      url.startsWith('edge://') ||
-      url.startsWith('moz-extension://')
+      parsedUrl.protocol === 'file:' &&
+      !parsedUrl.pathname.toLowerCase().endsWith('.pdf')
     ) {
       return false;
     }
-    // Allow http, https, and file protocols
-    if (
-      url.startsWith('http://') ||
-      url.startsWith('https://') ||
-      url.startsWith('file://')
-    ) {
-      // Additional check for file URLs - only allow PDFs for file protocol injection
-      if (url.startsWith('file://') && !url.toLowerCase().endsWith('.pdf')) {
-        return false; // Block non-PDF file URLs
-      }
-      return true;
-    }
-    // Fallback using URL object for less common but valid schemes
-    const parsedUrl = new URL(url);
-    if (['http:', 'https:', 'file:'].includes(parsedUrl.protocol)) {
-      // Additional check for file URLs
-      if (
-        parsedUrl.protocol === 'file:' &&
-        !parsedUrl.pathname.toLowerCase().endsWith('.pdf')
-      ) {
-        return false; // Block non-PDF file URLs
-      }
-      return true;
-    }
-    return false; // Block other schemes
+
+    // If all checks pass, the page is injectable
+    return true;
   } catch (e) {
     logger.service.warn(
       `URL parsing failed or non-standard scheme for injection check: ${url}`,
       e.message
     );
-    return false; // Disallow injection if URL parsing fails or scheme is unknown/disallowed
+    return false;
   }
 }
 
