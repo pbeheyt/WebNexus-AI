@@ -96,7 +96,7 @@ export function Popup() {
     isProcessingContent ||
     isProcessing;
 
-  const getTooltipMessage = () => {
+  const tooltipMessage = useMemo(() => {
     if (!isSupported) {
       return (
         <div className='text-xs text-theme-primary text-left w-full p-1.5'>
@@ -142,9 +142,7 @@ export function Popup() {
         </div>
       );
     }
-  };
-
-  const tooltipMessage = getTooltipMessage();
+  }, [isSupported, isInjectable, contentTypeLabel]);
 
   useEffect(() => {
     const messageListener = (message) => {
