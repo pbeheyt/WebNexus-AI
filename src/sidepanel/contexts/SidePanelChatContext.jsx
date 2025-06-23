@@ -72,11 +72,18 @@ export function SidePanelChatProvider({ children }) {
   // --- Core Hooks ---
   const [contextViewData, setContextViewData] = useState(null);
   const {
+    processContentViaApi,
+    isProcessing,
+    error: processingError,
+    reset: resetContentProcessing,
+  } = useContentProcessing(INTERFACE_SOURCES.SIDEPANEL);
+
+  const {
     messages,
     setMessages,
     currentChatSessionId,
     currentView,
-    createNewChat,
+    createNewChat: createNewChatFromHook,
     selectChatSession,
     deleteSelectedChatSession,
     switchToView: switchToViewFromHook,
@@ -95,13 +102,6 @@ export function SidePanelChatProvider({ children }) {
 
   const { tokenStats, calculateContextStatus, clearTokenData } =
     useTokenTracking(currentChatSessionId);
-
-  const {
-    processContentViaApi,
-    isProcessing,
-    error: processingError,
-    reset: resetContentProcessing,
-  } = useContentProcessing(INTERFACE_SOURCES.SIDEPANEL);
 
   // Refs remain in the context as they are shared between hooks/context logic
   const batchedStreamingContentRef = useRef('');
@@ -648,7 +648,7 @@ export function SidePanelChatProvider({ children }) {
         await ChatHistoryService.deleteChatSession(sessionToPotentiallyDelete);
       }
 
-      await createNewChat();
+      await createNewChatFromHook();
     } catch (error) {
       const lastError = chrome.runtime.lastError;
       if (lastError?.message?.includes('QUOTA_BYTES')) {
@@ -673,11 +673,23 @@ export function SidePanelChatProvider({ children }) {
     streamingMessageId,
     isProcessing,
     isCanceling,
-    createNewChat,
+    createNewChatFromHook,
     cancelStream,
     currentChatSessionId,
     showErrorNotification,
   ]);
+
+  const createNewChat = useCallback(async () => {
+    // Abort any active stream before creating a new chat
+    if (isProcessing && !isCanceling) {
+      logger.sidepanel.info(
+        'createNewChat: Active stream detected. Attempting to cancel before creating new chat.'
+      );
+      await cancelStream();
+    }
+    // Proceed with creating the new chat session
+    await createNewChatFromHook();
+  }, [isProcessing, isCanceling, cancelStream, createNewChatFromHook]);
 
   const clearChat = useCallback(async () => {
     if (!currentChatSessionId) return;
