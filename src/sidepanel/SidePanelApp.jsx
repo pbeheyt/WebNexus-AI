@@ -32,7 +32,7 @@ export default function SidePanelApp() {
   const { tabId, setTabId, hasAnyPlatformCredentials } = useSidePanelPlatform();
   const {
     resetCurrentTabData,
-    isRefreshing,
+    isSwitchingSession,
     tokenStats,
     contextStatus,
     isContentExtractionEnabled,
@@ -283,10 +283,10 @@ export default function SidePanelApp() {
           {/* Main App Header - Conditionally rendered */}
           {currentView !== 'context' && (
             <div ref={appHeaderRef} className='flex-shrink-0'>
-              <AppHeader
-                showRefreshButton={true}
-                onRefreshClick={resetCurrentTabData}
-                isRefreshing={isRefreshing}
+          <AppHeader
+            showRefreshButton={true}
+            onRefreshClick={resetCurrentTabData}
+            isRefreshing={isSwitchingSession}
                 isExpanded={headerExpanded}
                 onToggleHistoryView={() =>
                   currentView === 'chat'
@@ -324,12 +324,6 @@ export default function SidePanelApp() {
                 hasSelection={hasSelection}
                 className='bg-theme-primary'
               />
-            </div>
-          )}
-          {isReady && tabId && isRefreshing && (
-            <div className='absolute inset-0 bg-theme-primary/75 dark:bg-theme-primary/75 z-20 flex items-center justify-center pointer-events-auto'>
-              <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
-              <span className='sr-only'>Refreshing...</span>
             </div>
           )}
           {/* Main Content Area: Chat, History, or Context View */}

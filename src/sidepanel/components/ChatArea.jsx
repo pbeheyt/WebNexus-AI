@@ -28,6 +28,7 @@ import {
   ScrollDownIcon,
   NoCredentialsIcon,
   IconButton,
+  SpinnerIcon,
 } from '../../components';
 import { MESSAGE_ROLES } from '../../shared/constants';
 
@@ -47,6 +48,7 @@ function ChatArea({
     clearScrollToMessageId,
     modelConfigData,
     isThinkingModeEnabled,
+    isSwitchingSession,
   } = useSidePanelChat();
   const { contentType, currentTab } = useContent();
   const { textSize } = useUI();
@@ -615,6 +617,14 @@ function ChatArea({
     }
     return null;
   };
+
+  if (isSwitchingSession) {
+    return (
+      <div className='flex-1 flex items-center justify-center p-4'>
+        <SpinnerIcon className='w-8 h-8 text-theme-secondary' />
+      </div>
+    );
+  }
 
   return (
     <div className={`flex-1 flex flex-col relative ${className}`}>

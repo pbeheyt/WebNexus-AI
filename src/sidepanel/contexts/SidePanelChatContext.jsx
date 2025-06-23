@@ -63,7 +63,7 @@ export function SidePanelChatProvider({ children }) {
   const [stableTokenStats, setStableTokenStats] = useState(
     TokenManagementService._getEmptyStats()
   );
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSwitchingSession, setIsSwitchingSession] = useState(false);
   const [isThinkingModeEnabled, setIsThinkingModeEnabled] = useState(false);
 
   const previousExtractionStateRef = useRef(null);
@@ -624,7 +624,7 @@ export function SidePanelChatProvider({ children }) {
 
   const resetCurrentTabData = useCallback(async () => {
     if (tabId === null) return;
-    if (isRefreshing) return;
+    if (isSwitchingSession) return;
 
     if (
       !window.confirm(
@@ -634,7 +634,13 @@ export function SidePanelChatProvider({ children }) {
       return;
     }
 
-    setIsRefreshing(true);
+    setIsSwitchingSession(true);
+    // Optimistically clear the UI
+    setMessages([]);
+    if (typeof clearTokenData === 'function') {
+      await clearTokenData(currentChatSessionId);
+    }
+
     logger.sidepanel.info(
       `SidePanelChatContext: resetCurrentTabData for tab ${tabId}`
     );
@@ -665,11 +671,11 @@ export function SidePanelChatProvider({ children }) {
         );
       }
     } finally {
-      setIsRefreshing(false);
+      setIsSwitchingSession(false);
     }
   }, [
     tabId,
-    isRefreshing,
+    isSwitchingSession,
     streamingMessageId,
     isProcessing,
     isCanceling,
@@ -677,19 +683,47 @@ export function SidePanelChatProvider({ children }) {
     cancelStream,
     currentChatSessionId,
     showErrorNotification,
+    setMessages,
+    clearTokenData,
   ]);
 
   const createNewChat = useCallback(async () => {
-    // Abort any active stream before creating a new chat
-    if (isProcessing && !isCanceling) {
-      logger.sidepanel.info(
-        'createNewChat: Active stream detected. Attempting to cancel before creating new chat.'
-      );
-      await cancelStream();
+    if (isSwitchingSession) return;
+
+    setIsSwitchingSession(true);
+    // Optimistically clear the UI
+    setMessages([]);
+    if (typeof clearTokenData === 'function') {
+      await clearTokenData(currentChatSessionId);
     }
-    // Proceed with creating the new chat session
-    await createNewChatFromHook();
-  }, [isProcessing, isCanceling, cancelStream, createNewChatFromHook]);
+
+    try {
+      // Abort any active stream before creating a new chat
+      if (isProcessing && !isCanceling) {
+        logger.sidepanel.info(
+          'createNewChat: Active stream detected. Attempting to cancel before creating new chat.'
+        );
+        await cancelStream();
+      }
+      // Proceed with creating the new chat session
+      await createNewChatFromHook();
+    } catch (error) {
+      logger.sidepanel.error('Error during createNewChat:', error);
+      showErrorNotification('Failed to create a new chat session.');
+    } finally {
+      setIsSwitchingSession(false);
+    }
+  }, [
+    isProcessing,
+    isCanceling,
+    cancelStream,
+    createNewChatFromHook,
+    isSwitchingSession,
+    setMessages,
+    clearTokenData,
+    currentChatSessionId,
+    showErrorNotification,
+  ]);
 
   const clearChat = useCallback(async () => {
     if (!currentChatSessionId) return;
@@ -841,7 +875,7 @@ export function SidePanelChatProvider({ children }) {
         modelConfigData: stableModelConfigData,
         isProcessing,
         isCanceling,
-        isRefreshing,
+        isSwitchingSession,
         apiError: processingError,
         contentType,
         tokenStats: stableTokenStats,
