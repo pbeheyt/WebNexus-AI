@@ -15,19 +15,30 @@ import { debounce } from '../../shared/utils/debounce-utils.js';
  * @param {number} tabId - The ID of the tab to create the context menu for.
  */
 async function updateContextMenuForTab(tabId) {
+  logger.background.info(
+    `[ContextMenu] Starting update for tabId: ${tabId}`
+  );
   // Atomically remove the parent menu and all its children.
   // Use a try-catch to handle the first run where the menu doesn't exist.
   try {
     await chrome.contextMenus.remove('parent-menu');
+    logger.background.info('[ContextMenu] Successfully removed old parent menu.');
   } catch (e) {
     // It's safe to ignore "No such context menu item" errors here.
+    logger.background.info(
+      '[ContextMenu] Old parent menu did not exist, proceeding to create.'
+    );
   }
 
   // Fetch the latest tab data to ensure the URL is current.
   const tab = await chrome.tabs.get(tabId);
+  logger.background.info(`[ContextMenu] Fetched tab data. URL: ${tab.url}`);
 
   // Do not show the menu on pages where the side panel is not allowed (e.g., chrome://)
   if (!tab || !tab.id || !isSidePanelAllowedPage(tab.url)) {
+    logger.background.info(
+      `[ContextMenu] Skipping menu creation for restricted URL: ${tab.url}`
+    );
     // By not recreating the menu, it remains hidden.
     return;
   }
@@ -37,11 +48,15 @@ async function updateContextMenuForTab(tabId) {
   );
   const hasSelection = !!(selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] ||
     {})[tab.id];
+  logger.background.info(`[ContextMenu] Text selection state: ${hasSelection}`);
+
   const contentType = determineContentType(tab.url, hasSelection);
+  logger.background.info(`[ContextMenu] Determined content type: ${contentType}`);
 
   // Generate a dynamic title based on the content type
   const label = CONTENT_TYPE_LABELS[contentType] || 'Content';
   const dynamicTitle = `Process ${label} (Web UI)`;
+  logger.background.info(`[ContextMenu] Generated dynamic title: "${dynamicTitle}"`);
 
   // Recreate the parent menu item with the dynamic title.
   await chrome.contextMenus.create({
@@ -49,8 +64,12 @@ async function updateContextMenuForTab(tabId) {
     title: dynamicTitle,
     contexts: ['page', 'selection'],
   });
+  logger.background.info('[ContextMenu] Parent menu item created successfully.');
 
   const prompts = await loadRelevantPrompts(contentType);
+  logger.background.info(
+    `[ContextMenu] Found ${prompts.length} relevant prompts for type: ${contentType}.`
+  );
 
   if (prompts.length > 0) {
     for (const prompt of prompts) {
@@ -72,6 +91,9 @@ async function updateContextMenuForTab(tabId) {
       contexts: ['page', 'selection'],
     });
   }
+  logger.background.info(
+    `[ContextMenu] Finished updating menu for tabId: ${tabId}`
+  );
 }
 
 /**
