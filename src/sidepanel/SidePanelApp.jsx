@@ -308,7 +308,7 @@ export default function SidePanelApp() {
           {currentView === 'chat' && (
           <div
             ref={collapsibleHeaderRef}
-            className={`@container relative flex-shrink-0 z-10 transition-all duration-300 ease-in-out overflow-hidden ${
+            className={`@container relative flex-shrink-0 z-10 transition-all duration-300 ease-in-out ${
               headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
             }`}
           >
