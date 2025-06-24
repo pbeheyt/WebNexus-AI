@@ -10,7 +10,10 @@ import {
   setupTabStateListener,
   performStaleTabCleanup,
 } from './listeners/tab-state-listener.js';
-import { setupContextMenuListener } from './listeners/context-menu-listener.js';
+import {
+  setupContextMenuListener,
+  updateContextMenuForTab,
+} from './listeners/context-menu-listener.js';
 import { processWithDefaultPromptWebUI } from './services/content-processing.js';
 
 /**
@@ -66,9 +69,6 @@ async function startBackgroundService() {
         lastFocusedWindow: true,
       });
       if (initialTab && initialTab.id) {
-        const {
-          updateContextMenuForTab,
-        } = require('./listeners/context-menu-listener.js');
         await updateContextMenuForTab(initialTab.id);
         logger.background.info(
           `Initial context menu set for tab ${initialTab.id}`

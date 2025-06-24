@@ -8,6 +8,8 @@ import {
 import { loadRelevantPrompts } from '../../shared/utils/prompt-utils.js';
 import { debounce } from '../../shared/utils/debounce-utils.js';
 
+const PARENT_CONTEXT_MENU_ID = 'parent-menu';
+
 /**
  * Updates the context menu with relevant prompts for the given tab ID.
  * This function uses an atomic remove-and-recreate strategy and fetches fresh tab data
@@ -21,7 +23,7 @@ export async function updateContextMenuForTab(tabId) {
   // Atomically remove the parent menu and all its children.
   // Use a try-catch to handle the first run where the menu doesn't exist.
   try {
-    await chrome.contextMenus.remove('parent-menu');
+    await chrome.contextMenus.remove(PARENT_CONTEXT_MENU_ID);
     logger.background.info('[ContextMenu] Successfully removed old parent menu.');
   } catch (e) {
     // It's safe to ignore "No such context menu item" errors here.
@@ -60,7 +62,7 @@ export async function updateContextMenuForTab(tabId) {
 
   // Recreate the parent menu item with the dynamic title.
   await chrome.contextMenus.create({
-    id: 'parent-menu',
+    id: PARENT_CONTEXT_MENU_ID,
     title: dynamicTitle,
     contexts: ['page', 'selection'],
   });
@@ -77,7 +79,7 @@ export async function updateContextMenuForTab(tabId) {
       await chrome.contextMenus.create({
         id: `prompt-item-${prompt.id}`,
         title: prompt.name,
-        parentId: 'parent-menu',
+        parentId: PARENT_CONTEXT_MENU_ID,
         contexts: ['page', 'selection'],
       });
     }
@@ -87,7 +89,7 @@ export async function updateContextMenuForTab(tabId) {
       id: 'no-prompts-item',
       title: 'No prompts for this content type',
       enabled: false,
-      parentId: 'parent-menu',
+      parentId: PARENT_CONTEXT_MENU_ID,
       contexts: ['page', 'selection'],
     });
   }
