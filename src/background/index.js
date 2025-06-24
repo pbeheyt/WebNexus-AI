@@ -59,6 +59,25 @@ async function startBackgroundService() {
     // 1. Initialize extension configuration and state
     await initializeExtension();
 
+    // Set the initial context menu for the currently active tab on startup
+    try {
+      const [initialTab] = await chrome.tabs.query({
+        active: true,
+        lastFocusedWindow: true,
+      });
+      if (initialTab && initialTab.id) {
+        const {
+          updateContextMenuForTab,
+        } = require('./listeners/context-menu-listener.js');
+        await updateContextMenuForTab(initialTab.id);
+        logger.background.info(
+          `Initial context menu set for tab ${initialTab.id}`
+        );
+      }
+    } catch (error) {
+      logger.background.error('Error setting initial context menu:', error);
+    }
+
     // Inject the selection listener on startup to handle existing tabs
     await injectSelectionListenerIntoExistingTabs();
 

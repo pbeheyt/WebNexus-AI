@@ -43,12 +43,47 @@ import {
  */
 export function setupTabListener() {
   chrome.tabs.onUpdated.addListener(handleTabUpdate);
-  chrome.tabs.onActivated.addListener(handleTabActivation); // Add activation listener
-  chrome.tabs.onCreated.addListener(handleTabCreation); // Add creation listener
-  chrome.tabs.onRemoved.addListener(handleTabRemoval); // Add removal listener
+  chrome.tabs.onActivated.addListener(handleTabActivation);
+  chrome.tabs.onCreated.addListener(handleTabCreation);
+  chrome.tabs.onRemoved.addListener(handleTabRemoval);
+
+  // Add a listener for when the user switches focus between windows.
+  // This is crucial for keeping the context menu up-to-date in a multi-window environment.
+  chrome.windows.onFocusChanged.addListener(async (windowId) => {
+    // When focus is lost (e.g., to the desktop), windowId can be -1.
+    if (windowId === chrome.windows.WINDOW_ID_NONE) {
+      return;
+    }
+    try {
+      // Find the active tab in the newly focused window.
+      const [activeTab] = await chrome.tabs.query({
+        active: true,
+        windowId: windowId,
+      });
+      if (activeTab && activeTab.id) {
+        // Immediately update the context menu for this tab.
+        // We use the direct (non-debounced) function for responsiveness.
+        await updateContextMenuForTab(activeTab.id);
+      }
+    } catch (error) {
+      // Ignore errors if the window or tab is no longer available.
+      if (
+        error.message.includes('No window with id') ||
+        error.message.includes('No tab with id')
+      ) {
+        // Expected if a window is closed quickly.
+      } else {
+        logger.background.error(
+          'Error updating context menu on window focus changed:',
+          error
+        );
+      }
+    }
+  });
+
   logger.background.info(
-    'Tab update, activation, creation, and removal listeners initialized'
-  ); // Update log message
+    'Tab (update, activation, creation, removal) and window (focus) listeners initialized.'
+  );
 }
 
 /**
