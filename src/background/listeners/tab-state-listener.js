@@ -5,7 +5,7 @@ import ChatHistoryService from '../../sidepanel/services/ChatHistoryService.js';
 import { logger } from '../../shared/logger.js';
 import { STORAGE_KEYS } from '../../shared/constants';
 
-import { debouncedUpdateContextMenuForTab } from './context-menu-listener.js';
+import { updateContextMenuForTab } from './context-menu-listener.js';
 
 /**
  * Resets the UI state for a single tab, effectively preparing it for a new chat session.
@@ -105,11 +105,23 @@ export async function handleUpdateSelectionStatusRequest(
 ) {
   try {
     if (sender.tab && sender.tab.id) {
+      const tabId = sender.tab.id;
       // Update the selection state in storage
-      await updateTabSelectionState(sender.tab.id, message.hasSelection);
-      // Crucially, now update the context menu based on the new selection state
-      if (sender.tab && sender.tab.id) {
-        debouncedUpdateContextMenuForTab(sender.tab.id);
+      await updateTabSelectionState(tabId, message.hasSelection);
+
+      // Crucially, now update the context menu *immediately* based on the new selection state.
+      // Using the direct function avoids the debounce delay, making the UI more responsive.
+      try {
+        await updateContextMenuForTab(tabId);
+      } catch (error) {
+        // Ignore "No tab with id" errors, which can happen if the tab closes
+        // before this async function completes.
+        if (error.message && !error.message.includes('No tab with id')) {
+          logger.background.error(
+            'Error in direct context menu update during selection change:',
+            error
+          );
+        }
       }
     }
     sendResponse({ success: true }); // Acknowledge receipt

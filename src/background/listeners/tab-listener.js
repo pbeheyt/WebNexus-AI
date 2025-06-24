@@ -33,7 +33,10 @@ import {
   isInjectablePage,
 } from '../../shared/utils/content-utils.js';
 
-import { debouncedUpdateContextMenuForTab } from './context-menu-listener.js';
+import {
+  debouncedUpdateContextMenuForTab,
+  updateContextMenuForTab,
+} from './context-menu-listener.js';
 
 /**
  * Set up tab update and activation listeners
@@ -358,8 +361,19 @@ async function handleTabActivation(activeInfo) {
       );
       return; // Exit early, onUpdated will handle it
     }
-    // Update context menu for the newly activated tab using the debounced function
-    debouncedUpdateContextMenuForTab(activatedTab.id);
+// Update context menu for the newly activated tab using the direct function for immediate feedback
+    try {
+      await updateContextMenuForTab(activatedTab.id);
+    } catch (error) {
+      // Ignore "No tab with id" errors, which can happen if the tab closes
+      // before this async function completes.
+      if (error.message && !error.message.includes('No tab with id')) {
+        logger.background.error(
+          'Error in direct context menu update during activation:',
+          error
+        );
+      }
+    }
 
     if (
       !activatedTab ||

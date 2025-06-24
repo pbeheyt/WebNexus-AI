@@ -14,7 +14,7 @@ import { debounce } from '../../shared/utils/debounce-utils.js';
  * to ensure resilience against stale state from an idle service worker.
  * @param {number} tabId - The ID of the tab to create the context menu for.
  */
-async function updateContextMenuForTab(tabId) {
+export async function updateContextMenuForTab(tabId) {
   logger.background.info(
     `[ContextMenu] Starting update for tabId: ${tabId}`
   );

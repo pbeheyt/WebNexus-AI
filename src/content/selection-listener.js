@@ -39,7 +39,7 @@ if (window.webNexusAISelectionListenerInitialized) {
   };
 
   // Debounce the handler to avoid flooding the background script with messages during rapid selections.
-  const debouncedSelectionChangeHandler = debounce(handleSelectionChange, 250);
+  const debouncedSelectionChangeHandler = debounce(handleSelectionChange, 150);
 
   // Listen for selection changes on the document.
   document.addEventListener('selectionchange', debouncedSelectionChangeHandler);
