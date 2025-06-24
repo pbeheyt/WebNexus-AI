@@ -1,9 +1,4 @@
-import React, {
-  forwardRef,
-  useEffect,
-  useRef,
-  useCallback,
-} from 'react';
+import React, { forwardRef, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 /**
@@ -26,11 +21,11 @@ export const TextArea = forwardRef(
       id,
       ...props
     },
-        ref
-      ) => {
-        const textareaRef = useRef(null);
-    
-        // Pure validation function: returns error message or null, doesn't set state.
+    ref
+  ) => {
+    const textareaRef = useRef(null);
+
+    // Pure validation function: returns error message or null, doesn't set state.
     const validate = useCallback(
       (currentValue) => {
         let errorMessage = null;
@@ -50,16 +45,16 @@ export const TextArea = forwardRef(
     };
 
     // Report validity to parent on every value change, without showing visual error.
-        useEffect(() => {
-          const errorMessage = validate(value || '');
-          onValidation(!errorMessage);
-        }, [value, validate, onValidation]);
-    
-        const handleChange = (e) => {
-          if (onChange) {
-            onChange(e);
-          }
-        };
+    useEffect(() => {
+      const errorMessage = validate(value || '');
+      onValidation(!errorMessage);
+    }, [value, validate, onValidation]);
+
+    const handleChange = (e) => {
+      if (onChange) {
+        onChange(e);
+      }
+    };
 
     // Auto-resize functionality
     useEffect(() => {
@@ -85,25 +80,25 @@ export const TextArea = forwardRef(
         element.setSelectionRange(length, length);
         element.focus();
       }
-        }, [focusAtEnd, value]);
-    
-        const combinedClasses =
-          `w-full p-3 outline-none text-theme-primary resize-none ${className}`.trim();
-    
-        return (
-          <div className={`w-full ${wrapperClassName}`}>
-            <textarea
-              ref={combinedRef}
-              id={id}
-              value={value}
-              onChange={handleChange}
-              placeholder={placeholder}
-              maxLength={maxLength}
-              className={combinedClasses}
-              style={style}
-              {...props}
-            />
-          </div>
+    }, [focusAtEnd, value]);
+
+    const combinedClasses =
+      `w-full p-3 outline-none text-theme-primary resize-none ${className}`.trim();
+
+    return (
+      <div className={`w-full ${wrapperClassName}`}>
+        <textarea
+          ref={combinedRef}
+          id={id}
+          value={value}
+          onChange={handleChange}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          className={combinedClasses}
+          style={style}
+          {...props}
+        />
+      </div>
     );
   }
 );

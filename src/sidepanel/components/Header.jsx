@@ -36,7 +36,6 @@ function Header({
   const contextWindowRef = useRef(null);
   const costRef = useRef(null);
 
-
   const {
     outputTokens = 0,
     accumulatedCost = 0,

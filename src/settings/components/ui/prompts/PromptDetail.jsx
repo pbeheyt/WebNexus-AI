@@ -36,11 +36,8 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
 
     setIsDeletingActual(true);
     try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.USER_PROMPTS
-      );
-      const customPromptsByType =
-        result[STORAGE_KEYS.USER_PROMPTS] || {};
+      const result = await chrome.storage.local.get(STORAGE_KEYS.USER_PROMPTS);
+      const customPromptsByType = result[STORAGE_KEYS.USER_PROMPTS] || {};
 
       const typeData = customPromptsByType[prompt.contentType] || {};
       const isCurrentDefault = typeData['_defaultPromptId_'] === prompt.id;
@@ -146,9 +143,7 @@ const PromptDetail = ({ prompt, onEdit, onDelete }) => {
     }
     setIsSettingDefaultActual(true);
     try {
-      const result = await chrome.storage.local.get(
-        STORAGE_KEYS.USER_PROMPTS
-      );
+      const result = await chrome.storage.local.get(STORAGE_KEYS.USER_PROMPTS);
       const customPrompts = result[STORAGE_KEYS.USER_PROMPTS] || {};
 
       if (!customPrompts[prompt.contentType]) {

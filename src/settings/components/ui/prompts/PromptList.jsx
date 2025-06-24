@@ -31,8 +31,7 @@ const PromptList = ({
         const result = await chrome.storage.local.get(
           STORAGE_KEYS.USER_PROMPTS
         );
-        const customPromptsByType =
-          result[STORAGE_KEYS.USER_PROMPTS] || {};
+        const customPromptsByType = result[STORAGE_KEYS.USER_PROMPTS] || {};
         const uniquePromptsMap = new Map();
         const newDefaultPromptIds = {};
 

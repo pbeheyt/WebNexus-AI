@@ -396,7 +396,7 @@ async function handleTabActivation(activeInfo) {
       );
       return; // Exit early, onUpdated will handle it
     }
-// Update context menu for the newly activated tab using the direct function for immediate feedback
+    // Update context menu for the newly activated tab using the direct function for immediate feedback
     try {
       await updateContextMenuForTab(activatedTab.id);
     } catch (error) {

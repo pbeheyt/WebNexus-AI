@@ -283,10 +283,10 @@ export default function SidePanelApp() {
           {/* Main App Header - Conditionally rendered */}
           {currentView !== 'context' && (
             <div ref={appHeaderRef} className='flex-shrink-0'>
-          <AppHeader
-            showRefreshButton={true}
-            onRefreshClick={resetCurrentTabData}
-            isRefreshing={isSwitchingSession}
+              <AppHeader
+                showRefreshButton={true}
+                onRefreshClick={resetCurrentTabData}
+                isRefreshing={isSwitchingSession}
                 isExpanded={headerExpanded}
                 onToggleHistoryView={() =>
                   currentView === 'chat'
@@ -306,12 +306,12 @@ export default function SidePanelApp() {
           )}
           {/* Interactive Header Section - Conditionally rendered */}
           {currentView === 'chat' && (
-          <div
-            ref={collapsibleHeaderRef}
-            className={`@container relative flex-shrink-0 z-10 transition-all duration-300 ease-in-out ${
-              headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-            }`}
-          >
+            <div
+              ref={collapsibleHeaderRef}
+              className={`@container relative flex-shrink-0 z-10 transition-all duration-300 ease-in-out ${
+                headerExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
               <Header
                 isExpanded={headerExpanded}
                 tokenStats={tokenStats}

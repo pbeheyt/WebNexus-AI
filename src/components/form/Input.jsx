@@ -19,9 +19,9 @@ export const Input = forwardRef(
       endContent = null,
       ...restProps
     },
-        ref
-      ) => {
-        // Pure validation function: returns error message or null, doesn't set state.
+    ref
+  ) => {
+    // Pure validation function: returns error message or null, doesn't set state.
     const validate = useCallback(
       (currentValue) => {
         let errorMessage = null;
@@ -37,46 +37,46 @@ export const Input = forwardRef(
 
     // Report validity to parent on every value change, without showing visual error.
     // This allows parent form to enable/disable save buttons correctly.
-        useEffect(() => {
-          const errorMessage = validate(value || '');
-          onValidation(!errorMessage);
-        }, [value, validate, onValidation]);
-    
-        const handleChange = (e) => {
-          if (onChange) {
-            onChange(e);
-          }
-        };
-    
-        const baseClasses = 'w-full p-3 outline-none text-theme-primary';
-        const paddingClasses = endContent ? 'pr-12' : '';
-        const combinedClasses =
-          `${baseClasses} ${paddingClasses} ${className}`.trim();
+    useEffect(() => {
+      const errorMessage = validate(value || '');
+      onValidation(!errorMessage);
+    }, [value, validate, onValidation]);
+
+    const handleChange = (e) => {
+      if (onChange) {
+        onChange(e);
+      }
+    };
+
+    const baseClasses = 'w-full p-3 outline-none text-theme-primary';
+    const paddingClasses = endContent ? 'pr-12' : '';
+    const combinedClasses =
+      `${baseClasses} ${paddingClasses} ${className}`.trim();
 
     return (
       <div>
         <div className='relative w-full'>
-              <input
-                ref={ref}
-                type={type}
-                id={id}
-                name={name}
-                value={value}
-                onChange={handleChange}
-                placeholder={placeholder}
-                maxLength={maxLength}
-                disabled={disabled}
-                className={combinedClasses}
-                style={style}
-                {...restProps}
-              />
-              {endContent && (
-                <div className='absolute inset-y-0 right-0 flex items-center pr-2'>
-                  {endContent}
-                </div>
-              )}
+          <input
+            ref={ref}
+            type={type}
+            id={id}
+            name={name}
+            value={value}
+            onChange={handleChange}
+            placeholder={placeholder}
+            maxLength={maxLength}
+            disabled={disabled}
+            className={combinedClasses}
+            style={style}
+            {...restProps}
+          />
+          {endContent && (
+            <div className='absolute inset-y-0 right-0 flex items-center pr-2'>
+              {endContent}
             </div>
-          </div>
+          )}
+        </div>
+      </div>
     );
   }
 );

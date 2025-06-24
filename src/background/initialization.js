@@ -60,7 +60,9 @@ async function handleInstallation(details) {
 
     // --- Prompt Management ---
     if (details.reason === 'install') {
-      logger.background.info('Reason is "install", populating initial prompts...');
+      logger.background.info(
+        'Reason is "install", populating initial prompts...'
+      );
       await populateInitialPrompts();
 
       // --- First-Time Default Settings ---
@@ -71,13 +73,18 @@ async function handleInstallation(details) {
         await chrome.storage.sync.set({
           [STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID]: platformList[0].id,
         });
-        logger.background.info(`Default popup platform set to: ${platformList[0].id}`);
+        logger.background.info(
+          `Default popup platform set to: ${platformList[0].id}`
+        );
       }
       // Set default extraction strategy
       await chrome.storage.sync.set({
-        [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]: DEFAULT_EXTRACTION_STRATEGY,
+        [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]:
+          DEFAULT_EXTRACTION_STRATEGY,
       });
-      logger.background.info(`Default extraction strategy set to: ${DEFAULT_EXTRACTION_STRATEGY}`);
+      logger.background.info(
+        `Default extraction strategy set to: ${DEFAULT_EXTRACTION_STRATEGY}`
+      );
     }
 
     // --- Set Default Popup Platform Preference ---

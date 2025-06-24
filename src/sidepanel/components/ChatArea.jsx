@@ -68,7 +68,9 @@ function ChatArea({
 
   const rootFontSize = useMemo(() => {
     try {
-      const size = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const size = parseFloat(
+        getComputedStyle(document.documentElement).fontSize
+      );
       if (isNaN(size) || size <= 0) {
         logger.sidepanel.warn(
           `Could not parse root font size, falling back to 16px. Value was: ${getComputedStyle(document.documentElement).fontSize}`
@@ -80,7 +82,7 @@ function ChatArea({
       logger.sidepanel.error('Error getting root font size:', e);
       return 16;
     }
-  //eslint-disable-next-line react-hooks/exhaustive-deps
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textSize]); // Recalculates only when textSize changes
 
   // --- State ---

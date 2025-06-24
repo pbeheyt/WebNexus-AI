@@ -17,14 +17,14 @@ const PARENT_CONTEXT_MENU_ID = 'parent-menu';
  * @param {number} tabId - The ID of the tab to create the context menu for.
  */
 export async function updateContextMenuForTab(tabId) {
-  logger.background.info(
-    `[ContextMenu] Starting update for tabId: ${tabId}`
-  );
+  logger.background.info(`[ContextMenu] Starting update for tabId: ${tabId}`);
   // Atomically remove the parent menu and all its children.
   // Use a try-catch to handle the first run where the menu doesn't exist.
   try {
     await chrome.contextMenus.remove(PARENT_CONTEXT_MENU_ID);
-    logger.background.info('[ContextMenu] Successfully removed old parent menu.');
+    logger.background.info(
+      '[ContextMenu] Successfully removed old parent menu.'
+    );
   } catch (e) {
     // It's safe to ignore "No such context menu item" errors here.
     logger.background.info(
@@ -53,12 +53,16 @@ export async function updateContextMenuForTab(tabId) {
   logger.background.info(`[ContextMenu] Text selection state: ${hasSelection}`);
 
   const contentType = determineContentType(tab.url, hasSelection);
-  logger.background.info(`[ContextMenu] Determined content type: ${contentType}`);
+  logger.background.info(
+    `[ContextMenu] Determined content type: ${contentType}`
+  );
 
   // Generate a dynamic title based on the content type
   const label = CONTENT_TYPE_LABELS[contentType] || 'Content';
   const dynamicTitle = `Process ${label} (Web UI)`;
-  logger.background.info(`[ContextMenu] Generated dynamic title: "${dynamicTitle}"`);
+  logger.background.info(
+    `[ContextMenu] Generated dynamic title: "${dynamicTitle}"`
+  );
 
   // Recreate the parent menu item with the dynamic title.
   await chrome.contextMenus.create({
@@ -66,7 +70,9 @@ export async function updateContextMenuForTab(tabId) {
     title: dynamicTitle,
     contexts: ['page', 'selection'],
   });
-  logger.background.info('[ContextMenu] Parent menu item created successfully.');
+  logger.background.info(
+    '[ContextMenu] Parent menu item created successfully.'
+  );
 
   const prompts = await loadRelevantPrompts(contentType);
   logger.background.info(
@@ -114,10 +120,7 @@ export const debouncedUpdateContextMenuForTab = debounce(async (tabId) => {
     // Ignore "No tab with id" errors, which can happen if the tab closes
     // before the debounced function runs.
     if (error.message && !error.message.includes('No tab with id')) {
-      logger.background.error(
-        'Error in debounced context menu update:',
-        error
-      );
+      logger.background.error('Error in debounced context menu update:', error);
     }
   }
 }, 150); // 150ms delay

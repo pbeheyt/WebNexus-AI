@@ -198,7 +198,9 @@ class UserDataService {
   }
 
   async _resetPrompts() {
-    logger.service.info('Resetting all prompts by re-running initial population...');
+    logger.service.info(
+      'Resetting all prompts by re-running initial population...'
+    );
     try {
       // Call the new initial population function which overwrites existing prompts.
       const success = await populateInitialPrompts();
