@@ -10,98 +10,117 @@ import { debounce } from '../../shared/utils/debounce-utils.js';
 
 const PARENT_CONTEXT_MENU_ID = 'parent-menu';
 
+// Lock to prevent concurrent context menu updates from causing race conditions.
+let isContextMenuUpdating = false;
+
 /**
  * Updates the context menu with relevant prompts for the given tab ID.
  * This function uses an atomic remove-and-recreate strategy and fetches fresh tab data
  * to ensure resilience against stale state from an idle service worker.
+ * It includes a lock to prevent race conditions from concurrent calls.
  * @param {number} tabId - The ID of the tab to create the context menu for.
  */
 export async function updateContextMenuForTab(tabId) {
-  logger.background.info(`[ContextMenu] Starting update for tabId: ${tabId}`);
-  // Atomically remove the parent menu and all its children.
-  // Use a try-catch to handle the first run where the menu doesn't exist.
-  try {
-    await chrome.contextMenus.remove(PARENT_CONTEXT_MENU_ID);
+  if (isContextMenuUpdating) {
     logger.background.info(
-      '[ContextMenu] Successfully removed old parent menu.'
+      `[ContextMenu] Update already in progress for tabId: ${tabId}. Skipping.`
     );
-  } catch (e) {
-    // It's safe to ignore "No such context menu item" errors here.
-    logger.background.info(
-      '[ContextMenu] Old parent menu did not exist, proceeding to create.'
-    );
-  }
-
-  // Fetch the latest tab data to ensure the URL is current.
-  const tab = await chrome.tabs.get(tabId);
-  logger.background.info(`[ContextMenu] Fetched tab data. URL: ${tab.url}`);
-
-  // Do not show the menu on pages where the side panel is not allowed (e.g., chrome://)
-  if (!tab || !tab.id || !isSidePanelAllowedPage(tab.url)) {
-    logger.background.info(
-      `[ContextMenu] Skipping menu creation for restricted URL: ${tab.url}`
-    );
-    // By not recreating the menu, it remains hidden.
     return;
   }
+  isContextMenuUpdating = true;
+  logger.background.info(`[ContextMenu] Starting update for tabId: ${tabId}`);
 
-  const selectionResult = await chrome.storage.local.get(
-    STORAGE_KEYS.TAB_SELECTION_STATES
-  );
-  const hasSelection = !!(selectionResult[STORAGE_KEYS.TAB_SELECTION_STATES] ||
-    {})[tab.id];
-  logger.background.info(`[ContextMenu] Text selection state: ${hasSelection}`);
+  try {
+    // Atomically remove the parent menu and all its children.
+    // Use a try-catch to handle the first run where the menu doesn't exist.
+    try {
+      await chrome.contextMenus.remove(PARENT_CONTEXT_MENU_ID);
+      logger.background.info(
+        '[ContextMenu] Successfully removed old parent menu.'
+      );
+    } catch (e) {
+      // It's safe to ignore "No such context menu item" errors here.
+      logger.background.info(
+        '[ContextMenu] Old parent menu did not exist, proceeding to create.'
+      );
+    }
 
-  const contentType = determineContentType(tab.url, hasSelection);
-  logger.background.info(
-    `[ContextMenu] Determined content type: ${contentType}`
-  );
+    // Fetch the latest tab data to ensure the URL is current.
+    const tab = await chrome.tabs.get(tabId);
+    logger.background.info(`[ContextMenu] Fetched tab data. URL: ${tab.url}`);
 
-  // Generate a dynamic title based on the content type
-  const label = CONTENT_TYPE_LABELS[contentType] || 'Content';
-  const dynamicTitle = `Process ${label} (Web UI)`;
-  logger.background.info(
-    `[ContextMenu] Generated dynamic title: "${dynamicTitle}"`
-  );
+    // Do not show the menu on pages where the side panel is not allowed (e.g., chrome://)
+    if (!tab || !tab.id || !isSidePanelAllowedPage(tab.url)) {
+      logger.background.info(
+        `[ContextMenu] Skipping menu creation for restricted URL: ${tab.url}`
+      );
+      // By not recreating the menu, it remains hidden.
+      return;
+    }
 
-  // Recreate the parent menu item with the dynamic title.
-  await chrome.contextMenus.create({
-    id: PARENT_CONTEXT_MENU_ID,
-    title: dynamicTitle,
-    contexts: ['page', 'selection'],
-  });
-  logger.background.info(
-    '[ContextMenu] Parent menu item created successfully.'
-  );
+    const selectionResult = await chrome.storage.local.get(
+      STORAGE_KEYS.TAB_SELECTION_STATES
+    );
+    const hasSelection = !!(selectionResult[
+      STORAGE_KEYS.TAB_SELECTION_STATES
+    ] || {})[tab.id];
+    logger.background.info(
+      `[ContextMenu] Text selection state: ${hasSelection}`
+    );
 
-  const prompts = await loadRelevantPrompts(contentType);
-  logger.background.info(
-    `[ContextMenu] Found ${prompts.length} relevant prompts for type: ${contentType}.`
-  );
+    const contentType = determineContentType(tab.url, hasSelection);
+    logger.background.info(
+      `[ContextMenu] Determined content type: ${contentType}`
+    );
 
-  if (prompts.length > 0) {
-    for (const prompt of prompts) {
-      // Create children under the newly created parent menu.
+    // Generate a dynamic title based on the content type
+    const label = CONTENT_TYPE_LABELS[contentType] || 'Content';
+    const dynamicTitle = `Process ${label} (Web UI)`;
+    logger.background.info(
+      `[ContextMenu] Generated dynamic title: "${dynamicTitle}"`
+    );
+
+    // Recreate the parent menu item with the dynamic title.
+    await chrome.contextMenus.create({
+      id: PARENT_CONTEXT_MENU_ID,
+      title: dynamicTitle,
+      contexts: ['page', 'selection'],
+    });
+    logger.background.info(
+      '[ContextMenu] Parent menu item created successfully.'
+    );
+
+    const prompts = await loadRelevantPrompts(contentType);
+    logger.background.info(
+      `[ContextMenu] Found ${prompts.length} relevant prompts for type: ${contentType}.`
+    );
+
+    if (prompts.length > 0) {
+      for (const prompt of prompts) {
+        // Create children under the newly created parent menu.
+        await chrome.contextMenus.create({
+          id: `prompt-item-${prompt.id}`,
+          title: prompt.name,
+          parentId: PARENT_CONTEXT_MENU_ID,
+          contexts: ['page', 'selection'],
+        });
+      }
+    } else {
+      // Add a disabled item to inform the user if no prompts are available.
       await chrome.contextMenus.create({
-        id: `prompt-item-${prompt.id}`,
-        title: prompt.name,
+        id: 'no-prompts-item',
+        title: 'No prompts for this content type',
+        enabled: false,
         parentId: PARENT_CONTEXT_MENU_ID,
         contexts: ['page', 'selection'],
       });
     }
-  } else {
-    // Add a disabled item to inform the user if no prompts are available.
-    await chrome.contextMenus.create({
-      id: 'no-prompts-item',
-      title: 'No prompts for this content type',
-      enabled: false,
-      parentId: PARENT_CONTEXT_MENU_ID,
-      contexts: ['page', 'selection'],
-    });
+    logger.background.info(
+      `[ContextMenu] Finished updating menu for tabId: ${tabId}`
+    );
+  } finally {
+    isContextMenuUpdating = false; // Release the lock
   }
-  logger.background.info(
-    `[ContextMenu] Finished updating menu for tabId: ${tabId}`
-  );
 }
 
 /**
