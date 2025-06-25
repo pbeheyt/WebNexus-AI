@@ -86,7 +86,10 @@ const SidePanelModelParametersEditor = ({
   } = derivedSettings;
 
   const showBudgetSlider =
-    parameterSpecs?.thinkingBudget && currentEditingMode === 'thinking';
+    parameterSpecs?.thinkingBudget &&
+    modelConfigData?.thinking?.available === true &&
+    (currentEditingMode === 'thinking' ||
+      modelConfigData?.thinking?.toggleable === false);
   const modelSupportsSystemPrompt =
     capabilities?.supportsSystemPrompt !== false &&
     platform?.apiConfig?.apiStructure?.supportsSystemPrompt !== false;
