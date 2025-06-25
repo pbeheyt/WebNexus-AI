@@ -43,7 +43,7 @@ export function useConfigurableShortcut(
 
   // Effect to set up the keydown listener
   useEffect(() => {
-    const handleKeyDown = async (event) => {
+    const handleKeyDown = (event) => {
       // Ensure currentShortcutConfig is fully loaded before checking keys
       if (!currentShortcutConfig || !currentShortcutConfig.key) {
         loggerInstance.warn(
@@ -65,14 +65,14 @@ export function useConfigurableShortcut(
           `Shortcut pressed: ${JSON.stringify(currentShortcutConfig)}`
         );
         if (typeof onShortcutPressCallback === 'function') {
-          try {
-            await onShortcutPressCallback();
-          } catch (callbackError) {
+          // The callback itself can be async, but we don't await it here.
+          // Let it run and handle its own errors.
+          onShortcutPressCallback().catch((callbackError) => {
             loggerInstance.error(
               'Error executing shortcut callback:',
               callbackError
             );
-          }
+          });
         }
       }
     };
