@@ -279,7 +279,7 @@ export default function SidePanelApp() {
         </div>
       ) : tabId ? (
         <>
-          <Toast position='top-right'/>
+          <Toast position='top-right' />
           {/* Main App Header - Conditionally rendered */}
           {currentView !== 'context' && (
             <div ref={appHeaderRef} className='flex-shrink-0'>

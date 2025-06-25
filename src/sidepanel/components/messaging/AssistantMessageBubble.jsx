@@ -417,87 +417,89 @@ export const AssistantMessageBubble = memo(
             {/* Changed from children prop to nesting */}
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-        rehypePlugins={[]}
-        components={markdownComponents}
-      >
-        {preprocessedContent}
-      </ReactMarkdown>
-    </div>
-
-    {/* Footer section */}
-    <div className='flex justify-between items-center pb-4'>
-      <div className='text-xs text-theme-secondary flex items-center'>
-        {resolvedPlatformIconUrl && (
-          <div className='select-none mr-2'>
-            <PlatformIcon
-              platformId={platformId}
-              iconUrl={resolvedPlatformIconUrl}
-              altText='AI Platform'
-              className='w-5 h-5'
-            />
+              rehypePlugins={[]}
+              components={markdownComponents}
+            >
+              {preprocessedContent}
+            </ReactMarkdown>
           </div>
-        )}
-        {modelId && (
-          <span
-            className='mr-4'
-            title={
-              resolvedModelDisplayName !== modelId ? modelId : undefined
-            }
-          >
-            {' '}
-            {resolvedModelDisplayName || modelId}{' '}
-          </span>
-        )}
-        {/* API Cost Badge */}
-        {!isStreaming &&
-          typeof apiCost === 'number' &&
-          apiCost > 0 && ( // Show if apiCost is a number and > 0
-            <>
-              <span
-                ref={costDisplayRef}
-                className='text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help'
-                onMouseEnter={() => setCostTooltipVisible(true)}
-                onMouseLeave={() => setCostTooltipVisible(false)}
-                onFocus={() => setCostTooltipVisible(true)}
-                onBlur={() => setCostTooltipVisible(false)}
-                tabIndex={0}
-                role='button'
-                aria-describedby={`cost-tooltip-assistant-${id}`}
-                aria-label={`Estimated cost: ${formatCost(apiCost)}`}
+
+          {/* Footer section */}
+          <div className='flex justify-between items-center pb-4'>
+            <div className='text-xs text-theme-secondary flex items-center'>
+              {resolvedPlatformIconUrl && (
+                <div className='select-none mr-2'>
+                  <PlatformIcon
+                    platformId={platformId}
+                    iconUrl={resolvedPlatformIconUrl}
+                    altText='AI Platform'
+                    className='w-5 h-5'
+                  />
+                </div>
+              )}
+              {modelId && (
+                <span
+                  className='mr-4'
+                  title={
+                    resolvedModelDisplayName !== modelId ? modelId : undefined
+                  }
+                >
+                  {' '}
+                  {resolvedModelDisplayName || modelId}{' '}
+                </span>
+              )}
+              {/* API Cost Badge */}
+              {!isStreaming &&
+                typeof apiCost === 'number' &&
+                apiCost > 0 && ( // Show if apiCost is a number and > 0
+                  <>
+                    <span
+                      ref={costDisplayRef}
+                      className='text-xs text-theme-primary bg-gray-200 dark:bg-gray-700 px-2 py-1 items-center rounded-full font-semibold cursor-help'
+                      onMouseEnter={() => setCostTooltipVisible(true)}
+                      onMouseLeave={() => setCostTooltipVisible(false)}
+                      onFocus={() => setCostTooltipVisible(true)}
+                      onBlur={() => setCostTooltipVisible(false)}
+                      tabIndex={0}
+                      role='button'
+                      aria-describedby={`cost-tooltip-assistant-${id}`}
+                      aria-label={`Estimated cost: ${formatCost(apiCost)}`}
+                    >
+                      {formatCost(apiCost)}
+                    </span>
+                    <Tooltip
+                      show={costTooltipVisible}
+                      message={
+                        costBreakdown ? (
+                          <div className='text-left p-1'>
+                            <p className='font-semibold mb-1'>Cost Breakdown</p>
+                            <p>
+                              Input:{' '}
+                              {formatTokenCount(costBreakdown.inputTokens)}{' '}
+                              tokens @{' '}
+                              {formatPrice(costBreakdown.inputTokenPrice)}/M
+                            </p>
+                            <p>
+                              Output:{' '}
+                              {formatTokenCount(costBreakdown.outputTokens)}{' '}
+                              tokens @{' '}
+                              {formatPrice(costBreakdown.outputTokenPrice)}/M
+                            </p>
+                          </div>
+                        ) : (
+                          `Est. cost for this response: ${formatCost(apiCost)}`
+                        )
+                      }
+                      targetRef={costDisplayRef}
+                      position='top'
+                      id={`cost-tooltip-assistant-${id}`}
+                    />
+                  </>
+                )}
+              {/* End API Cost Badge */}
+              <div
+                className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
               >
-                {formatCost(apiCost)}
-              </span>
-              <Tooltip
-                show={costTooltipVisible}
-                message={
-                  costBreakdown ? (
-                    <div className='text-left p-1'>
-                      <p className='font-semibold mb-1'>Cost Breakdown</p>
-                      <p>
-                        Input: {formatTokenCount(costBreakdown.inputTokens)}{' '}
-                        tokens @{' '}
-                        {formatPrice(costBreakdown.inputTokenPrice)}/M
-                      </p>
-                      <p>
-                        Output: {formatTokenCount(costBreakdown.outputTokens)}{' '}
-                        tokens @{' '}
-                        {formatPrice(costBreakdown.outputTokenPrice)}/M
-                      </p>
-                    </div>
-                  ) : (
-                    `Est. cost for this response: ${formatCost(apiCost)}`
-                  )
-                }
-                targetRef={costDisplayRef}
-                position='top'
-                id={`cost-tooltip-assistant-${id}`}
-              />
-            </>
-          )}
-        {/* End API Cost Badge */}
-        <div
-          className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        >
                 <div className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'></div>
                 <div
                   className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'

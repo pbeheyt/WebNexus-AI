@@ -91,7 +91,7 @@
             "inputTokenPrice": 0.1,
             "outputTokenPrice": 0.4
           },
-         "capabilities": {
+          "capabilities": {
             "supportsTemperature": true,
             "supportsTopP": true,
             "supportsSystemPrompt": true

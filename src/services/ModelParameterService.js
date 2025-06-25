@@ -197,7 +197,8 @@ class ModelParameterService {
       // This flag determines if API-level thinking features (like budget/effort) should be activated.
       // It's true if thinking is always-on (non-toggleable), OR if it's toggleable and the user has it enabled.
       const isThinkingEnabledForThisRequest =
-        modelHasThinkingAvailable && (!modelThinkingIsUserToggleable || useThinkingMode);
+        modelHasThinkingAvailable &&
+        (!modelThinkingIsUserToggleable || useThinkingMode);
 
       // This key determines which set of user preferences to load ('base' or 'thinking').
       // It's 'thinking' only if the model has thinking available, it's user-toggleable, AND the user has it enabled.
