@@ -9,8 +9,6 @@ import SidePanelStateManager from '../services/SidePanelStateManager.js';
 
 import { resetState } from './core/state-manager.js';
 
-/* Removed old populateInitialPromptsAndSetDefaults function */
-
 /**
  * Initialize the extension's core configuration and state.
  * Should run on install and update.
@@ -87,55 +85,6 @@ async function handleInstallation(details) {
       );
     }
 
-    // --- Set Default Popup Platform Preference ---
-    if (details.reason === 'install') {
-      logger.background.info(
-        'Setting default popup platform preference on install...'
-      );
-      try {
-        const platformList = await ConfigService.getAllPlatformConfigs();
-
-        if (platformList && platformList.length > 0) {
-          const defaultPlatformId = platformList[0].id; // Use the ID of the first platform
-          await chrome.storage.sync.set({
-            [STORAGE_KEYS.POPUP_DEFAULT_PLATFORM_ID]: defaultPlatformId,
-          });
-          logger.background.info(
-            `Default popup platform set to: ${defaultPlatformId}`
-          );
-        } else {
-          logger.background.warn(
-            'No platforms found in config, cannot set default popup platform.'
-          );
-        }
-      } catch (error) {
-        logger.background.error(
-          'Error setting default popup platform preference:',
-          error
-        );
-      }
-    }
-    // --- End Set Default Popup Platform Preference ---
-
-    // --- Set Default General Content Extraction Strategy ---
-    logger.background.info(
-      'Setting default general content extraction strategy on install...'
-    );
-    try {
-      await chrome.storage.sync.set({
-        [STORAGE_KEYS.GENERAL_CONTENT_EXTRACTION_STRATEGY]:
-          DEFAULT_EXTRACTION_STRATEGY,
-      });
-      logger.background.info(
-        `Default general content extraction strategy set to: ${DEFAULT_EXTRACTION_STRATEGY}`
-      );
-    } catch (error) {
-      logger.background.error(
-        'Error setting default general content extraction strategy:',
-        error
-      );
-    }
-    // --- End Set Default General Content Extraction Strategy ---
 
     // --- Core Initialization ---
     // Run general initialization on both install and update.
