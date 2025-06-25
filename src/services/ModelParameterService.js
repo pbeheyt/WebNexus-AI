@@ -194,20 +194,19 @@ class ModelParameterService {
       const modelThinkingIsUserToggleable =
         modelConfig?.thinking?.toggleable === true;
 
-      // This flag determines if API-level thinking features (like budget/effort) should be activated
-      // because the user *explicitly enabled a toggleable thinking mode*.
-      // If thinking is available but not toggleable, its parameters from config are part of base defaults.
+      // This flag determines if API-level thinking features (like budget/effort) should be activated.
+      // It's true if thinking is always-on (non-toggleable), OR if it's toggleable and the user has it enabled.
       const isThinkingEnabledForThisRequest =
+        modelHasThinkingAvailable && (!modelThinkingIsUserToggleable || useThinkingMode);
+
+      // This key determines which set of user preferences to load ('base' or 'thinking').
+      // It's 'thinking' only if the model has thinking available, it's user-toggleable, AND the user has it enabled.
+      const useThinkingModeSettings =
         modelHasThinkingAvailable &&
         modelThinkingIsUserToggleable &&
         useThinkingMode;
 
-      // This key determines which set of user preferences to load ('base' or 'thinking').
-      // It's 'thinking' only if the model has thinking available, it's user-toggleable, AND the user has it enabled.
-      let modeKey = 'base';
-      if (isThinkingEnabledForThisRequest) {
-        modeKey = 'thinking';
-      }
+      const modeKey = useThinkingModeSettings ? 'thinking' : 'base';
 
       logger.service.info(
         `Resolving parameters for ${platformId}/${modelId}. ` +
