@@ -497,19 +497,23 @@ export const AssistantMessageBubble = memo(
                   </>
                 )}
               {/* End API Cost Badge */}
-              <div
-                className={`flex gap-1 items-center transition-opacity duration-150 h-4 select-none ${isStreaming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-              >
-                <div className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'></div>
+              {/* Conditionally render the streaming indicator */}
+              {isStreaming && (
                 <div
-                  className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
-                  style={{ animationDelay: '0.2s' }}
-                ></div>
-                <div
-                  className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
-                  style={{ animationDelay: '0.4s' }}
-                ></div>
-              </div>
+                  className='flex gap-1 items-center h-4 select-none'
+                  aria-label='Assistant is generating a response'
+                >
+                  <div className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'></div>
+                  <div
+                    className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
+                    style={{ animationDelay: '0.2s' }}
+                  ></div>
+                  <div
+                    className='w-1 h-1 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce'
+                    style={{ animationDelay: '0.4s' }}
+                  ></div>
+                </div>
+              )}
             </div>
             {/* Buttons Container (Rerun + Copy) */}
             <div
