@@ -38,34 +38,26 @@ export const Toggle = forwardRef(
         disabled={disabled}
         {...props}
       >
-        {/* Input remains visually hidden but semantically linked */}
+        {/* Input remains visually hidden but semantically linked, now with `peer` class */}
         <input
           type='checkbox'
-          className='sr-only'
+          className='sr-only peer'
           checked={checked}
           onChange={() => {}}
           disabled={disabled}
           tabIndex={-1} // Prevent redundant focus on the hidden input
           aria-hidden='true' // Hide from accessibility tree as button handles interaction
         />
-        {/* Visual slider background */}
+        {/* Visual slider background, now styled with peer-checked */}
         <span
-          className={`absolute inset-0 rounded-full transition-all select-none ${
-            checked ? 'bg-primary' : 'bg-theme-hover'
-          } ${disabled ? 'opacity-50' : ''}`}
+          className={`absolute inset-0 rounded-full transition-all select-none bg-theme-hover peer-checked:bg-primary ${
+            disabled ? 'opacity-50' : ''
+          }`}
           aria-hidden='true' // Decorative
         />
-        {/* Visual slider knob */}
+        {/* Visual slider knob, now styled with peer-checked and Tailwind classes */}
         <span
-          className='absolute bg-white rounded-full transition-transform duration-200 ease-in-out'
-          style={{
-            height: '70%',
-            aspectRatio: '1/1',
-            width: 'auto',
-            top: '15%',
-            left: '10%',
-            transform: checked ? 'translateX(130%)' : 'translateX(0)',
-          }}
+          className={`absolute h-[70%] aspect-square w-auto top-[15%] left-[10%] bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-[130%]`}
           aria-hidden='true' // Decorative
         />
       </button>
