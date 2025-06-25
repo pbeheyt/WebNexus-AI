@@ -19,11 +19,11 @@
       "apiStructure": {
         "supportsSystemPrompt": true
       },
-      "defaultModel": "gemini-2.5-flash",
+      "defaultModel": "gemini-2.5-flash-preview-05-20",
       "requiresModel": true,
       "models": [
         {
-          "id": "gemini-2.5-pro",
+          "id": "gemini-2.5-pro-preview-06-05",
           "displayName": "Gemini 2.5 Pro",
           "description": "Most powerful reasoning model.",
           "tokens": {
@@ -44,14 +44,14 @@
             "available": true,
             "toggleable": false,
             "budget": {
-              "min": 0,
+              "min": 128,
               "max": 32768,
               "default": 8192
             }
           }
         },
         {
-          "id": "gemini-2.5-flash",
+          "id": "gemini-2.5-flash-preview-05-20",
           "displayName": "Gemini 2.5 Flash",
           "description": "Best price-performance model, well-rounded capabilities.",
           "tokens": {
