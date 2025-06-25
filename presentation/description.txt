@@ -34,7 +34,7 @@ Gemini • ChatGPT • Claude • DeepSeek • Grok • Mistral
 • Customization: Themes (Light/Dark), text size, and configurable keyboard shortcuts.
 • Secure Storage: API keys and prompts are stored locally on your device.
 
-⚠️ USAGE NOTES:
+💡 USAGE NOTES:
 ----------------
 • Content Extraction: For Web content, choose between a 'Focused' strategy (targets main article content) and a 'Broad' strategy (for all page text). For YouTube/Reddit, scroll to load desired comments before processing.
 • Token Estimates: Based on OpenAI's tokenization library for guidance only. Actual billing may vary 10-30% higher—always verify with your AI provider's dashboard.
