@@ -330,7 +330,7 @@ export default function SidePanelApp() {
           {currentView === 'chat' && currentChatSessionId ? (
             <>
               <ChatArea
-                className='flex-1 min-h-0 relative z-0 bg-theme-surface'
+                className='flex-1 min-h-0 relative bg-theme-surface'
                 otherUIHeight={otherUIHeight}
                 requestHeightRecalculation={debouncedCalculateHeight}
               />
