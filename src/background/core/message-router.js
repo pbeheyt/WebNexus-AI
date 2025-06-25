@@ -144,7 +144,10 @@ function registerServiceHandlers() {
   });
 
   // Clear specific tab data (for sidepanel refresh)
-  messageHandlers.set('clearTabData', handleClearTabDataRequest);
+  messageHandlers.set('clearTabData', (message, sender, sendResponse) => {
+    handleClearTabDataRequest(message, sender, sendResponse);
+    return true; // Keep channel open for async response
+  });
 
   // Selection status update from content script
   messageHandlers.set(

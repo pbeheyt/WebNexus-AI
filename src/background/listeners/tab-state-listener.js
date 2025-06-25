@@ -134,43 +134,33 @@ export async function handleUpdateSelectionStatusRequest(
   }
 }
 
-export function handleClearTabDataRequest(message, sender, sendResponse) {
+export async function handleClearTabDataRequest(message, _sender, sendResponse) {
   if (!message.tabId) {
     logger.background.error('handleClearTabDataRequest called without tabId');
     sendResponse({ success: false, error: 'Missing tabId' });
-    return false; // Return false as sendResponse is called synchronously here
+    return;
   }
 
-  // Call the async function and handle the promise explicitly
-  clearSingleTabData(message.tabId)
-    .then((success) => {
-      if (success) {
-        logger.background.info(
-          `handleClearTabDataRequest successful for tab ${message.tabId}, sending success response.`
-        );
-        sendResponse({ success: true });
-      } else {
-        logger.background.warn(
-          `handleClearTabDataRequest failed for tab ${message.tabId}, sending failure response.`
-        );
-        sendResponse({
-          success: false,
-          error: 'Failed to clear tab data in background',
-        });
-      }
-    })
-    .catch((error) => {
-      logger.background.error(
-        'Error during clearSingleTabData execution in handler:',
-        error
-      );
+  try {
+    const success = await clearSingleTabData(message.tabId);
+    if (success) {
+      sendResponse({ success: true });
+    } else {
       sendResponse({
         success: false,
-        error: 'Internal error during tab data clearing',
+        error: 'Failed to clear tab data in background',
       });
+    }
+  } catch (error) {
+    logger.background.error(
+      'Error during clearSingleTabData execution in handler:',
+      error
+    );
+    sendResponse({
+      success: false,
+      error: 'Internal error during tab data clearing',
     });
-
-  return true; // Keep channel open for async response
+  }
 }
 
 /**
