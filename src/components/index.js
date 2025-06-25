@@ -57,7 +57,6 @@ export { NoCredentialsIcon } from './icons/NoCredentialsIcon';
 export { ErrorIcon } from './icons/ErrorIcon';
 export { FocusedStrategyIcon } from './icons/FocusedStrategyIcon';
 export { BroadStrategyIcon } from './icons/BroadStrategyIcon';
-export { ModelParametersIcon } from './icons/ModelParametersIcon';
 export { PlusIcon } from './icons/PlusIcon';
 export { TrashIcon } from './icons/TrashIcon';
 export { ArrowRightIcon } from './icons/ArrowRightIcon';
