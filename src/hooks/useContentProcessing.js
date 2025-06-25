@@ -1,6 +1,6 @@
 // src/hooks/useContentProcessing.js
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 import { INTERFACE_SOURCES } from '../shared/constants';
 import { logger } from '../shared/logger';
@@ -18,6 +18,7 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
   const [processingStatus, setProcessingStatus] = useState('idle');
   const [streamId, setStreamId] = useState(null);
   const [error, setError] = useState(null);
+  const streamListenerRef = useRef(null); // Add a ref for the listener
 
   // Get content context at the top level of the hook
   const { currentTab, contentType } = useContent();
@@ -30,6 +31,11 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
           action: 'cancelStream',
           streamId,
         }).catch((err) => logger.popup.error('Error canceling stream:', err));
+      }
+      // Add listener cleanup
+      if (streamListenerRef.current) {
+        chrome.runtime.onMessage.removeListener(streamListenerRef.current);
+        streamListenerRef.current = null;
       }
     };
   }, [streamId]);
@@ -184,20 +190,26 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
 
         if (streaming && response.streamId && onStreamChunk) {
           setStreamId(response.streamId);
-          const messageListener = (message) => {
+
+          // Remove any old listener and assign the new one to the ref
+          if (streamListenerRef.current) {
+            chrome.runtime.onMessage.removeListener(streamListenerRef.current);
+          }
+          streamListenerRef.current = (message) => {
             if (
               message.action === 'streamChunk' &&
               message.streamId === response.streamId
             ) {
               onStreamChunk(message.chunkData);
               if (message.chunkData.done) {
-                chrome.runtime.onMessage.removeListener(messageListener);
+                chrome.runtime.onMessage.removeListener(streamListenerRef.current);
+                streamListenerRef.current = null; // Clear ref after use
                 setProcessingStatus('success');
                 setStreamId(null);
               }
             }
           };
-          chrome.runtime.onMessage.addListener(messageListener);
+          chrome.runtime.onMessage.addListener(streamListenerRef.current);
           // Return the full response, including the new contentSuccessfullyIncluded flag
           return response;
         }
