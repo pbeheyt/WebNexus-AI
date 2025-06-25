@@ -9,16 +9,19 @@ export function PlatformSelector({ disabled }) {
   const { platforms, selectedPlatformId, selectPlatform } = usePopupPlatform();
   const { notifyPlatformChanged } = useStatus();
 
-  const handlePlatformSelect = async (platformId) => {
-    if (!disabled && platformId !== selectedPlatformId) {
-      const success = await selectPlatform(platformId);
+const handlePlatformSelect = (platformId) => {
+  if (!disabled && platformId !== selectedPlatformId) {
+    // No await here - let the UI update optimistically.
+    // The selectPlatform hook updates state immediately, then saves to storage.
+    selectPlatform(platformId).then((success) => {
       if (success) {
         const platformName =
           platforms.find((p) => p.id === platformId)?.name || platformId;
         notifyPlatformChanged(platformName);
       }
-    }
-  };
+    });
+  }
+};
 
   return (
     <div
