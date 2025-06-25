@@ -52,3 +52,5 @@ export function PdfIcon({ className = 'w-5 h-5', ...props }) {
 PdfIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default PdfIcon;

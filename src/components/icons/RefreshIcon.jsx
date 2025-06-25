@@ -25,3 +25,5 @@ export function RefreshIcon({ className = 'w-4 h-4', ...props }) {
 RefreshIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default RefreshIcon;

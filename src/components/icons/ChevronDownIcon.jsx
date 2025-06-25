@@ -24,3 +24,5 @@ export function ChevronDownIcon({ className = 'w-4 h-4', ...props }) {
 ChevronDownIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default ChevronDownIcon;

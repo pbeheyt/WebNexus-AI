@@ -31,3 +31,5 @@ export function YouTubeIcon({ className = 'w-5 h-5', ...props }) {
 YouTubeIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default YouTubeIcon;

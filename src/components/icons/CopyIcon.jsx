@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 /**
@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
  * @param {string} props.state - Current copy state ('idle', 'copied', or 'error')
  * @returns {JSX.Element} - The appropriate icon based on state
  */
-export const CopyIcon = memo(({ state = 'idle' }) => {
+export function CopyIcon({ state = 'idle' }) {
   // Error state is the only unique state now
   if (state === 'error') {
     return (
@@ -54,11 +54,11 @@ export const CopyIcon = memo(({ state = 'idle' }) => {
       ></path>
     </svg>
   );
-});
-
-CopyIcon.displayName = 'CopyIcon';
+}
 
 CopyIcon.propTypes = {
   className: PropTypes.string,
   state: PropTypes.oneOf(['idle', 'copied', 'error']),
 };
+
+export default CopyIcon;

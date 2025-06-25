@@ -23,3 +23,5 @@ export function XIcon({ className = 'w-4 h-4', ...props }) {
 XIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default XIcon;

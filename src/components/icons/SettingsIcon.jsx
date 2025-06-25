@@ -23,3 +23,5 @@ export function SettingsIcon({ className = 'w-4 h-4', ...props }) {
 SettingsIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default SettingsIcon;

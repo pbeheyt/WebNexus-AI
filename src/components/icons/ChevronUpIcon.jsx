@@ -30,3 +30,5 @@ export function ChevronUpIcon({ className = 'w-4 h-4', ...props }) {
 ChevronUpIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default ChevronUpIcon;

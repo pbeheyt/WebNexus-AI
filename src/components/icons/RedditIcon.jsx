@@ -25,3 +25,5 @@ export function RedditIcon({ className = 'w-5 h-5', ...props }) {
 RedditIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default RedditIcon;

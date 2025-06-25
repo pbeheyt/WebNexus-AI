@@ -26,3 +26,5 @@ export function SelectedTextIcon({ className = 'w-5 h-5', ...props }) {
 SelectedTextIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default SelectedTextIcon;

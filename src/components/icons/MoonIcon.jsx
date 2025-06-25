@@ -22,3 +22,5 @@ export function MoonIcon({ className = 'w-4 h-4', ...props }) {
 MoonIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default MoonIcon;

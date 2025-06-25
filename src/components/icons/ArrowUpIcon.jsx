@@ -23,3 +23,5 @@ export function ArrowUpIcon({ className = '', ...props }) {
 ArrowUpIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default ArrowUpIcon;

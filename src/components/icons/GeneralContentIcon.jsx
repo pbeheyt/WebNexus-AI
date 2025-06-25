@@ -26,3 +26,5 @@ export function GeneralContentIcon({ className = 'w-5 h-5', ...props }) {
 GeneralContentIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default GeneralContentIcon;

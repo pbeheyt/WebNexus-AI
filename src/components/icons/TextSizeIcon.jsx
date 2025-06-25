@@ -18,3 +18,5 @@ export function TextSizeIcon({ className = 'w-4 h-4', ...props }) {
 TextSizeIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default TextSizeIcon;

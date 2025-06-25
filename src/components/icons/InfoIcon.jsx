@@ -23,3 +23,5 @@ export function InfoIcon({ className = 'w-4 h-4', ...props }) {
 InfoIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default InfoIcon;

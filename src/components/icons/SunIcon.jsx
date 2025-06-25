@@ -30,3 +30,5 @@ export function SunIcon({ className = 'w-4 h-4', ...props }) {
 SunIcon.propTypes = {
   className: PropTypes.string,
 };
+
+export default SunIcon;
