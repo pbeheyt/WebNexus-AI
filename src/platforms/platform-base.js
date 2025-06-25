@@ -782,95 +782,97 @@ class BasePlatform extends PlatformInterface {
             `[${this.platformId}] Combined prompt and content (content may be null)`
           );
 
-    const editorElement = await this.findEditorElement();
-    if (!editorElement) {
-      this.logger.error(
-        `[${this.platformId}] Critical: Editor element not found during processContent.`
-      );
-      throw new Error( // Throw to be caught by the outer try-catch
-        `Could not find the editor element on ${this.platformId}. Automation cannot proceed.`
-      );
-    }
-    this.logger.info(`[${this.platformId}] Found editor element.`);
+          const editorElement = await this.findEditorElement();
+          if (!editorElement) {
+            this.logger.error(
+              `[${this.platformId}] Critical: Editor element not found during processContent.`
+            );
+            throw new Error( // Throw to be caught by the outer try-catch
+              `Could not find the editor element on ${this.platformId}. Automation cannot proceed.`
+            );
+          }
+          this.logger.info(`[${this.platformId}] Found editor element.`);
 
-    const insertSuccess = await this._insertTextIntoEditor(
-      editorElement,
-      fullText
-    );
-    if (!insertSuccess) {
-      this.logger.error(
-        `[${this.platformId}] Failed to insert text using _insertTextIntoEditor.`
-      );
-      throw new Error( // Throw
-        `Failed to insert text into the ${this.platformId} editor.`
-      );
-    }
-    this.logger.info(
-      `[${this.platformId}] Text insertion step completed.`
-    );
-
-    await this._wait(await this._getPreSubmitWaitMs());
-    this.logger.info(`[${this.platformId}] Wait step completed.`);
-
-    const submitResult = await this.findSubmitButton();
-
-    switch (submitResult.status) {
-      case 'editor_emptied_early':
-        this.logger.info(
-          `[${this.platformId}] Submission successful: Editor emptied before explicit submit button interaction.`
-        );
-        // Submission is successful, verification is implicitly passed.
-        break;
-
-      case 'found': {
-        const submitButton = submitResult.button;
-        this.logger.info(
-          `[${this.platformId}] Found submit button element. Proceeding to click attempt.`
-        );
-
-        try {
-          await this._clickSubmitButton(submitButton);
+          const insertSuccess = await this._insertTextIntoEditor(
+            editorElement,
+            fullText
+          );
+          if (!insertSuccess) {
+            this.logger.error(
+              `[${this.platformId}] Failed to insert text using _insertTextIntoEditor.`
+            );
+            throw new Error( // Throw
+              `Failed to insert text into the ${this.platformId} editor.`
+            );
+          }
           this.logger.info(
-            `[${this.platformId}] Submit button click attempt finished.`
+            `[${this.platformId}] Text insertion step completed.`
           );
-        } catch (clickError) {
-          this.logger.error(
-            `[${this.platformId}] Error occurred during _clickSubmitButton attempt:`,
-            clickError
-          );
-        }
 
-        const verificationSuccess = await this._verifySubmissionAttempted();
-        if (verificationSuccess) {
-          this.logger.info(
-            `[${this.platformId}] Post-interaction verification successful.`
-          );
-        } else {
-          this.logger.warn(
-            `[${this.platformId}] Post-interaction verification failed.`
-          );
-        }
-        break;
-      }
+          await this._wait(await this._getPreSubmitWaitMs());
+          this.logger.info(`[${this.platformId}] Wait step completed.`);
 
-      case 'timeout':
-      default: {
-        this.logger.warn(
-          `[${this.platformId}] Submit button not found or not ready within timeout. Attempting verification as a fallback.`
-        );
-        const verificationSuccess = await this._verifySubmissionAttempted();
-        if (verificationSuccess) {
-          this.logger.info(
-            `[${this.platformId}] Fallback verification successful (editor emptied).`
-          );
-        } else {
-          this.logger.warn(
-            `[${this.platformId}] Fallback verification failed (editor did not empty).`
-          );
-        }
-        break;
-      }
-    }
+          const submitResult = await this.findSubmitButton();
+
+          switch (submitResult.status) {
+            case 'editor_emptied_early':
+              this.logger.info(
+                `[${this.platformId}] Submission successful: Editor emptied before explicit submit button interaction.`
+              );
+              // Submission is successful, verification is implicitly passed.
+              break;
+
+            case 'found': {
+              const submitButton = submitResult.button;
+              this.logger.info(
+                `[${this.platformId}] Found submit button element. Proceeding to click attempt.`
+              );
+
+              try {
+                await this._clickSubmitButton(submitButton);
+                this.logger.info(
+                  `[${this.platformId}] Submit button click attempt finished.`
+                );
+              } catch (clickError) {
+                this.logger.error(
+                  `[${this.platformId}] Error occurred during _clickSubmitButton attempt:`,
+                  clickError
+                );
+              }
+
+              const verificationSuccess =
+                await this._verifySubmissionAttempted();
+              if (verificationSuccess) {
+                this.logger.info(
+                  `[${this.platformId}] Post-interaction verification successful.`
+                );
+              } else {
+                this.logger.warn(
+                  `[${this.platformId}] Post-interaction verification failed.`
+                );
+              }
+              break;
+            }
+
+            case 'timeout':
+            default: {
+              this.logger.warn(
+                `[${this.platformId}] Submit button not found or not ready within timeout. Attempting verification as a fallback.`
+              );
+              const verificationSuccess =
+                await this._verifySubmissionAttempted();
+              if (verificationSuccess) {
+                this.logger.info(
+                  `[${this.platformId}] Fallback verification successful (editor emptied).`
+                );
+              } else {
+                this.logger.warn(
+                  `[${this.platformId}] Fallback verification failed (editor did not empty).`
+                );
+              }
+              break;
+            }
+          }
         } catch (error) {
           // Catches errors from findEditor, insertText, findSubmitButton, or verification
           this.logger.error(

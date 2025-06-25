@@ -85,7 +85,6 @@ async function handleInstallation(details) {
       );
     }
 
-
     // --- Core Initialization ---
     // Run general initialization on both install and update.
     // It's generally safe to run this multiple times.

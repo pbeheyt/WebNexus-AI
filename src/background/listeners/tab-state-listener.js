@@ -134,7 +134,11 @@ export async function handleUpdateSelectionStatusRequest(
   }
 }
 
-export async function handleClearTabDataRequest(message, _sender, sendResponse) {
+export async function handleClearTabDataRequest(
+  message,
+  _sender,
+  sendResponse
+) {
   if (!message.tabId) {
     logger.background.error('handleClearTabDataRequest called without tabId');
     sendResponse({ success: false, error: 'Missing tabId' });

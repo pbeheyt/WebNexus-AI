@@ -202,7 +202,9 @@ export function useContentProcessing(source = INTERFACE_SOURCES.POPUP) {
             ) {
               onStreamChunk(message.chunkData);
               if (message.chunkData.done) {
-                chrome.runtime.onMessage.removeListener(streamListenerRef.current);
+                chrome.runtime.onMessage.removeListener(
+                  streamListenerRef.current
+                );
                 streamListenerRef.current = null; // Clear ref after use
                 setProcessingStatus('success');
                 setStreamId(null);
