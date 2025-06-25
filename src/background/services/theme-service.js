@@ -32,52 +32,9 @@ export async function handleThemeOperation(message, _sender, sendResponse) {
           [STORAGE_KEYS.THEME_PREFERENCE]: theme,
         });
 
-        // Notify only tabs with active sidepanels about theme change
-        const sidepanelStateResult = await chrome.storage.local.get(
-          STORAGE_KEYS.TAB_SIDEPANEL_STATES
-        );
-        const sidepanelStates =
-          sidepanelStateResult[STORAGE_KEYS.TAB_SIDEPANEL_STATES] || {};
-        const targetTabIds = [];
-
-        for (const [tabIdStr, isVisible] of Object.entries(sidepanelStates)) {
-          if (isVisible) {
-            const tabId = parseInt(tabIdStr, 10);
-            // Basic check if parsing was successful (tab IDs should always be numbers)
-            if (!isNaN(tabId)) {
-              targetTabIds.push(tabId);
-            } else {
-              logger.background.warn(
-                `Invalid tab ID found in sidepanel states: ${tabIdStr}`
-              );
-            }
-          }
-        }
-
-        for (const tabId of targetTabIds) {
-          try {
-            await chrome.tabs.sendMessage(tabId, {
-              action: 'themeUpdated',
-              theme,
-            });
-          } catch (error) {
-            if (
-              error.message &&
-              (error.message.includes('Could not establish connection') ||
-                error.message.includes('Receiving end does not exist'))
-            ) {
-              logger.background.warn(
-                `Could not send theme update to active sidepanel tab ${tabId}: Receiving end does not exist.`
-              );
-            } else {
-              logger.background.error(
-                `Failed to send theme update to active sidepanel tab ${tabId}:`,
-                error
-              );
-            }
-          }
-        }
-
+        // The chrome.storage.onChanged event is the single source of truth for theme updates.
+        // The UIService in each UI component (popup, sidepanel, settings) listens for this event
+        // and updates the theme automatically.
         sendResponse({
           success: true,
           theme,
