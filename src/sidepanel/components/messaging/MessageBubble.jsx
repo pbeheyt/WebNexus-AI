@@ -35,8 +35,17 @@ const MessageBubbleComponent = forwardRef(
           />
         );
       }
-      case MESSAGE_ROLES.ASSISTANT:
-        return <AssistantMessageBubble ref={ref} role={role} {...props} />;
+      case MESSAGE_ROLES.ASSISTANT: {
+        const { costBreakdown, ...assistantProps } = props;
+        return (
+          <AssistantMessageBubble
+            ref={ref}
+            role={role}
+            costBreakdown={costBreakdown}
+            {...assistantProps}
+          />
+        );
+      }
       default:
         logger.sidepanel.error(`Unknown message role: ${role}`);
         return null;
@@ -48,6 +57,7 @@ MessageBubbleComponent.propTypes = {
   role: PropTypes.oneOf(Object.values(MESSAGE_ROLES)).isRequired,
   id: PropTypes.string,
   apiCost: PropTypes.number,
+  costBreakdown: PropTypes.object,
   contextTypeUsed: PropTypes.string,
   pageContextUsed: PropTypes.string,
 };

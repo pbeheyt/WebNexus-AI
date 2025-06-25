@@ -77,3 +77,36 @@ export function formatCost(cost) {
     maximumFractionDigits: 3, // Allows for values like $0.125
   }).format(numCost);
 }
+
+/**
+ * Formats a price value, typically per million tokens, with high precision for small values.
+ * @param {number | null | undefined} price - The price value to format.
+ * @returns {string} The formatted price string.
+ */
+export function formatPrice(price) {
+  if (price === null || price === undefined || isNaN(Number(price))) {
+    return '$0.00';
+  }
+
+  const numPrice = Number(price);
+
+  if (numPrice === 0) return '$0.00';
+
+  // For very small prices (e.g., less than a cent), use more precision
+  if (Math.abs(numPrice) < 0.01) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4, // Allow up to 4 decimal places for sub-cent prices
+    }).format(numPrice);
+  }
+
+  // For larger prices, use standard 2 decimal places
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numPrice);
+}

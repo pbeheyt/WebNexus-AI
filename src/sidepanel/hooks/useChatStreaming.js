@@ -172,10 +172,11 @@ export function useChatStreaming({
                 if (msg.id === messageId && !isError) {
                   // Only try to add cost if not an error
                   let tempApiCost = null;
+                  let costBreakdown = null;
+
                   if (modelConfigData && modelConfigData.pricing) {
                     const tempTurnStats =
                       TokenManagementService.calculateTokenStatisticsFromMessages(
-                        // Use the array *as it is being built* for this turn's stats
                         updatedMessagesArray.slice(
                           0,
                           updatedMessagesArray.findIndex(
@@ -184,15 +185,23 @@ export function useChatStreaming({
                         ),
                         null
                       );
+
                     const costInfo = TokenManagementService.calculateCost(
                       tempTurnStats.inputTokensInLastApiCall,
                       finalOutputTokensForMessage,
-                      modelConfigData, // Use modelConfigData from the hook's closure
+                      modelConfigData,
                       isThinkingModeEnabled
                     );
+
                     tempApiCost = costInfo.totalCost;
+                    costBreakdown = {
+                      inputTokens: tempTurnStats.inputTokensInLastApiCall,
+                      outputTokens: finalOutputTokensForMessage,
+                      inputTokenPrice: costInfo.inputTokenPrice,
+                      outputTokenPrice: costInfo.outputTokenPrice,
+                    };
                   }
-                  return { ...msg, apiCost: tempApiCost };
+                  return { ...msg, apiCost: tempApiCost, costBreakdown };
                 }
                 return msg;
               });
