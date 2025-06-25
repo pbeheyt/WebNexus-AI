@@ -19,11 +19,11 @@
       "apiStructure": {
         "supportsSystemPrompt": true
       },
-      "defaultModel": "gemini-2.0-flash",
+      "defaultModel": "gemini-2.5-flash",
       "requiresModel": true,
       "models": [
         {
-          "id": "gemini-2.5-pro-preview-05-06",
+          "id": "gemini-2.5-pro",
           "displayName": "Gemini 2.5 Pro",
           "description": "Most powerful reasoning model.",
           "tokens": {
@@ -45,13 +45,13 @@
             "toggleable": false,
             "budget": {
               "min": 0,
-              "max": 24576,
+              "max": 32768,
               "default": 8192
             }
           }
         },
         {
-          "id": "gemini-2.5-flash-preview-04-17",
+          "id": "gemini-2.5-flash",
           "displayName": "Gemini 2.5 Flash",
           "description": "Best price-performance model, well-rounded capabilities.",
           "tokens": {
@@ -60,8 +60,8 @@
             "contextWindow": 1048576
           },
           "pricing": {
-            "inputTokenPrice": 0.15,
-            "outputTokenPrice": 0.6
+            "inputTokenPrice": 0.3,
+            "outputTokenPrice": 2.5
           },
           "capabilities": {
             "supportsTemperature": true,
@@ -71,10 +71,6 @@
           "thinking": {
             "available": true,
             "toggleable": true,
-            "pricing": {
-              "inputTokenPrice": 0.15,
-              "outputTokenPrice": 3.5
-            },
             "budget": {
               "min": 0,
               "max": 24576,
@@ -83,49 +79,31 @@
           }
         },
         {
-          "id": "gemini-2.0-flash",
-          "displayName": "Gemini 2.0 Flash",
-          "description": "Balanced model delivering excellent performance across all tasks.",
+          "id": "gemini-2.5-flash-lite-preview-06-17",
+          "displayName": "Gemini 2.5 Flash Lite",
+          "description": "Optimized for low cost and reduced latency.",
           "tokens": {
-            "maxOutput": 8192,
+            "maxOutput": 64000,
             "parameterName": "maxOutputTokens",
-            "contextWindow": 1048576
+            "contextWindow": 1000000
           },
           "pricing": {
             "inputTokenPrice": 0.1,
             "outputTokenPrice": 0.4
           },
-          "capabilities": {
+         "capabilities": {
             "supportsTemperature": true,
             "supportsTopP": true,
-            "supportsSystemPrompt": false
+            "supportsSystemPrompt": true
           },
           "thinking": {
-            "available": false,
-            "toggleable": false
-          }
-        },
-        {
-          "id": "gemini-2.0-flash-lite",
-          "displayName": "Gemini 2.0 Flash Lite",
-          "description": "Cost-effective and low-latency model.",
-          "tokens": {
-            "maxOutput": 8192,
-            "parameterName": "maxOutputTokens",
-            "contextWindow": 1048576
-          },
-          "pricing": {
-            "inputTokenPrice": 0.075,
-            "outputTokenPrice": 0.3
-          },
-          "capabilities": {
-            "supportsTemperature": true,
-            "supportsTopP": true,
-            "supportsSystemPrompt": false
-          },
-          "thinking": {
-            "available": false,
-            "toggleable": false
+            "available": true,
+            "toggleable": true,
+            "budget": {
+              "min": 0,
+              "max": 24576,
+              "default": 8192
+            }
           }
         }
       ]
