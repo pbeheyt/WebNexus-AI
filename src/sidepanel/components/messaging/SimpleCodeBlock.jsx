@@ -40,7 +40,7 @@ const SimpleCodeBlock = ({ children }) => {
 
   return (
     // Changed to `inline-flex` and added `max-w-full` to allow shrink-to-fit behavior
-    <div className='relative code-block-group m-2 rounded-lg bg-theme-secondary inline-flex items-center max-w-full px-1.5'>
+    <div className='relative code-block-group m-2 rounded-lg bg-theme-secondary inline-flex items-start max-w-full p-1.5'>
       {/* Code content area, grows to fill space */}
       <div className='whitespace-pre-wrap break-words text-theme-primary text-sm font-mono p-1.5'>
         {codeContent}
