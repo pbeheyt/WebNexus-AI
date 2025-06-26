@@ -1,10 +1,7 @@
 // src/sidepanel/services/ChatHistoryService.js
 
 import { logger } from '../../shared/logger';
-import {
-  STORAGE_KEYS,
-  MAX_CHAT_TITLE_LENGTH,
-} from '../../shared/constants';
+import { STORAGE_KEYS, MAX_CHAT_TITLE_LENGTH } from '../../shared/constants';
 
 import TokenManagementService from './TokenManagementService';
 
