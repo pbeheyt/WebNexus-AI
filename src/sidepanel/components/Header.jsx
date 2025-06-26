@@ -55,10 +55,72 @@ function Header({
   const formattedAccumulatedCost = formatCost(accumulatedCost);
 
   const tokenTooltipContent = {
-    inputTokens: `Est. Input: ${promptTokensInLastApiCall} (Prompt) + ${historyTokensSentInLastApiCall} (History) + ${systemTokensInLastApiCall} (System) = ${inputTokensInLastApiCall} total.`,
-    outputTokens: `Est. total output tokens generated in this chat session.`,
-    contextWindow: `Est. ${contextData.tokensRemaining} tokens remaining (${contextData.totalTokens} / ${contextData.maxContextWindow} used).`,
-    cost: `Est. total accumulated cost for this chat session.`,
+    inputTokens: (
+      <div className='p-1 text-left'>
+        <p className='font-semibold mb-1'>Last Input Tokens</p>
+        <p>
+          Prompt:{' '}
+          <span className='font-mono'>
+            {formatTokenCount(promptTokensInLastApiCall)}
+          </span>
+        </p>
+        <p>
+          History:{' '}
+          <span className='font-mono'>
+            {formatTokenCount(historyTokensSentInLastApiCall)}
+          </span>
+        </p>
+        <p>
+          System:{' '}
+          <span className='font-mono'>
+            {formatTokenCount(systemTokensInLastApiCall)}
+          </span>
+        </p>
+        <hr className='border-theme my-1' />
+        <p>
+          Total:{' '}
+          <span className='font-mono font-semibold'>
+            {formatTokenCount(inputTokensInLastApiCall)}
+          </span>
+        </p>
+      </div>
+    ),
+    outputTokens: (
+      <div className='p-1 text-left'>
+        <p className='font-semibold mb-1'>Session Output Tokens</p>
+        <p>Estimated total output tokens generated in this chat session.</p>
+      </div>
+    ),
+    contextWindow: (
+      <div className='p-1 text-left'>
+        <p className='font-semibold mb-1'>Context Window Usage</p>
+        <p>
+          Used:{' '}
+          <span className='font-mono'>
+            {formatTokenCount(contextData.totalTokens)}
+          </span>
+        </p>
+        <p>
+          Max:{' '}
+          <span className='font-mono'>
+            {formatTokenCount(contextData.maxContextWindow)}
+          </span>
+        </p>
+        <hr className='border-theme my-1' />
+        <p>
+          Remaining:{' '}
+          <span className='font-mono font-semibold'>
+            {formatTokenCount(contextData.tokensRemaining)}
+          </span>
+        </p>
+      </div>
+    ),
+    cost: (
+      <div className='p-1 text-left'>
+        <p className='font-semibold mb-1'>Session Cost</p>
+        <p>Estimated total accumulated cost for this chat session.</p>
+      </div>
+    ),
   };
 
   return (

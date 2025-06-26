@@ -509,7 +509,12 @@ function ChatArea({
                       <span>Free</span>
                       <Tooltip
                         show={hoveredElement === 'freeTier'}
-                        message='This model is currently free to use via API.'
+                        message={
+                          <div className='p-1'>
+                            <p className='font-semibold mb-1'>Free Model</p>
+                            <p>This model is currently free to use via API.</p>
+                          </div>
+                        }
                         targetRef={freeTierRef}
                         position='bottom'
                         id='chat-area-free-tier-tooltip'
@@ -533,7 +538,20 @@ function ChatArea({
                             <span>{`$${dynamicSpecs.inputPrice.toFixed(2)}`}</span>
                             <Tooltip
                               show={hoveredElement === 'inputPrice'}
-                              message={`$${dynamicSpecs.inputPrice.toFixed(2)} / 1M input tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
+                              message={
+                                <div className='p-1'>
+                                  <p className='font-semibold mb-1'>
+                                    Input Token Price
+                                  </p>
+                                  <p>
+                                    {`$${dynamicSpecs.inputPrice.toFixed(2)} / 1M tokens`}
+                                    {isThinkingModeEnabled &&
+                                    displayModelConfig?.thinking?.toggleable
+                                      ? ' (Thinking Mode)'
+                                      : ''}
+                                  </p>
+                                </div>
+                              }
                               targetRef={inputPriceRef}
                               position='bottom'
                               id='chat-area-input-price-tooltip'
@@ -558,7 +576,20 @@ function ChatArea({
                             <span>{`$${dynamicSpecs.outputPrice.toFixed(2)}`}</span>
                             <Tooltip
                               show={hoveredElement === 'outputPrice'}
-                              message={`$${dynamicSpecs.outputPrice.toFixed(2)} / 1M output tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
+                              message={
+                                <div className='p-1'>
+                                  <p className='font-semibold mb-1'>
+                                    Output Token Price
+                                  </p>
+                                  <p>
+                                    {`$${dynamicSpecs.outputPrice.toFixed(2)} / 1M tokens`}
+                                    {isThinkingModeEnabled &&
+                                    displayModelConfig?.thinking?.toggleable
+                                      ? ' (Thinking Mode)'
+                                      : ''}
+                                  </p>
+                                </div>
+                              }
                               targetRef={outputPriceRef}
                               position='bottom'
                               id='chat-area-output-price-tooltip'
@@ -585,7 +616,20 @@ function ChatArea({
                         </span>
                         <Tooltip
                           show={hoveredElement === 'contextWindow'}
-                          message={`Max context window: ${formatTokenCount(dynamicSpecs.contextWindow)} tokens.${isThinkingModeEnabled && displayModelConfig?.thinking?.toggleable ? ' (Thinking Mode)' : ''}`}
+                          message={
+                            <div className='p-1'>
+                              <p className='font-semibold mb-1'>
+                                Max Context Window
+                              </p>
+                              <p>
+                                {`${formatTokenCount(dynamicSpecs.contextWindow)} tokens`}
+                                {isThinkingModeEnabled &&
+                                displayModelConfig?.thinking?.toggleable
+                                  ? ' (Thinking Mode)'
+                                  : ''}
+                              </p>
+                            </div>
+                          }
                           targetRef={contextWindowRef}
                           position='bottom'
                           id='chat-area-context-window-tooltip'

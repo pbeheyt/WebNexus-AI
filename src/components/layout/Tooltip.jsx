@@ -123,7 +123,7 @@ export function Tooltip({
       id={id}
       ref={tooltipRef}
       style={tooltipStyle}
-      className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-center shadow-theme-medium z-50 transition-opacity duration-200 select-none pointer-events-none`}
+      className={`fixed bg-theme-surface text-theme-primary border border-theme text-xs rounded py-1 px-2 ${widthClass} text-left shadow-theme-medium z-50 transition-opacity duration-200 select-none pointer-events-none`}
       role='tooltip'
     >
       {message}
