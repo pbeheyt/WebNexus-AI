@@ -51,6 +51,7 @@ export function useChatStreaming({
   showErrorNotification,
 }) {
   const batchedThinkingContentRef = useRef('');
+  const cancellationResolverRef = useRef(null);
   const performThinkingStreamingStateUpdate = useCallback(() => {
     rafIdRef.current = null;
     const messageId = streamingMessageId;
@@ -257,6 +258,14 @@ export function useChatStreaming({
         );
       } finally {
         rerunStatsRef.current = null;
+        // Check if a cancellation promise is waiting to be resolved
+        if (cancellationResolverRef.current) {
+          logger.sidepanel.info(
+            'Stream completion is resolving a pending cancellation promise.'
+          );
+          cancellationResolverRef.current();
+          cancellationResolverRef.current = null;
+        }
       }
     },
     [
@@ -397,28 +406,56 @@ export function useChatStreaming({
   ]);
 
   const cancelStream = useCallback(async () => {
-    if (!streamingMessageId || !isProcessing || isCanceling) return;
+    if (!streamingMessageId || !isProcessing || isCanceling) {
+      return Promise.resolve(); // Resolve immediately if nothing to cancel
+    }
 
-    const { [STORAGE_KEYS.API_STREAM_ID]: streamIdFromStorage } =
-      await chrome.storage.local.get(STORAGE_KEYS.API_STREAM_ID);
+    // Set canceling state immediately
     setIsCanceling(true);
+
+    // Stop any pending UI updates
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
     }
+    batchedThinkingContentRef.current = '';
 
-    try {
-      batchedThinkingContentRef.current = '';
-      await robustSendMessage({
-        action: 'cancelStream',
-        streamId: streamIdFromStorage,
-      });
-    } catch (error) {
-      logger.sidepanel.error('Error cancelling stream:', error);
-      setStreamingMessageId(null); // Should be handled by stream completion, fallback
-    } finally {
-      setIsCanceling(false); // Should be handled by stream completion, fallback
-    }
+    return new Promise((resolve, reject) => {
+      // Use an async IIFE to handle async operations inside the non-async executor
+      (async () => {
+        try {
+          const { [STORAGE_KEYS.API_STREAM_ID]: streamIdFromStorage } =
+            await chrome.storage.local.get(STORAGE_KEYS.API_STREAM_ID);
+
+          // Store the resolver function to be called by the message listener later
+          cancellationResolverRef.current = resolve;
+
+          // Send the cancellation request
+          await robustSendMessage({
+            action: 'cancelStream',
+            streamId: streamIdFromStorage,
+          });
+
+          // Set a timeout to prevent getting stuck
+          setTimeout(() => {
+            if (cancellationResolverRef.current) {
+              logger.sidepanel.warn(
+                `Cancellation for stream ${streamIdFromStorage} timed out. Resolving to prevent UI lock.`
+              );
+              cancellationResolverRef.current();
+              cancellationResolverRef.current = null;
+            }
+          }, 5000); // 5-second timeout
+        } catch (error) {
+          logger.sidepanel.error('Error initiating stream cancellation:', error);
+          setIsCanceling(false); // Reset state on failure
+          if (cancellationResolverRef.current) {
+            cancellationResolverRef.current = null; // Clean up resolver
+          }
+          reject(error);
+        }
+      })();
+    });
   }, [
     streamingMessageId,
     isProcessing,
@@ -427,7 +464,6 @@ export function useChatStreaming({
     rafIdRef,
     batchedThinkingContentRef,
     robustSendMessage,
-    setStreamingMessageId,
   ]);
 
   useEffect(() => {

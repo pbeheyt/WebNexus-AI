@@ -623,8 +623,7 @@ export function SidePanelChatProvider({ children }) {
   };
 
   const resetCurrentTabData = useCallback(async () => {
-    if (tabId === null) return;
-    if (isSwitchingSession) return;
+    if (tabId === null || isSwitchingSession) return;
 
     if (
       !window.confirm(
@@ -635,21 +634,27 @@ export function SidePanelChatProvider({ children }) {
     }
 
     setIsSwitchingSession(true);
-    // Optimistically clear the UI
-    setMessages([]);
-    if (typeof clearTokenData === 'function') {
-      await clearTokenData(currentChatSessionId);
-    }
 
-    logger.sidepanel.info(
-      `SidePanelChatContext: resetCurrentTabData for tab ${tabId}`
-    );
     try {
-      const sessionToPotentiallyDelete = currentChatSessionId;
-      if (streamingMessageId && isProcessing && !isCanceling) {
+      // If a stream is active, await its cancellation first.
+      if (isProcessing && !isCanceling) {
+        logger.sidepanel.info(
+          'resetCurrentTabData: Active stream detected. Awaiting cancellation.'
+        );
         await cancelStream();
       }
 
+      // Optimistically clear the UI after potential cancellation
+      setMessages([]);
+      if (typeof clearTokenData === 'function') {
+        await clearTokenData(currentChatSessionId);
+      }
+
+      logger.sidepanel.info(
+        `SidePanelChatContext: resetCurrentTabData for tab ${tabId}`
+      );
+
+      const sessionToPotentiallyDelete = currentChatSessionId;
       if (sessionToPotentiallyDelete) {
         await ChatHistoryService.deleteChatSession(sessionToPotentiallyDelete);
       }
@@ -676,35 +681,36 @@ export function SidePanelChatProvider({ children }) {
   }, [
     tabId,
     isSwitchingSession,
-    streamingMessageId,
     isProcessing,
     isCanceling,
-    createNewChatFromHook,
     cancelStream,
+    clearTokenData,
     currentChatSessionId,
+    createNewChatFromHook,
     showErrorNotification,
     setMessages,
-    clearTokenData,
   ]);
 
   const createNewChat = useCallback(async () => {
     if (isSwitchingSession) return;
 
     setIsSwitchingSession(true);
-    // Optimistically clear the UI
-    setMessages([]);
-    if (typeof clearTokenData === 'function') {
-      await clearTokenData(currentChatSessionId);
-    }
 
     try {
-      // Abort any active stream before creating a new chat
+      // If a stream is active, await its cancellation first.
       if (isProcessing && !isCanceling) {
         logger.sidepanel.info(
-          'createNewChat: Active stream detected. Attempting to cancel before creating new chat.'
+          'createNewChat: Active stream detected. Awaiting cancellation.'
         );
         await cancelStream();
       }
+
+      // Optimistically clear the UI after potential cancellation
+      setMessages([]);
+      if (typeof clearTokenData === 'function') {
+        await clearTokenData(currentChatSessionId);
+      }
+
       // Proceed with creating the new chat session
       await createNewChatFromHook();
     } catch (error) {
