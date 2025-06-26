@@ -447,7 +447,10 @@ export function useChatStreaming({
             }
           }, 5000); // 5-second timeout
         } catch (error) {
-          logger.sidepanel.error('Error initiating stream cancellation:', error);
+          logger.sidepanel.error(
+            'Error initiating stream cancellation:',
+            error
+          );
           setIsCanceling(false); // Reset state on failure
           if (cancellationResolverRef.current) {
             cancellationResolverRef.current = null; // Clean up resolver
