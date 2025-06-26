@@ -4,11 +4,12 @@
 ----------------
 🌐 WEB UI MODE → Send to AI Websites
 • Extract page content and send it with your prompt to AI platforms.
-• Multiple access methods: Popup (Alt+W), Right-Click Menu, or Quick Shortcut (Alt+Q).
+• Access methods: Popup (Alt+W), Right-Click Menu, or Quick Shortcut (Alt+Q).
 • Uses your existing AI platform logins (no API keys required).
 
 💬 SIDE PANEL → Direct API Chat
 • Direct API chat with AI models, with automatic access to your current page content.
+• Access methods: Sidepanel Icon (top right of popup), or Keyboard Shortcut (Ctrl+W > Ctrl+S).
 • Full model selection and parameter customization (temperature, system prompts, etc.).
 • Real-time token counting and cost estimates.
 • Persistent chat history - continue conversations across sessions.
