@@ -3,7 +3,6 @@
 import { logger } from '../../shared/logger';
 import {
   STORAGE_KEYS,
-  MAX_MESSAGES_PER_TAB_HISTORY,
   MAX_CHAT_TITLE_LENGTH,
 } from '../../shared/constants';
 
@@ -79,8 +78,8 @@ class ChatHistoryService {
       ]);
       const allSessions = result[STORAGE_KEYS.GLOBAL_CHAT_SESSIONS] || {};
 
-      // Limit number of messages to prevent storage problems
-      const limitedMessages = messages.slice(-MAX_MESSAGES_PER_TAB_HISTORY);
+      // The message limit has been removed to allow for unlimited history.
+      const limitedMessages = messages;
 
       // Transform messages for storage to reduce footprint
       const storableMessages = limitedMessages.map((msg) => {
