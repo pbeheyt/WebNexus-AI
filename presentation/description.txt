@@ -7,7 +7,7 @@
 • Access methods: Popup (Alt+W), Right-Click Menu, or Quick Shortcut (Alt+Q).
 • Uses your existing AI platform logins (no API keys required).
 
-💬 SIDE PANEL → Direct API Chat
+💬 SIDE PANEL MODE → Direct API Chat
 • Direct API chat with AI models, with automatic access to your current page content.
 • Access methods: Sidepanel Icon (top right of popup), or Keyboard Shortcut (Ctrl+W > Ctrl+S).
 • Full model selection and parameter customization (temperature, system prompts, etc.).
@@ -25,7 +25,7 @@
 
 ☁️ SUPPORTED AI PLATFORMS:
 ----------------
-Gemini • ChatGPT • Claude • DeepSeek • Grok • Mistral
+The extension integrates with services from Google (Gemini), OpenAI (ChatGPT), Anthropic (Claude), DeepSeek, Mistral and xAI (Grok) across both its Web UI and Side Panel features.
 
 ⭐ CORE FEATURES:
 ----------------
