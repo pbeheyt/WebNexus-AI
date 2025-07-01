@@ -2,14 +2,14 @@
 
 ↔️ TWO INTERACTION MODES:
 ----------------
-🌐 WEB UI MODE → Send to AI Websites
+🌐 WEB UI → Send to AI Websites
 • Extract page content and send it with your prompt to AI platforms.
 • Access methods: Popup (Alt+W), Right-Click Menu, or Quick Shortcut (Alt+Q).
 • Uses your existing AI platform logins (no API keys required).
 
-💬 SIDE PANEL MODE → Direct API Chat
+💬 SIDE PANEL → Direct API Chat
 • Direct API chat with AI models, with automatic access to your current page content.
-• Access methods: Sidepanel Icon (top right of popup), or Keyboard Shortcut (Ctrl+W > Ctrl+S).
+• Access methods: Side Panel icon (top right of Popup), or Keyboard Shortcuts (Alt+W > Alt+S).
 • Full model selection and parameter customization (temperature, system prompts, etc.).
 • Real-time token counting and cost estimates.
 • Persistent chat history - continue conversations across sessions.
@@ -25,19 +25,19 @@
 
 ☁️ SUPPORTED AI PLATFORMS:
 ----------------
-The extension integrates with services from Google (Gemini), OpenAI (ChatGPT), Anthropic (Claude), DeepSeek, Mistral and xAI (Grok) across both its Web UI and Side Panel features.
+Supports integration with all major AI platforms across both its Web UI and Side Panel features.
 
 ⭐ CORE FEATURES:
 ----------------
 • Content Analysis: Extracts content from diverse sources.
 • Multi-AI Platform Support: Choose from multiple integrated AI platforms.
 • Prompt Management: Create, save, and reuse custom prompts per content type across all extension features.
-• Customization: Themes (Light/Dark), text size, and configurable keyboard shortcuts.
+• Customization: Themes (Light/Dark), Text Size, and configurable Keyboard Shortcuts.
 • Secure & Local: Your API keys, prompts, and chat history are stored safely on your device.
 
 💡 USAGE NOTES:
 ----------------
-• Content Extraction: For Web content, choose between a 'Focused' strategy (targets main content) and a 'Broad' strategy (for all page text). For YouTube/Reddit, scroll to load desired comments before processing.
+• Content Extraction: For Web Content, choose between a 'Focused' strategy (targets main content) and a 'Broad' strategy (for all page text). For YouTube/Reddit, scroll to load desired comments before processing.
 • Web UI Automation: This feature depends on AI website layouts and may break temporarily if they change significantly. Updates maintain compatibility.
 • Token Estimates: Based on OpenAI's tokenization library for guidance only. Actual billing may vary 10-30% higher—always verify with your AI provider's dashboard.
 • Local Storage: API keys are stored on your device. Be aware this is vulnerable if your device is compromised.
