@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WebNexus AI: Interact with Web, PDF, YouTube",
-  "description": "Instantly chat with, summarize, or analyze any webpage, PDF, or YouTube video. Works with all major AI platforms like ChatGPT & Gemini.",
+  "description": "Instantly chat, summarize, or analyze any page, PDF, or YouTube video. Supports ChatGPT, Gemini, Claude & more",
   "version": "1.1.1",
   "permissions": [
     "activeTab",
