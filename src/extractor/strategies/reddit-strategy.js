@@ -87,37 +87,28 @@ class RedditExtractorStrategy extends BaseExtractor {
     return 'Title not found';
   }
 
-  /**
-   * Extract the post content from the page (raw, with paragraph separation)
-   * @returns {string} The raw post content
-   */
-  extractPostContent() {
-    const selectors = [
-      '.text-neutral-content[slot="text-body"] .mb-sm .md.text-14',
-      '.RichTextJSON-root',
-      'div[data-testid="post-content"] div[data-click-id="text"]',
-    ];
+/**
+     * Extract the post content from the page (raw, with paragraph separation)
+     * @returns {string} The raw post content
+     */
+    extractPostContent() {
+      const selectors = [
+        '[property="schema:articleBody"]', // Most reliable, based on semantic HTML
+        'div[data-post-click-location="text-body"]', // New Reddit layout
+        '.text-neutral-content[slot="text-body"]', // Fallback for other layouts
+        'div[data-testid="post-content"]', // Older fallback
+      ];
 
-    for (const selector of selectors) {
-      const contentElement = document.querySelector(selector);
-      if (contentElement) {
-        let postContent = '';
-        const paragraphs = contentElement.querySelectorAll('p');
-        if (paragraphs.length > 0) {
-          paragraphs.forEach((paragraph, index) => {
-            postContent += paragraph.textContent;
-            if (index < paragraphs.length - 1) {
-              postContent += '\n\n'; // Use double newline for paragraph separation initially
-            }
-          });
-          return postContent; // Return raw, normalize in extractData
-        } else {
-          return contentElement.textContent; // Return raw, normalize in extractData
+      for (const selector of selectors) {
+        const contentElement = document.querySelector(selector);
+        if (contentElement && contentElement.innerText) {
+          // .innerText preserves line breaks from <p>, <li>, etc., which is what we want.
+          // It provides a much cleaner and more accurate representation of the rendered text.
+          return contentElement.innerText; // Return raw, normalize in extractData
         }
       }
+      return 'Post content not found';
     }
-    return 'Post content not found';
-  }
 
   /**
    * Extract post score
