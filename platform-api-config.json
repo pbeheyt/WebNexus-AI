@@ -488,6 +488,29 @@
       "requiresModel": true,
       "models": [
         {
+          "id": "grok-4-latest",
+          "displayName": "Grok 4",
+          "description": "The latest and most powerful reasoning model from xAI.",
+          "tokens": {
+            "maxOutput": 8192,
+            "parameterName": "max_tokens",
+            "contextWindow": 256000
+          },
+          "pricing": {
+            "inputTokenPrice": 3.0,
+            "outputTokenPrice": 15.0
+          },
+          "capabilities": {
+            "supportsTemperature": true,
+            "supportsTopP": true,
+            "supportsSystemPrompt": true
+          },
+          "thinking": {
+            "available": true,
+            "toggleable": false
+          }
+        },
+        {
           "id": "grok-3-latest",
           "displayName": "Grok 3",
           "description": "Flagship model excelling at enterprise tasks with deep domain knowledge.",
