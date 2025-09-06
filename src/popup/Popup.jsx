@@ -101,6 +101,17 @@ export function Popup() {
     isProcessing;
 
   const tooltipMessage = useMemo(() => {
+    const sidePanelText = (
+      <p>
+        Open the <span className='font-medium'>Side Panel</span>
+        <SidepanelIcon
+          className='w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary'
+          strokeWidth='2.5'
+        />{' '}
+        to have your AI conversation directly alongside the page.
+      </p>
+    );
+
     if (!isSupported) {
       return (
         <div className='text-xs text-theme-primary text-left w-full p-1.5'>
@@ -113,36 +124,22 @@ export function Popup() {
     } else if (!isInjectable) {
       return (
         <div className='text-xs text-theme-primary text-left w-full p-1.5'>
-          <p className='mb-1.5'>
+          <p className={process.env.BUILD_MODE === 'full' ? 'mb-1.5' : ''}>
             Content extraction is not supported for this page. You can still
             send your prompt to the selected AI platform.
           </p>
-          <p>
-            Open the <span className='font-medium'>Side Panel</span>
-            <SidepanelIcon
-              className='w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary'
-              strokeWidth='2.5'
-            />{' '}
-            to have your AI conversation directly alongside the page.
-          </p>
+          {process.env.BUILD_MODE === 'full' && sidePanelText}
         </div>
       );
     } else {
       return (
         <div className='text-xs text-theme-primary text-left w-full p-1.5'>
-          <p className='mb-1.5'>
+          <p className={process.env.BUILD_MODE === 'full' ? 'mb-1.5' : ''}>
             Extract this{' '}
             <span className='font-medium'>{contentTypeLabel || 'content'}</span>{' '}
             and send it with your prompt to the selected AI platform.
           </p>
-          <p>
-            Open the <span className='font-medium'>Side Panel</span>
-            <SidepanelIcon
-              className='w-3.5 h-3.5 inline-block align-text-bottom mx-1 text-theme-primary'
-              strokeWidth='2.5'
-            />{' '}
-            to have your AI conversation directly alongside the page.
-          </p>
+          {process.env.BUILD_MODE === 'full' && sidePanelText}
         </div>
       );
     }
