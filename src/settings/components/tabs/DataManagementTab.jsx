@@ -48,7 +48,7 @@ const DataManagementTab = () => {
     useNotification();
 
   const [selectedDataType, setSelectedDataType] = useState(
-    DATA_MANAGEMENT_OPTIONS[0].id
+    process.env.BUILD_MODE === 'full' ? 'all' : 'prompts'
   );
   const [isExportingActual, setIsExportingActual] = useState(false);
   const [isImportingActual, setIsImportingActual] = useState(false);
@@ -226,25 +226,38 @@ const DataManagementTab = () => {
       />
 
       <div className='w-fit'>
-        <SettingsCard className='selector-section-container mb-6'>
-          <div className='flex items-center'>
-            <h3 className='text-base font-semibold text-theme-primary'>
-              Data Type Selection
-            </h3>
-            <div className='ml-5'>
-              <CustomSelect
-                id='data-type-select'
-                options={DATA_MANAGEMENT_OPTIONS.map((opt) => ({
-                  id: opt.id,
-                  name: opt.name,
-                }))}
-                selectedValue={selectedDataType}
-                onChange={setSelectedDataType}
-                disabled={isAnyOperationLoadingForUI}
-              />
+        {process.env.BUILD_MODE === 'full' ? (
+          <SettingsCard className='selector-section-container mb-6'>
+            <div className='flex items-center'>
+              <h3 className='text-base font-semibold text-theme-primary'>
+                Data Type Selection
+              </h3>
+              <div className='ml-5'>
+                <CustomSelect
+                  id='data-type-select'
+                  options={DATA_MANAGEMENT_OPTIONS.map((opt) => ({
+                    id: opt.id,
+                    name: opt.name,
+                  }))}
+                  selectedValue={selectedDataType}
+                  onChange={setSelectedDataType}
+                  disabled={isAnyOperationLoadingForUI}
+                />
+              </div>
             </div>
-          </div>
-        </SettingsCard>
+          </SettingsCard>
+        ) : (
+          <SettingsCard className='selector-section-container mb-6'>
+            <div className='flex items-center'>
+              <h3 className='text-base font-semibold text-theme-primary'>
+                Data Type:
+              </h3>
+              <span className='ml-2 text-base text-theme-primary font-medium'>
+                Prompts
+              </span>
+            </div>
+          </SettingsCard>
+        )}
       </div>
 
       <div className='border-b border-theme mb-6 select-none'></div>
