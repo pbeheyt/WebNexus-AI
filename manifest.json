@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WebNexus AI: Send Web, PDF, YouTube to AI",
-  "description": "Extract content from any webpage, PDF, or YouTube video and send it any favorite AI platform.",
+  "description": "Extract content from any webpage, PDF, or YouTube video and send it to any AI platform.",
   "version": "2.0.0",
   "permissions": [
     "activeTab",
