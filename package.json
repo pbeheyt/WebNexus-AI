@@ -4,14 +4,16 @@
   "description": "Summarize & Interact with Web, PDFs & YouTube Videos using AI",
   "main": "webpack.config.js",
   "scripts": {
-    "build": "cross-env NODE_ENV=production webpack --mode production",
-    "build:dev": "webpack --mode development",
-    "watch": "webpack --watch",
+    "build": "npm run build:full",
+    "build:full": "cross-env BUILD_MODE=full NODE_ENV=production webpack --mode production",
+    "build:light": "cross-env BUILD_MODE=light NODE_ENV=production webpack --mode production",
+    "build:dev": "cross-env BUILD_MODE=full webpack --mode development",
+    "watch": "cross-env BUILD_MODE=full webpack --watch",
     "lint": "eslint 'src/**/*.{js,jsx}'",
     "lint:fix": "eslint 'src/**/*.{js,jsx}' --fix",
     "format": "prettier --write 'src/**/*.{js,jsx}' '*.{js,json,html,md,css}' --ignore-path .prettierignore",
     "format:check": "prettier --check 'src/**/*.{js,jsx}' '*.{js,json,html,md,css}' --ignore-path .prettierignore",
-    "analyze": "ANALYZE=true npm run build"
+    "analyze": "ANALYZE=true npm run build:full"
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",
