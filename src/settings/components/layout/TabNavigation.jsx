@@ -5,12 +5,25 @@ import { useTabs } from '../../contexts/TabContext';
 const TabNavigation = () => {
   const { TABS, activeTab, switchTab } = useTabs();
 
-  const tabsConfig = [
+  const baseTabs = [
     { id: TABS.PROMPT_MANAGEMENT, label: 'Prompts' },
-    { id: TABS.API_SETTINGS, label: 'API Settings' },
     { id: TABS.DATA_MANAGEMENT, label: 'Data Management' },
+  ];
+
+  const fullBuildTabs = [
+    { id: TABS.API_SETTINGS, label: 'API Settings' },
     { id: TABS.KEYBOARD_SHORTCUTS, label: 'Keyboard Shortcuts' },
   ];
+
+  const tabsConfig =
+    process.env.BUILD_MODE === 'full'
+      ? [
+          baseTabs[0], // Prompts
+          fullBuildTabs[0], // API Settings
+          baseTabs[1], // Data Management
+          fullBuildTabs[1], // Keyboard Shortcuts
+        ]
+      : baseTabs;
 
   return (
     <div className='tab-nav flex mb-6 border-b border-theme flex-wrap'>

@@ -7,7 +7,7 @@ import { STORAGE_KEYS } from '../../../shared/constants';
 import { logger } from '../../../shared/logger';
 import useMinimumLoadingTime from '../../../hooks/useMinimumLoadingTime';
 
-const DATA_MANAGEMENT_OPTIONS = [
+const allDataManagementOptions = [
   {
     id: 'all',
     name: 'All Settings',
@@ -35,6 +35,13 @@ const DATA_MANAGEMENT_OPTIONS = [
     loadingKeyBase: 'model-parameters',
   },
 ];
+
+const DATA_MANAGEMENT_OPTIONS =
+  process.env.BUILD_MODE === 'full'
+    ? allDataManagementOptions
+    : allDataManagementOptions.filter(
+        (opt) => !['credentials', 'model-parameters'].includes(opt.id)
+      );
 
 const DataManagementTab = () => {
   const { success: showSuccessNotification, error: showErrorNotification } =

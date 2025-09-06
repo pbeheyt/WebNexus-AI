@@ -91,34 +91,36 @@ function registerCoreHandlers() {
  * Register API-related message handlers
  */
 function registerApiHandlers() {
-  // Get API models
-  messageHandlers.set('getApiModels', (message, _sender, sendResponse) => {
-    handleApiModelRequest('getApiModels', message, sendResponse);
-    return true; // Keep channel open for async response
-  });
-
-  // API credential operations
-  messageHandlers.set(
-    'credentialOperation',
-    (message, sender, sendResponse) => {
-      handleCredentialOperation(message, sender, sendResponse);
+  if (process.env.BUILD_MODE === 'full') {
+    // Get API models
+    messageHandlers.set('getApiModels', (message, _sender, sendResponse) => {
+      handleApiModelRequest('getApiModels', message, sendResponse);
       return true; // Keep channel open for async response
-    }
-  );
+    });
 
-  // API content processing
-  messageHandlers.set(
-    'processContentViaApi',
-    (message, sender, sendResponse) => {
-      handleProcessContentViaApiRequest(message, sender, sendResponse);
+    // API credential operations
+    messageHandlers.set(
+      'credentialOperation',
+      (message, sender, sendResponse) => {
+        handleCredentialOperation(message, sender, sendResponse);
+        return true; // Keep channel open for async response
+      }
+    );
+
+    // API content processing
+    messageHandlers.set(
+      'processContentViaApi',
+      (message, sender, sendResponse) => {
+        handleProcessContentViaApiRequest(message, sender, sendResponse);
+        return true; // Keep channel open for async response
+      }
+    );
+
+    messageHandlers.set('cancelStream', (message, _sender, sendResponse) => {
+      handleApiModelRequest('cancelStream', message, sendResponse);
       return true; // Keep channel open for async response
-    }
-  );
-
-  messageHandlers.set('cancelStream', (message, _sender, sendResponse) => {
-    handleApiModelRequest('cancelStream', message, sendResponse);
-    return true; // Keep channel open for async response
-  });
+    });
+  }
 }
 
 /**
@@ -158,17 +160,19 @@ function registerServiceHandlers() {
     }
   );
 
-  // Handle requests to toggle the side panel
-  messageHandlers.set('toggleSidePanelAction', handleToggleSidePanelAction);
+  if (process.env.BUILD_MODE === 'full') {
+    // Handle requests to toggle the side panel
+    messageHandlers.set('toggleSidePanelAction', handleToggleSidePanelAction);
 
-  // Handle requests to close the current side panel
-  messageHandlers.set(
-    'closeCurrentSidePanel',
-    (message, sender, sendResponse) => {
-      handleCloseCurrentSidePanelRequest(message, sender, sendResponse);
-      return true; // Keep channel open for async response
-    }
-  );
+    // Handle requests to close the current side panel
+    messageHandlers.set(
+      'closeCurrentSidePanel',
+      (message, sender, sendResponse) => {
+        handleCloseCurrentSidePanelRequest(message, sender, sendResponse);
+        return true; // Keep channel open for async response
+      }
+    );
+  }
 
   // Handle PDF fetch requests for file:// URLs
   messageHandlers.set('fetchPdfAsBase64', (message, sender, sendResponse) => {

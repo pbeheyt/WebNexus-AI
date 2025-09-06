@@ -120,12 +120,15 @@ class UserDataService {
             // All settings import
             const { prompts, credentials, modelParametersSettings } =
               parsedJson.data;
-            await chrome.storage.local.set({
+            const dataToSet = {
               [STORAGE_KEYS.USER_PROMPTS]: prompts || {},
-              [STORAGE_KEYS.API_CREDENTIALS]: credentials || {},
-              [STORAGE_KEYS.MODEL_PARAMETER_SETTINGS]:
-                modelParametersSettings || {},
-            });
+            };
+            if (process.env.BUILD_MODE === 'full') {
+              dataToSet[STORAGE_KEYS.API_CREDENTIALS] = credentials || {};
+              dataToSet[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] =
+                modelParametersSettings || {};
+            }
+            await chrome.storage.local.set(dataToSet);
             await ensureDefaultPrompts();
           }
 
@@ -151,18 +154,23 @@ class UserDataService {
   }
 
   async exportAllSettings() {
-    const keysToExport = [
-      STORAGE_KEYS.USER_PROMPTS,
-      STORAGE_KEYS.API_CREDENTIALS,
-      STORAGE_KEYS.MODEL_PARAMETER_SETTINGS,
-    ];
+    let keysToExport = [STORAGE_KEYS.USER_PROMPTS];
+    if (process.env.BUILD_MODE === 'full') {
+      keysToExport.push(
+        STORAGE_KEYS.API_CREDENTIALS,
+        STORAGE_KEYS.MODEL_PARAMETER_SETTINGS
+      );
+    }
     const storedData = await chrome.storage.local.get(keysToExport);
     const dataBundle = {
       prompts: storedData[STORAGE_KEYS.USER_PROMPTS] || {},
-      credentials: storedData[STORAGE_KEYS.API_CREDENTIALS] || {},
-      modelParametersSettings:
-        storedData[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {},
     };
+    if (process.env.BUILD_MODE === 'full') {
+      dataBundle.credentials =
+        storedData[STORAGE_KEYS.API_CREDENTIALS] || {};
+      dataBundle.modelParametersSettings =
+        storedData[STORAGE_KEYS.MODEL_PARAMETER_SETTINGS] || {};
+    }
     return this._handleExport(dataBundle, 'WebNexusAI-AllSettings', 'all');
   }
 
@@ -234,8 +242,10 @@ class UserDataService {
       if (dataType === 'all') {
         logger.service.info('Resetting all settings...');
         await this._resetPrompts();
-        await this._resetCredentials();
-        await this._resetModelParameters();
+        if (process.env.BUILD_MODE === 'full') {
+          await this._resetCredentials();
+          await this._resetModelParameters();
+        }
         logger.service.info('All settings reset successfully.');
       } else if (dataType === 'prompts') {
         await this._resetPrompts();

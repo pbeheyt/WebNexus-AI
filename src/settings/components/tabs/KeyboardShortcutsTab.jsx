@@ -308,34 +308,36 @@ export function KeyboardShortcutsTab() {
         </div>
 
         {/* Right Column: Sidepanel Toggle Shortcut */}
-        <div className='w-full md:w-1/2'>
-          <SettingsCard>
-            <h3 className='text-base font-semibold text-theme-primary mb-2'>
-              Side Panel Toggle Shortcut
-            </h3>
-            <p className='text-sm text-theme-secondary mb-6'>
-              This shortcut is used within the extension&apos;s popup to
-              open/close the Side Panel, and from within the Side Panel itself
-              to close it when focused.
-            </p>
+        {process.env.BUILD_MODE === 'full' && (
+          <div className='w-full md:w-1/2'>
+            <SettingsCard>
+              <h3 className='text-base font-semibold text-theme-primary mb-2'>
+                Side Panel Toggle Shortcut
+              </h3>
+              <p className='text-sm text-theme-secondary mb-6'>
+                This shortcut is used within the extension&apos;s popup to
+                open/close the Side Panel, and from within the Side Panel itself
+                to close it when focused.
+              </p>
 
-            <div className='flex justify-between items-center py-2 px-5 rounded-md bg-theme-surface mb-6 border border-theme'>
-              <span className='text-sm text-theme-primary'>
-                Toggle the Side Panel
-              </span>
-              <span className='font-mono text-sm bg-theme-secondary ml-10 px-2 py-1 rounded text-theme-secondary'>
-                {formatShortcutToStringDisplay(customPopupShortcut)}
-              </span>
-            </div>
-            <Button
-              onClick={handleOpenShortcutModal}
-              variant='secondary'
-              size='md'
-            >
-              Update Shortcut
-            </Button>
-          </SettingsCard>
-        </div>
+              <div className='flex justify-between items-center py-2 px-5 rounded-md bg-theme-surface mb-6 border border-theme'>
+                <span className='text-sm text-theme-primary'>
+                  Toggle the Side Panel
+                </span>
+                <span className='font-mono text-sm bg-theme-secondary ml-10 px-2 py-1 rounded text-theme-secondary'>
+                  {formatShortcutToStringDisplay(customPopupShortcut)}
+                </span>
+              </div>
+              <Button
+                onClick={handleOpenShortcutModal}
+                variant='secondary'
+                size='md'
+              >
+                Update Shortcut
+              </Button>
+            </SettingsCard>
+          </div>
+        )}
       </div>
 
       <Modal

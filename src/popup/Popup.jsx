@@ -72,13 +72,17 @@ export function Popup() {
   }, []);
 
   useEffect(() => {
-    if (typeof chrome.sidePanel === 'undefined') {
+    if (process.env.BUILD_MODE === 'full') {
+      if (typeof chrome.sidePanel === 'undefined') {
+        setIsSidePanelApiAvailable(false);
+        updateStatus(
+          'Side Panel requires Chrome 114+. Please update your browser.',
+          'warning'
+        );
+        logger.popup.warn('Side Panel API is not available.');
+      }
+    } else {
       setIsSidePanelApiAvailable(false);
-      updateStatus(
-        'Side Panel requires Chrome 114+. Please update your browser.',
-        'warning'
-      );
-      logger.popup.warn('Side Panel API is not available.');
     }
   }, [updateStatus]);
 
@@ -168,94 +172,104 @@ export function Popup() {
     window.close();
   };
 
-  const toggleSidepanel = useCallback(async () => {
-    if (!currentTab?.id) {
-      updateStatus('Error: No active tab found.');
-      return;
-    }
+  let toggleSidepanel = () => {};
+  let popupSidepanelShortcut = DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG;
 
-    let tabUrl;
-    try {
-      const tab = await chrome.tabs.get(currentTab.id);
-      if (!tab || !tab.url) {
-        updateStatus('Error: Could not determine tab URL.');
+  if (process.env.BUILD_MODE === 'full') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    toggleSidepanel = useCallback(async () => {
+      if (!currentTab?.id) {
+        updateStatus('Error: No active tab found.');
         return;
       }
-      tabUrl = tab.url;
-    } catch (error) {
-      logger.popup.error('Error getting tab info:', error);
-      updateStatus('Error: Could not check tab information.');
-      return;
-    }
 
-    const isAllowed = await robustSendMessage({
-      action: 'isSidePanelAllowedPage',
-      url: tabUrl,
-    });
+      let tabUrl;
+      try {
+        const tab = await chrome.tabs.get(currentTab.id);
+        if (!tab || !tab.url) {
+          updateStatus('Error: Could not determine tab URL.');
+          return;
+        }
+        tabUrl = tab.url;
+      } catch (error) {
+        logger.popup.error('Error getting tab info:', error);
+        updateStatus('Error: Could not check tab information.');
+        return;
+      }
 
-    if (!isAllowed) {
-      updateStatus(
-        'Side Panel cannot be opened on this type of page.',
-        'warning'
-      );
-      return;
-    }
-
-    updateStatus('Toggling Side Panel...', true);
-    try {
-      const response = await robustSendMessage({
-        action: 'toggleSidePanelAction',
-        tabId: currentTab.id,
+      const isAllowed = await robustSendMessage({
+        action: 'isSidePanelAllowedPage',
+        url: tabUrl,
       });
 
-      if (response?.error === 'SIDE_PANEL_UNSUPPORTED') {
+      if (!isAllowed) {
         updateStatus(
-          'Side Panel requires Chrome 114+. Please update your browser.',
+          'Side Panel cannot be opened on this type of page.',
           'warning'
         );
-        setIsSidePanelApiAvailable(false);
-      } else if (response?.success) {
-        updateStatus(
-          `Side Panel state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
-        );
+        return;
+      }
 
-        if (response.visible) {
-          if (chrome.sidePanel && typeof chrome.sidePanel.open === 'function') {
-            try {
-              await chrome.sidePanel.open({ tabId: currentTab.id });
-              updateStatus('Side Panel opened successfully.');
-              window.close();
-            } catch (openError) {
-              logger.popup.error('Error opening side panel:', openError);
-              updateStatus(`Error opening Side Panel: ${openError.message}`);
+      updateStatus('Toggling Side Panel...', true);
+      try {
+        const response = await robustSendMessage({
+          action: 'toggleSidePanelAction',
+          tabId: currentTab.id,
+        });
+
+        if (response?.error === 'SIDE_PANEL_UNSUPPORTED') {
+          updateStatus(
+            'Side Panel requires Chrome 114+. Please update your browser.',
+            'warning'
+          );
+          setIsSidePanelApiAvailable(false);
+        } else if (response?.success) {
+          updateStatus(
+            `Side Panel state updated to: ${response.visible ? 'Visible' : 'Hidden'}.`
+          );
+
+          if (response.visible) {
+            if (
+              chrome.sidePanel &&
+              typeof chrome.sidePanel.open === 'function'
+            ) {
+              try {
+                await chrome.sidePanel.open({ tabId: currentTab.id });
+                updateStatus('Side Panel opened successfully.');
+                window.close();
+              } catch (openError) {
+                logger.popup.error('Error opening side panel:', openError);
+                updateStatus(`Error opening Side Panel: ${openError.message}`);
+              }
+            } else {
+              updateStatus('Side Panel API not available to open.', 'warning');
+              setIsSidePanelApiAvailable(false);
             }
           } else {
-            updateStatus('Side Panel API not available to open.', 'warning');
-            setIsSidePanelApiAvailable(false);
+            updateStatus('Side Panel disabled.');
+            window.close();
           }
         } else {
-          updateStatus('Side Panel disabled.');
-          window.close();
+          throw new Error(
+            response?.error || 'Failed to toggle sidepanel state in background.'
+          );
         }
-      } else {
-        throw new Error(
-          response?.error || 'Failed to toggle sidepanel state in background.'
-        );
+      } catch (error) {
+        logger.popup.error('Error in toggleSidepanel:', error);
+        updateStatus(`Error: ${error.message}`, false);
       }
-    } catch (error) {
-      logger.popup.error('Error in toggleSidepanel:', error);
-      updateStatus(`Error: ${error.message}`, false);
-    }
-  }, [currentTab, updateStatus]);
+    }, [currentTab, updateStatus]);
 
-  const { currentShortcutConfig: popupSidepanelShortcut } =
-    useConfigurableShortcut(
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { currentShortcutConfig } = useConfigurableShortcut(
       STORAGE_KEYS.CUSTOM_SIDEPANEL_TOGGLE_SHORTCUT,
       DEFAULT_POPUP_SIDEPANEL_SHORTCUT_CONFIG,
       toggleSidepanel,
       logger.popup,
       [toggleSidepanel]
     );
+    popupSidepanelShortcut = currentShortcutConfig;
+  }
 
   const handleDefaultPromptUpdateForPopup = useCallback(
     (promptName, contentTypeLabel) => {
@@ -345,20 +359,22 @@ export function Popup() {
             : 'More information about using this extension'
         }
       >
-        <button
-          onClick={toggleSidepanel}
-          className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
-          title={
-            !isSidePanelApiAvailable
-              ? 'Side Panel requires Chrome 114+'
-              : popupSidepanelShortcut && popupSidepanelShortcut.key
-                ? `Toggle Side Panel (${formatShortcutToStringDisplay(popupSidepanelShortcut)})`
-                : 'Toggle Side Panel'
-          }
-          disabled={!currentTab?.id || !isSidePanelApiAvailable}
-        >
-          <SidepanelIcon className='w-4 h-4 select-none' />
-        </button>
+        {process.env.BUILD_MODE === 'full' && (
+          <button
+            onClick={toggleSidepanel}
+            className='p-1 text-theme-secondary hover:text-primary hover:bg-theme-active rounded transition-colors'
+            title={
+              !isSidePanelApiAvailable
+                ? 'Side Panel requires Chrome 114+'
+                : popupSidepanelShortcut && popupSidepanelShortcut.key
+                  ? `Toggle Side Panel (${formatShortcutToStringDisplay(popupSidepanelShortcut)})`
+                  : 'Toggle Side Panel'
+            }
+            disabled={!currentTab?.id || !isSidePanelApiAvailable}
+          >
+            <SidepanelIcon className='w-4 h-4 select-none' />
+          </button>
+        )}
       </AppHeader>
 
       {!contentLoading && (
