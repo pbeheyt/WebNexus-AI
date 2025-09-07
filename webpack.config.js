@@ -5,7 +5,7 @@ const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const isProduction = process.env.NODE_ENV === 'production';
 const TerserPlugin = require('terser-webpack-plugin');
-const generateLicenseFile = require('generate-license-file').generateLicenseFile;
+const { LicenseFilePlugin } = require('generate-license-file-webpack-plugin');
 
 // Determine the build mode from environment variables, defaulting to 'full'
 const BUILD_MODE = process.env.BUILD_MODE || 'full';
@@ -84,33 +84,15 @@ module.exports = {
           from: 'LICENSE.md',
           to: 'LICENSE.md',
         },
-        {
-          from: 'NOTICES.txt',
-          to: 'NOTICES.txt',
-        },
       ],
     }),
     // Conditionally add BundleAnalyzerPlugin
     ...(process.env.ANALYZE === 'true' ? [new BundleAnalyzerPlugin()] : []),
-    {
-      apply: (compiler) => {
-        compiler.hooks.afterEmit.tapPromise(
-          'GenerateLicenseFilePlugin',
-          async () => {
-            try {
-              await generateLicenseFile({
-                input: path.resolve(__dirname, 'package.json'),
-                output: path.resolve(__dirname, 'NOTICES.txt'),
-                /* See configuration options at https://generate-license-file.js.org/ */
-              });
-              console.log('License file generated successfully.');
-            } catch (error) {
-              console.error('Error generating license file:', error);
-            }
-          }
-        );
-      },
-    },
+    new LicenseFilePlugin({
+      outputFileName: 'NOTICES.txt',
+      outputFolder: './', // Outputs to the root of the 'dist' folder
+      pathToPackageJson: path.resolve(__dirname, 'package.json'),
+    }),
   ].filter(Boolean),
   entry: {
     background: './src/background/index.js',
