@@ -66,9 +66,9 @@ module.exports = {
         // PDF.js worker and cmaps
         {
           from: 'node_modules/pdfjs-dist/build/pdf.worker.mjs',
-          to: 'dist/pdf.worker.mjs',
+          to: 'pdf.worker.mjs',
         },
-        { from: 'node_modules/pdfjs-dist/cmaps', to: 'dist/cmaps/' },
+        { from: 'node_modules/pdfjs-dist/cmaps', to: 'cmaps/' },
         // Conditionally copy files for the 'full' build only
         ...( !IS_LIGHT_BUILD
           ? [
